@@ -1,0 +1,60 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "TavernManager/1.0.0": {
+        "dependencies": {
+          "GodotSharp": "4.6.0",
+          "GodotSharpEditor": "4.6.0"
+        },
+        "runtime": {
+          "TavernManager.dll": {}
+        }
+      },
+      "GodotSharp/4.6.0": {
+        "runtime": {
+          "lib/net8.0/GodotSharp.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      },
+      "GodotSharpEditor/4.6.0": {
+        "dependencies": {
+          "GodotSharp": "4.6.0"
+        },
+        "runtime": {
+          "lib/net8.0/GodotSharpEditor.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "TavernManager/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "GodotSharp/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-k4VnWoOPueAkTtFoUzhDnP5e4Qs3Gho0ls/0VyHD81F90HeVBvT0YlsGtS5fvkrmxl731d96bKRWNL4+Rd977g==",
+      "path": "godotsharp/4.6.0",
+      "hashPath": "godotsharp.4.6.0.nupkg.sha512"
+    },
+    "GodotSharpEditor/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jpUfzyAJnG65kWsctfdXKTTPDGzv1eHVlGw/E5Fh5Axw8rGeklQJi0isAX1tBxPjcq/AuELYltpfOdUGc9f0kg==",
+      "path": "godotsharpeditor/4.6.0",
+      "hashPath": "godotsharpeditor.4.6.0.nupkg.sha512"
+    }
+  }
+}
