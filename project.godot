@@ -41,6 +41,10 @@ menu_toggle={
 ]
 }
 
+[internationalization]
+
+locale/translations_pot_files=PackedStringArray("res://dialogue/d1.dialogue")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
