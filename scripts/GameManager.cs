@@ -16,8 +16,9 @@ public partial class GameManager : Node
 
     // ── 库存 ──
     private Dictionary<string, int> _inv;
+    public Dictionary<string, int> Inventory => _inv;
+    public event Action InventoryChanged;
 
-    private static readonly string[] MatKeys = { "Ale", "Wine", "Bread", "Meat", "Herb" };
     private static readonly Dictionary<string, string> MN = new()
     { ["Ale"] = "麦芽", ["Wine"] = "葡萄", ["Bread"] = "面粉", ["Meat"] = "生肉", ["Herb"] = "草药" };
 
@@ -149,11 +150,11 @@ public partial class GameManager : Node
                 };
             }
 
-            // Check for scheduled NPC today
-            var npcToday = Narrative.GetTodayScene(Economy.CurrentDay);
-            if (npcToday != null)
+            // Check for scheduled NPCs today
+            var npcsToday = Narrative.GetTodayScenes(Economy.CurrentDay);
+            if (npcsToday.Count > 0)
             {
-                Narrative.TodayImportantNpc = npcToday.Id;
+                Narrative.TodayImportantNpc = npcsToday[0].Id;
             }
 
             // 检查今日是否有重要 NPC 到访（由 NarrativeManager 外部设置）
@@ -195,6 +196,7 @@ public partial class GameManager : Node
                 _inv[mat] = _inv.TryGetValue(mat, out var existing) ? existing + 1 : 1;
             }
         }
+        InventoryChanged?.Invoke();
         DayCycle.NextPhase(); // Day → Night
     }
 
@@ -272,39 +274,6 @@ public partial class GameManager : Node
     {
         if (_tavernView != null)
             _tavernView.ShowMessage("客人等得不耐烦了……", Colors.Orange);
-    }
-
-    // ── 合成与上菜 ──
-    public void TryCraft()
-    {
-        if (Craft.TryMatch(Craft.Slot1, Craft.Slot2, out var key))
-        {
-            Craft.CraftedKey = key;
-            _tavernView?.ShowMessage($"制作完成：{Craft.Recipes[key].Name}！", Colors.GreenYellow);
-        }
-        else
-        {
-            Craft.CraftedKey = null;
-            _tavernView?.ShowMessage("没有匹配的配方！", Colors.OrangeRed);
-        }
-    }
-
-    public void ServeToGuest()
-    {
-        if (!Guests.HasGuest || string.IsNullOrEmpty(Craft.CraftedKey)) return;
-
-        if (Craft.CraftedKey == Guests.CurrentGuest.OrderKey)
-        {
-            Economy.AddGold(Craft.Recipes[Craft.CraftedKey].Price);
-            Economy.AddReputation(2);
-            _tavernView?.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
-        }
-        else
-        {
-            _tavernView?.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
-        }
-        Craft.ClearCraftSlots();
-        Guests.ClearGuest();
     }
 
     // ── 打烊 ──

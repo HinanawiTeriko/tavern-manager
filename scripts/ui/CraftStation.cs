@@ -1,5 +1,7 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public partial class CraftStation : Control
 {
@@ -20,8 +22,12 @@ public partial class CraftStation : Control
     private const double HeatTime = 1.5;
     private bool _heating;
 
-    public string[] BarMaterials = new string[10];
-    public int[] BarCounts = new int[10];
+    // 快捷栏显示缓存：同步自 GameManager._inv
+    private string[] BarMaterials = new string[10];
+    private int[] BarCounts = new int[10];
+
+    private GameManager _gm;
+    private Control _overlayMenu;
 
     public string MaterialInSlot1 => _slot1Label != null && _slot1Label.Text != "空" ? _slot1Label.Text : null;
     public string MaterialInSlot2 => _slot2Label != null && _slot2Label.Text != "空" ? _slot2Label.Text : null;
@@ -34,6 +40,9 @@ public partial class CraftStation : Control
 
     public override void _Ready()
     {
+        _gm = GetNode<GameManager>("/root/GameManager");
+        _overlayMenu = GetNodeOrNull<Control>("../OverlayMenu");
+
         _slot1 = GetNode<ColorRect>("Slot1");
         _slot2 = GetNode<ColorRect>("Slot2");
         _resultSlot = GetNode<ColorRect>("ResultSlot");
@@ -41,7 +50,6 @@ public partial class CraftStation : Control
         _slot2Label = GetNode<Label>("Slot2/Label");
         _resultLabel = GetNode<Label>("ResultSlot/Label");
 
-        // 按钮引用
         _heatBtn = GetNode<Button>("HeatBtn");
         _shakeBtn = GetNode<Button>("ShakeBtn");
         _stirBtn = GetNode<Button>("StirBtn");
@@ -61,7 +69,8 @@ public partial class CraftStation : Control
         // 操作按钮事件
         _craftBtn.Pressed += () => CraftRequested?.Invoke();
         _serveBtn.Pressed += () => ServeRequested?.Invoke();
-        _clearBtn.Pressed += () => { ClearRequested?.Invoke(); ResetGestureButtons(); };
+        // Clear: 清空前把槽位材料退回库存
+        _clearBtn.Pressed += () => { ReturnSlotMaterials(); ClearRequested?.Invoke(); ResetGestureButtons(); };
 
         // 拖拽面板
         _dragPanel = new Panel { Visible = false, ZIndex = 100, MouseFilter = MouseFilterEnum.Ignore };
@@ -75,15 +84,85 @@ public partial class CraftStation : Control
             _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
         }
 
-        // 初始快捷栏
-        string[] defaults = { "Ale", "Wine", "Bread", "Meat", "Herb" };
-        for (int i = 0; i < 5; i++) { BarMaterials[i] = defaults[i]; BarCounts[i] = 5; }
-        RefreshAll();
+        // 从库存同步到快捷栏
+        SyncFromInventory();
+        _gm.InventoryChanged += SyncFromInventory;
+    }
+
+    /// 从 GameManager._inv 重建快捷栏显示
+    private void SyncFromInventory()
+    {
+        var inv = _gm.Inventory;
+        // 保留已有槽位类型，更新数量
+        for (int i = 0; i < 10; i++)
+        {
+            if (!string.IsNullOrEmpty(BarMaterials[i]) && inv.TryGetValue(BarMaterials[i], out var cnt) && cnt > 0)
+            {
+                BarCounts[i] = cnt;
+                RefreshShortcut(i);
+            }
+            else
+            {
+                BarMaterials[i] = null;
+                BarCounts[i] = 0;
+            }
+        }
+        // 填充新出现的材料到空槽位
+        foreach (var (key, count) in inv)
+        {
+            if (count <= 0) continue;
+            bool alreadyShown = false;
+            for (int i = 0; i < 10; i++)
+                if (BarMaterials[i] == key) { alreadyShown = true; break; }
+            if (alreadyShown) continue;
+            for (int i = 0; i < 10; i++)
+            {
+                if (string.IsNullOrEmpty(BarMaterials[i]))
+                {
+                    BarMaterials[i] = key;
+                    BarCounts[i] = count;
+                    RefreshShortcut(i);
+                    break;
+                }
+            }
+        }
+        // 刷新所有空槽位
+        for (int i = 0; i < 10; i++)
+            if (string.IsNullOrEmpty(BarMaterials[i]))
+                RefreshShortcut(i);
+    }
+
+    private void AddToInventory(string key, int amount = 1)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        _gm.Inventory.TryGetValue(key, out var cur);
+        _gm.Inventory[key] = cur + amount;
+        SyncFromInventory();
+    }
+
+    private void RemoveFromInventory(string key, int amount = 1)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        if (_gm.Inventory.TryGetValue(key, out var cur))
+        {
+            int remaining = cur - amount;
+            if (remaining <= 0)
+                _gm.Inventory.Remove(key);
+            else
+                _gm.Inventory[key] = remaining;
+        }
+        SyncFromInventory();
+    }
+
+    /// 把两个合成槽里的材料退回库存
+    private void ReturnSlotMaterials()
+    {
+        if (MaterialInSlot1 != null) AddToInventory(MaterialInSlot1);
+        if (MaterialInSlot2 != null) AddToInventory(MaterialInSlot2);
     }
 
     private void StartGesture(string name)
     {
-        // 需要至少有一个材料在槽位里
         if (string.IsNullOrEmpty(MaterialInSlot1) && string.IsNullOrEmpty(MaterialInSlot2))
         {
             GD.Print("[CraftStation] 请先放入材料！");
@@ -109,6 +188,8 @@ public partial class CraftStation : Control
 
     public override void _Process(double dt)
     {
+        if (_overlayMenu?.Visible == true) return;
+
         if (_heating)
         {
             _heatProgress += dt;
@@ -130,6 +211,8 @@ public partial class CraftStation : Control
 
     public override void _Input(InputEvent e)
     {
+        if (_overlayMenu?.Visible == true) return;
+
         if (e is InputEventMouseButton mb)
         {
             if (mb.ButtonIndex == MouseButton.Left)
@@ -144,7 +227,7 @@ public partial class CraftStation : Control
 
     private void TryPickUp(Vector2 pos)
     {
-        // 成品槽优先——拖成品去快捷栏或客人区
+        // 成品槽优先
         if (HitTest(_resultSlot, pos) && !string.IsNullOrEmpty(ResultKey))
         {
             string key = ResultKey;
@@ -171,10 +254,8 @@ public partial class CraftStation : Control
         {
             if (HitTest(_shortcutSlots[i], pos) && !string.IsNullOrEmpty(BarMaterials[i]) && BarCounts[i] > 0)
             {
-                BarCounts[i]--;
                 string mat = BarMaterials[i];
-                if (BarCounts[i] <= 0) BarMaterials[i] = null;
-                RefreshShortcut(i);
+                RemoveFromInventory(mat);
                 StartDrag(pos, mat);
                 return;
             }
@@ -187,7 +268,6 @@ public partial class CraftStation : Control
         var customerArea = GetNode<Control>("../CustomerArea");
         if (HitTest(customerArea, pos))
         {
-            // 如果是快捷栏的成品 → 检查是否匹配订单，直接上菜
             var gm = GetNode<GameManager>("/root/GameManager");
             if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
             {
@@ -228,14 +308,14 @@ public partial class CraftStation : Control
                 if (string.IsNullOrEmpty(BarMaterials[i]))
                 {
                     BarMaterials[i] = _dragMaterial;
-                    BarCounts[i] = 1;
+                    AddToInventory(_dragMaterial);
                     EndDrag();
                     RefreshShortcut(i);
                     return;
                 }
                 else if (BarMaterials[i] == _dragMaterial)
                 {
-                    BarCounts[i]++;
+                    AddToInventory(_dragMaterial);
                     EndDrag();
                     RefreshShortcut(i);
                     return;
@@ -267,14 +347,8 @@ public partial class CraftStation : Control
 
     private void ReturnDrag()
     {
-        for (int i = 0; i < 10; i++)
-        {
-            if (BarMaterials[i] == _dragMaterial) { BarCounts[i]++; RefreshShortcut(i); return; }
-        }
-        for (int i = 0; i < 10; i++)
-        {
-            if (string.IsNullOrEmpty(BarMaterials[i])) { BarMaterials[i] = _dragMaterial; BarCounts[i] = 1; RefreshShortcut(i); return; }
-        }
+        // 归还拖拽中的材料到库存
+        AddToInventory(_dragMaterial);
     }
 
     private void RefreshShortcut(int i)
@@ -282,7 +356,6 @@ public partial class CraftStation : Control
         _shortcutSlots[i].Color = string.IsNullOrEmpty(BarMaterials[i])
             ? new Color(0.1f, 0.08f, 0.06f)
             : GameManager.MaterialColor(BarMaterials[i]);
-        // 显示中文名 + 数量
         string matName = BarMaterials[i] switch
         {
             "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药",
@@ -299,6 +372,7 @@ public partial class CraftStation : Control
     public void ShowResult(string text, Color color)
     {
         _resultLabel.Text = text;
+        _resultLabel.RemoveThemeColorOverride("font_color");
         _resultLabel.AddThemeColorOverride("font_color", color);
     }
 

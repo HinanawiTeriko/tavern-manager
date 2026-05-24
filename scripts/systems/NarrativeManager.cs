@@ -112,22 +112,26 @@ public class NarrativeManager
         }
     }
 
-    public NpcData GetTodayScene(int day)
+    public List<NpcData> GetTodayScenes(int day)
     {
+        var result = new List<NpcData>();
         foreach (var npc in AllNpcs)
         {
             var scene = npc.Scenes.FirstOrDefault(s => s.Day == day);
             if (scene != null)
             {
-                if (scene.Trigger == "auto") return npc;
-                if (scene.Trigger.StartsWith("affection"))
+                if (scene.Trigger == "auto")
+                {
+                    result.Add(npc);
+                }
+                else if (scene.Trigger.StartsWith("affection"))
                 {
                     var parts = scene.Trigger.Split(">=");
                     if (parts.Length == 2 && int.TryParse(parts[1].Trim(), out var threshold))
-                        if (GetAffection(npc.Id) >= threshold) return npc;
+                        if (GetAffection(npc.Id) >= threshold) result.Add(npc);
                 }
             }
         }
-        return null;
+        return result;
     }
 }
