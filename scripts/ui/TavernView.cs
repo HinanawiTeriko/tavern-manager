@@ -15,6 +15,8 @@ public partial class TavernView : Node2D
     private Panel _menuPanel;
     private Label _messageLabel;
     private Button _endNightBtn;
+    private ColorRect _dialogueOverlay;
+    private GameManager _gm;
 
     public Control CraftStation => GetNode<Control>("CraftStation");
     public Control ShortcutBar => GetNode<Control>("ShortcutBar");
@@ -22,6 +24,7 @@ public partial class TavernView : Node2D
 
     public override void _Ready()
     {
+        _gm = GetNode<GameManager>("/root/GameManager");
         _bgSprite = GetNode<Sprite2D>("Background");
         _customerSprite = GetNode<TextureRect>("CustomerArea/CustomerSprite");
         _customerName = GetNode<Label>("CustomerArea/CustomerName");
@@ -32,6 +35,7 @@ public partial class TavernView : Node2D
         _dayLabel = GetNode<Label>("TopPanel/DayLabel");
         _messageLabel = GetNode<Label>("BottomBar/MessageLabel");
         _endNightBtn = GetNode<Button>("TopPanel/EndNightBtn");
+        _dialogueOverlay = GetNode<ColorRect>("DialogueOverlay");
 
         _menuPanel = GetNode<Panel>("OverlayMenu");
         GetNode<Button>("TopPanel/MenuButton").Pressed += ToggleMenu;
@@ -96,8 +100,7 @@ public partial class TavernView : Node2D
         GetNode<Button>("OverlayMenu/TabBtns/BtnBackpack").Pressed += () => { recipePanel.Visible = false; backpackPanel.Visible = true; };
 
         // Live-refresh backpack when inventory changes
-        var gm = GetNode<GameManager>("/root/GameManager");
-        gm.InventoryChanged += () => { if (_menuPanel.Visible) BuildBackpackList(gm.Craft); };
+        _gm.InventoryChanged += OnInventoryChanged;
 
         // Bottom bar message
         _messageLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
@@ -198,21 +201,42 @@ public partial class TavernView : Node2D
         _messageLabel.AddThemeColorOverride("font_color", color);
     }
 
+    public void SetDialogueMode(bool active)
+    {
+        _dialogueOverlay.Visible = active;
+        CraftStation.MouseFilter = active
+            ? Control.MouseFilterEnum.Ignore
+            : Control.MouseFilterEnum.Stop;
+        ShortcutBar.MouseFilter = active
+            ? Control.MouseFilterEnum.Ignore
+            : Control.MouseFilterEnum.Stop;
+    }
+
+    public override void _ExitTree()
+    {
+        if (_gm != null)
+            _gm.InventoryChanged -= OnInventoryChanged;
+    }
+
+    private void OnInventoryChanged()
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        if (_menuPanel.Visible) BuildBackpackList(_gm.Craft);
+    }
+
     public void ToggleMenu()
     {
         _menuPanel.Visible = !_menuPanel.Visible;
         if (_menuPanel.Visible)
         {
-            var gm = GetNode<GameManager>("/root/GameManager");
-            BuildRecipeList(gm.Craft);
-            BuildBackpackList(gm.Craft);
+            BuildRecipeList(_gm.Craft);
+            BuildBackpackList(_gm.Craft);
         }
     }
 
     private void OnEndNight()
     {
-        var gm = GetNode<GameManager>("/root/GameManager");
-        gm.EndNight();
+        _gm.EndNight();
     }
 
     public void BuildRecipeList(CraftSystem craft)
@@ -227,10 +251,9 @@ public partial class TavernView : Node2D
             row.AddThemeConstantOverride("separation", 6);
             row.CustomMinimumSize = new Vector2(0, 32);
 
-            var gmRecipe = GetNode<GameManager>("/root/GameManager");
             foreach (var mat in recipe.Materials)
             {
-                var iconTex = gmRecipe.TryLoadMaterialIcon(mat);
+                var iconTex = _gm.TryLoadMaterialIcon(mat);
                 if (iconTex != null)
                 {
                     var texRect = new TextureRect
@@ -283,8 +306,7 @@ public partial class TavernView : Node2D
 
     public void BuildBackpackList(CraftSystem craft)
     {
-        var gm = GetNode<GameManager>("/root/GameManager");
-        var inventory = gm.Inventory;
+        var inventory = _gm.Inventory;
         var backpackList = _menuPanel.GetNode<VBoxContainer>("BackpackPanel/BackpackList");
         foreach (var child in backpackList.GetChildren())
             child.QueueFree();
@@ -297,7 +319,7 @@ public partial class TavernView : Node2D
             row.CustomMinimumSize = new Vector2(0, 32);
             row.SetMeta("material_key", mat);
 
-            var iconTex = gm.TryLoadMaterialIcon(mat);
+            var iconTex = _gm.TryLoadMaterialIcon(mat);
             if (iconTex != null)
             {
                 var texRect = new TextureRect
