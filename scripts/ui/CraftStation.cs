@@ -1,30 +1,24 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 
 public partial class CraftStation : Control
 {
     private ColorRect _slot1, _slot2, _resultSlot;
-    private ColorRect _fireZone, _shakerZone, _stirZone;
+    private Button _heatBtn, _shakeBtn, _stirBtn;
+    private Button _craftBtn, _serveBtn, _clearBtn;
     private Label _slot1Label, _slot2Label, _resultLabel;
     private ColorRect[] _shortcutSlots = new ColorRect[10];
     private Label[] _shortcutLabels = new Label[10];
 
     private bool _dragging;
     private string _dragMaterial;
-    private int _dragCount;
     private Panel _dragPanel;
-    private Vector2 _dragOffset;
-    private int _dragSourceIndex = -1;
 
+    // 手势进度
+    private bool _heatDone, _shakeDone, _stirDone;
     private double _heatProgress;
     private const double HeatTime = 1.5;
     private bool _heating;
-
-    private bool _shaking;
-    private Vector2 _lastShakePos;
-    private int _shakeCount;
-    private const int ShakeThreshold = 6;
 
     public string[] BarMaterials = new string[10];
     public int[] BarCounts = new int[10];
@@ -36,30 +30,44 @@ public partial class CraftStation : Control
     public event Action CraftRequested;
     public event Action ServeRequested;
     public event Action ClearRequested;
-    // Gesture completion events
-    public event Action<string> GestureCompleted; // gesture name: "drag","shake","heat","stir"
+    public event Action<string> GestureCompleted;
 
     public override void _Ready()
     {
         _slot1 = GetNode<ColorRect>("Slot1");
         _slot2 = GetNode<ColorRect>("Slot2");
         _resultSlot = GetNode<ColorRect>("ResultSlot");
-        _fireZone = GetNode<ColorRect>("FireZone");
-        _shakerZone = GetNode<ColorRect>("ShakerZone");
-        _stirZone = GetNode<ColorRect>("StirZone");
         _slot1Label = GetNode<Label>("Slot1/Label");
         _slot2Label = GetNode<Label>("Slot2/Label");
         _resultLabel = GetNode<Label>("ResultSlot/Label");
+
+        // 按钮引用
+        _heatBtn = GetNode<Button>("HeatBtn");
+        _shakeBtn = GetNode<Button>("ShakeBtn");
+        _stirBtn = GetNode<Button>("StirBtn");
+        _craftBtn = GetNode<Button>("CraftBtn");
+        _serveBtn = GetNode<Button>("ServeBtn");
+        _clearBtn = GetNode<Button>("ClearBtn");
 
         _slot1Label.Text = "空";
         _slot2Label.Text = "空";
         _resultLabel.Text = "";
 
-        // Create drag preview panel
+        // 手势按钮事件
+        _heatBtn.Pressed += () => StartGesture("heat");
+        _shakeBtn.Pressed += () => StartGesture("shake");
+        _stirBtn.Pressed += () => { GestureCompleted?.Invoke("stir"); _stirDone = true; _stirBtn.Disabled = true; GD.Print("[CraftStation] 搅拌完成！"); };
+
+        // 操作按钮事件
+        _craftBtn.Pressed += () => CraftRequested?.Invoke();
+        _serveBtn.Pressed += () => ServeRequested?.Invoke();
+        _clearBtn.Pressed += () => { ClearRequested?.Invoke(); ResetGestureButtons(); };
+
+        // 拖拽面板
         _dragPanel = new Panel { Visible = false, ZIndex = 100, MouseFilter = MouseFilterEnum.Ignore };
         AddChild(_dragPanel);
 
-        // Reference shortcut bar slots
+        // 快捷栏引用
         var bar = GetNode<Control>("../ShortcutBar");
         for (int i = 0; i < 10; i++)
         {
@@ -67,14 +75,57 @@ public partial class CraftStation : Control
             _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
         }
 
-        // Initialize shortcut bar with default materials
-        string[] defaults = {"Ale","Wine","Bread","Meat","Herb"};
-        for (int i = 0; i < 5; i++)
-        {
-            BarMaterials[i] = defaults[i];
-            BarCounts[i] = 5;
-        }
+        // 初始快捷栏
+        string[] defaults = { "Ale", "Wine", "Bread", "Meat", "Herb" };
+        for (int i = 0; i < 5; i++) { BarMaterials[i] = defaults[i]; BarCounts[i] = 5; }
         RefreshAll();
+    }
+
+    private void StartGesture(string name)
+    {
+        // 需要至少有一个材料在槽位里
+        if (string.IsNullOrEmpty(MaterialInSlot1) && string.IsNullOrEmpty(MaterialInSlot2))
+        {
+            GD.Print("[CraftStation] 请先放入材料！");
+            return;
+        }
+
+        switch (name)
+        {
+            case "heat":
+                _heating = true;
+                _heatProgress = 0;
+                _heatBtn.Text = "加热中...";
+                _heatBtn.Disabled = true;
+                break;
+            case "shake":
+                GestureCompleted?.Invoke("shake");
+                _shakeDone = true;
+                _shakeBtn.Disabled = true;
+                GD.Print("[CraftStation] 摇晃完成！");
+                break;
+        }
+    }
+
+    public override void _Process(double dt)
+    {
+        if (_heating)
+        {
+            _heatProgress += dt;
+            float ratio = (float)(_heatProgress / HeatTime);
+            if (_heatProgress >= HeatTime)
+            {
+                _heating = false;
+                _heatDone = true;
+                _heatBtn.Text = "加热 ✓";
+                GestureCompleted?.Invoke("heat");
+                GD.Print("[CraftStation] 加热完成！");
+            }
+            else
+            {
+                _heatBtn.Text = $"加热中 {ratio * 100:F0}%";
+            }
+        }
     }
 
     public override void _Input(InputEvent e)
@@ -88,62 +139,25 @@ public partial class CraftStation : Control
             }
         }
         if (_dragging && e is InputEventMouseMotion mm)
-            UpdateDragPosition(mm.Position);
-
-        // Shake detection while holding
-        if (_shaking && e is InputEventMouseMotion sm)
-        {
-            var delta = sm.Position - _lastShakePos;
-            if (Math.Abs(delta.X) > 40 || Math.Abs(delta.Y) > 40)
-            {
-                _shakeCount++;
-                if (_shakeCount >= ShakeThreshold)
-                {
-                    _shaking = false;
-                    GestureCompleted?.Invoke("shake");
-                    _shakerZone.Color = new Color(0.2f, 0.3f, 0.8f);
-                    GD.Print("[CraftStation] 摇晃完成！");
-                }
-            }
-            _lastShakePos = sm.Position;
-        }
-    }
-
-    public override void _Process(double dt)
-    {
-        if (_heating)
-        {
-            _heatProgress += dt;
-            float ratio = (float)(_heatProgress / HeatTime);
-            _fireZone.Color = new Color(1f, 1f - ratio, 0f);
-            if (_heatProgress >= HeatTime)
-            {
-                _heating = false;
-                GestureCompleted?.Invoke("heat");
-                _fireZone.Color = new Color(0.8f, 0.2f, 0.1f);
-                GD.Print("[CraftStation] 加热完成！");
-            }
-        }
+            _dragPanel.Position = mm.Position - new Vector2(24, 24);
     }
 
     private void TryPickUp(Vector2 pos)
     {
-        // Check craft slots first
         if (HitTest(_slot1, pos) && !string.IsNullOrEmpty(MaterialInSlot1))
         {
-            StartDrag(pos, -1, MaterialInSlot1);
+            StartDrag(pos, MaterialInSlot1);
             _slot1Label.Text = "空";
             _slot1.Color = new Color(0.15f, 0.12f, 0.1f);
             return;
         }
         if (HitTest(_slot2, pos) && !string.IsNullOrEmpty(MaterialInSlot2))
         {
-            StartDrag(pos, -1, MaterialInSlot2);
+            StartDrag(pos, MaterialInSlot2);
             _slot2Label.Text = "空";
             _slot2.Color = new Color(0.15f, 0.12f, 0.1f);
             return;
         }
-        // Check shortcut bar
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos) && !string.IsNullOrEmpty(BarMaterials[i]) && BarCounts[i] > 0)
@@ -152,7 +166,7 @@ public partial class CraftStation : Control
                 string mat = BarMaterials[i];
                 if (BarCounts[i] <= 0) BarMaterials[i] = null;
                 RefreshShortcut(i);
-                StartDrag(pos, i, mat);
+                StartDrag(pos, mat);
                 return;
             }
         }
@@ -160,7 +174,6 @@ public partial class CraftStation : Control
 
     private void TryDrop(Vector2 pos)
     {
-        // Drop on craft slot 1
         if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
         {
             _slot1Label.Text = _dragMaterial;
@@ -169,7 +182,6 @@ public partial class CraftStation : Control
             GestureCompleted?.Invoke("drag");
             return;
         }
-        // Drop on craft slot 2
         if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
         {
             _slot2Label.Text = _dragMaterial;
@@ -178,7 +190,6 @@ public partial class CraftStation : Control
             GestureCompleted?.Invoke("drag");
             return;
         }
-        // Drop on shortcut bar
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos))
@@ -200,44 +211,17 @@ public partial class CraftStation : Control
                 }
             }
         }
-        // Drop on fire zone => start heating
-        if (HitTest(_fireZone, pos))
-        {
-            _heating = true;
-            _heatProgress = 0;
-            EndDrag();
-            return;
-        }
-        // Drop on shaker zone => start shaking
-        if (HitTest(_shakerZone, pos))
-        {
-            _shaking = true;
-            _lastShakePos = pos;
-            _shakeCount = 0;
-            EndDrag();
-            return;
-        }
-        // Drop on stir zone => instant stir complete
-        if (HitTest(_stirZone, pos))
-        {
-            GestureCompleted?.Invoke("stir");
-            GD.Print("[CraftStation] 搅拌完成！");
-            EndDrag();
-            return;
-        }
-        // Otherwise return to source
         ReturnDrag();
         EndDrag();
     }
 
-    private void StartDrag(Vector2 pos, int index, string material)
+    private void StartDrag(Vector2 pos, string material)
     {
         _dragging = true;
-        _dragSourceIndex = index;
         _dragMaterial = material;
         _dragPanel.Visible = true;
-        _dragPanel.Size = new Vector2(48, 48);
-        _dragPanel.Position = pos - new Vector2(24, 24);
+        _dragPanel.Size = new Vector2(64, 64);
+        _dragPanel.Position = pos - new Vector2(32, 32);
         var color = GameManager.MaterialColor(material);
         var sb = new StyleBoxFlat { BgColor = color, BorderWidthLeft = 2, BorderWidthTop = 2, BorderWidthRight = 2, BorderWidthBottom = 2 };
         _dragPanel.AddThemeStyleboxOverride("panel", sb);
@@ -247,37 +231,19 @@ public partial class CraftStation : Control
     {
         _dragging = false;
         _dragPanel.Visible = false;
-        _dragSourceIndex = -1;
         _dragMaterial = null;
     }
 
     private void ReturnDrag()
     {
-        // Return material to shortcut bar
         for (int i = 0; i < 10; i++)
         {
-            if (BarMaterials[i] == _dragMaterial)
-            {
-                BarCounts[i]++;
-                RefreshShortcut(i);
-                return;
-            }
+            if (BarMaterials[i] == _dragMaterial) { BarCounts[i]++; RefreshShortcut(i); return; }
         }
         for (int i = 0; i < 10; i++)
         {
-            if (string.IsNullOrEmpty(BarMaterials[i]))
-            {
-                BarMaterials[i] = _dragMaterial;
-                BarCounts[i] = 1;
-                RefreshShortcut(i);
-                return;
-            }
+            if (string.IsNullOrEmpty(BarMaterials[i])) { BarMaterials[i] = _dragMaterial; BarCounts[i] = 1; RefreshShortcut(i); return; }
         }
-    }
-
-    private void UpdateDragPosition(Vector2 pos)
-    {
-        _dragPanel.Position = pos - new Vector2(24, 24);
     }
 
     private void RefreshShortcut(int i)
@@ -285,7 +251,13 @@ public partial class CraftStation : Control
         _shortcutSlots[i].Color = string.IsNullOrEmpty(BarMaterials[i])
             ? new Color(0.1f, 0.08f, 0.06f)
             : GameManager.MaterialColor(BarMaterials[i]);
-        _shortcutLabels[i].Text = string.IsNullOrEmpty(BarMaterials[i]) ? "" : $"x{BarCounts[i]}";
+        // 显示中文名 + 数量
+        string matName = BarMaterials[i] switch
+        {
+            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药",
+            _ => BarMaterials[i]
+        };
+        _shortcutLabels[i].Text = string.IsNullOrEmpty(BarMaterials[i]) ? "" : $"{matName} x{BarCounts[i]}";
     }
 
     public void RefreshAll()
@@ -307,12 +279,23 @@ public partial class CraftStation : Control
         _slot2.Color = new Color(0.15f, 0.12f, 0.1f);
         _resultLabel.Text = "";
         ResultKey = null;
+        ResetGestureButtons();
     }
 
-    // ── 按钮触发方法（供场景信号连接） ──
-    public void OnCraftPressed() => CraftRequested?.Invoke();
-    public void OnServePressed() => ServeRequested?.Invoke();
-    public void OnClearPressed() => ClearRequested?.Invoke();
+    public void ResetGestureButtons()
+    {
+        _heatDone = false;
+        _shakeDone = false;
+        _stirDone = false;
+        _heating = false;
+        _heatProgress = 0;
+        _heatBtn.Text = "加热";
+        _heatBtn.Disabled = false;
+        _shakeBtn.Text = "摇晃";
+        _shakeBtn.Disabled = false;
+        _stirBtn.Text = "搅拌";
+        _stirBtn.Disabled = false;
+    }
 
     private static bool HitTest(Control c, Vector2 p)
     {

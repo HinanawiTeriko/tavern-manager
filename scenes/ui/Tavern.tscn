@@ -93,70 +93,67 @@ offset_bottom = 75.0
 text = "空"
 horizontal_alignment = 1
 
-[node name="FireZone" type="ColorRect" parent="CraftStation"]
+[node name="HeatBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 300.0
 offset_top = 0.0
-offset_right = 380.0
-offset_bottom = 80.0
-color = Color(0.8, 0.2, 0.1, 1)
-
-[node name="Label" type="Label" parent="CraftStation/FireZone"]
-layout_mode = 0
-offset_left = 5.0
-offset_top = 25.0
-offset_right = 75.0
-offset_bottom = 55.0
+offset_right = 390.0
+offset_bottom = 45.0
 text = "加热"
-horizontal_alignment = 1
 
-[node name="ShakerZone" type="ColorRect" parent="CraftStation"]
+[node name="ShakeBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 300.0
-offset_top = 100.0
-offset_right = 380.0
-offset_bottom = 180.0
-color = Color(0.2, 0.3, 0.8, 1)
-
-[node name="Label" type="Label" parent="CraftStation/ShakerZone"]
-layout_mode = 0
-offset_left = 5.0
-offset_top = 25.0
-offset_right = 75.0
-offset_bottom = 55.0
+offset_top = 55.0
+offset_right = 390.0
+offset_bottom = 100.0
 text = "摇晃"
-horizontal_alignment = 1
 
-[node name="StirZone" type="ColorRect" parent="CraftStation"]
+[node name="StirBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 400.0
 offset_top = 0.0
-offset_right = 480.0
-offset_bottom = 80.0
-color = Color(0.2, 0.7, 0.2, 1)
-
-[node name="Label" type="Label" parent="CraftStation/StirZone"]
-layout_mode = 0
-offset_left = 5.0
-offset_top = 25.0
-offset_right = 75.0
-offset_bottom = 55.0
+offset_right = 490.0
+offset_bottom = 45.0
 text = "搅拌"
-horizontal_alignment = 1
+
+[node name="CraftBtn" type="Button" parent="CraftStation"]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 55.0
+offset_right = 490.0
+offset_bottom = 100.0
+text = "合成"
+
+[node name="ServeBtn" type="Button" parent="CraftStation"]
+layout_mode = 0
+offset_left = 500.0
+offset_top = 0.0
+offset_right = 590.0
+offset_bottom = 45.0
+text = "上菜"
+
+[node name="ClearBtn" type="Button" parent="CraftStation"]
+layout_mode = 0
+offset_left = 500.0
+offset_top = 55.0
+offset_right = 590.0
+offset_bottom = 100.0
+text = "清空"
 
 [node name="ResultSlot" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
-offset_left = 400.0
-offset_top = 100.0
-offset_right = 500.0
-offset_bottom = 200.0
+offset_left = 300.0
+offset_top = 115.0
+offset_right = 590.0
+offset_bottom = 210.0
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="CraftStation/ResultSlot"]
 layout_mode = 0
 offset_left = 5.0
 offset_top = 35.0
-offset_right = 95.0
+offset_right = 285.0
 offset_bottom = 65.0
 text = "成品"
 horizontal_alignment = 1
@@ -164,137 +161,137 @@ horizontal_alignment = 1
 [node name="ShortcutBar" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 140.0
-offset_top = 685.0
+offset_top = 675.0
 offset_right = 1140.0
 offset_bottom = 715.0
 
 [node name="Slot0" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot0"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot1" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot1"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot2" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot2"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot3" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot3"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot4" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot4"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot5" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot5"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot6" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot6"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot7" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot7"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot8" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot8"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 
 [node name="Slot9" type="ColorRect" parent="ShortcutBar"]
-custom_minimum_size = Vector2(90, 30)
+custom_minimum_size = Vector2(90, 36)
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="ShortcutBar/Slot9"]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 3.0
+offset_top = 6.0
 offset_right = 88.0
-offset_bottom = 27.0
+offset_bottom = 30.0
 text = ""
 horizontal_alignment = 1
 

@@ -43,7 +43,7 @@ menu_toggle={
 
 [internationalization]
 
-locale/translations_pot_files=PackedStringArray("res://dialogue/d2.dialogue", "res://dialogue/d1.dialogue", "res://dialogue/d3.dialogue")
+locale/translations_pot_files=PackedStringArray("res://dialogue/d2.dialogue", "res://dialogue/d1.dialogue", "res://dialogue/d3.dialogue", "res://dialogue/mira_day12.dialogue", "res://dialogue/mira_day4.dialogue", "res://dialogue/ryan_day1.dialogue", "res://dialogue/ryan_day2.dialogue", "res://dialogue/ryan_day3.dialogue")
 
 [rendering]
 
