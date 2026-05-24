@@ -47,6 +47,10 @@ public partial class GameManager : Node
             ["SpicedWine"]=("香料红酒",new[]{"Wine","Herb"},11,true),
         }; _oKeys=_rec.Keys.ToArray();
         _dp=new Panel{Visible=false,MouseFilter=Control.MouseFilterEnum.Ignore,ZIndex=100};
+        var dcl=new Label{Name="CntLbl",HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+        dcl.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        dcl.AddThemeColorOverride("font_color",Colors.White);dcl.AddThemeFontSizeOverride("font_size",13);
+        _dp.AddChild(dcl);
     }
 
     public void StartGame(Node m){if(!_ok)Init(m);}
@@ -126,12 +130,17 @@ public partial class GameManager : Node
         if(!_custA&&!_mo){_spT+=dt;if(_spT>=_nxS){_spT=0;_nxS=_rng.NextDouble()*3+2;Spawn();}}
     }
 
-    // ── 拖拽输入（新规则）──
+    // ── 拖拽输入 ──
     public override void _Input(InputEvent e){
         if(!_ok)return;
         if(e is InputEventMouseButton mb){
             if(mb.ButtonIndex==MouseButton.Left){
-                if(mb.Pressed){if(_drag)DropAll();else PickUp(mb.Position);}
+                if(mb.Pressed){
+                    if(_drag){if(_src!=Df.Bar)DropAll();} // 慢速源保持点击放下
+                    else PickUp(mb.Position);
+                }else{
+                    if(_drag&&_src==Df.Bar)DropAll(); // 快捷栏源松开放下
+                }
             }else if(mb.ButtonIndex==MouseButton.Right&&mb.Pressed){
                 if(_drag)ReturnOne();else OnRClick(mb.Position);
             }
@@ -144,7 +153,7 @@ public partial class GameManager : Node
         if(HT(_cr2,p)&&!string.IsNullOrEmpty(_c2)){Start(Df.Craft,1,_c2);_c2="";UpdC();return;}
         for(int i=0;i<10;i++){
             if(HT(_br[i],p)&&!string.IsNullOrEmpty(_barMat[i])&&_barCnt[i]>0){
-                _dragCnt=_barCnt[i];Start(Df.Bar,i,_barMat[i]);_barMat[i]="";_barCnt[i]=0;UpdB(i);return;
+                _dragCnt=1;Start(Df.Bar,i,_barMat[i]);_barCnt[i]--;if(_barCnt[i]<=0)_barMat[i]="";UpdB(i);return;
             }
         }
         if(_mo&&_bpPanel.Visible){
@@ -159,6 +168,11 @@ public partial class GameManager : Node
     void DropAll(){
         if(!_drag)return;
         var p=GetViewport().GetMousePosition();
+        if(_src==Df.Bar){
+            if(HT(_cr1,p)&&string.IsNullOrEmpty(_c1)){_c1=_dm;UpdC();Finish();return;}
+            if(HT(_cr2,p)&&string.IsNullOrEmpty(_c2)){_c2=_dm;UpdC();Finish();return;}
+            ReturnAll();Finish();return;
+        }
         if(HT(_cr1,p)&&string.IsNullOrEmpty(_c1)){_c1=_dm;UpdC();Finish();return;}
         if(HT(_cr2,p)&&string.IsNullOrEmpty(_c2)){_c2=_dm;UpdC();Finish();return;}
         for(int i=0;i<10;i++){if(HT(_br[i],p)&&string.IsNullOrEmpty(_barMat[i])){_barMat[i]=_dm;_barCnt[i]=_dragCnt;UpdB(i);Finish();return;}}
@@ -189,13 +203,19 @@ public partial class GameManager : Node
     void Start(Df s,int i,string m){_src=s;_si=i;_dm=m;_drag=true;ShowDP();}
     void Finish(){_drag=false;HideDP();_src=Df.None;_si=-1;_dm="";_dragCnt=0;UpdAll();UpdAllBL();_srv.Disabled=string.IsNullOrEmpty(_c1)||!_custA;}
 
-    void ShowDP(){_dp.Visible=true;_dp.Size=new Vector2(48,48);_dp.Position=GetViewport().GetMousePosition()-new Vector2(24,24);
-        var sb=new StyleBoxFlat{BgColor=MC(_dm),BorderWidthLeft=2,BorderWidthTop=2,BorderWidthRight=2,BorderWidthBottom=2};
+    void ShowDP(){
+        _dp.Visible=true;
+        float w=80,h=63; // 等比缩放快捷栏 96:76
+        _dp.Size=new Vector2(w,h);
+        _dp.Position=GetViewport().GetMousePosition()-new Vector2(w/2,h/2);
+        var sb=new StyleBoxFlat{BgColor=MC(_dm),BorderWidthLeft=2,BorderWidthTop=2,BorderWidthRight=2,BorderWidthBottom=2,
+            BorderColor=Colors.White,CornerRadiusTopLeft=3,CornerRadiusTopRight=3,CornerRadiusBottomLeft=3,CornerRadiusBottomRight=3};
         _dp.AddThemeStyleboxOverride("panel",sb);
+        _dp.GL("CntLbl").Text=_dragCnt>1?$"{_dragCnt}":"";
     }
     void HideDP(){_dp.Visible=false;}
-    void UpdateDP(Vector2 pos){_dp.Position=pos-new Vector2(24,24);}
-    void UpdDPCount(){/* TODO: 贴图数字 */}
+    void UpdateDP(Vector2 pos){var hs=_dp.Size/2;_dp.Position=pos-new Vector2(hs.X,hs.Y);}
+    void UpdDPCount(){_dp.GL("CntLbl").Text=_dragCnt>1?$"{_dragCnt}":"";}
 
     // 右键非拖拽时 → 退回合成区材料
     void OnRClick(Vector2 p){
