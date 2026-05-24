@@ -98,4 +98,20 @@ public class GuestSystem
         _spawnTimer = 0;
         _nextSpawn = _rng.NextDouble() * 2 + 2;
     }
+
+    // ── 每日追踪 ──
+    public int GuestsServedToday { get; private set; }
+    public int OrdersSuccess { get; private set; }
+    public int OrdersFailed { get; private set; }
+
+    public void RecordGuestServed() => GuestsServedToday++;
+    public void RecordOrderSuccess() => OrdersSuccess++;
+    public void RecordOrderFailed() => OrdersFailed++;
+
+    public void ResetDaily()
+    {
+        GuestsServedToday = 0;
+        OrdersSuccess = 0;
+        OrdersFailed = 0;
+    }
 }
