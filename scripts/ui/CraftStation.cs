@@ -14,7 +14,7 @@ public partial class CraftStation : Control
 
     private bool _dragging;
     private string _dragMaterial;
-    private Panel _dragPanel;
+    private ColorRect _dragPanel;
 
     // 手势进度
     private bool _heatDone, _shakeDone, _stirDone;
@@ -74,9 +74,11 @@ public partial class CraftStation : Control
         // Clear: 清空前把槽位材料退回库存
         _clearBtn.Pressed += () => { ReturnSlotMaterials(); ClearRequested?.Invoke(); ResetGestureButtons(); };
 
-        // 拖拽面板
-        _dragPanel = new Panel { Visible = false, ZIndex = 100, MouseFilter = MouseFilterEnum.Ignore };
-        AddChild(_dragPanel);
+        // 拖拽面板：放在独立 CanvasLayer 上，确保渲染在所有 UI 之上
+        var dragCanvas = new CanvasLayer { Layer = 1 };
+        GetParent().AddChild(dragCanvas);
+        _dragPanel = new ColorRect { Visible = false, MouseFilter = MouseFilterEnum.Ignore };
+        dragCanvas.AddChild(_dragPanel);
 
         // 快捷栏引用
         var bar = GetNode<Control>("../ShortcutBar");
@@ -227,7 +229,7 @@ public partial class CraftStation : Control
         if (_overlayMenu?.Visible == true) return;
 
         if (_dragging)
-            _dragPanel.Position = GetViewport().GetMousePosition() - new Vector2(24, 24);
+            _dragPanel.Position = GetViewport().GetMousePosition() - new Vector2(32, 32);
 
         if (_heating)
         {
@@ -406,9 +408,7 @@ public partial class CraftStation : Control
         _dragPanel.Visible = true;
         _dragPanel.Size = new Vector2(64, 64);
         _dragPanel.Position = pos - new Vector2(32, 32);
-        var color = GameManager.MaterialColor(material);
-        var sb = new StyleBoxFlat { BgColor = color, BorderWidthLeft = 2, BorderWidthTop = 2, BorderWidthRight = 2, BorderWidthBottom = 2 };
-        _dragPanel.AddThemeStyleboxOverride("panel", sb);
+        _dragPanel.Color = GameManager.MaterialColor(material);
     }
 
     private void EndDrag()
