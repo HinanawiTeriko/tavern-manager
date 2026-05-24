@@ -75,9 +75,12 @@ tavern-manager/
 │   └── ui/TitleScreen.cs          # 标题界面脚本
 ├── data/                          # 配置数据（预留）
 ├── docs/                          # 文档
-│   ├── AI_GUIDE.md                # AI 开发规范
-│   ├── AI_CONTEXT.md              # AI 项目速查
-│   └── RESOURCES.md               # 资源标记文档
+│   ├── 01_AI开发规范.md             # AI 开发规范
+│   ├── 02_AI项目速查.md             # AI 项目速查
+│   ├── 03_资源清单.md               # 资源清单
+│   ├── 04_游戏总览.md               # 游戏总览
+│   ├── 05_核心机制.md               # 核心机制规则
+│   └── 06_策划文档计划.md            # 策划文档计划
 └── addons/godot_mcp/              # Godot MCP 编辑器插件
 ```
 
@@ -99,9 +102,12 @@ tavern-manager/
 
 | 文档 | 用途 |
 |------|------|
-| [AI_CONTEXT.md](docs/AI_CONTEXT.md) | AI 快速理解项目的速查文档 |
-| [AI_GUIDE.md](docs/AI_GUIDE.md) | AI 开发规范和目录约定 |
-| [RESOURCES.md](docs/RESOURCES.md) | 资源清单、参数速查 |
+| [01_AI开发规范.md](docs/01_AI开发规范.md) | AI 开发规范和目录约定 |
+| [02_AI项目速查.md](docs/02_AI项目速查.md) | AI 快速理解项目的速查文档 |
+| [03_资源清单.md](docs/03_资源清单.md) | 资源清单、参数速查 |
+| [04_游戏总览.md](docs/04_游戏总览.md) | 游戏定位、体验目标 |
+| [05_核心机制.md](docs/05_核心机制.md) | 核心玩法规则 |
+| [06_策划文档计划.md](docs/06_策划文档计划.md) | 策划文档制作计划 |
 
 ---
 

@@ -1,0 +1,36 @@
+{
+  "npcs": [
+    {
+      "id": "ryan",
+      "name": "莱恩",
+      "title": "见习骑士",
+      "description": "年轻热血的见习骑士，梦想加入白银阶冒险队伍",
+      "affectionStart": 0,
+      "scenes": [
+        { "day": 1, "dialogue": "ryan_day1", "order": "Bread", "trigger": "auto" },
+        { "day": 2, "dialogue": "ryan_day2", "order": "Meat", "trigger": "auto" },
+        { "day": 3, "dialogue": "ryan_day3", "order": "Herbal Ale", "trigger": "auto" }
+      ],
+      "endings": {
+        "hero": "莱恩加入了白银阶队伍，成为真正的骑士",
+        "fallen": "莱恩在地牢深处失踪，只留下那面裂开的盾牌",
+        "broken": "莱恩活了下来，但血斧小队的覆灭让他一蹶不振"
+      }
+    },
+    {
+      "id": "mira",
+      "name": "米拉",
+      "title": "旅行商人",
+      "description": "精明干练的女商人，每周来酒馆一次兜售稀有材料",
+      "affectionStart": 5,
+      "scenes": [
+        { "day": 4, "dialogue": "mira_day4", "order": "Wine", "trigger": "auto" },
+        { "day": 12, "dialogue": "mira_day12", "order": "SpicedWine", "trigger": "affection >= 10" }
+      ],
+      "endings": {
+        "partner": "米拉成为了酒馆的固定供应商，一起做生意",
+        "farewell": "米拉离开了这个地牢，继续她的旅途"
+      }
+    }
+  ]
+}

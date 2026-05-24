@@ -1,0 +1,10 @@
+{
+  "maxStamina": 5,
+  "locations": [
+    { "id": "mushroom_forest", "name": "菌菇林地", "cost": 1, "materials": ["Herb"], "description": "潮湿的洞穴林地，生长着各种菌类和草药" },
+    { "id": "abandoned_mine", "name": "废弃矿道", "cost": 2, "materials": ["Ale"], "description": "废弃已久的矿道，偶尔能找到野生麦穗" },
+    { "id": "dark_river", "name": "暗河沿岸", "cost": 2, "materials": ["Meat"], "description": "地下暗河旁，小型野兽和鱼类出没" },
+    { "id": "grape_trellis", "name": "葡萄藤架", "cost": 1, "materials": ["Wine"], "description": "地牢里罕见的天然葡萄藤" },
+    { "id": "mill_farm", "name": "农庄磨坊", "cost": 1, "materials": ["Bread"], "description": "地牢入口附近的农庄，可以交换面粉" }
+  ]
+}

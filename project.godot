@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameManager="*res://scripts/GameManager.cs"
+DialogueManager="*uid://c3rodes2l3gxb"
 
 [display]
 
@@ -30,7 +31,7 @@ project/assembly_name="TavernManager"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [input]
 
@@ -39,6 +40,10 @@ menu_toggle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
 ]
 }
+
+[internationalization]
+
+locale/translations_pot_files=PackedStringArray("res://dialogue/d2.dialogue", "res://dialogue/d1.dialogue", "res://dialogue/d3.dialogue", "res://dialogue/mira_day12.dialogue", "res://dialogue/mira_day4.dialogue", "res://dialogue/ryan_day1.dialogue", "res://dialogue/ryan_day2.dialogue", "res://dialogue/ryan_day3.dialogue")
 
 [rendering]
 
