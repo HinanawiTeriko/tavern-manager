@@ -4,6 +4,11 @@ public partial class TitleScreen : Node2D
 {
     public override void _Ready()
     {
+        // -- Ambience --
+        var ambience = GetNode<TitleAmbience>("Ambience");
+        ambience.StarColor = new Color(ThemeColors.AmberPrimary, 0.9f);
+        ambience.DustColor = ThemeColors.AmberPrimary;
+
         // -- Title --
         var title = GetNode<Label>("UI/TitlePanel/TitleLabel");
         ThemeColors.StyleHeader(title, 48);
