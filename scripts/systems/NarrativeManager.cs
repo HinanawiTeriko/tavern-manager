@@ -144,4 +144,29 @@ public class NarrativeManager
         }
         return result;
     }
+
+    /// Get fate entries for NPCs whose ending was sealed today.
+    public List<(string NpcName, string NpcTitle, string FateText)> GetTodayNpcFates(int day)
+    {
+        var result = new List<(string NpcName, string NpcTitle, string FateText)>();
+
+        foreach (var npc in AllNpcs)
+        {
+            var scene = npc.Scenes.FirstOrDefault(s => s.Day == day);
+            if (scene == null) continue;
+
+            var endingVar = $"{npc.Id}_ending";
+            if (DialogueVars.TryGetValue(endingVar, out var endingVal))
+            {
+                var endingKey = endingVal.AsString();
+                if (!string.IsNullOrEmpty(endingKey) && npc.Endings != null
+                    && npc.Endings.TryGetValue(endingKey, out var fateText))
+                {
+                    result.Add((npc.Name, npc.Title, fateText));
+                }
+            }
+        }
+
+        return result;
+    }
 }
