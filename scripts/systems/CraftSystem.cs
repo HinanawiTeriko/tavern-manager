@@ -33,7 +33,7 @@ public class CraftSystem
 
     public string Slot1 { get; set; }
     public string Slot2 { get; set; }
-    public string CraftedKey { get; private set; }
+    public string CraftedKey { get; set; }
 
     public bool GestureDragDone { get; set; }
     public bool GestureShakeDone { get; set; }
