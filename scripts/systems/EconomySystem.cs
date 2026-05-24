@@ -20,6 +20,14 @@ public class EconomySystem
         EmitChanged();
     }
 
+    public bool SpendGold(int amount)
+    {
+        if (Gold < amount) return false;
+        Gold -= amount;
+        EmitChanged();
+        return true;
+    }
+
     public void AddReputation(int amount)
     {
         Reputation += amount;
