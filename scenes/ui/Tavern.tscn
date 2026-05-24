@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/TavernView.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/CraftStation.cs" id="2"]
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -51,6 +52,7 @@ offset_right = 350.0
 offset_bottom = 390.0
 
 [node name="CraftStation" type="Control" parent="."]
+script = ExtResource("2")
 layout_mode = 0
 offset_left = 340.0
 offset_top = 460.0

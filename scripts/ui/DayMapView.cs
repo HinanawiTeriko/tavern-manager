@@ -58,7 +58,7 @@ public partial class DayMapView : Node2D
     private void LoadLocations()
     {
         using var file = FileAccess.Open("res://data/locations.json", FileAccess.ModeFlags.Read);
-        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText());
+        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         _locations = data.Locations;
         _maxStamina = data.MaxStamina;
         _staminaLeft = _maxStamina;

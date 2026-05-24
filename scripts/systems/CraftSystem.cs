@@ -44,7 +44,7 @@ public class CraftSystem
     {
         using var file = FileAccess.Open("res://data/recipes.json", FileAccess.ModeFlags.Read);
         var json = file.GetAsText();
-        var data = JsonSerializer.Deserialize<RecipeFile>(json);
+        var data = JsonSerializer.Deserialize<RecipeFile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         foreach (var r in data.Recipes)
             Recipes[r.Key] = r;

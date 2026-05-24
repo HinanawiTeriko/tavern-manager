@@ -97,7 +97,7 @@ public class NarrativeManager
             using var file = FileAccess.Open("res://data/npcs.json", FileAccess.ModeFlags.Read);
             if (file == null) return;
             var json = file.GetAsText();
-            var data = JsonSerializer.Deserialize<NpcFile>(json);
+            var data = JsonSerializer.Deserialize<NpcFile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (data?.Npcs != null)
             {
                 AllNpcs = new List<NpcData>(data.Npcs);

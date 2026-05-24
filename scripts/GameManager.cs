@@ -89,6 +89,7 @@ public partial class GameManager : Node
                 };
 
                 craftStation.CraftRequested += () => {
+                    Craft.ResetGestures();
                     var mat1 = craftStation.MaterialInSlot1;
                     var mat2 = craftStation.MaterialInSlot2;
                     if (string.IsNullOrEmpty(mat1))
@@ -144,13 +145,22 @@ public partial class GameManager : Node
                 };
             }
 
+            // Check for scheduled NPC today
+            var npcToday = Narrative.GetTodayScene(Economy.CurrentDay);
+            if (npcToday != null)
+            {
+                Narrative.TodayImportantNpc = npcToday.Id;
+            }
+
             // 检查今日是否有重要 NPC 到访（由 NarrativeManager 外部设置）
             if (!string.IsNullOrEmpty(Narrative.TodayImportantNpc))
             {
-                var npcId = Narrative.TodayImportantNpc;
-                var orderKey = Guests.HasGuest ? Guests.CurrentGuest.OrderKey : "Bread";
-                Guests.SpawnImportant(npcId, orderKey);
-                Narrative.TodayImportantNpc = null; // 清除标记，避免重复生成
+                var npc = Narrative.AllNpcs.FirstOrDefault(n => n.Id == Narrative.TodayImportantNpc);
+                if (npc != null)
+                {
+                    var scene = npc.Scenes.FirstOrDefault(s => s.Day == Economy.CurrentDay);
+                    Guests.SpawnImportant(npc.Id, scene?.Order ?? "Bread");
+                }
             }
         }
         else if (view is DayMapView dmv)
@@ -188,7 +198,7 @@ public partial class GameManager : Node
     {
         using var file = FileAccess.Open("res://data/locations.json", FileAccess.ModeFlags.Read);
         if (file == null) return System.Array.Empty<LocationData>();
-        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText());
+        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         return data?.Locations ?? System.Array.Empty<LocationData>();
     }
 
@@ -330,7 +340,7 @@ public partial class GameManager : Node
             if (file != null)
             {
                 var json = file.GetAsText();
-                return JsonSerializer.Deserialize<Dictionary<string, int>>(json)
+                return JsonSerializer.Deserialize<Dictionary<string, int>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     ?? new() { ["Ale"] = 20, ["Wine"] = 20, ["Bread"] = 20, ["Meat"] = 20, ["Herb"] = 20 };
             }
         }
