@@ -73,6 +73,16 @@ public partial class TavernView : Node2D
         ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/TabBtns/BtnBackpack"), 14);
         ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/CloseBtn"), 14);
 
+        // Tab switching
+        var recipePanel = GetNode<Control>("OverlayMenu/RecipePanel");
+        var backpackPanel = GetNode<Control>("OverlayMenu/BackpackPanel");
+        GetNode<Button>("OverlayMenu/TabBtns/BtnRecipes").Pressed += () => { recipePanel.Visible = true; backpackPanel.Visible = false; };
+        GetNode<Button>("OverlayMenu/TabBtns/BtnBackpack").Pressed += () => { recipePanel.Visible = false; backpackPanel.Visible = true; };
+
+        // Live-refresh backpack when inventory changes
+        var gm = GetNode<GameManager>("/root/GameManager");
+        gm.InventoryChanged += () => { if (_menuPanel.Visible) BuildBackpackList(gm.Craft); };
+
         // Bottom bar message
         _messageLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
         _messageLabel.AddThemeFontSizeOverride("font_size", 14);
@@ -129,6 +139,7 @@ public partial class TavernView : Node2D
         {
             var gm = GetNode<GameManager>("/root/GameManager");
             BuildRecipeList(gm.Craft);
+            BuildBackpackList(gm.Craft);
         }
     }
 
@@ -175,8 +186,10 @@ public partial class TavernView : Node2D
         }
     }
 
-    public void BuildBackpackList(Dictionary<string, int> inventory, Dictionary<string, string> matNames, CraftSystem craft)
+    public void BuildBackpackList(CraftSystem craft)
     {
+        var gm = GetNode<GameManager>("/root/GameManager");
+        var inventory = gm.Inventory;
         var backpackList = _menuPanel.GetNode<VBoxContainer>("BackpackPanel/BackpackList");
         foreach (var child in backpackList.GetChildren())
             child.QueueFree();
@@ -187,6 +200,7 @@ public partial class TavernView : Node2D
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 6);
             row.CustomMinimumSize = new Vector2(0, 32);
+            row.SetMeta("material_key", mat);
 
             var box = new ColorRect
             {
@@ -195,7 +209,7 @@ public partial class TavernView : Node2D
             };
             row.AddChild(box);
 
-            var displayName = matNames.ContainsKey(mat) ? matNames[mat] : mat;
+            var displayName = craft.Materials.TryGetValue(mat, out var md) ? md.Name : mat;
             var label = new Label { Text = $"{displayName}  x{count}" };
             label.AddThemeColorOverride("font_color", ThemeColors.TextLight);
             label.AddThemeFontSizeOverride("font_size", 14);

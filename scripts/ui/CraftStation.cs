@@ -137,7 +137,7 @@ public partial class CraftStation : Control
         if (string.IsNullOrEmpty(key)) return;
         _gm.Inventory.TryGetValue(key, out var cur);
         _gm.Inventory[key] = cur + amount;
-        SyncFromInventory();
+        _gm.NotifyInventoryChanged();
     }
 
     private void RemoveFromInventory(string key, int amount = 1)
@@ -151,7 +151,7 @@ public partial class CraftStation : Control
             else
                 _gm.Inventory[key] = remaining;
         }
-        SyncFromInventory();
+        _gm.NotifyInventoryChanged();
     }
 
     /// 把两个合成槽里的材料退回库存
@@ -227,6 +227,33 @@ public partial class CraftStation : Control
 
     private void TryPickUp(Vector2 pos)
     {
+        // 菜单打开时：优先检查背包列表项
+        if (_overlayMenu?.Visible == true)
+        {
+            var backpackPanel = GetNodeOrNull<Control>("../OverlayMenu/BackpackPanel");
+            if (backpackPanel?.Visible == true)
+            {
+                var backpackList = GetNodeOrNull<VBoxContainer>("../OverlayMenu/BackpackPanel/BackpackList");
+                if (backpackList != null)
+                {
+                    foreach (Control row in backpackList.GetChildren())
+                    {
+                        if (HitTest(row, pos))
+                        {
+                            string mat = row.GetMeta("material_key").AsString();
+                            if (!string.IsNullOrEmpty(mat) && _gm.Inventory.TryGetValue(mat, out var cnt) && cnt > 0)
+                            {
+                                RemoveFromInventory(mat);
+                                StartDrag(pos, mat);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            return; // 菜单打开时不拾取其他区域
+        }
+
         // 成品槽优先
         if (HitTest(_resultSlot, pos) && !string.IsNullOrEmpty(ResultKey))
         {
@@ -264,43 +291,51 @@ public partial class CraftStation : Control
 
     private void TryDrop(Vector2 pos)
     {
-        // 拖到客人区 → 上菜
-        var customerArea = GetNode<Control>("../CustomerArea");
-        if (HitTest(customerArea, pos))
+        // 菜单打开时：只允许拖到快捷栏
+        var menuOpen = _overlayMenu?.Visible == true;
+
+        if (!menuOpen)
         {
-            var gm = GetNode<GameManager>("/root/GameManager");
-            if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+            // 拖到客人区 → 上菜
+            var customerArea = GetNode<Control>("../CustomerArea");
+            if (HitTest(customerArea, pos))
             {
-                gm.Craft.CraftedKey = _dragMaterial;
-                gm.Craft.GestureDragDone = true;
-                gm.Craft.GestureShakeDone = true;
-                gm.Craft.GestureHeatDone = true;
-                gm.Craft.GestureStirDone = true;
-                ResultKey = null;
-                _resultLabel.Text = "";
+                var gm = GetNode<GameManager>("/root/GameManager");
+                if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+                {
+                    gm.Craft.CraftedKey = _dragMaterial;
+                    gm.Craft.GestureDragDone = true;
+                    gm.Craft.GestureShakeDone = true;
+                    gm.Craft.GestureHeatDone = true;
+                    gm.Craft.GestureStirDone = true;
+                    ResultKey = null;
+                    _resultLabel.Text = "";
+                    EndDrag();
+                    ServeRequested?.Invoke();
+                    return;
+                }
                 EndDrag();
-                ServeRequested?.Invoke();
                 return;
             }
-            EndDrag();
-            return;
+            if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
+            {
+                _slot1Label.Text = _dragMaterial;
+                _slot1.Color = GameManager.MaterialColor(_dragMaterial);
+                EndDrag();
+                GestureCompleted?.Invoke("drag");
+                return;
+            }
+            if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
+            {
+                _slot2Label.Text = _dragMaterial;
+                _slot2.Color = GameManager.MaterialColor(_dragMaterial);
+                EndDrag();
+                GestureCompleted?.Invoke("drag");
+                return;
+            }
         }
-        if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
-        {
-            _slot1Label.Text = _dragMaterial;
-            _slot1.Color = GameManager.MaterialColor(_dragMaterial);
-            EndDrag();
-            GestureCompleted?.Invoke("drag");
-            return;
-        }
-        if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
-        {
-            _slot2Label.Text = _dragMaterial;
-            _slot2.Color = GameManager.MaterialColor(_dragMaterial);
-            EndDrag();
-            GestureCompleted?.Invoke("drag");
-            return;
-        }
+
+        // 快捷栏（菜单打开或关闭时均可拖入）
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos))
@@ -322,6 +357,8 @@ public partial class CraftStation : Control
                 }
             }
         }
+
+        if (menuOpen) { ReturnDrag(); EndDrag(); return; }
         ReturnDrag();
         EndDrag();
     }

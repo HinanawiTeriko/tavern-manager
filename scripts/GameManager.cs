@@ -18,6 +18,7 @@ public partial class GameManager : Node
     private Dictionary<string, int> _inv;
     public Dictionary<string, int> Inventory => _inv;
     public event Action InventoryChanged;
+    public void NotifyInventoryChanged() => InventoryChanged?.Invoke();
 
     private static readonly Dictionary<string, string> MN = new()
     { ["Ale"] = "麦芽", ["Wine"] = "葡萄", ["Bread"] = "面粉", ["Meat"] = "生肉", ["Herb"] = "草药" };
