@@ -87,6 +87,22 @@ public partial class CraftStation : Control
         // 从库存同步到快捷栏
         SyncFromInventory();
         _gm.InventoryChanged += SyncFromInventory;
+
+        // Apply small button theme to gesture/action buttons
+        ThemeColors.StyleSmallButton(_heatBtn, 12);
+        ThemeColors.StyleSmallButton(_shakeBtn, 12);
+        ThemeColors.StyleSmallButton(_stirBtn, 12);
+        ThemeColors.StyleSmallButton(_craftBtn, 12);
+        ThemeColors.StyleSmallButton(_serveBtn, 12);
+        ThemeColors.StyleSmallButton(_clearBtn, 12);
+
+        // Improved slot visuals (closer to pixel-art slot design)
+        var slotInnerColor = new Color(0.08f, 0.06f, 0.04f);
+        _slot1.Color = slotInnerColor;
+        _slot2.Color = slotInnerColor;
+        _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
+        for (int i = 0; i < 10; i++)
+            _shortcutSlots[i].Color = slotInnerColor;
     }
 
     /// 从 GameManager._inv 重建快捷栏显示

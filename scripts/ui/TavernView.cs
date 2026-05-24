@@ -1,10 +1,11 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class TavernView : Node2D
 {
-    private ColorRect _bgPlaceholder;
-    private ColorRect _customerSprite;
+    private Sprite2D _bgSprite;
+    private TextureRect _customerSprite;
     private Label _customerName;
     private Label _orderBubble;
     private ProgressBar _timerBar;
@@ -21,8 +22,8 @@ public partial class TavernView : Node2D
 
     public override void _Ready()
     {
-        _bgPlaceholder = GetNode<ColorRect>("Background");
-        _customerSprite = GetNode<ColorRect>("CustomerArea/CustomerSprite");
+        _bgSprite = GetNode<Sprite2D>("Background");
+        _customerSprite = GetNode<TextureRect>("CustomerArea/CustomerSprite");
         _customerName = GetNode<Label>("CustomerArea/CustomerName");
         _orderBubble = GetNode<Label>("CustomerArea/OrderBubble");
         _timerBar = GetNode<ProgressBar>("CustomerArea/TimerBar");
@@ -45,8 +46,21 @@ public partial class TavernView : Node2D
 
     private void ApplyTheme()
     {
-        // Background
-        _bgPlaceholder.Color = ThemeColors.BackgroundDeep;
+        // Background: try pixel-art tavern_bg, fallback to generated gradient
+        var bgTex = TextureManager.TryLoad("res://assets/textures/backgrounds/tavern_bg.png");
+        if (bgTex != null)
+        {
+            _bgSprite.Texture = bgTex;
+        }
+        else
+        {
+            var placeholderGradient = new GradientTexture2D
+            {
+                Width = 1280, Height = 720,
+                Gradient = new Gradient { Colors = new[] { ThemeColors.BackgroundDeep, ThemeColors.SurfaceLow }, Offsets = new[] { 0f, 1f } }
+            };
+            _bgSprite.Texture = placeholderGradient;
+        }
 
         // Customer area
         _customerName.AddThemeColorOverride("font_color", ThemeColors.TextLight);
@@ -66,8 +80,9 @@ public partial class TavernView : Node2D
         ThemeColors.StyleButton(GetNode<Button>("TopPanel/MenuButton"), 14);
         ThemeColors.StyleButton(_endNightBtn, 14);
 
-        // Menu panel
-        _menuPanel.AddThemeStyleboxOverride("panel", ThemeColors.ParchmentPanel());
+        // Menu panel: try 9-patch parchment texture, fallback to flat
+        var parchmentTex = ThemeColors.PanelParchment();
+        _menuPanel.AddThemeStyleboxOverride("panel", (StyleBox)parchmentTex ?? ThemeColors.ParchmentPanel());
 
         // Menu tab buttons
         ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/TabBtns/BtnRecipes"), 14);
@@ -88,23 +103,73 @@ public partial class TavernView : Node2D
         _messageLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
         _messageLabel.AddThemeFontSizeOverride("font_size", 14);
 
-        // Timer bar
-        var timerStyle = new StyleBoxFlat
-        {
-            BgColor = new Color(ThemeColors.SurfaceHigh, 0.8f),
-            BorderWidthLeft = 1, BorderWidthTop = 1,
-            BorderWidthRight = 1, BorderWidthBottom = 1,
-            BorderColor = ThemeColors.PanelBorder
-        };
-        _timerBar.AddThemeStyleboxOverride("background", timerStyle);
+        // Timer bar: try patience bar textures, fallback to flat
+        var patienceBgTex = TextureManager.TryLoadStyleBox("res://assets/textures/ui/bar_patience_bg.png");
+        var patienceFillTex = TextureManager.TryLoadStyleBox("res://assets/textures/ui/bar_patience_fill.png");
+        _timerBar.AddThemeStyleboxOverride("background",
+            (StyleBox)patienceBgTex ?? new StyleBoxFlat
+            {
+                BgColor = new Color(ThemeColors.SurfaceHigh, 0.8f),
+                BorderWidthLeft = 1, BorderWidthTop = 1,
+                BorderWidthRight = 1, BorderWidthBottom = 1,
+                BorderColor = ThemeColors.PanelBorder
+            });
+        if (patienceFillTex != null)
+            _timerBar.AddThemeStyleboxOverride("fill", patienceFillTex);
         _timerBar.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+
+        // Top panel background strip
+        var topBarTex = ThemeColors.BarTopPanel();
+        var topPanelBg = GetNodeOrNull<Panel>("TopPanelBg");
+        if (topPanelBg != null)
+            topPanelBg.AddThemeStyleboxOverride("panel", (StyleBox)topBarTex ?? new StyleBoxFlat
+            {
+                BgColor = new Color(ThemeColors.BackgroundDeep, 0.85f),
+                BorderWidthBottom = 1,
+                BorderColor = ThemeColors.PanelBorder,
+            });
+
+        // Shortcut bar background
+        var shortcutBarBgTex = ThemeColors.BarShortcutBg();
+        var shortcutBg = GetNodeOrNull<Panel>("ShortcutBarBg");
+        if (shortcutBg != null)
+            shortcutBg.AddThemeStyleboxOverride("panel", (StyleBox)shortcutBarBgTex ?? new StyleBoxFlat
+            {
+                BgColor = new Color(ThemeColors.SurfaceLow, 0.8f),
+                BorderWidthTop = 1,
+                BorderColor = ThemeColors.PanelBorder,
+            });
     }
 
-    public void SetBackgroundColor(Color c) => _bgPlaceholder.Color = c;
-
-    public void ShowCustomer(string name, string order, Color color)
+    private static readonly Dictionary<string, string> NpcTextureKeys = new()
     {
-        _customerSprite.Color = color;
+        ["ryan"] = "ryan_neutral",
+        ["mira"] = "mira_neutral",
+    };
+
+    public void ShowCustomer(string name, string order, string npcId = "guest")
+    {
+        string texKey = NpcTextureKeys.TryGetValue(npcId, out var k) ? k : npcId;
+        var tex = TextureManager.TryLoad($"res://assets/textures/characters/{texKey}.png");
+        if (tex != null)
+        {
+            _customerSprite.Texture = tex;
+            _customerSprite.Modulate = Colors.White;
+        }
+        else
+        {
+            var placeholderGradient = new GradientTexture2D
+            {
+                Width = 200, Height = 250,
+                Gradient = new Gradient
+                {
+                    Colors = new[] { new Color(0.35f, 0.25f, 0.4f), new Color(0.2f, 0.15f, 0.25f) },
+                    Offsets = new[] { 0f, 1f }
+                }
+            };
+            _customerSprite.Texture = placeholderGradient;
+            _customerSprite.Modulate = Colors.White;
+        }
         _customerSprite.Visible = true;
         _customerName.Text = name;
         _orderBubble.Text = $"「来一份{order}！」";
@@ -182,6 +247,19 @@ public partial class TavernView : Node2D
             arrow.AddThemeColorOverride("font_color", ThemeColors.TextLight);
             arrow.AddThemeFontSizeOverride("font_size", 14);
             row.AddChild(arrow);
+
+            var gestureText = string.Join(" ", recipe.Gestures.Select(g => g switch
+            {
+                "drag" => "[拖拽]",
+                "shake" => "[摇晃]",
+                "heat" => "[加热]",
+                "stir" => "[搅拌]",
+                _ => $"[{g}]"
+            }));
+            var gestureLabel = new Label { Text = gestureText };
+            gestureLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+            gestureLabel.AddThemeFontSizeOverride("font_size", 13);
+            row.AddChild(gestureLabel);
 
             recipeList.AddChild(row);
         }

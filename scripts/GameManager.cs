@@ -23,6 +23,9 @@ public partial class GameManager : Node
     private static readonly Dictionary<string, string> MN = new()
     { ["Ale"] = "麦芽", ["Wine"] = "葡萄", ["Bread"] = "面粉", ["Meat"] = "生肉", ["Herb"] = "草药" };
 
+    // ── 对话状态 ──
+    private bool _isDialogueActive;
+
     // ── 当前场景引用 ──
     private TavernView _tavernView;
     private DayMapView _dayMapView;
@@ -51,6 +54,12 @@ public partial class GameManager : Node
         // 初始化 DayCycle
         DayCycle.PhaseChanged += OnPhaseChanged;
 
+        // ── 对话事件：暂停客人计时 ──
+        DialogueManager.DialogueStarted += (_) => _isDialogueActive = true;
+        DialogueManager.DialogueEnded += (_) => _isDialogueActive = false;
+        // ── 对话变量同步：将 Dialogue Manager 内部变更写回 NarrativeManager ──
+        DialogueManager.Mutated += (mutation) => Narrative.SyncFromMutation(mutation);
+
         GD.Print("[GameManager] 初始化完成");
     }
 
@@ -60,11 +69,12 @@ public partial class GameManager : Node
         if (Input.IsActionJustPressed("menu_toggle") && _tavernView != null)
             _tavernView.ToggleMenu();
 
-        // 夜晚客人逻辑
+        // 夜晚客人逻辑（对话进行中暂停计时）
         if (DayCycle.Phase == DayPhase.Night && _tavernView != null)
         {
             var menuOpen = _tavernView?.IsMenuOpen ?? false;
-            Guests.Update(dt, Guests.HasGuest, menuOpen);
+            if (!_isDialogueActive)
+                Guests.Update(dt, Guests.HasGuest, menuOpen);
             if (Guests.HasGuest)
                 _tavernView.UpdateTimer(Guests.CurrentGuest.Patience / GuestData.BasePatience);
         }
@@ -244,26 +254,27 @@ public partial class GameManager : Node
             var npc = Narrative.AllNpcs.FirstOrDefault(n => n.Id == guest.NpcId);
             if (npc != null) displayName = npc.Name;
         }
-        _tavernView.ShowCustomer(displayName, recipe?.Name ?? guest.OrderKey,
-            Craft.MaterialColor(recipe?.Materials.Length > 0 ? recipe.Materials[0] : "Ale"));
+        _tavernView.ShowCustomer(displayName, recipe?.Name ?? guest.OrderKey, guest.NpcId ?? "guest");
 
         if (guest.HasDialogue)
         {
             Narrative.TodayImportantNpc = guest.NpcId;
-            try
-            {
-                var dm = DialogueManager.Instance;
-                if (dm != null && GodotObject.IsInstanceValid(dm))
-                {
-                    dm.Call("show_example_dialogue_balloon",
-                        $"res://dialogue/{guest.NpcId}_day{Economy.CurrentDay}.dialogue", "start");
-                }
-            }
-            catch
-            {
-                /* Dialogue Manager 可能未就绪 */
-            }
+            var dialoguePath = $"res://dialogue/{guest.NpcId}_day{Economy.CurrentDay}.dialogue";
+            CallDeferred(nameof(StartDialogueDeferred), dialoguePath);
         }
+    }
+
+    private void StartDialogueDeferred(string dialoguePath)
+    {
+        var dialogueResource = GD.Load<Resource>(dialoguePath);
+        if (dialogueResource == null)
+        {
+            GD.PrintErr($"[GameManager] 对话文件加载失败: {dialoguePath}");
+            return;
+        }
+        var balloon = DialogueManager.ShowExampleDialogueBalloon(dialogueResource, "start");
+        if (balloon != null)
+            balloon.Set("will_block_other_input", false);
     }
 
     private void OnGuestLeft()
