@@ -190,7 +190,7 @@ public partial class GameManager : Node
                     if (isImportant && !string.IsNullOrEmpty(npcId))
                     {
                         var postPath = $"res://dialogue/{npcId}_day{Economy.CurrentDay}.post.dialogue";
-                        if (ResourceLoader.Exists(postPath))
+                        if (FileAccess.FileExists(postPath))
                         {
                             _dialoguePhase = "post";
                             tv.SetDialogueMode(true);
