@@ -70,7 +70,16 @@ public partial class CraftStation : Control
 
         // 操作按钮事件
         _craftBtn.Pressed += () => CraftRequested?.Invoke();
-        _serveBtn.Pressed += () => ServeRequested?.Invoke();
+        _serveBtn.Pressed += () => {
+            if (!_gm.Guests.HasGuest) { GD.Print("[CraftStation] 没有客人，无法上菜"); return; }
+            if (string.IsNullOrEmpty(_gm.Craft.CraftedKey)) { GD.Print("[CraftStation] 请先合成"); return; }
+            // 按键上菜与拖拽上菜保持一致，自动完成全部手势
+            _gm.Craft.GestureDragDone = true;
+            _gm.Craft.GestureShakeDone = true;
+            _gm.Craft.GestureHeatDone = true;
+            _gm.Craft.GestureStirDone = true;
+            ServeRequested?.Invoke();
+        };
         // Clear: 先清空槽位，再退回材料（避免退回过程中异常导致槽位无法清空）
         _clearBtn.Pressed += () => {
             var m1 = MaterialInSlot1;

@@ -2,7 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 
 // ── NPC 数据模型 ──
 
@@ -106,20 +105,71 @@ public class NarrativeManager
                 GD.Print("[Narrative] npcs.json 未找到，使用默认变量");
                 return;
             }
-            var json = file.GetAsText();
-            var data = JsonSerializer.Deserialize<NpcFile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (data?.Npcs != null)
+            var jsonText = file.GetAsText();
+            var json = new Godot.Json();
+            var error = json.Parse(jsonText);
+            if (error != Error.Ok)
             {
-                AllNpcs = new List<NpcData>(data.Npcs);
-                foreach (var npc in AllNpcs)
-                    SetAffection(npc.Id, npc.AffectionStart);
-                GD.Print($"[Narrative] 加载 {AllNpcs.Count} 个 NPC");
+                GD.PrintErr($"[Narrative] JSON 解析失败: {error}");
+                return;
             }
+            var root = json.Data.AsGodotDictionary();
+            var npcsArray = root["npcs"].AsGodotArray();
+            foreach (var npcVariant in npcsArray)
+            {
+                var npcDict = npcVariant.AsGodotDictionary();
+                var npc = new NpcData
+                {
+                    Id = npcDict["id"].AsString(),
+                    Name = npcDict["name"].AsString(),
+                    Title = npcDict["title"].AsString(),
+                    Description = npcDict["description"].AsString(),
+                    AffectionStart = npcDict["affectionStart"].AsInt32(),
+                    Scenes = ParseNpcScenes(npcDict["scenes"].AsGodotArray()),
+                    Endings = ParseNpcEndings(npcDict["endings"].AsGodotDictionary()),
+                };
+                AllNpcs.Add(npc);
+                SetAffection(npc.Id, npc.AffectionStart);
+            }
+            GD.Print($"[Narrative] 加载 {AllNpcs.Count} 个 NPC");
         }
         catch (System.Exception e)
         {
             GD.PrintErr($"[Narrative] 加载 NPC 数据失败: {e.Message}");
         }
+    }
+
+    private NpcSceneData[] ParseNpcScenes(Godot.Collections.Array scenesArray)
+    {
+        var result = new List<NpcSceneData>();
+        foreach (var sceneVariant in scenesArray)
+        {
+            var d = sceneVariant.AsGodotDictionary();
+            var scene = new NpcSceneData
+            {
+                Day = d["day"].AsInt32(),
+                Dialogue = d["dialogue"].AsString(),
+                Order = d["order"].AsString(),
+                Trigger = d["trigger"].AsString(),
+            };
+            if (d.TryGetValue("variables", out var varsVariant))
+            {
+                var varsArray = varsVariant.AsGodotArray();
+                scene.Variables = new string[varsArray.Count];
+                for (int i = 0; i < varsArray.Count; i++)
+                    scene.Variables[i] = varsArray[i].AsString();
+            }
+            result.Add(scene);
+        }
+        return result.ToArray();
+    }
+
+    private Dictionary<string, string> ParseNpcEndings(Godot.Collections.Dictionary endingsDict)
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var key in endingsDict.Keys)
+            result[key.AsString()] = endingsDict[key].AsString();
+        return result;
     }
 
     public List<NpcData> GetTodayScenes(int day)
