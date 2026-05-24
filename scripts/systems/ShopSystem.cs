@@ -41,6 +41,7 @@ public class ShopSystem
             var data = JsonSerializer.Deserialize<ShopConfig>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
+            if (data == null) return;
             _materialPrices.Clear();
             if (data.Materials != null)
                 foreach (var m in data.Materials)
@@ -69,8 +70,9 @@ public class ShopSystem
 
     public int GetRecipeUnlockPrice(string key)
     {
-        _recipeUnlockPrices.TryGetValue(key, out var price);
-        return price; // 0 if not found
+        if (_recipeUnlockPrices.TryGetValue(key, out var price))
+            return price;
+        return -1; // not found
     }
 
     public bool IsMiraShopToday(int currentDay, NarrativeManager narrative)
