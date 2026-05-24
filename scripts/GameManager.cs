@@ -158,6 +158,7 @@ public partial class GameManager : Node
                 };
 
                 craftStation.ServeRequested += () => {
+                    try {
                     GD.Print($"[Serve] 进入 ServeRequested | HasGuest={Guests.HasGuest} CraftedKey={Craft.CraftedKey}");
                     if (!Guests.HasGuest || string.IsNullOrEmpty(Craft.CraftedKey)) return;
 
@@ -212,6 +213,9 @@ public partial class GameManager : Node
                     {
                         GD.Print($"[Serve] 跳过对话 (isImportant={isImportant} npcId={npcId})，清除客人");
                         Guests.ClearGuest();
+                    }
+                    } catch (System.Exception e) {
+                        GD.PrintErr($"[Serve] 异常: {e.GetType().Name}: {e.Message}\n{e.StackTrace}");
                     }
                 };
 
