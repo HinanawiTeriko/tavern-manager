@@ -38,6 +38,7 @@ public partial class GameManager : Node
 
     // ── 对话状态 ──
     private bool _isDialogueActive;
+    private string _dialoguePhase;
 
     // ── 当前场景引用 ──
     private TavernView _tavernView;
@@ -71,21 +72,22 @@ public partial class GameManager : Node
 
         // ── 对话事件：暂停客人计时 ──
         DialogueManager.DialogueStarted += (_) => _isDialogueActive = true;
-        DialogueManager.DialogueEnded += (_) => _isDialogueActive = false;
+        DialogueManager.DialogueEnded += (_) => OnDialogueEnded();
 
         GD.Print("[GameManager] 初始化完成");
     }
 
     public override void _Process(double dt)
     {
-        // E键菜单
-        if (Input.IsActionJustPressed("menu_toggle") && _tavernView != null)
+        // E键菜单（仅在酒馆场景有效）
+        if (Input.IsActionJustPressed("menu_toggle") && _tavernView != null && GodotObject.IsInstanceValid(_tavernView))
             _tavernView.ToggleMenu();
 
         // 夜晚客人逻辑（对话进行中暂停计时）
-        if (DayCycle.Phase == DayPhase.Night && _tavernView != null)
+        // 仅在酒馆场景有效，LedgerScreen 虽也是 Night 但不应该有客人逻辑
+        if (DayCycle.Phase == DayPhase.Night && _tavernView != null && GodotObject.IsInstanceValid(_tavernView))
         {
-            var menuOpen = _tavernView?.IsMenuOpen ?? false;
+            var menuOpen = _tavernView.IsMenuOpen;
             if (!_isDialogueActive)
                 Guests.Update(dt, Guests.HasGuest, menuOpen);
             if (Guests.HasGuest)
@@ -239,6 +241,7 @@ public partial class GameManager : Node
     // ── 昼夜阶段切换 ──
     private void OnPhaseChanged(DayPhase phase)
     {
+        GD.Print($"[GameManager] OnPhaseChanged: {phase}, CurrentDay before={Economy.CurrentDay}");
         if (phase == DayPhase.Night)
         {
             GetTree().CallDeferred("change_scene_to_file", "res://scenes/ui/Tavern.tscn");
@@ -246,6 +249,7 @@ public partial class GameManager : Node
         else
         {
             Economy.CurrentDay++;
+            GD.Print($"[GameManager] CurrentDay 递增到 {Economy.CurrentDay}");
             if (Economy.CurrentDay > EconomySystem.MaxDays)
             {
                 GetTree().CallDeferred("change_scene_to_file", "res://scenes/ui/EndingScreen.tscn");
@@ -260,7 +264,7 @@ public partial class GameManager : Node
     // ── 客人事件 ──
     private void OnGuestArrived(GuestData guest)
     {
-        if (_tavernView == null) return;
+        if (_tavernView == null || !GodotObject.IsInstanceValid(_tavernView)) return;
 
         // 始终显示客人信息
         var recipe = Craft.GetRecipe(guest.OrderKey);
@@ -296,27 +300,54 @@ public partial class GameManager : Node
 
     private void OnGuestLeft()
     {
-        if (_tavernView != null)
+        if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
             _tavernView.HideCustomer();
+    }
+
+    private void OnDialogueEnded()
+    {
+        _isDialogueActive = false;
+
+        if (_dialoguePhase == "pre")
+        {
+            _dialoguePhase = null;
+            if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
+                _tavernView.SetDialogueMode(false);
+        }
+        else if (_dialoguePhase == "post")
+        {
+            _dialoguePhase = null;
+            Guests.ClearGuest();
+            if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
+                _tavernView.SetDialogueMode(false);
+        }
     }
 
     private void OnPatienceLow()
     {
-        if (_tavernView != null)
+        if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
             _tavernView.ShowMessage("客人等得不耐烦了……", Colors.Orange);
     }
 
     // ── 打烊 ──
     public void EndNight()
     {
-        if (DayCycle.Phase != DayPhase.Night) return;
+        GD.Print($"[GameManager] EndNight 调用 — Phase={DayCycle.Phase}, HasGuest={Guests.HasGuest}, CurrentDay={Economy.CurrentDay}");
+        if (DayCycle.Phase != DayPhase.Night)
+        {
+            GD.Print("[GameManager] EndNight 失败：当前不是夜晚");
+            return;
+        }
         if (Guests.HasGuest)
         {
-            _tavernView?.ShowMessage("还有客人在等呢！", Colors.Orange);
+            if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
+                _tavernView.ShowMessage("还有客人在等呢！", Colors.Orange);
+            GD.Print("[GameManager] EndNight 失败：还有客人");
             return;
         }
 
         var fates = Narrative.GetTodayNpcFates(Economy.CurrentDay);
+        GD.Print($"[GameManager] 生成 LedgerData, NPC fates: {fates?.Count ?? 0}");
 
         CurrentLedgerData = new LedgerData
         {
@@ -334,13 +365,14 @@ public partial class GameManager : Node
         Economy.ResetDaily();
         Guests.ResetDaily();
 
+        GD.Print("[GameManager] 切换到 LedgerScreen");
         GetTree().CallDeferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn");
     }
 
     // ── UI ──
     private void RefreshTavernUI()
     {
-        if (_tavernView == null) return;
+        if (_tavernView == null || !GodotObject.IsInstanceValid(_tavernView)) return;
         _tavernView.UpdateTopBar(Economy.Gold, Economy.Reputation,
             Economy.CurrentDay, EconomySystem.MaxDays);
     }
