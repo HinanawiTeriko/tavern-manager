@@ -54,13 +54,13 @@ public class NarrativeManager
     // 今日是否已在白天触发过 NPC 偶遇
     public bool DayEncounterTriggered { get; set; }
 
-    public void SetVar(string key, object value)
+    public void SetVar(string key, Variant value)
     {
-        DialogueVars[key] = Variant.From(value);
+        DialogueVars[key] = value;
     }
 
-    public object GetVar(string key) =>
-        DialogueVars.TryGetValue(key, out var v) ? v.Obj : null;
+    public Variant GetVar(string key) =>
+        DialogueVars.TryGetValue(key, out var v) ? v : default;
 
     public bool HasKeyItem(string itemId) => KeyItems.Contains(itemId);
 
