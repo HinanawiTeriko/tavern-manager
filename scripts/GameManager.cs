@@ -158,6 +158,7 @@ public partial class GameManager : Node
                 };
 
                 craftStation.ServeRequested += () => {
+                    GD.Print($"[Serve] 进入 ServeRequested | HasGuest={Guests.HasGuest} CraftedKey={Craft.CraftedKey}");
                     if (!Guests.HasGuest || string.IsNullOrEmpty(Craft.CraftedKey)) return;
 
                     if (!Craft.AllGesturesDone(Craft.CraftedKey))
@@ -168,6 +169,7 @@ public partial class GameManager : Node
 
                     var isImportant = Guests.CurrentGuest.HasDialogue;
                     var npcId = Guests.CurrentGuest.NpcId;
+                    GD.Print($"[Serve] isImportant={isImportant} npcId={npcId} OrderKey={Guests.CurrentGuest.OrderKey} CurrentDay={Economy.CurrentDay}");
 
                     if (Craft.CraftedKey == Guests.CurrentGuest.OrderKey)
                     {
@@ -176,12 +178,14 @@ public partial class GameManager : Node
                         Guests.RecordOrderSuccess();
                         tv.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
                         if (isImportant) Narrative.SetVar("serve_result", "success");
+                        GD.Print("[Serve] 上菜成功，serve_result=success");
                     }
                     else
                     {
                         Guests.RecordOrderFailed();
                         tv.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
                         if (isImportant) Narrative.SetVar("serve_result", "fail");
+                        GD.Print("[Serve] 上菜失败，serve_result=fail");
                     }
                     Guests.RecordGuestServed();
                     Craft.ClearCraftSlots();
@@ -190,19 +194,23 @@ public partial class GameManager : Node
                     if (isImportant && !string.IsNullOrEmpty(npcId))
                     {
                         var postPath = $"res://dialogue/{npcId}_day{Economy.CurrentDay}.post.dialogue";
+                        GD.Print($"[Serve] postPath={postPath} FileExists={FileAccess.FileExists(postPath)}");
                         if (FileAccess.FileExists(postPath))
                         {
+                            GD.Print("[Serve] 开始后对话...");
                             _dialoguePhase = "post";
                             tv.SetDialogueMode(true);
                             CallDeferred(nameof(StartDialogueDeferred), postPath);
                         }
                         else
                         {
+                            GD.Print("[Serve] 后对话文件不存在，清除客人");
                             Guests.ClearGuest();
                         }
                     }
                     else
                     {
+                        GD.Print($"[Serve] 跳过对话 (isImportant={isImportant} npcId={npcId})，清除客人");
                         Guests.ClearGuest();
                     }
                 };
@@ -326,6 +334,7 @@ public partial class GameManager : Node
 
     private void StartDialogueDeferred(string dialoguePath)
     {
+        GD.Print($"[Dialogue] StartDialogueDeferred: {dialoguePath}");
         var dialogueResource = GD.Load<Resource>(dialoguePath);
         if (dialogueResource == null)
         {
@@ -333,6 +342,7 @@ public partial class GameManager : Node
             RecoverFromDialogueFailure();
             return;
         }
+        GD.Print($"[Dialogue] 资源加载成功, 显示气球...");
         var extraStates = new Godot.Collections.Array<Variant> { Narrative.DialogueVars };
         var balloon = DialogueManager.ShowExampleDialogueBalloon(dialogueResource, "start", extraStates);
         if (balloon == null)
@@ -341,11 +351,13 @@ public partial class GameManager : Node
             RecoverFromDialogueFailure();
             return;
         }
+        GD.Print($"[Dialogue] 气球显示成功");
         balloon.Set("will_block_other_input", false);
     }
 
     private void RecoverFromDialogueFailure()
     {
+        GD.Print("[Dialogue] RecoverFromDialogueFailure 恢复...");
         _dialoguePhase = null;
         _isDialogueActive = false;
         if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
@@ -362,23 +374,28 @@ public partial class GameManager : Node
 
     private void OnDialogueEnded()
     {
+        GD.Print($"[Dialogue] OnDialogueEnded phase={_dialoguePhase}");
         _isDialogueActive = false;
 
         if (_dialoguePhase == "pre")
         {
+            GD.Print("[Dialogue] 预对话结束，关闭对话模式");
             _dialoguePhase = null;
             if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
                 _tavernView.SetDialogueMode(false);
 
             var drugged = Narrative.DialogueVars.TryGetValue("ryan_drugged", out var dv) && dv.AsBool();
+            GD.Print($"[Dialogue] ryan_drugged={drugged}");
             if (drugged && Guests.HasGuest && Guests.CurrentGuest.NpcId == "ryan")
             {
+                GD.Print("[Dialogue] 莱恩被下药，清除客人");
                 Guests.ClearGuest();
                 _tavernView?.HideCustomer();
             }
         }
         else if (_dialoguePhase == "post")
         {
+            GD.Print("[Dialogue] 后对话结束，清除客人");
             _dialoguePhase = null;
             Guests.ClearGuest();
             if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))

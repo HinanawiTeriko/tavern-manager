@@ -71,8 +71,10 @@ public partial class CraftStation : Control
         // 操作按钮事件
         _craftBtn.Pressed += () => CraftRequested?.Invoke();
         _serveBtn.Pressed += () => {
+            GD.Print($"[CraftStation] 上菜按钮 HasGuest={_gm.Guests.HasGuest} CraftedKey={_gm.Craft.CraftedKey}");
             if (!_gm.Guests.HasGuest) { GD.Print("[CraftStation] 没有客人，无法上菜"); return; }
             if (string.IsNullOrEmpty(_gm.Craft.CraftedKey)) { GD.Print("[CraftStation] 请先合成"); return; }
+            GD.Print($"[CraftStation] 上菜流程开始, 触发 ServeRequested 事件");
             // 按键上菜与拖拽上菜保持一致，自动完成全部手势
             _gm.Craft.GestureDragDone = true;
             _gm.Craft.GestureShakeDone = true;
