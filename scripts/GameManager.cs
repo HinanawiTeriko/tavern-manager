@@ -155,22 +155,46 @@ public partial class GameManager : Node
                         return;
                     }
 
+                    var isImportant = Guests.CurrentGuest.HasDialogue;
+                    var npcId = Guests.CurrentGuest.NpcId;
+
                     if (Craft.CraftedKey == Guests.CurrentGuest.OrderKey)
                     {
                         Economy.AddGold(Craft.Recipes[Craft.CraftedKey].Price);
                         Economy.AddReputation(2);
                         Guests.RecordOrderSuccess();
                         tv.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
+                        if (isImportant) Narrative.SetVar("serve_result", "success");
                     }
                     else
                     {
                         Guests.RecordOrderFailed();
                         tv.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
+                        if (isImportant) Narrative.SetVar("serve_result", "fail");
                     }
                     Guests.RecordGuestServed();
                     Craft.ClearCraftSlots();
                     craftStation.ClearSlots();
-                    Guests.ClearGuest();
+
+                    if (isImportant && !string.IsNullOrEmpty(npcId))
+                    {
+                        var postPath = $"res://dialogue/{npcId}_day{Economy.CurrentDay}.post.dialogue";
+                        if (ResourceLoader.Exists(postPath))
+                        {
+                            _dialoguePhase = "post";
+                            tv.SetDialogueMode(true);
+                            CallDeferred(nameof(StartDialogueDeferred), postPath);
+                        }
+                        else
+                        {
+                            GD.Print($"[GameManager] post 对话不存在: {postPath}，直接清除客人");
+                            Guests.ClearGuest();
+                        }
+                    }
+                    else
+                    {
+                        Guests.ClearGuest();
+                    }
                 };
 
                 craftStation.ClearRequested += () => {
@@ -279,7 +303,9 @@ public partial class GameManager : Node
         if (guest.HasDialogue)
         {
             Narrative.TodayImportantNpc = guest.NpcId;
-            var dialoguePath = $"res://dialogue/{guest.NpcId}_day{Economy.CurrentDay}.dialogue";
+            var dialoguePath = $"res://dialogue/{guest.NpcId}_day{Economy.CurrentDay}.pre.dialogue";
+            _dialoguePhase = "pre";
+            _tavernView.SetDialogueMode(true);
             CallDeferred(nameof(StartDialogueDeferred), dialoguePath);
         }
     }
