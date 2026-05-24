@@ -55,9 +55,9 @@ offset_bottom = 390.0
 script = ExtResource("2")
 layout_mode = 0
 offset_left = 340.0
-offset_top = 460.0
+offset_top = 505.0
 offset_right = 940.0
-offset_bottom = 680.0
+offset_bottom = 670.0
 
 [node name="Slot1" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
@@ -98,15 +98,15 @@ layout_mode = 0
 offset_left = 300.0
 offset_top = 0.0
 offset_right = 390.0
-offset_bottom = 45.0
+offset_bottom = 40.0
 text = "加热"
 
 [node name="ShakeBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 300.0
-offset_top = 55.0
+offset_top = 48.0
 offset_right = 390.0
-offset_bottom = 100.0
+offset_bottom = 88.0
 text = "摇晃"
 
 [node name="StirBtn" type="Button" parent="CraftStation"]
@@ -114,15 +114,15 @@ layout_mode = 0
 offset_left = 400.0
 offset_top = 0.0
 offset_right = 490.0
-offset_bottom = 45.0
+offset_bottom = 40.0
 text = "搅拌"
 
 [node name="CraftBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 400.0
-offset_top = 55.0
+offset_top = 48.0
 offset_right = 490.0
-offset_bottom = 100.0
+offset_bottom = 88.0
 text = "合成"
 
 [node name="ServeBtn" type="Button" parent="CraftStation"]
@@ -130,31 +130,31 @@ layout_mode = 0
 offset_left = 500.0
 offset_top = 0.0
 offset_right = 590.0
-offset_bottom = 45.0
+offset_bottom = 40.0
 text = "上菜"
 
 [node name="ClearBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 500.0
-offset_top = 55.0
+offset_top = 48.0
 offset_right = 590.0
-offset_bottom = 100.0
+offset_bottom = 88.0
 text = "清空"
 
 [node name="ResultSlot" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
 offset_left = 300.0
-offset_top = 115.0
+offset_top = 95.0
 offset_right = 590.0
-offset_bottom = 210.0
+offset_bottom = 160.0
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="CraftStation/ResultSlot"]
 layout_mode = 0
 offset_left = 5.0
-offset_top = 35.0
+offset_top = 15.0
 offset_right = 285.0
-offset_bottom = 65.0
+offset_bottom = 50.0
 text = "成品"
 horizontal_alignment = 1
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csxwcpvoof8oj"
-path="res://.godot/imported/dark_dungeon_tavern_interior___2026-05-20T12-11-23.png-98de5d1b6a28ef750f235fcc3cf59068.ctex"
+uid="uid://dq1802r7gyyue"
+path="res://.godot/imported/tavern_sign.png-645832d6171561ed87057eda03623dd9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/dark_dungeon_tavern_interior___2026-05-20T12-11-23.png"
-dest_files=["res://.godot/imported/dark_dungeon_tavern_interior___2026-05-20T12-11-23.png-98de5d1b6a28ef750f235fcc3cf59068.ctex"]
+source_file="res://assets/textures/backgrounds/tavern_sign.png"
+dest_files=["res://.godot/imported/tavern_sign.png-645832d6171561ed87057eda03623dd9.ctex"]
 
 [params]
 

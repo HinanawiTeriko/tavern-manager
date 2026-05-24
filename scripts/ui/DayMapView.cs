@@ -48,6 +48,24 @@ public partial class DayMapView : Node2D
         _resultLabel = GetNode<Label>("ResultPanel/ResultLabel");
         _continueBtn = GetNode<Button>("ResultPanel/ContinueBtn");
 
+        // Theme: static labels
+        var titleLabel = GetNode<Label>("MapArea/TitleLabel");
+        ThemeColors.StyleHeader(titleLabel, 26);
+
+        ThemeColors.StyleHeader(_dayLabel, 22);
+
+        _staminaLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+        _staminaLabel.AddThemeFontSizeOverride("font_size", 20);
+
+        // Theme: buttons
+        ThemeColors.StyleButton(_goButton, 24);
+        ThemeColors.StyleButton(_continueBtn, 16);
+
+        // Theme: result panel
+        _resultPanel.AddThemeStyleboxOverride("panel", ThemeColors.ParchmentPanel());
+        _resultLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+        _resultLabel.AddThemeFontSizeOverride("font_size", 18);
+
         _goButton.Pressed += OnGoPressed;
         _continueBtn.Pressed += OnContinue;
 
@@ -58,7 +76,8 @@ public partial class DayMapView : Node2D
     private void LoadLocations()
     {
         using var file = FileAccess.Open("res://data/locations.json", FileAccess.ModeFlags.Read);
-        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var data = JsonSerializer.Deserialize<LocationsFile>(file.GetAsText(),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         _locations = data.Locations;
         _maxStamina = data.MaxStamina;
         _staminaLeft = _maxStamina;
@@ -91,14 +110,17 @@ public partial class DayMapView : Node2D
 
             var info = new VBoxContainer();
             info.CustomMinimumSize = new Vector2(360, 0);
+
             var nameLabel = new Label { Text = $"{loc.Name}  [{loc.Cost}体力]" };
-            nameLabel.AddThemeColorOverride("font_color", Colors.White);
+            nameLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
             nameLabel.AddThemeFontSizeOverride("font_size", 18);
             info.AddChild(nameLabel);
+
             var descLabel = new Label { Text = loc.Description };
-            descLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
+            descLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
             descLabel.AddThemeFontSizeOverride("font_size", 13);
             info.AddChild(descLabel);
+
             row.AddChild(info);
 
             var countLabel = new Label
@@ -107,16 +129,18 @@ public partial class DayMapView : Node2D
                 CustomMinimumSize = new Vector2(40, 0),
                 HorizontalAlignment = HorizontalAlignment.Center
             };
-            countLabel.AddThemeColorOverride("font_color", Colors.White);
+            countLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
             countLabel.AddThemeFontSizeOverride("font_size", 22);
             row.AddChild(countLabel);
 
             var addBtn = new Button { Text = "+", CustomMinimumSize = new Vector2(40, 36) };
+            ThemeColors.StyleButton(addBtn, 16);
             string locId = loc.Id;
             addBtn.Pressed += () => AddAssignment(locId, loc.Cost, countLabel);
             row.AddChild(addBtn);
 
             var subBtn = new Button { Text = "-", CustomMinimumSize = new Vector2(40, 36), Disabled = true };
+            ThemeColors.StyleButton(subBtn, 16);
             subBtn.Pressed += () => RemoveAssignment(locId, loc.Cost, countLabel);
             row.AddChild(subBtn);
 
@@ -150,7 +174,6 @@ public partial class DayMapView : Node2D
         if (_assignments[locId] <= 0) _assignments.Remove(locId);
         countLabel.Text = _assignments.TryGetValue(locId, out var remaining) ? remaining.ToString() : "0";
         UpdateStaminaDisplay();
-        // Re-enable add buttons
         foreach (var btn in _locAddBtns.Values) btn.Disabled = false;
         if (_locSubBtns.TryGetValue(locId, out var subBtn))
             subBtn.Disabled = !_assignments.ContainsKey(locId);

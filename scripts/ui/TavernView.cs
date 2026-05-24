@@ -37,6 +37,56 @@ public partial class TavernView : Node2D
         _menuPanel.Visible = false;
 
         _endNightBtn.Pressed += OnEndNight;
+
+        // -- Apply design system theme --
+        ApplyTheme();
+    }
+
+    private void ApplyTheme()
+    {
+        // Background
+        _bgPlaceholder.Color = ThemeColors.BackgroundDeep;
+
+        // Customer area
+        _customerName.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+        _customerName.AddThemeFontSizeOverride("font_size", 18);
+        _orderBubble.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+        _orderBubble.AddThemeFontSizeOverride("font_size", 15);
+
+        // Top bar
+        _goldLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+        _goldLabel.AddThemeFontSizeOverride("font_size", 16);
+        _repLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+        _repLabel.AddThemeFontSizeOverride("font_size", 16);
+        _dayLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+        _dayLabel.AddThemeFontSizeOverride("font_size", 15);
+
+        // Buttons in top bar
+        ThemeColors.StyleButton(GetNode<Button>("TopPanel/MenuButton"), 14);
+        ThemeColors.StyleButton(_endNightBtn, 14);
+
+        // Menu panel
+        _menuPanel.AddThemeStyleboxOverride("panel", ThemeColors.ParchmentPanel());
+
+        // Menu tab buttons
+        ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/TabBtns/BtnRecipes"), 14);
+        ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/TabBtns/BtnBackpack"), 14);
+        ThemeColors.StyleButton(GetNode<Button>("OverlayMenu/CloseBtn"), 14);
+
+        // Bottom bar message
+        _messageLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+        _messageLabel.AddThemeFontSizeOverride("font_size", 14);
+
+        // Timer bar
+        var timerStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(ThemeColors.SurfaceHigh, 0.8f),
+            BorderWidthLeft = 1, BorderWidthTop = 1,
+            BorderWidthRight = 1, BorderWidthBottom = 1,
+            BorderColor = ThemeColors.PanelBorder
+        };
+        _timerBar.AddThemeStyleboxOverride("background", timerStyle);
+        _timerBar.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
     }
 
     public void SetBackgroundColor(Color c) => _bgPlaceholder.Color = c;
@@ -100,10 +150,10 @@ public partial class TavernView : Node2D
             row.AddThemeConstantOverride("separation", 6);
             row.CustomMinimumSize = new Vector2(0, 32);
 
-            // Material blocks
             foreach (var mat in recipe.Materials)
             {
-                var box = new ColorRect {
+                var box = new ColorRect
+                {
                     Color = craft.MaterialColor(mat),
                     CustomMinimumSize = new Vector2(36, 20)
                 };
@@ -111,13 +161,13 @@ public partial class TavernView : Node2D
                 if (mat != recipe.Materials[recipe.Materials.Length - 1])
                 {
                     var plus = new Label { Text = "+" };
-                    plus.AddThemeColorOverride("font_color", Colors.White);
+                    plus.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
                     row.AddChild(plus);
                 }
             }
 
             var arrow = new Label { Text = $" = {recipe.Name}  {recipe.Price}金" };
-            arrow.AddThemeColorOverride("font_color", Colors.White);
+            arrow.AddThemeColorOverride("font_color", ThemeColors.TextLight);
             arrow.AddThemeFontSizeOverride("font_size", 14);
             row.AddChild(arrow);
 
@@ -138,7 +188,8 @@ public partial class TavernView : Node2D
             row.AddThemeConstantOverride("separation", 6);
             row.CustomMinimumSize = new Vector2(0, 32);
 
-            var box = new ColorRect {
+            var box = new ColorRect
+            {
                 Color = craft.MaterialColor(mat),
                 CustomMinimumSize = new Vector2(36, 20)
             };
@@ -146,7 +197,7 @@ public partial class TavernView : Node2D
 
             var displayName = matNames.ContainsKey(mat) ? matNames[mat] : mat;
             var label = new Label { Text = $"{displayName}  x{count}" };
-            label.AddThemeColorOverride("font_color", Colors.White);
+            label.AddThemeColorOverride("font_color", ThemeColors.TextLight);
             label.AddThemeFontSizeOverride("font_size", 14);
             row.AddChild(label);
 
