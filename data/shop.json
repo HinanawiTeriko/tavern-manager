@@ -1,0 +1,16 @@
+{
+  "materials": [
+    { "key": "Ale", "price": 2 },
+    { "key": "Wine", "price": 2 },
+    { "key": "Bread", "price": 2 },
+    { "key": "Meat", "price": 3 },
+    { "key": "Herb", "price": 2 }
+  ],
+  "recipeUnlocks": [
+    { "key": "Herbal Ale", "price": 20 },
+    { "key": "SpicedWine", "price": 20 },
+    { "key": "MeatSand", "price": 30 },
+    { "key": "Meat Stew", "price": 40 }
+  ],
+  "miraDiscount": 0.8
+}

@@ -72,15 +72,56 @@ public static class ThemeColors
     }
 
     /// Apply amber button theme to any Button node.
+    /// Prefers pixel-art textures; falls back to StyleBoxFlat.
     public static void StyleButton(Button btn, int fontSize = 16)
     {
         btn.AddThemeFontSizeOverride("font_size", fontSize);
         btn.AddThemeColorOverride("font_color", TextOnAmber);
         btn.AddThemeColorOverride("font_hover_color", TextOnAmber);
         btn.AddThemeColorOverride("font_pressed_color", TextOnAmber);
-        btn.AddThemeStyleboxOverride("normal", ButtonNormal());
-        btn.AddThemeStyleboxOverride("hover", ButtonHover());
-        btn.AddThemeStyleboxOverride("pressed", ButtonPressed());
+
+        var texNormal = BtnWideNormal();
+        var texHover = BtnWideHover();
+        var texPressed = BtnWidePressed();
+
+        if (texNormal != null && texHover != null && texPressed != null)
+        {
+            btn.AddThemeStyleboxOverride("normal", texNormal);
+            btn.AddThemeStyleboxOverride("hover", texHover);
+            btn.AddThemeStyleboxOverride("pressed", texPressed);
+        }
+        else
+        {
+            btn.AddThemeStyleboxOverride("normal", ButtonNormal());
+            btn.AddThemeStyleboxOverride("hover", ButtonHover());
+            btn.AddThemeStyleboxOverride("pressed", ButtonPressed());
+        }
+    }
+
+    /// Style a small button (90x40) for CraftStation gesture/action buttons.
+    public static void StyleSmallButton(Button btn, int fontSize = 13)
+    {
+        btn.AddThemeFontSizeOverride("font_size", fontSize);
+        btn.AddThemeColorOverride("font_color", TextOnAmber);
+        btn.AddThemeColorOverride("font_hover_color", TextOnAmber);
+        btn.AddThemeColorOverride("font_pressed_color", TextOnAmber);
+
+        var texNormal = BtnSmallNormal();
+        var texHover = BtnSmallHover();
+        var texPressed = BtnSmallPressed();
+
+        if (texNormal != null && texHover != null && texPressed != null)
+        {
+            btn.AddThemeStyleboxOverride("normal", texNormal);
+            btn.AddThemeStyleboxOverride("hover", texHover);
+            btn.AddThemeStyleboxOverride("pressed", texPressed);
+        }
+        else
+        {
+            btn.AddThemeStyleboxOverride("normal", ButtonNormal(1, 2));
+            btn.AddThemeStyleboxOverride("hover", ButtonHover(1, 2));
+            btn.AddThemeStyleboxOverride("pressed", ButtonPressed(2, 1));
+        }
     }
 
     /// Dark wood panel style.
@@ -129,4 +170,55 @@ public static class ThemeColors
         label.AddThemeColorOverride("font_color", TextSubtitle);
         label.AddThemeFontSizeOverride("font_size", fontSize);
     }
+
+    // -- Texture-based StyleBox factories (return null if texture missing) --
+
+    private static StyleBoxTexture _cachedBtnWideNormal;
+    private static StyleBoxTexture _cachedBtnWideHover;
+    private static StyleBoxTexture _cachedBtnWidePressed;
+    private static StyleBoxTexture _cachedBtnSmallNormal;
+    private static StyleBoxTexture _cachedBtnSmallHover;
+    private static StyleBoxTexture _cachedBtnSmallPressed;
+    private static StyleBoxTexture _cachedSlotMaterial;
+    private static StyleBoxTexture _cachedSlotResult;
+    private static StyleBoxTexture _cachedSlotShortcut;
+    private static StyleBoxTexture _cachedPanelParchment;
+    private static StyleBoxTexture _cachedBarShortcutBg;
+    private static StyleBoxTexture _cachedBarTopPanel;
+
+    public static StyleBoxTexture BtnWideNormal() =>
+        _cachedBtnWideNormal ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_wide_normal.png");
+
+    public static StyleBoxTexture BtnWideHover() =>
+        _cachedBtnWideHover ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_wide_hover.png");
+
+    public static StyleBoxTexture BtnWidePressed() =>
+        _cachedBtnWidePressed ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_wide_pressed.png");
+
+    public static StyleBoxTexture BtnSmallNormal() =>
+        _cachedBtnSmallNormal ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_small_normal.png");
+
+    public static StyleBoxTexture BtnSmallHover() =>
+        _cachedBtnSmallHover ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_small_hover.png");
+
+    public static StyleBoxTexture BtnSmallPressed() =>
+        _cachedBtnSmallPressed ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/btn_small_pressed.png");
+
+    public static StyleBoxTexture SlotMaterial() =>
+        _cachedSlotMaterial ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/slot_material.png");
+
+    public static StyleBoxTexture SlotResult() =>
+        _cachedSlotResult ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/slot_result.png");
+
+    public static StyleBoxTexture SlotShortcut() =>
+        _cachedSlotShortcut ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/slot_shortcut.png");
+
+    public static StyleBoxTexture PanelParchment() =>
+        _cachedPanelParchment ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/panel_parchment_9patch.png");
+
+    public static StyleBoxTexture BarShortcutBg() =>
+        _cachedBarShortcutBg ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/bar_shortcut_bg.png");
+
+    public static StyleBoxTexture BarTopPanel() =>
+        _cachedBarTopPanel ??= TextureManager.TryLoadStyleBox("res://assets/textures/ui/bar_top_panel.png");
 }

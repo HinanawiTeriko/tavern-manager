@@ -31,6 +31,16 @@ public class CraftSystem
     public Dictionary<string, MaterialData> Materials { get; private set; } = new();
     public string[] RecipeKeys { get; private set; }
 
+    public HashSet<string> UnlockedRecipes { get; private set; } = new();
+
+    public bool IsRecipeUnlocked(string recipeKey) => UnlockedRecipes.Contains(recipeKey);
+
+    public void UnlockRecipe(string recipeKey)
+    {
+        UnlockedRecipes.Add(recipeKey);
+        GD.Print($"[Craft] 配方已解锁: {recipeKey}");
+    }
+
     public string Slot1 { get; set; }
     public string Slot2 { get; set; }
     public string CraftedKey { get; set; }
@@ -51,6 +61,11 @@ public class CraftSystem
         Materials = data.Materials;
         RecipeKeys = Recipes.Keys.ToArray();
         GD.Print($"[Craft] 加载 {Recipes.Count} 个配方, {Materials.Count} 种材料");
+
+        // 5 basic single-material recipes unlocked by default
+        var defaultUnlocked = new[] { "Ale", "Wine", "Bread", "Meat", "Herb Tea" };
+        foreach (var key in defaultUnlocked)
+            UnlockedRecipes.Add(key);
     }
 
     public bool TryMatch(string mat1, string mat2, out string recipeKey)

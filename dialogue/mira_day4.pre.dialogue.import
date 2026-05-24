@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dryuojt7d67le"
+path="res://.godot/imported/mira_day4.pre.dialogue-34e29f667fd85d1eab8852587d54eb14.tres"
+
+[deps]
+
+source_file="res://dialogue/mira_day4.pre.dialogue"
+dest_files=["res://.godot/imported/mira_day4.pre.dialogue-34e29f667fd85d1eab8852587d54eb14.tres"]
+
+[params]
+
+defaults=true

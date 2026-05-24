@@ -1,0 +1,11 @@
+~ start
+
+if serve_result == "success"
+    莱恩: 好肉！明天就靠这块肉打赢地牢了！
+    莱恩: 谢了老板！
+    set aff_ryan = 10
+    => END
+
+else
+    莱恩: 不是这个……算了，我随便吃点就行。
+    => END

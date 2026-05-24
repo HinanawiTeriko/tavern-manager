@@ -45,6 +45,30 @@ public partial class TitleScreen : Node2D
 		var ver = GetNode<Label>("UI/VersionLabel");
 		ver.AddThemeColorOverride("font_color", new Color(ThemeColors.TextSubtitle, 0.35f));
 		ver.AddThemeFontSizeOverride("font_size", 11);
+
+		// -- Decorative elements (load textures if available) --
+		TryLoadDeco("Deco/CandleLeft", "res://assets/textures/ui/deco_candle_left.png");
+		TryLoadDeco("Deco/CandleRight", "res://assets/textures/ui/deco_candle_right.png");
+		TryLoadDeco("Deco/Mug", "res://assets/textures/ui/deco_mug.png");
+		TryLoadDeco("Deco/Emblem", "res://assets/textures/ui/deco_emblem.png");
+
+		// -- Title sign image --
+		var titleSign = GetNodeOrNull<TextureRect>("UI/TitlePanel/TitleSign");
+		if (titleSign != null)
+		{
+			var signTex = TextureManager.TryLoad("res://assets/textures/ui/title_sign.png");
+			if (signTex != null) titleSign.Texture = signTex;
+		}
+	}
+
+	private void TryLoadDeco(string nodePath, string texPath)
+	{
+		var node = GetNodeOrNull<Sprite2D>(nodePath);
+		if (node != null)
+		{
+			var tex = TextureManager.TryLoad(texPath);
+			if (tex != null) node.Texture = tex;
+		}
 	}
 
 	private void OnStart()

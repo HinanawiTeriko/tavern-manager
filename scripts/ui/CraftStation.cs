@@ -14,7 +14,7 @@ public partial class CraftStation : Control
 
     private bool _dragging;
     private string _dragMaterial;
-    private Panel _dragPanel;
+    private ColorRect _dragPanel;
 
     // 手势进度
     private bool _heatDone, _shakeDone, _stirDone;
@@ -28,6 +28,7 @@ public partial class CraftStation : Control
 
     private GameManager _gm;
     private Control _overlayMenu;
+    private ColorRect _dialogueOverlay;
 
     public string MaterialInSlot1 => _slot1Label != null && _slot1Label.Text != "空" ? _slot1Label.Text : null;
     public string MaterialInSlot2 => _slot2Label != null && _slot2Label.Text != "空" ? _slot2Label.Text : null;
@@ -42,6 +43,7 @@ public partial class CraftStation : Control
     {
         _gm = GetNode<GameManager>("/root/GameManager");
         _overlayMenu = GetNodeOrNull<Control>("../OverlayMenu");
+        _dialogueOverlay = GetNodeOrNull<ColorRect>("../DialogueOverlay");
 
         _slot1 = GetNode<ColorRect>("Slot1");
         _slot2 = GetNode<ColorRect>("Slot2");
@@ -68,25 +70,77 @@ public partial class CraftStation : Control
 
         // 操作按钮事件
         _craftBtn.Pressed += () => CraftRequested?.Invoke();
-        _serveBtn.Pressed += () => ServeRequested?.Invoke();
-        // Clear: 清空前把槽位材料退回库存
-        _clearBtn.Pressed += () => { ReturnSlotMaterials(); ClearRequested?.Invoke(); ResetGestureButtons(); };
+        _serveBtn.Pressed += () => {
+            if (!_gm.Guests.HasGuest) { GD.Print("[CraftStation] 没有客人，无法上菜"); return; }
+            if (string.IsNullOrEmpty(_gm.Craft.CraftedKey)) { GD.Print("[CraftStation] 请先合成"); return; }
+            // 按键上菜与拖拽上菜保持一致，自动完成全部手势
+            _gm.Craft.GestureDragDone = true;
+            _gm.Craft.GestureShakeDone = true;
+            _gm.Craft.GestureHeatDone = true;
+            _gm.Craft.GestureStirDone = true;
+            ServeRequested?.Invoke();
+        };
+        // Clear: 先清空槽位，再退回材料（避免退回过程中异常导致槽位无法清空）
+        _clearBtn.Pressed += () => {
+            var m1 = MaterialInSlot1;
+            var m2 = MaterialInSlot2;
+            ClearRequested?.Invoke();
+            ResetGestureButtons();
+            if (m1 != null) AddToInventory(m1);
+            if (m2 != null) AddToInventory(m2);
+        };
 
-        // 拖拽面板
-        _dragPanel = new Panel { Visible = false, ZIndex = 100, MouseFilter = MouseFilterEnum.Ignore };
-        AddChild(_dragPanel);
+        // 拖拽面板：放在独立 CanvasLayer 上，确保渲染在所有 UI 之上
+        var dragCanvas = new CanvasLayer { Layer = 1 };
+        GetParent().AddChild(dragCanvas);
+        _dragPanel = new ColorRect { Visible = false, MouseFilter = MouseFilterEnum.Ignore };
+        dragCanvas.AddChild(_dragPanel);
 
         // 快捷栏引用
         var bar = GetNode<Control>("../ShortcutBar");
+        bar.MouseFilter = MouseFilterEnum.Ignore;
         for (int i = 0; i < 10; i++)
         {
             _shortcutSlots[i] = bar.GetNode<ColorRect>($"Slot{i}");
+            _shortcutSlots[i].MouseFilter = MouseFilterEnum.Ignore;
             _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
+            _shortcutLabels[i].MouseFilter = MouseFilterEnum.Ignore;
         }
 
-        // 从库存同步到快捷栏
+        // 合成槽和自身设为 Ignore，让鼠标事件穿透到 _Input，不然 GUI 系统会吃掉事件
+        MouseFilter = MouseFilterEnum.Ignore;
+        _slot1.MouseFilter = MouseFilterEnum.Ignore;
+        _slot2.MouseFilter = MouseFilterEnum.Ignore;
+        _slot1Label.MouseFilter = MouseFilterEnum.Ignore;
+        _slot2Label.MouseFilter = MouseFilterEnum.Ignore;
+        _resultSlot.MouseFilter = MouseFilterEnum.Ignore;
+        _resultLabel.MouseFilter = MouseFilterEnum.Ignore;
+
+        // Apply small button theme to gesture/action buttons
+        ThemeColors.StyleSmallButton(_heatBtn, 12);
+        ThemeColors.StyleSmallButton(_shakeBtn, 12);
+        ThemeColors.StyleSmallButton(_stirBtn, 12);
+        ThemeColors.StyleSmallButton(_craftBtn, 12);
+        ThemeColors.StyleSmallButton(_serveBtn, 12);
+        ThemeColors.StyleSmallButton(_clearBtn, 12);
+
+        // Improved slot visuals (closer to pixel-art slot design)
+        var slotInnerColor = new Color(0.08f, 0.06f, 0.04f);
+        _slot1.Color = slotInnerColor;
+        _slot2.Color = slotInnerColor;
+        _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
+        for (int i = 0; i < 10; i++)
+            _shortcutSlots[i].Color = slotInnerColor;
+
+        // 从库存同步到快捷栏（必须在初始化槽位颜色之后调用，否则颜色会被覆盖）
         SyncFromInventory();
         _gm.InventoryChanged += SyncFromInventory;
+    }
+
+    public override void _ExitTree()
+    {
+        if (_gm != null)
+            _gm.InventoryChanged -= SyncFromInventory;
     }
 
     /// 从 GameManager._inv 重建快捷栏显示
@@ -137,7 +191,7 @@ public partial class CraftStation : Control
         if (string.IsNullOrEmpty(key)) return;
         _gm.Inventory.TryGetValue(key, out var cur);
         _gm.Inventory[key] = cur + amount;
-        SyncFromInventory();
+        _gm.NotifyInventoryChanged();
     }
 
     private void RemoveFromInventory(string key, int amount = 1)
@@ -151,14 +205,7 @@ public partial class CraftStation : Control
             else
                 _gm.Inventory[key] = remaining;
         }
-        SyncFromInventory();
-    }
-
-    /// 把两个合成槽里的材料退回库存
-    private void ReturnSlotMaterials()
-    {
-        if (MaterialInSlot1 != null) AddToInventory(MaterialInSlot1);
-        if (MaterialInSlot2 != null) AddToInventory(MaterialInSlot2);
+        _gm.NotifyInventoryChanged();
     }
 
     private void StartGesture(string name)
@@ -190,6 +237,9 @@ public partial class CraftStation : Control
     {
         if (_overlayMenu?.Visible == true) return;
 
+        if (_dragging)
+            _dragPanel.Position = GetViewport().GetMousePosition() - new Vector2(32, 32);
+
         if (_heating)
         {
             _heatProgress += dt;
@@ -212,21 +262,44 @@ public partial class CraftStation : Control
     public override void _Input(InputEvent e)
     {
         if (_overlayMenu?.Visible == true) return;
+        if (_dialogueOverlay?.Visible == true) return;
 
-        if (e is InputEventMouseButton mb)
+        if (e is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
         {
-            if (mb.ButtonIndex == MouseButton.Left)
-            {
-                if (mb.Pressed && !_dragging) TryPickUp(mb.Position);
-                else if (!mb.Pressed && _dragging) TryDrop(mb.Position);
-            }
+            if (mb.Pressed && !_dragging) TryPickUp(mb.Position);
+            else if (!mb.Pressed && _dragging) TryDrop(mb.Position);
         }
-        if (_dragging && e is InputEventMouseMotion mm)
-            _dragPanel.Position = mm.Position - new Vector2(24, 24);
     }
 
     private void TryPickUp(Vector2 pos)
     {
+        // 菜单打开时：优先检查背包列表项
+        if (_overlayMenu?.Visible == true)
+        {
+            var backpackPanel = GetNodeOrNull<Control>("../OverlayMenu/BackpackPanel");
+            if (backpackPanel?.Visible == true)
+            {
+                var backpackList = GetNodeOrNull<VBoxContainer>("../OverlayMenu/BackpackPanel/BackpackList");
+                if (backpackList != null)
+                {
+                    foreach (Control row in backpackList.GetChildren())
+                    {
+                        if (HitTest(row, pos))
+                        {
+                            string mat = row.GetMeta("material_key").AsString();
+                            if (!string.IsNullOrEmpty(mat) && _gm.Inventory.TryGetValue(mat, out var cnt) && cnt > 0)
+                            {
+                                RemoveFromInventory(mat);
+                                StartDrag(pos, mat);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            return; // 菜单打开时不拾取其他区域
+        }
+
         // 成品槽优先
         if (HitTest(_resultSlot, pos) && !string.IsNullOrEmpty(ResultKey))
         {
@@ -264,43 +337,52 @@ public partial class CraftStation : Control
 
     private void TryDrop(Vector2 pos)
     {
-        // 拖到客人区 → 上菜
-        var customerArea = GetNode<Control>("../CustomerArea");
-        if (HitTest(customerArea, pos))
+        var menuOpen = _overlayMenu?.Visible == true;
+
+        if (!menuOpen)
         {
-            var gm = GetNode<GameManager>("/root/GameManager");
-            if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+            // 拖到客人区 → 上菜
+            var customerArea = GetNode<Control>("../CustomerArea");
+            if (HitTest(customerArea, pos))
             {
-                gm.Craft.CraftedKey = _dragMaterial;
-                gm.Craft.GestureDragDone = true;
-                gm.Craft.GestureShakeDone = true;
-                gm.Craft.GestureHeatDone = true;
-                gm.Craft.GestureStirDone = true;
-                ResultKey = null;
-                _resultLabel.Text = "";
+                var gm = GetNode<GameManager>("/root/GameManager");
+                if (gm.Guests.HasGuest && _dragMaterial != null && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+                {
+                    gm.Craft.CraftedKey = _dragMaterial;
+                    gm.Craft.GestureDragDone = true;
+                    gm.Craft.GestureShakeDone = true;
+                    gm.Craft.GestureHeatDone = true;
+                    gm.Craft.GestureStirDone = true;
+                    ResultKey = null;
+                    _resultLabel.Text = "";
+                    EndDrag();
+                    ServeRequested?.Invoke();
+                    return;
+                }
+                // 条件不满足（没客人/不是成品）→ 归还材料
+                ReturnDrag();
                 EndDrag();
-                ServeRequested?.Invoke();
                 return;
             }
-            EndDrag();
-            return;
+            if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
+            {
+                _slot1Label.Text = _dragMaterial;
+                _slot1.Color = GameManager.MaterialColor(_dragMaterial);
+                EndDrag();
+                GestureCompleted?.Invoke("drag");
+                return;
+            }
+            if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
+            {
+                _slot2Label.Text = _dragMaterial;
+                _slot2.Color = GameManager.MaterialColor(_dragMaterial);
+                EndDrag();
+                GestureCompleted?.Invoke("drag");
+                return;
+            }
         }
-        if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
-        {
-            _slot1Label.Text = _dragMaterial;
-            _slot1.Color = GameManager.MaterialColor(_dragMaterial);
-            EndDrag();
-            GestureCompleted?.Invoke("drag");
-            return;
-        }
-        if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
-        {
-            _slot2Label.Text = _dragMaterial;
-            _slot2.Color = GameManager.MaterialColor(_dragMaterial);
-            EndDrag();
-            GestureCompleted?.Invoke("drag");
-            return;
-        }
+
+        // 快捷栏（菜单打开或关闭时均可拖入）
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos))
@@ -322,6 +404,8 @@ public partial class CraftStation : Control
                 }
             }
         }
+
+        if (menuOpen) { ReturnDrag(); EndDrag(); return; }
         ReturnDrag();
         EndDrag();
     }
@@ -333,9 +417,7 @@ public partial class CraftStation : Control
         _dragPanel.Visible = true;
         _dragPanel.Size = new Vector2(64, 64);
         _dragPanel.Position = pos - new Vector2(32, 32);
-        var color = GameManager.MaterialColor(material);
-        var sb = new StyleBoxFlat { BgColor = color, BorderWidthLeft = 2, BorderWidthTop = 2, BorderWidthRight = 2, BorderWidthBottom = 2 };
-        _dragPanel.AddThemeStyleboxOverride("panel", sb);
+        _dragPanel.Color = GameManager.MaterialColor(material);
     }
 
     private void EndDrag()
@@ -358,7 +440,7 @@ public partial class CraftStation : Control
             : GameManager.MaterialColor(BarMaterials[i]);
         string matName = BarMaterials[i] switch
         {
-            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药",
+            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药", "SleepPowder" => "沉睡花粉",
             _ => BarMaterials[i]
         };
         _shortcutLabels[i].Text = string.IsNullOrEmpty(BarMaterials[i]) ? "" : $"{matName} x{BarCounts[i]}";

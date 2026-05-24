@@ -17,14 +17,34 @@ public class EconomySystem
     public void AddGold(int amount)
     {
         Gold += amount;
+        GoldToday += amount;
         EmitChanged();
+    }
+
+    public bool SpendGold(int amount)
+    {
+        if (Gold < amount) return false;
+        Gold -= amount;
+        EmitChanged();
+        return true;
     }
 
     public void AddReputation(int amount)
     {
         Reputation += amount;
+        RepToday += amount;
         CheckLevelUp();
         EmitChanged();
+    }
+
+    // ── 每日追踪 ──
+    public int GoldToday { get; private set; }
+    public int RepToday { get; private set; }
+
+    public void ResetDaily()
+    {
+        GoldToday = 0;
+        RepToday = 0;
     }
 
     private void CheckLevelUp()

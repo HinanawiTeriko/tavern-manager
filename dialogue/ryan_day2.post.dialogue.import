@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://borkqunx6hhcd"
+path="res://.godot/imported/ryan_day2.post.dialogue-355bd6572a2b2e75067104953580e6b3.tres"
+
+[deps]
+
+source_file="res://dialogue/ryan_day2.post.dialogue"
+dest_files=["res://.godot/imported/ryan_day2.post.dialogue-355bd6572a2b2e75067104953580e6b3.tres"]
+
+[params]
+
+defaults=true
