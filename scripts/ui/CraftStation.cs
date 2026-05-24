@@ -71,8 +71,15 @@ public partial class CraftStation : Control
         // 操作按钮事件
         _craftBtn.Pressed += () => CraftRequested?.Invoke();
         _serveBtn.Pressed += () => ServeRequested?.Invoke();
-        // Clear: 清空前把槽位材料退回库存
-        _clearBtn.Pressed += () => { ReturnSlotMaterials(); ClearRequested?.Invoke(); ResetGestureButtons(); };
+        // Clear: 先清空槽位，再退回材料（避免退回过程中异常导致槽位无法清空）
+        _clearBtn.Pressed += () => {
+            var m1 = MaterialInSlot1;
+            var m2 = MaterialInSlot2;
+            ClearRequested?.Invoke();
+            ResetGestureButtons();
+            if (m1 != null) AddToInventory(m1);
+            if (m2 != null) AddToInventory(m2);
+        };
 
         // 拖拽面板：放在独立 CanvasLayer 上，确保渲染在所有 UI 之上
         var dragCanvas = new CanvasLayer { Layer = 1 };
@@ -190,13 +197,6 @@ public partial class CraftStation : Control
                 _gm.Inventory[key] = remaining;
         }
         _gm.NotifyInventoryChanged();
-    }
-
-    /// 把两个合成槽里的材料退回库存
-    private void ReturnSlotMaterials()
-    {
-        if (MaterialInSlot1 != null) AddToInventory(MaterialInSlot1);
-        if (MaterialInSlot2 != null) AddToInventory(MaterialInSlot2);
     }
 
     private void StartGesture(string name)
