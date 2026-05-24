@@ -309,6 +309,11 @@ public partial class CraftStation : Control
         ResultKey = null;
     }
 
+    // ── 按钮触发方法（供场景信号连接） ──
+    public void OnCraftPressed() => CraftRequested?.Invoke();
+    public void OnServePressed() => ServeRequested?.Invoke();
+    public void OnClearPressed() => ClearRequested?.Invoke();
+
     private static bool HitTest(Control c, Vector2 p)
     {
         var r = c.GetGlobalRect();

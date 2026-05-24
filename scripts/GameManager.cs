@@ -15,8 +15,7 @@ public partial class GameManager : Node
     public CraftSystem Craft { get; private set; } = new();
 
     // ── 库存 ──
-    private Dictionary<string, int> _inv = new()
-    { ["Ale"] = 50, ["Wine"] = 50, ["Bread"] = 50, ["Meat"] = 50, ["Herb"] = 50 };
+    private Dictionary<string, int> _inv;
 
     private static readonly string[] MatKeys = { "Ale", "Wine", "Bread", "Meat", "Herb" };
     private static readonly Dictionary<string, string> MN = new()
@@ -29,8 +28,14 @@ public partial class GameManager : Node
 
     public override void _Ready()
     {
+        // 加载库存数据
+        _inv = LoadInitialInventory();
+
         // 加载配方数据
         Craft.LoadRecipes();
+
+        // 加载 NPC 数据
+        Narrative.LoadNpcData();
 
         // 初始化 GuestSystem
         Guests = new GuestSystem(Craft.RecipeKeys);
@@ -64,6 +69,80 @@ public partial class GameManager : Node
         {
             _tavernView = tv;
             RefreshTavernUI();
+
+            // ── 连接 CraftStation ──
+            var craftStation = tv.GetNode<CraftStation>("CraftStation");
+            if (craftStation != null)
+            {
+                craftStation.GestureCompleted += (gesture) => {
+                    switch (gesture)
+                    {
+                        case "drag": Craft.GestureDragDone = true; break;
+                        case "shake": Craft.GestureShakeDone = true; break;
+                        case "heat": Craft.GestureHeatDone = true; break;
+                        case "stir": Craft.GestureStirDone = true; break;
+                    }
+                    if (!string.IsNullOrEmpty(Craft.CraftedKey) && Craft.AllGesturesDone(Craft.CraftedKey))
+                    {
+                        tv.ShowMessage($"制作完成：{Craft.Recipes[Craft.CraftedKey].Name}！", Colors.GreenYellow);
+                    }
+                };
+
+                craftStation.CraftRequested += () => {
+                    var mat1 = craftStation.MaterialInSlot1;
+                    var mat2 = craftStation.MaterialInSlot2;
+                    if (string.IsNullOrEmpty(mat1))
+                    {
+                        tv.ShowMessage("请先拖入材料！", Colors.Orange);
+                        return;
+                    }
+                    if (Craft.TryMatch(mat1, mat2, out var key))
+                    {
+                        Craft.CraftedKey = key;
+                        craftStation.ResultKey = key;
+                        craftStation.ShowResult(Craft.Recipes[key].Name, Colors.GreenYellow);
+                        Craft.GestureDragDone = true;
+                        tv.ShowMessage($"需要手势：{string.Join(", ", Craft.Recipes[key].Gestures)}", Colors.Yellow);
+                    }
+                    else
+                    {
+                        Craft.CraftedKey = null;
+                        craftStation.ResultKey = null;
+                        craftStation.ShowResult("无效配方", Colors.OrangeRed);
+                        tv.ShowMessage("没有匹配的配方！", Colors.OrangeRed);
+                    }
+                };
+
+                craftStation.ServeRequested += () => {
+                    if (!Guests.HasGuest || string.IsNullOrEmpty(Craft.CraftedKey)) return;
+
+                    if (!Craft.AllGesturesDone(Craft.CraftedKey))
+                    {
+                        tv.ShowMessage("请先完成所有手势！", Colors.Orange);
+                        return;
+                    }
+
+                    if (Craft.CraftedKey == Guests.CurrentGuest.OrderKey)
+                    {
+                        Economy.AddGold(Craft.Recipes[Craft.CraftedKey].Price);
+                        Economy.AddReputation(2);
+                        tv.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
+                    }
+                    else
+                    {
+                        tv.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
+                    }
+                    Craft.ClearCraftSlots();
+                    craftStation.ClearSlots();
+                    Guests.ClearGuest();
+                };
+
+                craftStation.ClearRequested += () => {
+                    Craft.ClearCraftSlots();
+                    craftStation.ClearSlots();
+                    craftStation.ShowResult("", Colors.White);
+                };
+            }
 
             // 检查今日是否有重要 NPC 到访（由 NarrativeManager 外部设置）
             if (!string.IsNullOrEmpty(Narrative.TodayImportantNpc))
@@ -240,6 +319,23 @@ public partial class GameManager : Node
             "Herb" => new(0.2f, 0.7f, 0.2f),
             _ => Colors.Gray
         };
+    }
+
+    // ── 库存加载 ──
+    private Dictionary<string, int> LoadInitialInventory()
+    {
+        try
+        {
+            using var file = FileAccess.Open("res://data/inventory_default.json", FileAccess.ModeFlags.Read);
+            if (file != null)
+            {
+                var json = file.GetAsText();
+                return JsonSerializer.Deserialize<Dictionary<string, int>>(json)
+                    ?? new() { ["Ale"] = 20, ["Wine"] = 20, ["Bread"] = 20, ["Meat"] = 20, ["Herb"] = 20 };
+            }
+        }
+        catch { }
+        return new() { ["Ale"] = 20, ["Wine"] = 20, ["Bread"] = 20, ["Meat"] = 20, ["Herb"] = 20 };
     }
 
     // ── 兼容旧 MainInit ──

@@ -72,33 +72,85 @@ public partial class TavernView : Node2D
         _messageLabel.AddThemeColorOverride("font_color", color);
     }
 
-    public void ToggleMenu() => _menuPanel.Visible = !_menuPanel.Visible;
+    public void ToggleMenu()
+    {
+        _menuPanel.Visible = !_menuPanel.Visible;
+        if (_menuPanel.Visible)
+        {
+            var gm = GetNode<GameManager>("/root/GameManager");
+            BuildRecipeList(gm.Craft);
+        }
+    }
 
     private void OnEndNight()
     {
-        GetTree().ChangeSceneToFile("res://scenes/ui/DayMap.tscn");
+        var gm = GetNode<GameManager>("/root/GameManager");
+        gm.EndNight();
     }
 
-    public void BuildRecipeList(Dictionary<string, RecipeData> recipes)
+    public void BuildRecipeList(CraftSystem craft)
     {
         var recipeList = _menuPanel.GetNode<VBoxContainer>("RecipePanel/RecipeList");
         foreach (var child in recipeList.GetChildren())
             child.QueueFree();
 
-        foreach (var (key, recipe) in recipes)
+        foreach (var (key, recipe) in craft.Recipes)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 8);
-            row.CustomMinimumSize = new Vector2(0, 36);
+            row.AddThemeConstantOverride("separation", 6);
+            row.CustomMinimumSize = new Vector2(0, 32);
 
-            var label = new Label
+            // Material blocks
+            foreach (var mat in recipe.Materials)
             {
-                Text = $"{recipe.Name}  {recipe.Price}金  [{string.Join(",", recipe.Gestures)}]"
+                var box = new ColorRect {
+                    Color = craft.MaterialColor(mat),
+                    CustomMinimumSize = new Vector2(36, 20)
+                };
+                row.AddChild(box);
+                if (mat != recipe.Materials[recipe.Materials.Length - 1])
+                {
+                    var plus = new Label { Text = "+" };
+                    plus.AddThemeColorOverride("font_color", Colors.White);
+                    row.AddChild(plus);
+                }
+            }
+
+            var arrow = new Label { Text = $" = {recipe.Name}  {recipe.Price}金" };
+            arrow.AddThemeColorOverride("font_color", Colors.White);
+            arrow.AddThemeFontSizeOverride("font_size", 14);
+            row.AddChild(arrow);
+
+            recipeList.AddChild(row);
+        }
+    }
+
+    public void BuildBackpackList(Dictionary<string, int> inventory, Dictionary<string, string> matNames, CraftSystem craft)
+    {
+        var backpackList = _menuPanel.GetNode<VBoxContainer>("BackpackPanel/BackpackList");
+        foreach (var child in backpackList.GetChildren())
+            child.QueueFree();
+
+        foreach (var (mat, count) in inventory)
+        {
+            if (count <= 0) continue;
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 6);
+            row.CustomMinimumSize = new Vector2(0, 32);
+
+            var box = new ColorRect {
+                Color = craft.MaterialColor(mat),
+                CustomMinimumSize = new Vector2(36, 20)
             };
+            row.AddChild(box);
+
+            var displayName = matNames.ContainsKey(mat) ? matNames[mat] : mat;
+            var label = new Label { Text = $"{displayName}  x{count}" };
             label.AddThemeColorOverride("font_color", Colors.White);
             label.AddThemeFontSizeOverride("font_size", 14);
             row.AddChild(label);
-            recipeList.AddChild(row);
+
+            backpackList.AddChild(row);
         }
     }
 }
