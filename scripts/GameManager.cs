@@ -339,6 +339,13 @@ public partial class GameManager : Node
             _dialoguePhase = null;
             if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
                 _tavernView.SetDialogueMode(false);
+
+            var drugged = Narrative.DialogueVars.TryGetValue("ryan_drugged", out var dv) && dv.AsBool();
+            if (drugged && Guests.HasGuest && Guests.CurrentGuest.NpcId == "ryan")
+            {
+                Guests.ClearGuest();
+                _tavernView?.HideCustomer();
+            }
         }
         else if (_dialoguePhase == "post")
         {
