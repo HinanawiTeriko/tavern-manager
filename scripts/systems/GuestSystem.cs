@@ -27,7 +27,7 @@ public class GuestSystem
         "磐石芬恩","毒刃鲁克"
     };
 
-    private readonly string[] _normalOrders;
+    private readonly Func<string[]> _getAvailableOrders;
     private readonly Random _rng = new();
     private double _spawnTimer;
     private double _nextSpawn = 2.0;
@@ -36,9 +36,9 @@ public class GuestSystem
     public event Action GuestLeft;
     public event Action PatienceLow;
 
-    public GuestSystem(string[] recipeKeys)
+    public GuestSystem(Func<string[]> getAvailableOrders)
     {
-        _normalOrders = recipeKeys;
+        _getAvailableOrders = getAvailableOrders;
     }
 
     public void Update(double dt, bool hasGuest, bool menuOpen)
@@ -66,11 +66,13 @@ public class GuestSystem
 
     private void SpawnNormal()
     {
+        var orders = _getAvailableOrders();
+        if (orders.Length == 0) return;
         CurrentGuest = new GuestData
         {
             Name = _normalNames[_rng.Next(_normalNames.Length)],
             Type = GuestType.Normal,
-            OrderKey = _normalOrders[_rng.Next(_normalOrders.Length)],
+            OrderKey = orders[_rng.Next(orders.Length)],
             Patience = GuestData.BasePatience,
             HasDialogue = false
         };

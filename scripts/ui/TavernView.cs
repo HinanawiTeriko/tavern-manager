@@ -282,10 +282,20 @@ public partial class TavernView : Node2D
                 }
             }
 
-            var arrow = new Label { Text = $" = {recipe.Name}  {recipe.Price}金" };
-            arrow.AddThemeColorOverride("font_color", ThemeColors.TextLight);
-            arrow.AddThemeFontSizeOverride("font_size", 14);
-            row.AddChild(arrow);
+            if (craft.IsRecipeUnlocked(key))
+            {
+                var arrow = new Label { Text = $" = {recipe.Name}  {recipe.Price}金" };
+                arrow.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+                arrow.AddThemeFontSizeOverride("font_size", 14);
+                row.AddChild(arrow);
+            }
+            else
+            {
+                var locked = new Label { Text = " = ??? (未解锁)" };
+                locked.AddThemeColorOverride("font_color", ThemeColors.TextDim);
+                locked.AddThemeFontSizeOverride("font_size", 14);
+                row.AddChild(locked);
+            }
 
             var gestureText = string.Join(" ", recipe.Gestures.Select(g => g switch
             {

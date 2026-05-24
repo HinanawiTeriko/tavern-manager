@@ -24,6 +24,7 @@ public partial class GameManager : Node
     public EconomySystem Economy { get; private set; } = new();
     public DayCycleSystem DayCycle { get; private set; } = new();
     public NarrativeManager Narrative { get; private set; } = new();
+    public ShopSystem Shop { get; private set; } = new();
     public GuestSystem Guests { get; private set; }
     public CraftSystem Craft { get; private set; } = new();
 
@@ -58,8 +59,11 @@ public partial class GameManager : Node
         // 加载 NPC 数据
         Narrative.LoadNpcData();
 
+        // 初始化 ShopSystem
+        Shop.LoadConfig();
+
         // 初始化 GuestSystem
-        Guests = new GuestSystem(Craft.RecipeKeys);
+        Guests = new GuestSystem(() => Craft.UnlockedRecipes.ToArray());
         Guests.GuestArrived += OnGuestArrived;
         Guests.GuestLeft += OnGuestLeft;
         Guests.PatienceLow += OnPatienceLow;
@@ -131,6 +135,11 @@ public partial class GameManager : Node
                     }
                     if (Craft.TryMatch(mat1, mat2, out var key))
                     {
+                        if (!Craft.IsRecipeUnlocked(key))
+                        {
+                            tv.ShowMessage("配方未解锁！请前往商店购买。", Colors.Orange);
+                            return;
+                        }
                         Craft.CraftedKey = key;
                         craftStation.ResultKey = key;
                         craftStation.ShowResult(Craft.Recipes[key].Name, Colors.GreenYellow);
@@ -400,6 +409,29 @@ public partial class GameManager : Node
 
         GD.Print("[GameManager] 切换到 LedgerScreen");
         GetTree().CallDeferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn");
+    }
+
+    // ── 商店购买 ──
+    public bool BuyMaterial(string key, int quantity, bool miraActive = false)
+    {
+        if (quantity < 1) return false;
+        var unitPrice = Shop.GetMaterialPrice(key, miraActive);
+        var total = unitPrice * quantity;
+        if (!Economy.SpendGold(total)) return false;
+        _inv.TryGetValue(key, out var existing);
+        _inv[key] = existing + quantity;
+        NotifyInventoryChanged();
+        return true;
+    }
+
+    public bool BuyRecipeUnlock(string key)
+    {
+        if (Craft.IsRecipeUnlocked(key)) return false;
+        var price = Shop.GetRecipeUnlockPrice(key);
+        if (price <= 0) return false;
+        if (!Economy.SpendGold(price)) return false;
+        Craft.UnlockRecipe(key);
+        return true;
     }
 
     // ── UI ──
