@@ -5,6 +5,19 @@ using System.Linq;
 using System.Text.Json;
 using DialogueManagerRuntime;
 
+public class LedgerData
+{
+    public int Day;
+    public int GoldToday;
+    public int RepToday;
+    public int GoldTotal;
+    public int RepTotal;
+    public int GuestsServed;
+    public int OrdersSuccess;
+    public int OrdersFailed;
+    public List<(string NpcName, string NpcTitle, string FateText)> NpcFates;
+}
+
 public partial class GameManager : Node
 {
     // ── 子系统 ──
@@ -30,6 +43,8 @@ public partial class GameManager : Node
     private TavernView _tavernView;
     private DayMapView _dayMapView;
     private EndingScreen _endingScreen;
+
+    public LedgerData CurrentLedgerData { get; private set; }
 
     public override void _Ready()
     {
@@ -142,12 +157,15 @@ public partial class GameManager : Node
                     {
                         Economy.AddGold(Craft.Recipes[Craft.CraftedKey].Price);
                         Economy.AddReputation(2);
+                        Guests.RecordOrderSuccess();
                         tv.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
                     }
                     else
                     {
+                        Guests.RecordOrderFailed();
                         tv.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
                     }
+                    Guests.RecordGuestServed();
                     Craft.ClearCraftSlots();
                     craftStation.ClearSlots();
                     Guests.ClearGuest();
@@ -297,7 +315,26 @@ public partial class GameManager : Node
             _tavernView?.ShowMessage("还有客人在等呢！", Colors.Orange);
             return;
         }
-        DayCycle.NextPhase();
+
+        var fates = Narrative.GetTodayNpcFates(Economy.CurrentDay);
+
+        CurrentLedgerData = new LedgerData
+        {
+            Day = Economy.CurrentDay,
+            GoldToday = Economy.GoldToday,
+            RepToday = Economy.RepToday,
+            GoldTotal = Economy.Gold,
+            RepTotal = Economy.Reputation,
+            GuestsServed = Guests.GuestsServedToday,
+            OrdersSuccess = Guests.OrdersSuccess,
+            OrdersFailed = Guests.OrdersFailed,
+            NpcFates = fates,
+        };
+
+        Economy.ResetDaily();
+        Guests.ResetDaily();
+
+        GetTree().CallDeferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn");
     }
 
     // ── UI ──
