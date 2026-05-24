@@ -14,28 +14,8 @@ public static class TextureManager
         return null;
     }
 
-    /// Try to load a StyleBoxTexture for a 9-patch capable texture.
+    /// Try to create a StyleBoxTexture from a fixed-size texture file.
     /// Returns null if the texture is missing.
-    public static StyleBoxTexture TryLoad9Patch(string path,
-        int marginLeft = 8, int marginTop = 8, int marginRight = 8, int marginBottom = 8)
-    {
-        var tex = TryLoad(path);
-        if (tex == null) return null;
-        return new StyleBoxTexture
-        {
-            Texture = tex,
-            TextureScale = 1,
-            RegionRect = new Rect2(0, 0, tex.GetWidth(), tex.GetHeight()),
-            PatchMarginLeft = marginLeft,
-            PatchMarginTop = marginTop,
-            PatchMarginRight = marginRight,
-            PatchMarginBottom = marginBottom,
-            AxisStretchHorizontal = StyleBoxTexture.AxisStretchModeEnum.Tile,
-            AxisStretchVertical = StyleBoxTexture.AxisStretchModeEnum.Tile,
-        };
-    }
-
-    /// Try to load a StyleBoxTexture for a fixed-size (non-9-patch) texture.
     public static StyleBoxTexture TryLoadStyleBox(string path)
     {
         var tex = TryLoad(path);
@@ -43,12 +23,7 @@ public static class TextureManager
         return new StyleBoxTexture
         {
             Texture = tex,
-            TextureScale = 1,
             RegionRect = new Rect2(0, 0, tex.GetWidth(), tex.GetHeight()),
-            PatchMarginLeft = 0,
-            PatchMarginTop = 0,
-            PatchMarginRight = 0,
-            PatchMarginBottom = 0,
         };
     }
 }
