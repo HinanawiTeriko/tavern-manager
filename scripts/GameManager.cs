@@ -63,7 +63,8 @@ public partial class GameManager : Node
         // 夜晚客人逻辑
         if (DayCycle.Phase == DayPhase.Night && _tavernView != null)
         {
-            Guests.Update(dt, Guests.HasGuest, false);
+            var menuOpen = _tavernView?.IsMenuOpen ?? false;
+            Guests.Update(dt, Guests.HasGuest, menuOpen);
             if (Guests.HasGuest)
                 _tavernView.UpdateTimer(Guests.CurrentGuest.Patience / GuestData.BasePatience);
         }

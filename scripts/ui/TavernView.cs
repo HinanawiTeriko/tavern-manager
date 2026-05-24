@@ -17,6 +17,7 @@ public partial class TavernView : Node2D
 
     public Control CraftStation => GetNode<Control>("CraftStation");
     public Control ShortcutBar => GetNode<Control>("ShortcutBar");
+    public bool IsMenuOpen => _menuPanel.Visible;
 
     public override void _Ready()
     {
