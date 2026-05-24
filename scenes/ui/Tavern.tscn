@@ -1,0 +1,406 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/TavernView.cs" id="1"]
+
+[node name="Tavern" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0.165, 0.102, 0.055, 1)
+
+[node name="CustomerArea" type="Control" parent="."]
+layout_mode = 0
+offset_left = 440.0
+offset_top = 80.0
+offset_right = 840.0
+offset_bottom = 440.0
+
+[node name="CustomerSprite" type="ColorRect" parent="CustomerArea"]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 20.0
+offset_right = 300.0
+offset_bottom = 300.0
+color = Color(0.25, 0.2, 0.3, 1)
+
+[node name="CustomerName" type="Label" parent="CustomerArea"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 400.0
+offset_bottom = 24.0
+text = "等待中……"
+horizontal_alignment = 1
+
+[node name="OrderBubble" type="Label" parent="CustomerArea"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 320.0
+offset_right = 400.0
+offset_bottom = 360.0
+text = ""
+horizontal_alignment = 1
+
+[node name="TimerBar" type="ProgressBar" parent="CustomerArea"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 370.0
+offset_right = 350.0
+offset_bottom = 390.0
+
+[node name="CraftStation" type="Control" parent="."]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 460.0
+offset_right = 940.0
+offset_bottom = 680.0
+
+[node name="Slot1" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 120.0
+offset_bottom = 120.0
+color = Color(0.15, 0.12, 0.1, 1)
+
+[node name="Label" type="Label" parent="CraftStation/Slot1"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 45.0
+offset_right = 115.0
+offset_bottom = 75.0
+text = "空"
+horizontal_alignment = 1
+
+[node name="Slot2" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 0.0
+offset_right = 260.0
+offset_bottom = 120.0
+color = Color(0.15, 0.12, 0.1, 1)
+
+[node name="Label" type="Label" parent="CraftStation/Slot2"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 45.0
+offset_right = 115.0
+offset_bottom = 75.0
+text = "空"
+horizontal_alignment = 1
+
+[node name="FireZone" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 0.0
+offset_right = 380.0
+offset_bottom = 80.0
+color = Color(0.8, 0.2, 0.1, 1)
+
+[node name="Label" type="Label" parent="CraftStation/FireZone"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 25.0
+offset_right = 75.0
+offset_bottom = 55.0
+text = "加热"
+horizontal_alignment = 1
+
+[node name="ShakerZone" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 100.0
+offset_right = 380.0
+offset_bottom = 180.0
+color = Color(0.2, 0.3, 0.8, 1)
+
+[node name="Label" type="Label" parent="CraftStation/ShakerZone"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 25.0
+offset_right = 75.0
+offset_bottom = 55.0
+text = "摇晃"
+horizontal_alignment = 1
+
+[node name="StirZone" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 0.0
+offset_right = 480.0
+offset_bottom = 80.0
+color = Color(0.2, 0.7, 0.2, 1)
+
+[node name="Label" type="Label" parent="CraftStation/StirZone"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 25.0
+offset_right = 75.0
+offset_bottom = 55.0
+text = "搅拌"
+horizontal_alignment = 1
+
+[node name="ResultSlot" type="ColorRect" parent="CraftStation"]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 100.0
+offset_right = 500.0
+offset_bottom = 200.0
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="CraftStation/ResultSlot"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 35.0
+offset_right = 95.0
+offset_bottom = 65.0
+text = "成品"
+horizontal_alignment = 1
+
+[node name="ShortcutBar" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 685.0
+offset_right = 1140.0
+offset_bottom = 715.0
+
+[node name="Slot0" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot0"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot1" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot1"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot2" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot2"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot3" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot3"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot4" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot4"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot5" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot5"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot6" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot6"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot7" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot7"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot8" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot8"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="Slot9" type="ColorRect" parent="ShortcutBar"]
+custom_minimum_size = Vector2(90, 30)
+color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="Label" type="Label" parent="ShortcutBar/Slot9"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 3.0
+offset_right = 88.0
+offset_bottom = 27.0
+text = ""
+horizontal_alignment = 1
+
+[node name="TopPanel" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1280.0
+offset_bottom = 40.0
+
+[node name="GoldLabel" type="Label" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(200, 0)
+text = "金币：0"
+
+[node name="ReputationLabel" type="Label" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(200, 0)
+text = "声望：0"
+
+[node name="DayLabel" type="Label" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(150, 0)
+text = "第1/30天"
+
+[node name="MenuButton" type="Button" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(80, 0)
+text = "菜单"
+
+[node name="EndNightBtn" type="Button" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(80, 0)
+text = "打烊"
+
+[node name="BottomBar" type="Control" parent="."]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 695.0
+offset_right = 1280.0
+offset_bottom = 720.0
+
+[node name="MessageLabel" type="Label" parent="BottomBar"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 0.0
+offset_right = 1270.0
+offset_bottom = 25.0
+text = "欢迎！"
+
+[node name="OverlayMenu" type="Panel" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 290.0
+offset_top = 100.0
+offset_right = 990.0
+offset_bottom = 600.0
+
+[node name="TabBtns" type="HBoxContainer" parent="OverlayMenu"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 690.0
+offset_bottom = 50.0
+
+[node name="BtnRecipes" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(100, 0)
+text = "配方"
+
+[node name="BtnBackpack" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(100, 0)
+text = "背包"
+
+[node name="RecipePanel" type="ScrollContainer" parent="OverlayMenu"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 60.0
+offset_right = 690.0
+offset_bottom = 440.0
+
+[node name="RecipeList" type="VBoxContainer" parent="OverlayMenu/RecipePanel"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 680.0
+offset_bottom = 380.0
+
+[node name="BackpackPanel" type="ScrollContainer" parent="OverlayMenu"]
+visible = false
+layout_mode = 0
+offset_left = 10.0
+offset_top = 60.0
+offset_right = 690.0
+offset_bottom = 440.0
+
+[node name="BackpackList" type="VBoxContainer" parent="OverlayMenu/BackpackPanel"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 680.0
+offset_bottom = 380.0
+
+[node name="CloseBtn" type="Button" parent="OverlayMenu"]
+layout_mode = 0
+offset_left = 310.0
+offset_top = 450.0
+offset_right = 390.0
+offset_bottom = 480.0
+text = "关闭"

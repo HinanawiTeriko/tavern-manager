@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using DialogueManagerRuntime;
 
 public class NarrativeManager
 {
@@ -24,8 +25,9 @@ public class NarrativeManager
     public void SetVar(string key, object value)
     {
         _vars[key] = value;
-        if (DialogueManager.IsInstanceValid())
-            ((GodotObject)DialogueManager.Instance).Call("set_variable", key, value);
+        var instance = DialogueManager.Instance;
+        if (instance != null && GodotObject.IsInstanceValid(instance))
+            instance.Call("set_variable", key, Variant.From(value));
     }
 
     public object GetVar(string key) =>
