@@ -29,6 +29,7 @@ public partial class GameManager : Node
 
     public override void _Ready()
     {
+<<<<<<< HEAD
         // 加载库存数据
         _inv = LoadInitialInventory();
 
@@ -51,6 +52,20 @@ public partial class GameManager : Node
         DayCycle.PhaseChanged += OnPhaseChanged;
 
         GD.Print("[GameManager] 初始化完成");
+=======
+        _rec=new(){
+            ["Ale"]=("麦芽酒",new[]{"Ale"},5,false),["Wine"]=("葡萄酒",new[]{"Wine"},5,false),
+            ["Bread"]=("面包",new[]{"Bread"},3,false),["Meat"]=("烤肉",new[]{"Meat"},4,false),
+            ["Herb Tea"]=("草药茶",new[]{"Herb"},3,false),["Herbal Ale"]=("草药麦酒",new[]{"Ale","Herb"},10,true),
+            ["Meat Stew"]=("肉汤",new[]{"Meat","Ale"},12,true),["MeatSand"]=("肉夹面包",new[]{"Bread","Meat"},9,true),
+            ["SpicedWine"]=("香料红酒",new[]{"Wine","Herb"},11,true),
+        }; _oKeys=_rec.Keys.ToArray();
+        _dp=new Panel{Visible=false,MouseFilter=Control.MouseFilterEnum.Ignore,ZIndex=100};
+        var dcl=new Label{Name="CntLbl",HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+        dcl.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        dcl.AddThemeColorOverride("font_color",Colors.White);dcl.AddThemeFontSizeOverride("font_size",13);
+        _dp.AddChild(dcl);
+>>>>>>> 2cf0f025c1b3b84d7f9aa08c6123d49285c0f62b
     }
 
     public override void _Process(double dt)
@@ -93,6 +108,7 @@ public partial class GameManager : Node
                     }
                 };
 
+<<<<<<< HEAD
                 craftStation.CraftRequested += () => {
                     Craft.ResetGestures();
                     var mat1 = craftStation.MaterialInSlot1;
@@ -148,13 +164,37 @@ public partial class GameManager : Node
                     craftStation.ClearSlots();
                     craftStation.ShowResult("", Colors.White);
                 };
+=======
+    // ── 拖拽输入 ──
+    public override void _Input(InputEvent e){
+        if(!_ok)return;
+        if(e is InputEventMouseButton mb){
+            if(mb.ButtonIndex==MouseButton.Left){
+                if(mb.Pressed){
+                    if(_drag){if(_src!=Df.Bar)DropAll();} // 慢速源保持点击放下
+                    else PickUp(mb.Position);
+                }else{
+                    if(_drag&&_src==Df.Bar)DropAll(); // 快捷栏源松开放下
+                }
+            }else if(mb.ButtonIndex==MouseButton.Right&&mb.Pressed){
+                if(_drag)ReturnOne();else OnRClick(mb.Position);
+>>>>>>> 2cf0f025c1b3b84d7f9aa08c6123d49285c0f62b
             }
 
+<<<<<<< HEAD
             // Check for scheduled NPCs today
             var npcsToday = Narrative.GetTodayScenes(Economy.CurrentDay);
             if (npcsToday.Count > 0)
             {
                 Narrative.TodayImportantNpc = npcsToday[0].Id;
+=======
+    void PickUp(Vector2 p){
+        if(HT(_cr1,p)&&!string.IsNullOrEmpty(_c1)){Start(Df.Craft,0,_c1);_c1="";UpdC();return;}
+        if(HT(_cr2,p)&&!string.IsNullOrEmpty(_c2)){Start(Df.Craft,1,_c2);_c2="";UpdC();return;}
+        for(int i=0;i<10;i++){
+            if(HT(_br[i],p)&&!string.IsNullOrEmpty(_barMat[i])&&_barCnt[i]>0){
+                _dragCnt=1;Start(Df.Bar,i,_barMat[i]);_barCnt[i]--;if(_barCnt[i]<=0)_barMat[i]="";UpdB(i);return;
+>>>>>>> 2cf0f025c1b3b84d7f9aa08c6123d49285c0f62b
             }
 
             // 检查今日是否有重要 NPC 到访（由 NarrativeManager 外部设置）
@@ -168,11 +208,38 @@ public partial class GameManager : Node
                 }
             }
         }
+<<<<<<< HEAD
         else if (view is DayMapView dmv)
         {
             _dayMapView = dmv;
             _dayMapView.ShowDay(Economy.CurrentDay, EconomySystem.MaxDays);
             _dayMapView.GatheringConfirmed += OnGatheringConfirmed;
+=======
+    }
+
+    void DropAll(){
+        if(!_drag)return;
+        var p=GetViewport().GetMousePosition();
+        if(_src==Df.Bar){
+            if(HT(_cr1,p)&&string.IsNullOrEmpty(_c1)){_c1=_dm;UpdC();Finish();return;}
+            if(HT(_cr2,p)&&string.IsNullOrEmpty(_c2)){_c2=_dm;UpdC();Finish();return;}
+            ReturnAll();Finish();return;
+        }
+        if(HT(_cr1,p)&&string.IsNullOrEmpty(_c1)){_c1=_dm;UpdC();Finish();return;}
+        if(HT(_cr2,p)&&string.IsNullOrEmpty(_c2)){_c2=_dm;UpdC();Finish();return;}
+        for(int i=0;i<10;i++){if(HT(_br[i],p)&&string.IsNullOrEmpty(_barMat[i])){_barMat[i]=_dm;_barCnt[i]=_dragCnt;UpdB(i);Finish();return;}}
+        for(int i=0;i<10;i++){if(HT(_br[i],p)&&_barMat[i]==_dm){_barCnt[i]+=_dragCnt;UpdB(i);Finish();return;}}
+        if(_mo&&_bpPanel.Visible){for(int i=0;i<5;i++){if(HT(_bp[i],p)){_inv[MatKeys[i]]+=_dragCnt;UpdBL(i);Finish();return;}}}
+        ReturnAll();Finish();
+    }
+
+    void ReturnOne(){
+        _dragCnt--;
+        switch(_src){
+            case Df.Bar:_barMat[_si]=_dm;_barCnt[_si]=1;UpdB(_si);break;
+            case Df.Craft:if(_si==0)_c1=_dm;else _c2=_dm;UpdC();break;
+            case Df.BP:_inv[_dm]=1;UpdBL(_si);break;
+>>>>>>> 2cf0f025c1b3b84d7f9aa08c6123d49285c0f62b
         }
         else if (view is EndingScreen es)
         {
@@ -181,6 +248,7 @@ public partial class GameManager : Node
         }
     }
 
+<<<<<<< HEAD
     // ── 采集结果处理 ──
     private void OnGatheringConfirmed(Dictionary<string, int> assignments)
     {
@@ -199,6 +267,24 @@ public partial class GameManager : Node
         InventoryChanged?.Invoke();
         DayCycle.NextPhase(); // Day → Night
     }
+=======
+    void Start(Df s,int i,string m){_src=s;_si=i;_dm=m;_drag=true;ShowDP();}
+    void Finish(){_drag=false;HideDP();_src=Df.None;_si=-1;_dm="";_dragCnt=0;UpdAll();UpdAllBL();_srv.Disabled=string.IsNullOrEmpty(_c1)||!_custA;}
+
+    void ShowDP(){
+        _dp.Visible=true;
+        float w=80,h=63; // 等比缩放快捷栏 96:76
+        _dp.Size=new Vector2(w,h);
+        _dp.Position=GetViewport().GetMousePosition()-new Vector2(w/2,h/2);
+        var sb=new StyleBoxFlat{BgColor=MC(_dm),BorderWidthLeft=2,BorderWidthTop=2,BorderWidthRight=2,BorderWidthBottom=2,
+            BorderColor=Colors.White,CornerRadiusTopLeft=3,CornerRadiusTopRight=3,CornerRadiusBottomLeft=3,CornerRadiusBottomRight=3};
+        _dp.AddThemeStyleboxOverride("panel",sb);
+        _dp.GL("CntLbl").Text=_dragCnt>1?$"{_dragCnt}":"";
+    }
+    void HideDP(){_dp.Visible=false;}
+    void UpdateDP(Vector2 pos){var hs=_dp.Size/2;_dp.Position=pos-new Vector2(hs.X,hs.Y);}
+    void UpdDPCount(){_dp.GL("CntLbl").Text=_dragCnt>1?$"{_dragCnt}":"";}
+>>>>>>> 2cf0f025c1b3b84d7f9aa08c6123d49285c0f62b
 
     private LocationData[] LoadLocationsData()
     {

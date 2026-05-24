@@ -2,7 +2,8 @@
 ~*.dll
 
 # Godot 4+ specific ignores
-.godot/
+.godot/*
+!.godot/mono/
 .nomedia
 
 # Godot-specific ignores
