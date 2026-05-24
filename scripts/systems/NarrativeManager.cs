@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using DialogueManagerRuntime;
 
 // ── NPC 数据模型 ──
 
@@ -36,8 +35,10 @@ public class NarrativeManager
 {
     // ── NPC 数据 ──
     public List<NpcData> AllNpcs { get; private set; } = new();
-    // 叙事变量池（供 .dialogue 文件读取）
-    private Dictionary<string, object> _vars = new();
+
+    // 对话变量池 — Godot Dictionary 直接作为 extra_game_state 传给 Dialogue Manager
+    // DM 的 set/if 表达式会直接读写此 Dictionary
+    public Godot.Collections.Dictionary DialogueVars { get; private set; } = new();
 
     // 关键道具
     public HashSet<string> KeyItems { get; } = new();
@@ -56,14 +57,11 @@ public class NarrativeManager
 
     public void SetVar(string key, object value)
     {
-        _vars[key] = value;
-        var instance = DialogueManager.Instance;
-        if (instance != null && GodotObject.IsInstanceValid(instance))
-            instance.Call("set_variable", key, Variant.From(value));
+        DialogueVars[key] = Variant.From(value);
     }
 
     public object GetVar(string key) =>
-        _vars.TryGetValue(key, out var v) ? v : null;
+        DialogueVars.TryGetValue(key, out var v) ? v.Obj : null;
 
     public bool HasKeyItem(string itemId) => KeyItems.Contains(itemId);
 
@@ -80,7 +78,7 @@ public class NarrativeManager
     }
 
     public int GetAffection(string npcId) =>
-        Affection.TryGetValue(npcId, out var v) ? v : 0;
+        DialogueVars.TryGetValue($"aff_{npcId}", out var v) ? v.AsInt32() : 0;
 
     public void SetEnding(string npcId, string ending)
     {
@@ -92,10 +90,22 @@ public class NarrativeManager
 
     public void LoadNpcData()
     {
+        // 预初始化所有对话变量，避免 DM 因变量未找到而断言失败
+        // （即使用到的 NPC 尚未加载，这些占位值也能保证 DM 的 set/if 不崩溃）
+        DialogueVars["has_sleep_powder"] = Variant.From(false);
+        DialogueVars["ryan_drugged"] = Variant.From(false);
+        DialogueVars["ryan_ending"] = Variant.From("");
+        DialogueVars["aff_ryan"] = Variant.From(0);
+        DialogueVars["aff_mira"] = Variant.From(5);
+
         try
         {
             using var file = FileAccess.Open("res://data/npcs.json", FileAccess.ModeFlags.Read);
-            if (file == null) return;
+            if (file == null)
+            {
+                GD.Print("[Narrative] npcs.json 未找到，使用默认变量");
+                return;
+            }
             var json = file.GetAsText();
             var data = JsonSerializer.Deserialize<NpcFile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (data?.Npcs != null)
