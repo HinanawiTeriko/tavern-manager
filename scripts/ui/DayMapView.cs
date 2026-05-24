@@ -34,6 +34,7 @@ public partial class DayMapView : Node2D
 
     private Dictionary<string, Label> _assignLabels = new();
     private Dictionary<string, Button> _locAddBtns = new();
+    private Dictionary<string, Button> _locSubBtns = new();
 
     public event System.Action<Dictionary<string, int>> GatheringConfirmed;
 
@@ -75,6 +76,8 @@ public partial class DayMapView : Node2D
         _continueBtn.Visible = true;
         foreach (var btn in _locAddBtns.Values)
             btn.Disabled = false;
+        foreach (var btn in _locSubBtns.Values)
+            btn.Disabled = true;
         _goButton.Disabled = false;
     }
 
@@ -113,8 +116,13 @@ public partial class DayMapView : Node2D
             addBtn.Pressed += () => AddAssignment(locId, loc.Cost, countLabel);
             row.AddChild(addBtn);
 
+            var subBtn = new Button { Text = "-", CustomMinimumSize = new Vector2(40, 36), Disabled = true };
+            subBtn.Pressed += () => RemoveAssignment(locId, loc.Cost, countLabel);
+            row.AddChild(subBtn);
+
             _assignLabels[loc.Id] = countLabel;
             _locAddBtns[loc.Id] = addBtn;
+            _locSubBtns[loc.Id] = subBtn;
 
             _locationList.AddChild(row);
         }
@@ -128,8 +136,24 @@ public partial class DayMapView : Node2D
         _assignments[locId] = cur + 1;
         countLabel.Text = _assignments[locId].ToString();
         UpdateStaminaDisplay();
+        if (_locSubBtns.TryGetValue(locId, out var subBtn))
+            subBtn.Disabled = false;
         if (_staminaLeft < 1)
             foreach (var btn in _locAddBtns.Values) btn.Disabled = true;
+    }
+
+    private void RemoveAssignment(string locId, int cost, Label countLabel)
+    {
+        if (!_assignments.TryGetValue(locId, out var cur) || cur < 1) return;
+        _staminaLeft += cost;
+        _assignments[locId] = cur - 1;
+        if (_assignments[locId] <= 0) _assignments.Remove(locId);
+        countLabel.Text = _assignments.TryGetValue(locId, out var remaining) ? remaining.ToString() : "0";
+        UpdateStaminaDisplay();
+        // Re-enable add buttons
+        foreach (var btn in _locAddBtns.Values) btn.Disabled = false;
+        if (_locSubBtns.TryGetValue(locId, out var subBtn))
+            subBtn.Disabled = !_assignments.ContainsKey(locId);
     }
 
     private void UpdateStaminaDisplay()
