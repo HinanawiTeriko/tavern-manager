@@ -71,6 +71,26 @@ public partial class DayMapView : Node2D
 
         LoadLocations();
         BuildLocationUI();
+
+        // Background: try daymap_bg texture, fallback to deep color
+        var bgNode = GetNodeOrNull<Sprite2D>("Background");
+        if (bgNode != null)
+        {
+            var bgTex = TextureManager.TryLoad("res://assets/textures/backgrounds/daymap_bg.png");
+            if (bgTex != null)
+            {
+                bgNode.Texture = bgTex;
+            }
+            else
+            {
+                var placeholderGradient = new GradientTexture2D
+                {
+                    Width = 1280, Height = 720,
+                    Gradient = new Gradient { Colors = new[] { ThemeColors.BackgroundDeep, ThemeColors.SurfaceMid }, Offsets = new[] { 0f, 1f } }
+                };
+                bgNode.Texture = placeholderGradient;
+            }
+        }
     }
 
     private void LoadLocations()

@@ -57,8 +57,6 @@ public partial class GameManager : Node
         // ── 对话事件：暂停客人计时 ──
         DialogueManager.DialogueStarted += (_) => _isDialogueActive = true;
         DialogueManager.DialogueEnded += (_) => _isDialogueActive = false;
-        // ── 对话变量同步：将 Dialogue Manager 内部变更写回 NarrativeManager ──
-        DialogueManager.Mutated += (mutation) => Narrative.SyncFromMutation(mutation);
 
         GD.Print("[GameManager] 初始化完成");
     }
@@ -272,7 +270,8 @@ public partial class GameManager : Node
             GD.PrintErr($"[GameManager] 对话文件加载失败: {dialoguePath}");
             return;
         }
-        var balloon = DialogueManager.ShowExampleDialogueBalloon(dialogueResource, "start");
+        var extraStates = new Godot.Collections.Array<Variant> { Narrative.DialogueVars };
+        var balloon = DialogueManager.ShowExampleDialogueBalloon(dialogueResource, "start", extraStates);
         if (balloon != null)
             balloon.Set("will_block_other_input", false);
     }
@@ -320,6 +319,22 @@ public partial class GameManager : Node
             "Herb" => new(0.2f, 0.7f, 0.2f),
             _ => Colors.Gray
         };
+    }
+
+    private static readonly Dictionary<string, string> MaterialIconPaths = new()
+    {
+        ["Ale"] = "res://assets/textures/icons/materials/ale.png",
+        ["Wine"] = "res://assets/textures/icons/materials/wine.png",
+        ["Bread"] = "res://assets/textures/icons/materials/bread.png",
+        ["Meat"] = "res://assets/textures/icons/materials/meat.png",
+        ["Herb"] = "res://assets/textures/icons/materials/herb.png",
+    };
+
+    public Texture2D TryLoadMaterialIcon(string key)
+    {
+        if (MaterialIconPaths.TryGetValue(key, out var path))
+            return TextureManager.TryLoad(path);
+        return null;
     }
 
     // ── 库存加载 ──

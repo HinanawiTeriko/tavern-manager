@@ -227,14 +227,30 @@ public partial class TavernView : Node2D
             row.AddThemeConstantOverride("separation", 6);
             row.CustomMinimumSize = new Vector2(0, 32);
 
+            var gmRecipe = GetNode<GameManager>("/root/GameManager");
             foreach (var mat in recipe.Materials)
             {
-                var box = new ColorRect
+                var iconTex = gmRecipe.TryLoadMaterialIcon(mat);
+                if (iconTex != null)
                 {
-                    Color = craft.MaterialColor(mat),
-                    CustomMinimumSize = new Vector2(36, 20)
-                };
-                row.AddChild(box);
+                    var texRect = new TextureRect
+                    {
+                        Texture = iconTex,
+                        CustomMinimumSize = new Vector2(32, 32),
+                        ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                        StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    };
+                    row.AddChild(texRect);
+                }
+                else
+                {
+                    var box = new ColorRect
+                    {
+                        Color = craft.MaterialColor(mat),
+                        CustomMinimumSize = new Vector2(36, 20)
+                    };
+                    row.AddChild(box);
+                }
                 if (mat != recipe.Materials[recipe.Materials.Length - 1])
                 {
                     var plus = new Label { Text = "+" };
@@ -281,12 +297,27 @@ public partial class TavernView : Node2D
             row.CustomMinimumSize = new Vector2(0, 32);
             row.SetMeta("material_key", mat);
 
-            var box = new ColorRect
+            var iconTex = gm.TryLoadMaterialIcon(mat);
+            if (iconTex != null)
             {
-                Color = craft.MaterialColor(mat),
-                CustomMinimumSize = new Vector2(36, 20)
-            };
-            row.AddChild(box);
+                var texRect = new TextureRect
+                {
+                    Texture = iconTex,
+                    CustomMinimumSize = new Vector2(32, 32),
+                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                };
+                row.AddChild(texRect);
+            }
+            else
+            {
+                var box = new ColorRect
+                {
+                    Color = craft.MaterialColor(mat),
+                    CustomMinimumSize = new Vector2(36, 20)
+                };
+                row.AddChild(box);
+            }
 
             var displayName = craft.Materials.TryGetValue(mat, out var md) ? md.Name : mat;
             var label = new Label { Text = $"{displayName}  x{count}" };

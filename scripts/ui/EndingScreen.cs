@@ -32,6 +32,26 @@ public partial class EndingScreen : Node2D
         GetNode<Button>("Content/QuitBtn").Pressed += () => GetTree().Quit();
         GetNode<Button>("Content/RestartBtn").Pressed += () =>
             GetTree().ChangeSceneToFile("res://scenes/ui/TitleScreen.tscn");
+
+        // Background: try ending_bg texture, fallback to deep color
+        var bgNode = GetNodeOrNull<Sprite2D>("Background");
+        if (bgNode != null)
+        {
+            var bgTex = TextureManager.TryLoad("res://assets/textures/backgrounds/ending_bg.png");
+            if (bgTex != null)
+            {
+                bgNode.Texture = bgTex;
+            }
+            else
+            {
+                var placeholderGradient = new GradientTexture2D
+                {
+                    Width = 1280, Height = 720,
+                    Gradient = new Gradient { Colors = new[] { new Color(0.055f, 0.047f, 0.04f), ThemeColors.BackgroundDeep }, Offsets = new[] { 0f, 1f } }
+                };
+                bgNode.Texture = placeholderGradient;
+            }
+        }
     }
 
     public void ShowEndings(int gold, int rep, Dictionary<string, string> npcEndings)
