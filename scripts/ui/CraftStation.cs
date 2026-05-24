@@ -226,6 +226,9 @@ public partial class CraftStation : Control
     {
         if (_overlayMenu?.Visible == true) return;
 
+        if (_dragging)
+            _dragPanel.Position = GetViewport().GetMousePosition() - new Vector2(24, 24);
+
         if (_heating)
         {
             _heatProgress += dt;
@@ -250,16 +253,11 @@ public partial class CraftStation : Control
         if (_overlayMenu?.Visible == true) return;
         if (_dialogueOverlay?.Visible == true) return;
 
-        if (e is InputEventMouseButton mb)
+        if (e is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
         {
-            if (mb.ButtonIndex == MouseButton.Left)
-            {
-                if (mb.Pressed && !_dragging) TryPickUp(mb.Position);
-                else if (!mb.Pressed && _dragging) TryDrop(mb.Position);
-            }
+            if (mb.Pressed && !_dragging) TryPickUp(mb.Position);
+            else if (!mb.Pressed && _dragging) TryDrop(mb.Position);
         }
-        if (_dragging && e is InputEventMouseMotion mm)
-            _dragPanel.Position = mm.Position - new Vector2(24, 24);
     }
 
     private void TryPickUp(Vector2 pos)
