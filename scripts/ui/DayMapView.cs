@@ -139,6 +139,7 @@ public partial class DayMapView : Node2D
         foreach (var btn in _locSubBtns.Values)
             btn.Disabled = true;
         _goButton.Disabled = false;
+        _goButton.Visible = true;
         _isShopTab = false;
         if (_gatherTabBtn != null) UpdateTabAppearance();
         if (_shopPanel != null) _shopPanel.Visible = false;
@@ -313,6 +314,8 @@ public partial class DayMapView : Node2D
 
         if (shop)
             RefreshShopUI();
+
+        _goButton.Visible = !shop;
     }
 
     private void UpdateTabAppearance()
