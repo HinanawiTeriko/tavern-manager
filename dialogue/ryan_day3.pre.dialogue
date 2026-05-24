@@ -1,0 +1,15 @@
+~ start
+
+if ryan_drugged
+    佣兵甲: 老板……这是莱恩的盾牌。
+    佣兵甲: 血斧小队在地牢二层全军覆没……
+    佣兵甲: 莱恩他……精神崩溃了，说要回老家。
+    set ryan_ending = "broken"
+    => END
+
+else
+    佣兵甲: 老板……莱恩今天在地牢里……
+    佣兵甲: 他为了保护队友，挡住了怪物的攻击……
+    佣兵甲: 这是他留下的盾牌。
+    set ryan_ending = "fallen"
+    => END

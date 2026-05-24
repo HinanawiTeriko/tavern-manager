@@ -1,0 +1,11 @@
+~ start
+
+if serve_result == "success"
+    莱恩: 呼——活过来了！你的手艺还是这么实在。
+    莱恩: 走了老板，明天见！
+    set aff_ryan = 5
+    => END
+
+else
+    莱恩: 唉，看来今天运气不太好……
+    => END
