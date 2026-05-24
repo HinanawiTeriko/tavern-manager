@@ -1,0 +1,11 @@
+~ start
+
+if serve_result == "success"
+    米拉: 好酒！我就知道你这儿的水准一直在线。
+    米拉: 对了，关于香料的事——下回详谈。
+    set aff_mira = 10
+    => END
+
+else
+    米拉: 这可不是我想要的……算了，生意的事改天再说。
+    => END

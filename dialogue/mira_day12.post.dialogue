@@ -1,0 +1,13 @@
+~ start
+
+if serve_result == "success"
+    米拉: 完美！看来我没找错人。
+    米拉: 今天就签协议吧。
+    set aff_mira = 15
+    set mira_ending = "partner"
+    => END
+
+else
+    米拉: 看来你今天状态不太好……协议的事我再考虑考虑。
+    set mira_ending = "farewell"
+    => END
