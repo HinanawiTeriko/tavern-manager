@@ -1,6 +1,7 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1779288343
+::res://::1779526688
 icon.svg::CompressedTexture2D::6044676285444772995::1779171216::1779288344::1::::<><><>0<>0<>8b15e77d6ea8460685461fadb2b987a0<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+README.md::TextFile::-1::1779455579::0::1::::<><><>0<>0<><>::
 ::res://addons/::1779278627
 ::res://addons/godot_mcp/::1779278627
 command_handler.gd::GDScript::496723503935433231::1779171216::0::1::::MCPCommandHandler<>Node<><>0<>1<><>::
@@ -29,11 +30,12 @@ script_utils.gd::GDScript::8091914555543048975::1779171216::0::1::::ScriptUtils<
 ::res://assets/audio/::1779278627
 ::res://assets/fonts/::1779278627
 ::res://assets/models/::1779278627
-::res://assets/textures/::1779288023
+::res://assets/textures/::1779288344
 dark_dungeon_tavern_interior___2026-05-20T12-11-23.png::CompressedTexture2D::6085061407589016561::1779279083::1779288344::1::::<><><>0<>0<>4edbb4c4dabe750274c1f56b153017b8<>res://.godot/imported/dark_dungeon_tavern_interior___2026-05-20T12-11-23.png-98de5d1b6a28ef750f235fcc3cf59068.ctex::
 ::res://assets/ui/::1779278627
 ::res://data/::1779278627
-::res://docs/::1779284535
+::res://docs/::1779455625
+AI_CONTEXT.md::TextFile::-1::1779455625::0::1::::<><><>0<>0<><>::
 AI_GUIDE.md::TextFile::-1::1779171216::0::1::::<><><>0<>0<><>::
 RESOURCES.md::TextFile::-1::1779284535::0::1::::<><><>0<>0<><>::
 ::res://scenes/::1779278627
