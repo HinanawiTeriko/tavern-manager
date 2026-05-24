@@ -34,6 +34,15 @@ offset_bottom = 50.0
 text = "体力：5/5"
 horizontal_alignment = 2
 
+[node name="GoldLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_left = 800.0
+offset_top = 10.0
+offset_right = 990.0
+offset_bottom = 50.0
+text = "金币：0"
+horizontal_alignment = 2
+
 [node name="MapArea" type="Control" parent="."]
 layout_mode = 0
 offset_left = 140.0

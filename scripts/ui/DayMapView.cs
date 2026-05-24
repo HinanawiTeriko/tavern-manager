@@ -36,6 +36,18 @@ public partial class DayMapView : Node2D
     private Dictionary<string, Button> _locAddBtns = new();
     private Dictionary<string, Button> _locSubBtns = new();
 
+    // ── 商店 ──
+    private bool _isShopTab;
+    private Button _gatherTabBtn;
+    private Button _shopTabBtn;
+    private Control _shopPanel;
+    private Label _shopTitle;
+    private Label _goldLabel;
+    private VBoxContainer _materialList;
+    private VBoxContainer _recipeList;
+    private bool _isMiraShop;
+    private Dictionary<string, Label> _matQtyLabels = new();
+
     public event System.Action<Dictionary<string, int>> GatheringConfirmed;
 
     public override void _Ready()
@@ -71,6 +83,15 @@ public partial class DayMapView : Node2D
 
         LoadLocations();
         BuildLocationUI();
+
+        // Gold label
+        _goldLabel = GetNode<Label>("TopBar/GoldLabel");
+        _goldLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+        _goldLabel.AddThemeFontSizeOverride("font_size", 20);
+
+        // Tab buttons + shop UI
+        BuildTabButtons();
+        BuildShopUI();
 
         // Background: try daymap_bg texture, fallback to deep color
         var bgNode = GetNodeOrNull<Sprite2D>("Background");
@@ -118,6 +139,14 @@ public partial class DayMapView : Node2D
         foreach (var btn in _locSubBtns.Values)
             btn.Disabled = true;
         _goButton.Disabled = false;
+        _isShopTab = false;
+        if (_gatherTabBtn != null) UpdateTabAppearance();
+        if (_shopPanel != null) _shopPanel.Visible = false;
+        // Reset gather panel visibility
+        var mapArea = GetNode<Control>("MapArea");
+        mapArea.GetNode<Label>("TitleLabel").Visible = true;
+        mapArea.GetNode<VBoxContainer>("LocationList").Visible = true;
+        UpdateGoldDisplay();
     }
 
     private void BuildLocationUI()
@@ -237,5 +266,231 @@ public partial class DayMapView : Node2D
     {
         _resultPanel.Visible = false;
         GatheringConfirmed?.Invoke(_assignments);
+    }
+
+    public void UpdateGoldDisplay()
+    {
+        var gm = GetNode<GameManager>("/root/GameManager");
+        if (gm != null)
+            _goldLabel.Text = $"金币：{gm.Economy.Gold}";
+    }
+
+    private void BuildTabButtons()
+    {
+        var mapArea = GetNode<Control>("MapArea");
+        var tabRow = new HBoxContainer();
+        tabRow.AddThemeConstantOverride("separation", 8);
+        tabRow.CustomMinimumSize = new Vector2(0, 40);
+
+        _gatherTabBtn = new Button { Text = "采集", CustomMinimumSize = new Vector2(100, 36) };
+        ThemeColors.StyleButton(_gatherTabBtn, 16);
+        _gatherTabBtn.Pressed += () => SwitchTab(false);
+        tabRow.AddChild(_gatherTabBtn);
+
+        _shopTabBtn = new Button { Text = "商店", CustomMinimumSize = new Vector2(100, 36) };
+        ThemeColors.StyleButton(_shopTabBtn, 16);
+        _shopTabBtn.Pressed += () => SwitchTab(true);
+        tabRow.AddChild(_shopTabBtn);
+
+        mapArea.AddChild(tabRow);
+        mapArea.MoveChild(tabRow, 0);
+
+        UpdateTabAppearance();
+    }
+
+    private void SwitchTab(bool shop)
+    {
+        _isShopTab = shop;
+        UpdateTabAppearance();
+
+        var mapArea = GetNode<Control>("MapArea");
+        var titleLabel = mapArea.GetNode<Label>("TitleLabel");
+        var locationList = mapArea.GetNode<VBoxContainer>("LocationList");
+
+        titleLabel.Visible = !shop;
+        locationList.Visible = !shop;
+        _shopPanel.Visible = shop;
+
+        if (shop)
+            RefreshShopUI();
+    }
+
+    private void UpdateTabAppearance()
+    {
+        if (_gatherTabBtn == null || _shopTabBtn == null) return;
+        _gatherTabBtn.Modulate = _isShopTab ? Colors.DimGray : Colors.White;
+        _shopTabBtn.Modulate = _isShopTab ? Colors.White : Colors.DimGray;
+    }
+
+    private void BuildShopUI()
+    {
+        _shopPanel = new Control();
+        _shopPanel.AnchorLeft = 0;
+        _shopPanel.AnchorRight = 1;
+        _shopPanel.OffsetLeft = 0;
+        _shopPanel.OffsetTop = 50;
+        _shopPanel.OffsetRight = 1000;
+        _shopPanel.OffsetBottom = 420;
+        _shopPanel.Visible = false;
+        GetNode<Control>("MapArea").AddChild(_shopPanel);
+
+        _shopTitle = new Label();
+        _shopTitle.CustomMinimumSize = new Vector2(0, 36);
+        ThemeColors.StyleHeader(_shopTitle, 22);
+        _shopPanel.AddChild(_shopTitle);
+
+        var matTitle = new Label { Text = "—— 购买材料 ——" };
+        matTitle.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+        matTitle.AddThemeFontSizeOverride("font_size", 16);
+        matTitle.CustomMinimumSize = new Vector2(0, 30);
+        _shopPanel.AddChild(matTitle);
+
+        _materialList = new VBoxContainer();
+        _materialList.AddThemeConstantOverride("separation", 4);
+        _shopPanel.AddChild(_materialList);
+
+        var recipeTitle = new Label { Text = "—— 解锁配方 ——" };
+        recipeTitle.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+        recipeTitle.AddThemeFontSizeOverride("font_size", 16);
+        recipeTitle.CustomMinimumSize = new Vector2(0, 30);
+        _shopPanel.AddChild(recipeTitle);
+
+        _recipeList = new VBoxContainer();
+        _recipeList.AddThemeConstantOverride("separation", 4);
+        _shopPanel.AddChild(_recipeList);
+    }
+
+    private void RefreshShopUI()
+    {
+        var gm = GetNode<GameManager>("/root/GameManager");
+        if (gm == null) return;
+
+        _isMiraShop = gm.Shop.IsMiraShopToday(gm.Economy.CurrentDay, gm.Narrative);
+        _shopTitle.Text = _isMiraShop ? "米拉的旅行商店" : "商店";
+
+        BuildMaterialRows(gm);
+        BuildRecipeRows(gm);
+        UpdateGoldDisplay();
+    }
+
+    private void BuildMaterialRows(GameManager gm)
+    {
+        foreach (var child in _materialList.GetChildren())
+            child.QueueFree();
+        _matQtyLabels.Clear();
+
+        var materials = new[] { ("Ale", "麦芽"), ("Wine", "葡萄"), ("Bread", "面粉"), ("Meat", "生肉"), ("Herb", "草药") };
+
+        foreach (var (key, name) in materials)
+        {
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 8);
+            row.CustomMinimumSize = new Vector2(0, 40);
+
+            var nameLabel = new Label { Text = name, CustomMinimumSize = new Vector2(70, 0) };
+            nameLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+            nameLabel.AddThemeFontSizeOverride("font_size", 16);
+            row.AddChild(nameLabel);
+
+            int price = gm.Shop.GetMaterialPrice(key, _isMiraShop);
+            var priceLabel = new Label
+            {
+                Text = _isMiraShop ? $"{gm.Shop.GetMaterialPrice(key)}→{price}金" : $"{price}金",
+                CustomMinimumSize = new Vector2(70, 0)
+            };
+            priceLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+            priceLabel.AddThemeFontSizeOverride("font_size", 14);
+            row.AddChild(priceLabel);
+
+            var subBtn = new Button { Text = "-", CustomMinimumSize = new Vector2(36, 30) };
+            ThemeColors.StyleButton(subBtn, 14);
+            string matKey = key;
+            var qtyLabel = new Label { Text = "0", CustomMinimumSize = new Vector2(30, 0), HorizontalAlignment = HorizontalAlignment.Center };
+            qtyLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+            qtyLabel.AddThemeFontSizeOverride("font_size", 18);
+            _matQtyLabels[key] = qtyLabel;
+            var addBtn = new Button { Text = "+", CustomMinimumSize = new Vector2(36, 30) };
+            ThemeColors.StyleButton(addBtn, 14);
+
+            subBtn.Pressed += () => {
+                var cur = int.Parse(qtyLabel.Text);
+                if (cur > 0) { cur--; qtyLabel.Text = cur.ToString(); }
+            };
+            addBtn.Pressed += () => {
+                var cur = int.Parse(qtyLabel.Text);
+                cur++; qtyLabel.Text = cur.ToString();
+            };
+
+            var buyBtn = new Button { Text = "购买", CustomMinimumSize = new Vector2(56, 30) };
+            ThemeColors.StyleButton(buyBtn, 14);
+            buyBtn.Pressed += () => {
+                var qty = int.Parse(qtyLabel.Text);
+                if (qty < 1) return;
+                if (gm.BuyMaterial(matKey, qty, _isMiraShop))
+                {
+                    qtyLabel.Text = "0";
+                    UpdateGoldDisplay();
+                }
+            };
+
+            row.AddChild(subBtn);
+            row.AddChild(qtyLabel);
+            row.AddChild(addBtn);
+            row.AddChild(buyBtn);
+            _materialList.AddChild(row);
+        }
+    }
+
+    private void BuildRecipeRows(GameManager gm)
+    {
+        foreach (var child in _recipeList.GetChildren())
+            child.QueueFree();
+
+        var unlocks = new[] {
+            ("Herbal Ale", "草药麦酒"), ("SpicedWine", "香料红酒"),
+            ("MeatSand", "肉夹面包"), ("Meat Stew", "肉汤")
+        };
+
+        foreach (var (key, name) in unlocks)
+        {
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 8);
+            row.CustomMinimumSize = new Vector2(0, 40);
+
+            var nameLabel = new Label { Text = name, CustomMinimumSize = new Vector2(100, 0) };
+            nameLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+            nameLabel.AddThemeFontSizeOverride("font_size", 16);
+            row.AddChild(nameLabel);
+
+            if (gm.Craft.IsRecipeUnlocked(key))
+            {
+                var owned = new Label { Text = "已拥有", CustomMinimumSize = new Vector2(80, 0) };
+                owned.AddThemeColorOverride("font_color", ThemeColors.TextDim);
+                owned.AddThemeFontSizeOverride("font_size", 14);
+                row.AddChild(owned);
+            }
+            else
+            {
+                int price = gm.Shop.GetRecipeUnlockPrice(key);
+                var priceLabel = new Label { Text = $"{price}金", CustomMinimumSize = new Vector2(60, 0) };
+                priceLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
+                priceLabel.AddThemeFontSizeOverride("font_size", 14);
+                row.AddChild(priceLabel);
+
+                var unlockBtn = new Button { Text = "解锁", CustomMinimumSize = new Vector2(56, 30) };
+                ThemeColors.StyleButton(unlockBtn, 14);
+                string rKey = key;
+                unlockBtn.Pressed += () => {
+                    if (gm.BuyRecipeUnlock(rKey))
+                    {
+                        UpdateGoldDisplay();
+                        BuildRecipeRows(gm);
+                    }
+                };
+                row.AddChild(unlockBtn);
+            }
+
+            _recipeList.AddChild(row);
+        }
     }
 }
