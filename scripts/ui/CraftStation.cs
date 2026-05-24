@@ -28,6 +28,7 @@ public partial class CraftStation : Control
 
     private GameManager _gm;
     private Control _overlayMenu;
+    private ColorRect _dialogueOverlay;
 
     public string MaterialInSlot1 => _slot1Label != null && _slot1Label.Text != "空" ? _slot1Label.Text : null;
     public string MaterialInSlot2 => _slot2Label != null && _slot2Label.Text != "空" ? _slot2Label.Text : null;
@@ -42,6 +43,7 @@ public partial class CraftStation : Control
     {
         _gm = GetNode<GameManager>("/root/GameManager");
         _overlayMenu = GetNodeOrNull<Control>("../OverlayMenu");
+        _dialogueOverlay = GetNodeOrNull<ColorRect>("../DialogueOverlay");
 
         _slot1 = GetNode<ColorRect>("Slot1");
         _slot2 = GetNode<ColorRect>("Slot2");
@@ -78,15 +80,23 @@ public partial class CraftStation : Control
 
         // 快捷栏引用
         var bar = GetNode<Control>("../ShortcutBar");
+        bar.MouseFilter = MouseFilterEnum.Ignore;
         for (int i = 0; i < 10; i++)
         {
             _shortcutSlots[i] = bar.GetNode<ColorRect>($"Slot{i}");
+            _shortcutSlots[i].MouseFilter = MouseFilterEnum.Ignore;
             _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
+            _shortcutLabels[i].MouseFilter = MouseFilterEnum.Ignore;
         }
 
-        // 从库存同步到快捷栏
-        SyncFromInventory();
-        _gm.InventoryChanged += SyncFromInventory;
+        // 合成槽和自身设为 Ignore，让鼠标事件穿透到 _Input，不然 GUI 系统会吃掉事件
+        MouseFilter = MouseFilterEnum.Ignore;
+        _slot1.MouseFilter = MouseFilterEnum.Ignore;
+        _slot2.MouseFilter = MouseFilterEnum.Ignore;
+        _slot1Label.MouseFilter = MouseFilterEnum.Ignore;
+        _slot2Label.MouseFilter = MouseFilterEnum.Ignore;
+        _resultSlot.MouseFilter = MouseFilterEnum.Ignore;
+        _resultLabel.MouseFilter = MouseFilterEnum.Ignore;
 
         // Apply small button theme to gesture/action buttons
         ThemeColors.StyleSmallButton(_heatBtn, 12);
@@ -103,6 +113,16 @@ public partial class CraftStation : Control
         _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
         for (int i = 0; i < 10; i++)
             _shortcutSlots[i].Color = slotInnerColor;
+
+        // 从库存同步到快捷栏（必须在初始化槽位颜色之后调用，否则颜色会被覆盖）
+        SyncFromInventory();
+        _gm.InventoryChanged += SyncFromInventory;
+    }
+
+    public override void _ExitTree()
+    {
+        if (_gm != null)
+            _gm.InventoryChanged -= SyncFromInventory;
     }
 
     /// 从 GameManager._inv 重建快捷栏显示
@@ -228,6 +248,7 @@ public partial class CraftStation : Control
     public override void _Input(InputEvent e)
     {
         if (_overlayMenu?.Visible == true) return;
+        if (_dialogueOverlay?.Visible == true) return;
 
         if (e is InputEventMouseButton mb)
         {
@@ -307,7 +328,6 @@ public partial class CraftStation : Control
 
     private void TryDrop(Vector2 pos)
     {
-        // 菜单打开时：只允许拖到快捷栏
         var menuOpen = _overlayMenu?.Visible == true;
 
         if (!menuOpen)
@@ -317,7 +337,7 @@ public partial class CraftStation : Control
             if (HitTest(customerArea, pos))
             {
                 var gm = GetNode<GameManager>("/root/GameManager");
-                if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+                if (gm.Guests.HasGuest && _dragMaterial != null && gm.Craft.Recipes.ContainsKey(_dragMaterial))
                 {
                     gm.Craft.CraftedKey = _dragMaterial;
                     gm.Craft.GestureDragDone = true;
@@ -330,6 +350,8 @@ public partial class CraftStation : Control
                     ServeRequested?.Invoke();
                     return;
                 }
+                // 条件不满足（没客人/不是成品）→ 归还材料
+                ReturnDrag();
                 EndDrag();
                 return;
             }
@@ -411,7 +433,7 @@ public partial class CraftStation : Control
             : GameManager.MaterialColor(BarMaterials[i]);
         string matName = BarMaterials[i] switch
         {
-            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药",
+            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药", "SleepPowder" => "沉睡花粉",
             _ => BarMaterials[i]
         };
         _shortcutLabels[i].Text = string.IsNullOrEmpty(BarMaterials[i]) ? "" : $"{matName} x{BarCounts[i]}";

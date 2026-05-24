@@ -1,8 +1,5 @@
 ~ start
 
-if ryan_drugged
-    => END
-
 if serve_result == "success"
     莱恩: 好肉！明天就靠这块肉打赢地牢了！
     莱恩: 谢了老板！

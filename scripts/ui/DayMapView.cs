@@ -46,7 +46,6 @@ public partial class DayMapView : Node2D
     private VBoxContainer _materialList;
     private VBoxContainer _recipeList;
     private bool _isMiraShop;
-    private Dictionary<string, Label> _matQtyLabels = new();
 
     public event System.Action<Dictionary<string, int>> GatheringConfirmed;
 
@@ -296,6 +295,14 @@ public partial class DayMapView : Node2D
         mapArea.AddChild(tabRow);
         mapArea.MoveChild(tabRow, 0);
 
+        // 把原有节点往下移，给 tab 栏腾空间
+        var titleLabel = mapArea.GetNode<Label>("TitleLabel");
+        titleLabel.OffsetTop = 45;
+        titleLabel.OffsetBottom = 80;
+        var locationList = mapArea.GetNode<VBoxContainer>("LocationList");
+        locationList.OffsetTop = 95;
+        locationList.OffsetBottom = 420;
+
         UpdateTabAppearance();
     }
 
@@ -327,40 +334,44 @@ public partial class DayMapView : Node2D
 
     private void BuildShopUI()
     {
-        _shopPanel = new Control();
+        _shopPanel = new ScrollContainer();
         _shopPanel.AnchorLeft = 0;
         _shopPanel.AnchorRight = 1;
         _shopPanel.OffsetLeft = 0;
-        _shopPanel.OffsetTop = 50;
+        _shopPanel.OffsetTop = 95;
         _shopPanel.OffsetRight = 1000;
         _shopPanel.OffsetBottom = 420;
         _shopPanel.Visible = false;
         GetNode<Control>("MapArea").AddChild(_shopPanel);
 
+        var shopContent = new VBoxContainer();
+        shopContent.AddThemeConstantOverride("separation", 8);
+        _shopPanel.AddChild(shopContent);
+
         _shopTitle = new Label();
         _shopTitle.CustomMinimumSize = new Vector2(0, 36);
         ThemeColors.StyleHeader(_shopTitle, 22);
-        _shopPanel.AddChild(_shopTitle);
+        shopContent.AddChild(_shopTitle);
 
         var matTitle = new Label { Text = "—— 购买材料 ——" };
         matTitle.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
         matTitle.AddThemeFontSizeOverride("font_size", 16);
         matTitle.CustomMinimumSize = new Vector2(0, 30);
-        _shopPanel.AddChild(matTitle);
+        shopContent.AddChild(matTitle);
 
         _materialList = new VBoxContainer();
         _materialList.AddThemeConstantOverride("separation", 4);
-        _shopPanel.AddChild(_materialList);
+        shopContent.AddChild(_materialList);
 
         var recipeTitle = new Label { Text = "—— 解锁配方 ——" };
         recipeTitle.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
         recipeTitle.AddThemeFontSizeOverride("font_size", 16);
         recipeTitle.CustomMinimumSize = new Vector2(0, 30);
-        _shopPanel.AddChild(recipeTitle);
+        shopContent.AddChild(recipeTitle);
 
         _recipeList = new VBoxContainer();
         _recipeList.AddThemeConstantOverride("separation", 4);
-        _shopPanel.AddChild(_recipeList);
+        shopContent.AddChild(_recipeList);
     }
 
     private void RefreshShopUI()
@@ -380,7 +391,6 @@ public partial class DayMapView : Node2D
     {
         foreach (var child in _materialList.GetChildren())
             child.QueueFree();
-        _matQtyLabels.Clear();
 
         var materials = new[] { ("Ale", "麦芽"), ("Wine", "葡萄"), ("Bread", "面粉"), ("Meat", "生肉"), ("Herb", "草药") };
 
@@ -411,7 +421,6 @@ public partial class DayMapView : Node2D
             var qtyLabel = new Label { Text = "0", CustomMinimumSize = new Vector2(30, 0), HorizontalAlignment = HorizontalAlignment.Center };
             qtyLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
             qtyLabel.AddThemeFontSizeOverride("font_size", 18);
-            _matQtyLabels[key] = qtyLabel;
             var addBtn = new Button { Text = "+", CustomMinimumSize = new Vector2(36, 30) };
             ThemeColors.StyleButton(addBtn, 14);
 
@@ -475,6 +484,7 @@ public partial class DayMapView : Node2D
             else
             {
                 int price = gm.Shop.GetRecipeUnlockPrice(key);
+                if (price < 0) { _recipeList.AddChild(row); return; }
                 var priceLabel = new Label { Text = $"{price}金", CustomMinimumSize = new Vector2(60, 0) };
                 priceLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
                 priceLabel.AddThemeFontSizeOverride("font_size", 14);

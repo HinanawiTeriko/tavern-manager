@@ -32,10 +32,12 @@ public partial class GameManager : Node
     private Dictionary<string, int> _inv;
     public Dictionary<string, int> Inventory => _inv;
     public event Action InventoryChanged;
-    public void NotifyInventoryChanged() => InventoryChanged?.Invoke();
-
-    private static readonly Dictionary<string, string> MN = new()
-    { ["Ale"] = "麦芽", ["Wine"] = "葡萄", ["Bread"] = "面粉", ["Meat"] = "生肉", ["Herb"] = "草药" };
+    public void NotifyInventoryChanged()
+    {
+        if (_inv.TryGetValue("SleepPowder", out var sp) && sp > 0)
+            Narrative.SetVar("has_sleep_powder", true);
+        InventoryChanged?.Invoke();
+    }
 
     // ── 对话状态 ──
     private bool _isDialogueActive;
@@ -196,7 +198,6 @@ public partial class GameManager : Node
                         }
                         else
                         {
-                            GD.Print($"[GameManager] post 对话不存在: {postPath}，直接清除客人");
                             Guests.ClearGuest();
                         }
                     }
@@ -253,9 +254,13 @@ public partial class GameManager : Node
         {
             var loc = System.Array.Find(locations, l => l.Id == locId);
             if (loc == null) continue;
+            // 第2天在菌菇林地必定采集到沉睡花粉（保证玩家能体验下药剧情）
+            var materials = (Economy.CurrentDay == 2 && locId == "mushroom_forest")
+                ? new[] { "SleepPowder" }
+                : loc.Materials;
             for (int i = 0; i < count; i++)
             {
-                var mat = loc.Materials[rng.Next(loc.Materials.Length)];
+                var mat = materials[rng.Next(materials.Length)];
                 _inv[mat] = _inv.TryGetValue(mat, out var existing) ? existing + 1 : 1;
             }
         }
@@ -325,12 +330,28 @@ public partial class GameManager : Node
         if (dialogueResource == null)
         {
             GD.PrintErr($"[GameManager] 对话文件加载失败: {dialoguePath}");
+            RecoverFromDialogueFailure();
             return;
         }
         var extraStates = new Godot.Collections.Array<Variant> { Narrative.DialogueVars };
         var balloon = DialogueManager.ShowExampleDialogueBalloon(dialogueResource, "start", extraStates);
-        if (balloon != null)
-            balloon.Set("will_block_other_input", false);
+        if (balloon == null)
+        {
+            GD.PrintErr($"[GameManager] 显示对话气球失败: {dialoguePath}");
+            RecoverFromDialogueFailure();
+            return;
+        }
+        balloon.Set("will_block_other_input", false);
+    }
+
+    private void RecoverFromDialogueFailure()
+    {
+        _dialoguePhase = null;
+        _isDialogueActive = false;
+        if (_tavernView != null && GodotObject.IsInstanceValid(_tavernView))
+            _tavernView.SetDialogueMode(false);
+        if (Guests.HasGuest && Guests.CurrentGuest.HasDialogue)
+            Guests.ClearGuest();
     }
 
     private void OnGuestLeft()
@@ -451,6 +472,7 @@ public partial class GameManager : Node
             "Bread" => new(0.7f, 0.55f, 0.3f),
             "Meat" => new(0.65f, 0.2f, 0.1f),
             "Herb" => new(0.2f, 0.7f, 0.2f),
+            "SleepPowder" => new(0.55f, 0.4f, 0.75f),
             _ => Colors.Gray
         };
     }

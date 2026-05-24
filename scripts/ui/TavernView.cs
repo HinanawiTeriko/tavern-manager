@@ -46,6 +46,9 @@ public partial class TavernView : Node2D
 
         // -- Apply design system theme --
         ApplyTheme();
+
+        // BottomBar covers y=695-720 and overlaps ShortcutBar; must not consume clicks
+        GetNode<Control>("BottomBar").MouseFilter = Control.MouseFilterEnum.Ignore;
     }
 
     private void ApplyTheme()
@@ -204,12 +207,6 @@ public partial class TavernView : Node2D
     public void SetDialogueMode(bool active)
     {
         _dialogueOverlay.Visible = active;
-        CraftStation.MouseFilter = active
-            ? Control.MouseFilterEnum.Ignore
-            : Control.MouseFilterEnum.Stop;
-        ShortcutBar.MouseFilter = active
-            ? Control.MouseFilterEnum.Ignore
-            : Control.MouseFilterEnum.Stop;
     }
 
     public override void _ExitTree()

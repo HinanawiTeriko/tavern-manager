@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://b5v265rnmhrot"
+path="res://.godot/imported/ryan_day2.pre.dialogue-984384a866d9eb3693947ed87c0ea839.tres"
+
+[deps]
+
+source_file="res://dialogue/ryan_day2.pre.dialogue"
+dest_files=["res://.godot/imported/ryan_day2.pre.dialogue-984384a866d9eb3693947ed87c0ea839.tres"]
+
+[params]
+
+defaults=true
