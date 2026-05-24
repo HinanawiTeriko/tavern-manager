@@ -60,7 +60,11 @@ public partial class GameManager : Node
 
         // 夜晚客人逻辑
         if (DayCycle.Phase == DayPhase.Night && _tavernView != null)
+        {
             Guests.Update(dt, Guests.HasGuest, false);
+            if (Guests.HasGuest)
+                _tavernView.UpdateTimer(Guests.CurrentGuest.Patience / GuestData.BasePatience);
+        }
     }
 
     public void RegisterView(Node view)
@@ -227,10 +231,21 @@ public partial class GameManager : Node
     private void OnGuestArrived(GuestData guest)
     {
         if (_tavernView == null) return;
+
+        // 始终显示客人信息
+        var recipe = Craft.GetRecipe(guest.OrderKey);
+        var displayName = guest.Name;
+        if (guest.HasDialogue)
+        {
+            var npc = Narrative.AllNpcs.FirstOrDefault(n => n.Id == guest.NpcId);
+            if (npc != null) displayName = npc.Name;
+        }
+        _tavernView.ShowCustomer(displayName, recipe?.Name ?? guest.OrderKey,
+            Craft.MaterialColor(recipe?.Materials.Length > 0 ? recipe.Materials[0] : "Ale"));
+
         if (guest.HasDialogue)
         {
             Narrative.TodayImportantNpc = guest.NpcId;
-            // 触发 Dialogue Manager 对话
             try
             {
                 var dm = DialogueManager.Instance;
@@ -244,12 +259,6 @@ public partial class GameManager : Node
             {
                 /* Dialogue Manager 可能未就绪 */
             }
-        }
-        else
-        {
-            var recipe = Craft.GetRecipe(guest.OrderKey);
-            _tavernView.ShowCustomer(guest.Name, recipe?.Name ?? guest.OrderKey,
-                Craft.MaterialColor(recipe?.Materials[0] ?? "Ale"));
         }
     }
 

@@ -144,6 +144,15 @@ public partial class CraftStation : Control
 
     private void TryPickUp(Vector2 pos)
     {
+        // 成品槽优先——拖成品去快捷栏或客人区
+        if (HitTest(_resultSlot, pos) && !string.IsNullOrEmpty(ResultKey))
+        {
+            string key = ResultKey;
+            StartDrag(pos, key);
+            _resultLabel.Text = "";
+            ResultKey = null;
+            return;
+        }
         if (HitTest(_slot1, pos) && !string.IsNullOrEmpty(MaterialInSlot1))
         {
             StartDrag(pos, MaterialInSlot1);
@@ -174,6 +183,28 @@ public partial class CraftStation : Control
 
     private void TryDrop(Vector2 pos)
     {
+        // 拖到客人区 → 上菜
+        var customerArea = GetNode<Control>("../CustomerArea");
+        if (HitTest(customerArea, pos))
+        {
+            // 如果是快捷栏的成品 → 检查是否匹配订单，直接上菜
+            var gm = GetNode<GameManager>("/root/GameManager");
+            if (gm.Guests.HasGuest && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+            {
+                gm.Craft.CraftedKey = _dragMaterial;
+                gm.Craft.GestureDragDone = true;
+                gm.Craft.GestureShakeDone = true;
+                gm.Craft.GestureHeatDone = true;
+                gm.Craft.GestureStirDone = true;
+                ResultKey = null;
+                _resultLabel.Text = "";
+                EndDrag();
+                ServeRequested?.Invoke();
+                return;
+            }
+            EndDrag();
+            return;
+        }
         if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
         {
             _slot1Label.Text = _dragMaterial;
