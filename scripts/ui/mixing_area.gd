@@ -85,7 +85,7 @@ func _draw() -> void:
 
 	for i in range(_items.size()):
 		var item = _gm.Craft.get_item(_items[i])
-		var c: Color = Colors.GRAY
+		var c: Color = Color.GRAY
 		if not item.is_empty():
 			var col_arr = item.get("color", [])
 			if col_arr is Array and col_arr.size() >= 3:

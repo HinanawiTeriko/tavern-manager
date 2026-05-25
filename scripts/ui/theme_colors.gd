@@ -35,7 +35,7 @@ var _cached_panel_parchment: StyleBoxTexture = null
 var _cached_bar_shortcut_bg: StyleBoxTexture = null
 var _cached_bar_top_panel: StyleBoxTexture = null
 
-static func _get() -> ThemeColors:
+static func instance() -> ThemeColors:
 	if _inst == null:
 		_inst = ThemeColors.new()
 	return _inst
@@ -75,7 +75,7 @@ static func style_button(btn: Button, font_size: int = 16) -> void:
 	btn.add_theme_color_override("font_color", TEXT_ON_AMBER)
 	btn.add_theme_color_override("font_hover_color", TEXT_ON_AMBER)
 	btn.add_theme_color_override("font_pressed_color", TEXT_ON_AMBER)
-	var inst = _get()
+	var inst = instance()
 	var tex_normal = inst._btn_wide_normal()
 	var tex_hover = inst._btn_wide_hover()
 	var tex_pressed = inst._btn_wide_pressed()
@@ -93,7 +93,7 @@ static func style_small_button(btn: Button, font_size: int = 13) -> void:
 	btn.add_theme_color_override("font_color", TEXT_ON_AMBER)
 	btn.add_theme_color_override("font_hover_color", TEXT_ON_AMBER)
 	btn.add_theme_color_override("font_pressed_color", TEXT_ON_AMBER)
-	var inst = _get()
+	var inst = instance()
 	var tex_normal = inst._btn_small_normal()
 	var tex_hover = inst._btn_small_hover()
 	var tex_pressed = inst._btn_small_pressed()

@@ -386,9 +386,9 @@ func _start_drag(pos: Vector2, material: String) -> void:
 		if col_arr is Array and col_arr.size() >= 3:
 			_drag_panel.color = Color(col_arr[0], col_arr[1], col_arr[2])
 		else:
-			_drag_panel.color = Colors.GRAY
+			_drag_panel.color = Color.GRAY
 	else:
-		_drag_panel.color = Colors.GRAY
+		_drag_panel.color = Color.GRAY
 
 func _end_drag() -> void:
 	_dragging = false
@@ -483,9 +483,9 @@ func _refresh_shortcut(i: int) -> void:
 			if col_arr is Array and col_arr.size() >= 3:
 				_shortcut_slots[i].color = Color(col_arr[0], col_arr[1], col_arr[2])
 			else:
-				_shortcut_slots[i].color = Colors.GRAY
+				_shortcut_slots[i].color = Color.GRAY
 		else:
-			_shortcut_slots[i].color = Colors.GRAY
+			_shortcut_slots[i].color = Color.GRAY
 		_shortcut_labels[i].text = "%s x%d" % [item.get("name", bar_materials[i]), bar_counts[i]]
 
 func refresh_all() -> void:

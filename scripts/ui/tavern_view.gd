@@ -73,7 +73,7 @@ func _apply_theme() -> void:
 	ThemeColors.style_button($TopPanel/MenuButton, 14)
 	ThemeColors.style_button(_end_night_btn, 14)
 
-	var parchment_tex = ThemeColors._get().panel_parchment()
+	var parchment_tex = ThemeColors.instance().panel_parchment()
 	if parchment_tex != null:
 		_menu_panel.add_theme_stylebox_override("panel", parchment_tex)
 	else:
@@ -108,7 +108,7 @@ func _apply_theme() -> void:
 		_timer_bar.add_theme_stylebox_override("fill", patience_fill)
 	_timer_bar.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 
-	var top_bar_tex = ThemeColors._get().bar_top_panel()
+	var top_bar_tex = ThemeColors.instance().bar_top_panel()
 	var top_panel_bg = get_node_or_null("TopPanelBg")
 	if top_panel_bg != null:
 		if top_bar_tex != null:
@@ -120,7 +120,7 @@ func _apply_theme() -> void:
 			sb.border_color = ThemeColors.PANEL_BORDER
 			top_panel_bg.add_theme_stylebox_override("panel", sb)
 
-	var shortcut_bg_tex = ThemeColors._get().bar_shortcut_bg()
+	var shortcut_bg_tex = ThemeColors.instance().bar_shortcut_bg()
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
 		if shortcut_bg_tex != null:
@@ -214,7 +214,7 @@ func _build_recipe_list() -> void:
 			row.add_child(tex_rect)
 		else:
 			var col_arr = item_data.get("color", [])
-			var mat_color = Colors.GRAY
+			var mat_color = Color.GRAY
 			if col_arr is Array and col_arr.size() >= 3:
 				mat_color = Color(col_arr[0], col_arr[1], col_arr[2])
 			var box = ColorRect.new()
@@ -260,7 +260,7 @@ func _build_backpack_list() -> void:
 		else:
 			var mat_item: Dictionary = _gm.Craft.get_item(mat)
 			var col_arr = mat_item.get("color", [])
-			var mat_color = Colors.GRAY
+			var mat_color = Color.GRAY
 			if col_arr is Array and col_arr.size() >= 3:
 				mat_color = Color(col_arr[0], col_arr[1], col_arr[2])
 			var box = ColorRect.new()
