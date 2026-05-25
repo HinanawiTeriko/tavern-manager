@@ -3,134 +3,103 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 
-public class RecipeData
-{
-    public string Key { get; set; }
-    public string Name { get; set; }
-    public string[] Materials { get; set; }
-    public int Price { get; set; }
-    public string[] Gestures { get; set; }
-    public string Icon { get; set; }
-}
-
-public class MaterialData
+public class ItemData
 {
     public string Name { get; set; }
     public float[] Color { get; set; }
+    public int Price { get; set; }
 }
 
-public class RecipeFile
+public class CombineRule
 {
-    public RecipeData[] Recipes { get; set; }
-    public Dictionary<string, MaterialData> Materials { get; set; }
+    public string A { get; set; }
+    public string B { get; set; }
+    public string Result { get; set; }
+}
+
+public class CombineFile
+{
+    public CombineRule[] Combines { get; set; }
 }
 
 public class CraftSystem
 {
-    public Dictionary<string, RecipeData> Recipes { get; private set; } = new();
-    public Dictionary<string, MaterialData> Materials { get; private set; } = new();
-    public string[] RecipeKeys { get; private set; }
+    // ── 物品字典 ──
+    public Dictionary<string, ItemData> Items { get; private set; } = new();
 
+    // ── 加工图: item_key → { operation → result_key } ──
+    private Dictionary<string, Dictionary<string, string>> _ops = new();
+
+    // ── 组合规则: 按 (a,b) 排序存储 ──
+    private Dictionary<(string, string), string> _combine = new();
+
+    // ── 配方解锁（兼容旧 ShopSystem） ──
     public HashSet<string> UnlockedRecipes { get; private set; } = new();
+    public bool IsRecipeUnlocked(string key) => UnlockedRecipes.Contains(key);
+    public void UnlockRecipe(string key) => UnlockedRecipes.Add(key);
 
-    public bool IsRecipeUnlocked(string recipeKey) => UnlockedRecipes.Contains(recipeKey);
+    // ── 加载 ──
 
-    public void UnlockRecipe(string recipeKey)
+    public void LoadData()
     {
-        UnlockedRecipes.Add(recipeKey);
-        GD.Print($"[Craft] 配方已解锁: {recipeKey}");
+        LoadItems();
+        LoadOperations();
+        LoadCombines();
+        GD.Print($"[Craft] 加载 {Items.Count} 种物品, {_ops.Count} 个加工节点, {_combine.Count} 条组合规则");
     }
 
-    public string Slot1 { get; set; }
-    public string Slot2 { get; set; }
-    public string CraftedKey { get; set; }
-
-    public bool GestureDragDone { get; set; }
-    public bool GestureShakeDone { get; set; }
-    public bool GestureHeatDone { get; set; }
-    public bool GestureStirDone { get; set; }
-
-    public void LoadRecipes()
+    private void LoadItems()
     {
-        using var file = FileAccess.Open("res://data/recipes.json", FileAccess.ModeFlags.Read);
+        using var file = FileAccess.Open("res://data/items.json", FileAccess.ModeFlags.Read);
         var json = file.GetAsText();
-        var data = JsonSerializer.Deserialize<RecipeFile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        foreach (var r in data.Recipes)
-            Recipes[r.Key] = r;
-        Materials = data.Materials;
-        RecipeKeys = Recipes.Keys.ToArray();
-        GD.Print($"[Craft] 加载 {Recipes.Count} 个配方, {Materials.Count} 种材料");
-
-        // 5 basic single-material recipes unlocked by default
-        var defaultUnlocked = new[] { "Ale", "Wine", "Bread", "Meat", "Herb Tea" };
-        foreach (var key in defaultUnlocked)
-            UnlockedRecipes.Add(key);
+        Items = JsonSerializer.Deserialize<Dictionary<string, ItemData>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
-    public bool TryMatch(string mat1, string mat2, out string recipeKey)
+    private void LoadOperations()
     {
-        recipeKey = null;
-        var input = new List<string>();
-        if (!string.IsNullOrEmpty(mat1)) input.Add(mat1);
-        if (!string.IsNullOrEmpty(mat2)) input.Add(mat2);
-        input.Sort();
+        using var file = FileAccess.Open("res://data/operations.json", FileAccess.ModeFlags.Read);
+        var json = file.GetAsText();
+        var raw = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        _ops = raw ?? new();
+    }
 
-        foreach (var (key, recipe) in Recipes)
+    private void LoadCombines()
+    {
+        // 组合规则以硬编码方式加载（数据量小）
+        foreach (var (a, b, r) in new[] {
+            ("dough", "meat_raw", "dough_meat"),
+            ("ale", "herb", "ale_herb"),
+            ("grape", "herb", "grape_herb"),
+            ("meat_raw", "ale", "meat_stew_raw"),
+        })
         {
-            var required = new List<string>(recipe.Materials);
-            required.Sort();
-            if (input.SequenceEqual(required))
-            {
-                recipeKey = key;
-                return true;
-            }
+            _combine[(a, b)] = r;
+            _combine[(b, a)] = r; // 对称
         }
-        return false;
     }
 
-    public bool AllGesturesDone(string recipeKey)
-    {
-        if (!Recipes.TryGetValue(recipeKey, out var recipe)) return false;
-        foreach (var g in recipe.Gestures)
-        {
-            switch (g)
-            {
-                case "drag": if (!GestureDragDone) return false; break;
-                case "shake": if (!GestureShakeDone) return false; break;
-                case "heat": if (!GestureHeatDone) return false; break;
-                case "stir": if (!GestureStirDone) return false; break;
-            }
-        }
-        return true;
-    }
+    // ── 查询 ──
 
-    public void ResetGestures()
-    {
-        GestureDragDone = false;
-        GestureShakeDone = false;
-        GestureHeatDone = false;
-        GestureStirDone = false;
-    }
+    public ItemData GetItem(string key) =>
+        Items.TryGetValue(key, out var item) ? item : null;
 
-    public void ClearCraftSlots()
-    {
-        Slot1 = null;
-        Slot2 = null;
-        CraftedKey = null;
-        ResetGestures();
-    }
+    /// 返回某物品的所有可用操作及产物
+    public Dictionary<string, string> GetOperations(string key) =>
+        _ops.TryGetValue(key, out var ops) ? ops : new();
 
-    public RecipeData GetRecipe(string key) =>
-        Recipes.TryGetValue(key, out var r) ? r : null;
+    /// 是否有可用操作（有操作 = 可继续加工）
+    public bool HasOperations(string key) => _ops.ContainsKey(key);
 
-    public Color MaterialColor(string key)
+    /// price > 0 视为可售成品
+    public bool IsProduct(string key) =>
+        Items.TryGetValue(key, out var item) && item.Price > 0;
+
+    /// 检查两物品是否可组合
+    public string GetCombineResult(string a, string b)
     {
-        if (Materials.TryGetValue(key, out var m))
-        {
-            var c = m.Color;
-            return new Color(c[0], c[1], c[2]);
-        }
-        return Colors.Gray;
+        if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b)) return null;
+        return _combine.TryGetValue((a, b), out var result) ? result : null;
     }
 }
