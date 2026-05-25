@@ -84,7 +84,7 @@ func _draw() -> void:
 	item_w = min(item_w, 100.0)
 
 	for i in range(_items.size()):
-		var item = _gm.Craft.get_item(_items[i])
+		var item = _gm.craft.get_item(_items[i])
 		var c: Color = Color.GRAY
 		if not item.is_empty():
 			var col_arr = item.get("color", [])

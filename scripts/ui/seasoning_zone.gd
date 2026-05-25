@@ -63,17 +63,17 @@ func deactivate() -> void:
 func try_apply_seasoning(item_key: String) -> bool:
 	if not visible:
 		return false
-	var seasoning: Dictionary = _gm.Seasoning.get_seasoning(item_key)
+	var seasoning: Dictionary = _gm.seasoning.get_seasoning(item_key)
 	if seasoning.is_empty():
 		return false
 
 	if item_key == "sleep_powder":
-		if not _gm.Inventory.has(item_key) or _gm.Inventory[item_key] < 1:
+		if not _gm.inventory.has(item_key) or _gm.inventory[item_key] < 1:
 			return false
-		_gm.Inventory[item_key] = _gm.Inventory[item_key] - 1
-		if _gm.Inventory[item_key] <= 0:
-			_gm.Inventory.erase(item_key)
-		_gm.NotifyInventoryChanged()
+		_gm.inventory[item_key] = _gm.inventory[item_key] - 1
+		if _gm.inventory[item_key] <= 0:
+			_gm.inventory.erase(item_key)
+		_gm.notify_inventory_changed()
 
 	_apply_seasoning(item_key)
 	return true
@@ -91,7 +91,7 @@ func clear_seasoning() -> void:
 
 func _apply_seasoning(key: String) -> void:
 	_applied_seasoning = key
-	var seasoning: Dictionary = _gm.Seasoning.get_seasoning(key)
+	var seasoning: Dictionary = _gm.seasoning.get_seasoning(key)
 	_applied_label.text = "已加: " + seasoning.get("name", key)
 	_applied_label.visible = true
 	_hint_label.visible = false
@@ -104,10 +104,10 @@ func _rebuild_buttons() -> void:
 	for child in _btn_row.get_children():
 		child.queue_free()
 
-	for key in _gm.Seasoning.seasonings:
-		var data: Dictionary = _gm.Seasoning.seasonings[key]
+	for key in _gm.seasoning.seasonings:
+		var data: Dictionary = _gm.seasoning.seasonings[key]
 		if key == "sleep_powder":
-			if not _gm.Inventory.has(key) or _gm.Inventory[key] < 1:
+			if not _gm.inventory.has(key) or _gm.inventory[key] < 1:
 				continue
 
 		var btn = Button.new()

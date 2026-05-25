@@ -29,7 +29,7 @@ func _refresh() -> void:
 	var products: Array = []
 
 	for key in contents:
-		var ops: Dictionary = _gm.Craft.get_operations(key)
+		var ops: Dictionary = _gm.craft.get_operations(key)
 		for result_key in ops.values():
 			if not products.has(result_key):
 				products.append(result_key)
@@ -42,12 +42,12 @@ func _refresh() -> void:
 	if distinct.size() >= 2:
 		for i in range(distinct.size()):
 			for j in range(i + 1, distinct.size()):
-				var combined = _gm.Craft.get_combine_result(distinct[i], distinct[j])
+				var combined = _gm.craft.get_combine_result(distinct[i], distinct[j])
 				if combined != "" and not products.has(combined):
 					products.append(combined)
 
 	for key in products:
-		var item: Dictionary = _gm.Craft.get_item(key)
+		var item: Dictionary = _gm.craft.get_item(key)
 		if item.is_empty():
 			continue
 		var btn = Button.new()
@@ -64,7 +64,7 @@ func _on_product_selected(key: String) -> void:
 		return
 
 	for c in contents:
-		var ops: Dictionary = _gm.Craft.get_operations(c)
+		var ops: Dictionary = _gm.craft.get_operations(c)
 		if ops.values().has(key):
 			_mixing_area.consume_and_replace([c], key)
 			return
@@ -72,6 +72,6 @@ func _on_product_selected(key: String) -> void:
 	if contents.size() >= 2:
 		for i in range(contents.size()):
 			for j in range(i + 1, contents.size()):
-				if _gm.Craft.get_combine_result(contents[i], contents[j]) == key:
+				if _gm.craft.get_combine_result(contents[i], contents[j]) == key:
 					_mixing_area.consume_and_replace([contents[i], contents[j]], key)
 					return

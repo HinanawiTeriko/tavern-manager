@@ -76,7 +76,7 @@ func _ready() -> void:
 
 	_combine_yes_btn.pressed.connect(func():
 		_combine_query_bar.visible = false
-		var result = _gm.Craft.get_combine_result(_pending_a, _pending_b)
+		var result = _gm.craft.get_combine_result(_pending_a, _pending_b)
 		if result != "":
 			_mixing_area.clear_items()
 			_mixing_area.force_add_item(result)
@@ -120,8 +120,8 @@ func _exit_tree() -> void:
 func _show_combine_query(a: String, b: String) -> void:
 	_pending_a = a
 	_pending_b = b
-	var item_a: Dictionary = _gm.Craft.get_item(a)
-	var item_b: Dictionary = _gm.Craft.get_item(b)
+	var item_a: Dictionary = _gm.craft.get_item(a)
+	var item_b: Dictionary = _gm.craft.get_item(b)
 	_combine_query_label.text = "混合 " + item_a.get("name", a) + " 和 " + item_b.get("name", b) + "？"
 	_combine_query_bar.visible = true
 
@@ -134,7 +134,7 @@ func _refresh_operation_buttons() -> void:
 		return
 
 	var first_key: String = contents[0]
-	var ops: Dictionary = _gm.Craft.get_operations(first_key)
+	var ops: Dictionary = _gm.craft.get_operations(first_key)
 	if ops.size() == 0:
 		return
 
@@ -206,12 +206,12 @@ func _check_result_ready() -> void:
 	var contents: Array = _mixing_area._items
 	if contents.size() == 1:
 		var key: String = contents[0]
-		if not _gm.Craft.has_operations(key):
+		if not _gm.craft.has_operations(key):
 			_move_to_result_slot(key)
 			_mixing_area.clear_items()
 
 func _move_to_result_slot(key: String) -> void:
-	var item: Dictionary = _gm.Craft.get_item(key)
+	var item: Dictionary = _gm.craft.get_item(key)
 	if not item.is_empty():
 		var col_arr = item.get("color", [])
 		if col_arr is Array and col_arr.size() >= 3:
@@ -329,10 +329,10 @@ func _try_drop(pos: Vector2) -> void:
 	if not menu_open:
 		var customer_area = get_node("../CustomerArea")
 		if _hit_test(customer_area, pos):
-			if _gm.Guests.has_guest and _drag_material != "":
+			if _gm.guests.has_guest and _drag_material != "":
 				var serve_key = _drag_material
 				var serve_seasoning = _seasoning_zone.get_applied_seasoning()
-				var item: Dictionary = _gm.Craft.get_item(serve_key)
+				var item: Dictionary = _gm.craft.get_item(serve_key)
 				if not item.is_empty():
 					_result_slot.set_meta("item_key", serve_key)
 					_result_slot.set_meta("seasoning", serve_seasoning)
@@ -380,7 +380,7 @@ func _start_drag(pos: Vector2, material: String) -> void:
 	_drag_panel.visible = true
 	_drag_panel.size = Vector2(64, 64)
 	_drag_panel.position = pos - Vector2(32, 32)
-	var item: Dictionary = _gm.Craft.get_item(material)
+	var item: Dictionary = _gm.craft.get_item(material)
 	if not item.is_empty():
 		var col_arr = item.get("color", [])
 		if col_arr is Array and col_arr.size() >= 3:
@@ -416,7 +416,7 @@ func _init_shortcut_bar() -> void:
 func _init_drag_panel() -> void:
 	var drag_canvas = CanvasLayer.new()
 	drag_canvas.layer = 1
-	get_parent().add_child(drag_canvas)
+	get_parent().call_deferred("add_child", drag_canvas)
 	_drag_panel = ColorRect.new()
 	_drag_panel.visible = false
 	_drag_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -477,7 +477,7 @@ func _refresh_shortcut(i: int) -> void:
 		_shortcut_slots[i].color = Color(0.1, 0.08, 0.06)
 		_shortcut_labels[i].text = ""
 	else:
-		var item: Dictionary = _gm.Craft.get_item(bar_materials[i])
+		var item: Dictionary = _gm.craft.get_item(bar_materials[i])
 		if not item.is_empty():
 			var col_arr = item.get("color", [])
 			if col_arr is Array and col_arr.size() >= 3:

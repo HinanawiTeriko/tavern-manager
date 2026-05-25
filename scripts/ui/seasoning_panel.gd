@@ -15,7 +15,7 @@ func _ready() -> void:
 	visible = false
 
 func show_for(item_key: String) -> void:
-	if not _gm.Craft.is_product(item_key):
+	if not _gm.craft.is_product(item_key):
 		visible = false
 		return
 
@@ -24,8 +24,8 @@ func show_for(item_key: String) -> void:
 	for child in _btn_row.get_children():
 		child.queue_free()
 
-	for key in _gm.Seasoning.seasonings:
-		var data: Dictionary = _gm.Seasoning.seasonings[key]
+	for key in _gm.seasoning.seasonings:
+		var data: Dictionary = _gm.seasoning.seasonings[key]
 		var btn = Button.new()
 		btn.text = data.get("name", key)
 		ThemeColors.style_small_button(btn, 12)

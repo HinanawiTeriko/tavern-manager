@@ -197,8 +197,8 @@ func _build_recipe_list() -> void:
 	for child in recipe_list.get_children():
 		child.queue_free()
 
-	for key in _gm.Craft.items:
-		var item_data: Dictionary = _gm.Craft.items[key]
+	for key in _gm.craft.items:
+		var item_data: Dictionary = _gm.craft.items[key]
 
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
@@ -258,7 +258,7 @@ func _build_backpack_list() -> void:
 			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			row.add_child(tex_rect)
 		else:
-			var mat_item: Dictionary = _gm.Craft.get_item(mat)
+			var mat_item: Dictionary = _gm.craft.get_item(mat)
 			var col_arr = mat_item.get("color", [])
 			var mat_color = Color.GRAY
 			if col_arr is Array and col_arr.size() >= 3:
@@ -268,7 +268,7 @@ func _build_backpack_list() -> void:
 			box.custom_minimum_size = Vector2(36, 20)
 			row.add_child(box)
 
-		var mat_item2: Dictionary = _gm.Craft.get_item(mat)
+		var mat_item2: Dictionary = _gm.craft.get_item(mat)
 		var display_name = mat_item2.get("name", mat)
 		var label = Label.new()
 		label.text = display_name + "  x" + str(count)
