@@ -27,6 +27,7 @@ public partial class GameManager : Node
     public ShopSystem Shop { get; private set; } = new();
     public GuestSystem Guests { get; private set; }
     public CraftSystem Craft { get; private set; } = new();
+    public SeasoningSystem Seasoning { get; private set; } = new();
 
     // ── 库存 ──
     private Dictionary<string, int> _inv;
@@ -63,6 +64,7 @@ public partial class GameManager : Node
 
         // 初始化 ShopSystem
         Shop.LoadConfig();
+        Seasoning.Load();
 
         // 初始化 GuestSystem
         Guests = new GuestSystem(() => Craft.UnlockedRecipes.ToArray());
