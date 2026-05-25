@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://dipj5v87n86g7"]
 
 [ext_resource type="Texture2D" uid="uid://b2lrgmf86eqwx" path="res://assets/textures/backgrounds/title_bg.png" id="1"]
-[ext_resource type="Script" uid="uid://c06bkp5alpq4l" path="res://scripts/ui/title_screen.gd" id="2"]
-[ext_resource type="Script" uid="uid://d1phxyd4mdphl" path="res://scripts/ui/title_ambience.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/title_ambience.gd" id="3"]
 
 [node name="TitleScreen" type="Node2D" unique_id=259919159]
 script = ExtResource("2")

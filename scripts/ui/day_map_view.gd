@@ -342,14 +342,14 @@ func _build_material_rows(gm) -> void:
 
 	for pair in materials:
 		var key: String = pair[0]
-		var name: String = pair[1]
+		var mat_name: String = pair[1]
 
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.custom_minimum_size = Vector2(0, 40)
 
 		var name_label = Label.new()
-		name_label.text = name
+		name_label.text = mat_name
 		name_label.custom_minimum_size = Vector2(70, 0)
 		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 		name_label.add_theme_font_size_override("font_size", 16)
@@ -423,14 +423,14 @@ func _build_recipe_rows(gm) -> void:
 
 	for pair in unlocks:
 		var key: String = pair[0]
-		var name: String = pair[1]
+		var mat_name: String = pair[1]
 
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.custom_minimum_size = Vector2(0, 40)
 
 		var name_label = Label.new()
-		name_label.text = name
+		name_label.text = mat_name
 		name_label.custom_minimum_size = Vector2(100, 0)
 		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 		name_label.add_theme_font_size_override("font_size", 16)

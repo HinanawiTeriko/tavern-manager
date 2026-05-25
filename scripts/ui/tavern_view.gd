@@ -132,7 +132,7 @@ func _apply_theme() -> void:
 			sb.border_color = ThemeColors.PANEL_BORDER
 			shortcut_bg.add_theme_stylebox_override("panel", sb)
 
-func show_customer(name: String, order: String, npc_id: String = "guest") -> void:
+func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
 	if tex != null:
