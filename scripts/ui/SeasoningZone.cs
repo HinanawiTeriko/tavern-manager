@@ -16,6 +16,7 @@ public partial class SeasoningZone : Control
     {
         _gm = GetNode<GameManager>("/root/GameManager");
         MouseFilter = MouseFilterEnum.Stop;
+        ClipContents = true;
 
         _hintLabel = new Label
         {
@@ -24,10 +25,12 @@ public partial class SeasoningZone : Control
             VerticalAlignment = VerticalAlignment.Center,
             MouseFilter = MouseFilterEnum.Ignore,
             AnchorRight = 1f,
-            AnchorBottom = 1f
+            AnchorBottom = 0.6f,
+            OffsetRight = 0,
+            OffsetBottom = 0
         };
-        _hintLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.5f));
-        _hintLabel.AddThemeFontSizeOverride("font_size", 13);
+        _hintLabel.AddThemeColorOverride("font_color", ThemeColors.AmberPrimary);
+        _hintLabel.AddThemeFontSizeOverride("font_size", 12);
         AddChild(_hintLabel);
 
         _appliedLabel = new Label
@@ -37,17 +40,15 @@ public partial class SeasoningZone : Control
             VerticalAlignment = VerticalAlignment.Center,
             MouseFilter = MouseFilterEnum.Ignore,
             AnchorRight = 1f,
-            AnchorBottom = 1f
+            AnchorBottom = 0.6f,
+            OffsetRight = 0,
+            OffsetBottom = 0
         };
-        _appliedLabel.AddThemeColorOverride("font_color", new Color(0.2f, 0.9f, 0.3f));
-        _appliedLabel.AddThemeFontSizeOverride("font_size", 13);
+        _appliedLabel.AddThemeColorOverride("font_color", new Color(0.3f, 0.9f, 0.3f));
+        _appliedLabel.AddThemeFontSizeOverride("font_size", 12);
         AddChild(_appliedLabel);
 
-        _btnRow = new HBoxContainer
-        {
-            AnchorRight = 1f,
-            AnchorBottom = 1f
-        };
+        _btnRow = new HBoxContainer();
         _btnRow.AddThemeConstantOverride("separation", 2);
         AddChild(_btnRow);
 
@@ -60,6 +61,11 @@ public partial class SeasoningZone : Control
         _appliedLabel.Visible = false;
         _hintLabel.Visible = true;
         RebuildButtons();
+        // Position button row at bottom 40% of zone
+        _btnRow.OffsetLeft = 2;
+        _btnRow.OffsetTop = (int)(Size.Y * 0.6f);
+        _btnRow.OffsetRight = (int)Size.X - 2;
+        _btnRow.OffsetBottom = (int)Size.Y - 2;
         Visible = true;
         QueueRedraw();
     }
@@ -140,11 +146,28 @@ public partial class SeasoningZone : Control
 
     public override void _Draw()
     {
-        var rect = GetRect();
-        var bgColor = _appliedSeasoning != null
-            ? new Color(0.18f, 0.15f, 0.08f)
-            : new Color(0.12f, 0.1f, 0.08f);
-        DrawRect(rect, bgColor);
-        DrawRect(rect, new Color(0.4f, 0.35f, 0.25f), false);
+        var rect = new Rect2(Vector2.Zero, Size);
+        // Background fill — dark brown, same family as MixingArea but distinct
+        var bg = _appliedSeasoning != null
+            ? new Color(0.15f, 0.13f, 0.06f)
+            : new Color(0.13f, 0.10f, 0.07f);
+        DrawRect(rect, bg);
+
+        // Dashed amber border — indicates "drop here"
+        var dashColor = new Color(ThemeColors.AmberPrimary, 0.5f);
+        float dash = 5f, gap = 4f;
+        float w = rect.Size.X, h = rect.Size.Y;
+
+        // Top & bottom dashes
+        for (float x = 0; x < w; x += dash + gap)
+            DrawLine(new Vector2(x, 0), new Vector2(Math.Min(x + dash, w), 0), dashColor);
+        for (float x = 0; x < w; x += dash + gap)
+            DrawLine(new Vector2(x, h), new Vector2(Math.Min(x + dash, w), h), dashColor);
+
+        // Left & right dashes
+        for (float y = 0; y < h; y += dash + gap)
+            DrawLine(new Vector2(0, y), new Vector2(0, Math.Min(y + dash, h)), dashColor);
+        for (float y = 0; y < h; y += dash + gap)
+            DrawLine(new Vector2(w, y), new Vector2(w, Math.Min(y + dash, h)), dashColor);
     }
 }
