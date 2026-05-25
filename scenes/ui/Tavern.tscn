@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/TavernView.cs" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/CraftStation.cs" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/MixingArea.cs" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/ProductPanel.cs" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/SeasoningPanel.cs" id="5"]
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -59,103 +62,87 @@ offset_top = 505.0
 offset_right = 940.0
 offset_bottom = 670.0
 
-[node name="Slot1" type="ColorRect" parent="CraftStation"]
+[node name="MixingArea" type="Control" parent="CraftStation"]
+script = ExtResource("3")
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
-offset_right = 120.0
+offset_right = 280.0
 offset_bottom = 120.0
-color = Color(0.15, 0.12, 0.1, 1)
 
-[node name="Label" type="Label" parent="CraftStation/Slot1"]
+[node name="ProductPanel" type="Control" parent="CraftStation"]
+script = ExtResource("4")
 layout_mode = 0
-offset_left = 5.0
-offset_top = 45.0
-offset_right = 115.0
-offset_bottom = 75.0
-text = "空"
-horizontal_alignment = 1
-
-[node name="Slot2" type="ColorRect" parent="CraftStation"]
-layout_mode = 0
-offset_left = 140.0
+offset_left = 480.0
 offset_top = 0.0
-offset_right = 260.0
+offset_right = 600.0
 offset_bottom = 120.0
-color = Color(0.15, 0.12, 0.1, 1)
 
-[node name="Label" type="Label" parent="CraftStation/Slot2"]
+[node name="CombineQueryBar" type="HBoxContainer" parent="CraftStation"]
 layout_mode = 0
-offset_left = 5.0
+offset_left = 0.0
+offset_top = 125.0
+offset_right = 470.0
+offset_bottom = 155.0
+
+[node name="Label" type="Label" parent="CraftStation/CombineQueryBar"]
+layout_mode = 0
+text = "混合？"
+
+[node name="YesBtn" type="Button" parent="CraftStation/CombineQueryBar"]
+layout_mode = 0
+text = "是"
+
+[node name="NoBtn" type="Button" parent="CraftStation/CombineQueryBar"]
+layout_mode = 0
+text = "否"
+
+[node name="OperationButtons" type="HBoxContainer" parent="CraftStation"]
+layout_mode = 0
+offset_left = 290.0
+offset_top = 0.0
+offset_right = 470.0
+offset_bottom = 40.0
+
+[node name="SeasoningPanel" type="Control" parent="CraftStation"]
+script = ExtResource("5")
+layout_mode = 0
+offset_left = 290.0
 offset_top = 45.0
-offset_right = 115.0
-offset_bottom = 75.0
-text = "空"
-horizontal_alignment = 1
-
-[node name="HeatBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 300.0
-offset_top = 0.0
-offset_right = 390.0
-offset_bottom = 40.0
-text = "加热"
-
-[node name="ShakeBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 300.0
-offset_top = 48.0
-offset_right = 390.0
-offset_bottom = 88.0
-text = "摇晃"
-
-[node name="StirBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 400.0
-offset_top = 0.0
-offset_right = 490.0
-offset_bottom = 40.0
-text = "搅拌"
-
-[node name="CraftBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 400.0
-offset_top = 48.0
-offset_right = 490.0
-offset_bottom = 88.0
-text = "合成"
+offset_right = 470.0
+offset_bottom = 85.0
 
 [node name="ServeBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
-offset_left = 500.0
-offset_top = 0.0
-offset_right = 590.0
-offset_bottom = 40.0
+offset_left = 290.0
+offset_top = 90.0
+offset_right = 380.0
+offset_bottom = 130.0
 text = "上菜"
 
 [node name="ClearBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
-offset_left = 500.0
-offset_top = 48.0
-offset_right = 590.0
-offset_bottom = 88.0
+offset_left = 390.0
+offset_top = 90.0
+offset_right = 480.0
+offset_bottom = 130.0
 text = "清空"
 
 [node name="ResultSlot" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
-offset_left = 300.0
-offset_top = 95.0
-offset_right = 590.0
-offset_bottom = 160.0
+offset_left = 290.0
+offset_top = 135.0
+offset_right = 480.0
+offset_bottom = 165.0
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="CraftStation/ResultSlot"]
 layout_mode = 0
 offset_left = 5.0
-offset_top = 15.0
-offset_right = 285.0
-offset_bottom = 50.0
-text = "成品"
+offset_top = 3.0
+offset_right = 185.0
+offset_bottom = 25.0
+text = ""
 horizontal_alignment = 1
 
 [node name="ShortcutBarBg" type="Panel" parent="."]
