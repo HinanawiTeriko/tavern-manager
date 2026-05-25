@@ -24,6 +24,7 @@ public partial class CraftStation : Control
     // ── Drag state ──
     private bool _dragging;
     private string _dragMaterial;
+    private string _dragSeasoning;
     private ColorRect _dragPanel;
     private Control _overlayMenu;
     private ColorRect _dialogueOverlay;
@@ -87,17 +88,16 @@ public partial class CraftStation : Control
             _combineQueryBar.Visible = false;
             var result = _gm.Craft.GetCombineResult(_pendingA, _pendingB);
             if (result != null)
-                _mixingArea.ForceAddItem(result);
-            else
             {
-                _mixingArea.ForceAddItem(_pendingA);
-                _mixingArea.ForceAddItem(_pendingB);
+                _mixingArea.Clear();
+                _mixingArea.ForceAddItem(result);
             }
+            else
+                _mixingArea.ForceAddItems(_pendingA, _pendingB);
         };
         _combineNoBtn.Pressed += () => {
             _combineQueryBar.Visible = false;
             _mixingArea.ForceAddItem(_pendingA);
-            _mixingArea.ForceAddItem(_pendingB);
         };
 
         // ── Clear button ──
@@ -382,6 +382,7 @@ public partial class CraftStation : Control
         var serveKey = _resultSlot.GetMeta("item_key", "").AsString();
         if (!string.IsNullOrEmpty(serveKey) && HitTest(_resultSlot, pos))
         {
+            _dragSeasoning = _resultSlot.GetMeta("seasoning", "").AsString();
             StartDrag(pos, serveKey);
             _resultLabel.Text = "";
             ClearResultSlot();
@@ -427,13 +428,14 @@ public partial class CraftStation : Control
                 if (_gm.Guests.HasGuest && !string.IsNullOrEmpty(_dragMaterial))
                 {
                     var serveKey = _dragMaterial;
+                    var serveSeasoning = _dragSeasoning;
                     var item = _gm.Craft.GetItem(serveKey);
                     if (item != null)
                     {
                         _resultSlot.SetMeta("item_key", serveKey);
-                        _resultSlot.SetMeta("seasoning", "");
+                        _resultSlot.SetMeta("seasoning", serveSeasoning ?? "");
                         EndDrag();
-                        ServeRequested?.Invoke(serveKey, null);
+                        ServeRequested?.Invoke(serveKey, serveSeasoning);
                         return;
                     }
                 }
@@ -495,6 +497,7 @@ public partial class CraftStation : Control
         _dragging = false;
         _dragPanel.Visible = false;
         _dragMaterial = null;
+        _dragSeasoning = null;
     }
 
     private void ReturnDrag()

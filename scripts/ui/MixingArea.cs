@@ -47,6 +47,15 @@ public partial class MixingArea : Control
         RefreshDisplay();
     }
 
+    /// 批量强制添加，只触发一次 RefreshDisplay（避免 CheckResultReady 过早消耗）
+    public void ForceAddItems(params string[] keys)
+    {
+        foreach (var key in keys)
+            if (!string.IsNullOrEmpty(key))
+                _items.Add(key);
+        RefreshDisplay();
+    }
+
     public void RemoveItem(string key)
     {
         var idx = _items.IndexOf(key);
