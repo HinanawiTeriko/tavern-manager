@@ -5,234 +5,275 @@ using System.Linq;
 
 public partial class CraftStation : Control
 {
-    private ColorRect _slot1, _slot2, _resultSlot;
-    private Button _heatBtn, _shakeBtn, _stirBtn;
-    private Button _craftBtn, _serveBtn, _clearBtn;
-    private Label _slot1Label, _slot2Label, _resultLabel;
-    private ColorRect[] _shortcutSlots = new ColorRect[10];
-    private Label[] _shortcutLabels = new Label[10];
+    // ── Child component refs ──
+    private MixingArea _mixingArea;
+    private ProductPanel _productPanel;
+    private SeasoningPanel _seasoningPanel;
+    private Control _operationButtons; // HBoxContainer holding dynamic op buttons
+    private Button _serveBtn;
+    private Button _clearBtn;
+    private ColorRect _resultSlot;
+    private Label _resultLabel;
 
+    // ── Combine query bar ──
+    private HBoxContainer _combineQueryBar;
+    private Label _combineQueryLabel;
+    private Button _combineYesBtn;
+    private Button _combineNoBtn;
+    private string _pendingA, _pendingB;
+
+    // ── Drag state ──
     private bool _dragging;
     private string _dragMaterial;
     private ColorRect _dragPanel;
-
-    // 手势进度
-    private bool _heatDone, _shakeDone, _stirDone;
-    private double _heatProgress;
-    private const double HeatTime = 1.5;
-    private bool _heating;
-
-    // 快捷栏显示缓存：同步自 GameManager._inv
-    private string[] BarMaterials = new string[10];
-    private int[] BarCounts = new int[10];
-
-    private GameManager _gm;
     private Control _overlayMenu;
     private ColorRect _dialogueOverlay;
 
-    public string MaterialInSlot1 => _slot1Label != null && _slot1Label.Text != "空" ? _slot1Label.Text : null;
-    public string MaterialInSlot2 => _slot2Label != null && _slot2Label.Text != "空" ? _slot2Label.Text : null;
-    public string ResultKey { get; set; }
+    // ── Shortcut bar cache ──
+    private string[] BarMaterials = new string[10];
+    private int[] BarCounts = new int[10];
+    private ColorRect[] _shortcutSlots = new ColorRect[10];
+    private Label[] _shortcutLabels = new Label[10];
 
-    public event Action CraftRequested;
-    public event Action ServeRequested;
+    private GameManager _gm;
+
+    // ── Events ──
+    public event Action<string, string> ServeRequested; // (itemKey, seasoningTag or null)
     public event Action ClearRequested;
-    public event Action<string> GestureCompleted;
+    public event Action<string> GestureCompleted; // kept for compat
+
+    // ── Heat progress ──
+    private bool _heating;
+    private double _heatProgress;
+    private const double HeatTime = 1.5;
+    private string _heatTargetOp;
+    private Button _heatBtnRef;
+
+    // ── Stir progress ──
+    private bool _stirring;
+    private int _stirCircles;
+    private const int StirTarget = 3;
+    private Vector2 _stirLastMouse;
+    private double _stirTotalAngle;
 
     public override void _Ready()
     {
         _gm = GetNode<GameManager>("/root/GameManager");
+
+        // Find child components (all exist in the scene)
+        _mixingArea = GetNode<MixingArea>("MixingArea");
+        _productPanel = GetNode<ProductPanel>("ProductPanel");
+        _seasoningPanel = GetNode<SeasoningPanel>("SeasoningPanel");
+        _operationButtons = GetNode<Control>("OperationButtons");
+        _serveBtn = GetNode<Button>("ServeBtn");
+        _clearBtn = GetNode<Button>("ClearBtn");
+        _resultSlot = GetNode<ColorRect>("ResultSlot");
+        _resultLabel = GetNode<Label>("ResultSlot/Label");
         _overlayMenu = GetNodeOrNull<Control>("../OverlayMenu");
         _dialogueOverlay = GetNodeOrNull<ColorRect>("../DialogueOverlay");
 
-        _slot1 = GetNode<ColorRect>("Slot1");
-        _slot2 = GetNode<ColorRect>("Slot2");
-        _resultSlot = GetNode<ColorRect>("ResultSlot");
-        _slot1Label = GetNode<Label>("Slot1/Label");
-        _slot2Label = GetNode<Label>("Slot2/Label");
-        _resultLabel = GetNode<Label>("ResultSlot/Label");
+        // Combine query bar
+        _combineQueryBar = GetNode<HBoxContainer>("CombineQueryBar");
+        _combineQueryLabel = GetNode<Label>("CombineQueryBar/Label");
+        _combineYesBtn = GetNode<Button>("CombineQueryBar/YesBtn");
+        _combineNoBtn = GetNode<Button>("CombineQueryBar/NoBtn");
+        _combineQueryBar.Visible = false;
 
-        _heatBtn = GetNode<Button>("HeatBtn");
-        _shakeBtn = GetNode<Button>("ShakeBtn");
-        _stirBtn = GetNode<Button>("StirBtn");
-        _craftBtn = GetNode<Button>("CraftBtn");
-        _serveBtn = GetNode<Button>("ServeBtn");
-        _clearBtn = GetNode<Button>("ClearBtn");
+        // ── MixingArea events ──
+        _mixingArea.CombineQuery += (a, b) => ShowCombineQuery(a, b);
+        _mixingArea.ContentsChanged += RefreshOperationButtons;
+        _mixingArea.ContentsChanged += CheckResultReady;
 
-        _slot1Label.Text = "空";
-        _slot2Label.Text = "空";
-        _resultLabel.Text = "";
+        // ── Query bar buttons ──
+        _combineYesBtn.Pressed += () => {
+            _combineQueryBar.Visible = false;
+            var result = _gm.Craft.GetCombineResult(_pendingA, _pendingB);
+            if (result != null)
+                _mixingArea.ForceAddItem(result);
+            else
+            {
+                _mixingArea.ForceAddItem(_pendingA);
+                _mixingArea.ForceAddItem(_pendingB);
+            }
+        };
+        _combineNoBtn.Pressed += () => {
+            _combineQueryBar.Visible = false;
+            _mixingArea.ForceAddItem(_pendingA);
+            _mixingArea.ForceAddItem(_pendingB);
+        };
 
-        // 手势按钮事件
-        _heatBtn.Pressed += () => StartGesture("heat");
-        _shakeBtn.Pressed += () => StartGesture("shake");
-        _stirBtn.Pressed += () => { GestureCompleted?.Invoke("stir"); _stirDone = true; _stirBtn.Disabled = true; GD.Print("[CraftStation] 搅拌完成！"); };
-
-        // 操作按钮事件
-        _craftBtn.Pressed += () => CraftRequested?.Invoke();
+        // ── Serve/Clear buttons ──
         _serveBtn.Pressed += () => {
-            if (!_gm.Guests.HasGuest) { GD.Print("[CraftStation] 没有客人，无法上菜"); return; }
-            if (string.IsNullOrEmpty(_gm.Craft.CraftedKey)) { GD.Print("[CraftStation] 请先合成"); return; }
-            // 按键上菜与拖拽上菜保持一致，自动完成全部手势
-            _gm.Craft.GestureDragDone = true;
-            _gm.Craft.GestureShakeDone = true;
-            _gm.Craft.GestureHeatDone = true;
-            _gm.Craft.GestureStirDone = true;
-            ServeRequested?.Invoke();
+            var serveKey = _resultSlot.GetMeta("item_key", "").AsString();
+            if (string.IsNullOrEmpty(serveKey)) return;
+            var seasoning = _resultSlot.GetMeta("seasoning", "").AsString();
+            if (string.IsNullOrEmpty(seasoning)) seasoning = null;
+            ServeRequested?.Invoke(serveKey, seasoning);
         };
-        // Clear: 先清空槽位，再退回材料（避免退回过程中异常导致槽位无法清空）
+
         _clearBtn.Pressed += () => {
-            var m1 = MaterialInSlot1;
-            var m2 = MaterialInSlot2;
+            foreach (var item in _mixingArea.Contents)
+                AddToInventory(item);
+            _mixingArea.Clear();
+            ClearResultSlot();
+            _seasoningPanel.Visible = false;
             ClearRequested?.Invoke();
-            ResetGestureButtons();
-            if (m1 != null) AddToInventory(m1);
-            if (m2 != null) AddToInventory(m2);
         };
 
-        // 拖拽面板：放在独立 CanvasLayer 上，确保渲染在所有 UI 之上
-        var dragCanvas = new CanvasLayer { Layer = 1 };
-        GetParent().AddChild(dragCanvas);
-        _dragPanel = new ColorRect { Visible = false, MouseFilter = MouseFilterEnum.Ignore };
-        dragCanvas.AddChild(_dragPanel);
+        // ── Seasoning events ──
+        _seasoningPanel.SeasoningApplied += (seasoning) => {
+            _resultSlot.SetMeta("seasoning", seasoning);
+        };
+        _seasoningPanel.SeasoningSkipped += () => { };
 
-        // 快捷栏引用
-        var bar = GetNode<Control>("../ShortcutBar");
-        bar.MouseFilter = MouseFilterEnum.Ignore;
-        for (int i = 0; i < 10; i++)
-        {
-            _shortcutSlots[i] = bar.GetNode<ColorRect>($"Slot{i}");
-            _shortcutSlots[i].MouseFilter = MouseFilterEnum.Ignore;
-            _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
-            _shortcutLabels[i].MouseFilter = MouseFilterEnum.Ignore;
-        }
-
-        // 合成槽和自身设为 Ignore，让鼠标事件穿透到 _Input，不然 GUI 系统会吃掉事件
-        MouseFilter = MouseFilterEnum.Ignore;
-        _slot1.MouseFilter = MouseFilterEnum.Ignore;
-        _slot2.MouseFilter = MouseFilterEnum.Ignore;
-        _slot1Label.MouseFilter = MouseFilterEnum.Ignore;
-        _slot2Label.MouseFilter = MouseFilterEnum.Ignore;
-        _resultSlot.MouseFilter = MouseFilterEnum.Ignore;
-        _resultLabel.MouseFilter = MouseFilterEnum.Ignore;
-
-        // Apply small button theme to gesture/action buttons
-        ThemeColors.StyleSmallButton(_heatBtn, 12);
-        ThemeColors.StyleSmallButton(_shakeBtn, 12);
-        ThemeColors.StyleSmallButton(_stirBtn, 12);
-        ThemeColors.StyleSmallButton(_craftBtn, 12);
+        // ── Style buttons ──
         ThemeColors.StyleSmallButton(_serveBtn, 12);
         ThemeColors.StyleSmallButton(_clearBtn, 12);
+        ThemeColors.StyleSmallButton(_combineYesBtn, 12);
+        ThemeColors.StyleSmallButton(_combineNoBtn, 12);
 
-        // Improved slot visuals (closer to pixel-art slot design)
-        var slotInnerColor = new Color(0.08f, 0.06f, 0.04f);
-        _slot1.Color = slotInnerColor;
-        _slot2.Color = slotInnerColor;
+        // Result slot styling
         _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
-        for (int i = 0; i < 10; i++)
-            _shortcutSlots[i].Color = slotInnerColor;
 
-        // 从库存同步到快捷栏（必须在初始化槽位颜色之后调用，否则颜色会被覆盖）
+        // ── Shortcut bar init ──
+        InitShortcutBar();
+        InitDragPanel();
+
         SyncFromInventory();
         _gm.InventoryChanged += SyncFromInventory;
     }
 
     public override void _ExitTree()
     {
-        if (_gm != null)
-            _gm.InventoryChanged -= SyncFromInventory;
+        if (_gm != null) _gm.InventoryChanged -= SyncFromInventory;
     }
 
-    /// 从 GameManager._inv 重建快捷栏显示
-    private void SyncFromInventory()
+    // ── Combine query ──
+    private void ShowCombineQuery(string a, string b)
     {
-        var inv = _gm.Inventory;
-        // 保留已有槽位类型，更新数量
-        for (int i = 0; i < 10; i++)
+        _pendingA = a;
+        _pendingB = b;
+        var itemA = _gm.Craft.GetItem(a);
+        var itemB = _gm.Craft.GetItem(b);
+        _combineQueryLabel.Text = $"混合 {itemA?.Name ?? a} 和 {itemB?.Name ?? b}？";
+        _combineQueryBar.Visible = true;
+    }
+
+    // ── Operation buttons ──
+    private void RefreshOperationButtons()
+    {
+        foreach (var child in _operationButtons.GetChildren())
+            child.QueueFree();
+
+        var contents = _mixingArea.Contents;
+        if (contents.Count == 0) return;
+
+        var firstKey = contents[0];
+        var ops = _gm.Craft.GetOperations(firstKey);
+
+        if (ops.Count == 0) return;
+
+        foreach (var kvp in ops)
         {
-            if (!string.IsNullOrEmpty(BarMaterials[i]) && inv.TryGetValue(BarMaterials[i], out var cnt) && cnt > 0)
+            var op = kvp.Key;
+            var result = kvp.Value;
+            var label = op switch { "heat" => "加热", "stir" => "搅拌", "shake" => "摇晃", "pour" => "倒出", _ => op };
+            var btn = new Button { Text = label };
+            ThemeColors.StyleSmallButton(btn, 12);
+
+            switch (op)
             {
-                BarCounts[i] = cnt;
-                RefreshShortcut(i);
-            }
-            else
-            {
-                BarMaterials[i] = null;
-                BarCounts[i] = 0;
-            }
-        }
-        // 填充新出现的材料到空槽位
-        foreach (var (key, count) in inv)
-        {
-            if (count <= 0) continue;
-            bool alreadyShown = false;
-            for (int i = 0; i < 10; i++)
-                if (BarMaterials[i] == key) { alreadyShown = true; break; }
-            if (alreadyShown) continue;
-            for (int i = 0; i < 10; i++)
-            {
-                if (string.IsNullOrEmpty(BarMaterials[i]))
-                {
-                    BarMaterials[i] = key;
-                    BarCounts[i] = count;
-                    RefreshShortcut(i);
+                case "heat":
+                    btn.ButtonDown += () => StartHeat(btn, result);
                     break;
-                }
+                case "stir":
+                    btn.ButtonDown += () => StartStir(btn, result);
+                    break;
+                case "shake":
+                    btn.Pressed += () => ExecuteOperation(result);
+                    break;
+                default:
+                    btn.Pressed += () => ExecuteOperation(result);
+                    break;
+            }
+            _operationButtons.AddChild(btn);
+        }
+    }
+
+    // ── Heat gesture ──
+    private void StartHeat(Button btn, string resultKey)
+    {
+        _heating = true;
+        _heatProgress = 0;
+        _heatTargetOp = resultKey;
+        _heatBtnRef = btn;
+        btn.Text = "加热中...";
+        btn.Disabled = true;
+    }
+
+    // ── Stir gesture ──
+    private void StartStir(Button btn, string resultKey)
+    {
+        _stirring = true;
+        _stirCircles = 0;
+        _stirTotalAngle = 0;
+        _stirLastMouse = GetViewport().GetMousePosition();
+        _heatTargetOp = resultKey;
+        _heatBtnRef = btn;
+        btn.Text = "搅拌中... (转圈)";
+    }
+
+    private void ExecuteOperation(string resultKey)
+    {
+        var contents = _mixingArea.Contents;
+        if (contents.Count == 0) return;
+        _mixingArea.ConsumeAndReplace(new[] { contents[0] }, resultKey);
+        GestureCompleted?.Invoke("done");
+    }
+
+    // ── Check if single item with no further operations → move to result slot ──
+    private void CheckResultReady()
+    {
+        var contents = _mixingArea.Contents;
+        if (contents.Count == 1)
+        {
+            var key = contents[0];
+            if (!_gm.Craft.HasOperations(key))
+            {
+                MoveToResultSlot(key);
+                _mixingArea.Clear();
             }
         }
-        // 刷新所有空槽位
-        for (int i = 0; i < 10; i++)
-            if (string.IsNullOrEmpty(BarMaterials[i]))
-                RefreshShortcut(i);
     }
 
-    private void AddToInventory(string key, int amount = 1)
+    private void MoveToResultSlot(string key)
     {
-        if (string.IsNullOrEmpty(key)) return;
-        _gm.Inventory.TryGetValue(key, out var cur);
-        _gm.Inventory[key] = cur + amount;
-        _gm.NotifyInventoryChanged();
+        var item = _gm.Craft.GetItem(key);
+        if (item != null)
+        {
+            _resultSlot.Color = new Color(item.Color[0], item.Color[1], item.Color[2]);
+            _resultLabel.Text = item.Name;
+        }
+        else
+        {
+            _resultLabel.Text = key;
+        }
+        _resultSlot.SetMeta("item_key", key);
+        _resultSlot.SetMeta("seasoning", "");
+
+        _seasoningPanel.ShowFor(key);
     }
 
-    private void RemoveFromInventory(string key, int amount = 1)
+    private void ClearResultSlot()
     {
-        if (string.IsNullOrEmpty(key)) return;
-        if (_gm.Inventory.TryGetValue(key, out var cur))
-        {
-            int remaining = cur - amount;
-            if (remaining <= 0)
-                _gm.Inventory.Remove(key);
-            else
-                _gm.Inventory[key] = remaining;
-        }
-        _gm.NotifyInventoryChanged();
+        _resultLabel.Text = "";
+        _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
+        _resultSlot.RemoveMeta("item_key");
+        _resultSlot.RemoveMeta("seasoning");
+        _seasoningPanel.Visible = false;
     }
 
-    private void StartGesture(string name)
-    {
-        if (string.IsNullOrEmpty(MaterialInSlot1) && string.IsNullOrEmpty(MaterialInSlot2))
-        {
-            GD.Print("[CraftStation] 请先放入材料！");
-            return;
-        }
-
-        switch (name)
-        {
-            case "heat":
-                _heating = true;
-                _heatProgress = 0;
-                _heatBtn.Text = "加热中...";
-                _heatBtn.Disabled = true;
-                break;
-            case "shake":
-                GestureCompleted?.Invoke("shake");
-                _shakeDone = true;
-                _shakeBtn.Disabled = true;
-                GD.Print("[CraftStation] 摇晃完成！");
-                break;
-        }
-    }
-
+    // ── _Process: heat/stir progress + drag ──
     public override void _Process(double dt)
     {
         if (_overlayMenu?.Visible == true) return;
@@ -247,18 +288,40 @@ public partial class CraftStation : Control
             if (_heatProgress >= HeatTime)
             {
                 _heating = false;
-                _heatDone = true;
-                _heatBtn.Text = "加热 ✓";
+                _heatBtnRef.Text = "加热 ✓";
                 GestureCompleted?.Invoke("heat");
-                GD.Print("[CraftStation] 加热完成！");
+                ExecuteOperation(_heatTargetOp);
             }
             else
             {
-                _heatBtn.Text = $"加热中 {ratio * 100:F0}%";
+                _heatBtnRef.Text = $"加热中 {ratio * 100:F0}%";
+            }
+        }
+
+        if (_stirring)
+        {
+            var mouse = GetViewport().GetMousePosition();
+            var prev = _stirLastMouse - _heatBtnRef.GlobalPosition;
+            var cur = mouse - _heatBtnRef.GlobalPosition;
+            var anglePrev = Math.Atan2(prev.Y, prev.X);
+            var angleCur = Math.Atan2(cur.Y, cur.X);
+            var delta = angleCur - anglePrev;
+            if (Math.Abs(delta) > 0.01) _stirTotalAngle += delta;
+            _stirLastMouse = mouse;
+
+            _stirCircles = (int)(Math.Abs(_stirTotalAngle) / (Math.PI * 2));
+            _heatBtnRef.Text = $"搅拌中... {_stirCircles}/{StirTarget}";
+            if (_stirCircles >= StirTarget)
+            {
+                _stirring = false;
+                _heatBtnRef.Text = "搅拌 ✓";
+                GestureCompleted?.Invoke("stir");
+                ExecuteOperation(_heatTargetOp);
             }
         }
     }
 
+    // ── Drag & Drop (input handling) ──
     public override void _Input(InputEvent e)
     {
         if (_overlayMenu?.Visible == true) return;
@@ -273,56 +336,53 @@ public partial class CraftStation : Control
 
     private void TryPickUp(Vector2 pos)
     {
-        // 菜单打开时：优先检查背包列表项
+        // Menu open: check backpack list items
         if (_overlayMenu?.Visible == true)
         {
-            var backpackPanel = GetNodeOrNull<Control>("../OverlayMenu/BackpackPanel");
-            if (backpackPanel?.Visible == true)
+            var backpackList = GetNodeOrNull<VBoxContainer>("../OverlayMenu/BackpackPanel/BackpackList");
+            if (backpackList != null)
             {
-                var backpackList = GetNodeOrNull<VBoxContainer>("../OverlayMenu/BackpackPanel/BackpackList");
-                if (backpackList != null)
+                foreach (Control row in backpackList.GetChildren())
                 {
-                    foreach (Control row in backpackList.GetChildren())
+                    if (HitTest(row, pos))
                     {
-                        if (HitTest(row, pos))
+                        string mat = row.GetMeta("material_key").AsString();
+                        if (!string.IsNullOrEmpty(mat) && _gm.Inventory.TryGetValue(mat, out var cnt) && cnt > 0)
                         {
-                            string mat = row.GetMeta("material_key").AsString();
-                            if (!string.IsNullOrEmpty(mat) && _gm.Inventory.TryGetValue(mat, out var cnt) && cnt > 0)
-                            {
-                                RemoveFromInventory(mat);
-                                StartDrag(pos, mat);
-                                return;
-                            }
+                            RemoveFromInventory(mat);
+                            StartDrag(pos, mat);
+                            return;
                         }
                     }
                 }
             }
-            return; // 菜单打开时不拾取其他区域
+            return;
         }
 
-        // 成品槽优先
-        if (HitTest(_resultSlot, pos) && !string.IsNullOrEmpty(ResultKey))
+        // Result slot: pick up the finished item
+        var serveKey = _resultSlot.GetMeta("item_key", "").AsString();
+        if (!string.IsNullOrEmpty(serveKey) && HitTest(_resultSlot, pos))
         {
-            string key = ResultKey;
-            StartDrag(pos, key);
+            StartDrag(pos, serveKey);
             _resultLabel.Text = "";
-            ResultKey = null;
+            ClearResultSlot();
             return;
         }
-        if (HitTest(_slot1, pos) && !string.IsNullOrEmpty(MaterialInSlot1))
+
+        // MixingArea: pick up an item from mixing area
+        if (HitTest(_mixingArea, pos))
         {
-            StartDrag(pos, MaterialInSlot1);
-            _slot1Label.Text = "空";
-            _slot1.Color = new Color(0.15f, 0.12f, 0.1f);
-            return;
+            var contents = _mixingArea.Contents;
+            if (contents.Count > 0)
+            {
+                string mat = contents[contents.Count - 1];
+                _mixingArea.RemoveItem(mat);
+                StartDrag(pos, mat);
+                return;
+            }
         }
-        if (HitTest(_slot2, pos) && !string.IsNullOrEmpty(MaterialInSlot2))
-        {
-            StartDrag(pos, MaterialInSlot2);
-            _slot2Label.Text = "空";
-            _slot2.Color = new Color(0.15f, 0.12f, 0.1f);
-            return;
-        }
+
+        // Shortcut bar: pick up material
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos) && !string.IsNullOrEmpty(BarMaterials[i]) && BarCounts[i] > 0)
@@ -341,48 +401,37 @@ public partial class CraftStation : Control
 
         if (!menuOpen)
         {
-            // 拖到客人区 → 上菜
+            // Drop on customer area → serve
             var customerArea = GetNode<Control>("../CustomerArea");
             if (HitTest(customerArea, pos))
             {
-                var gm = GetNode<GameManager>("/root/GameManager");
-                if (gm.Guests.HasGuest && _dragMaterial != null && gm.Craft.Recipes.ContainsKey(_dragMaterial))
+                if (_gm.Guests.HasGuest && !string.IsNullOrEmpty(_dragMaterial))
                 {
-                    gm.Craft.CraftedKey = _dragMaterial;
-                    gm.Craft.GestureDragDone = true;
-                    gm.Craft.GestureShakeDone = true;
-                    gm.Craft.GestureHeatDone = true;
-                    gm.Craft.GestureStirDone = true;
-                    ResultKey = null;
-                    _resultLabel.Text = "";
-                    EndDrag();
-                    ServeRequested?.Invoke();
-                    return;
+                    var item = _gm.Craft.GetItem(_dragMaterial);
+                    if (item != null && item.Price > 0)
+                    {
+                        _resultSlot.SetMeta("item_key", _dragMaterial);
+                        _resultSlot.SetMeta("seasoning", "");
+                        EndDrag();
+                        ServeRequested?.Invoke(_dragMaterial, null);
+                        return;
+                    }
                 }
-                // 条件不满足（没客人/不是成品）→ 归还材料
                 ReturnDrag();
                 EndDrag();
                 return;
             }
-            if (HitTest(_slot1, pos) && string.IsNullOrEmpty(MaterialInSlot1))
+
+            // Drop on MixingArea → add item
+            if (HitTest(_mixingArea, pos) && !string.IsNullOrEmpty(_dragMaterial))
             {
-                _slot1Label.Text = _dragMaterial;
-                _slot1.Color = GameManager.MaterialColor(_dragMaterial);
+                _mixingArea.AddItem(_dragMaterial);
                 EndDrag();
-                GestureCompleted?.Invoke("drag");
-                return;
-            }
-            if (HitTest(_slot2, pos) && string.IsNullOrEmpty(MaterialInSlot2))
-            {
-                _slot2Label.Text = _dragMaterial;
-                _slot2.Color = GameManager.MaterialColor(_dragMaterial);
-                EndDrag();
-                GestureCompleted?.Invoke("drag");
                 return;
             }
         }
 
-        // 快捷栏（菜单打开或关闭时均可拖入）
+        // Drop on shortcut bar
         for (int i = 0; i < 10; i++)
         {
             if (HitTest(_shortcutSlots[i], pos))
@@ -417,7 +466,8 @@ public partial class CraftStation : Control
         _dragPanel.Visible = true;
         _dragPanel.Size = new Vector2(64, 64);
         _dragPanel.Position = pos - new Vector2(32, 32);
-        _dragPanel.Color = GameManager.MaterialColor(material);
+        var item = _gm.Craft.GetItem(material);
+        _dragPanel.Color = item != null ? new Color(item.Color[0], item.Color[1], item.Color[2]) : Colors.Gray;
     }
 
     private void EndDrag()
@@ -429,59 +479,117 @@ public partial class CraftStation : Control
 
     private void ReturnDrag()
     {
-        // 归还拖拽中的材料到库存
         AddToInventory(_dragMaterial);
+    }
+
+    // ── Shortcut bar ──
+    private void InitShortcutBar()
+    {
+        var bar = GetNode<Control>("../ShortcutBar");
+        bar.MouseFilter = MouseFilterEnum.Ignore;
+        for (int i = 0; i < 10; i++)
+        {
+            _shortcutSlots[i] = bar.GetNode<ColorRect>($"Slot{i}");
+            _shortcutSlots[i].MouseFilter = MouseFilterEnum.Ignore;
+            _shortcutLabels[i] = bar.GetNode<Label>($"Slot{i}/Label");
+            _shortcutLabels[i].MouseFilter = MouseFilterEnum.Ignore;
+
+            var slotInnerColor = new Color(0.08f, 0.06f, 0.04f);
+            _shortcutSlots[i].Color = slotInnerColor;
+        }
+    }
+
+    private void InitDragPanel()
+    {
+        var dragCanvas = new CanvasLayer { Layer = 1 };
+        GetParent().AddChild(dragCanvas);
+        _dragPanel = new ColorRect { Visible = false, MouseFilter = MouseFilterEnum.Ignore };
+        dragCanvas.AddChild(_dragPanel);
+    }
+
+    private void SyncFromInventory()
+    {
+        var inv = _gm.Inventory;
+        for (int i = 0; i < 10; i++)
+        {
+            if (!string.IsNullOrEmpty(BarMaterials[i]) && inv.TryGetValue(BarMaterials[i], out var cnt) && cnt > 0)
+            {
+                BarCounts[i] = cnt;
+                RefreshShortcut(i);
+            }
+            else
+            {
+                BarMaterials[i] = null;
+                BarCounts[i] = 0;
+            }
+        }
+        foreach (var kvp in inv)
+        {
+            var key = kvp.Key;
+            var count = kvp.Value;
+            if (count <= 0) continue;
+            bool alreadyShown = false;
+            for (int i = 0; i < 10; i++)
+                if (BarMaterials[i] == key) { alreadyShown = true; break; }
+            if (alreadyShown) continue;
+            for (int i = 0; i < 10; i++)
+            {
+                if (string.IsNullOrEmpty(BarMaterials[i]))
+                {
+                    BarMaterials[i] = key;
+                    BarCounts[i] = count;
+                    RefreshShortcut(i);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < 10; i++)
+            if (string.IsNullOrEmpty(BarMaterials[i]))
+                RefreshShortcut(i);
+    }
+
+    private void AddToInventory(string key, int amount = 1)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        _gm.Inventory.TryGetValue(key, out var cur);
+        _gm.Inventory[key] = cur + amount;
+        _gm.NotifyInventoryChanged();
+    }
+
+    private void RemoveFromInventory(string key, int amount = 1)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        if (_gm.Inventory.TryGetValue(key, out var cur))
+        {
+            int remaining = cur - amount;
+            if (remaining <= 0)
+                _gm.Inventory.Remove(key);
+            else
+                _gm.Inventory[key] = remaining;
+        }
+        _gm.NotifyInventoryChanged();
     }
 
     private void RefreshShortcut(int i)
     {
-        _shortcutSlots[i].Color = string.IsNullOrEmpty(BarMaterials[i])
-            ? new Color(0.1f, 0.08f, 0.06f)
-            : GameManager.MaterialColor(BarMaterials[i]);
-        string matName = BarMaterials[i] switch
+        if (string.IsNullOrEmpty(BarMaterials[i]))
         {
-            "Ale" => "麦芽", "Wine" => "葡萄", "Bread" => "面粉", "Meat" => "生肉", "Herb" => "草药", "SleepPowder" => "沉睡花粉",
-            _ => BarMaterials[i]
-        };
-        _shortcutLabels[i].Text = string.IsNullOrEmpty(BarMaterials[i]) ? "" : $"{matName} x{BarCounts[i]}";
+            _shortcutSlots[i].Color = new Color(0.1f, 0.08f, 0.06f);
+            _shortcutLabels[i].Text = "";
+        }
+        else
+        {
+            var item = _gm.Craft.GetItem(BarMaterials[i]);
+            _shortcutSlots[i].Color = item != null
+                ? new Color(item.Color[0], item.Color[1], item.Color[2])
+                : Colors.Gray;
+            _shortcutLabels[i].Text = $"{item?.Name ?? BarMaterials[i]} x{BarCounts[i]}";
+        }
     }
 
     public void RefreshAll()
     {
         for (int i = 0; i < 10; i++) RefreshShortcut(i);
-    }
-
-    public void ShowResult(string text, Color color)
-    {
-        _resultLabel.Text = text;
-        _resultLabel.RemoveThemeColorOverride("font_color");
-        _resultLabel.AddThemeColorOverride("font_color", color);
-    }
-
-    public void ClearSlots()
-    {
-        _slot1Label.Text = "空";
-        _slot2Label.Text = "空";
-        _slot1.Color = new Color(0.15f, 0.12f, 0.1f);
-        _slot2.Color = new Color(0.15f, 0.12f, 0.1f);
-        _resultLabel.Text = "";
-        ResultKey = null;
-        ResetGestureButtons();
-    }
-
-    public void ResetGestureButtons()
-    {
-        _heatDone = false;
-        _shakeDone = false;
-        _stirDone = false;
-        _heating = false;
-        _heatProgress = 0;
-        _heatBtn.Text = "加热";
-        _heatBtn.Disabled = false;
-        _shakeBtn.Text = "摇晃";
-        _shakeBtn.Disabled = false;
-        _stirBtn.Text = "搅拌";
-        _stirBtn.Disabled = false;
     }
 
     private static bool HitTest(Control c, Vector2 p)
