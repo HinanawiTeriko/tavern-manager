@@ -283,6 +283,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and not _dragging:
 			_try_pick_up(event.position)
 		elif not event.pressed and _dragging:
+			print("[drag] 松手 pos=", event.position)
 			_try_drop(event.position)
 
 func _try_pick_up(pos: Vector2) -> void:
@@ -300,6 +301,7 @@ func _try_pick_up(pos: Vector2) -> void:
 
 	var serve_key: String = _result_slot.get_meta("item_key", "")
 	if serve_key != "" and _hit_test(_result_slot, pos):
+		print("[drag] 从成品槽拿起: ", serve_key)
 		_drag_result_key = serve_key
 		_drag_result_source = "result_slot"
 		_result_label.text = ""
@@ -357,6 +359,7 @@ func _try_drop(pos: Vector2) -> void:
 			return
 
 	if _hit_test(_seasoning_zone, pos):
+		print("[drag] 松手在香料区, result_key=", _drag_result_key, " mat=", _drag_material, " sz_state=", _seasoning_zone.get_state())
 		if _drag_result_key != "" and _seasoning_zone.get_state() == SeasoningZone.State.EMPTY:
 			_seasoning_zone.set_item(_drag_result_key)
 			_end_drag()
