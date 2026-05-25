@@ -35,7 +35,7 @@ public partial class GameManager : Node
     public event Action InventoryChanged;
     public void NotifyInventoryChanged()
     {
-        if (_inv.TryGetValue("SleepPowder", out var sp) && sp > 0)
+        if (_inv.TryGetValue("sleep_powder", out var sp) && sp > 0)
             Narrative.SetVar("has_sleep_powder", true);
         InventoryChanged?.Invoke();
     }
@@ -67,7 +67,7 @@ public partial class GameManager : Node
         Seasoning.Load();
 
         // 初始化 GuestSystem
-        Guests = new GuestSystem(() => Craft.UnlockedRecipes.ToArray());
+        Guests = new GuestSystem(() => Craft.Items.Where(kvp => kvp.Value.Price > 0).Select(kvp => kvp.Key).ToArray());
         Guests.GuestArrived += OnGuestArrived;
         Guests.GuestLeft += OnGuestLeft;
         Guests.PatienceLow += OnPatienceLow;
@@ -185,7 +185,7 @@ public partial class GameManager : Node
                 if (npc != null)
                 {
                     var scene = npc.Scenes.FirstOrDefault(s => s.Day == Economy.CurrentDay);
-                    Guests.SpawnImportant(npc.Id, scene?.Order ?? "Bread");
+                    Guests.SpawnImportant(npc.Id, scene?.Order ?? "bread");
                 }
             }
         }
@@ -213,7 +213,7 @@ public partial class GameManager : Node
             if (loc == null) continue;
             // 第2天在菌菇林地必定采集到沉睡花粉（保证玩家能体验下药剧情）
             var materials = (Economy.CurrentDay == 2 && locId == "mushroom_forest")
-                ? new[] { "SleepPowder" }
+                ? new[] { "sleep_powder" }
                 : loc.Materials;
             for (int i = 0; i < count; i++)
             {
@@ -424,23 +424,23 @@ public partial class GameManager : Node
     {
         return key switch
         {
-            "Ale" => new(0.8f, 0.6f, 0.2f),
-            "Wine" => new(0.6f, 0.1f, 0.2f),
-            "Bread" => new(0.7f, 0.55f, 0.3f),
-            "Meat" => new(0.65f, 0.2f, 0.1f),
-            "Herb" => new(0.2f, 0.7f, 0.2f),
-            "SleepPowder" => new(0.55f, 0.4f, 0.75f),
+            "ale" => new(0.8f, 0.6f, 0.2f),
+            "grape" => new(0.6f, 0.1f, 0.2f),
+            "flour" => new(0.7f, 0.55f, 0.3f),
+            "meat_raw" => new(0.65f, 0.2f, 0.1f),
+            "herb" => new(0.2f, 0.7f, 0.2f),
+            "sleep_powder" => new(0.55f, 0.4f, 0.75f),
             _ => Colors.Gray
         };
     }
 
     private static readonly Dictionary<string, string> MaterialIconPaths = new()
     {
-        ["Ale"] = "res://assets/textures/icons/materials/ale.png",
-        ["Wine"] = "res://assets/textures/icons/materials/wine.png",
-        ["Bread"] = "res://assets/textures/icons/materials/bread.png",
-        ["Meat"] = "res://assets/textures/icons/materials/meat.png",
-        ["Herb"] = "res://assets/textures/icons/materials/herb.png",
+        ["ale"] = "res://assets/textures/icons/materials/ale.png",
+        ["grape"] = "res://assets/textures/icons/materials/wine.png",
+        ["flour"] = "res://assets/textures/icons/materials/bread.png",
+        ["meat_raw"] = "res://assets/textures/icons/materials/meat.png",
+        ["herb"] = "res://assets/textures/icons/materials/herb.png",
     };
 
     public Texture2D TryLoadMaterialIcon(string key)
@@ -460,11 +460,11 @@ public partial class GameManager : Node
             {
                 var json = file.GetAsText();
                 return JsonSerializer.Deserialize<Dictionary<string, int>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new() { ["Ale"] = 20, ["Wine"] = 20, ["Bread"] = 20, ["Meat"] = 20, ["Herb"] = 20 };
+                    ?? new() { ["ale"] = 20, ["grape"] = 20, ["flour"] = 20, ["meat_raw"] = 20, ["herb"] = 20 };
             }
         }
         catch { }
-        return new() { ["Ale"] = 20, ["Wine"] = 20, ["Bread"] = 20, ["Meat"] = 20, ["Herb"] = 20 };
+        return new() { ["ale"] = 20, ["grape"] = 20, ["flour"] = 20, ["meat_raw"] = 20, ["herb"] = 20 };
     }
 
     // ── 兼容旧 MainInit ──

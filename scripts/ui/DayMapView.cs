@@ -392,7 +392,7 @@ public partial class DayMapView : Node2D
         foreach (var child in _materialList.GetChildren())
             child.QueueFree();
 
-        var materials = new[] { ("Ale", "麦芽"), ("Wine", "葡萄"), ("Bread", "面粉"), ("Meat", "生肉"), ("Herb", "草药") };
+        var materials = new[] { ("ale", "麦芽"), ("grape", "葡萄"), ("flour", "面粉"), ("meat_raw", "生肉"), ("herb", "草药") };
 
         foreach (var (key, name) in materials)
         {

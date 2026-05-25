@@ -65,25 +65,25 @@ offset_bottom = 670.0
 [node name="MixingArea" type="Control" parent="CraftStation"]
 script = ExtResource("3")
 layout_mode = 0
-offset_left = 0.0
+offset_left = 60.0
 offset_top = 0.0
-offset_right = 280.0
+offset_right = 540.0
 offset_bottom = 120.0
 
 [node name="ProductPanel" type="Control" parent="CraftStation"]
 script = ExtResource("4")
 layout_mode = 0
-offset_left = 480.0
+offset_left = 0.0
 offset_top = 0.0
-offset_right = 600.0
+offset_right = 55.0
 offset_bottom = 120.0
 
 [node name="CombineQueryBar" type="HBoxContainer" parent="CraftStation"]
 layout_mode = 0
-offset_left = 0.0
-offset_top = 125.0
-offset_right = 470.0
-offset_bottom = 155.0
+offset_left = 60.0
+offset_top = 123.0
+offset_right = 460.0
+offset_bottom = 162.0
 
 [node name="Label" type="Label" parent="CraftStation/CombineQueryBar"]
 layout_mode = 0
@@ -99,41 +99,41 @@ text = "否"
 
 [node name="OperationButtons" type="HBoxContainer" parent="CraftStation"]
 layout_mode = 0
-offset_left = 290.0
-offset_top = 0.0
-offset_right = 470.0
-offset_bottom = 40.0
+offset_left = 60.0
+offset_top = 123.0
+offset_right = 460.0
+offset_bottom = 162.0
 
 [node name="SeasoningPanel" type="Control" parent="CraftStation"]
 script = ExtResource("5")
 layout_mode = 0
-offset_left = 290.0
-offset_top = 45.0
-offset_right = 470.0
-offset_bottom = 85.0
+offset_left = 60.0
+offset_top = 123.0
+offset_right = 460.0
+offset_bottom = 162.0
 
 [node name="ClearBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
-offset_left = 340.0
-offset_top = 90.0
-offset_right = 440.0
-offset_bottom = 130.0
+offset_left = 465.0
+offset_top = 123.0
+offset_right = 595.0
+offset_bottom = 162.0
 text = "清空"
 
 [node name="ResultSlot" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
-offset_left = 290.0
-offset_top = 135.0
-offset_right = 480.0
-offset_bottom = 165.0
+offset_left = 545.0
+offset_top = 0.0
+offset_right = 600.0
+offset_bottom = 120.0
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="CraftStation/ResultSlot"]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 3.0
-offset_right = 185.0
-offset_bottom = 25.0
+offset_left = 2.0
+offset_top = 35.0
+offset_right = 53.0
+offset_bottom = 85.0
 text = ""
 horizontal_alignment = 1
 

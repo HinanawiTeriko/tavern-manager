@@ -1,10 +1,10 @@
 {
   "maxStamina": 5,
   "locations": [
-    { "id": "mushroom_forest", "name": "菌菇林地", "cost": 1, "materials": ["Herb", "Herb", "SleepPowder"], "description": "潮湿的洞穴林地，生长着各种菌类和草药" },
-    { "id": "abandoned_mine", "name": "废弃矿道", "cost": 2, "materials": ["Ale", "Ale", "Meat"], "description": "废弃已久的矿道，偶尔能找到野生麦穗和穴居小兽" },
-    { "id": "dark_river", "name": "暗河沿岸", "cost": 2, "materials": ["Meat", "Meat", "Ale"], "description": "地下暗河旁，小型野兽和鱼类出没，岸边偶有野生谷物" },
-    { "id": "grape_trellis", "name": "葡萄藤架", "cost": 1, "materials": ["Wine", "Wine", "Herb"], "description": "地牢里罕见的天然葡萄藤，藤架下偶生草药" },
-    { "id": "mill_farm", "name": "农庄磨坊", "cost": 1, "materials": ["Bread", "Bread", "Herb"], "description": "地牢入口附近的农庄，可以交换面粉，田边也能采到草药" }
+    { "id": "mushroom_forest", "name": "菌菇林地", "cost": 1, "materials": ["herb", "herb", "sleep_powder"], "description": "潮湿的洞穴林地，生长着各种菌类和草药" },
+    { "id": "abandoned_mine", "name": "废弃矿道", "cost": 2, "materials": ["ale", "ale", "meat_raw"], "description": "废弃已久的矿道，偶尔能找到野生麦穗和穴居小兽" },
+    { "id": "dark_river", "name": "暗河沿岸", "cost": 2, "materials": ["meat_raw", "meat_raw", "ale"], "description": "地下暗河旁，小型野兽和鱼类出没，岸边偶有野生谷物" },
+    { "id": "grape_trellis", "name": "葡萄藤架", "cost": 1, "materials": ["grape", "grape", "herb"], "description": "地牢里罕见的天然葡萄藤，藤架下偶生草药" },
+    { "id": "mill_farm", "name": "农庄磨坊", "cost": 1, "materials": ["flour", "flour", "herb"], "description": "地牢入口附近的农庄，可以交换面粉，田边也能采到草药" }
   ]
 }

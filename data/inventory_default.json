@@ -1,8 +1,8 @@
 {
-  "Ale": 20,
-  "Wine": 20,
-  "Bread": 20,
-  "Meat": 20,
-  "Herb": 20,
-  "SleepPowder": 0
+  "ale": 20,
+  "grape": 20,
+  "flour": 20,
+  "meat_raw": 20,
+  "herb": 20,
+  "sleep_powder": 0
 }
