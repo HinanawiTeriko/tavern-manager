@@ -174,9 +174,11 @@ public partial class CraftStation : Control
             {
                 case "heat":
                     btn.ButtonDown += () => StartHeat(btn, result);
+                    btn.ButtonUp += () => StopHeat();
                     break;
                 case "stir":
                     btn.ButtonDown += () => StartStir(btn, result);
+                    btn.ButtonUp += () => StopStir();
                     break;
                 case "shake":
                     btn.Pressed += () => ExecuteOperation(result);
@@ -197,7 +199,17 @@ public partial class CraftStation : Control
         _heatTargetOp = resultKey;
         _heatBtnRef = btn;
         btn.Text = "加热中...";
-        btn.Disabled = true;
+    }
+
+    private void StopHeat()
+    {
+        if (!_heating) return;
+        _heating = false;
+        if (_heatProgress < HeatTime)
+        {
+            _heatBtnRef.Text = "加热";
+        }
+        _heatBtnRef = null;
     }
 
     // ── Stir gesture ──
@@ -210,6 +222,17 @@ public partial class CraftStation : Control
         _heatTargetOp = resultKey;
         _heatBtnRef = btn;
         btn.Text = "搅拌中... (转圈)";
+    }
+
+    private void StopStir()
+    {
+        if (!_stirring) return;
+        _stirring = false;
+        if (_stirCircles < StirTarget)
+        {
+            _heatBtnRef.Text = "搅拌";
+        }
+        _heatBtnRef = null;
     }
 
     private void ExecuteOperation(string resultKey)
@@ -277,11 +300,11 @@ public partial class CraftStation : Control
             if (_heatProgress >= HeatTime)
             {
                 _heating = false;
-                _heatBtnRef.Text = "加热 ✓";
+                if (_heatBtnRef != null) _heatBtnRef.Text = "加热 ✓";
                 GestureCompleted?.Invoke("heat");
                 ExecuteOperation(_heatTargetOp);
             }
-            else
+            else if (_heatBtnRef != null)
             {
                 _heatBtnRef.Text = $"加热中 {ratio * 100:F0}%";
             }
@@ -290,20 +313,27 @@ public partial class CraftStation : Control
         if (_stirring)
         {
             var mouse = GetViewport().GetMousePosition();
-            var prev = _stirLastMouse - _heatBtnRef.GlobalPosition;
-            var cur = mouse - _heatBtnRef.GlobalPosition;
+            var btnCenter = _heatBtnRef != null ? _heatBtnRef.GlobalPosition : Vector2.Zero;
+            var prev = _stirLastMouse - btnCenter;
+            var cur = mouse - btnCenter;
             var anglePrev = Math.Atan2(prev.Y, prev.X);
             var angleCur = Math.Atan2(cur.Y, cur.X);
             var delta = angleCur - anglePrev;
-            if (Math.Abs(delta) > 0.01) _stirTotalAngle += delta;
+
+            // Normalize delta to [-PI, PI] to handle angle wrap-around
+            if (delta > Math.PI) delta -= Math.PI * 2;
+            else if (delta < -Math.PI) delta += Math.PI * 2;
+
+            if (Math.Abs(delta) > 0.005) _stirTotalAngle += delta;
             _stirLastMouse = mouse;
 
             _stirCircles = (int)(Math.Abs(_stirTotalAngle) / (Math.PI * 2));
-            _heatBtnRef.Text = $"搅拌中... {_stirCircles}/{StirTarget}";
+            if (_heatBtnRef != null)
+                _heatBtnRef.Text = $"搅拌... {_stirCircles}/{StirTarget}圈";
             if (_stirCircles >= StirTarget)
             {
                 _stirring = false;
-                _heatBtnRef.Text = "搅拌 ✓";
+                if (_heatBtnRef != null) _heatBtnRef.Text = "搅拌 ✓";
                 GestureCompleted?.Invoke("stir");
                 ExecuteOperation(_heatTargetOp);
             }
