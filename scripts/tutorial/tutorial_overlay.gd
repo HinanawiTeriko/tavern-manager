@@ -220,17 +220,34 @@ func show_step(step: Dictionary, highlight_rect: Array, _has_prev: bool, has_nex
 		catcher.position = Vector2(x, y)
 		catcher.size = Vector2(w, h)
 
-	# 标题与描述面板位置
+	# 标题与描述面板位置（限幅防止超出屏幕）
 	var desc_x: float = step.get("desc_pos_x", 0.5)
 	var desc_y: float = step.get("desc_pos_y", 0.75)
 	var desc_w: float = step.get("desc_width", 420)
 	var desc_h: float = step.get("desc_height", 140)
 
-	_title_label.position = Vector2(vs.x * desc_x - desc_w / 2.0, vs.y * desc_y + 12)
+	var panel_x = vs.x * desc_x - desc_w / 2.0
+	var panel_y = vs.y * desc_y + 48
+	var title_y = vs.y * desc_y + 12
+	var btn_next_y = vs.y * desc_y + desc_h + 56
+
+	# 限幅：面板不能超出屏幕底部（为按钮留出空间）
+	var panel_bottom = panel_y + desc_h
+	var btn_margin = 60  # 按钮 + 间距
+	if panel_bottom + btn_margin > vs.y:
+		var overflow = panel_bottom + btn_margin - vs.y
+		panel_y = max(4, panel_y - overflow)
+		title_y = max(4, title_y - overflow)
+		btn_next_y = panel_y + desc_h + 8
+
+	# 限幅 x 方向
+	panel_x = clamp(panel_x, 10, vs.x - desc_w - 10)
+
+	_title_label.position = Vector2(panel_x, title_y)
 	_title_label.size = Vector2(desc_w, 32)
 	_title_label.text = step.get("title", "")
 
-	_description_panel.position = Vector2(vs.x * desc_x - desc_w / 2.0, vs.y * desc_y + 48)
+	_description_panel.position = Vector2(panel_x, panel_y)
 	_description_panel.size = Vector2(desc_w, desc_h)
 
 	_description_label.position = Vector2(16, 14)
@@ -239,7 +256,7 @@ func show_step(step: Dictionary, highlight_rect: Array, _has_prev: bool, has_nex
 
 	# 按钮位置
 	_skip_btn.position = Vector2(vs.x - 120, 16)
-	_next_btn.position = Vector2(vs.x * desc_x - 75, vs.y * desc_y + desc_h + 56)
+	_next_btn.position = Vector2(vs.x * desc_x - 75, btn_next_y)
 	_next_btn.text = "完成 ✓" if not has_next else "下一步 ▶"
 
 	visible = true

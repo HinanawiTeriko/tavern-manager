@@ -1,7 +1,7 @@
 class_name MixingArea
 extends Control
 
-signal combine_query(a: String, b: String)
+signal mix_available(available: bool)
 signal contents_changed()
 
 var _items: Array = []
@@ -11,33 +11,14 @@ func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
+
+## 直接添加物品（不触发合并查询）
 func add_item(key: String) -> void:
 	if key == "":
 		return
-
-	var distinct: Array = []
-	for i in _items:
-		if i != key and not distinct.has(i):
-			distinct.append(i)
-
-	if distinct.size() > 0 and not _items.has(key):
-		combine_query.emit(key, distinct[0])
-		return
-
 	_items.append(key)
 	_refresh()
 
-func force_add_item(key: String) -> void:
-	if key == "":
-		return
-	_items.append(key)
-	_refresh()
-
-func force_add_items(keys: Array) -> void:
-	for key in keys:
-		if key != "":
-			_items.append(key)
-	_refresh()
 
 func remove_item(key: String) -> void:
 	var idx = _items.find(key)
@@ -45,14 +26,17 @@ func remove_item(key: String) -> void:
 		_items.remove_at(idx)
 		_refresh()
 
+
 func clear_items() -> void:
 	_items.clear()
 	_refresh()
+
 
 func consume_and_replace_single(new_key: String) -> void:
 	_items.clear()
 	_items.append(new_key)
 	_refresh()
+
 
 func consume_and_replace(consumed: Array, new_key: String) -> void:
 	for c in consumed:
@@ -62,13 +46,65 @@ func consume_and_replace(consumed: Array, new_key: String) -> void:
 	_items.append(new_key)
 	_refresh()
 
+
+func get_items() -> Array:
+	return _items
+
+
+## 检查合成区物品是否满足混合配方
+## 返回 {a: key1, b: key2, result: key3} 或空字典
+func get_mix_recipe() -> Dictionary:
+	var distinct: Array = []
+	for i in _items:
+		if not distinct.has(i):
+			distinct.append(i)
+
+	if distinct.size() < 2:
+		return {}
+
+	for i in range(distinct.size()):
+		for j in range(i + 1, distinct.size()):
+			var result = _gm.craft.get_combine_result(distinct[i], distinct[j])
+			if result != "":
+				return {
+					"a": distinct[i],
+					"b": distinct[j],
+					"result": result
+				}
+	return {}
+
+
+## 执行混合：严格消耗配方中两种材料各一个，生成结果
+func do_mix(a: String, b: String, result: String) -> void:
+	var removed_a = false
+	var removed_b = false
+	var new_items: Array = []
+	for item in _items:
+		if item == a and not removed_a:
+			removed_a = true
+			continue
+		if item == b and not removed_b:
+			removed_b = true
+			continue
+		new_items.append(item)
+	new_items.append(result)
+	_items = new_items
+	_refresh()
+
+
 func _refresh() -> void:
 	contents_changed.emit()
+	_check_mix()
 	queue_redraw()
+
+
+func _check_mix() -> void:
+	var recipe = get_mix_recipe()
+	mix_available.emit(not recipe.is_empty())
+
 
 func _draw() -> void:
 	var rect = get_rect()
-
 	draw_rect(rect, Color(0.15, 0.12, 0.1))
 	draw_rect(rect, Color(0.3, 0.25, 0.2), false)
 

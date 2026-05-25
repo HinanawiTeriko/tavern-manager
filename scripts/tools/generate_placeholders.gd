@@ -87,8 +87,8 @@ func _gen_p1_backgrounds(project_dir: String) -> int:
 	print("[P1] 生成背景资源...")
 	var count = 0
 
-	# D1 - 地牢区域地图背景 (1280x720)
-	var img1 = _create_bg_image(1280, 720, Color(0.086, 0.075, 0.067), "DAYMAP")
+	# D1 - 地牢区域地图背景 (1280x720)，不添加文字标签避免显示 "DAYMAP"
+	var img1 = _create_bg_image(1280, 720, Color(0.086, 0.075, 0.067), "")
 	count += _save_img(img1, project_dir + "assets/textures/backgrounds/daymap_bg.png")
 
 	# E1 - 结局画面背景 (1280x720)
@@ -273,8 +273,9 @@ func _create_bg_image(w: int, h: int, bg_color: Color, label: String) -> Image:
 			for y in range(h):
 				img.set_pixel(x, y, line_color)
 
-	# 添加标签
-	_add_label(img, w, h, label)
+	# 添加标签（空字符串时不添加，避免英文占位文字）
+	if label != "":
+		_add_label(img, w, h, label)
 
 	return img
 
@@ -400,8 +401,8 @@ func _create_title_sign_image() -> Image:
 		img.set_pixel(0, i, border_color)
 		img.set_pixel(w-1, i, border_color)
 
-	# 添加文字
-	_add_label(img, w, h, "TAVERN")
+	# 添加文字（不添加英文占位标签，避免与中文标题重叠）
+	# _add_label(img, w, h, "TAVERN")  # 已禁用以避免英文占位文字
 
 	return img
 

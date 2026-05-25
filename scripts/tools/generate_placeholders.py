@@ -269,13 +269,14 @@ def create_title_sign() -> Image.Image:
         font = ImageFont.truetype("arial.ttf", 64)
     except:
         font = ImageFont.load_default()
-    label = "TAVERN"
-    bbox = draw.textbbox((0, 0), label, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
-    text_x = (w - text_w) // 2
-    text_y = (h - text_h) // 2
-    draw.text((text_x, text_y), label, fill=COLORS["amber_primary"] + (255,), font=font)
+    # 添加文字（不添加英文占位标签，避免与中文标题重叠）
+    # label = "TAVERN"
+    # bbox = draw.textbbox((0, 0), label, font=font)
+    # text_w = bbox[2] - bbox[0]
+    # text_h = bbox[3] - bbox[1]
+    # text_x = (w - text_w) // 2
+    # text_y = (h - text_h) // 2
+    # draw.text((text_x, text_y), label, fill=COLORS["amber_primary"] + (255,), font=font)
 
     return img
 
@@ -291,8 +292,8 @@ def generate_p1_backgrounds(output_dir: str) -> int:
     bg_dir = os.path.join(output_dir, "backgrounds")
     ensure_dir(bg_dir)
 
-    # D1 - 地牢区域地图背景
-    img = create_bg(1280, 720, COLORS["bg_deep"], "DAYMAP")
+    # D1 - 地牢区域地图背景（不添加 "DAYMAP" 文字）
+    img = create_bg(1280, 720, COLORS["bg_deep"], "")
     if save_image(img, os.path.join(bg_dir, "daymap_bg.png")):
         count += 1
 

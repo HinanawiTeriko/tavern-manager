@@ -1,4 +1,3 @@
-class_name TutorialManager
 extends Node
 
 signal tutorial_step_started(step_id: String)
@@ -25,7 +24,7 @@ var first_ledger_shown: bool = false
 
 
 func _ready() -> void:
-	_load_state()
+	# 不加载持久化状态，每次重启游戏都重新开始教程
 	_load_steps()
 
 

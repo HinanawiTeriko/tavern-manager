@@ -68,17 +68,14 @@ func _ready() -> void:
 
 	var bg_node = get_node_or_null("Background")
 	if bg_node != null:
-		var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/daymap_bg.png")
-		if bg_tex != null:
-			bg_node.texture = bg_tex
-		else:
-			var grad = GradientTexture2D.new()
-			grad.width = 1280; grad.height = 720
-			var g = Gradient.new()
-			g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
-			g.offsets = [0.0, 1.0]
-			grad.gradient = g
-			bg_node.texture = grad
+		# 使用程序化渐变，避免占位图上的 "DAYMAP" 文字
+		var grad = GradientTexture2D.new()
+		grad.width = 1280; grad.height = 720
+		var g = Gradient.new()
+		g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
+		g.offsets = [0.0, 1.0]
+		grad.gradient = g
+		bg_node.texture = grad
 
 func _load_locations() -> void:
 	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
@@ -491,9 +488,9 @@ func _trigger_gather_tutorial() -> void:
 		return
 
 	var rects = {
-		"MapArea": [35, 80, 740, 350],
+		"MapArea": [140, 80, 1000, 420],
 		"TopBar": [30, 5, 320, 55],
-		"GoButton": [200, 540, 220, 56],
+		"GoButton": [540, 520, 200, 50],
 	}
 	tm.start_tutorial("gather", rects)
 
@@ -504,6 +501,6 @@ func _trigger_shop_tutorial() -> void:
 		return
 
 	var rects = {
-		"MapArea": [35, 80, 740, 350],
+		"MapArea": [140, 80, 1000, 420],
 	}
 	tm.start_tutorial("shop", rects)

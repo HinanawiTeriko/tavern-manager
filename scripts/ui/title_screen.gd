@@ -40,11 +40,10 @@ func _ready() -> void:
 	_try_load_deco("Deco/Mug", "res://assets/textures/ui/deco_mug.png")
 	_try_load_deco("Deco/Emblem", "res://assets/textures/ui/deco_emblem.png")
 
+	# 隐藏 TitleSign，避免占位符生成的 "TAVERN" 文字与中文标题重叠
 	var title_sign = get_node_or_null("UI/TitlePanel/TitleSign")
 	if title_sign != null:
-		var sign_tex = TextureManager.try_load("res://assets/textures/ui/title_sign.png")
-		if sign_tex != null:
-			title_sign.texture = sign_tex
+		title_sign.visible = false
 
 func _try_load_deco(node_path: String, tex_path: String) -> void:
 	var node = get_node_or_null(node_path)
