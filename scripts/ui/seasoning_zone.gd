@@ -19,11 +19,10 @@ func _ready() -> void:
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label.anchor_right = 1.0
-	_label.anchor_bottom = 1.0
 	_label.text = "放入成品"
 	_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	_label.add_theme_font_size_override("font_size", 14)
+	_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_label)
 
 	queue_redraw()
