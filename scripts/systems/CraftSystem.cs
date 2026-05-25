@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 
 public class ItemData
@@ -8,18 +7,6 @@ public class ItemData
     public string Name { get; set; }
     public float[] Color { get; set; }
     public int Price { get; set; }
-}
-
-public class CombineRule
-{
-    public string A { get; set; }
-    public string B { get; set; }
-    public string Result { get; set; }
-}
-
-public class CombineFile
-{
-    public CombineRule[] Combines { get; set; }
 }
 
 public class CraftSystem
@@ -45,20 +32,23 @@ public class CraftSystem
         LoadItems();
         LoadOperations();
         LoadCombines();
-        GD.Print($"[Craft] 加载 {Items.Count} 种物品, {_ops.Count} 个加工节点, {_combine.Count} 条组合规则");
+        GD.Print($"[Craft] 加载 {Items?.Count ?? 0} 种物品, {_ops.Count} 个加工节点, {_combine.Count} 条组合规则");
     }
 
     private void LoadItems()
     {
         using var file = FileAccess.Open("res://data/items.json", FileAccess.ModeFlags.Read);
+        if (file == null) return;
         var json = file.GetAsText();
         Items = JsonSerializer.Deserialize<Dictionary<string, ItemData>>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            ?? new();
     }
 
     private void LoadOperations()
     {
         using var file = FileAccess.Open("res://data/operations.json", FileAccess.ModeFlags.Read);
+        if (file == null) return;
         var json = file.GetAsText();
         var raw = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
