@@ -21,17 +21,17 @@ func _ready() -> void:
 	if data != null:
 		_render(data)
 
-func _render(data: Dictionary) -> void:
-	_title_label.text = "第 %d 天 · 营业结算" % data["day"]
+func _render(data: LedgerData) -> void:
+	_title_label.text = "第 %d 天 · 营业结算" % data.day
 	ThemeColors.style_header(_title_label, 30)
 
-	_add_stat_row("金币收入    +%d 金      累计: %d 金" % [data["gold_today"], data["gold_total"]])
-	_add_stat_row("声望变化    +%d           累计: %d" % [data["rep_today"], data["rep_total"]])
-	_add_stat_row("服务客人    %d 位" % data["guests_served"])
-	_add_stat_row("成功订单    %d 单" % data["orders_success"])
-	_add_stat_row("失败订单    %d 单" % data["orders_failed"])
+	_add_stat_row("金币收入    +%d 金      累计: %d 金" % [data.gold_today, data.gold_total])
+	_add_stat_row("声望变化    +%d           累计: %d" % [data.rep_today, data.rep_total])
+	_add_stat_row("服务客人    %d 位" % data.guests_served)
+	_add_stat_row("成功订单    %d 单" % data.orders_success)
+	_add_stat_row("失败订单    %d 单" % data.orders_failed)
 
-	var fates: Array = data.get("npc_fates", [])
+	var fates: Array = data.npc_fates
 	if fates.size() > 0:
 		_fate_title.text = "今日宿命"
 		ThemeColors.style_header(_fate_title, 22)
