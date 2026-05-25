@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/TavernView.cs" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/CraftStation.cs" id="2"]
 [ext_resource type="Script" path="res://scripts/ui/MixingArea.cs" id="3"]
 [ext_resource type="Script" path="res://scripts/ui/ProductPanel.cs" id="4"]
 [ext_resource type="Script" path="res://scripts/ui/SeasoningPanel.cs" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/SeasoningZone.cs" id="6"]
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -76,24 +77,32 @@ layout_mode = 0
 offset_left = 485.0
 offset_top = 0.0
 offset_right = 595.0
-offset_bottom = 115.0
+offset_bottom = 55.0
 
 [node name="ResultSlot" type="ColorRect" parent="CraftStation"]
 layout_mode = 0
 offset_left = 485.0
 offset_top = 0.0
 offset_right = 595.0
-offset_bottom = 115.0
+offset_bottom = 55.0
 color = Color(0.1, 0.08, 0.06, 1)
 
 [node name="Label" type="Label" parent="CraftStation/ResultSlot"]
 layout_mode = 0
 offset_left = 3.0
-offset_top = 35.0
+offset_top = 12.0
 offset_right = 107.0
-offset_bottom = 80.0
+offset_bottom = 43.0
 text = ""
 horizontal_alignment = 1
+
+[node name="SeasoningZone" type="Control" parent="CraftStation"]
+script = ExtResource("6")
+layout_mode = 0
+offset_left = 485.0
+offset_top = 56.0
+offset_right = 595.0
+offset_bottom = 115.0
 
 [node name="CombineQueryBar" type="HBoxContainer" parent="CraftStation"]
 layout_mode = 0

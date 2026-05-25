@@ -26,4 +26,6 @@ public class SeasoningSystem
 
     public SeasoningData GetSeasoning(string key) =>
         Seasonings.TryGetValue(key, out var s) ? s : null;
+
+    public bool IsSeasoning(string key) => Seasonings.ContainsKey(key);
 }

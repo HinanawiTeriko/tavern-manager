@@ -8,7 +8,7 @@ public partial class CraftStation : Control
     // ── Child component refs ──
     private MixingArea _mixingArea;
     private ProductPanel _productPanel;
-    private SeasoningPanel _seasoningPanel;
+    private SeasoningZone _seasoningZone;
     private Control _operationButtons; // HBoxContainer holding dynamic op buttons
     private Button _clearBtn;
     private ColorRect _resultSlot;
@@ -24,7 +24,6 @@ public partial class CraftStation : Control
     // ── Drag state ──
     private bool _dragging;
     private string _dragMaterial;
-    private string _dragSeasoning;
     private ColorRect _dragPanel;
     private Control _overlayMenu;
     private ColorRect _dialogueOverlay;
@@ -63,7 +62,8 @@ public partial class CraftStation : Control
         // Find child components (all exist in the scene)
         _mixingArea = GetNode<MixingArea>("MixingArea");
         _productPanel = GetNode<ProductPanel>("ProductPanel");
-        _seasoningPanel = GetNode<SeasoningPanel>("SeasoningPanel");
+        _seasoningZone = GetNode<SeasoningZone>("SeasoningZone");
+        _seasoningZone.Visible = false;
         _operationButtons = GetNode<Control>("OperationButtons");
         _clearBtn = GetNode<Button>("ClearBtn");
         _resultSlot = GetNode<ColorRect>("ResultSlot");
@@ -106,15 +106,14 @@ public partial class CraftStation : Control
                 AddToInventory(item);
             _mixingArea.Clear();
             ClearResultSlot();
-            _seasoningPanel.Visible = false;
+            _seasoningZone.Deactivate();
             ClearRequested?.Invoke();
         };
 
         // ── Seasoning events ──
-        _seasoningPanel.SeasoningApplied += (seasoning) => {
+        _seasoningZone.SeasoningApplied += (seasoning) => {
             _resultSlot.SetMeta("seasoning", seasoning);
         };
-        _seasoningPanel.SeasoningSkipped += () => { };
 
         // ── Style buttons ──
         ThemeColors.StyleSmallButton(_clearBtn, 12);
@@ -273,7 +272,7 @@ public partial class CraftStation : Control
         _resultSlot.SetMeta("item_key", key);
         _resultSlot.SetMeta("seasoning", "");
 
-        _seasoningPanel.ShowFor(key);
+        _seasoningZone.Activate();
     }
 
     private void ClearResultSlot()
@@ -282,7 +281,7 @@ public partial class CraftStation : Control
         _resultSlot.Color = new Color(0.06f, 0.05f, 0.04f);
         _resultSlot.RemoveMeta("item_key");
         _resultSlot.RemoveMeta("seasoning");
-        _seasoningPanel.Visible = false;
+        _seasoningZone.Deactivate();
     }
 
     // ── _Process: heat/stir progress + drag ──
@@ -382,7 +381,6 @@ public partial class CraftStation : Control
         var serveKey = _resultSlot.GetMeta("item_key", "").AsString();
         if (!string.IsNullOrEmpty(serveKey) && HitTest(_resultSlot, pos))
         {
-            _dragSeasoning = _resultSlot.GetMeta("seasoning", "").AsString();
             StartDrag(pos, serveKey);
             _resultLabel.Text = "";
             ClearResultSlot();
@@ -428,7 +426,7 @@ public partial class CraftStation : Control
                 if (_gm.Guests.HasGuest && !string.IsNullOrEmpty(_dragMaterial))
                 {
                     var serveKey = _dragMaterial;
-                    var serveSeasoning = _dragSeasoning;
+                    var serveSeasoning = _seasoningZone.GetAppliedSeasoning();
                     var item = _gm.Craft.GetItem(serveKey);
                     if (item != null)
                     {
@@ -448,6 +446,16 @@ public partial class CraftStation : Control
             if (HitTest(_mixingArea, pos) && !string.IsNullOrEmpty(_dragMaterial))
             {
                 _mixingArea.AddItem(_dragMaterial);
+                EndDrag();
+                return;
+            }
+        }
+
+        // Drop on SeasoningZone
+        if (HitTest(_seasoningZone, pos) && !string.IsNullOrEmpty(_dragMaterial))
+        {
+            if (_seasoningZone.TryApplySeasoning(_dragMaterial))
+            {
                 EndDrag();
                 return;
             }
@@ -497,7 +505,6 @@ public partial class CraftStation : Control
         _dragging = false;
         _dragPanel.Visible = false;
         _dragMaterial = null;
-        _dragSeasoning = null;
     }
 
     private void ReturnDrag()
