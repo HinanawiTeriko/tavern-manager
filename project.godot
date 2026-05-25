@@ -25,7 +25,6 @@ DialogueManager="*uid://c3rodes2l3gxb"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
