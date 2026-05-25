@@ -4,6 +4,7 @@
 # Godot 4+ specific ignores
 .godot/*
 !.godot/mono/
+.godot/mono/temp/
 .nomedia
 
 # Godot-specific ignores
