@@ -132,9 +132,9 @@ offset_bottom = 162.0
 [node name="ClearBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
 offset_left = 485.0
-offset_top = 118.0
+offset_top = 180.0
 offset_right = 595.0
-offset_bottom = 162.0
+offset_bottom = 224.0
 text = "清空"
 
 [node name="ShortcutBarBg" type="Panel" parent="."]

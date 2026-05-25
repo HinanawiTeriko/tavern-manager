@@ -1,8 +1,6 @@
 class_name SeasoningZone
 extends Control
 
-signal serve_requested(item_key: String, seasoning_tag: String)
-
 enum State { EMPTY, HAS_ITEM, SEASONED }
 
 var _gm
@@ -10,11 +8,24 @@ var _state: State = State.EMPTY
 var _item_key: String = ""
 var _applied_seasoning: String = ""
 var _item_name: String = ""
+var _label: Label
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
+
+	_label = Label.new()
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label.anchor_right = 1.0
+	_label.anchor_bottom = 1.0
+	_label.text = "放入成品"
+	_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_label.add_theme_font_size_override("font_size", 14)
+	add_child(_label)
+
 	queue_redraw()
 
 func get_item_key() -> String:
@@ -32,6 +43,8 @@ func set_item(key: String) -> void:
 	var item = _gm.craft.get_item(key)
 	_item_name = item.get("name", key)
 	_state = State.HAS_ITEM
+	_label.text = _item_name
+	_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 	queue_redraw()
 
 func clear_item() -> void:
@@ -39,6 +52,8 @@ func clear_item() -> void:
 	_applied_seasoning = ""
 	_item_name = ""
 	_state = State.EMPTY
+	_label.text = "放入成品"
+	_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	queue_redraw()
 
 func try_apply_seasoning(seasoning_key: String) -> bool:
@@ -59,6 +74,8 @@ func try_apply_seasoning(seasoning_key: String) -> bool:
 	var seasoning = _gm.seasoning.get_seasoning(seasoning_key)
 	_item_name = _gm.craft.get_item(_item_key).get("name", _item_key) + " · " + seasoning.get("name", seasoning_key)
 	_state = State.SEASONED
+	_label.text = _item_name
+	_label.add_theme_color_override("font_color", Color.LIME_GREEN)
 	queue_redraw()
 	return true
 
@@ -92,8 +109,3 @@ func _draw() -> void:
 		draw_line(Vector2(0, y), Vector2(0, min(y + dash, h)), dash_color)
 		draw_line(Vector2(w, y), Vector2(w, min(y + dash, h)), dash_color)
 		y += dash + gap
-
-	if _state == State.EMPTY:
-		draw_string(ThemeDB.fallback_font, Vector2(8, 28), "放入成品", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16, 16)
-	elif _state == State.HAS_ITEM or _state == State.SEASONED:
-		draw_string(ThemeDB.fallback_font, Vector2(8, 28), _item_name, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16, 16)
