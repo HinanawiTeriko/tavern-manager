@@ -105,8 +105,8 @@ func show_day(day: int, total_days: int) -> void:
 	_day_label.text = "第 %d/%d 天 — 白天·采集" % [day, total_days]
 	_stamina_left = _max_stamina
 	_assignments.clear()
-	for kv in _assign_labels:
-		kv.value.text = "0"
+	for label in _assign_labels.values():
+		label.text = "0"
 	_update_stamina_display()
 	_result_panel.visible = false
 	_continue_btn.visible = true
