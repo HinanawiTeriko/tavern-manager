@@ -14,8 +14,7 @@ git pull origin main
 
 # 3. 提交前检查
 git status                         # 确认改了哪些文件
-dotnet build                       # 必须 0 errors！
-grep -r "<<<<<<" --include="*.cs" . # 确认无残留冲突标记
+grep -r "<<<<<<" --include="*.gd" . # 确认无残留冲突标记
 
 # 4. 精确提交
 git add <具体文件1> <具体文件2>      # ❌ 严禁 git add . 或 git add -A
@@ -34,18 +33,14 @@ git push
 
 | 文件/目录 | 原因 |
 |-----------|------|
-| `.godot/mono/temp/` | 编译缓存，每人本地不同 |
 | `.godot/editor/` | 编辑器个人布局/缓存 |
 | `.env` | 可能含密钥 |
 | `.mcp.json` | 个人 MCP 配置 |
-| `*.dll`, `*.pdb` | 编译产物 |
 | 任何含 `<<<<<<` 的文件 | 冲突未解决 |
 
 `.gitignore` 已配置：
 ```
-.godot/*
-!.godot/mono/
-.godot/mono/temp/       # 编译产物忽略
+.godot/
 ```
 
 ---
@@ -59,7 +54,6 @@ git push
 # 2. 删除 <<<<<<<、=======、>>>>>>> 标记
 # 3. 保留正确的代码
 # 4. 验证
-dotnet build            # 必须 0 errors
 grep -r "<<<<<<" .
 
 # 5. 提交
@@ -75,21 +69,18 @@ git commit -m "merge: 简述冲突内容"
 
 如果你是 AI，以下行为必须遵守：
 
-1. **提交前必须 `dotnet build` 通过**，有 error 不提交
+1. **提交前在 Godot 编辑器中验证**，有 error 不提交
 2. **每次提交前检查 `git status`**，只 add 计划内的文件，不顺手带无关改动
-3. **不提交 `.godot/mono/temp/`**，如果被误 add，先 `git rm --cached -r` 移除
-4. **解决冲突后搜 `<<<<<<`** 确认 0 残留
-5. **一个 commit 只做一个主题**：feat:/fix:/refactor:/docs:
-6. **不修改 `addons/`** 下任何文件
+3. **解决冲突后搜 `<<<<<<`** 确认 0 残留
+4. **一个 commit 只做一个主题**：feat:/fix:/refactor:/docs:
+5. **不修改 `addons/`** 下任何文件
 
 ---
 
 ## 协作红线（一票否决）
 
-- ❌ 提交后 `dotnet build` 报错
 - ❌ 提交中包含 `<<<<<<` / `=======` / `>>>>>>>` 标记
 - ❌ `git add .` 或 `git add -A` 一把梭
-- ❌ 提交 `.godot/mono/temp/` 编译产物
 - ❌ `git push --force` 到 main
 
 ---
@@ -101,5 +92,3 @@ git commit -m "merge: 简述冲突内容"
 修改 → 小步提交（每完成一个功能点就 commit）
 收工 → git pull --rebase && git push
 ```
-
-**核心习惯：每次 `git commit` 之前，跑一次 `dotnet build`。过了再推，不过不推。**
