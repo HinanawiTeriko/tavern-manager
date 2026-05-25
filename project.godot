@@ -12,12 +12,12 @@ config_version=5
 
 config/name="tavern-manager"
 run/main_scene="res://scenes/ui/TitleScreen.tscn"
-config/features=PackedStringArray("4.6", "C#", "GL Compatibility")
+config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
-GameManager="*res://scripts/GameManager.cs"
+GameManager="*res://scripts/game_manager.gd"
 DialogueManager="*uid://c3rodes2l3gxb"
 
 [display]
@@ -25,9 +25,6 @@ DialogueManager="*uid://c3rodes2l3gxb"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 
-[dotnet]
-
-project/assembly_name="TavernManager"
 
 [editor_plugins]
 

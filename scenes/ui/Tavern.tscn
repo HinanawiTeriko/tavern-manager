@@ -1,11 +1,11 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/TavernView.cs" id="1"]
-[ext_resource type="Script" path="res://scripts/ui/CraftStation.cs" id="2"]
-[ext_resource type="Script" path="res://scripts/ui/MixingArea.cs" id="3"]
-[ext_resource type="Script" path="res://scripts/ui/ProductPanel.cs" id="4"]
-[ext_resource type="Script" path="res://scripts/ui/SeasoningPanel.cs" id="5"]
-[ext_resource type="Script" path="res://scripts/ui/SeasoningZone.cs" id="6"]
+[ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/craft_station.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/mixing_area.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/product_panel.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/seasoning_panel.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/seasoning_zone.gd" id="6"]
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
