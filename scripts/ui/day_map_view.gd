@@ -1,0 +1,469 @@
+class_name DayMapView
+extends Node2D
+
+signal gathering_confirmed(assignments: Dictionary)
+
+var _location_list: VBoxContainer
+var _stamina_label: Label
+var _day_label: Label
+var _go_button: Button
+var _result_panel: Panel
+var _result_label: Label
+var _continue_btn: Button
+
+var _assignments: Dictionary = {}
+var _stamina_left: int = 0
+var _max_stamina: int = 5
+var _locations: Array = []
+
+var _assign_labels: Dictionary = {}
+var _loc_add_btns: Dictionary = {}
+var _loc_sub_btns: Dictionary = {}
+
+# Shop
+var _is_shop_tab: bool = false
+var _gather_tab_btn: Button
+var _shop_tab_btn: Button
+var _shop_panel: ScrollContainer
+var _shop_title: Label
+var _gold_label: Label
+var _material_list: VBoxContainer
+var _recipe_list: VBoxContainer
+var _is_mira_shop: bool = false
+
+func _ready() -> void:
+	_location_list = $MapArea/LocationList
+	_stamina_label = $TopBar/StaminaLabel
+	_day_label = $TopBar/DayLabel
+	_go_button = $GoButton
+	_result_panel = $ResultPanel
+	_result_label = $ResultPanel/ResultLabel
+	_continue_btn = $ResultPanel/ContinueBtn
+
+	var title_label = $MapArea/TitleLabel
+	ThemeColors.style_header(title_label, 26)
+	ThemeColors.style_header(_day_label, 22)
+	_stamina_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_stamina_label.add_theme_font_size_override("font_size", 20)
+
+	ThemeColors.style_button(_go_button, 24)
+	ThemeColors.style_button(_continue_btn, 16)
+
+	_result_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
+	_result_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_result_label.add_theme_font_size_override("font_size", 18)
+
+	_go_button.pressed.connect(_on_go_pressed)
+	_continue_btn.pressed.connect(_on_continue)
+
+	_load_locations()
+	_build_location_ui()
+
+	_gold_label = $TopBar/GoldLabel
+	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_gold_label.add_theme_font_size_override("font_size", 20)
+
+	_build_tab_buttons()
+	_build_shop_ui()
+
+	var bg_node = get_node_or_null("Background")
+	if bg_node != null:
+		var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/daymap_bg.png")
+		if bg_tex != null:
+			bg_node.texture = bg_tex
+		else:
+			var grad = GradientTexture2D.new()
+			grad.width = 1280; grad.height = 720
+			var g = Gradient.new()
+			g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
+			g.offsets = [0.0, 1.0]
+			grad.gradient = g
+			bg_node.texture = grad
+
+func _load_locations() -> void:
+	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
+	var json_text = file.get_as_text()
+	file.close()
+	var json = JSON.new()
+	json.parse(json_text)
+	var data: Dictionary = json.data
+	_locations = []
+	for loc_dict in data["locations"]:
+		var loc = LocationData.new()
+		loc.id = loc_dict["id"]
+		loc.name = loc_dict["name"]
+		loc.cost = loc_dict["cost"]
+		loc.materials = []
+		for m in loc_dict["materials"]:
+			loc.materials.append(m)
+		loc.description = loc_dict["description"]
+		_locations.append(loc)
+	_max_stamina = data["maxStamina"]
+	_stamina_left = _max_stamina
+
+func show_day(day: int, total_days: int) -> void:
+	_day_label.text = "第 %d/%d 天 — 白天·采集" % [day, total_days]
+	_stamina_left = _max_stamina
+	_assignments.clear()
+	for kv in _assign_labels:
+		kv.value.text = "0"
+	_update_stamina_display()
+	_result_panel.visible = false
+	_continue_btn.visible = true
+	for btn in _loc_add_btns.values():
+		btn.disabled = false
+	for btn in _loc_sub_btns.values():
+		btn.disabled = true
+	_go_button.disabled = false
+	_go_button.visible = true
+	_is_shop_tab = false
+	if _gather_tab_btn != null:
+		_update_tab_appearance()
+	if _shop_panel != null:
+		_shop_panel.visible = false
+	var map_area = $MapArea
+	map_area.get_node("TitleLabel").visible = true
+	map_area.get_node("LocationList").visible = true
+	_update_gold_display()
+
+func _build_location_ui() -> void:
+	for loc in _locations:
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		row.custom_minimum_size = Vector2(0, 52)
+
+		var info = VBoxContainer.new()
+		info.custom_minimum_size = Vector2(360, 0)
+
+		var name_label = Label.new()
+		name_label.text = loc.name + "  [" + str(loc.cost) + "体力]"
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 18)
+		info.add_child(name_label)
+
+		var desc_label = Label.new()
+		desc_label.text = loc.description
+		desc_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+		desc_label.add_theme_font_size_override("font_size", 13)
+		info.add_child(desc_label)
+
+		row.add_child(info)
+
+		var count_label = Label.new()
+		count_label.text = "0"
+		count_label.custom_minimum_size = Vector2(40, 0)
+		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		count_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+		count_label.add_theme_font_size_override("font_size", 22)
+		row.add_child(count_label)
+
+		var add_btn = Button.new()
+		add_btn.text = "+"
+		add_btn.custom_minimum_size = Vector2(40, 36)
+		ThemeColors.style_button(add_btn, 16)
+		var loc_id: String = loc.id
+		add_btn.pressed.connect(_add_assignment.bind(loc_id, loc.cost, count_label))
+		row.add_child(add_btn)
+
+		var sub_btn = Button.new()
+		sub_btn.text = "-"
+		sub_btn.custom_minimum_size = Vector2(40, 36)
+		sub_btn.disabled = true
+		ThemeColors.style_button(sub_btn, 16)
+		sub_btn.pressed.connect(_remove_assignment.bind(loc_id, loc.cost, count_label))
+		row.add_child(sub_btn)
+
+		_assign_labels[loc.id] = count_label
+		_loc_add_btns[loc.id] = add_btn
+		_loc_sub_btns[loc.id] = sub_btn
+
+		_location_list.add_child(row)
+
+func _add_assignment(loc_id: String, cost: int, count_label: Label) -> void:
+	if _stamina_left < cost:
+		return
+	_stamina_left -= cost
+	var cur: int = _assignments.get(loc_id, 0)
+	_assignments[loc_id] = cur + 1
+	count_label.text = str(_assignments[loc_id])
+	_update_stamina_display()
+	if _loc_sub_btns.has(loc_id):
+		_loc_sub_btns[loc_id].disabled = false
+	if _stamina_left < 1:
+		for btn in _loc_add_btns.values():
+			btn.disabled = true
+
+func _remove_assignment(loc_id: String, cost: int, count_label: Label) -> void:
+	var cur: int = _assignments.get(loc_id, 0)
+	if cur < 1:
+		return
+	_stamina_left += cost
+	_assignments[loc_id] = cur - 1
+	if _assignments[loc_id] <= 0:
+		_assignments.erase(loc_id)
+	count_label.text = str(_assignments.get(loc_id, 0))
+	_update_stamina_display()
+	for btn in _loc_add_btns.values():
+		btn.disabled = false
+	if _loc_sub_btns.has(loc_id):
+		_loc_sub_btns[loc_id].disabled = not _assignments.has(loc_id)
+
+func _update_stamina_display() -> void:
+	_stamina_label.text = "体力：" + str(_stamina_left) + "/" + str(_max_stamina)
+
+func _on_go_pressed() -> void:
+	if _assignments.size() == 0:
+		_result_label.text = "请至少分配一点体力到采集点！"
+		_result_panel.visible = true
+		_continue_btn.visible = false
+		return
+	_go_button.disabled = true
+	gathering_confirmed.emit(_assignments)
+
+func _on_continue() -> void:
+	_result_panel.visible = false
+
+func _update_gold_display() -> void:
+	var gm = get_node("/root/GameManager")
+	if gm != null:
+		_gold_label.text = "金币：" + str(gm.economy.gold)
+
+func _build_tab_buttons() -> void:
+	var map_area = $MapArea
+	var tab_row = HBoxContainer.new()
+	tab_row.add_theme_constant_override("separation", 8)
+	tab_row.custom_minimum_size = Vector2(0, 40)
+
+	_gather_tab_btn = Button.new()
+	_gather_tab_btn.text = "采集"
+	_gather_tab_btn.custom_minimum_size = Vector2(100, 36)
+	ThemeColors.style_button(_gather_tab_btn, 16)
+	_gather_tab_btn.pressed.connect(_switch_tab.bind(false))
+	tab_row.add_child(_gather_tab_btn)
+
+	_shop_tab_btn = Button.new()
+	_shop_tab_btn.text = "商店"
+	_shop_tab_btn.custom_minimum_size = Vector2(100, 36)
+	ThemeColors.style_button(_shop_tab_btn, 16)
+	_shop_tab_btn.pressed.connect(_switch_tab.bind(true))
+	tab_row.add_child(_shop_tab_btn)
+
+	map_area.add_child(tab_row)
+	map_area.move_child(tab_row, 0)
+
+	var title_label = map_area.get_node("TitleLabel")
+	title_label.offset_top = 45
+	title_label.offset_bottom = 80
+	var location_list = map_area.get_node("LocationList")
+	location_list.offset_top = 95
+	location_list.offset_bottom = 420
+
+	_update_tab_appearance()
+
+func _switch_tab(shop: bool) -> void:
+	_is_shop_tab = shop
+	_update_tab_appearance()
+
+	var map_area = $MapArea
+	map_area.get_node("TitleLabel").visible = not shop
+	map_area.get_node("LocationList").visible = not shop
+	_shop_panel.visible = shop
+
+	if shop:
+		_refresh_shop_ui()
+
+	_go_button.visible = not shop
+
+func _update_tab_appearance() -> void:
+	if _gather_tab_btn == null or _shop_tab_btn == null:
+		return
+	_gather_tab_btn.modulate = Color.DIM_GRAY if _is_shop_tab else Color.WHITE
+	_shop_tab_btn.modulate = Color.WHITE if _is_shop_tab else Color.DIM_GRAY
+
+func _build_shop_ui() -> void:
+	_shop_panel = ScrollContainer.new()
+	_shop_panel.anchor_left = 0.0; _shop_panel.anchor_right = 1.0
+	_shop_panel.offset_left = 0; _shop_panel.offset_top = 95
+	_shop_panel.offset_right = 1000; _shop_panel.offset_bottom = 420
+	_shop_panel.visible = false
+	$MapArea.add_child(_shop_panel)
+
+	var shop_content = VBoxContainer.new()
+	shop_content.add_theme_constant_override("separation", 8)
+	_shop_panel.add_child(shop_content)
+
+	_shop_title = Label.new()
+	_shop_title.custom_minimum_size = Vector2(0, 36)
+	ThemeColors.style_header(_shop_title, 22)
+	shop_content.add_child(_shop_title)
+
+	var mat_title = Label.new()
+	mat_title.text = "—— 购买材料 ——"
+	mat_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	mat_title.add_theme_font_size_override("font_size", 16)
+	mat_title.custom_minimum_size = Vector2(0, 30)
+	shop_content.add_child(mat_title)
+
+	_material_list = VBoxContainer.new()
+	_material_list.add_theme_constant_override("separation", 4)
+	shop_content.add_child(_material_list)
+
+	var recipe_title = Label.new()
+	recipe_title.text = "—— 解锁配方 ——"
+	recipe_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	recipe_title.add_theme_font_size_override("font_size", 16)
+	recipe_title.custom_minimum_size = Vector2(0, 30)
+	shop_content.add_child(recipe_title)
+
+	_recipe_list = VBoxContainer.new()
+	_recipe_list.add_theme_constant_override("separation", 4)
+	shop_content.add_child(_recipe_list)
+
+func _refresh_shop_ui() -> void:
+	var gm = get_node("/root/GameManager")
+	if gm == null:
+		return
+
+	_is_mira_shop = gm.shop.is_mira_shop_today(gm.economy.current_day, gm.narrative)
+	_shop_title.text = "米拉的旅行商店" if _is_mira_shop else "商店"
+
+	_build_material_rows(gm)
+	_build_recipe_rows(gm)
+	_update_gold_display()
+
+func _build_material_rows(gm) -> void:
+	for child in _material_list.get_children():
+		child.queue_free()
+
+	var materials = [
+		["ale", "麦芽"], ["grape", "葡萄"], ["flour", "面粉"],
+		["meat_raw", "生肉"], ["herb", "草药"]
+	]
+
+	for pair in materials:
+		var key: String = pair[0]
+		var name: String = pair[1]
+
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		row.custom_minimum_size = Vector2(0, 40)
+
+		var name_label = Label.new()
+		name_label.text = name
+		name_label.custom_minimum_size = Vector2(70, 0)
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 16)
+		row.add_child(name_label)
+
+		var price: int = gm.shop.get_material_price(key, _is_mira_shop)
+		var price_label = Label.new()
+		if _is_mira_shop:
+			price_label.text = str(gm.shop.get_material_price(key)) + "→" + str(price) + "金"
+		else:
+			price_label.text = str(price) + "金"
+		price_label.custom_minimum_size = Vector2(70, 0)
+		price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+		price_label.add_theme_font_size_override("font_size", 14)
+		row.add_child(price_label)
+
+		var sub_btn = Button.new()
+		sub_btn.text = "-"
+		sub_btn.custom_minimum_size = Vector2(36, 30)
+		ThemeColors.style_button(sub_btn, 14)
+		var qty_label = Label.new()
+		qty_label.text = "0"
+		qty_label.custom_minimum_size = Vector2(30, 0)
+		qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		qty_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+		qty_label.add_theme_font_size_override("font_size", 18)
+		var add_btn = Button.new()
+		add_btn.text = "+"
+		add_btn.custom_minimum_size = Vector2(36, 30)
+		ThemeColors.style_button(add_btn, 14)
+
+		sub_btn.pressed.connect(func():
+			var cur = int(qty_label.text)
+			if cur > 0:
+				cur -= 1
+				qty_label.text = str(cur)
+		)
+		add_btn.pressed.connect(func():
+			var cur = int(qty_label.text)
+			cur += 1
+			qty_label.text = str(cur)
+		)
+
+		var buy_btn = Button.new()
+		buy_btn.text = "购买"
+		buy_btn.custom_minimum_size = Vector2(56, 30)
+		ThemeColors.style_button(buy_btn, 14)
+		buy_btn.pressed.connect(func():
+			var qty = int(qty_label.text)
+			if qty < 1:
+				return
+			if gm.buy_material(key, qty, _is_mira_shop):
+				qty_label.text = "0"
+				_update_gold_display()
+		)
+
+		row.add_child(sub_btn)
+		row.add_child(qty_label)
+		row.add_child(add_btn)
+		row.add_child(buy_btn)
+		_material_list.add_child(row)
+
+func _build_recipe_rows(gm) -> void:
+	for child in _recipe_list.get_children():
+		child.queue_free()
+
+	var unlocks = [
+		["Herbal Ale", "草药麦酒"], ["SpicedWine", "香料红酒"],
+		["MeatSand", "肉夹面包"], ["Meat Stew", "肉汤"]
+	]
+
+	for pair in unlocks:
+		var key: String = pair[0]
+		var name: String = pair[1]
+
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		row.custom_minimum_size = Vector2(0, 40)
+
+		var name_label = Label.new()
+		name_label.text = name
+		name_label.custom_minimum_size = Vector2(100, 0)
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 16)
+		row.add_child(name_label)
+
+		if gm.craft.is_recipe_unlocked(key):
+			var owned = Label.new()
+			owned.text = "已拥有"
+			owned.custom_minimum_size = Vector2(80, 0)
+			owned.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
+			owned.add_theme_font_size_override("font_size", 14)
+			row.add_child(owned)
+		else:
+			var price: int = gm.shop.get_recipe_unlock_price(key)
+			if price < 0:
+				_recipe_list.add_child(row)
+				continue
+			var price_label = Label.new()
+			price_label.text = str(price) + "金"
+			price_label.custom_minimum_size = Vector2(60, 0)
+			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			price_label.add_theme_font_size_override("font_size", 14)
+			row.add_child(price_label)
+
+			var unlock_btn = Button.new()
+			unlock_btn.text = "解锁"
+			unlock_btn.custom_minimum_size = Vector2(56, 30)
+			ThemeColors.style_button(unlock_btn, 14)
+			unlock_btn.pressed.connect(func():
+				if gm.buy_recipe_unlock(key):
+					_update_gold_display()
+					_build_recipe_rows(gm)
+			)
+			row.add_child(unlock_btn)
+
+		_recipe_list.add_child(row)
