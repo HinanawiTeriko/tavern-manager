@@ -426,13 +426,14 @@ public partial class CraftStation : Control
             {
                 if (_gm.Guests.HasGuest && !string.IsNullOrEmpty(_dragMaterial))
                 {
-                    var item = _gm.Craft.GetItem(_dragMaterial);
+                    var serveKey = _dragMaterial;
+                    var item = _gm.Craft.GetItem(serveKey);
                     if (item != null)
                     {
-                        _resultSlot.SetMeta("item_key", _dragMaterial);
+                        _resultSlot.SetMeta("item_key", serveKey);
                         _resultSlot.SetMeta("seasoning", "");
                         EndDrag();
-                        ServeRequested?.Invoke(_dragMaterial, null);
+                        ServeRequested?.Invoke(serveKey, null);
                         return;
                     }
                 }
