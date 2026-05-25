@@ -1,0 +1,18 @@
+{
+  "flour":       { "stir": "dough" },
+  "dough":       { "heat": "bread" },
+  "bread":       { "heat": "bread_burnt" },
+  "meat_raw":    { "heat": "meat_cooked" },
+  "meat_cooked": { "heat": "meat_burnt" },
+  "ale":         { "heat": "ale_roasted" },
+  "ale_roasted": { "stir": "ale_beer" },
+  "ale_beer":    { "heat": "ale_burnt" },
+  "grape":       { "stir": "grape_juice" },
+  "grape_juice": { "heat": "wine" },
+  "herb":        { "heat": "herb_tea" },
+  "dough_meat":  { "heat": "meat_sand" },
+  "meat_sand":   { "heat": "bread_burnt" },
+  "ale_herb":    { "heat": "herbal_ale" },
+  "grape_herb":  { "heat": "spiced_wine" },
+  "meat_stew_raw":{ "heat": "meat_stew" }
+}
