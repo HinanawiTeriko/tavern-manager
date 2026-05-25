@@ -73,6 +73,9 @@ func _apply_theme() -> void:
 	ThemeColors.style_button($TopPanel/MenuButton, 14)
 	ThemeColors.style_button(_end_night_btn, 14)
 
+	# 添加教程按钮到菜单
+	_add_tutorial_button_to_menu()
+
 	var parchment_tex = ThemeColors.instance().panel_parchment()
 	if parchment_tex != null:
 		_menu_panel.add_theme_stylebox_override("panel", parchment_tex)
@@ -191,6 +194,50 @@ func _toggle_menu() -> void:
 
 func _on_end_night() -> void:
 	_gm.end_night()
+
+func _add_tutorial_button_to_menu() -> void:
+	var tab_btns = $OverlayMenu/TabBtns
+	if tab_btns == null:
+		return
+
+	var tutorial_btn = Button.new()
+	tutorial_btn.name = "BtnTutorial"
+	tutorial_btn.text = "教程"
+	tutorial_btn.custom_minimum_size = Vector2(60, 30)
+	ThemeColors.style_button(tutorial_btn, 14)
+	tutorial_btn.pressed.connect(_on_tutorial_btn_pressed)
+	tab_btns.add_child(tutorial_btn)
+
+
+func _on_tutorial_btn_pressed() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	# 检查是否所有教程都已完成
+	if tm.is_group_completed("gather") and tm.is_group_completed("shop") and \
+	   tm.is_group_completed("craft") and tm.is_group_completed("seasoning") and \
+	   tm.is_group_completed("serve") and tm.is_group_completed("ledger"):
+		# 全部完成，点击重新开始
+		tm.replay_all()
+		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+	else:
+		# 还有未完成的教程，重新开始全部
+		tm.replay_all()
+		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+
+
+func trigger_craft_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"CraftStation": [330, 490, 620, 210],
+		"ShortcutBar": [485, 650, 470, 55],
+		"MixingArea": [345, 502, 260, 82],
+	}
+	tm.start_tutorial("craft", rects)
 
 func _build_recipe_list() -> void:
 	var recipe_list = _menu_panel.get_node("RecipePanel/RecipeList")

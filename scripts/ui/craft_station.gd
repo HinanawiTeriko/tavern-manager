@@ -12,14 +12,7 @@ var _operation_buttons: Control
 var _clear_btn: Button
 var _result_slot: ColorRect
 var _result_label: Label
-
-# Combine query bar
-var _combine_query_bar: HBoxContainer
-var _combine_query_label: Label
-var _combine_yes_btn: Button
-var _combine_no_btn: Button
-var _pending_a: String = ""
-var _pending_b: String = ""
+var _mix_btn: Button
 
 # Drag state
 var _dragging: bool = false
@@ -66,30 +59,17 @@ func _ready() -> void:
 	_overlay_menu = get_node_or_null("../OverlayMenu")
 	_dialogue_overlay = get_node_or_null("../DialogueOverlay")
 
-	_combine_query_bar = $CombineQueryBar
-	_combine_query_label = $CombineQueryBar/Label
-	_combine_yes_btn = $CombineQueryBar/YesBtn
-	_combine_no_btn = $CombineQueryBar/NoBtn
-	_combine_query_bar.visible = false
+	# 隐藏旧的合并查询栏（Tavern.tscn 中已有 CombineQueryBar 节点，直接隐藏）
+	var combine_query_bar = get_node_or_null("CombineQueryBar")
+	if combine_query_bar != null:
+		combine_query_bar.visible = false
 
-	_mixing_area.combine_query.connect(_show_combine_query)
+	# 创建混合按钮（放在操作按钮之前）
+	_create_mix_button()
+
+	_mixing_area.mix_available.connect(_on_mix_available)
 	_mixing_area.contents_changed.connect(_refresh_operation_buttons)
 	_mixing_area.contents_changed.connect(_check_result_ready)
-
-	_combine_yes_btn.pressed.connect(func():
-		_combine_query_bar.visible = false
-		var result = _gm.craft.get_combine_result(_pending_a, _pending_b)
-		if result != "":
-			_mixing_area.clear_items()
-			_mixing_area.force_add_item(result)
-		else:
-			_mixing_area.force_add_items([_pending_a, _pending_b])
-	)
-
-	_combine_no_btn.pressed.connect(func():
-		_combine_query_bar.visible = false
-		_mixing_area.force_add_item(_pending_a)
-	)
 
 	_clear_btn.pressed.connect(func():
 		for item in _mixing_area._items:
@@ -100,8 +80,6 @@ func _ready() -> void:
 	)
 
 	ThemeColors.style_small_button(_clear_btn, 12)
-	ThemeColors.style_small_button(_combine_yes_btn, 12)
-	ThemeColors.style_small_button(_combine_no_btn, 12)
 
 	_result_slot.color = Color(0.06, 0.05, 0.04)
 
@@ -110,17 +88,50 @@ func _ready() -> void:
 	_sync_from_inventory()
 	_gm.inventory_changed.connect(_sync_from_inventory)
 
-func _exit_tree() -> void:
-	if _gm != null:
-		_gm.inventory_changed.disconnect(_sync_from_inventory)
 
-func _show_combine_query(a: String, b: String) -> void:
-	_pending_a = a
-	_pending_b = b
-	var item_a: Dictionary = _gm.craft.get_item(a)
-	var item_b: Dictionary = _gm.craft.get_item(b)
-	_combine_query_label.text = "混合 " + item_a.get("name", a) + " 和 " + item_b.get("name", b) + "？"
-	_combine_query_bar.visible = true
+func _create_mix_button() -> void:
+	_mix_btn = Button.new()
+	_mix_btn.name = "MixBtn"
+	_mix_btn.text = "混合"
+	_mix_btn.visible = false
+	_mix_btn.custom_minimum_size = Vector2(120, 36)
+	ThemeColors.style_button(_mix_btn, 14)
+	_mix_btn.pressed.connect(_on_mix_pressed)
+
+	# 放在 CombineQueryBar/OperationButtons 的位置
+	var cqbar = get_node_or_null("CombineQueryBar")
+	if cqbar != null:
+		# 放在 CombineQueryBar 后、OperationButtons 前
+		var idx = cqbar.get_index()
+		add_child(_mix_btn)
+		move_child(_mix_btn, idx)
+	else:
+		add_child(_mix_btn)
+
+
+func _on_mix_available(available: bool) -> void:
+	_mix_btn.visible = available
+	# 混合可用时隐藏操作按钮
+	if available:
+		for child in _operation_buttons.get_children():
+			child.queue_free()
+	else:
+		_refresh_operation_buttons()
+
+
+func _on_mix_pressed() -> void:
+	var recipe = _mixing_area.get_mix_recipe()
+	if recipe.is_empty():
+		return
+
+	var a: String = recipe["a"]
+	var b: String = recipe["b"]
+	var result: String = recipe["result"]
+
+	# 检查库存中是否有足够的材料（混合区的材料来自背包，此处只是合成操作）
+	# 严格按配方各消耗一个
+	_mixing_area.do_mix(a, b, result)
+
 
 func _refresh_operation_buttons() -> void:
 	for child in _operation_buttons.get_children():
@@ -128,6 +139,11 @@ func _refresh_operation_buttons() -> void:
 
 	var contents: Array = _mixing_area._items
 	if contents.size() == 0:
+		return
+
+	# 如果已有可混合配方，不显示操作按钮
+	var recipe = _mixing_area.get_mix_recipe()
+	if not recipe.is_empty():
 		return
 
 	var first_key: String = contents[0]
@@ -159,6 +175,7 @@ func _refresh_operation_buttons() -> void:
 				btn.pressed.connect(_execute_operation.bind(result))
 
 		_operation_buttons.add_child(btn)
+
 
 func _start_heat(btn: Button, result_key: String) -> void:
 	_heating = true
@@ -220,6 +237,13 @@ func _move_to_result_slot(key: String) -> void:
 	_result_slot.set_meta("item_key", key)
 	_result_slot.set_meta("seasoning", "")
 	_seasoning_zone.clear_item()
+
+	# 教程：首次制作出成品，触发香料教程
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.first_product_seasoned and not tm._is_active:
+		tm.first_product_seasoned = true
+		tm._save_state()
+		call_deferred("_trigger_seasoning_tutorial")
 
 func _clear_result_slot() -> void:
 	_result_label.text = ""
@@ -351,7 +375,8 @@ func _try_drop(pos: Vector2) -> void:
 			_end_drag()
 			return
 
-		if _hit_test(_mixing_area, pos) and _drag_material != "":
+		# 检查拖拽物中心点是否在合成区内（大面积重叠判定）
+		if _center_hit_test(_mixing_area, pos) and _drag_material != "":
 			_mixing_area.add_item(_drag_material)
 			_end_drag()
 			return
@@ -362,11 +387,9 @@ func _try_drop(pos: Vector2) -> void:
 			_end_drag()
 			return
 		if _drag_material != "":
-			# 先尝试作为香料撒入
 			if _seasoning_zone.try_apply_seasoning(_drag_material):
 				_end_drag()
 				return
-			# 不是香料，则作为成品放入（来自快捷栏的成品）
 			var item = _gm.craft.get_item(_drag_material)
 			if not item.is_empty() and _seasoning_zone.get_state() == SeasoningZone.State.EMPTY:
 				_seasoning_zone.set_item(_drag_material)
@@ -395,6 +418,17 @@ func _try_drop(pos: Vector2) -> void:
 		return
 	_return_drag()
 	_end_drag()
+
+
+## 检查拖拽物中心点是否在目标控件内（用于大面积重叠判定）
+func _center_hit_test(target: Control, mouse_pos: Vector2) -> bool:
+	var rect = target.get_global_rect()
+	# 拖拽面板中心约在鼠标位置
+	var cx = mouse_pos.x
+	var cy = mouse_pos.y
+	return cx >= rect.position.x and cx <= rect.position.x + rect.size.x \
+		and cy >= rect.position.y and cy <= rect.position.y + rect.size.y
+
 
 func _start_drag(pos: Vector2, material: String) -> void:
 	_dragging = true
@@ -541,6 +575,18 @@ func _refresh_shortcut(i: int) -> void:
 func refresh_all() -> void:
 	for i in range(10):
 		_refresh_shortcut(i)
+
+
+func _trigger_seasoning_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"SeasoningZone": [821, 556, 114, 75],
+	}
+	tm.start_tutorial("seasoning", rects)
+
 
 func _hit_test(c: Control, p: Vector2) -> bool:
 	var r = c.get_global_rect()

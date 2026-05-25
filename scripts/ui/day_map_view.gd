@@ -68,17 +68,14 @@ func _ready() -> void:
 
 	var bg_node = get_node_or_null("Background")
 	if bg_node != null:
-		var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/daymap_bg.png")
-		if bg_tex != null:
-			bg_node.texture = bg_tex
-		else:
-			var grad = GradientTexture2D.new()
-			grad.width = 1280; grad.height = 720
-			var g = Gradient.new()
-			g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
-			g.offsets = [0.0, 1.0]
-			grad.gradient = g
-			bg_node.texture = grad
+		# 使用程序化渐变，避免占位图上的 "DAYMAP" 文字
+		var grad = GradientTexture2D.new()
+		grad.width = 1280; grad.height = 720
+		var g = Gradient.new()
+		g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
+		g.offsets = [0.0, 1.0]
+		grad.gradient = g
+		bg_node.texture = grad
 
 func _load_locations() -> void:
 	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
@@ -125,6 +122,13 @@ func show_day(day: int, total_days: int) -> void:
 	map_area.get_node("TitleLabel").visible = true
 	map_area.get_node("LocationList").visible = true
 	_update_gold_display()
+
+	# 教程：首次进入采集界面
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.daymap_first_shown:
+		tm.daymap_first_shown = true
+		tm._save_state()
+		call_deferred("_trigger_gather_tutorial")
 
 func _build_location_ui() -> void:
 	for loc in _locations:
@@ -215,8 +219,9 @@ func _on_go_pressed() -> void:
 	if _assignments.size() == 0:
 		_result_label.text = "请至少分配一点体力到采集点！"
 		_result_panel.visible = true
-		_continue_btn.visible = false
+		_continue_btn.text = "知道了"
 		return
+	_continue_btn.text = "继续 → 夜晚"
 	_go_button.disabled = true
 	gathering_confirmed.emit(_assignments)
 
@@ -271,6 +276,13 @@ func _switch_tab(shop: bool) -> void:
 
 	if shop:
 		_refresh_shop_ui()
+
+		# 教程：首次访问商店
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null and not tm.shop_first_visited:
+			tm.shop_first_visited = true
+			tm._save_state()
+			call_deferred("_trigger_shop_tutorial")
 
 	_go_button.visible = not shop
 
@@ -467,3 +479,28 @@ func _build_recipe_rows(gm) -> void:
 			row.add_child(unlock_btn)
 
 		_recipe_list.add_child(row)
+
+
+# 教程触发方法
+func _trigger_gather_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"MapArea": [140, 80, 1000, 420],
+		"TopBar": [30, 5, 320, 55],
+		"GoButton": [540, 520, 200, 50],
+	}
+	tm.start_tutorial("gather", rects)
+
+
+func _trigger_shop_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"MapArea": [140, 80, 1000, 420],
+	}
+	tm.start_tutorial("shop", rects)

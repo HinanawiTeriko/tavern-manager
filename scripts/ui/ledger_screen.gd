@@ -21,6 +21,13 @@ func _ready() -> void:
 	if data != null:
 		_render(data)
 
+	# 教程：首次查看账单
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.first_ledger_shown:
+		tm.first_ledger_shown = true
+		tm._save_state()
+		call_deferred("_trigger_ledger_tutorial")
+
 func _render(data: LedgerData) -> void:
 	_title_label.text = "第 %d 天 · 营业结算" % data.day
 	ThemeColors.style_header(_title_label, 30)
@@ -68,3 +75,14 @@ func _add_stat_row(text: String) -> void:
 func _on_continue() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.day_cycle.next_phase()
+
+
+func _trigger_ledger_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"UI": [90, 50, 1100, 560],
+	}
+	tm.start_tutorial("ledger", rects)

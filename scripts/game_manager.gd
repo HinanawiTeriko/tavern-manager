@@ -69,8 +69,10 @@ func _process(delta: float) -> void:
 		_tavern_view._toggle_menu()
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
+		var tm = get_node_or_null("/root/TutorialManager")
+		var tutorial_active = tm != null and tm._is_active
 		var menu_open = _tavern_view._menu_panel.visible if _tavern_view._menu_panel != null else false
-		if not _is_dialogue_active:
+		if not _is_dialogue_active and not tutorial_active:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
 			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
@@ -125,6 +127,14 @@ func register_view(view: Node) -> void:
 					guests.clear_guest()
 			)
 
+		# 教程：首次进入酒馆，先检查是否需要触发教程
+		var tm = get_node_or_null("/root/TutorialManager")
+		var tutorial_will_start = tm != null and not tm.tavern_first_entered
+
+		if tutorial_will_start:
+			tm.tavern_first_entered = true
+			tm._save_state()
+
 		var npcs_today = narrative.get_today_scenes(economy.current_day)
 		if npcs_today.size() > 0:
 			narrative.today_important_npc = npcs_today[0].id
@@ -142,7 +152,18 @@ func register_view(view: Node) -> void:
 						scene = s
 						break
 				var order_key = scene.order if scene != null else "bread"
-				guests.spawn_important(npc.id, order_key)
+
+				if tutorial_will_start:
+					# 教程结束后再生成重要 NPC（如莱恩）
+					tm.tutorial_sequence_ended.connect(
+						_spawn_npc_after_tutorial.bind(npc.id, order_key),
+						CONNECT_ONE_SHOT
+					)
+				else:
+					guests.spawn_important(npc.id, order_key)
+
+		if tutorial_will_start:
+			view.call_deferred("trigger_craft_tutorial")
 
 	elif view is DayMapView:
 		_day_map_view = view
@@ -225,12 +246,34 @@ func _on_guest_arrived(guest: GuestData) -> void:
 				break
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), guest.npc_id if guest.npc_id != "" else "guest")
 
+	var tm = get_node_or_null("/root/TutorialManager")
+
+	# 重要 NPC 的对话优先于服务教程
 	if guest.has_dialogue:
-		narrative.today_important_npc = guest.npc_id
-		var dialogue_path = "res://dialogue/" + guest.npc_id + "_day" + str(economy.current_day) + ".pre.dialogue"
-		_dialogue_phase = "pre"
-		_tavern_view.set_dialogue_mode(true)
-		call_deferred("_start_dialogue_deferred", dialogue_path)
+		var tutorial_active = tm != null and tm._is_active
+		if not tutorial_active:
+			narrative.today_important_npc = guest.npc_id
+			var dialogue_path = "res://dialogue/" + guest.npc_id + "_day" + str(economy.current_day) + ".pre.dialogue"
+			_dialogue_phase = "pre"
+			_tavern_view.set_dialogue_mode(true)
+			call_deferred("_start_dialogue_deferred", dialogue_path)
+	else:
+		# 服务教程：仅对普通客人触发，不对重要 NPC 触发
+		if tm != null and not tm.first_guest_arrived and not tm._is_active:
+			tm.first_guest_arrived = true
+			tm._save_state()
+			await get_tree().create_timer(0.5).timeout
+			if tm != null and is_instance_valid(tm):
+				var rects = {
+					"CustomerArea": [432, 70, 410, 328],
+				}
+				tm.start_tutorial("serve", rects)
+
+## 教程结束后生成重要 NPC（避免教程期间对话冲突）
+func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: String) -> void:
+	if group_id != "craft":
+		return
+	guests.spawn_important(npc_id, order_key)
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)

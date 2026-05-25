@@ -19,11 +19,16 @@ config/icon="res://icon.svg"
 
 GameManager="*res://scripts/game_manager.gd"
 DialogueManager="*uid://c3rodes2l3gxb"
+TutorialManager="*res://scripts/tutorial/tutorial_manager.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+
+[dotnet]
+
+project/assembly_name="tavern-manager"
 
 [editor_plugins]
 
