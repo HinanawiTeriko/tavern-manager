@@ -10,7 +10,6 @@ public partial class CraftStation : Control
     private ProductPanel _productPanel;
     private SeasoningPanel _seasoningPanel;
     private Control _operationButtons; // HBoxContainer holding dynamic op buttons
-    private Button _serveBtn;
     private Button _clearBtn;
     private ColorRect _resultSlot;
     private Label _resultLabel;
@@ -65,7 +64,6 @@ public partial class CraftStation : Control
         _productPanel = GetNode<ProductPanel>("ProductPanel");
         _seasoningPanel = GetNode<SeasoningPanel>("SeasoningPanel");
         _operationButtons = GetNode<Control>("OperationButtons");
-        _serveBtn = GetNode<Button>("ServeBtn");
         _clearBtn = GetNode<Button>("ClearBtn");
         _resultSlot = GetNode<ColorRect>("ResultSlot");
         _resultLabel = GetNode<Label>("ResultSlot/Label");
@@ -102,15 +100,7 @@ public partial class CraftStation : Control
             _mixingArea.ForceAddItem(_pendingB);
         };
 
-        // ── Serve/Clear buttons ──
-        _serveBtn.Pressed += () => {
-            var serveKey = _resultSlot.GetMeta("item_key", "").AsString();
-            if (string.IsNullOrEmpty(serveKey)) return;
-            var seasoning = _resultSlot.GetMeta("seasoning", "").AsString();
-            if (string.IsNullOrEmpty(seasoning)) seasoning = null;
-            ServeRequested?.Invoke(serveKey, seasoning);
-        };
-
+        // ── Clear button ──
         _clearBtn.Pressed += () => {
             foreach (var item in _mixingArea.Contents)
                 AddToInventory(item);
@@ -127,7 +117,6 @@ public partial class CraftStation : Control
         _seasoningPanel.SeasoningSkipped += () => { };
 
         // ── Style buttons ──
-        ThemeColors.StyleSmallButton(_serveBtn, 12);
         ThemeColors.StyleSmallButton(_clearBtn, 12);
         ThemeColors.StyleSmallButton(_combineYesBtn, 12);
         ThemeColors.StyleSmallButton(_combineNoBtn, 12);
@@ -408,7 +397,7 @@ public partial class CraftStation : Control
                 if (_gm.Guests.HasGuest && !string.IsNullOrEmpty(_dragMaterial))
                 {
                     var item = _gm.Craft.GetItem(_dragMaterial);
-                    if (item != null && item.Price > 0)
+                    if (item != null)
                     {
                         _resultSlot.SetMeta("item_key", _dragMaterial);
                         _resultSlot.SetMeta("seasoning", "");

@@ -88,9 +88,21 @@ public partial class MixingArea : Control
 
     public override void _Draw()
     {
-        if (_items.Count == 0) return;
-
         var rect = GetRect();
+
+        // Always draw a visible drop zone border and label
+        DrawRect(rect, new Color(0.15f, 0.12f, 0.1f));
+        DrawRect(rect, new Color(0.3f, 0.25f, 0.2f), false);
+
+        if (_items.Count == 0)
+        {
+            var font = ThemeDB.FallbackFont;
+            if (font != null)
+                DrawString(font, new Vector2(8, rect.Size.Y * 0.35f), "拖入材料",
+                    HorizontalAlignment.Left, rect.Size.X - 16, 16);
+            return;
+        }
+
         var margin = 8f;
         float itemW = (rect.Size.X - margin * (_items.Count + 1)) / Math.Max(1, _items.Count);
         itemW = Math.Min(itemW, 100f);

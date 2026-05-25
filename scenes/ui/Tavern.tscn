@@ -112,19 +112,11 @@ offset_top = 45.0
 offset_right = 470.0
 offset_bottom = 85.0
 
-[node name="ServeBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 290.0
-offset_top = 90.0
-offset_right = 380.0
-offset_bottom = 130.0
-text = "上菜"
-
 [node name="ClearBtn" type="Button" parent="CraftStation"]
 layout_mode = 0
-offset_left = 390.0
+offset_left = 340.0
 offset_top = 90.0
-offset_right = 480.0
+offset_right = 440.0
 offset_bottom = 130.0
 text = "清空"
 
