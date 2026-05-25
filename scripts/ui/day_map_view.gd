@@ -126,6 +126,13 @@ func show_day(day: int, total_days: int) -> void:
 	map_area.get_node("LocationList").visible = true
 	_update_gold_display()
 
+	# 教程：首次进入采集界面
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.daymap_first_shown:
+		tm.daymap_first_shown = true
+		tm._save_state()
+		call_deferred("_trigger_gather_tutorial")
+
 func _build_location_ui() -> void:
 	for loc in _locations:
 		var row = HBoxContainer.new()
@@ -215,8 +222,9 @@ func _on_go_pressed() -> void:
 	if _assignments.size() == 0:
 		_result_label.text = "请至少分配一点体力到采集点！"
 		_result_panel.visible = true
-		_continue_btn.visible = false
+		_continue_btn.text = "知道了"
 		return
+	_continue_btn.text = "继续 → 夜晚"
 	_go_button.disabled = true
 	gathering_confirmed.emit(_assignments)
 
@@ -271,6 +279,13 @@ func _switch_tab(shop: bool) -> void:
 
 	if shop:
 		_refresh_shop_ui()
+
+		# 教程：首次访问商店
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null and not tm.shop_first_visited:
+			tm.shop_first_visited = true
+			tm._save_state()
+			call_deferred("_trigger_shop_tutorial")
 
 	_go_button.visible = not shop
 
@@ -467,3 +482,28 @@ func _build_recipe_rows(gm) -> void:
 			row.add_child(unlock_btn)
 
 		_recipe_list.add_child(row)
+
+
+# 教程触发方法
+func _trigger_gather_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"MapArea": [35, 80, 740, 350],
+		"TopBar": [30, 5, 320, 55],
+		"GoButton": [200, 540, 220, 56],
+	}
+	tm.start_tutorial("gather", rects)
+
+
+func _trigger_shop_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"MapArea": [35, 80, 740, 350],
+	}
+	tm.start_tutorial("shop", rects)

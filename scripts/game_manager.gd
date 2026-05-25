@@ -144,6 +144,13 @@ func register_view(view: Node) -> void:
 				var order_key = scene.order if scene != null else "bread"
 				guests.spawn_important(npc.id, order_key)
 
+		# 教程：首次进入酒馆，触发合成教程
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null and not tm.tavern_first_entered:
+			tm.tavern_first_entered = true
+			tm._save_state()
+			view.call_deferred("trigger_craft_tutorial")
+
 	elif view is DayMapView:
 		_day_map_view = view
 		_day_map_view.show_day(economy.current_day, EconomySystem.MAX_DAYS)
@@ -224,6 +231,18 @@ func _on_guest_arrived(guest: GuestData) -> void:
 				display_name = npc.npc_name
 				break
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), guest.npc_id if guest.npc_id != "" else "guest")
+
+	# 教程：首次客人到达（仅在没有活跃教程时触发）
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.first_guest_arrived and not tm._is_active:
+		tm.first_guest_arrived = true
+		tm._save_state()
+		await get_tree().create_timer(0.5).timeout
+		if tm != null and is_instance_valid(tm):
+			var rects = {
+				"CustomerArea": [432, 70, 410, 328],
+			}
+			tm.start_tutorial("serve", rects)
 
 	if guest.has_dialogue:
 		narrative.today_important_npc = guest.npc_id

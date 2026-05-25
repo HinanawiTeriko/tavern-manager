@@ -221,6 +221,13 @@ func _move_to_result_slot(key: String) -> void:
 	_result_slot.set_meta("seasoning", "")
 	_seasoning_zone.clear_item()
 
+	# 教程：首次制作出成品，触发香料教程
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.first_product_seasoned and not tm._is_active:
+		tm.first_product_seasoned = true
+		tm._save_state()
+		call_deferred("_trigger_seasoning_tutorial")
+
 func _clear_result_slot() -> void:
 	_result_label.text = ""
 	_result_slot.color = Color(0.06, 0.05, 0.04)
@@ -541,6 +548,18 @@ func _refresh_shortcut(i: int) -> void:
 func refresh_all() -> void:
 	for i in range(10):
 		_refresh_shortcut(i)
+
+
+func _trigger_seasoning_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+
+	var rects = {
+		"SeasoningZone": [821, 556, 114, 75],
+	}
+	tm.start_tutorial("seasoning", rects)
+
 
 func _hit_test(c: Control, p: Vector2) -> bool:
 	var r = c.get_global_rect()
