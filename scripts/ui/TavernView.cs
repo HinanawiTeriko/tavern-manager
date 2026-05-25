@@ -242,70 +242,42 @@ public partial class TavernView : Node2D
 		foreach (var child in recipeList.GetChildren())
 			child.QueueFree();
 
-		foreach (var (key, recipe) in craft.Recipes)
+		foreach (var kvp in craft.Items)
 		{
 			var row = new HBoxContainer();
 			row.AddThemeConstantOverride("separation", 6);
 			row.CustomMinimumSize = new Vector2(0, 32);
 
-			foreach (var mat in recipe.Materials)
-			{
-				var iconTex = _gm.TryLoadMaterialIcon(mat);
-				if (iconTex != null)
-				{
-					var texRect = new TextureRect
-					{
-						Texture = iconTex,
-						CustomMinimumSize = new Vector2(32, 32),
-						ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-						StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-					};
-					row.AddChild(texRect);
-				}
-				else
-				{
-					var box = new ColorRect
-					{
-						Color = craft.MaterialColor(mat),
-						CustomMinimumSize = new Vector2(36, 20)
-					};
-					row.AddChild(box);
-				}
-				if (mat != recipe.Materials[recipe.Materials.Length - 1])
-				{
-					var plus = new Label { Text = "+" };
-					plus.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
-					row.AddChild(plus);
-				}
-			}
+			var key = kvp.Key;
+			var itemData = kvp.Value;
 
-			if (craft.IsRecipeUnlocked(key))
+			var iconTex = _gm.TryLoadMaterialIcon(key);
+			if (iconTex != null)
 			{
-				var arrow = new Label { Text = $" = {recipe.Name}  {recipe.Price}金" };
-				arrow.AddThemeColorOverride("font_color", ThemeColors.TextLight);
-				arrow.AddThemeFontSizeOverride("font_size", 14);
-				row.AddChild(arrow);
+				var texRect = new TextureRect
+				{
+					Texture = iconTex,
+					CustomMinimumSize = new Vector2(32, 32),
+					ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+					StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+				};
+				row.AddChild(texRect);
 			}
 			else
 			{
-				var locked = new Label { Text = " = ??? (未解锁)" };
-				locked.AddThemeColorOverride("font_color", ThemeColors.TextDim);
-				locked.AddThemeFontSizeOverride("font_size", 14);
-				row.AddChild(locked);
+				var matColor = itemData?.Color != null ? new Color(itemData.Color[0], itemData.Color[1], itemData.Color[2]) : Colors.Gray;
+				var box = new ColorRect
+				{
+					Color = matColor,
+					CustomMinimumSize = new Vector2(36, 20)
+				};
+				row.AddChild(box);
 			}
 
-			var gestureText = string.Join(" ", recipe.Gestures.Select(g => g switch
-			{
-				"drag" => "[拖拽]",
-				"shake" => "[摇晃]",
-				"heat" => "[加热]",
-				"stir" => "[搅拌]",
-				_ => $"[{g}]"
-			}));
-			var gestureLabel = new Label { Text = gestureText };
-			gestureLabel.AddThemeColorOverride("font_color", ThemeColors.TextSubtitle);
-			gestureLabel.AddThemeFontSizeOverride("font_size", 13);
-			row.AddChild(gestureLabel);
+			var nameLabel = new Label { Text = $" {itemData?.Name ?? key}  {(itemData?.Price > 0 ? $"{itemData.Price}金" : "")}" };
+			nameLabel.AddThemeColorOverride("font_color", ThemeColors.TextLight);
+			nameLabel.AddThemeFontSizeOverride("font_size", 14);
+			row.AddChild(nameLabel);
 
 			recipeList.AddChild(row);
 		}
@@ -340,15 +312,18 @@ public partial class TavernView : Node2D
 			}
 			else
 			{
+				var matItem = craft.GetItem(mat);
+				var matColor = matItem != null ? new Color(matItem.Color[0], matItem.Color[1], matItem.Color[2]) : Colors.Gray;
 				var box = new ColorRect
 				{
-					Color = craft.MaterialColor(mat),
+					Color = matColor,
 					CustomMinimumSize = new Vector2(36, 20)
 				};
 				row.AddChild(box);
 			}
 
-			var displayName = craft.Materials.TryGetValue(mat, out var md) ? md.Name : mat;
+			var matItem2 = craft.GetItem(mat);
+			var displayName = matItem2?.Name ?? mat;
 			var label = new Label { Text = $"{displayName}  x{count}" };
 			label.AddThemeColorOverride("font_color", ThemeColors.TextLight);
 			label.AddThemeFontSizeOverride("font_size", 14);

@@ -56,8 +56,8 @@ public partial class GameManager : Node
         // 加载库存数据
         _inv = LoadInitialInventory();
 
-        // 加载配方数据
-        Craft.LoadRecipes();
+        // 加载加工数据
+        Craft.LoadData();
 
         // 加载 NPC 数据
         Narrative.LoadNpcData();
@@ -114,66 +114,18 @@ public partial class GameManager : Node
             var craftStation = tv.GetNode<CraftStation>("CraftStation");
             if (craftStation != null)
             {
-                craftStation.GestureCompleted += (gesture) => {
-                    switch (gesture)
-                    {
-                        case "drag": Craft.GestureDragDone = true; break;
-                        case "shake": Craft.GestureShakeDone = true; break;
-                        case "heat": Craft.GestureHeatDone = true; break;
-                        case "stir": Craft.GestureStirDone = true; break;
-                    }
-                    if (!string.IsNullOrEmpty(Craft.CraftedKey) && Craft.AllGesturesDone(Craft.CraftedKey))
-                    {
-                        tv.ShowMessage($"制作完成：{Craft.Recipes[Craft.CraftedKey].Name}！", Colors.GreenYellow);
-                    }
-                };
-
-                craftStation.CraftRequested += () => {
-                    Craft.ResetGestures();
-                    var mat1 = craftStation.MaterialInSlot1;
-                    var mat2 = craftStation.MaterialInSlot2;
-                    if (string.IsNullOrEmpty(mat1))
-                    {
-                        tv.ShowMessage("请先拖入材料！", Colors.Orange);
-                        return;
-                    }
-                    if (Craft.TryMatch(mat1, mat2, out var key))
-                    {
-                        if (!Craft.IsRecipeUnlocked(key))
-                        {
-                            tv.ShowMessage("配方未解锁！请前往商店购买。", Colors.Orange);
-                            return;
-                        }
-                        Craft.CraftedKey = key;
-                        craftStation.ResultKey = key;
-                        craftStation.ShowResult(Craft.Recipes[key].Name, Colors.GreenYellow);
-                        Craft.GestureDragDone = true;
-                        tv.ShowMessage($"需要手势：{string.Join(", ", Craft.Recipes[key].Gestures)}", Colors.Yellow);
-                    }
-                    else
-                    {
-                        Craft.CraftedKey = null;
-                        craftStation.ResultKey = null;
-                        craftStation.ShowResult("无效配方", Colors.OrangeRed);
-                        tv.ShowMessage("没有匹配的配方！", Colors.OrangeRed);
-                    }
-                };
-
-                craftStation.ServeRequested += () => {
-                    if (!Guests.HasGuest || string.IsNullOrEmpty(Craft.CraftedKey)) return;
-
-                    if (!Craft.AllGesturesDone(Craft.CraftedKey))
-                    {
-                        tv.ShowMessage("请先完成所有手势！", Colors.Orange);
-                        return;
-                    }
+                craftStation.ServeRequested += (itemKey, seasoningTag) => {
+                    if (!Guests.HasGuest || string.IsNullOrEmpty(itemKey)) return;
 
                     var isImportant = Guests.CurrentGuest.HasDialogue;
                     var npcId = Guests.CurrentGuest.NpcId;
 
-                    if (Craft.CraftedKey == Guests.CurrentGuest.OrderKey)
+                    var item = Craft.GetItem(itemKey);
+                    var itemPrice = item?.Price ?? 0;
+
+                    if (itemKey == Guests.CurrentGuest.OrderKey)
                     {
-                        Economy.AddGold(Craft.Recipes[Craft.CraftedKey].Price);
+                        Economy.AddGold(itemPrice);
                         Economy.AddReputation(2);
                         Guests.RecordOrderSuccess();
                         tv.ShowMessage($"完美！{Guests.CurrentGuest.Name} 很满意！", Colors.LimeGreen);
@@ -182,12 +134,17 @@ public partial class GameManager : Node
                     else
                     {
                         Guests.RecordOrderFailed();
-                        tv.ShowMessage($"错了！{Guests.CurrentGuest.Name} 很失望……", Colors.Red);
+                        tv.ShowMessage(
+                            itemPrice > 0 ? $"错了！{Guests.CurrentGuest.Name} 要的不是这个！" :
+                            $"这看起来不太对劲……{Guests.CurrentGuest.Name} 很失望。",
+                            Colors.Red);
                         if (isImportant) Narrative.SetVar("serve_result", "fail");
                     }
+
+                    if (!string.IsNullOrEmpty(seasoningTag))
+                        Narrative.SetVar("seasoning_used", seasoningTag);
+
                     Guests.RecordGuestServed();
-                    Craft.ClearCraftSlots();
-                    craftStation.ClearSlots();
 
                     if (isImportant && !string.IsNullOrEmpty(npcId))
                     {
@@ -210,9 +167,7 @@ public partial class GameManager : Node
                 };
 
                 craftStation.ClearRequested += () => {
-                    Craft.ClearCraftSlots();
-                    craftStation.ClearSlots();
-                    craftStation.ShowResult("", Colors.White);
+                    // CraftStation handles material return internally
                 };
             }
 
@@ -307,14 +262,14 @@ public partial class GameManager : Node
         if (_tavernView == null || !GodotObject.IsInstanceValid(_tavernView)) return;
 
         // 始终显示客人信息
-        var recipe = Craft.GetRecipe(guest.OrderKey);
+        var item = Craft.GetItem(guest.OrderKey);
         var displayName = guest.Name;
         if (guest.HasDialogue)
         {
             var npc = Narrative.AllNpcs.FirstOrDefault(n => n.Id == guest.NpcId);
             if (npc != null) displayName = npc.Name;
         }
-        _tavernView.ShowCustomer(displayName, recipe?.Name ?? guest.OrderKey, guest.NpcId ?? "guest");
+        _tavernView.ShowCustomer(displayName, item?.Name ?? guest.OrderKey, guest.NpcId ?? "guest");
 
         if (guest.HasDialogue)
         {
