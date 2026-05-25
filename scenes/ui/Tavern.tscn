@@ -1,11 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/craft_station.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/ui/mixing_area.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/ui/product_panel.gd" id="4"]
-[ext_resource type="Script" path="res://scripts/ui/seasoning_panel.gd" id="5"]
-[ext_resource type="Script" path="res://scripts/ui/seasoning_zone.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/ui/seasoning_zone.gd" id="5"]
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -97,12 +96,12 @@ text = ""
 horizontal_alignment = 1
 
 [node name="SeasoningZone" type="Control" parent="CraftStation"]
-script = ExtResource("6")
+script = ExtResource("5")
 layout_mode = 0
 offset_left = 485.0
 offset_top = 56.0
-offset_right = 595.0
-offset_bottom = 115.0
+offset_right = 685.0
+offset_bottom = 176.0
 
 [node name="CombineQueryBar" type="HBoxContainer" parent="CraftStation"]
 layout_mode = 0
@@ -124,14 +123,6 @@ layout_mode = 0
 text = "否"
 
 [node name="OperationButtons" type="HBoxContainer" parent="CraftStation"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 118.0
-offset_right = 480.0
-offset_bottom = 162.0
-
-[node name="SeasoningPanel" type="Control" parent="CraftStation"]
-script = ExtResource("5")
 layout_mode = 0
 offset_left = 10.0
 offset_top = 118.0

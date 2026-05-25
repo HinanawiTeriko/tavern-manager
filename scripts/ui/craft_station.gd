@@ -24,6 +24,9 @@ var _pending_b: String = ""
 # Drag state
 var _dragging: bool = false
 var _drag_material: String = ""
+var _drag_result_key: String = ""
+var _drag_result_source: String = ""
+var _drag_seasoning: String = ""
 var _drag_panel: ColorRect
 var _overlay_menu
 var _dialogue_overlay
@@ -56,7 +59,6 @@ func _ready() -> void:
 	_mixing_area = $MixingArea
 	_product_panel = $ProductPanel
 	_seasoning_zone = $SeasoningZone
-	_seasoning_zone.visible = false
 	_operation_buttons = $OperationButtons
 	_clear_btn = $ClearBtn
 	_result_slot = $ResultSlot
@@ -94,12 +96,7 @@ func _ready() -> void:
 			_add_to_inventory(item)
 		_mixing_area.clear_items()
 		_clear_result_slot()
-		_seasoning_zone.deactivate()
 		clear_requested.emit()
-	)
-
-	_seasoning_zone.seasoning_applied.connect(func(seasoning: String):
-		_result_slot.set_meta("seasoning", seasoning)
 	)
 
 	ThemeColors.style_small_button(_clear_btn, 12)
@@ -222,14 +219,14 @@ func _move_to_result_slot(key: String) -> void:
 
 	_result_slot.set_meta("item_key", key)
 	_result_slot.set_meta("seasoning", "")
-	_seasoning_zone.activate()
+	_seasoning_zone.clear_item()
 
 func _clear_result_slot() -> void:
 	_result_label.text = ""
 	_result_slot.color = Color(0.06, 0.05, 0.04)
 	_result_slot.remove_meta("item_key")
 	_result_slot.remove_meta("seasoning")
-	_seasoning_zone.deactivate()
+	_seasoning_zone.clear_item()
 
 func _process(delta: float) -> void:
 	if _overlay_menu != null and _overlay_menu.visible:
@@ -303,9 +300,21 @@ func _try_pick_up(pos: Vector2) -> void:
 
 	var serve_key: String = _result_slot.get_meta("item_key", "")
 	if serve_key != "" and _hit_test(_result_slot, pos):
-		_start_drag(pos, serve_key)
+		_drag_result_key = serve_key
+		_drag_result_source = "result_slot"
 		_result_label.text = ""
-		_clear_result_slot()
+		_result_slot.color = Color(0.06, 0.05, 0.04)
+		_result_slot.remove_meta("item_key")
+		_result_slot.remove_meta("seasoning")
+		_start_result_drag(pos)
+		return
+
+	if _hit_test(_seasoning_zone, pos) and _seasoning_zone.get_state() != SeasoningZone.State.EMPTY:
+		_drag_result_key = _seasoning_zone.get_item_key()
+		_drag_result_source = "seasoning_zone"
+		_drag_seasoning = _seasoning_zone.get_applied_seasoning()
+		_seasoning_zone.clear_item()
+		_start_result_drag(pos)
 		return
 
 	if _hit_test(_mixing_area, pos):
@@ -329,13 +338,12 @@ func _try_drop(pos: Vector2) -> void:
 	if not menu_open:
 		var customer_area = get_node("../CustomerArea")
 		if _hit_test(customer_area, pos):
-			if _gm.guests.has_guest and _drag_material != "":
-				var serve_key = _drag_material
-				var serve_seasoning = _seasoning_zone.get_applied_seasoning()
+			if _gm.guests.has_guest and (_drag_material != "" or _drag_result_key != ""):
+				var serve_key = _drag_result_key if _drag_result_key != "" else _drag_material
+				var serve_seasoning = _drag_seasoning if _drag_result_key != "" else _seasoning_zone.get_applied_seasoning()
+				_seasoning_zone.clear_item()
 				var item: Dictionary = _gm.craft.get_item(serve_key)
 				if not item.is_empty():
-					_result_slot.set_meta("item_key", serve_key)
-					_result_slot.set_meta("seasoning", serve_seasoning)
 					_end_drag()
 					serve_requested.emit(serve_key, serve_seasoning)
 					return
@@ -348,12 +356,19 @@ func _try_drop(pos: Vector2) -> void:
 			_end_drag()
 			return
 
-	if _hit_test(_seasoning_zone, pos) and _drag_material != "":
-		if _seasoning_zone.try_apply_seasoning(_drag_material):
+	if _hit_test(_seasoning_zone, pos):
+		if _drag_result_key != "" and _seasoning_zone.get_state() == SeasoningZone.State.EMPTY:
+			_seasoning_zone.set_item(_drag_result_key)
 			_end_drag()
 			return
+		if _drag_material != "":
+			if _seasoning_zone.try_apply_seasoning(_drag_material):
+				_end_drag()
+				return
 
 	for i in range(10):
+		if _drag_material == "":
+			break
 		if _hit_test(_shortcut_slots[i], pos):
 			if bar_materials[i] == "":
 				bar_materials[i] = _drag_material
@@ -390,13 +405,41 @@ func _start_drag(pos: Vector2, material: String) -> void:
 	else:
 		_drag_panel.color = Color.GRAY
 
+func _start_result_drag(pos: Vector2) -> void:
+	_dragging = true
+	_drag_panel.visible = true
+	_drag_panel.size = Vector2(64, 64)
+	_drag_panel.position = pos - Vector2(32, 32)
+	var item: Dictionary = _gm.craft.get_item(_drag_result_key)
+	if not item.is_empty():
+		var col_arr = item.get("color", [])
+		if col_arr is Array and col_arr.size() >= 3:
+			_drag_panel.color = Color(col_arr[0], col_arr[1], col_arr[2])
+		else:
+			_drag_panel.color = Color.GRAY
+	else:
+		_drag_panel.color = Color.GRAY
+
 func _end_drag() -> void:
 	_dragging = false
 	_drag_panel.visible = false
 	_drag_material = ""
+	_drag_result_key = ""
+	_drag_result_source = ""
+	_drag_seasoning = ""
 
 func _return_drag() -> void:
-	_add_to_inventory(_drag_material)
+	if _drag_result_key != "":
+		if _drag_result_source == "result_slot":
+			_move_to_result_slot(_drag_result_key)
+		elif _drag_result_source == "seasoning_zone":
+			_seasoning_zone.set_item(_drag_result_key)
+			if _drag_seasoning != "":
+				_seasoning_zone.try_apply_seasoning(_drag_seasoning)
+		else:
+			_add_to_inventory(_drag_result_key)
+	elif _drag_material != "":
+		_add_to_inventory(_drag_material)
 
 func _init_shortcut_bar() -> void:
 	bar_materials.resize(10)
