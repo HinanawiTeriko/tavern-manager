@@ -149,7 +149,7 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 		_customer_sprite.modulate = Color.WHITE
 
 	_customer_sprite.visible = true
-	_customer_name.text = name
+	_customer_name.text = customer_name
 	_order_bubble.text = "「来一份" + order + "！」"
 	_order_bubble.visible = true
 
