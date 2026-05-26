@@ -59,14 +59,14 @@ func _ready() -> void:
 	_load_locations()
 	_build_location_ui()
 
+	_gold_label = $TopBar/GoldLabel
+	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_gold_label.add_theme_font_size_override("font_size", 20)
+
 	# Register with GameManager
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
-
-	_gold_label = $TopBar/GoldLabel
-	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_gold_label.add_theme_font_size_override("font_size", 20)
 
 	_build_tab_buttons()
 	_build_shop_ui()
