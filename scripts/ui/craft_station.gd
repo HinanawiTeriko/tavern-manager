@@ -5,9 +5,9 @@ signal serve_requested(item_key: String, seasoning_tag: String)
 signal clear_requested()
 signal gesture_completed(action: String)
 
-var _mixing_area
-var _product_panel
-var _seasoning_zone
+var _mixing_area: MixingArea
+var _product_panel: ProductPanel
+var _seasoning_zone: SeasoningZone
 var _operation_buttons: Control
 var _clear_btn: Button
 var _result_slot: ColorRect
@@ -21,16 +21,16 @@ var _drag_result_key: String = ""
 var _drag_result_source: String = ""
 var _drag_seasoning: String = ""
 var _drag_panel: ColorRect
-var _overlay_menu
-var _dialogue_overlay
+var _overlay_menu: Control
+var _dialogue_overlay: Control
 
 # Shortcut bar
-var bar_materials: Array = []
-var bar_counts: Array = []
-var _shortcut_slots: Array = []
-var _shortcut_labels: Array = []
+var bar_materials: Array[String] = []
+var bar_counts: Array[int] = []
+var _shortcut_slots: Array[ColorRect] = []
+var _shortcut_labels: Array[Label] = []
 
-var _gm
+var _gm: GameManager
 
 # Heat
 var _heating: bool = false
@@ -72,8 +72,8 @@ func _ready() -> void:
 	_mixing_area.contents_changed.connect(_check_result_ready)
 
 	_clear_btn.pressed.connect(func():
-		for item in _mixing_area._items:
-			_add_to_inventory(item)
+		for item in _mixing_area.get_items():
+			_gm.add_to_inventory(item)
 		_mixing_area.clear_items()
 		_clear_result_slot()
 		clear_requested.emit()
@@ -317,7 +317,7 @@ func _try_pick_up(pos: Vector2) -> void:
 				if _hit_test(row, pos):
 					var mat: String = row.get_meta("material_key", "")
 					if mat != "" and _gm.inventory.get(mat, 0) > 0:
-						_remove_from_inventory(mat)
+						_gm.remove_from_inventory(mat)
 						_start_drag(pos, mat)
 						return
 		return
@@ -352,7 +352,7 @@ func _try_pick_up(pos: Vector2) -> void:
 	for i in range(10):
 		if _hit_test(_shortcut_slots[i], pos) and bar_materials[i] != "" and bar_counts[i] > 0:
 			var mat: String = bar_materials[i]
-			_remove_from_inventory(mat)
+			_gm.remove_from_inventory(mat)
 			_start_drag(pos, mat)
 			return
 
@@ -402,12 +402,12 @@ func _try_drop(pos: Vector2) -> void:
 		if _hit_test(_shortcut_slots[i], pos):
 			if bar_materials[i] == "":
 				bar_materials[i] = _drag_material
-				_add_to_inventory(_drag_material)
+				_gm.add_to_inventory(_drag_material)
 				_end_drag()
 				_refresh_shortcut(i)
 				return
 			elif bar_materials[i] == _drag_material:
-				_add_to_inventory(_drag_material)
+				_gm.add_to_inventory(_drag_material)
 				_end_drag()
 				_refresh_shortcut(i)
 				return
@@ -478,9 +478,9 @@ func _return_drag() -> void:
 			if _drag_seasoning != "":
 				_seasoning_zone.try_apply_seasoning(_drag_seasoning)
 		else:
-			_add_to_inventory(_drag_result_key)
+			_gm.add_to_inventory(_drag_result_key)
 	elif _drag_material != "":
-		_add_to_inventory(_drag_material)
+		_gm.add_to_inventory(_drag_material)
 
 func _init_shortcut_bar() -> void:
 	bar_materials.resize(10)
@@ -537,24 +537,6 @@ func _sync_from_inventory() -> void:
 	for i in range(10):
 		if bar_materials[i] == "":
 			_refresh_shortcut(i)
-
-func _add_to_inventory(key: String, amount: int = 1) -> void:
-	if key == "":
-		return
-	var cur: int = _gm.inventory.get(key, 0)
-	_gm.inventory[key] = cur + amount
-	_gm.notify_inventory_changed()
-
-func _remove_from_inventory(key: String, amount: int = 1) -> void:
-	if key == "":
-		return
-	if _gm.inventory.has(key):
-		var remaining: int = _gm.inventory[key] - amount
-		if remaining <= 0:
-			_gm.inventory.erase(key)
-		else:
-			_gm.inventory[key] = remaining
-	_gm.notify_inventory_changed()
 
 func _refresh_shortcut(i: int) -> void:
 	if bar_materials[i] == "":

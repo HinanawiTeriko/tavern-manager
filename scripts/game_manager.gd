@@ -395,6 +395,24 @@ func notify_inventory_changed() -> void:
 		narrative.set_var("has_sleep_powder", true)
 	inventory_changed.emit()
 
+func add_to_inventory(key: String, amount: int = 1) -> void:
+	if key == "":
+		return
+	var cur: int = inventory.get(key, 0)
+	inventory[key] = cur + amount
+	notify_inventory_changed()
+
+func remove_from_inventory(key: String, amount: int = 1) -> bool:
+	if key == "" or not inventory.has(key):
+		return false
+	var remaining: int = inventory[key] - amount
+	if remaining <= 0:
+		inventory.erase(key)
+	else:
+		inventory[key] = remaining
+	notify_inventory_changed()
+	return true
+
 func try_load_material_icon(key: String) -> Texture2D:
 	if MATERIAL_ICON_PATHS.has(key):
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
