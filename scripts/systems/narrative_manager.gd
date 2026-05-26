@@ -90,16 +90,29 @@ func get_today_scenes(day: int) -> Array[NpcData]:
 	for npc in all_npcs:
 		for scene in npc.scenes:
 			if scene.day == day:
-				if scene.trigger == "auto":
+				if _check_trigger(scene.trigger, npc.id):
 					result.append(npc)
-				elif scene.trigger.begins_with("affection"):
-					var parts = scene.trigger.split(">=")
-					if parts.size() == 2:
-						var threshold: int = int(parts[1].strip_edges())
-						if get_affection(npc.id) >= threshold:
-							result.append(npc)
 				break
 	return result
+
+func _check_trigger(trigger, npc_id: String) -> bool:
+	# 新格式: {"type": "auto"}
+	if trigger is Dictionary and trigger.get("type") == "auto":
+		return true
+	# 新格式: {"type": "affection", "threshold": N}
+	if trigger is Dictionary and trigger.get("type") == "affection":
+		var threshold: int = trigger.get("threshold", 0)
+		return get_affection(npc_id) >= threshold
+	# 兼容旧格式: "auto"
+	if trigger is String and trigger == "auto":
+		return true
+	# 兼容旧格式: "affection >= N"
+	if trigger is String and trigger.begins_with("affection"):
+		var parts = trigger.split(">=")
+		if parts.size() == 2:
+			var threshold: int = int(parts[1].strip_edges())
+			return get_affection(npc_id) >= threshold
+	return false
 
 func get_today_npc_fates(day: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
