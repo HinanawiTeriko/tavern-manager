@@ -67,7 +67,7 @@ func load_npc_data() -> void:
 		set_affection(npc.id, npc.affection_start)
 	print("[Narrative] 加载 ", all_npcs.size(), " 个 NPC")
 
-func _parse_scenes(scenes_array: Array) -> Array:
+func _parse_scenes(scenes_array: Array) -> Array[NpcSceneData]:
 	var result: Array = []
 	for scene_dict in scenes_array:
 		var scene = NpcSceneData.new()
@@ -76,7 +76,7 @@ func _parse_scenes(scenes_array: Array) -> Array:
 		scene.order = scene_dict["order"]
 		scene.trigger = scene_dict["trigger"]
 		if scene_dict.has("variables"):
-			scene.variables = []
+			scene.variables = [] as Array[String]
 			for v in scene_dict["variables"]:
 				scene.variables.append(v)
 		result.append(scene)
