@@ -6,5 +6,5 @@ var npc_name: String = ""
 var title: String = ""
 var description: String = ""
 var affection_start: int = 0
-var scenes: Array = []
+var scenes: Array[NpcSceneData] = []
 var endings: Dictionary = {}

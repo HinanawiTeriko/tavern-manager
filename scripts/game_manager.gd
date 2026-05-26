@@ -24,6 +24,7 @@ var _dialogue_phase: String = ""
 var _tavern_view = null
 var _day_map_view = null
 var _ending_screen = null
+var _tutorial_manager = null
 
 const MATERIAL_ICON_PATHS: Dictionary = {
 	"ale": "res://assets/textures/icons/materials/ale.png",
@@ -50,7 +51,7 @@ func _ready() -> void:
 	guests = GuestSystem.new(func():
 		var available: Array = []
 		for key in craft.items:
-			if craft.items[key].get("price", 0) > 0:
+			if craft.is_product(key):
 				available.append(key)
 		return available
 	)
@@ -64,14 +65,15 @@ func _ready() -> void:
 	DialogueManager.dialogue_started.connect(func(_resource): _is_dialogue_active = true)
 	DialogueManager.dialogue_ended.connect(func(_resource): _on_dialogue_ended())
 
+	_tutorial_manager = get_node_or_null("/root/TutorialManager")
+
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("menu_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view._toggle_menu()
+		_tavern_view.toggle_menu()
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
-		var tm = get_node_or_null("/root/TutorialManager")
-		var tutorial_active = tm != null and tm._is_active
-		var menu_open = _tavern_view._menu_panel.visible if _tavern_view._menu_panel != null else false
+		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
+		var menu_open = _tavern_view.is_menu_open()
 		if not _is_dialogue_active and not tutorial_active:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
@@ -84,51 +86,10 @@ func register_view(view: Node) -> void:
 
 		var craft_station = view.get_node("CraftStation")
 		if craft_station != null:
-			craft_station.serve_requested.connect(func(item_key: String, seasoning_tag: String):
-				if not guests.has_guest or item_key == "":
-					return
-
-				var is_important = guests.current_guest.has_dialogue
-				var npc_id = guests.current_guest.npc_id
-
-				var item: Dictionary = craft.get_item(item_key)
-				var item_price: int = item.get("price", 0)
-
-				if item_key == guests.current_guest.order_key:
-					economy.add_gold(item_price)
-					economy.add_reputation(2)
-					guests.record_order_success()
-					view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
-					if is_important:
-						narrative.set_var("serve_result", "success")
-				else:
-					guests.record_order_failed()
-					if item_price > 0:
-						view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
-					else:
-						view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
-					if is_important:
-						narrative.set_var("serve_result", "fail")
-
-				if seasoning_tag != "":
-					narrative.set_var("seasoning_used", seasoning_tag)
-
-				guests.record_guest_served()
-
-				if is_important and npc_id != "":
-					var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
-					if FileAccess.file_exists(post_path):
-						_dialogue_phase = "post"
-						view.set_dialogue_mode(true)
-						call_deferred("_start_dialogue_deferred", post_path)
-					else:
-						guests.clear_guest()
-				else:
-					guests.clear_guest()
-			)
+			craft_station.serve_requested.connect(_on_serve_requested)
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
-		var tm = get_node_or_null("/root/TutorialManager")
+		var tm = _tutorial_manager
 		var tutorial_will_start = tm != null and not tm.tavern_first_entered
 
 		if tutorial_will_start:
@@ -201,16 +162,16 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 	inventory_changed.emit()
 	day_cycle.next_phase()
 
-func _load_locations_data() -> Array:
+func _load_locations_data() -> Array[LocationData]:
 	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
 	if file == null:
-		return []
+		return [] as Array[LocationData]
 	var json_text = file.get_as_text()
 	file.close()
 	var data: Dictionary = JSON.parse_string(json_text)
 	if data == null:
-		return []
-	var result: Array = []
+		return [] as Array[LocationData]
+	var result: Array[LocationData] = []
 	for loc_dict in data["locations"]:
 		var loc = LocationData.new()
 		loc.id = loc_dict["id"]
@@ -274,6 +235,49 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	if group_id != "craft":
 		return
 	guests.spawn_important(npc_id, order_key)
+
+## 上菜判定逻辑（从 register_view lambda 提取）
+func _on_serve_requested(item_key: String, seasoning_tag: String) -> void:
+	if not guests.has_guest or item_key == "":
+		return
+
+	var is_important = guests.current_guest.has_dialogue
+	var npc_id = guests.current_guest.npc_id
+
+	var item: Dictionary = craft.get_item(item_key)
+	var item_price: int = item.get("price", 0)
+
+	if item_key == guests.current_guest.order_key:
+		economy.add_gold(item_price)
+		economy.add_reputation(2)
+		guests.record_order_success()
+		_tavern_view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
+		if is_important:
+			narrative.set_var("serve_result", "success")
+	else:
+		guests.record_order_failed()
+		if item.get("type", "") == "product":
+			_tavern_view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
+		else:
+			_tavern_view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
+		if is_important:
+			narrative.set_var("serve_result", "fail")
+
+	if seasoning_tag != "":
+		narrative.set_var("seasoning_used", seasoning_tag)
+
+	guests.record_guest_served()
+
+	if is_important and npc_id != "":
+		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
+		if FileAccess.file_exists(post_path):
+			_dialogue_phase = "post"
+			_tavern_view.set_dialogue_mode(true)
+			call_deferred("_start_dialogue_deferred", post_path)
+		else:
+			guests.clear_guest()
+	else:
+		guests.clear_guest()
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
@@ -351,10 +355,10 @@ func end_night() -> void:
 
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn")
 
-func buy_material(key: String, quantity: int, mira_active: bool = false) -> bool:
+func buy_material(key: String, quantity: int, discount: float = 1.0) -> bool:
 	if quantity < 1:
 		return false
-	var unit_price: int = shop.get_material_price(key, mira_active)
+	var unit_price: int = shop.get_material_price(key, discount)
 	var total = unit_price * quantity
 	if not economy.spend_gold(total):
 		return false
@@ -362,6 +366,13 @@ func buy_material(key: String, quantity: int, mira_active: bool = false) -> bool
 	inventory[key] = existing + quantity
 	notify_inventory_changed()
 	return true
+
+func is_mira_in_shop_today() -> bool:
+	var scenes = narrative.get_today_scenes(economy.current_day)
+	for npc in scenes:
+		if npc.id == "mira":
+			return true
+	return false
 
 func buy_recipe_unlock(key: String) -> bool:
 	if craft.is_recipe_unlocked(key):
@@ -384,6 +395,24 @@ func notify_inventory_changed() -> void:
 		narrative.set_var("has_sleep_powder", true)
 	inventory_changed.emit()
 
+func add_to_inventory(key: String, amount: int = 1) -> void:
+	if key == "":
+		return
+	var cur: int = inventory.get(key, 0)
+	inventory[key] = cur + amount
+	notify_inventory_changed()
+
+func remove_from_inventory(key: String, amount: int = 1) -> bool:
+	if key == "" or not inventory.has(key):
+		return false
+	var remaining: int = inventory[key] - amount
+	if remaining <= 0:
+		inventory.erase(key)
+	else:
+		inventory[key] = remaining
+	notify_inventory_changed()
+	return true
+
 func try_load_material_icon(key: String) -> Texture2D:
 	if MATERIAL_ICON_PATHS.has(key):
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
@@ -401,13 +430,3 @@ func _load_initial_inventory() -> Dictionary:
 	return {
 		"ale": 20, "grape": 20, "flour": 20, "meat_raw": 20, "herb": 20
 	}
-
-func _enter_tree() -> void:
-	get_tree().node_added.connect(_on_node_added)
-
-func _on_node_added(node: Node) -> void:
-	call_deferred("_register_view_deferred", node)
-
-func _register_view_deferred(node: Node) -> void:
-	if node is TavernView or node is DayMapView or node is EndingScreen:
-		register_view(node)

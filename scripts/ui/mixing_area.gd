@@ -4,8 +4,8 @@ extends Control
 signal mix_available(available: bool)
 signal contents_changed()
 
-var _items: Array = []
-var _gm = null
+var _items: Array[String] = []
+var _gm: GameManager
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")

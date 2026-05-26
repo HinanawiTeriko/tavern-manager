@@ -45,6 +45,8 @@ func _ready() -> void:
 
 	$BottomBar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	_gm.register_view(self)
+
 func _apply_theme() -> void:
 	var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
 	if bg_tex != null:
@@ -187,10 +189,16 @@ func _on_inventory_changed() -> void:
 		_build_backpack_list()
 
 func _toggle_menu() -> void:
+	toggle_menu()
+
+func toggle_menu() -> void:
 	_menu_panel.visible = not _menu_panel.visible
 	if _menu_panel.visible:
 		_build_recipe_list()
 		_build_backpack_list()
+
+func is_menu_open() -> bool:
+	return _menu_panel != null and _menu_panel.visible
 
 func _on_end_night() -> void:
 	_gm.end_night()
@@ -270,7 +278,7 @@ func _build_recipe_list() -> void:
 			row.add_child(box)
 
 		var price_str = ""
-		if item_data.get("price", 0) > 0:
+		if item_data.get("type", "") == "product":
 			price_str = str(item_data["price"]) + "金"
 		var name_label = Label.new()
 		name_label.text = " " + item_data.get("name", key) + "  " + price_str

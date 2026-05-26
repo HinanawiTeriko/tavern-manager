@@ -2,5 +2,5 @@
   "spice":        { "name": "辣",       "tag": "spicy",   "color": [0.9, 0.2, 0.1] },
   "herb_spice":   { "name": "香草",     "tag": "herbal",  "color": [0.2, 0.8, 0.3] },
   "salt":         { "name": "盐",       "tag": "salty",   "color": [0.9, 0.9, 0.9] },
-  "sleep_powder": { "name": "沉睡花粉",  "tag": "drugged", "color": [0.55, 0.4, 0.75] }
+  "sleep_powder": { "tag": "drugged" }
 }

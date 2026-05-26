@@ -3,7 +3,7 @@ extends Control
 
 enum State { EMPTY, HAS_ITEM, SEASONED }
 
-var _gm
+var _gm: GameManager
 var _state: State = State.EMPTY
 var _item_key: String = ""
 var _applied_seasoning: String = ""
@@ -62,16 +62,15 @@ func try_apply_seasoning(seasoning_key: String) -> bool:
 		return false
 
 	if seasoning_key == "sleep_powder":
-		if not _gm.inventory.has(seasoning_key) or _gm.inventory[seasoning_key] < 1:
+		if not _gm.remove_from_inventory(seasoning_key, 1):
 			return false
-		_gm.inventory[seasoning_key] = _gm.inventory[seasoning_key] - 1
-		if _gm.inventory[seasoning_key] <= 0:
-			_gm.inventory.erase(seasoning_key)
-		_gm.notify_inventory_changed()
 
 	_applied_seasoning = seasoning_key
 	var seasoning = _gm.seasoning.get_seasoning(seasoning_key)
-	_item_name = _gm.craft.get_item(_item_key).get("name", _item_key) + " · " + seasoning.get("name", seasoning_key)
+	var seasoning_name = seasoning.get("name", "")
+	if seasoning_name == "":
+		seasoning_name = _gm.craft.get_item(seasoning_key).get("name", seasoning_key)
+	_item_name = _gm.craft.get_item(_item_key).get("name", _item_key) + " · " + seasoning_name
 	_state = State.SEASONED
 	_label.text = _item_name
 	_label.add_theme_color_override("font_color", Color.LIME_GREEN)

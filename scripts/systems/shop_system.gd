@@ -1,9 +1,12 @@
 class_name ShopSystem
 extends RefCounted
 
+const UNKNOWN_PRICE: int = 999
+const INVALID_RECIPE_PRICE: int = -1
+const MIRA_DISCOUNT: float = 0.8
+
 var _material_prices: Dictionary = {}
 var _recipe_unlock_prices: Dictionary = {}
-var _mira_discount: float = 0.8
 
 func load_config() -> void:
 	var file = FileAccess.open("res://data/shop.json", FileAccess.READ)
@@ -12,13 +15,9 @@ func load_config() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		print("[Shop] JSON 解析失败: ", error)
-		return
-	var data: Dictionary = json.data
+	var data = JSON.parse_string(json_text)
 	if data == null:
+		print("[Shop] JSON 解析失败")
 		return
 	_material_prices.clear()
 	if data.has("materials") and data["materials"] != null:
@@ -28,26 +27,17 @@ func load_config() -> void:
 	if data.has("recipeUnlocks") and data["recipeUnlocks"] != null:
 		for r in data["recipeUnlocks"]:
 			_recipe_unlock_prices[r["key"]] = r["price"]
-	if data.has("miraDiscount"):
-		_mira_discount = data["miraDiscount"]
 	print("[Shop] 加载 ", _material_prices.size(), " 种材料, ", _recipe_unlock_prices.size(), " 种可解锁配方")
 
-func get_material_price(key: String, mira_active: bool = false) -> int:
+func get_material_price(key: String, discount: float = 1.0) -> int:
 	if not _material_prices.has(key):
-		return 999
+		return UNKNOWN_PRICE
 	var price: int = _material_prices[key]
-	if mira_active:
-		return floori(price * _mira_discount)
+	if discount < 1.0:
+		return floori(price * discount)
 	return price
 
 func get_recipe_unlock_price(key: String) -> int:
 	if _recipe_unlock_prices.has(key):
 		return _recipe_unlock_prices[key]
-	return -1
-
-func is_mira_shop_today(current_day: int, narrative) -> bool:
-	var scenes = narrative.get_today_scenes(current_day)
-	for npc in scenes:
-		if npc.id == "mira":
-			return true
-	return false
+	return INVALID_RECIPE_PRICE

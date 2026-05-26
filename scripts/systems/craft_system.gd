@@ -25,11 +25,10 @@ func _load_items() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
+	var data = JSON.parse_string(json_text)
+	if data == null:
 		return
-	items = json.data
+	items = data
 
 func _load_operations() -> void:
 	var file = FileAccess.open("res://data/operations.json", FileAccess.READ)
@@ -37,19 +36,23 @@ func _load_operations() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
+	var data = JSON.parse_string(json_text)
+	if data == null:
 		return
-	_ops = json.data
+	_ops = data
 
 func _load_combines() -> void:
-	var pairs = [
-		["dough", "meat_raw", "dough_meat"],
-		["ale", "herb", "ale_herb"],
-		["grape", "herb", "grape_herb"],
-		["meat_raw", "ale", "meat_stew_raw"],
-	]
+	var file = FileAccess.open("res://data/combines.json", FileAccess.READ)
+	if file == null:
+		push_error("[Craft] combines.json 未找到")
+		return
+	var json_text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary or not data.has("pairs"):
+		push_error("[Craft] combines.json 格式无效")
+		return
+	var pairs: Array = data["pairs"]
 	for p in pairs:
 		var a: String = p[0]
 		var b: String = p[1]
@@ -71,7 +74,7 @@ func has_operations(key: String) -> bool:
 
 func is_product(key: String) -> bool:
 	var item: Dictionary = items.get(key, {})
-	return item.get("price", 0) > 0
+	return item.get("type", "") == "product"
 
 func get_combine_result(a: String, b: String) -> String:
 	if a == "" or b == "":
