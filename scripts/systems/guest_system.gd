@@ -41,6 +41,7 @@ func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 		if current_guest.patience <= 15.0 and prev_patience > 15.0:
 			patience_low.emit()
 		if current_guest.patience <= 0.0:
+			record_order_failed()
 			clear_guest()
 
 func _spawn_normal() -> void:

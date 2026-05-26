@@ -26,6 +26,10 @@ func _ready() -> void:
 	$Content/QuitBtn.pressed.connect(func(): get_tree().quit())
 	$Content/RestartBtn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/ui/TitleScreen.tscn"))
 
+	var gm = get_node("/root/GameManager")
+	if gm != null:
+		gm.register_view(self)
+
 	var bg_node = get_node_or_null("Background")
 	if bg_node != null:
 		var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/ending_bg.png")

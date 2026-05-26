@@ -33,6 +33,7 @@ func get_affection(npc_id: String) -> int:
 
 func set_ending(npc_id: String, ending: String) -> void:
 	endings[npc_id] = ending
+	dialogue_vars[npc_id + "_ending"] = ending
 	print("[Narrative] ", npc_id, " 结局 → ", ending)
 
 func load_npc_data() -> void:

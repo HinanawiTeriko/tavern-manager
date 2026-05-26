@@ -1,9 +1,15 @@
 class_name TextureManager
 extends RefCounted
 
+static var _cache: Dictionary = {}
+
 static func try_load(path: String) -> Texture2D:
+	if _cache.has(path):
+		return _cache[path]
 	if ResourceLoader.exists(path):
-		return load(path)
+		var tex: Texture2D = load(path)
+		_cache[path] = tex
+		return tex
 	return null
 
 static func try_load_style_box(path: String) -> StyleBoxTexture:
@@ -14,3 +20,6 @@ static func try_load_style_box(path: String) -> StyleBoxTexture:
 	sb.texture = tex
 	sb.region_rect = Rect2(0, 0, tex.get_width(), tex.get_height())
 	return sb
+
+static func clear_cache() -> void:
+	_cache.clear()

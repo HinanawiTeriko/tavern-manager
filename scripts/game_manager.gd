@@ -24,6 +24,7 @@ var _dialogue_phase: String = ""
 var _tavern_view = null
 var _day_map_view = null
 var _ending_screen = null
+var _tutorial_manager = null
 
 const MATERIAL_ICON_PATHS: Dictionary = {
 	"ale": "res://assets/textures/icons/materials/ale.png",
@@ -64,14 +65,15 @@ func _ready() -> void:
 	DialogueManager.dialogue_started.connect(func(_resource): _is_dialogue_active = true)
 	DialogueManager.dialogue_ended.connect(func(_resource): _on_dialogue_ended())
 
+	_tutorial_manager = get_node_or_null("/root/TutorialManager")
+
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("menu_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view._toggle_menu()
+		_tavern_view.toggle_menu()
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
-		var tm = get_node_or_null("/root/TutorialManager")
-		var tutorial_active = tm != null and tm._is_active
-		var menu_open = _tavern_view._menu_panel.visible if _tavern_view._menu_panel != null else false
+		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
+		var menu_open = _tavern_view.is_menu_open()
 		if not _is_dialogue_active and not tutorial_active:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
@@ -128,7 +130,7 @@ func register_view(view: Node) -> void:
 			)
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
-		var tm = get_node_or_null("/root/TutorialManager")
+		var tm = _tutorial_manager
 		var tutorial_will_start = tm != null and not tm.tavern_first_entered
 
 		if tutorial_will_start:
@@ -401,13 +403,3 @@ func _load_initial_inventory() -> Dictionary:
 	return {
 		"ale": 20, "grape": 20, "flour": 20, "meat_raw": 20, "herb": 20
 	}
-
-func _enter_tree() -> void:
-	get_tree().node_added.connect(_on_node_added)
-
-func _on_node_added(node: Node) -> void:
-	call_deferred("_register_view_deferred", node)
-
-func _register_view_deferred(node: Node) -> void:
-	if node is TavernView or node is DayMapView or node is EndingScreen:
-		register_view(node)

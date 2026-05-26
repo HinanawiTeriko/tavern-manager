@@ -41,7 +41,7 @@ func reset_daily() -> void:
 	rep_today = 0
 
 func _check_level_up() -> void:
-	if tavern_level < 3 and reputation >= _level_rep_thresholds[tavern_level]:
+	if tavern_level < _level_rep_thresholds.size() and reputation >= _level_rep_thresholds[tavern_level]:
 		tavern_level += 1
 		print("[Economy] 酒馆升级到 Lv.", tavern_level)
 

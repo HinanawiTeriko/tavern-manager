@@ -297,7 +297,7 @@ func _process(delta: float) -> void:
 			gesture_completed.emit("stir")
 			_execute_operation(_heat_target_op)
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if _overlay_menu != null and _overlay_menu.visible:
 		return
 	if _dialogue_overlay != null and _dialogue_overlay.visible:
