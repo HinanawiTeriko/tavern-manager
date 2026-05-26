@@ -51,7 +51,7 @@ func _ready() -> void:
 	guests = GuestSystem.new(func():
 		var available: Array = []
 		for key in craft.items:
-			if craft.items[key].get("price", 0) > 0:
+			if craft.is_product(key):
 				available.append(key)
 		return available
 	)
@@ -105,7 +105,7 @@ func register_view(view: Node) -> void:
 						narrative.set_var("serve_result", "success")
 				else:
 					guests.record_order_failed()
-					if item_price > 0:
+					if item.get("type", "") == "product":
 						view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
 					else:
 						view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
@@ -353,10 +353,10 @@ func end_night() -> void:
 
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn")
 
-func buy_material(key: String, quantity: int, mira_active: bool = false) -> bool:
+func buy_material(key: String, quantity: int, discount: float = 1.0) -> bool:
 	if quantity < 1:
 		return false
-	var unit_price: int = shop.get_material_price(key, mira_active)
+	var unit_price: int = shop.get_material_price(key, discount)
 	var total = unit_price * quantity
 	if not economy.spend_gold(total):
 		return false
@@ -364,6 +364,13 @@ func buy_material(key: String, quantity: int, mira_active: bool = false) -> bool
 	inventory[key] = existing + quantity
 	notify_inventory_changed()
 	return true
+
+func is_mira_in_shop_today() -> bool:
+	var scenes = narrative.get_today_scenes(economy.current_day)
+	for npc in scenes:
+		if npc.id == "mira":
+			return true
+	return false
 
 func buy_recipe_unlock(key: String) -> bool:
 	if craft.is_recipe_unlocked(key):

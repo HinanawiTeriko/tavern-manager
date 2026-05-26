@@ -74,7 +74,7 @@ func has_operations(key: String) -> bool:
 
 func is_product(key: String) -> bool:
 	var item: Dictionary = items.get(key, {})
-	return item.get("price", 0) > 0
+	return item.get("type", "") == "product"
 
 func get_combine_result(a: String, b: String) -> String:
 	if a == "" or b == "":

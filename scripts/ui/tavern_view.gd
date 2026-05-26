@@ -278,7 +278,7 @@ func _build_recipe_list() -> void:
 			row.add_child(box)
 
 		var price_str = ""
-		if item_data.get("price", 0) > 0:
+		if item_data.get("type", "") == "product":
 			price_str = str(item_data["price"]) + "金"
 		var name_label = Label.new()
 		name_label.text = " " + item_data.get("name", key) + "  " + price_str
