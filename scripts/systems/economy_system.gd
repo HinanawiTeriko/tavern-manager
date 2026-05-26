@@ -1,7 +1,7 @@
 class_name EconomySystem
 extends RefCounted
 
-signal changed()
+signal changed(gold: int, reputation: int, level: int)
 
 var gold: int = 0
 var reputation: int = 0
@@ -21,20 +21,20 @@ func get_level_rep_threshold() -> int:
 func add_gold(amount: int) -> void:
 	gold += amount
 	gold_today += amount
-	changed.emit()
+	changed.emit(gold, reputation, tavern_level)
 
 func spend_gold(amount: int) -> bool:
 	if gold < amount:
 		return false
 	gold -= amount
-	changed.emit()
+	changed.emit(gold, reputation, tavern_level)
 	return true
 
 func add_reputation(amount: int) -> void:
 	reputation += amount
 	rep_today += amount
 	_check_level_up()
-	changed.emit()
+	changed.emit(gold, reputation, tavern_level)
 
 func reset_daily() -> void:
 	gold_today = 0
