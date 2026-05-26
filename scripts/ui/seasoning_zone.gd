@@ -71,7 +71,10 @@ func try_apply_seasoning(seasoning_key: String) -> bool:
 
 	_applied_seasoning = seasoning_key
 	var seasoning = _gm.seasoning.get_seasoning(seasoning_key)
-	_item_name = _gm.craft.get_item(_item_key).get("name", _item_key) + " · " + seasoning.get("name", seasoning_key)
+	var seasoning_name = seasoning.get("name", "")
+	if seasoning_name == "":
+		seasoning_name = _gm.craft.get_item(seasoning_key).get("name", seasoning_key)
+	_item_name = _gm.craft.get_item(_item_key).get("name", _item_key) + " · " + seasoning_name
 	_state = State.SEASONED
 	_label.text = _item_name
 	_label.add_theme_color_override("font_color", Color.LIME_GREEN)
