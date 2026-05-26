@@ -89,9 +89,10 @@ func _load_locations() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	json.parse(json_text)
-	var data: Dictionary = json.data
+	var data = JSON.parse_string(json_text)
+	if data == null:
+		push_error("[DayMapView] locations.json 格式无效")
+		return
 	_locations = []
 	for loc_dict in data["locations"]:
 		var loc = LocationData.new()

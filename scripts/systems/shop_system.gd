@@ -12,13 +12,9 @@ func load_config() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		print("[Shop] JSON 解析失败: ", error)
-		return
-	var data: Dictionary = json.data
+	var data = JSON.parse_string(json_text)
 	if data == null:
+		print("[Shop] JSON 解析失败")
 		return
 	_material_prices.clear()
 	if data.has("materials") and data["materials"] != null:

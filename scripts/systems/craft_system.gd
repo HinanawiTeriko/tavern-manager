@@ -25,11 +25,10 @@ func _load_items() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
+	var data = JSON.parse_string(json_text)
+	if data == null:
 		return
-	items = json.data
+	items = data
 
 func _load_operations() -> void:
 	var file = FileAccess.open("res://data/operations.json", FileAccess.READ)
@@ -37,11 +36,10 @@ func _load_operations() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
+	var data = JSON.parse_string(json_text)
+	if data == null:
 		return
-	_ops = json.data
+	_ops = data
 
 func _load_combines() -> void:
 	var file = FileAccess.open("res://data/combines.json", FileAccess.READ)

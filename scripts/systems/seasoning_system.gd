@@ -10,12 +10,11 @@ func load_data() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		print("[Seasoning] JSON 解析失败: ", error)
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary:
+		push_error("[Seasoning] JSON 解析失败或格式错误")
 		return
-	seasonings = json.data
+	seasonings = data
 	print("[Seasoning] 加载 ", seasonings.size(), " 种香料")
 
 func get_seasoning(key: String) -> Dictionary:

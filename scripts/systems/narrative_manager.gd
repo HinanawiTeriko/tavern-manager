@@ -49,12 +49,10 @@ func load_npc_data() -> void:
 		return
 	var json_text = file.get_as_text()
 	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		printerr("[Narrative] JSON 解析失败: ", error)
+	var root = JSON.parse_string(json_text)
+	if root == null or not root is Dictionary:
+		printerr("[Narrative] JSON 解析失败")
 		return
-	var root: Dictionary = json.data
 	var npcs_array: Array = root["npcs"]
 	for npc_dict in npcs_array:
 		var npc = NpcData.new()
