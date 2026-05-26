@@ -11,12 +11,13 @@ var gold_today: int = 0
 var rep_today: int = 0
 
 const MAX_DAYS: int = 30
+const MAX_REP_THRESHOLD: int = 0x7FFFFFFF
 const _level_rep_thresholds: Array = [0, 50, 150]
 
 func get_level_rep_threshold() -> int:
 	if tavern_level < _level_rep_thresholds.size():
 		return _level_rep_thresholds[tavern_level]
-	return 0x7FFFFFFF
+	return MAX_REP_THRESHOLD
 
 func add_gold(amount: int) -> void:
 	gold += amount
