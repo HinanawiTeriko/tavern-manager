@@ -1,7 +1,7 @@
 class_name NarrativeManager
 extends RefCounted
 
-var all_npcs: Array = []
+var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
 var key_items: Array = []
 var affection: Dictionary = {}
@@ -68,7 +68,7 @@ func load_npc_data() -> void:
 	print("[Narrative] 加载 ", all_npcs.size(), " 个 NPC")
 
 func _parse_scenes(scenes_array: Array) -> Array[NpcSceneData]:
-	var result: Array = []
+	var result: Array[NpcSceneData] = []
 	for scene_dict in scenes_array:
 		var scene = NpcSceneData.new()
 		scene.day = int(scene_dict["day"])
@@ -85,8 +85,8 @@ func _parse_scenes(scenes_array: Array) -> Array[NpcSceneData]:
 func _parse_endings(endings_dict: Dictionary) -> Dictionary:
 	return endings_dict
 
-func get_today_scenes(day: int) -> Array:
-	var result: Array = []
+func get_today_scenes(day: int) -> Array[NpcData]:
+	var result: Array[NpcData] = []
 	for npc in all_npcs:
 		for scene in npc.scenes:
 			if scene.day == day:
@@ -101,8 +101,8 @@ func get_today_scenes(day: int) -> Array:
 				break
 	return result
 
-func get_today_npc_fates(day: int) -> Array:
-	var result: Array = []
+func get_today_npc_fates(day: int) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
 	for npc in all_npcs:
 		for scene in npc.scenes:
 			if scene.day == day:

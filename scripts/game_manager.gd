@@ -203,16 +203,16 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 	inventory_changed.emit()
 	day_cycle.next_phase()
 
-func _load_locations_data() -> Array:
+func _load_locations_data() -> Array[LocationData]:
 	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
 	if file == null:
-		return []
+		return [] as Array[LocationData]
 	var json_text = file.get_as_text()
 	file.close()
 	var data: Dictionary = JSON.parse_string(json_text)
 	if data == null:
-		return []
-	var result: Array = []
+		return [] as Array[LocationData]
+	var result: Array[LocationData] = []
 	for loc_dict in data["locations"]:
 		var loc = LocationData.new()
 		loc.id = loc_dict["id"]
