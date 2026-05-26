@@ -28,22 +28,15 @@ func load_config() -> void:
 		_mira_discount = data["miraDiscount"]
 	print("[Shop] 加载 ", _material_prices.size(), " 种材料, ", _recipe_unlock_prices.size(), " 种可解锁配方")
 
-func get_material_price(key: String, mira_active: bool = false) -> int:
+func get_material_price(key: String, discount: float = 1.0) -> int:
 	if not _material_prices.has(key):
 		return 999
 	var price: int = _material_prices[key]
-	if mira_active:
-		return floori(price * _mira_discount)
+	if discount < 1.0:
+		return floori(price * discount)
 	return price
 
 func get_recipe_unlock_price(key: String) -> int:
 	if _recipe_unlock_prices.has(key):
 		return _recipe_unlock_prices[key]
 	return -1
-
-func is_mira_shop_today(current_day: int, narrative) -> bool:
-	var scenes = narrative.get_today_scenes(current_day)
-	for npc in scenes:
-		if npc.id == "mira":
-			return true
-	return false

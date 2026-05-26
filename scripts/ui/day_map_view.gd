@@ -345,7 +345,7 @@ func _refresh_shop_ui() -> void:
 	if gm == null:
 		return
 
-	_is_mira_shop = gm.shop.is_mira_shop_today(gm.economy.current_day, gm.narrative)
+	_is_mira_shop = gm.is_mira_in_shop_today()
 	_shop_title.text = "米拉的旅行商店" if _is_mira_shop else "商店"
 
 	_build_material_rows(gm)
@@ -376,10 +376,11 @@ func _build_material_rows(gm) -> void:
 		name_label.add_theme_font_size_override("font_size", 16)
 		row.add_child(name_label)
 
-		var price: int = gm.shop.get_material_price(key, _is_mira_shop)
+		var discount: float = 0.8 if _is_mira_shop else 1.0
+		var price: int = gm.shop.get_material_price(key, discount)
 		var price_label = Label.new()
 		if _is_mira_shop:
-			price_label.text = str(gm.shop.get_material_price(key)) + "→" + str(price) + "金"
+			price_label.text = str(gm.shop.get_material_price(key)) + "\u2192" + str(price) + "\u91d1"
 		else:
 			price_label.text = str(price) + "金"
 		price_label.custom_minimum_size = Vector2(70, 0)
@@ -422,7 +423,7 @@ func _build_material_rows(gm) -> void:
 			var qty = int(qty_label.text)
 			if qty < 1:
 				return
-			if gm.buy_material(key, qty, _is_mira_shop):
+			if gm.buy_material(key, qty, 0.8 if _is_mira_shop else 1.0):
 				qty_label.text = "0"
 				_update_gold_display()
 		)
