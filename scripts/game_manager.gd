@@ -86,48 +86,7 @@ func register_view(view: Node) -> void:
 
 		var craft_station = view.get_node("CraftStation")
 		if craft_station != null:
-			craft_station.serve_requested.connect(func(item_key: String, seasoning_tag: String):
-				if not guests.has_guest or item_key == "":
-					return
-
-				var is_important = guests.current_guest.has_dialogue
-				var npc_id = guests.current_guest.npc_id
-
-				var item: Dictionary = craft.get_item(item_key)
-				var item_price: int = item.get("price", 0)
-
-				if item_key == guests.current_guest.order_key:
-					economy.add_gold(item_price)
-					economy.add_reputation(2)
-					guests.record_order_success()
-					view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
-					if is_important:
-						narrative.set_var("serve_result", "success")
-				else:
-					guests.record_order_failed()
-					if item.get("type", "") == "product":
-						view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
-					else:
-						view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
-					if is_important:
-						narrative.set_var("serve_result", "fail")
-
-				if seasoning_tag != "":
-					narrative.set_var("seasoning_used", seasoning_tag)
-
-				guests.record_guest_served()
-
-				if is_important and npc_id != "":
-					var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
-					if FileAccess.file_exists(post_path):
-						_dialogue_phase = "post"
-						view.set_dialogue_mode(true)
-						call_deferred("_start_dialogue_deferred", post_path)
-					else:
-						guests.clear_guest()
-				else:
-					guests.clear_guest()
-			)
+			craft_station.serve_requested.connect(_on_serve_requested)
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
 		var tm = _tutorial_manager
@@ -276,6 +235,49 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	if group_id != "craft":
 		return
 	guests.spawn_important(npc_id, order_key)
+
+## 上菜判定逻辑（从 register_view lambda 提取）
+func _on_serve_requested(item_key: String, seasoning_tag: String) -> void:
+	if not guests.has_guest or item_key == "":
+		return
+
+	var is_important = guests.current_guest.has_dialogue
+	var npc_id = guests.current_guest.npc_id
+
+	var item: Dictionary = craft.get_item(item_key)
+	var item_price: int = item.get("price", 0)
+
+	if item_key == guests.current_guest.order_key:
+		economy.add_gold(item_price)
+		economy.add_reputation(2)
+		guests.record_order_success()
+		_tavern_view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
+		if is_important:
+			narrative.set_var("serve_result", "success")
+	else:
+		guests.record_order_failed()
+		if item.get("type", "") == "product":
+			_tavern_view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
+		else:
+			_tavern_view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
+		if is_important:
+			narrative.set_var("serve_result", "fail")
+
+	if seasoning_tag != "":
+		narrative.set_var("seasoning_used", seasoning_tag)
+
+	guests.record_guest_served()
+
+	if is_important and npc_id != "":
+		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
+		if FileAccess.file_exists(post_path):
+			_dialogue_phase = "post"
+			_tavern_view.set_dialogue_mode(true)
+			call_deferred("_start_dialogue_deferred", post_path)
+		else:
+			guests.clear_guest()
+	else:
+		guests.clear_guest()
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
