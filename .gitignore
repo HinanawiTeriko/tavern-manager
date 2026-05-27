@@ -43,3 +43,6 @@ $RECYCLE.BIN/
 
 # Windows
 *.lnk
+
+# Superpowers docs (local only)
+docs/superpowers/
