@@ -23,8 +23,9 @@ export_presets.cfg
 # MCP config (contains local machine-specific settings)
 .mcp.json
 
-# CodeBuddy Code (local IDE settings)
+# CodeBuddy Code (local IDE settings, AI-only)
 .codebuddy/
+CODEBUDDY.md
 
 # VS Code (keep shared settings, ignore local)
 .vscode/
