@@ -242,6 +242,9 @@ func _has_support(item: DeskItem) -> bool:
 
 
 func _try_slide(item: DeskItem) -> void:
+	# 在地面上的物品不参与滑落判定（地面是无限平面，无悬空概念）
+	if item.pos.y + ITEM_SIZE >= _ground_y - 0.5:
+		return
 	var r := Rect2(item.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
 	var cx: float = item.pos.x + ITEM_SIZE * 0.5
 	var best_area: float = 0.0
