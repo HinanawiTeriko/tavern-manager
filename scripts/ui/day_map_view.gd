@@ -56,6 +56,10 @@ func _ready() -> void:
 	_go_button.pressed.connect(_on_go_pressed)
 	_continue_btn.pressed.connect(_on_continue)
 
+	var exp_btn = $TopBar/ExpTavernBtn
+	ThemeColors.style_small_button(exp_btn, 13)
+	exp_btn.pressed.connect(_on_exp_tavern_pressed)
+
 	_load_locations()
 	_build_location_ui()
 
@@ -514,3 +518,7 @@ func _trigger_shop_tutorial() -> void:
 		"MapArea": [140, 80, 1000, 420],
 	}
 	tm.start_tutorial("shop", rects)
+
+
+func _on_exp_tavern_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/ExperimentalTavern.tscn")
