@@ -1,0 +1,89 @@
+P1优先级 - 背景类素材AI提示词
+===========================================
+
+1. D1 - 地牢区域地图背景 (daymap_bg.png)
+-------------------------------------------
+文件: assets/textures/backgrounds/daymap_bg.png
+尺寸: 640×360 px (2x缩放到1280×720)
+风格: 简陋像素涂鸦，纯色块+1px黑轮廓
+
+AI提示词 (Stable Diffusion / Midjourney):
+```
+pixel art, crudely drawn MS Paint style, 
+dungeon map on parchment paper, 640x360,
+flat parchment base (#D0C8B8), 
+pixelated jagged torn edges,
+Five labeled locations connected by dotted pixel paths:
+- mushroom grotto (top left, simple mushroom shapes)
+- abandoned mine tunnel (top center, minecart silhouette)
+- underground river (right, wavy lines)
+- grape vine terrace (bottom left, vine patterns)
+- underground farm mill (bottom right, windmill silhouette)
+Dark ink lines (#403020) on parchment,
+pixel compass rose decoration in corner,
+limited color palette, flat colors,
+1px black outlines (#000000),
+chunky pixel shapes, simple identifiable forms,
+no UI elements, no gradient, no soft blur
+```
+
+Negative prompt:
+```
+3D render, realistic photo, smooth gradients, 
+anime style, photorealistic, modern map,
+bright colors, text, watermark, signature,
+jpeg artifacts, distorted, deformed
+```
+
+Midjourney额外参数:
+```
+--style pixel --niji 6 --ar 16:9 --weird 500
+```
+
+---
+2. E1 - 结局画面背景 (ending_bg.png)
+-------------------------------------------
+文件: assets/textures/backgrounds/ending_bg.png
+尺寸: 640×360 px (2x缩放到1280×720)
+风格: 简陋像素涂鸦，纯色块+1px黑轮廓
+
+AI提示词:
+```
+pixel art, crudely drawn MS Paint style,
+closed tavern after hours, 640x360,
+same stone and wood tavern interior as B1,
+using deeper dark colors (#1E1814 dominant),
+heavy closed ledger book on bartop center-bottom,
+flat amber (#E8A040) decorative pattern on cover,
+wall sconces as dark flat blocks (extinguished),
+lite from above center as subtle brighter pixel tones,
+quiet, contemplative, end-of-journey mood,
+limited color palette, flat colors,
+1px black outlines (#000000),
+chunky pixel shapes, simple identifiable forms,
+no gradient, no soft glow, no characters
+```
+
+Negative prompt:
+```
+3D render, realistic, anime style, 
+smooth gradients, blur, bright colors,
+people, characters, text, modern furniture
+```
+
+Midjourney额外参数:
+```
+--style pixel --niji 6 --ar 16:9 --weird 300
+```
+
+---
+生成建议:
+---------
+1. 每个背景生成5-10个变体
+2. 选择最符合像素涂鸦风格的版本
+3. 在Aseprite中手动调整:
+   - 将颜色减少到24色板
+   - 添加/统一1px黑色轮廓
+   - 确保纯色填充，无渐变
+   - 调整尺寸为精确的640×360px
+4. 导出为PNG-24格式，背景不透明
