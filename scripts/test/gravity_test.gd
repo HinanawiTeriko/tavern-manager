@@ -204,7 +204,8 @@ func _simulate_physics(delta: float) -> void:
 
 func _resolve_item_collisions(item: DeskItem) -> void:
 	var r := Rect2(item.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-	var support_y: float = -INF
+	# AABB 相交即视为支撑候选，取最高的顶面（y 最小）作为 snap 目标
+	var support_y: float = INF
 
 	for other in _items:
 		if other == item or not other.is_static:
@@ -214,11 +215,10 @@ func _resolve_item_collisions(item: DeskItem) -> void:
 			continue
 		if item.vel.y < 0:
 			continue
-		var top_y: float = other.pos.y
-		if item.pos.y + ITEM_SIZE >= top_y and item.pos.y < top_y:
-			support_y = top_y
+		if other.pos.y < support_y:
+			support_y = other.pos.y
 
-	if support_y > -INF:
+	if support_y < INF:
 		item.pos.y = support_y - ITEM_SIZE
 		item.vel.y = -item.vel.y * BOUNCE_DAMP
 		if abs(item.vel.y) < SETTLE_THRESHOLD:
