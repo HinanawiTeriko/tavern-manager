@@ -1,0 +1,200 @@
+P1优先级 - 图标类素材AI提示词
+===========================================
+
+图标规格:
+- 采集点图标: 16×16 px (3x缩放到48×48)
+- 通用小图标: 8×8 px (3x缩放到24×24)
+- 格式: PNG-24, 透明背景
+- 描边: 1px纯黑轮廓 #000000
+- 光影: 纯色填充，无渐变
+
+1. D2a - 菌菇林地图标 (icon_mushroom.png)
+------------------------------------------------
+文件: assets/textures/icons/map/icon_mushroom.png
+尺寸: 16×16 px
+
+AI提示词:
+```
+pixel art icon, crudely drawn MS Paint style,
+16x16 canvas, 1px black outlines,
+cluster of glowing mushrooms,
+caps emitting faint blue-white light,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms, 8-bit style
+```
+
+---
+2. D2b - 废弃矿道图标 (icon_mine.png)
+------------------------------------------------
+文件: assets/textures/icons/map/icon_mine.png
+尺寸: 16×16 px
+
+AI提示词:
+```
+pixel art icon, crudely drawn MS Paint style,
+16x16 canvas, 1px black outlines,
+two crossed pickaxes with chunk of dark ore,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms, 8-bit style
+```
+
+---
+3. D2c - 暗河沿岸图标 (icon_river.png)
+------------------------------------------------
+文件: assets/textures/icons/map/icon_river.png
+尺寸: 16×16 px
+
+AI提示词:
+```
+pixel art icon, crudely drawn MS Paint style,
+16x16 canvas, 1px black outlines,
+water droplet with ripple rings beneath,
+suggesting underground river,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms, 8-bit style
+```
+
+---
+4. D2d - 葡萄藤架图标 (icon_vine.png)
+------------------------------------------------
+文件: assets/textures/icons/map/icon_vine.png
+尺寸: 16×16 px
+
+AI提示词:
+```
+pixel art icon, crudely drawn MS Paint style,
+16x16 canvas, 1px black outlines,
+bunch of grapes with curling vine tendrils,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms, 8-bit style
+```
+
+---
+5. D2e - 农庄磨坊图标 (icon_mill.png)
+------------------------------------------------
+文件: assets/textures/icons/map/icon_mill.png
+尺寸: 16×16 px
+
+AI提示词:
+```
+pixel art icon, crudely drawn MS Paint style,
+16x16 canvas, 1px black outlines,
+small windmill/mill building silhouette,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms, 8-bit style
+```
+
+---
+6. U1 - 金币图标 (icon_gold.png)
+------------------------------------------------
+文件: assets/textures/ui/icon_gold.png
+尺寸: 8×8 px
+
+AI提示词:
+```
+pixel art tiny icon, crudely drawn MS Paint style,
+8x8 canvas, 1px black outlines,
+round gold coin with serrated edge,
+star mark in center, golden highlight,
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms
+```
+
+---
+7. U2 - 声望星星图标 (icon_star.png)
+------------------------------------------------
+文件: assets/textures/ui/icon_star.png
+尺寸: 8×8 px
+
+AI提示词:
+```
+pixel art tiny icon, crudely drawn MS Paint style,
+8x8 canvas, 1px black outlines,
+five-pointed star, amber-gold fill (#E8A040),
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms
+```
+
+---
+8. U3 - 体力心形图标 (icon_stamina.png)
+------------------------------------------------
+文件: assets/textures/ui/icon_stamina.png
+尺寸: 8×8 px
+
+AI提示词:
+```
+pixel art tiny icon, crudely drawn MS Paint style,
+8x8 canvas, 1px black outlines,
+small heart shape or lightning bolt,
+bright green fill (#5A8A3A),
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms
+```
+
+---
+9. U4 - 关闭X图标 (icon_close.png)
+------------------------------------------------
+文件: assets/textures/ui/icon_close.png
+尺寸: 8×8 px
+
+AI提示词:
+```
+pixel art tiny icon, crudely drawn MS Paint style,
+8x8 canvas, 1px black outlines,
+X/cross mark, 2px line width,
+muted brown (#908878),
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms
+```
+
+---
+10. U5 - 勾号图标 (icon_check.png)
+------------------------------------------------
+文件: assets/textures/ui/icon_check.png
+尺寸: 8×8 px
+
+AI提示词:
+```
+pixel art tiny icon, crudely drawn MS Paint style,
+8x8 canvas, 1px black outlines,
+checkmark, 2px line width,
+success green (#5A8A3A),
+limited color palette, flat colors,
+transparent background, no anti-aliasing,
+simple identifiable forms
+```
+
+---
+通用Negative Prompt (所有图标):
+------------------------------------
+```
+3D render, realistic photo, smooth gradients,
+anime style, manga style, photorealistic,
+text, watermark, signature,
+jpeg artifacts, distorted, deformed,
+blurry, low quality, too detailed,
+complex details, shading, gradient
+```
+
+---
+生成建议:
+---------
+1. 图标尺寸极小(8×8或16×16)，AI生成难度高
+2. 建议方案:
+   - 方案A: 使用AI生成高分辨率版本(64×64或128×128)，然后手动缩小到目标尺寸
+   - 方案B: 直接使用Aseprite手动绘制(更快更精确)
+   - 方案C: 使用专门的像素艺术AI工具(Pixel Art AI Generator)
+3. 手动调整重点:
+   - 确保1px黑色轮廓清晰可见
+   - 颜色严格限制在24色板内
+   - 形状简单可识别
+   - 透明背景处理干净
