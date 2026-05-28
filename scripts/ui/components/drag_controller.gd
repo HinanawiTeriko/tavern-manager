@@ -13,8 +13,6 @@ signal animation_finished(key: String, dest: Vector2, end_type: String)  # end_t
 # —— 可调物理参数 ——
 const FOLLOW_WEIGHT: float = 0.15     # lerp 权重（越大越跟手）
 const MAX_LAG: float = 15.0           # 最大落后 px
-const WOBBLE_AMP: float = 8.0         # 抓起摇晃 px
-const WOBBLE_TIME: float = 0.3        # 摇晃总时长秒
 const DROP_TIME: float = 0.12         # 下落时长秒
 const BOUNCE_AMP: float = 10.0        # 弹跳过冲 px
 const BOUNCE_TIME: float = 0.15       # 弹跳回弹秒
@@ -24,7 +22,6 @@ const PANEL_SIZE: float = 64.0
 
 # —— 内部状态 ——
 var _active: bool = false
-var _in_wobble: bool = false   # 摇晃期间不响应 lerp
 var _item_key: String = ""
 var _drag_offset: Vector2      # 鼠标相对物品中心的偏移
 var _virtual_pos: Vector2      # lerp 平滑位置
@@ -84,7 +81,6 @@ func get_visual_pos() -> Vector2:
 
 func start_drag(key: String, start_pos: Vector2, col: Color, off: Vector2 = Vector2.ZERO) -> void:
 	_active = true
-	_in_wobble = true
 	_item_key = key
 	_drag_offset = off if off != Vector2.ZERO else Vector2(PANEL_SIZE * 0.5, PANEL_SIZE * 0.5)
 	_target_pos = start_pos
@@ -94,16 +90,8 @@ func start_drag(key: String, start_pos: Vector2, col: Color, off: Vector2 = Vect
 	_panel.visible = true
 	_panel.position = start_pos - _drag_offset
 
-	# 抓起摇晃：左右摆动 → 回正
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
-	_tween = create_tween()
-	var base_x: float = _panel.position.x
-	var d: float = WOBBLE_TIME * 0.33
-	_tween.tween_property(_panel, "position:x", base_x + WOBBLE_AMP, d)
-	_tween.tween_property(_panel, "position:x", base_x - WOBBLE_AMP, d)
-	_tween.tween_property(_panel, "position:x", base_x, d)
-	_tween.tween_callback(func(): _in_wobble = false)
 
 
 func update_target(event: InputEventMouseMotion) -> void:
@@ -121,7 +109,7 @@ func update_target_global(pos: Vector2) -> void:
 
 
 func process_step(delta: float) -> void:
-	if not _active or _in_wobble:
+	if not _active:
 		return
 
 	# lerp 惯性跟随
@@ -141,7 +129,6 @@ func end_drag_to(target_pos: Vector2) -> void:
 	if not _active:
 		return
 	_active = false
-	_in_wobble = false
 	_end_dest = target_pos
 	_end_type = "placed"
 
@@ -162,7 +149,6 @@ func end_drag_return(origin_pos: Vector2) -> void:
 	if not _active:
 		return
 	_active = false
-	_in_wobble = false
 	_end_dest = origin_pos
 	_end_type = "returned"
 
@@ -190,7 +176,6 @@ func cancel() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	_active = false
-	_in_wobble = false
 	_panel.visible = false
 	_item_key = ""
 
