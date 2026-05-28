@@ -37,6 +37,7 @@ default_color = Color(1, 0.3, 0.3, 0.7)
 
 [node name="GroundShape" type="CollisionShape2D" parent="World/Walls"]
 shape = SubResource("seg_ground")
+one_way_collision = true
 
 [node name="LeftWallShape" type="CollisionShape2D" parent="World/Walls"]
 shape = SubResource("seg_left")

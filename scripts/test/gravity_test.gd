@@ -6,7 +6,6 @@ extends Node2D
 
 # —— 常量 ——
 const DESK_RECT := Rect2(80, 60, 1120, 396)
-const HOTBAR_SPAWN_Y: float = 250.0    # 从快捷栏拖出时物品诞生 y（桌面顶部、地面碰撞器上方）
 const SLOT_COLORS: Array[Color] = [
 	Color(0.862745, 0.078431, 0.235294, 1),  # CRIMSON
 	Color(1, 0.843137, 0, 1),                # GOLD
@@ -51,11 +50,10 @@ func _try_pickup(pos: Vector2) -> void:
 		_drag_ctrl.start_drag(hit_body, pos)
 		return
 
-	# 2. 命中快捷栏槽位？→ 在桌面顶部生成新物品（避开地面碰撞器），再用鼠标位置作为钉子点
+	# 2. 命中快捷栏槽位？→ 在鼠标位置生成新物品再钉住（ground 是单向碰撞，物品会自然穿过地面进入桌面）
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos):
-			var spawn_pos := Vector2(pos.x, HOTBAR_SPAWN_Y)
-			var body := _spawn_desk_item_at(spawn_pos, SLOT_COLORS[i])
+			var body := _spawn_desk_item_at(pos, SLOT_COLORS[i])
 			_drag_ctrl.start_drag(body, pos)
 			return
 
