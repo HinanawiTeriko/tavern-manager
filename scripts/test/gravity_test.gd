@@ -1,8 +1,8 @@
 class_name GravityTest
 extends Node2D
 
-## RigidBody2D 物理沙盘。
-## 拖拽流程：DragController 显示幽灵面板；物理体只在物品停在桌面上时存在。
+## RigidBody2D 物理沙盘。拖拽采用 DragController 的钉子模式 —
+## 拖拽中物品全程是物理体，能与其他物品双向碰撞。
 
 # —— 常量 ——
 const DESK_RECT := Rect2(80, 60, 1120, 396)
@@ -36,32 +36,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and not _drag_ctrl.is_dragging():
 			_try_pickup(pos)
 		elif not event.pressed and _drag_ctrl.is_dragging():
-			_on_release(pos)
+			_drag_ctrl.end_drag()
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
-
-
-func _process(delta: float) -> void:
-	if _drag_ctrl.is_dragging():
-		_drag_ctrl.process_step(delta)
 
 
 # —— 拾取 ——
 
 func _try_pickup(pos: Vector2) -> void:
-	# 1. 命中桌面上已有物品？
+	# 1. 命中桌面上已有物品？→ 直接钉住（不销毁）
 	var hit_body: DeskItem = _hit_test_item(pos)
 	if hit_body != null:
-		var visual := hit_body.get_node("Visual") as Polygon2D
-		var color: Color = visual.color
-		hit_body.queue_free()
-		_drag_ctrl.start_drag("desk", pos, color)
+		_drag_ctrl.start_drag(hit_body, pos)
 		return
 
-	# 2. 命中快捷栏槽位？
+	# 2. 命中快捷栏槽位？→ 在鼠标位置生成新物品再钉住
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos):
-			_drag_ctrl.start_drag("bar", pos, SLOT_COLORS[i])
+			var body := _spawn_desk_item_at(pos, SLOT_COLORS[i])
+			_drag_ctrl.start_drag(body, pos)
 			return
 
 
@@ -78,33 +71,9 @@ func _hit_test_item(pos: Vector2) -> DeskItem:
 	return null
 
 
-# —— 释放 ——
-
-func _on_release(pos: Vector2) -> void:
-	var spawn_pos: Vector2 = _drag_ctrl.get_visual_pos()
-	if DESK_RECT.has_point(pos):
-		_spawn_desk_item(_drag_ctrl.get_panel_color(), spawn_pos)
-		_drag_ctrl.cancel()
-	else:
-		var slot_origin: Vector2 = _nearest_slot_origin(pos)
-		_drag_ctrl.end_drag_return(slot_origin)
-
-
-func _spawn_desk_item(color: Color, pos: Vector2) -> void:
-	# 防止 spawn 在墙体里：x 钳到墙内 30 px 安全区
-	var clamped_x: float = clampf(pos.x, DESK_RECT.position.x + 30.0, DESK_RECT.end.x - 30.0)
+func _spawn_desk_item_at(pos: Vector2, color: Color) -> DeskItem:
 	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
 	_items_node.add_child(item)
 	item.set_color(color)
-	item.global_position = Vector2(clamped_x, pos.y)
-
-
-func _nearest_slot_origin(pos: Vector2) -> Vector2:
-	var best: Vector2 = _slot_rects[0].position
-	var best_d: float = INF
-	for r in _slot_rects:
-		var d: float = r.get_center().distance_squared_to(pos)
-		if d < best_d:
-			best_d = d
-			best = r.position
-	return best
+	item.global_position = pos
+	return item
