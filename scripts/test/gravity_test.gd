@@ -1,305 +1,110 @@
 class_name GravityTest
-extends Control
+extends Node2D
 
-## 桌面重力测试：地面线、下落、堆叠、滑落
+## RigidBody2D 物理沙盘。
+## 拖拽流程：DragController 显示幽灵面板；物理体只在物品停在桌面上时存在。
 
-# —— 物品数据结构 ——
-class DeskItem:
-	var color: Color
-	var pos: Vector2
-	var vel: Vector2
-	var is_static: bool
+# —— 常量 ——
+const DESK_RECT := Rect2(80, 60, 1120, 396)
+const SLOT_COLORS: Array[Color] = [
+	Color(0.862745, 0.078431, 0.235294, 1),  # CRIMSON
+	Color(1, 0.843137, 0, 1),                # GOLD
+	Color(0.18, 0.55, 0.34, 1),              # 海绿
+	Color(0.254902, 0.411765, 0.882353, 1),  # ROYAL_BLUE
+	Color(0.6, 0.196078, 0.8, 1),            # DARK_ORCHID
+]
+const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 
+# —— 子节点引用 ——
+@onready var _drag_ctrl: DragController = $DragCtrl
+@onready var _items_node: Node2D = $World/Items
+@onready var _hotbar_root: Control = $HotbarUI/HotbarRoot
 
-# —— 物理参数 ——
-const GRAVITY: float = 800.0
-const ITEM_SIZE: float = 60.0
-const BOUNCE_DAMP: float = 0.3
-const SLIDE_SPEED: float = 250.0
-const SETTLE_THRESHOLD: float = 2.0
-const GROUND_Y_RATIO: float = 0.65
-
-# —— UI ——
-var _drag_ctrl: DragController
-var _desktop_rect: Rect2
-var _ground_y: float
-var _items: Array[DeskItem] = []
-
-const BAR_COUNT: int = 5
-const BAR_W: float = 70.0
-const BAR_H: float = 70.0
-const BAR_GAP: float = 12.0
-var _bar_slots: Array[Rect2] = []
-var _bar_colors: Array[Color] = []
+# —— 运行时状态 ——
+var _slot_rects: Array[Rect2] = []
 
 
 func _ready() -> void:
-	_drag_ctrl = DragController.new()
-	_drag_ctrl.name = "DragCtrl"
-	add_child(_drag_ctrl)
-	_drag_ctrl.animation_finished.connect(_on_anim_done)
-
-	_desktop_rect = Rect2(80, 60, size.x - 160, size.y * 0.55)
-	_ground_y = _desktop_rect.position.y + _desktop_rect.size.y * GROUND_Y_RATIO
-
-	var colors: Array[Color] = [
-		Color.CRIMSON, Color.GOLD, Color(0.18, 0.55, 0.34),
-		Color.ROYAL_BLUE, Color.DARK_ORCHID,
-	]
-	var total_w: float = BAR_COUNT * BAR_W + (BAR_COUNT - 1) * BAR_GAP
-	var sx: float = (size.x - total_w) * 0.5
-	var sy: float = size.y - BAR_H - 30.0
-	for i in range(BAR_COUNT):
-		_bar_slots.append(Rect2(sx + i * (BAR_W + BAR_GAP), sy, BAR_W, BAR_H))
-		_bar_colors.append(colors[i])
+	for i in range(SLOT_COLORS.size()):
+		var slot := _hotbar_root.get_node("Slot%d" % i) as ColorRect
+		_slot_rects.append(Rect2(slot.global_position, slot.size))
 
 
-func _draw() -> void:
-	if not is_inside_tree():
-		return
-
-	# 桌面背景
-	draw_rect(_desktop_rect, Color(0.12, 0.10, 0.07))
-	draw_rect(_desktop_rect, Color(0.35, 0.30, 0.20), false, 2.0)
-
-	# 地面线
-	var gx1: float = _desktop_rect.position.x
-	var gx2: float = gx1 + _desktop_rect.size.x
-	var dash: float = 10.0; var gap: float = 6.0
-	var x: float = gx1
-	while x < gx2:
-		draw_line(Vector2(x, _ground_y), Vector2(min(x + dash, gx2), _ground_y), Color(1, 0.3, 0.3, 0.7), 2.0)
-		x += dash + gap
-
-	var font = ThemeDB.fallback_font
-	if font:
-		draw_string(font, Vector2(_desktop_rect.position.x + 8, _ground_y - 14),
-			"--- 地面线 ---", HORIZONTAL_ALIGNMENT_LEFT, 200, 12, Color(1, 0.3, 0.3, 0.6))
-
-	# 桌面物品（本地坐标）
-	for item in _items:
-		var r := Rect2(item.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-		draw_rect(r, item.color)
-		draw_rect(r, Color.WHITE if not item.is_static else Color(item.color, 0.5), false, 1.5)
-
-	# 快捷栏
-	for i in range(BAR_COUNT):
-		var r := _bar_slots[i]
-		draw_rect(r, _bar_colors[i])
-		draw_rect(r, Color.WHITE, false, 1.5)
-		if font:
-			draw_string(font, r.position + Vector2(4, 14), str(i + 1),
-				HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 8, 13)
-
-	# 提示
-	if font:
-		draw_string(font, Vector2(10, 10),
-			"从底部拖到红线上方松手 → 下落 | 堆叠 | 重心悬空→滑落",
-			HORIZONTAL_ALIGNMENT_LEFT, size.x - 20, 14, Color(0.65, 0.55, 0.45))
-
-
-# —— 输入处理 ——
-# button 事件走 _gui_input：press/release 用本地坐标，匹配 _draw()
-# motion 事件走 _input：更可靠，不依赖 GUI 路由
-
-func _gui_input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		print("[GUI] btn pressed=%s drag=%s pos=%s" % [event.pressed, _drag_ctrl.is_dragging(), event.position])
-		if event.pressed:
-			if not _drag_ctrl.is_dragging():
-				_try_pickup(event.position)
-		else:
-			if _drag_ctrl.is_dragging():
-				_on_release(event.position)
-
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and _drag_ctrl.is_dragging():
-		_drag_ctrl.update_target(event)
+		var pos: Vector2 = event.global_position
+		if event.pressed and not _drag_ctrl.is_dragging():
+			_try_pickup(pos)
+		elif not event.pressed and _drag_ctrl.is_dragging():
+			_on_release(pos)
+	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
+		_drag_ctrl.update_target_global(event.global_position)
 
 
 func _process(delta: float) -> void:
 	if _drag_ctrl.is_dragging():
 		_drag_ctrl.process_step(delta)
-	_simulate_physics(delta)
-	queue_redraw()
 
 
-# —— 拾取 / 释放 ——
+# —— 拾取 ——
 
-func _try_pickup(local_pos: Vector2) -> void:
-	# 桌面物品（从顶层向下遍历）
-	for i in range(_items.size() - 1, -1, -1):
-		var it := _items[i]
-		var item_rect := Rect2(it.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-		if it.is_static and item_rect.has_point(local_pos):
-			print("[PICK] hit item %d at local %s (rect %s)" % [i, local_pos, item_rect])
-			_drag_ctrl.start_drag("desk", get_global_mouse_position(), it.color,
-				Vector2(ITEM_SIZE * 0.5, ITEM_SIZE * 0.5))
-			_items.remove_at(i)
-			return
+func _try_pickup(pos: Vector2) -> void:
+	# 1. 命中桌面上已有物品？
+	var hit_body: DeskItem = _hit_test_item(pos)
+	if hit_body != null:
+		var visual := hit_body.get_node("Visual") as Polygon2D
+		var color: Color = visual.color
+		hit_body.queue_free()
+		_drag_ctrl.start_drag("desk", pos, color)
+		return
 
-	# 没命中——打印前两个物品对比
-	if _items.size() > 0 and _items[0].is_static:
-		print("[MISS] local=%s gl_pos=%s cnt=%d item0_rect=%s" % [
-			local_pos, global_position, _items.size(),
-			Rect2(_items[0].pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-		])
-
-	# 快捷栏
-	for i in range(BAR_COUNT):
-		if _bar_slots[i].has_point(local_pos):
-			_drag_ctrl.start_drag("bar", get_global_mouse_position(), _bar_colors[i],
-				Vector2(BAR_W * 0.5, BAR_H * 0.5))
+	# 2. 命中快捷栏槽位？
+	for i in range(_slot_rects.size()):
+		if _slot_rects[i].has_point(pos):
+			_drag_ctrl.start_drag("bar", pos, SLOT_COLORS[i])
 			return
 
 
-func _on_release(local_pos: Vector2) -> void:
-	if _desktop_rect.has_point(local_pos):
-		# DragController 的视觉位置是 viewport 坐标，转本地
-		var vp_center := _drag_ctrl.get_visual_pos()
-		var local_center := vp_center - global_position
-		var it := DeskItem.new()
-		it.color = _drag_ctrl.get_panel_color()
-		it.pos = local_center - Vector2(ITEM_SIZE * 0.5, ITEM_SIZE * 0.5)
-		it.vel = Vector2.ZERO
-		it.is_static = false
-		_items.append(it)
+func _hit_test_item(pos: Vector2) -> DeskItem:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 1)
+	if hits.size() > 0:
+		var collider = hits[0].get("collider")
+		if collider is DeskItem:
+			return collider
+	return null
+
+
+# —— 释放 ——
+
+func _on_release(pos: Vector2) -> void:
+	var spawn_pos: Vector2 = _drag_ctrl.get_visual_pos()
+	if DESK_RECT.has_point(pos):
+		_spawn_desk_item(_drag_ctrl.get_panel_color(), spawn_pos)
 		_drag_ctrl.cancel()
-		print("[DROP] vp_center=%s gl_pos=%s stored=%s local_mouse=%s" % [vp_center, global_position, it.pos, local_pos])
 	else:
-		# 回到快捷栏（本地坐标 → viewport）
-		var vp_origin := _find_nearest_bar(local_pos) + global_position
-		_drag_ctrl.end_drag_return(vp_origin)
+		var slot_origin: Vector2 = _nearest_slot_origin(pos)
+		_drag_ctrl.end_drag_return(slot_origin)
 
 
-func _on_anim_done(_key: String, _dest: Vector2, _type: String) -> void:
-	pass
+func _spawn_desk_item(color: Color, pos: Vector2) -> void:
+	# 防止 spawn 在墙体里：x 钳到墙内 30 px 安全区
+	var clamped_x: float = clampf(pos.x, DESK_RECT.position.x + 30.0, DESK_RECT.end.x - 30.0)
+	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
+	_items_node.add_child(item)
+	item.set_color(color)
+	item.global_position = Vector2(clamped_x, pos.y)
 
 
-# —— 重力物理 ——
-
-func _simulate_physics(delta: float) -> void:
-	for item in _items:
-		if item.is_static:
-			if not _has_support(item):
-				item.is_static = false
-			else:
-				continue
-
-		item.vel.y += GRAVITY * delta
-		item.pos += item.vel * delta
-
-		# 地面碰撞
-		if item.pos.y + ITEM_SIZE >= _ground_y:
-			item.pos.y = _ground_y - ITEM_SIZE
-			item.vel.y = -item.vel.y * BOUNCE_DAMP
-			if abs(item.vel.y) < SETTLE_THRESHOLD:
-				item.vel.y = 0
-			item.vel.x *= 0.9
-			_snap_to_static(item)
-
-		_resolve_item_collisions(item)
-
-
-func _resolve_item_collisions(item: DeskItem) -> void:
-	var r := Rect2(item.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-	# AABB 相交即视为支撑候选，取最高的顶面（y 最小）作为 snap 目标
-	var support_y: float = INF
-
-	for other in _items:
-		if other == item or not other.is_static:
-			continue
-		var o_r := Rect2(other.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-		if not r.intersects(o_r, true):
-			continue
-		if item.vel.y < 0:
-			continue
-		if other.pos.y < support_y:
-			support_y = other.pos.y
-
-	if support_y < INF:
-		item.pos.y = support_y - ITEM_SIZE
-		item.vel.y = -item.vel.y * BOUNCE_DAMP
-		if abs(item.vel.y) < SETTLE_THRESHOLD:
-			item.vel.y = 0
-		_snap_to_static(item)
-
-	if item.is_static and abs(item.vel.x) < SETTLE_THRESHOLD:
-		_try_slide(item)
-
-
-func _has_support(item: DeskItem) -> bool:
-	if item.pos.y + ITEM_SIZE >= _ground_y - 1:
-		return true
-	var foot := Rect2(item.pos.x + 4, item.pos.y + ITEM_SIZE - 2, ITEM_SIZE - 8, 4)
-	for other in _items:
-		if other == item or not other.is_static:
-			continue
-		if foot.intersects(Rect2(other.pos, Vector2(ITEM_SIZE, ITEM_SIZE)), true):
-			return true
-	return false
-
-
-func _try_slide(item: DeskItem) -> void:
-	# 在地面上的物品不参与滑落判定（地面是无限平面，无悬空概念）
-	if item.pos.y + ITEM_SIZE >= _ground_y - 0.5:
-		return
-
-	# 无支撑 → 不应是 static，复位为下落
-	if not _has_support(item):
-		item.is_static = false
-		return
-
-	# 在我下方且 top 接触我 bottom 的物体，取它们的 x 范围作为支撑跨度
-	var cx: float = item.pos.x + ITEM_SIZE * 0.5
-	var support_left: float = INF
-	var support_right: float = -INF
-	var my_bottom: float = item.pos.y + ITEM_SIZE
-
-	for other in _items:
-		if other == item or not other.is_static:
-			continue
-		if abs(my_bottom - other.pos.y) > 0.5:
-			continue
-		var left: float = max(item.pos.x, other.pos.x)
-		var right: float = min(item.pos.x + ITEM_SIZE, other.pos.x + ITEM_SIZE)
-		if right <= left:
-			continue
-		if left < support_left:
-			support_left = left
-		if right > support_right:
-			support_right = right
-
-	# 有 _has_support 但找不到接触 top（防御性，正常不会到这里）
-	if support_left == INF:
-		return
-
-	# 重心在支撑范围中部 → 保持静止
-	if cx >= support_left + 8 and cx <= support_right - 8:
-		return
-
-	# 重心悬空 → 向外滑落
-	if cx < support_left + 8:
-		item.vel.x = -SLIDE_SPEED
-		item.is_static = false
-	elif cx > support_right - 8:
-		item.vel.x = SLIDE_SPEED
-		item.is_static = false
-
-
-func _snap_to_static(item: DeskItem) -> void:
-	if abs(item.vel.x) < SETTLE_THRESHOLD and abs(item.vel.y) < SETTLE_THRESHOLD:
-		item.vel = Vector2.ZERO
-		item.is_static = true
-
-
-func _find_nearest_bar(local_pos: Vector2) -> Vector2:
-	var best: Rect2 = _bar_slots[0]
+func _nearest_slot_origin(pos: Vector2) -> Vector2:
+	var best: Vector2 = _slot_rects[0].position
 	var best_d: float = INF
-	for r in _bar_slots:
-		var d: float = r.get_center().distance_squared_to(local_pos)
+	for r in _slot_rects:
+		var d: float = r.get_center().distance_squared_to(pos)
 		if d < best_d:
 			best_d = d
-			best = r
-	return best.position
+			best = r.position
+	return best
