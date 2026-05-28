@@ -1,0 +1,232 @@
+P1优先级 - UI组件类素材AI提示词
+============================================
+
+UI组件规格:
+- 各种尺寸，详见各项说明
+- 格式: PNG-24, 透明背景(背景类除外)
+- 描边: 1px纯黑轮廓 #000000 (可交互元素)
+- 光影: 纯色填充，无渐变
+- 9-patch: 需要标记可拉伸区域
+
+1. 羊皮纸9-patch面板 (panel_parchment_9patch.png)
+------------------------------------------------
+文件: assets/textures/ui/panel_parchment_9patch.png
+尺寸: 32×32 px (9-patch原片)
+
+AI提示词:
+```
+pixel art UI element, crudely drawn MS Paint style,
+32x32 canvas, 9-patch panel,
+parchment texture look, warm pale brown base,
+subtle fiber/paper grain texture (1px noise),
+edges slightly darkened/burnt,
+four sides: 2px dark brown border (#554334),
+four corners have small darkened areas,
+center fill area is plain parchment,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+designed for NinePatchRect stretching
+```
+
+---
+2. 对话气泡9-patch (bubble_order_9patch.png)
+------------------------------------------------
+文件: assets/textures/ui/bubble_order_9patch.png
+尺寸: 32×32 px (9-patch原片)
+
+AI提示词:
+```
+pixel art UI element, crudely drawn MS Paint style,
+32x32 canvas, 9-patch speech bubble,
+light parchment-colored bubble interior (#393431),
+2px border (#554334),
+pointed tail on the left side (for pointing at customer),
+slightly lighter than the panel for readability,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+designed for NinePatchRect stretching
+```
+
+---
+3. 标题招牌字 (title_sign.png)
+------------------------------------------------
+文件: assets/textures/ui/title_sign.png
+尺寸: 512×128 px
+
+AI提示词:
+```
+pixel art title sign, crudely drawn MS Paint style,
+512x128 canvas, pixel handwriting style,
+Chinese characters "地下城酒馆",
+amber-gold fill (#E8A040),
+2px black outline (#000000),
+drop shadow: offset 3px downward, dark color (#0d0b0a),
+transparent background, clean pixel edges,
+limited color palette, flat colors,
+no anti-aliasing, no gradient
+```
+
+注意: 中文字符对AI来说很难准确生成，建议:
+- 方案A: 使用像素字体工具生成文字，然后添加装饰元素
+- 方案B: 在Aseprite中手动绘制像素文字
+- 方案C: 使用AI生成装饰边框，手动添加文字
+
+---
+4. 标题装饰元素 - 左侧烛台 (deco_candle_left.png)
+------------------------------------------------
+文件: assets/textures/ui/deco_candle_left.png
+尺寸: 64×64 px
+
+AI提示词:
+```
+pixel art decoration, crudely drawn MS Paint style,
+64x64 canvas, metal candle holder base,
+half-melted candle, small flame (#ff9500),
+2-3 frame animation potential,
+dark outline, transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing, simple identifiable forms
+```
+
+---
+5. 标题装饰元素 - 右侧烛台 (deco_candle_right.png)
+------------------------------------------------
+文件: assets/textures/ui/deco_candle_right.png
+尺寸: 64×64 px
+
+AI提示词:
+```
+pixel art decoration, crudely drawn MS Paint style,
+64x64 canvas, same as left candle but mirrored,
+or slightly different wax shape,
+metal candle holder base, half-melted candle,
+small flame (#ff9500),
+dark outline, transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing, simple identifiable forms
+```
+
+---
+6. 标题装饰元素 - 啤酒杯 (deco_mug.png)
+------------------------------------------------
+文件: assets/textures/ui/deco_mug.png
+尺寸: 64×64 px
+
+AI提示词:
+```
+pixel art decoration, crudely drawn MS Paint style,
+64x64 canvas, wooden beer mug on bartop,
+foam overflowing, warm tones,
+dark outline, transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing, simple identifiable forms
+```
+
+---
+7. 标题装饰元素 - 酒馆徽章 (deco_emblem.png)
+------------------------------------------------
+文件: assets/textures/ui/deco_emblem.png
+尺寸: 128×128 px
+
+AI提示词:
+```
+pixel art emblem, crudely drawn MS Paint style,
+128x128 canvas, tavern crest,
+shield shape + wheat stalks + drinking mug,
+pixel art style, amber (#E8A040) on dark (#161311) shield,
+transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing, detailed but clean pixel work
+```
+
+---
+8. 体力分段槽 (bar_stamina_segment.png)
+------------------------------------------------
+文件: assets/textures/ui/bar_stamina_segment.png
+尺寸: 48×32 px (单段)
+
+AI提示词:
+```
+pixel art UI element, crudely drawn MS Paint style,
+48x32 canvas, stamina segment,
+amber-colored (#ffbd7f) filled segment,
+heart or lightning bolt shape,
+empty version: same shape but dark outline only,
+hollow inside (#1f1b19),
+designed to be placed 5 segments side by side,
+1px dark outline (#000000),
+transparent background, no anti-aliasing,
+limited color palette, flat colors
+```
+
+---
+9. 装饰分隔线 (divider_rope.png)
+------------------------------------------------
+文件: assets/textures/ui/divider_rope.png
+尺寸: 1000×4 px
+
+AI提示词:
+```
+pixel art UI divider, crudely drawn MS Paint style,
+1000x4 canvas, horizontal thin line,
+mimicking rope/chain texture,
+color (#554334),
+small spiral/knot decorations at both ends,
+transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing, simple pixel pattern
+```
+
+注意: 1000×4px是极细的长条，AI生成可能困难。
+建议直接在Aseprite中手动绘制像素图案。
+
+---
+10. 耐心倒计时填充条 (bar_patience_fill.png) - P0已有，P1可选优化
+------------------------------------------------
+文件: assets/textures/ui/bar_patience_fill.png
+尺寸: 16×20 px (9-patch可拉伸)
+
+AI提示词:
+```
+pixel art UI fill bar, crudely drawn MS Paint style,
+16x20 canvas, horizontal gradient fill,
+left side green (#5A8A3A) → middle amber (#E8A040) → right side red (#B8402C),
+used as fill for a ProgressBar,
+1px dark border around fill area,
+clean pixel edges, transparent background,
+limited color palette, flat colors,
+1px black outlines (#000000),
+no anti-aliasing
+```
+
+---
+通用Negative Prompt (所有UI组件):
+------------------------------------
+```
+3D render, realistic photo, smooth gradients,
+anime style, manga style, photorealistic,
+text, watermark, signature,
+jpeg artifacts, distorted, deformed,
+blurry, low quality,
+modern UI, glossy, gradient,
+complex details, soft edges
+```
+
+---
+生成建议:
+---------
+1. UI组件通常需要精确的尺寸和布局，AI生成后需要大量手动调整
+2. 9-patch组件需要手动标记可拉伸区域(在Aseprite或Godot中)
+3. 文字类素材(如title_sign.png)建议手动绘制或使用像素字体工具
+4. 简单的装饰图案(如divider_rope.png)直接在Aseprite中绘制更高效
+5. 对于复杂的UI组件，可以:
+   - 使用AI生成纹理和装饰元素
+   - 手动组装成完整的UI组件
+   - 确保尺寸精确符合技术规范
