@@ -1,7 +1,23 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/experimental_tavern_view.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/ui/desktop_workspace.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2"]
+
+[sub_resource type="SegmentShape2D" id="seg_top"]
+a = Vector2(0, 10)
+b = Vector2(1280, 10)
+
+[sub_resource type="SegmentShape2D" id="seg_left"]
+a = Vector2(60, 0)
+b = Vector2(60, 710)
+
+[sub_resource type="SegmentShape2D" id="seg_right"]
+a = Vector2(1220, 0)
+b = Vector2(1220, 710)
+
+[sub_resource type="SegmentShape2D" id="seg_ground"]
+a = Vector2(60, 600)
+b = Vector2(1220, 600)
 
 [node name="ExperimentalTavern" type="Node2D"]
 script = ExtResource("1")
@@ -95,52 +111,29 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="CustomerArea" type="Control" parent="."]
-layout_mode = 0
-offset_left = 440.0
-offset_top = 60.0
-offset_right = 840.0
-offset_bottom = 400.0
+[node name="World" type="Node2D" parent="."]
 
-[node name="CustomerSprite" type="ColorRect" parent="CustomerArea"]
-layout_mode = 0
-offset_left = 60.0
-offset_top = 0.0
-offset_right = 340.0
-offset_bottom = 340.0
-color = Color(0.30, 0.25, 0.35, 1)
-mouse_filter = 2
+[node name="Walls" type="StaticBody2D" parent="World"]
 
-[node name="SpriteLabel" type="Label" parent="CustomerArea/CustomerSprite"]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 140.0
-offset_bottom = 180.0
-text = "【客人立绘】"
-horizontal_alignment = 1
-vertical_alignment = 1
-mouse_filter = 2
+[node name="TopShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_top")
 
-[node name="CustomerName" type="Label" parent="CustomerArea"]
-layout_mode = 0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 400.0
-offset_bottom = 28.0
-text = "等待客人中……"
-horizontal_alignment = 1
-mouse_filter = 2
+[node name="LeftWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_left")
 
-[node name="OrderLabel" type="Label" parent="CustomerArea"]
-layout_mode = 0
-offset_left = 0.0
-offset_top = 345.0
-offset_right = 400.0
-offset_bottom = 370.0
-text = ""
-horizontal_alignment = 1
-mouse_filter = 2
+[node name="RightWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_right")
+
+[node name="GroundShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_ground")
+one_way_collision = true
+
+[node name="Items" type="Node2D" parent="World"]
+
+[node name="GroundLine" type="Line2D" parent="World"]
+points = PackedVector2Array(60, 600, 1220, 600)
+width = 2.0
+default_color = Color(1, 0.35, 0.2, 0.6)
 
 [node name="DesktopArea" type="Control" parent="."]
 z_index = 10
@@ -158,14 +151,6 @@ offset_right = 1240.0
 offset_bottom = 280.0
 color = Color(0.35, 0.25, 0.15, 1)
 mouse_filter = 2
-
-[node name="DesktopWorkspace" type="Control" parent="DesktopArea"]
-script = ExtResource("2")
-layout_mode = 0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = 1236.0
-offset_bottom = 230.0
 
 [node name="DesktopLabel" type="Label" parent="DesktopArea"]
 layout_mode = 0
@@ -392,3 +377,6 @@ offset_top = 4.0
 offset_right = 562.0
 offset_bottom = 32.0
 text = "第1/30天"
+
+[node name="DragCtrl" type="Node" parent="."]
+script = ExtResource("2")
