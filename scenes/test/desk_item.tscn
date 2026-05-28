@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/test/desk_item.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_shape"]
+size = Vector2(60, 60)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_mat"]
+bounce = 0.25
+friction = 0.6
+
+[node name="DeskItem" type="RigidBody2D"]
+script = ExtResource("1_script")
+mass = 1.0
+gravity_scale = 1.0
+linear_damp = 0.5
+angular_damp = 4.0
+lock_rotation = false
+continuous_cd = 1
+physics_material_override = SubResource("PhysicsMaterial_mat")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_shape")
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-30, -30, 30, -30, 30, 30, -30, 30)
+color = Color(0.8, 0.8, 0.8, 1)
