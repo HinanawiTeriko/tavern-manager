@@ -245,32 +245,45 @@ func _try_slide(item: DeskItem) -> void:
 	# 在地面上的物品不参与滑落判定（地面是无限平面，无悬空概念）
 	if item.pos.y + ITEM_SIZE >= _ground_y - 0.5:
 		return
-	var r := Rect2(item.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
+
+	# 无支撑 → 不应是 static，复位为下落
+	if not _has_support(item):
+		item.is_static = false
+		return
+
+	# 在我下方且 top 接触我 bottom 的物体，取它们的 x 范围作为支撑跨度
 	var cx: float = item.pos.x + ITEM_SIZE * 0.5
-	var best_area: float = 0.0
-	var best_left: float = 0.0
-	var best_right: float = 0.0
+	var support_left: float = INF
+	var support_right: float = -INF
+	var my_bottom: float = item.pos.y + ITEM_SIZE
 
 	for other in _items:
 		if other == item or not other.is_static:
 			continue
-		var o_r := Rect2(other.pos, Vector2(ITEM_SIZE, ITEM_SIZE))
-		var clip := r.intersection(o_r)
-		if clip.size.y > 2:
-			var area: float = clip.size.x * clip.size.y
-			if area > best_area:
-				best_area = area
-				best_left = clip.position.x
-				best_right = clip.position.x + clip.size.x
+		if abs(my_bottom - other.pos.y) > 0.5:
+			continue
+		var left: float = max(item.pos.x, other.pos.x)
+		var right: float = min(item.pos.x + ITEM_SIZE, other.pos.x + ITEM_SIZE)
+		if right <= left:
+			continue
+		if left < support_left:
+			support_left = left
+		if right > support_right:
+			support_right = right
 
-	if best_area < 8:
-		item.is_static = false
+	# 有 _has_support 但找不到接触 top（防御性，正常不会到这里）
+	if support_left == INF:
 		return
 
-	if cx < best_left + 8:
+	# 重心在支撑范围中部 → 保持静止
+	if cx >= support_left + 8 and cx <= support_right - 8:
+		return
+
+	# 重心悬空 → 向外滑落
+	if cx < support_left + 8:
 		item.vel.x = -SLIDE_SPEED
 		item.is_static = false
-	elif cx > best_right - 8:
+	elif cx > support_right - 8:
 		item.vel.x = SLIDE_SPEED
 		item.is_static = false
 
