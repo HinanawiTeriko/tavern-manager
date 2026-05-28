@@ -12,7 +12,7 @@ signal drag_started(body: DeskItem)
 signal drag_ended(body: DeskItem)
 
 # —— 物理参数 ——
-const JOINT_SOFTNESS: float = 0.0    # 0 = 刚性钉子；调到 0.01~0.05 可减抖动
+const JOINT_SOFTNESS: float = 0.0    # 0 = 刚性钉子；增大会使约束更"软"/有弹性（不是减抖动 — 抖动调 angular_damp/linear_damp）
 
 # —— 内部状态 ——
 var _body: DeskItem = null
@@ -44,6 +44,10 @@ func start_drag(body: DeskItem, mouse_global_pos: Vector2) -> void:
 	_anchor.collision_layer = 0
 	_anchor.collision_mask = 0
 	_anchor.global_position = mouse_global_pos
+	var anchor_shape := CollisionShape2D.new()
+	anchor_shape.shape = RectangleShape2D.new()
+	anchor_shape.disabled = true
+	_anchor.add_child(anchor_shape)
 	body.get_parent().add_child(_anchor)
 
 	# 钉子关节：把锚点和 body 钉在一起，钉点在世界坐标的鼠标按下位置
@@ -86,10 +90,4 @@ func end_drag() -> void:
 # ================================================================
 
 func _exit_tree() -> void:
-	if _joint != null:
-		_joint.queue_free()
-		_joint = null
-	if _anchor != null:
-		_anchor.queue_free()
-		_anchor = null
-	_body = null
+	end_drag()
