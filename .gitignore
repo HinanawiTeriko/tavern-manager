@@ -27,6 +27,9 @@ export_presets.cfg
 .codebuddy/
 CODEBUDDY.md
 
+# Claude Code (AI-only, local)
+CLAUDE.md
+
 # VS Code (keep shared settings, ignore local)
 .vscode/
 !.vscode/settings.json
