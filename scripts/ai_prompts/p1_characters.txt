@@ -1,0 +1,137 @@
+P1优先级 - 角色类素材AI提示词
+===========================================
+
+角色规格:
+- 尺寸: 24×24 px (3x缩放到72×72)
+- 格式: PNG-24, 透明背景
+- 描边: 1px纯黑轮廓 #000000
+- 光影: 纯色填充，无渐变，最多2-3个色阶
+
+1. C11a - 战士客人 (guest_warrior.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_warrior.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, male warrior head,
+iron helmet visor, thick beard, rugged weathered face,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes,
+simple identifiable forms, 8-bit style
+```
+
+---
+2. C11b - 法师客人 (guest_mage.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_mage.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, male mage head,
+pointed wizard hat, long white beard,
+mysterious look, magical aura,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes
+```
+
+---
+3. C11c - 盗贼客人 (guest_rogue.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_rogue.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, rogue character head,
+hood pulled low, cloth mask covering lower face,
+cunning eyes visible, stealthy look,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes
+```
+
+---
+4. C11d - 弓箭手客人 (guest_archer.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_archer.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, archer character head,
+feathered cap/hat, pointed elf-like ears,
+sharp keen gaze, focused expression,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes
+```
+
+---
+5. C11e - 牧师客人 (guest_cleric.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_cleric.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, cleric character head,
+bald or short-cropped hair, holy symbol pendant,
+kind gentle face, healing aura,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes
+```
+
+---
+6. C11f - 野蛮人客人 (guest_barbarian.png)
+------------------------------------------------
+文件: assets/textures/characters/guest_barbarian.png
+
+AI提示词:
+```
+pixel art bust portrait, crudely drawn MS Paint style,
+24x24 canvas, barbarian character head,
+wild unkempt hair, war paint stripes on face,
+animal fur cloak visible on shoulders,
+fierce look, battle-scarred,
+limited color palette, flat colors,
+1px black outlines (#000000),
+transparent background, no anti-aliasing,
+neutral expression, chunky pixel shapes
+```
+
+---
+通用Negative Prompt (所有角色):
+------------------------------------
+```
+3D render, realistic photo, smooth gradients,
+anime style, manga style, photorealistic,
+modern clothing, bright colors,
+text, watermark, signature,
+jpeg artifacts, distorted, deformed,
+blurry, low quality, extra limbs
+```
+
+---
+生成建议:
+---------
+1. 每个角色生成10-15个变体（24×24像素艺术很难一次成功）
+2. 重点关注:
+   - 轮廓清晰度（1px黑线）
+   - 颜色限制在24色板内
+   - 面部表情辨识度
+3. 在Aseprite中手动调整:
+   - 应用24色板
+   - 统一轮廓线宽
+   - 纯色填充
+   - 透明背景处理
+4. 测试在Godot中的显示效果(72×72缩放)
