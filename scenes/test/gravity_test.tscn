@@ -1,15 +1,97 @@
-[gd_scene load_steps=3 format=3 uid="uid://dtg0x87qkbx4v"]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/test/gravity_test.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2_drag_ctrl"]
 
-[sub_resource type="RectangleShape2D" id="2_shape"]
-size = Vector2(1280, 720)
+[sub_resource type="SegmentShape2D" id="seg_ground"]
+a = Vector2(80, 318)
+b = Vector2(1200, 318)
 
-[node name="GravityTest" type="Control"]
-layout_mode = 3
-anchors_preset = 15
+[sub_resource type="SegmentShape2D" id="seg_left"]
+a = Vector2(80, 60)
+b = Vector2(80, 318)
+
+[sub_resource type="SegmentShape2D" id="seg_right"]
+a = Vector2(1200, 60)
+b = Vector2(1200, 318)
+
+[node name="GravityTest" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = 80.0
+offset_top = 60.0
+offset_right = 1200.0
+offset_bottom = 456.0
+color = Color(0.12, 0.1, 0.07, 1)
+mouse_filter = 2
+
+[node name="GroundLine" type="Line2D" parent="."]
+points = PackedVector2Array(80, 318, 1200, 318)
+width = 2.0
+default_color = Color(1, 0.3, 0.3, 0.7)
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Walls" type="StaticBody2D" parent="World"]
+
+[node name="GroundShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_ground")
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_left")
+
+[node name="RightWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_right")
+
+[node name="Items" type="Node2D" parent="World"]
+
+[node name="HotbarUI" type="CanvasLayer" parent="."]
+
+[node name="HotbarRoot" type="Control" parent="HotbarUI"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_script")
+mouse_filter = 2
+
+[node name="Slot0" type="ColorRect" parent="HotbarUI/HotbarRoot"]
+offset_left = 441.0
+offset_top = 620.0
+offset_right = 511.0
+offset_bottom = 690.0
+color = Color(0.862745, 0.078431, 0.235294, 1)
+mouse_filter = 2
+
+[node name="Slot1" type="ColorRect" parent="HotbarUI/HotbarRoot"]
+offset_left = 523.0
+offset_top = 620.0
+offset_right = 593.0
+offset_bottom = 690.0
+color = Color(1, 0.843137, 0, 1)
+mouse_filter = 2
+
+[node name="Slot2" type="ColorRect" parent="HotbarUI/HotbarRoot"]
+offset_left = 605.0
+offset_top = 620.0
+offset_right = 675.0
+offset_bottom = 690.0
+color = Color(0.18, 0.55, 0.34, 1)
+mouse_filter = 2
+
+[node name="Slot3" type="ColorRect" parent="HotbarUI/HotbarRoot"]
+offset_left = 687.0
+offset_top = 620.0
+offset_right = 757.0
+offset_bottom = 690.0
+color = Color(0.254902, 0.411765, 0.882353, 1)
+mouse_filter = 2
+
+[node name="Slot4" type="ColorRect" parent="HotbarUI/HotbarRoot"]
+offset_left = 769.0
+offset_top = 620.0
+offset_right = 839.0
+offset_bottom = 690.0
+color = Color(0.6, 0.196078, 0.8, 1)
+mouse_filter = 2
+
+[node name="DragCtrl" type="Node" parent="."]
+script = ExtResource("2_drag_ctrl")
