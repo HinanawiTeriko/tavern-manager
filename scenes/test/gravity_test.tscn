@@ -15,6 +15,10 @@ b = Vector2(80, 318)
 a = Vector2(1200, 60)
 b = Vector2(1200, 318)
 
+[sub_resource type="SegmentShape2D" id="seg_top"]
+a = Vector2(80, 60)
+b = Vector2(1200, 60)
+
 [node name="GravityTest" type="Node2D"]
 script = ExtResource("1_script")
 
@@ -44,6 +48,9 @@ shape = SubResource("seg_left")
 
 [node name="RightWallShape" type="CollisionShape2D" parent="World/Walls"]
 shape = SubResource("seg_right")
+
+[node name="TopShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_top")
 
 [node name="Items" type="Node2D" parent="World"]
 
