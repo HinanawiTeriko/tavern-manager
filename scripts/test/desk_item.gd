@@ -5,6 +5,7 @@ extends RigidBody2D
 
 const KILL_Y: float = 800.0
 
+var item_key: String = ""
 var _pending_color: Color = Color.WHITE
 
 @onready var _visual: Polygon2D = $Visual
@@ -23,3 +24,9 @@ func set_color(c: Color) -> void:
 	_pending_color = c
 	if is_node_ready():
 		_visual.color = c
+
+
+func set_item(key: String, item_data: Dictionary) -> void:
+	item_key = key
+	var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
+	set_color(Color(rgb[0], rgb[1], rgb[2]))
