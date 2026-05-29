@@ -68,6 +68,7 @@ offset_right = 511.0
 offset_bottom = 690.0
 color = Color(0.862745, 0.078431, 0.235294, 1)
 mouse_filter = 2
+metadata/item_key = "ale"
 
 [node name="Slot1" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 523.0
@@ -76,6 +77,7 @@ offset_right = 593.0
 offset_bottom = 690.0
 color = Color(1, 0.843137, 0, 1)
 mouse_filter = 2
+metadata/item_key = "grape"
 
 [node name="Slot2" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 605.0
@@ -84,6 +86,7 @@ offset_right = 675.0
 offset_bottom = 690.0
 color = Color(0.18, 0.55, 0.34, 1)
 mouse_filter = 2
+metadata/item_key = "herb"
 
 [node name="Slot3" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 687.0
@@ -92,6 +95,7 @@ offset_right = 757.0
 offset_bottom = 690.0
 color = Color(0.254902, 0.411765, 0.882353, 1)
 mouse_filter = 2
+metadata/item_key = "flour"
 
 [node name="Slot4" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 769.0
@@ -100,6 +104,7 @@ offset_right = 839.0
 offset_bottom = 690.0
 color = Color(0.6, 0.196078, 0.8, 1)
 mouse_filter = 2
+metadata/item_key = "meat_raw"
 
 [node name="DragCtrl" type="Node" parent="."]
 script = ExtResource("2_drag_ctrl")
