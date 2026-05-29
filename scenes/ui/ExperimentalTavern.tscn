@@ -1,7 +1,24 @@
-[gd_scene load_steps=3 format=3 uid="uid://buxs4ykfcgl1f"]
+[gd_scene load_steps=7 format=3 uid="uid://buxs4ykfcgl1f"]
 
 [ext_resource type="Script" path="res://scripts/ui/experimental_tavern_view.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/ui/desktop_workspace.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/desktop_workspace.gd" id="3"]
+
+[sub_resource type="SegmentShape2D" id="seg_top"]
+a = Vector2(0, 10)
+b = Vector2(1280, 10)
+
+[sub_resource type="SegmentShape2D" id="seg_left"]
+a = Vector2(60, 0)
+b = Vector2(60, 710)
+
+[sub_resource type="SegmentShape2D" id="seg_right"]
+a = Vector2(1220, 0)
+b = Vector2(1220, 710)
+
+[sub_resource type="SegmentShape2D" id="seg_ground"]
+a = Vector2(60, 600)
+b = Vector2(1220, 600)
 
 [node name="ExperimentalTavern" type="Node2D" unique_id=500687288]
 script = ExtResource("1")
@@ -95,6 +112,30 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
+[node name="World" type="Node2D" parent="."]
+
+[node name="Walls" type="StaticBody2D" parent="World"]
+
+[node name="TopShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_top")
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_left")
+
+[node name="RightWallShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_right")
+
+[node name="GroundShape" type="CollisionShape2D" parent="World/Walls"]
+shape = SubResource("seg_ground")
+one_way_collision = true
+
+[node name="Items" type="Node2D" parent="World"]
+
+[node name="GroundLine" type="Line2D" parent="World"]
+points = PackedVector2Array(60, 600, 1220, 600)
+width = 2.0
+default_color = Color(1, 0.35, 0.2, 0.6)
+
 [node name="CustomerArea" type="Control" parent="." unique_id=511174919]
 layout_mode = 0
 offset_left = 440.0
@@ -160,7 +201,7 @@ color = Color(0.35, 0.25, 0.15, 1)
 mouse_filter = 2
 
 [node name="DesktopWorkspace" type="Control" parent="DesktopArea" unique_id=1796577391]
-script = ExtResource("2")
+script = ExtResource("3")
 layout_mode = 0
 offset_left = 4.0
 offset_top = 4.0
@@ -392,3 +433,6 @@ offset_top = 4.0
 offset_right = 562.0
 offset_bottom = 32.0
 text = "第1/30天"
+
+[node name="DragCtrl" type="Node" parent="."]
+script = ExtResource("2")
