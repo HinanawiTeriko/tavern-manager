@@ -13,11 +13,13 @@ signal drag_ended(body: DeskItem)
 
 # —— 物理参数 ——
 const JOINT_SOFTNESS: float = 0.0    # 0 = 刚性钉子；增大会使约束更"软"/有弹性（不是减抖动 — 抖动调 angular_damp/linear_damp）
+const SERVE_SPEED_SMOOTHING: float = 0.3   # 平滑速度 EMA 系数：每物理帧把瞬时速度混入；越大越跟手、越小越稳
 
 # —— 内部状态 ——
 var _body: DeskItem = null
 var _anchor: AnimatableBody2D = null
 var _joint: PinJoint2D = null
+var _serve_speed: float = 0.0   # 拖拽期间的平滑速度（EMA），上菜风格判定用；start_drag 清零
 
 
 # ================================================================
@@ -32,12 +34,18 @@ func get_body() -> DeskItem:
 	return _body
 
 
+func get_serve_speed() -> float:
+	## 上菜风格信号：最近一段拖拽的平滑速度（松手后保持到下次 start_drag）。
+	return _serve_speed
+
+
 func start_drag(body: DeskItem, mouse_global_pos: Vector2) -> void:
 	## 在 body 上创建钉子，钉子位置 = mouse_global_pos（即按下时光标在物品上的局部点）。
 	if _body != null:
 		end_drag()
 
 	_body = body
+	_serve_speed = 0.0
 
 	# 锚点：不参与碰撞的 AnimatableBody2D，跟随鼠标
 	_anchor = AnimatableBody2D.new()
@@ -88,6 +96,13 @@ func end_drag() -> void:
 # ================================================================
 #  生命周期
 # ================================================================
+
+func _physics_process(_delta: float) -> void:
+	## 拖拽期间每帧把瞬时速度混入平滑速度（EMA）。松手后 _body 置空即停止更新，
+	## _serve_speed 保留最后一段拖拽的平滑值供 get_serve_speed() 读取。
+	if _body != null and is_instance_valid(_body):
+		_serve_speed = lerp(_serve_speed, _body.linear_velocity.length(), SERVE_SPEED_SMOOTHING)
+
 
 func _exit_tree() -> void:
 	end_drag()
