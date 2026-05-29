@@ -30,6 +30,9 @@ CODEBUDDY.md
 # Claude Code (AI-only, local)
 CLAUDE.md
 
+# Codex/OpenAI agents (AI-only, local)
+AGENTS.md
+
 # VS Code (keep shared settings, ignore local)
 .vscode/
 !.vscode/settings.json
