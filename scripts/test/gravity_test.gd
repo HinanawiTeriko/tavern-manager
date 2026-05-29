@@ -30,8 +30,6 @@ func _ready() -> void:
 			var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
 			slot.color = Color(rgb[0], rgb[1], rgb[2])
 	_brewery.recipe_consumed.connect(func(k): print("[Brewery] 产出 ", k))
-	_drag_ctrl.drag_started.connect(func(b: DeskItem): b.last_throw_speed = 0.0)
-	_drag_ctrl.drag_ended.connect(func(b: DeskItem): b.last_throw_speed = b.linear_velocity.length())
 
 
 func _unhandled_input(event: InputEvent) -> void:
