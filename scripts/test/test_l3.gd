@@ -20,9 +20,10 @@ func _ok(cond: bool, msg: String) -> void:
 func _test_classify() -> void:
 	var cs := CraftStyleSystem.new()
 	cs.load_data()
+	# 样本速度须明显落在各档区间内（阈值热调：当前 gentle=60 / rough=500）
 	_ok(cs.classify({"serve_drop_speed": 2000.0}) == "粗鲁", "高速应为粗鲁")
-	_ok(cs.classify({"serve_drop_speed": 50.0}) == "温柔", "低速应为温柔")
-	_ok(cs.classify({"serve_drop_speed": 500.0}) == "平静", "中速应为平静")
+	_ok(cs.classify({"serve_drop_speed": 30.0}) == "温柔", "低速应为温柔")
+	_ok(cs.classify({"serve_drop_speed": 250.0}) == "平静", "中速应为平静")
 	_ok(cs.classify({}) == "平静", "空字典应为平静(安全默认)")
 
 func _test_npc_parse() -> void:
