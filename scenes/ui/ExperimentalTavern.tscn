@@ -1,12 +1,12 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://buxs4ykfcgl1f"]
 
 [ext_resource type="Script" path="res://scripts/ui/experimental_tavern_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/desktop_workspace.gd" id="2"]
 
-[node name="ExperimentalTavern" type="Node2D"]
+[node name="ExperimentalTavern" type="Node2D" unique_id=500687288]
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1938193895]
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1280.0
@@ -14,7 +14,7 @@ offset_bottom = 720.0
 color = Color(0.06, 0.05, 0.08, 1)
 mouse_filter = 2
 
-[node name="BgLabel" type="Label" parent="Background"]
+[node name="BgLabel" type="Label" parent="Background" unique_id=946472196]
 layout_mode = 0
 offset_left = 440.0
 offset_top = 40.0
@@ -24,10 +24,10 @@ text = "【背景图 — 酒馆内景】"
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Tables" type="Node2D" parent="."]
+[node name="Tables" type="Node2D" parent="." unique_id=2033194840]
 z_index = -10
 
-[node name="Table1" type="ColorRect" parent="Tables"]
+[node name="Table1" type="ColorRect" parent="Tables" unique_id=2049441010]
 offset_left = 60.0
 offset_top = 220.0
 offset_right = 310.0
@@ -35,7 +35,7 @@ offset_bottom = 350.0
 color = Color(0.25, 0.18, 0.10, 1)
 mouse_filter = 2
 
-[node name="Label1" type="Label" parent="Tables/Table1"]
+[node name="Label1" type="Label" parent="Tables/Table1" unique_id=631513587]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -44,7 +44,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="Table2" type="ColorRect" parent="Tables"]
+[node name="Table2" type="ColorRect" parent="Tables" unique_id=1249039150]
 offset_left = 360.0
 offset_top = 220.0
 offset_right = 610.0
@@ -52,7 +52,7 @@ offset_bottom = 350.0
 color = Color(0.25, 0.18, 0.10, 1)
 mouse_filter = 2
 
-[node name="Label2" type="Label" parent="Tables/Table2"]
+[node name="Label2" type="Label" parent="Tables/Table2" unique_id=1422684173]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -61,7 +61,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="Table3" type="ColorRect" parent="Tables"]
+[node name="Table3" type="ColorRect" parent="Tables" unique_id=664660562]
 offset_left = 660.0
 offset_top = 220.0
 offset_right = 910.0
@@ -69,7 +69,7 @@ offset_bottom = 350.0
 color = Color(0.25, 0.18, 0.10, 1)
 mouse_filter = 2
 
-[node name="Label3" type="Label" parent="Tables/Table3"]
+[node name="Label3" type="Label" parent="Tables/Table3" unique_id=1048208736]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -78,7 +78,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="Table4" type="ColorRect" parent="Tables"]
+[node name="Table4" type="ColorRect" parent="Tables" unique_id=2117483483]
 offset_left = 960.0
 offset_top = 220.0
 offset_right = 1210.0
@@ -86,7 +86,7 @@ offset_bottom = 350.0
 color = Color(0.25, 0.18, 0.10, 1)
 mouse_filter = 2
 
-[node name="Label4" type="Label" parent="Tables/Table4"]
+[node name="Label4" type="Label" parent="Tables/Table4" unique_id=806304228]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -95,14 +95,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="CustomerArea" type="Control" parent="."]
+[node name="CustomerArea" type="Control" parent="." unique_id=511174919]
 layout_mode = 0
 offset_left = 440.0
 offset_top = 60.0
 offset_right = 840.0
 offset_bottom = 400.0
 
-[node name="CustomerSprite" type="ColorRect" parent="CustomerArea"]
+[node name="CustomerSprite" type="ColorRect" parent="CustomerArea" unique_id=708847584]
 layout_mode = 0
 offset_left = 60.0
 offset_top = 0.0
@@ -111,7 +111,7 @@ offset_bottom = 340.0
 color = Color(0.30, 0.25, 0.35, 1)
 mouse_filter = 2
 
-[node name="SpriteLabel" type="Label" parent="CustomerArea/CustomerSprite"]
+[node name="SpriteLabel" type="Label" parent="CustomerArea/CustomerSprite" unique_id=1969145859]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -122,7 +122,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
 
-[node name="CustomerName" type="Label" parent="CustomerArea"]
+[node name="CustomerName" type="Label" parent="CustomerArea" unique_id=1831067474]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
@@ -132,7 +132,7 @@ text = "等待客人中……"
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="OrderLabel" type="Label" parent="CustomerArea"]
+[node name="OrderLabel" type="Label" parent="CustomerArea" unique_id=658745013]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 345.0
@@ -142,7 +142,7 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="DesktopArea" type="Control" parent="."]
+[node name="DesktopArea" type="Control" parent="." unique_id=518253417]
 z_index = 10
 layout_mode = 0
 offset_left = 20.0
@@ -150,7 +150,7 @@ offset_top = 420.0
 offset_right = 1260.0
 offset_bottom = 700.0
 
-[node name="DesktopBg" type="ColorRect" parent="DesktopArea"]
+[node name="DesktopBg" type="ColorRect" parent="DesktopArea" unique_id=1696805721]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
@@ -159,7 +159,7 @@ offset_bottom = 280.0
 color = Color(0.35, 0.25, 0.15, 1)
 mouse_filter = 2
 
-[node name="DesktopWorkspace" type="Control" parent="DesktopArea"]
+[node name="DesktopWorkspace" type="Control" parent="DesktopArea" unique_id=1796577391]
 script = ExtResource("2")
 layout_mode = 0
 offset_left = 4.0
@@ -167,7 +167,7 @@ offset_top = 4.0
 offset_right = 1236.0
 offset_bottom = 230.0
 
-[node name="DesktopLabel" type="Label" parent="DesktopArea"]
+[node name="DesktopLabel" type="Label" parent="DesktopArea" unique_id=740480622]
 layout_mode = 0
 offset_left = 460.0
 offset_top = 2.0
@@ -177,14 +177,14 @@ text = "【吧台桌面 — 合成区】"
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="OperationButtons" type="HBoxContainer" parent="DesktopArea"]
+[node name="OperationButtons" type="HBoxContainer" parent="DesktopArea" unique_id=537059135]
 layout_mode = 0
 offset_left = 4.0
 offset_top = 236.0
 offset_right = 900.0
 offset_bottom = 276.0
 
-[node name="MixBtn" type="Button" parent="DesktopArea"]
+[node name="MixBtn" type="Button" parent="DesktopArea" unique_id=534082602]
 layout_mode = 0
 offset_left = 10.0
 offset_top = 236.0
@@ -192,7 +192,7 @@ offset_right = 130.0
 offset_bottom = 276.0
 text = "混合"
 
-[node name="ClearDesktopBtn" type="Button" parent="DesktopArea"]
+[node name="ClearDesktopBtn" type="Button" parent="DesktopArea" unique_id=2140946293]
 layout_mode = 0
 offset_left = 1130.0
 offset_top = 236.0
@@ -200,7 +200,7 @@ offset_right = 1236.0
 offset_bottom = 276.0
 text = "清空桌面"
 
-[node name="ShortcutBar" type="HBoxContainer" parent="."]
+[node name="ShortcutBar" type="HBoxContainer" parent="." unique_id=1288625582]
 z_index = 20
 layout_mode = 0
 offset_left = 140.0
@@ -208,11 +208,11 @@ offset_top = 664.0
 offset_right = 1140.0
 offset_bottom = 720.0
 
-[node name="Slot0" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot0" type="ColorRect" parent="ShortcutBar" unique_id=1290289629]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot0"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot0" unique_id=926231023]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -222,11 +222,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot1" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot1" type="ColorRect" parent="ShortcutBar" unique_id=1372136919]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot1"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot1" unique_id=651636754]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -236,11 +236,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot2" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot2" type="ColorRect" parent="ShortcutBar" unique_id=510718132]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot2"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot2" unique_id=36278043]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -250,11 +250,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot3" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot3" type="ColorRect" parent="ShortcutBar" unique_id=371256248]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot3"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot3" unique_id=1310179374]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -264,11 +264,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot4" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot4" type="ColorRect" parent="ShortcutBar" unique_id=322253113]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot4"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot4" unique_id=1235017600]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -278,11 +278,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot5" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot5" type="ColorRect" parent="ShortcutBar" unique_id=824535900]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot5"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot5" unique_id=1845340190]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -292,11 +292,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot6" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot6" type="ColorRect" parent="ShortcutBar" unique_id=455585957]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot6"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot6" unique_id=1837277203]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -306,11 +306,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot7" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot7" type="ColorRect" parent="ShortcutBar" unique_id=1522500687]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot7"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot7" unique_id=1443567628]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -320,11 +320,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot8" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot8" type="ColorRect" parent="ShortcutBar" unique_id=1757741167]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot8"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot8" unique_id=1135392637]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -334,11 +334,11 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="Slot9" type="ColorRect" parent="ShortcutBar"]
+[node name="Slot9" type="ColorRect" parent="ShortcutBar" unique_id=1214155345]
 custom_minimum_size = Vector2(64, 56)
 color = Color(0.1, 0.08, 0.06, 1)
 
-[node name="Label" type="Label" parent="ShortcutBar/Slot9"]
+[node name="Label" type="Label" parent="ShortcutBar/Slot9" unique_id=735197618]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 14.0
@@ -348,16 +348,16 @@ text = ""
 horizontal_alignment = 1
 mouse_filter = 2
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1145217140]
 
-[node name="TopPanel" type="HBoxContainer" parent="UI"]
+[node name="TopPanel" type="HBoxContainer" parent="UI" unique_id=1465355649]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1280.0
 offset_bottom = 36.0
 
-[node name="TopPanelBg" type="ColorRect" parent="UI/TopPanel"]
+[node name="TopPanelBg" type="ColorRect" parent="UI/TopPanel" unique_id=335359346]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
@@ -366,7 +366,7 @@ offset_bottom = 36.0
 color = Color(0.08, 0.06, 0.05, 0.9)
 mouse_filter = 2
 
-[node name="GoldLabel" type="Label" parent="UI/TopPanel"]
+[node name="GoldLabel" type="Label" parent="UI/TopPanel" unique_id=812196353]
 layout_mode = 0
 custom_minimum_size = Vector2(200, 0)
 offset_left = 12.0
@@ -375,7 +375,7 @@ offset_right = 212.0
 offset_bottom = 32.0
 text = "金币：0"
 
-[node name="ReputationLabel" type="Label" parent="UI/TopPanel"]
+[node name="ReputationLabel" type="Label" parent="UI/TopPanel" unique_id=900844689]
 layout_mode = 0
 custom_minimum_size = Vector2(200, 0)
 offset_left = 212.0
@@ -384,7 +384,7 @@ offset_right = 412.0
 offset_bottom = 32.0
 text = "声望：0"
 
-[node name="DayLabel" type="Label" parent="UI/TopPanel"]
+[node name="DayLabel" type="Label" parent="UI/TopPanel" unique_id=2078942829]
 layout_mode = 0
 custom_minimum_size = Vector2(150, 0)
 offset_left = 412.0
