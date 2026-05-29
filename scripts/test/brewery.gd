@@ -2,8 +2,9 @@ class_name Brewery
 extends Node2D
 
 ## 酒桶（容器）：物品掉入 Mouth Area2D 触发配方匹配。
-## 命中 → 销毁输入物 + 在 OutputAnchor spawn 产出物理体。
-## 未命中 → 销毁输入物（"材料消耗"软兜底），不 spawn 产出。
+## 成品穿过桶口不消耗（玩家拿成品试错的常规动作）。
+## 材料命中配方 → 销毁输入 + 在 OutputAnchor spawn 产出。
+## 材料未命中 → 销毁输入（"扔错食材"软兜底），不 spawn 产出。
 
 signal recipe_consumed(product_key: String)
 
@@ -27,6 +28,8 @@ func _on_mouth_body_entered(body: Node) -> void:
 		return
 	var item: DeskItem = body
 	if item.item_key == "":
+		return
+	if GameManager.craft.is_product(item.item_key):
 		return
 	var product_key: String = GameManager.craft.query_recipe(
 		CONTAINER_KEY, [item.item_key])
