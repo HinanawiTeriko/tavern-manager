@@ -103,6 +103,10 @@ func is_product(key: String) -> bool:
 	var item: Dictionary = items.get(key, {})
 	return item.get("type", "") == "product"
 
+func get_memory_for(product_key: String) -> Dictionary:
+	var recipe: Dictionary = recipes.get(product_key, {})
+	return recipe.get("memory_for", {})
+
 func get_combine_result(a: String, b: String) -> String:
 	if a == "" or b == "":
 		return ""
