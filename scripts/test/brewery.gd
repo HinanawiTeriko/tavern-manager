@@ -25,6 +25,7 @@ var _timer: Timer = null
 func _ready() -> void:
 	assert(GameManager.craft != null, "[Brewery] GameManager.craft 未就绪")
 	_items_parent = get_parent().get_node("Items")
+	assert(_items_parent != null, "[Brewery] 未找到父节点下的 'Items' 节点")
 	_mouth.body_entered.connect(_on_mouth_body_entered)
 	_timer = Timer.new()
 	_timer.one_shot = true
