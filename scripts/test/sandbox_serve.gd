@@ -43,7 +43,8 @@ func _on_drag_ended(body: DeskItem) -> void:
 		return
 	if not _customer_area.get_overlapping_bodies().has(body):
 		return
-	GameManager.request_serve(body.item_key)
+	var speed: float = body.linear_velocity.length()
+	GameManager.request_serve(body.item_key, {"serve_drop_speed": speed})
 	body.queue_free()
 
 
