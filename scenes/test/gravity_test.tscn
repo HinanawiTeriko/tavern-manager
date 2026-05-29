@@ -1,8 +1,9 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/test/gravity_test.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2_drag_ctrl"]
 [ext_resource type="Script" path="res://scripts/test/brewery.gd" id="3_brewery"]
+[ext_resource type="Script" path="res://scripts/test/sandbox_serve.gd" id="4_sandbox"]
 
 [sub_resource type="SegmentShape2D" id="seg_ground"]
 a = Vector2(80, 318)
@@ -22,6 +23,9 @@ b = Vector2(1200, 60)
 
 [sub_resource type="RectangleShape2D" id="rect_mouth"]
 size = Vector2(100, 30)
+
+[sub_resource type="RectangleShape2D" id="rect_customer"]
+size = Vector2(180, 140)
 
 [node name="GravityTest" type="Node2D"]
 script = ExtResource("1_script")
@@ -134,3 +138,41 @@ metadata/item_key = "meat_raw"
 
 [node name="DragCtrl" type="Node" parent="."]
 script = ExtResource("2_drag_ctrl")
+
+[node name="SandboxServe" type="Node2D" parent="."]
+script = ExtResource("4_sandbox")
+
+[node name="CustomerArea" type="Area2D" parent="SandboxServe"]
+position = Vector2(300, 150)
+
+[node name="Shape" type="CollisionShape2D" parent="SandboxServe/CustomerArea"]
+shape = SubResource("rect_customer")
+
+[node name="Visual" type="Polygon2D" parent="SandboxServe/CustomerArea"]
+polygon = PackedVector2Array(-90, -70, 90, -70, 90, 70, -90, 70)
+color = Color(0.2, 0.35, 0.6, 0.45)
+
+[node name="UILayer" type="CanvasLayer" parent="SandboxServe"]
+
+[node name="Root" type="Control" parent="SandboxServe/UILayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="OrderLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 50.0
+
+[node name="MessageLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 56.0
+offset_right = 700.0
+offset_bottom = 86.0
+
+[node name="TopBarLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 92.0
+offset_right = 700.0
+offset_bottom = 122.0
