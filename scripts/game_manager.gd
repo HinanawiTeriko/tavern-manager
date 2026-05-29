@@ -236,6 +236,10 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 		return
 	guests.spawn_important(npc_id, order_key)
 
+## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
+func request_serve(item_key: String, seasoning_tag: String = "") -> void:
+	_on_serve_requested(item_key, seasoning_tag)
+
 ## 上菜判定逻辑（从 register_view lambda 提取）
 func _on_serve_requested(item_key: String, seasoning_tag: String) -> void:
 	if not guests.has_guest or item_key == "":
