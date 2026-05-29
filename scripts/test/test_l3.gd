@@ -8,6 +8,7 @@ var _checks := 0
 
 func _ready() -> void:
 	_test_classify()
+	_test_npc_parse()
 	print("[TEST-L3] ALL PASS (", _checks, " checks)")
 	get_tree().quit()  # headless 下退出；编辑器 F6 下也会关闭播放窗口，Output 仍保留
 
@@ -22,3 +23,14 @@ func _test_classify() -> void:
 	_ok(cs.classify({"serve_drop_speed": 50.0}) == "温柔", "低速应为温柔")
 	_ok(cs.classify({"serve_drop_speed": 500.0}) == "平静", "中速应为平静")
 	_ok(cs.classify({}) == "平静", "空字典应为平静(安全默认)")
+
+func _test_npc_parse() -> void:
+	var nm := NarrativeManager.new()
+	nm.load_npc_data()
+	var mira: NpcData = null
+	for n in nm.all_npcs:
+		if n.id == "mira":
+			mira = n
+	_ok(mira != null, "应解析到 mira")
+	_ok(mira.preferred_styles.has("温柔"), "mira preferred 含 温柔")
+	_ok(mira.disliked_styles.has("粗鲁"), "mira disliked 含 粗鲁")

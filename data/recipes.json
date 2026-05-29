@@ -7,7 +7,8 @@
   "wine": {
     "name": "葡萄酒",
     "ingredients": ["grape"],
-    "container": "barrel"
+    "container": "barrel",
+    "memory_for": { "mira": "day4_road_story" }
   },
   "herb_tea": {
     "name": "草药茶",

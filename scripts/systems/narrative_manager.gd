@@ -63,6 +63,12 @@ func load_npc_data() -> void:
 		npc.affection_start = int(npc_dict["affectionStart"])
 		npc.scenes = _parse_scenes(npc_dict["scenes"])
 		npc.endings = _parse_endings(npc_dict["endings"])
+		if npc_dict.has("preferred_styles"):
+			for s in npc_dict["preferred_styles"]:
+				npc.preferred_styles.append(s)
+		if npc_dict.has("disliked_styles"):
+			for s in npc_dict["disliked_styles"]:
+				npc.disliked_styles.append(s)
 		all_npcs.append(npc)
 		set_affection(npc.id, npc.affection_start)
 	print("[Narrative] 加载 ", all_npcs.size(), " 个 NPC")
