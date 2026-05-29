@@ -50,3 +50,6 @@ $RECYCLE.BIN/
 
 # Superpowers docs (local only)
 docs/superpowers/
+
+#godot import
+*.import

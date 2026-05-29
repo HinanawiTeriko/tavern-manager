@@ -78,7 +78,7 @@ func get_mix_recipe() -> Dictionary:
 func do_mix(a: String, b: String, result: String) -> void:
 	var removed_a = false
 	var removed_b = false
-	var new_items: Array = []
+	var new_items: Array[String] = []
 	for item in _items:
 		if item == a and not removed_a:
 			removed_a = true

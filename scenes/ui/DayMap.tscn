@@ -43,6 +43,14 @@ offset_bottom = 50.0
 text = "金币：0"
 horizontal_alignment = 2
 
+[node name="ExpTavernBtn" type="Button" parent="TopBar"]
+layout_mode = 0
+offset_left = 1100.0
+offset_top = 8.0
+offset_right = 1270.0
+offset_bottom = 52.0
+text = "实验场景"
+
 [node name="MapArea" type="Control" parent="."]
 layout_mode = 0
 offset_left = 140.0
