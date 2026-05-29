@@ -12,6 +12,7 @@ const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
 @onready var _hotbar_root: Control = $HotbarUI/HotbarRoot
+@onready var _brewery: Brewery = $World/Brewery
 
 # —— 运行时状态 ——
 var _slot_rects: Array[Rect2] = []
@@ -28,6 +29,7 @@ func _ready() -> void:
 			var item_data: Dictionary = GameManager.craft.get_item(item_key)
 			var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
 			slot.color = Color(rgb[0], rgb[1], rgb[2])
+	_brewery.recipe_consumed.connect(func(k): print("[Brewery] 产出 ", k))
 
 
 func _unhandled_input(event: InputEvent) -> void:
