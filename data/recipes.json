@@ -1,0 +1,17 @@
+{
+  "ale_beer": {
+    "name": "麦芽酒",
+    "ingredients": ["ale"],
+    "container": "barrel"
+  },
+  "wine": {
+    "name": "葡萄酒",
+    "ingredients": ["grape"],
+    "container": "barrel"
+  },
+  "herb_tea": {
+    "name": "草药茶",
+    "ingredients": ["herb"],
+    "container": "barrel"
+  }
+}
