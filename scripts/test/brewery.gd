@@ -52,6 +52,9 @@ func _spawn_product(product_key: String) -> void:
 	product.set_item(product_key, item_data)
 
 
+## ⚠️ 临时占位：当前只做解冻/重冻。真正的摇晃计数 + 必须摇够才出酒
+## 将在后续「摇晃酿造」任务中替换这两个函数的实现（届时 begin 启动摇晃采样、
+## end 结算 _try_brew）。本任务阶段酒桶刻意不产出。
 func begin_shake_session() -> void:
 	freeze = false
 
