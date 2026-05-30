@@ -64,15 +64,15 @@ func _physics_process(delta: float) -> void:
 	_process_grill_sear(delta)
 
 
-## 灶台抓取唤醒。锅已冻结成静态（不可移动），故只为非锅容器解冻。
+## 抓取时解冻。锅释放后重新冻结，避免搅拌时被勺子推走。
 func begin_action_session() -> void:
 	sleeping = false
-	if container_key != "pot":
-		freeze = false
+	freeze = false
 
 
 func end_action_session() -> void:
-	pass
+	if container_key == "pot":
+		freeze = true
 
 
 ## 勺尖在锅内时，按勺尖的"移动距离"累积搅拌进度——比读物理速度稳，
@@ -102,7 +102,7 @@ func _process_grill_sear(delta: float) -> void:
 		if not body is DeskItem:
 			continue
 		var item: DeskItem = body
-		if item.item_key == "" or GameManager.craft.is_product(item.item_key):
+		if not can_sear_item_key(item.item_key):
 			continue
 		now_inside.append(item)
 		if item.is_held:
@@ -136,6 +136,16 @@ func _is_point_inside_stir_zone(global_pos: Vector2) -> bool:
 	return absf(local_pos.x) <= stir_zone_half_width \
 		and local_pos.y >= stir_zone_top_y \
 		and local_pos.y <= stir_zone_bottom_y
+
+
+func can_sear_item_key(item_key: String) -> bool:
+	if item_key == "":
+		return false
+	if item_key == "meat_cooked" or item_key == "bread":
+		return true
+	if GameManager.craft.is_product(item_key):
+		return false
+	return GameManager.craft.query_recipe("grill", [item_key]) != ""
 
 
 func _configure_state() -> void:

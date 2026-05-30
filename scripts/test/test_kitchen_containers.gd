@@ -9,6 +9,8 @@ func _ready() -> void:
 	_test_meat_orientation()
 	_test_pot_stir_progress()
 	_test_pot_intake_requires_center_inside_mouth()
+	_test_grill_continues_searing_cooked_items()
+	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
 	_test_desk_item_two_faces()
 	_test_tavern_scene_nodes()
@@ -72,6 +74,26 @@ func _test_pot_intake_requires_center_inside_mouth() -> void:
 	item.global_position = Vector2(150, 62)
 	_ok(not pot.is_item_inside_intake(item), "pot should not accept item outside mouth width")
 	item.free()
+	pot.free()
+
+
+func _test_grill_continues_searing_cooked_items() -> void:
+	var grill = KITCHEN_CONTAINER_SCRIPT.new()
+	grill.container_key = "grill"
+	_ok(grill.can_sear_item_key("meat_cooked"), "cooked meat should keep searing toward burnt")
+	_ok(grill.can_sear_item_key("bread"), "bread should keep searing toward burnt")
+	_ok(not grill.can_sear_item_key("wine"), "unrelated finished products should not sear on grill")
+	grill.free()
+
+
+func _test_pot_unfreezes_while_held() -> void:
+	var pot = KITCHEN_CONTAINER_SCRIPT.new()
+	pot.container_key = "pot"
+	pot.freeze = true
+	pot.begin_action_session()
+	_ok(not pot.freeze, "pot should unfreeze while held so drag can move it")
+	pot.end_action_session()
+	_ok(pot.freeze, "pot should refreeze after release for stable stirring")
 	pot.free()
 
 
