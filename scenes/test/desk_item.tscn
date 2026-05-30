@@ -22,6 +22,16 @@ physics_material_override = SubResource("PhysicsMaterial_mat")
 [node name="Shape" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_shape")
 
-[node name="Visual" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-30, -30, 30, -30, 30, 30, -30, 30)
+[node name="VisualTop" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-30, -30, 30, -30, 30, 0, -30, 0)
 color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="VisualBottom" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-30, 0, 30, 0, 30, 30, -30, 30)
+color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="FaceTop" type="Marker2D" parent="."]
+position = Vector2(0, -15)
+
+[node name="FaceBottom" type="Marker2D" parent="."]
+position = Vector2(0, 15)

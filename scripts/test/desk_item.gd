@@ -1,10 +1,12 @@
 class_name DeskItem
 extends RigidBody2D
 
-## 桌面物品（物理体）。掉出屏幕下方自动销毁。
+## 桌面物品(物理体)。掉出屏幕下方自动销毁。
+## 烤架按压煎制:被抓着(is_held)且贴在烤架时,朝下那一面累积熟度,颜色随之变化。
 
 const KILL_Y: float = 800.0
 const IMPACT_DEBUG_SPEED: float = 260.0
+const MEAT_DONENESS := preload("res://scripts/systems/meat_doneness.gd")
 
 const PHYSICS_LIMITS := {
 	"mass": Vector2(0.2, 5.0),
@@ -44,15 +46,20 @@ const FALLBACK_PROFILES := {
 
 var item_key: String = ""
 var quality: String = "normal"
+var is_held: bool = false
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
+var _doneness = MEAT_DONENESS.new()
 
-@onready var _visual: Polygon2D = $Visual
+@onready var _visual_top: Polygon2D = $VisualTop
+@onready var _visual_bottom: Polygon2D = $VisualBottom
+@onready var _face_top: Marker2D = $FaceTop
+@onready var _face_bottom: Marker2D = $FaceBottom
 @onready var _shape: CollisionShape2D = $Shape
 
 
 func _ready() -> void:
-	_visual.color = _pending_color
+	_apply_base_color(_pending_color)
 
 
 func _physics_process(_delta: float) -> void:
@@ -62,8 +69,9 @@ func _physics_process(_delta: float) -> void:
 
 func set_color(c: Color) -> void:
 	_pending_color = c
+	_doneness.set_raw_color(c)
 	if is_node_ready():
-		_visual.color = c
+		_apply_base_color(c)
 
 
 func set_item(key: String, item_data: Dictionary, profiles: Dictionary = {}) -> void:
@@ -125,6 +133,36 @@ func apply_feedback_profile(profile: Dictionary) -> void:
 	feedback_profile = profile.duplicate(true)
 
 
+## 朝下(贴烤架)那一面的索引:0=上半,1=下半,按 marker 世界 y 比较。
+func down_face_index() -> int:
+	return MEAT_DONENESS.down_face_of(_face_top.global_position, _face_bottom.global_position)
+
+
+## 给指定面喂热,并立即刷新两面颜色。
+func add_heat(face: int, amount: float) -> void:
+	_doneness.add_heat(face, amount)
+	_refresh_face_colors()
+
+
+## 取走定稿:返回 "cooked" / "burnt" / "raw"。
+func grill_result() -> String:
+	return _doneness.result()
+
+
+func _apply_base_color(c: Color) -> void:
+	if not is_node_ready():
+		return
+	_visual_top.color = c
+	_visual_bottom.color = c
+
+
+func _refresh_face_colors() -> void:
+	if not is_node_ready():
+		return
+	_visual_top.color = _doneness.face_color(0)
+	_visual_bottom.color = _doneness.face_color(1)
+
+
 func _merge_with_fallback_profiles(profiles: Dictionary) -> Dictionary:
 	var merged := FALLBACK_PROFILES.duplicate(true)
 	for section in profiles.keys():
@@ -157,45 +195,78 @@ func _array_to_vector2(value, fallback: Vector2) -> Vector2:
 
 
 func _set_visual_rect(size: Vector2) -> void:
-	var visual := _get_visual_node()
-	if visual == null:
-		return
 	var half := size * 0.5
-	visual.polygon = PackedVector2Array([
-		Vector2(-half.x, -half.y),
-		Vector2(half.x, -half.y),
-		Vector2(half.x, half.y),
-		Vector2(-half.x, half.y)
-	])
+	if is_node_ready():
+		_visual_top.polygon = PackedVector2Array([
+			Vector2(-half.x, -half.y),
+			Vector2(half.x, -half.y),
+			Vector2(half.x, 0.0),
+			Vector2(-half.x, 0.0)
+		])
+		_visual_bottom.polygon = PackedVector2Array([
+			Vector2(-half.x, 0.0),
+			Vector2(half.x, 0.0),
+			Vector2(half.x, half.y),
+			Vector2(-half.x, half.y)
+		])
+	else:
+		var top := get_node_or_null("VisualTop") as Polygon2D
+		var bot := get_node_or_null("VisualBottom") as Polygon2D
+		if top != null:
+			top.polygon = PackedVector2Array([
+				Vector2(-half.x, -half.y),
+				Vector2(half.x, -half.y),
+				Vector2(half.x, 0.0),
+				Vector2(-half.x, 0.0)
+			])
+		if bot != null:
+			bot.polygon = PackedVector2Array([
+				Vector2(-half.x, 0.0),
+				Vector2(half.x, 0.0),
+				Vector2(half.x, half.y),
+				Vector2(-half.x, half.y)
+			])
 
 
 func _set_visual_circle(radius: float) -> void:
-	var visual := _get_visual_node()
-	if visual == null:
-		return
-	var points := PackedVector2Array()
+	var points_top := PackedVector2Array()
+	var points_bottom := PackedVector2Array()
 	for i in range(16):
 		var a := TAU * float(i) / 16.0
-		points.append(Vector2(cos(a), sin(a)) * radius)
-	visual.polygon = points
+		var p := Vector2(cos(a), sin(a)) * radius
+		if p.y <= 0.0:
+			points_top.append(p)
+		else:
+			points_bottom.append(p)
+	# Close the halves at the center line
+	points_top.append(Vector2(radius, 0.0))
+	points_top.append(Vector2(-radius, 0.0))
+	points_bottom.append(Vector2(-radius, 0.0))
+	points_bottom.append(Vector2(radius, 0.0))
+	_apply_split_polygons(points_top, points_bottom)
 
 
 func _set_visual_capsule(radius: float, height: float) -> void:
-	var visual := _get_visual_node()
-	if visual == null:
-		return
 	var half_body := maxf((height * 0.5) - radius, 0.0)
-	var points := PackedVector2Array()
+	var points_top := PackedVector2Array()
+	var points_bottom := PackedVector2Array()
 	for i in range(8):
 		var a := PI + PI * float(i) / 7.0
-		points.append(Vector2(cos(a) * radius, -half_body + sin(a) * radius))
+		points_top.append(Vector2(cos(a) * radius, -half_body + sin(a) * radius))
 	for i in range(8):
 		var a := PI * float(i) / 7.0
-		points.append(Vector2(cos(a) * radius, half_body + sin(a) * radius))
-	visual.polygon = points
+		points_bottom.append(Vector2(cos(a) * radius, half_body + sin(a) * radius))
+	_apply_split_polygons(points_top, points_bottom)
 
 
-func _get_visual_node() -> Polygon2D:
+func _apply_split_polygons(top_poly: PackedVector2Array, bottom_poly: PackedVector2Array) -> void:
 	if is_node_ready():
-		return _visual
-	return get_node_or_null("Visual") as Polygon2D
+		_visual_top.polygon = top_poly
+		_visual_bottom.polygon = bottom_poly
+	else:
+		var top := get_node_or_null("VisualTop") as Polygon2D
+		var bot := get_node_or_null("VisualBottom") as Polygon2D
+		if top != null:
+			top.polygon = top_poly
+		if bot != null:
+			bot.polygon = bottom_poly
