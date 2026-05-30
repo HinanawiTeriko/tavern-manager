@@ -70,6 +70,16 @@ func _profiles() -> Dictionary:
 				"impact_sound": "tap",
 				"impact_particle": "",
 				"shake_scale": 0.0
+			},
+			"thud": {
+				"impact_sound": "thud",
+				"impact_particle": "",
+				"shake_scale": 0.15
+			},
+			"powder": {
+				"impact_sound": "soft",
+				"impact_particle": "flour_puff",
+				"shake_scale": 0.0
 			}
 		}
 	}
@@ -127,7 +137,26 @@ func _test_feedback_profile_triggers_visual_impact() -> void:
 	_ok(item.trigger_impact_feedback(320.0), "high-speed impact should trigger feedback")
 	_ok(visual.modulate != Color.WHITE, "high-speed impact should flash visual color")
 	_ok(visual.scale != Vector2.ONE, "high-speed impact should pop visual scale")
+	_ok(item.has_node("ImpactFeedback/BouncyRing"), "bouncy impact should create visible ring")
 	item.queue_free()
+
+	var thud := _spawn_item()
+	thud.setup_item("meat_raw", {"feedback_profile": "thud"}, _profiles())
+	_ok(thud.trigger_impact_feedback(320.0), "thud impact should trigger feedback")
+	_ok(thud.has_node("ImpactFeedback/ThudBlock"), "thud impact should create visible block")
+	thud.queue_free()
+
+	var powder := _spawn_item()
+	powder.setup_item("flour", {"feedback_profile": "powder"}, _profiles())
+	_ok(powder.trigger_impact_feedback(320.0), "powder impact should trigger feedback")
+	_ok(powder.get_node("ImpactFeedback").get_child_count() >= 4, "powder impact should create several dust motes")
+	powder.queue_free()
+
+	var baseline := _spawn_item()
+	baseline.setup_item("ale", {}, _profiles())
+	_ok(baseline.trigger_impact_feedback(320.0), "default impact should trigger feedback")
+	_ok(baseline.has_node("ImpactFeedback/DefaultFlash"), "default impact should create a small flash")
+	baseline.queue_free()
 
 
 func _visual_rect_size(item: DeskItem) -> Vector2:
