@@ -36,16 +36,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_spawn_test_guest()
 
 
-func _on_drag_ended(body: DeskItem) -> void:
-	if body == null or body.item_key == "":
+func _on_drag_ended(body: RigidBody2D) -> void:
+	if not body is DeskItem:
 		return
-	if not GameManager.craft.is_product(body.item_key):
+	var item: DeskItem = body
+	if item.item_key == "":
 		return
-	if not _customer_area.get_overlapping_bodies().has(body):
+	if not GameManager.craft.is_product(item.item_key):
+		return
+	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var speed: float = _drag_ctrl.get_serve_speed()
-	GameManager.request_serve(body.item_key, {"serve_drop_speed": speed})
-	body.queue_free()
+	GameManager.request_serve(item.item_key, {"serve_drop_speed": speed})
+	item.queue_free()
 
 
 # ================================================================

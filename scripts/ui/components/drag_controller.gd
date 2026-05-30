@@ -8,15 +8,15 @@ extends Node
 ##   移动: update_target_global(pos)
 ##   松开: end_drag()
 
-signal drag_started(body: DeskItem)
-signal drag_ended(body: DeskItem)
+signal drag_started(body: RigidBody2D)
+signal drag_ended(body: RigidBody2D)
 
 # —— 物理参数 ——
 const JOINT_SOFTNESS: float = 0.0    # 0 = 刚性钉子；增大会使约束更"软"/有弹性（不是减抖动 — 抖动调 angular_damp/linear_damp）
 const SERVE_SPEED_SMOOTHING: float = 0.3   # 平滑速度 EMA 系数：每物理帧把瞬时速度混入；越大越跟手、越小越稳
 
 # —— 内部状态 ——
-var _body: DeskItem = null
+var _body: RigidBody2D = null
 var _anchor: AnimatableBody2D = null
 var _joint: PinJoint2D = null
 var _serve_speed: float = 0.0   # 拖拽期间的平滑速度（EMA），上菜风格判定用；start_drag 清零
@@ -30,7 +30,7 @@ func is_dragging() -> bool:
 	return _body != null
 
 
-func get_body() -> DeskItem:
+func get_body() -> RigidBody2D:
 	return _body
 
 
@@ -39,7 +39,7 @@ func get_serve_speed() -> float:
 	return _serve_speed
 
 
-func start_drag(body: DeskItem, mouse_global_pos: Vector2) -> void:
+func start_drag(body: RigidBody2D, mouse_global_pos: Vector2) -> void:
 	## 在 body 上创建钉子，钉子位置 = mouse_global_pos（即按下时光标在物品上的局部点）。
 	if _body != null:
 		end_drag()
