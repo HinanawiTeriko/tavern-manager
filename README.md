@@ -1,98 +1,97 @@
 # 地下城酒馆 (Tavern Manager)
 
-> 地下城风格的酒馆模拟经营游戏 | Godot 4.6 标准版 | GDScript | v0.2
+> Godot 4.6 标准版 / GDScript / 2D GL Compatibility 的吧台物理经营原型。
 
----
+## 项目现状
+
+当前主线已经从旧的“固定合成槽 + 按钮手势 + SeasoningZone”改为“物理吧台工作面 + 三容器加工 + 拖拽上菜”。
+
+- 主场景：`res://scenes/ui/TitleScreen.tscn`
+- 夜晚营业：`res://scenes/ui/Tavern.tscn`
+- 核心工作面：`scripts/ui/bar_workspace.gd`
+- 三个 Day 1 容器：酒桶 `barrel`、烤架 `grill`、炖锅 `pot`
+- 物理物品：`scenes/test/desk_item.tscn` + `scripts/test/desk_item.gd`
+- 配方查询：`CraftSystem.query_recipe(container, ingredients)`
 
 ## 游戏简介
 
-你是一名地下城酒馆的老板。冒险者们从危险的地牢归来，渴望一杯麦芽酒或一顿热饭。白天采集材料、与 NPC 对话，夜晚在吧台后通过**拖拽材料合成食物和饮料**，用**手势操作**（加热/摇晃/搅拌）完成烹饪，撒上香料调味，满足客人的订单，赚取金币和声望！
+玩家经营一间地下城酒馆。白天在 DayMap 选择目的地、采集材料、触发 NPC 对话；夜晚在吧台后从快捷栏取材，把材料作为物理物体拖到桌面，通过酒桶、烤架和炖锅制作订单，再把成品拖到客人投放区完成上菜。上菜时的力度会进入 L3 动作风格系统，影响重要 NPC 的信任与反馈。
 
-### 核心玩法
+### 当前可玩循环
 
-- **白天采集**：选择目的地，采集材料，与 NPC 互动推进剧情
-- **拖拽合成**：从快捷栏拿起材料，拖入合成区组合成食物/饮料
-- **手势操作**：加热、摇晃、搅拌、倒出四种手势
-- **香料调味**：将成品撒上香料再上菜
-- **服务客人**：在客人耐心耗尽前提供正确订单
-- **经营成长**：赚取金币和声望，解锁更多配方
+1. `TitleScreen` 点击开始进入 `DayMap`。
+2. 选择或跳过白天准备，进入 `Tavern`。
+3. 从底部 `ShortcutBar` 点取材料，生成可拖拽的 `DeskItem`。
+4. 把材料投入酒桶、烤架或炖锅，容器产出物理成品。
+5. 将成品拖到 `CustomerDropArea` 松手，上菜并结算金币、声望和叙事变量。
+6. 打烊后进入 `LedgerScreen`，继续下一天；第 30 天后进入 `EndingScreen`。
 
-### 当前内容 (v0.2)
+## 当前内容
 
-| 内容 | 数量 |
-|------|------|
-| 材料种类 | 5 种（麦芽、葡萄、面粉、生肉、草药） |
-| 香料 | 4 种（辣、香草、咸、迷睡花粉） |
-| 配方 | 9 种（5 单品 + 4 合成品） |
-| 子系统 | 7 个（合成/客人/经济/昼夜/叙事/香料/商店） |
-| 场景 | 5 个（标题/大地图/酒馆/结算/结局） |
-| 游戏天数 | 30 天 |
-| NPC 叙事线 | 莱恩 3 天 + 米拉 2 天 |
-
----
+| 内容 | 当前状态 |
+|------|----------|
+| 基础材料 | 5 种：麦芽、葡萄、面粉、生肉、草药 |
+| 可上菜成品 | 11 种：酒桶 5、烤架 3、炖锅 3 |
+| 容器 | 酒桶、烤架、炖锅已接入 Tavern |
+| 物理手感 | RigidBody2D + PinJoint 拖拽，物品 profile 可配置 |
+| 酒桶 | 投料、摇晃计数、品质 normal/good、物理产出 |
+| 烤架 | 单面按压煎制，熟/焦定稿 |
+| 炖锅 | 投料后用物理勺搅拌，进度满足后产出 |
+| L3 风格 | 上菜速度分为温柔、平静、粗鲁，接入 Mira/Day4/wine 竖切片 |
+| NPC 叙事 | Ryan Day 1-3、Mira Day 4/12 |
 
 ## 快速开始
 
 ### 环境要求
 
-- **Godot**: 4.6.x-stable 标准版（非 .NET/Mono）
-- **操作系统**: Windows / macOS / Linux
+- Godot 4.6.x standard，非 .NET/Mono 版
+- Windows / macOS / Linux
 
 ### 运行
 
-用 Godot 4.6.x 标准版编辑器打开项目目录，点击运行即可。无需额外编译步骤。
+用 Godot 4.6.x 标准版编辑器打开项目目录，运行主场景即可。项目没有额外编译、打包脚本、linter 或 CI。
 
-### 操作
+Godot MCP 环境可能启动 Mono 并输出 `.NET: Assemblies not found`，只要标准编辑器不复现，按环境噪声处理。
 
-| 操作 | 按键/方式 |
-|------|-----------|
-| 拖拽材料 | **鼠标左键** 拿起/放下 |
-| 逐个退回 | 拖拽中 **鼠标右键** |
-| 全部退回 | 非拖拽时 **鼠标右键** |
-| 打开菜单 | **E 键**（查看配方表和背包） |
+### 基本操作
 
----
+| 操作 | 方式 |
+|------|------|
+| 取材料 | 鼠标左键点击底部快捷栏槽位 |
+| 拖动物品/容器/勺子 | 鼠标左键按住并移动 |
+| 投入酒桶 | 把材料丢入桶口，速度足够才会接收 |
+| 摇酒桶 | 抓住酒桶左右晃动，摇够后产出 |
+| 烤制 | 抓着可烤材料按在烤架热区，离开热区时定稿 |
+| 炖煮 | 把材料放进锅，再用勺尖在锅内搅动 |
+| 上菜 | 把成品拖进客人投放区松手 |
+| 菜单 | `E` 打开/关闭配方与背包面板 |
 
 ## 项目结构
 
-```
+```text
 tavern-manager/
-├── project.godot                  # 引擎配置
-├── assets/                        # 美术/音频/字体资源
-│   ├── textures/                  # 图片纹理
-│   ├── audio/                     # 音效音乐
-│   ├── fonts/                     # 字体文件
-│   └── ui/                        # UI 素材
-├── scenes/                        # 场景文件 (.tscn)
-│   ├── main/Main.tscn             # 主入口容器
-│   └── ui/                        # UI 场景
-├── scripts/                       # GDScript 脚本
-│   ├── game_manager.gd            # [核心] Autoload 顶层协调器
-│   ├── main/                      # 场景入口
-│   ├── systems/                   # 系统逻辑（7个子系统）
-│   └── ui/                        # UI 逻辑
-├── data/                          # JSON 配置数据
+├── project.godot                  # Godot 配置，主场景为 TitleScreen
+├── assets/                        # 纹理、图标、导入资源
+├── data/                          # JSON 玩法数据
+│   ├── items.json                 # 物品、价格、颜色、profile 引用
+│   ├── recipes.json               # container + ingredients 配方表
+│   ├── item_physics_profiles.json # 物理/碰撞/反馈 profile
+│   ├── barrel.json                # 酒桶摇晃阈值
+│   └── craft_style_thresholds.json# L3 风格阈值
 ├── dialogue/                      # Dialogue Manager 对话
-├── docs/                          # 文档
-└── addons/                        # Godot 插件
+├── scenes/
+│   ├── ui/                        # TitleScreen / DayMap / Tavern / Ledger / Ending
+│   └── test/                      # 物理沙盘和无 runner 的测试场景
+├── scripts/
+│   ├── game_manager.gd            # Autoload 顶层协调器
+│   ├── systems/                   # RefCounted 子系统
+│   ├── ui/                        # 正式 UI 与吧台工作面
+│   └── test/                      # 沙盘脚本与手动测试脚本
+├── docs/                          # 项目文档
+└── addons/                        # vendored 插件，不随意修改
 ```
 
----
-
-## 技术栈
-
-| 项目 | 说明 |
-|------|------|
-| 引擎 | Godot 4.6 标准版 |
-| 语言 | GDScript |
-| 渲染 | 2D (GL Compatibility) |
-| 分辨率 | 1280×720，可缩放视口 |
-| 设计系统 | "Hearth & Shadow" 暖色像素风 |
-| 插件 | Dialogue Manager（对话）、Godot MCP（AI 辅助） |
-
----
-
-## 文档导航
+## 重要文档
 
 > 📚 完整索引见 [docs/README.md](docs/README.md)
 
@@ -104,16 +103,23 @@ tavern-manager/
 | 需求规格 | [11_物理效果](docs/specs/11_合成物理效果需求文档.md) · [13_物理重设计](docs/specs/13_合成系统物理重设计需求文档.md) · [16_物理手感](docs/specs/16_物品物理手感Profile接口设计.md) · [17_Day1配方](docs/specs/17_Day1三容器配方与解锁设计.md) |
 | 参考资料 | [03_资源清单](docs/reference/03_资源清单.md) |
 
----
+`docs/10_酿造系统需求文档.md` 和 `docs/14_吧台交互系统重设计_legacy.md` 是历史/废弃文档，不作为新开发依据。
 
-## 路线图
+## 开发约定
 
-- [x] v0.1 MVP — 基础拖拽合成 + 客人服务循环
-- [x] v0.2 — 系统拆分（7个子系统）、手势合成、香料系统、NPC 叙事线
-- [ ] v0.3 — 内容扩展：更多 NPC 故事线、配方、美术资源替换
-- [ ] v1.0 — 完整 30 天游戏循环、多 NPC 结局、音频
+- GDScript 使用 tabs，文件/变量/函数用 `snake_case`。
+- 场景和脚本分树存放：`.tscn` 在 `scenes/`，`.gd` 在 `scripts/`。
+- 子系统放 `scripts/systems/`，尽量保持 `RefCounted`，跨系统行为通过 `GameManager` 路由。
+- 使用绝对 `res://` 路径。
+- 不修改 `addons/`，除非明确更新依赖。
+- 提交前至少检查 `git status` 和冲突标记。
 
+## 验证建议
 
-## 合并要求
+项目没有自动测试 runner。改 gameplay/UI 后优先走标准编辑器手测：
 
-- 所有改动需通过PR合并到main
+```text
+TitleScreen -> DayMap -> Tavern -> LedgerScreen -> DayMap
+```
+
+三容器相关改动还应在 Tavern 中逐个验证酒桶、烤架、炖锅的主要配方，并确认上菜结算无错误/警告。需要跑测试场景时可用 `scenes/test/test_l3.tscn`、`test_barrel_shake.tscn`、`test_kitchen_containers.tscn` 等 headless 场景辅助验证。

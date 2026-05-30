@@ -1,9 +1,11 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="dc"]
 [ext_resource type="Script" path="res://scripts/test/brewery.gd" id="brw"]
+[ext_resource type="Script" path="res://scripts/ui/kitchen_container.gd" id="kc"]
+[ext_resource type="Script" path="res://scripts/ui/stir_spoon.gd" id="spoon"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
 a = Vector2(150, 655)
@@ -40,8 +42,47 @@ b = Vector2(50, -40)
 [sub_resource type="RectangleShape2D" id="tv_mouth"]
 size = Vector2(100, 30)
 
+[sub_resource type="RectangleShape2D" id="tv_grill_body"]
+size = Vector2(140, 32)
+
+[sub_resource type="RectangleShape2D" id="tv_grill_intake"]
+size = Vector2(150, 48)
+
+[sub_resource type="RectangleShape2D" id="tv_grill_sear"]
+size = Vector2(150, 28)
+
+[sub_resource type="SegmentShape2D" id="tv_pot_wall_left"]
+a = Vector2(-48, 38)
+b = Vector2(-40, -34)
+
+[sub_resource type="SegmentShape2D" id="tv_pot_wall_right"]
+a = Vector2(48, 38)
+b = Vector2(40, -34)
+
+[sub_resource type="SegmentShape2D" id="tv_pot_wall_bottom"]
+a = Vector2(-48, 38)
+b = Vector2(48, 38)
+
+[sub_resource type="SegmentShape2D" id="tv_pot_rim_left"]
+a = Vector2(-40, -34)
+b = Vector2(-34, -34)
+
+[sub_resource type="SegmentShape2D" id="tv_pot_rim_right"]
+a = Vector2(34, -34)
+b = Vector2(40, -34)
+
+[sub_resource type="RectangleShape2D" id="tv_pot_intake"]
+size = Vector2(86, 42)
+
+[sub_resource type="RectangleShape2D" id="tv_pot_pickup"]
+size = Vector2(104, 92)
+
 [sub_resource type="RectangleShape2D" id="tv_drop"]
 size = Vector2(410, 328)
+
+[sub_resource type="CapsuleShape2D" id="tv_spoon_shape"]
+radius = 8.0
+height = 88.0
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -421,6 +462,106 @@ shape = SubResource("tv_mouth")
 
 [node name="OutputAnchor" type="Marker2D" parent="BarWorkspace/World/Brewery"]
 position = Vector2(0, -70)
+
+[node name="Grill" type="RigidBody2D" parent="BarWorkspace/World"]
+position = Vector2(330, 620)
+script = ExtResource("kc")
+container_key = "grill"
+cook_time = 2.5
+burn_time = 5.5
+intake_inner_half_width = 75.0
+intake_top_y = -48.0
+intake_bottom_y = 0.0
+
+[node name="Body" type="CollisionShape2D" parent="BarWorkspace/World/Grill"]
+shape = SubResource("tv_grill_body")
+
+[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Grill"]
+polygon = PackedVector2Array(-75, 16, 75, 16, 68, -16, -68, -16)
+color = Color(0.42, 0.12, 0.08, 1)
+
+[node name="HeatBars" type="Polygon2D" parent="BarWorkspace/World/Grill"]
+polygon = PackedVector2Array(-56, -6, -44, -6, -44, 6, -56, 6, -16, -6, -4, -6, -4, 6, -16, 6, 24, -6, 36, -6, 36, 6, 24, 6)
+color = Color(1, 0.35, 0.08, 1)
+
+[node name="Intake" type="Area2D" parent="BarWorkspace/World/Grill"]
+position = Vector2(0, -24)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Grill/Intake"]
+shape = SubResource("tv_grill_intake")
+
+[node name="OutputAnchor" type="Marker2D" parent="BarWorkspace/World/Grill"]
+position = Vector2(0, -56)
+
+[node name="SearZone" type="Area2D" parent="BarWorkspace/World/Grill"]
+position = Vector2(0, -16)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Grill/SearZone"]
+shape = SubResource("tv_grill_sear")
+
+[node name="Pot" type="RigidBody2D" parent="BarWorkspace/World"]
+position = Vector2(520, 600)
+script = ExtResource("kc")
+container_key = "pot"
+required_stir = 650.0
+intake_inner_half_width = 34.0
+intake_top_y = -59.0
+intake_bottom_y = -17.0
+
+[node name="WallLeft" type="CollisionShape2D" parent="BarWorkspace/World/Pot"]
+shape = SubResource("tv_pot_wall_left")
+
+[node name="WallRight" type="CollisionShape2D" parent="BarWorkspace/World/Pot"]
+shape = SubResource("tv_pot_wall_right")
+
+[node name="WallBottom" type="CollisionShape2D" parent="BarWorkspace/World/Pot"]
+shape = SubResource("tv_pot_wall_bottom")
+
+[node name="RimLeft" type="CollisionShape2D" parent="BarWorkspace/World/Pot"]
+shape = SubResource("tv_pot_rim_left")
+
+[node name="RimRight" type="CollisionShape2D" parent="BarWorkspace/World/Pot"]
+shape = SubResource("tv_pot_rim_right")
+
+[node name="PickupArea" type="Area2D" parent="BarWorkspace/World/Pot"]
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Pot/PickupArea"]
+shape = SubResource("tv_pot_pickup")
+
+[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Pot"]
+z_index = 12
+polygon = PackedVector2Array(-48, 38, 48, 38, 40, -34, -40, -34)
+color = Color(0.16, 0.22, 0.28, 1)
+
+[node name="Soup" type="Polygon2D" parent="BarWorkspace/World/Pot"]
+z_index = 12
+position = Vector2(0, -28)
+polygon = PackedVector2Array(-34, -6, 34, -6, 34, 6, -34, 6)
+color = Color(0.52, 0.32, 0.14, 1)
+
+[node name="Intake" type="Area2D" parent="BarWorkspace/World/Pot"]
+position = Vector2(0, -38)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Pot/Intake"]
+shape = SubResource("tv_pot_intake")
+
+[node name="OutputAnchor" type="Marker2D" parent="BarWorkspace/World/Pot"]
+position = Vector2(0, -72)
+
+[node name="Spoon" type="RigidBody2D" parent="BarWorkspace/World"]
+position = Vector2(700, 590)
+z_index = 10
+script = ExtResource("spoon")
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Spoon"]
+shape = SubResource("tv_spoon_shape")
+
+[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Spoon"]
+polygon = PackedVector2Array(-5, -44, 5, -44, 5, 28, 11, 34, 11, 44, -11, 44, -11, 34, -5, 28)
+color = Color(0.75, 0.62, 0.4, 1)
+
+[node name="Tip" type="Marker2D" parent="BarWorkspace/World/Spoon"]
+position = Vector2(0, 40)
 
 [node name="DragCtrl" type="Node" parent="BarWorkspace"]
 script = ExtResource("dc")
