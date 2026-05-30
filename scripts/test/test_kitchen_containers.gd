@@ -12,7 +12,7 @@ func _ready() -> void:
 	_test_grill_continues_searing_cooked_items()
 	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
-	_test_desk_item_two_faces()
+	_test_desk_item_split_visuals()
 	_test_tavern_scene_nodes()
 	print("[TEST-KITCHEN] ALL PASS (", _checks, " checks)")
 	get_tree().quit()
@@ -34,12 +34,11 @@ func _test_meat_doneness() -> void:
 	doneness.set_raw_color(Color(0.65, 0.2, 0.1))
 	_ok(doneness.result() == "raw", "fresh meat is raw")
 	doneness.add_heat(0, 1.0)
-	_ok(doneness.result() == "raw", "one cooked face and one raw face is still raw")
-	doneness.add_heat(1, 1.0)
-	_ok(doneness.result() == "cooked", "both cooked faces produce cooked result")
+	_ok(doneness.result() == "cooked", "single-side sear to cooked threshold produces cooked result")
+	_ok(doneness.face_color(0) == MeatDoneness.GOLDEN, "cooked meat uses golden color")
+	_ok(doneness.face_color(1) == MeatDoneness.GOLDEN, "visual halves share the same single-side doneness color")
 	doneness.add_heat(0, 1.5)
-	_ok(doneness.result() == "burnt", "any face past burn max burns the item")
-	_ok(doneness.face_color(1) == MeatDoneness.GOLDEN, "cooked face uses golden color")
+	_ok(doneness.result() == "burnt", "continued single-side sear past burn max burns the item")
 
 
 func _test_meat_orientation() -> void:
@@ -108,12 +107,12 @@ func _test_recipe_data() -> void:
 	_ok(craft.query_recipe("pot", ["flour", "ale"]) == "malt_porridge", "flour and ale in pot should make porridge")
 
 
-func _test_desk_item_two_faces() -> void:
+func _test_desk_item_split_visuals() -> void:
 	var scene := load("res://scenes/test/desk_item.tscn") as PackedScene
 	_ok(scene != null, "desk item scene should load")
 	var item := scene.instantiate()
-	_ok(item.get_node_or_null("VisualTop") is Polygon2D, "desk item has VisualTop half")
-	_ok(item.get_node_or_null("VisualBottom") is Polygon2D, "desk item has VisualBottom half")
+	_ok(item.get_node_or_null("VisualTop") is Polygon2D, "desk item keeps a top visual half")
+	_ok(item.get_node_or_null("VisualBottom") is Polygon2D, "desk item keeps a bottom visual half")
 	_ok(item.get_node_or_null("FaceTop") is Marker2D, "desk item has FaceTop marker")
 	_ok(item.get_node_or_null("FaceBottom") is Marker2D, "desk item has FaceBottom marker")
 	item.free()

@@ -19,7 +19,7 @@ const COOK_STATION_STATE := preload("res://scripts/systems/cook_station_state.gd
 @export var stir_zone_top_y: float = -59.0
 @export var stir_zone_bottom_y: float = 40.0
 # —— 烤架按压煎制 ——
-@export var heat_rate: float = 1.0   # 朝下面每秒累积的熟度
+@export var heat_rate: float = 1.0   # 每秒累积的单面熟度
 
 @onready var _intake: Area2D = $Intake
 @onready var _output_anchor: Marker2D = $OutputAnchor
@@ -93,7 +93,7 @@ func _accumulate_stir(spoon: StirSpoon, _delta: float) -> void:
 	_state.add_stir(moved * stir_scale)
 
 
-## 烤架:被抓着且贴在 SearZone 内的肉,朝下面累积熟度;离开烤区时定稿。
+## 烤架:被抓着且贴在 SearZone 内的物品累积单面熟度;离开烤区时定稿。
 func _process_grill_sear(delta: float) -> void:
 	if _sear_zone == null:
 		return
@@ -114,7 +114,7 @@ func _process_grill_sear(delta: float) -> void:
 	_searing_bodies = now_inside
 
 
-## 肉离开烤架时按两面颜色定稿:熟→配方产物;焦→焦糊;生→保持原样(留作剧情)。
+## 物品离开烤架时按单一熟度定稿:熟→配方产物;焦→焦糊;生→保持原样(留作剧情)。
 func _finalize_grill_item(item: DeskItem) -> void:
 	var verdict := item.grill_result()
 	if verdict == "raw":

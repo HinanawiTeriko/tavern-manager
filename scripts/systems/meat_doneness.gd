@@ -7,7 +7,7 @@ const GOLDEN := Color(0.5, 0.15, 0.05)
 const BURNT := Color(0.1, 0.08, 0.05)
 
 var _raw_color: Color = Color(0.65, 0.2, 0.1)
-var _t := [0.0, 0.0]
+var _progress: float = 0.0
 
 
 func set_raw_color(c: Color) -> void:
@@ -17,23 +17,25 @@ func set_raw_color(c: Color) -> void:
 func add_heat(face: int, amount: float) -> void:
 	if face < 0 or face > 1:
 		return
-	_t[face] += maxf(amount, 0.0)
+	_progress += maxf(amount, 0.0)
 
 
 func face_progress(face: int) -> float:
-	return _t[face]
+	if face < 0 or face > 1:
+		return 0.0
+	return _progress
 
 
 func is_face_raw(face: int) -> bool:
-	return _t[face] < COOKED_MIN
+	return face_progress(face) < COOKED_MIN
 
 
 func is_face_burnt(face: int) -> bool:
-	return _t[face] > BURN_MAX
+	return face_progress(face) > BURN_MAX
 
 
 func face_color(face: int) -> Color:
-	var t: float = _t[face]
+	var t: float = face_progress(face)
 	if t <= COOKED_MIN:
 		return _raw_color.lerp(GOLDEN, clampf(t / COOKED_MIN, 0.0, 1.0))
 	if t <= BURN_MAX:
@@ -42,9 +44,9 @@ func face_color(face: int) -> Color:
 
 
 func result() -> String:
-	if is_face_burnt(0) or is_face_burnt(1):
+	if _progress > BURN_MAX:
 		return "burnt"
-	if is_face_raw(0) or is_face_raw(1):
+	if _progress < COOKED_MIN:
 		return "raw"
 	return "cooked"
 
