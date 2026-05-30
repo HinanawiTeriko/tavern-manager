@@ -1,0 +1,7 @@
+{
+  "shake": {
+    "min_speed": 150.0,
+    "min_count": 4,
+    "good_count": 10
+  }
+}
