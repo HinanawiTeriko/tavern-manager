@@ -120,9 +120,12 @@ func _try_brew() -> void:
 		return
 	var product_key: String = GameManager.craft.query_recipe(CONTAINER_KEY, _pending_keys)
 	var quality: String = _shake.quality_tier()
+	var shakes: int = _shake.shake_count
 	_pending_keys.clear()
 	_shake.reset()
 	if product_key == "":
+		print("[Brewery] 摇够了但配方未命中，料已消耗无产出 (摇晃 %d 次)" % shakes)
 		return   # 软兜底：料已消耗、无产出
+	print("[Brewery] 产出 %s  品质=%s  (摇晃 %d 次)" % [product_key, quality, shakes])
 	_spawn_product(product_key, quality)
 	recipe_consumed.emit(product_key)
