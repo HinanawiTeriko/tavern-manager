@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/test/gravity_test.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2_drag_ctrl"]
@@ -20,6 +20,18 @@ b = Vector2(1200, 318)
 [sub_resource type="SegmentShape2D" id="seg_top"]
 a = Vector2(80, 60)
 b = Vector2(1200, 60)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_left"]
+a = Vector2(-50, 40)
+b = Vector2(-40, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_right"]
+a = Vector2(50, 40)
+b = Vector2(40, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_bottom"]
+a = Vector2(-50, 40)
+b = Vector2(50, 40)
 
 [sub_resource type="RectangleShape2D" id="rect_mouth"]
 size = Vector2(100, 30)
@@ -62,9 +74,18 @@ shape = SubResource("seg_top")
 
 [node name="Items" type="Node2D" parent="World"]
 
-[node name="Brewery" type="Node2D" parent="World"]
+[node name="Brewery" type="RigidBody2D" parent="World"]
 position = Vector2(900, 280)
 script = ExtResource("3_brewery")
+
+[node name="WallLeft" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_left")
+
+[node name="WallRight" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_right")
+
+[node name="WallBottom" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_bottom")
 
 [node name="Visual" type="Polygon2D" parent="World/Brewery"]
 polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
@@ -82,7 +103,7 @@ position = Vector2(0, -50)
 shape = SubResource("rect_mouth")
 
 [node name="OutputAnchor" type="Marker2D" parent="World/Brewery"]
-position = Vector2(100, 0)
+position = Vector2(0, -70)
 
 [node name="HotbarUI" type="CanvasLayer" parent="."]
 

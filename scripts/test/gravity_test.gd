@@ -38,7 +38,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and not _drag_ctrl.is_dragging():
 			_try_pickup(pos)
 		elif not event.pressed and _drag_ctrl.is_dragging():
+			var dragged := _drag_ctrl.get_body()
 			_drag_ctrl.end_drag()
+			if dragged == _brewery:
+				_brewery.end_shake_session()
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
 
@@ -52,6 +55,12 @@ func _try_pickup(pos: Vector2) -> void:
 		_drag_ctrl.start_drag(hit_body, pos)
 		return
 
+	# 命中酒桶本体？→ 解冻并钉住（可移动 + 可摇）
+	if _hit_test_brewery(pos):
+		_brewery.begin_shake_session()
+		_drag_ctrl.start_drag(_brewery, pos)
+		return
+
 	# 2. 命中快捷栏槽位？→ 在鼠标位置生成新物品再钉住
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos):
@@ -61,6 +70,18 @@ func _try_pickup(pos: Vector2) -> void:
 			var body := _spawn_desk_item_at(pos, item_key)
 			_drag_ctrl.start_drag(body, pos)
 			return
+
+
+func _hit_test_brewery(pos: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		if h.get("collider") == _brewery:
+			return true
+	return false
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
