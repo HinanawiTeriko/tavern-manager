@@ -1,16 +1,18 @@
 class_name Brewery
 extends RigidBody2D
 
-## 酒桶（容器，物理体）。默认 freeze 悬停桌上；抓起解冻可移动+可摇；松手在落点重冻。
-## 杯状侧壁（左斜壁/右斜壁/桶底）由 .tscn 提供，顶部留口；甩偏撞壁弹开，甩准从 Mouth 入桶。
-## 收料：物品够速度入 Mouth → 攒进 _pending_keys（不再自动产出，出酒见后续摇晃任务）。
-## 成品穿过桶口不消耗（玩家拿成品试错的常规动作）。
-
+## Barrel container body. It keeps normal gravity, can be grabbed/shaken,
+## and continues as a physics body after release.
 signal recipe_consumed(product_key: String)
 
 const CONTAINER_KEY := "barrel"
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
-const MIN_THROW_SPEED := 250.0   # 进桶瞬间速度阈值；够力才收料
+const BARREL_MASS := 2.5
+const BARREL_LINEAR_DAMP := 0.8
+const BARREL_ANGULAR_DAMP := 4.0
+const MOUTH_INNER_HALF_WIDTH := 24.0
+const MOUTH_TOP_Y := -64.0
+const MOUTH_BOTTOM_Y := -34.0
 
 @onready var _mouth: Area2D = $Mouth
 @onready var _output_anchor: Marker2D = $OutputAnchor
@@ -20,28 +22,48 @@ var _pending_keys: Array[String] = []
 
 
 func _ready() -> void:
-	assert(GameManager.craft != null, "[Brewery] GameManager.craft 未就绪")
+	assert(GameManager.craft != null, "[Brewery] GameManager.craft is not ready")
 	_items_parent = get_parent().get_node("Items")
-	assert(_items_parent != null, "[Brewery] 未找到父节点下的 'Items' 节点")
-	freeze = true
-	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
-	gravity_scale = 0.0           # 解冻后靠拖拽/重冻定位，不自由下坠
-	lock_rotation = true          # 摇晃只用水平平移，不让桶自转
+	assert(_items_parent != null, "[Brewery] Missing sibling Items node")
+	mass = BARREL_MASS
+	freeze = false
+	gravity_scale = 1.0
+	linear_damp = BARREL_LINEAR_DAMP
+	angular_damp = BARREL_ANGULAR_DAMP
+	lock_rotation = false
 	_mouth.body_entered.connect(_on_mouth_body_entered)
 
 
+func _physics_process(_delta: float) -> void:
+	for body in _mouth.get_overlapping_bodies():
+		_try_accept_mouth_body(body)
+
+
 func _on_mouth_body_entered(body: Node) -> void:
+	_try_accept_mouth_body(body)
+
+
+func _try_accept_mouth_body(body: Node) -> void:
 	if not body is DeskItem:
 		return
 	var item: DeskItem = body
+	if item.is_queued_for_deletion():
+		return
 	if item.item_key == "":
 		return
 	if GameManager.craft.is_product(item.item_key):
 		return
-	if item.linear_velocity.length() < MIN_THROW_SPEED:
+	if not _is_item_inside_mouth_opening(item):
 		return
 	_pending_keys.append(item.item_key)
 	item.queue_free()
+
+
+func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
+	var local_pos: Vector2 = to_local(item.global_position)
+	return absf(local_pos.x) <= MOUTH_INNER_HALF_WIDTH \
+		and local_pos.y >= MOUTH_TOP_Y \
+		and local_pos.y <= MOUTH_BOTTOM_Y
 
 
 func _spawn_product(product_key: String) -> void:
@@ -52,13 +74,15 @@ func _spawn_product(product_key: String) -> void:
 	product.set_item(product_key, item_data)
 
 
-## ⚠️ 临时占位：当前只做解冻/重冻。真正的摇晃计数 + 必须摇够才出酒
-## 将在后续「摇晃酿造」任务中替换这两个函数的实现（届时 begin 启动摇晃采样、
-## end 结算 _try_brew）。本任务阶段酒桶刻意不产出。
+## Placeholder for the later shake-brewing task. For now these only wake the
+## barrel for dragging and keep it dynamic when released.
 func begin_shake_session() -> void:
 	freeze = false
+	lock_rotation = false
+	sleeping = false
 
 
 func end_shake_session() -> void:
-	freeze = true
-	linear_velocity = Vector2.ZERO
+	freeze = false
+	lock_rotation = false
+	sleeping = false

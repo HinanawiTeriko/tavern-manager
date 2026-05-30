@@ -77,9 +77,13 @@ func _hit_test_brewery(pos: Vector2) -> bool:
 	var params := PhysicsPointQueryParameters2D.new()
 	params.position = pos
 	params.collide_with_bodies = true
+	params.collide_with_areas = true
 	var hits := space.intersect_point(params, 8)
 	for h in hits:
-		if h.get("collider") == _brewery:
+		var collider = h.get("collider")
+		if collider == _brewery:
+			return true
+		if collider is Area2D and collider.get_parent() == _brewery:
 			return true
 	return false
 

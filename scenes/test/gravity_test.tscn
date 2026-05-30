@@ -33,6 +33,14 @@ b = Vector2(40, -40)
 a = Vector2(-50, 40)
 b = Vector2(50, 40)
 
+[sub_resource type="SegmentShape2D" id="seg_rim_left"]
+a = Vector2(-50, -40)
+b = Vector2(-30, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_rim_right"]
+a = Vector2(30, -40)
+b = Vector2(50, -40)
+
 [sub_resource type="RectangleShape2D" id="rect_mouth"]
 size = Vector2(100, 30)
 
@@ -87,9 +95,20 @@ shape = SubResource("seg_wall_right")
 [node name="WallBottom" type="CollisionShape2D" parent="World/Brewery"]
 shape = SubResource("seg_wall_bottom")
 
+[node name="RimLeft" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_rim_left")
+
+[node name="RimRight" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_rim_right")
+
 [node name="Visual" type="Polygon2D" parent="World/Brewery"]
 polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
 color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="PickupArea" type="Area2D" parent="World/Brewery"]
+
+[node name="Shape" type="CollisionPolygon2D" parent="World/Brewery/PickupArea"]
+polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
 
 [node name="MouthRim" type="Polygon2D" parent="World/Brewery"]
 position = Vector2(0, -40)
