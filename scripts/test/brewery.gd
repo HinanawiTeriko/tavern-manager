@@ -40,7 +40,7 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	if _session_active:
-		_shake.add_sample(linear_velocity.x)
+		_shake.add_sample(linear_velocity)
 	for body in _mouth.get_overlapping_bodies():
 		_try_accept_mouth_body(body)
 
