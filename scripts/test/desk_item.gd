@@ -6,6 +6,7 @@ extends RigidBody2D
 const KILL_Y: float = 800.0
 
 var item_key: String = ""
+var quality: String = "normal"
 var _pending_color: Color = Color.WHITE
 
 @onready var _visual: Polygon2D = $Visual
