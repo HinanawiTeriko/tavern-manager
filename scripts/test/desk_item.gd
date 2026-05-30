@@ -46,6 +46,7 @@ var item_key: String = ""
 var quality: String = "normal"
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
+var _impact_tween: Tween = null
 
 @onready var _visual: Polygon2D = $Visual
 @onready var _shape: CollisionShape2D = $Shape
@@ -127,6 +128,36 @@ func apply_feedback_profile(profile: Dictionary) -> void:
 	contact_monitor = true
 	max_contacts_reported = maxi(max_contacts_reported, 4)
 	_ensure_contact_signal()
+
+
+func trigger_impact_feedback(impact_speed: float) -> bool:
+	if feedback_profile.is_empty() or impact_speed < IMPACT_DEBUG_SPEED:
+		return false
+	var visual := _get_visual_node()
+	if visual == null:
+		return false
+	if _impact_tween != null and _impact_tween.is_valid():
+		_impact_tween.kill()
+	var impact_sound: String = feedback_profile.get("impact_sound", "normal")
+	var shake_scale: float = float(feedback_profile.get("shake_scale", 0.0))
+	match impact_sound:
+		"tap":
+			visual.modulate = Color(1.25, 1.18, 0.85, 1.0)
+			visual.scale = Vector2(1.18, 1.18)
+		"thud":
+			visual.modulate = Color(0.85, 0.7, 0.6, 1.0)
+			visual.scale = Vector2(0.92 - shake_scale * 0.08, 0.92 - shake_scale * 0.08)
+		"soft":
+			visual.modulate = Color(1.0, 0.92, 0.72, 1.0)
+			visual.scale = Vector2(1.08, 1.08)
+		_:
+			visual.modulate = Color(1.12, 1.12, 1.0, 1.0)
+			visual.scale = Vector2(1.08, 1.08)
+	_impact_tween = create_tween()
+	_impact_tween.set_parallel(true)
+	_impact_tween.tween_property(visual, "modulate", Color.WHITE, 0.14)
+	_impact_tween.tween_property(visual, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return true
 
 
 func _merge_with_fallback_profiles(profiles: Dictionary) -> Dictionary:
@@ -211,8 +242,4 @@ func _ensure_contact_signal() -> void:
 
 
 func _on_body_entered(_body: Node) -> void:
-	if feedback_profile.is_empty():
-		return
-	if linear_velocity.length() < IMPACT_DEBUG_SPEED:
-		return
-	print("[DeskItem] impact feedback=", feedback_profile.get("impact_sound", "normal"), " item=", item_key)
+	trigger_impact_feedback(linear_velocity.length())
