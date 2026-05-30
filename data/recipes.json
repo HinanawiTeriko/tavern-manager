@@ -24,5 +24,35 @@
     "name": "香料红酒",
     "ingredients": ["grape", "herb"],
     "container": "barrel"
+  },
+  "bread": {
+    "name": "面包",
+    "ingredients": ["flour"],
+    "container": "grill"
+  },
+  "meat_cooked": {
+    "name": "烤肉",
+    "ingredients": ["meat_raw"],
+    "container": "grill"
+  },
+  "meat_sand": {
+    "name": "肉夹面包",
+    "ingredients": ["flour", "meat_raw"],
+    "container": "grill"
+  },
+  "meat_stew": {
+    "name": "肉汤",
+    "ingredients": ["meat_raw", "ale"],
+    "container": "pot"
+  },
+  "herb_broth": {
+    "name": "草药清汤",
+    "ingredients": ["herb", "ale"],
+    "container": "pot"
+  },
+  "malt_porridge": {
+    "name": "麦芽粥",
+    "ingredients": ["flour", "ale"],
+    "container": "pot"
   }
 }

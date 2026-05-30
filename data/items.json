@@ -23,5 +23,7 @@
   "spiced_wine":  { "name": "香料红酒",    "color": [0.45, 0.1, 0.2],  "price": 11, "type": "product" },
   "meat_stew_raw":{ "name": "生肉汤",      "color": [0.5, 0.3, 0.15],  "price": 0,  "type": "intermediate" },
   "meat_stew":    { "name": "肉汤",        "color": [0.55, 0.3, 0.15], "price": 12, "type": "product" },
+  "herb_broth":   { "name": "草药清汤",    "color": [0.35, 0.55, 0.22], "price": 8, "type": "product" },
+  "malt_porridge":{ "name": "麦芽粥",      "color": [0.62, 0.48, 0.24], "price": 8, "type": "product" },
   "sleep_powder": { "name": "沉睡花粉",    "color": [0.55, 0.4, 0.75], "price": 0,  "type": "special" }
 }
