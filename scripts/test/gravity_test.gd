@@ -32,18 +32,31 @@ func _ready() -> void:
 	_brewery.recipe_consumed.connect(func(k): print("[Brewery] 产出 ", k))
 
 
+func _input(event: InputEvent) -> void:
+	if not _drag_ctrl.is_dragging():
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_release_dragged_body()
+	elif event is InputEventMouseMotion:
+		_drag_ctrl.update_target_global(event.global_position)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var pos: Vector2 = event.global_position
 		if event.pressed and not _drag_ctrl.is_dragging():
 			_try_pickup(pos)
 		elif not event.pressed and _drag_ctrl.is_dragging():
-			var dragged := _drag_ctrl.get_body()
-			_drag_ctrl.end_drag()
-			if dragged == _brewery:
-				_brewery.end_shake_session()
+			_release_dragged_body()
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
+
+
+func _release_dragged_body() -> void:
+	var dragged := _drag_ctrl.get_body()
+	_drag_ctrl.end_drag()
+	if dragged == _brewery:
+		_brewery.end_shake_session()
 
 
 # —— 拾取 ——
@@ -93,9 +106,9 @@ func _hit_test_item(pos: Vector2) -> DeskItem:
 	var params := PhysicsPointQueryParameters2D.new()
 	params.position = pos
 	params.collide_with_bodies = true
-	var hits := space.intersect_point(params, 1)
-	if hits.size() > 0:
-		var collider = hits[0].get("collider")
+	var hits := space.intersect_point(params, 8)
+	for hit in hits:
+		var collider = hit.get("collider")
 		if collider is DeskItem:
 			return collider
 	return null
@@ -105,6 +118,6 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
 	_items_node.add_child(item)
 	var item_data: Dictionary = GameManager.craft.get_item(item_key)
-	item.set_item(item_key, item_data)
+	item.set_item(item_key, item_data, GameManager.craft.get_item_physics_profiles())
 	item.global_position = pos
 	return item

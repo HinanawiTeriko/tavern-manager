@@ -19,14 +19,29 @@ static func spawn_at(pos: Vector2, material_key: String, parent: Node, craft_sys
 	if col_arr is Array and col_arr.size() >= 3:
 		color = Color(col_arr[0], col_arr[1], col_arr[2])
 	var display_name: String = item_data.get("name", material_key)
-	return spawn_with_color(pos, material_key, display_name, color, parent)
+	var profiles: Dictionary = craft_system.get_item_physics_profiles() if craft_system != null and craft_system.has_method("get_item_physics_profiles") else {}
+	return spawn_with_color(pos, material_key, display_name, color, parent, item_data, profiles)
 
 
 ## 直接指定颜色和名称生成 DeskItem
-static func spawn_with_color(pos: Vector2, material_key: String, display_name: String, color: Color, parent: Node) -> DeskItem:
+static func spawn_with_color(
+	pos: Vector2,
+	material_key: String,
+	display_name: String,
+	color: Color,
+	parent: Node,
+	item_data: Dictionary = {},
+	profiles: Dictionary = {}
+) -> DeskItem:
 	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
 	parent.add_child(item)
-	item.set_color(color)
+	var setup_data := item_data.duplicate(true)
+	if setup_data.is_empty():
+		setup_data = {
+			"name": display_name,
+			"color": [color.r, color.g, color.b]
+		}
+	item.set_item(material_key, setup_data, profiles)
 	item.set_meta("material_key", material_key)
 	item.global_position = pos
 	item.z_index = 100  # 确保粒子/物品渲染在所有 UI 之上

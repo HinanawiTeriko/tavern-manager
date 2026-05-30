@@ -4,6 +4,7 @@ extends RefCounted
 var items: Dictionary = {}
 var _ops: Dictionary = {}
 var _combine: Dictionary = {}
+var item_physics_profiles: Dictionary = {}
 var unlocked_recipes: Array = []
 var recipes: Dictionary = {}              # 原始 JSON：product_key -> recipe data
 var _recipes_by_container: Dictionary = {}  # "barrel|ale" -> "ale_beer"
@@ -17,6 +18,7 @@ func unlock_recipe(key: String) -> void:
 
 func load_data() -> void:
 	_load_items()
+	_load_item_physics_profiles()
 	_load_operations()
 	_load_combines()
 	_load_recipes()
@@ -32,6 +34,19 @@ func _load_items() -> void:
 	if data == null:
 		return
 	items = data
+
+func _load_item_physics_profiles() -> void:
+	var file = FileAccess.open("res://data/item_physics_profiles.json", FileAccess.READ)
+	if file == null:
+		push_warning("[Craft] item_physics_profiles.json 未找到，用 DeskItem 默认物理参数")
+		return
+	var json_text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary:
+		push_error("[Craft] item_physics_profiles.json 格式无效")
+		return
+	item_physics_profiles = data
 
 func _load_operations() -> void:
 	var file = FileAccess.open("res://data/operations.json", FileAccess.READ)
@@ -92,6 +107,9 @@ func _make_key(a: String, b: String) -> String:
 
 func get_item(key: String) -> Dictionary:
 	return items.get(key, {})
+
+func get_item_physics_profiles() -> Dictionary:
+	return item_physics_profiles
 
 func get_operations(key: String) -> Dictionary:
 	return _ops.get(key, {})
