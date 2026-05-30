@@ -1,0 +1,81 @@
+{
+  "physics": {
+    "default": {
+      "mass": 1.0,
+      "friction": 0.6,
+      "bounce": 0.25,
+      "linear_damp": 0.2,
+      "angular_damp": 0.35,
+      "gravity_scale": 1.0
+    },
+    "round_light": {
+      "mass": 0.45,
+      "friction": 0.08,
+      "bounce": 0.65,
+      "linear_damp": 0.02,
+      "angular_damp": 0.02,
+      "gravity_scale": 1.0
+    },
+    "heavy_dull": {
+      "mass": 3.4,
+      "friction": 0.95,
+      "bounce": 0.02,
+      "linear_damp": 0.95,
+      "angular_damp": 1.25,
+      "gravity_scale": 1.15
+    },
+    "soft_stable": {
+      "mass": 0.75,
+      "friction": 1.0,
+      "bounce": 0.0,
+      "linear_damp": 1.25,
+      "angular_damp": 1.6,
+      "gravity_scale": 1.0
+    }
+  },
+  "collision": {
+    "default_box": {
+      "shape": "rect",
+      "size": [56, 56],
+      "offset": [0, 0]
+    },
+    "circle_small": {
+      "shape": "circle",
+      "radius": 24,
+      "offset": [0, 0]
+    },
+    "bottle_tall": {
+      "shape": "capsule",
+      "radius": 10,
+      "height": 54,
+      "offset": [0, 0]
+    },
+    "block_flat": {
+      "shape": "rect",
+      "size": [48, 28],
+      "offset": [0, 0]
+    }
+  },
+  "feedback": {
+    "default": {
+      "impact_sound": "normal",
+      "impact_particle": "",
+      "shake_scale": 0.0
+    },
+    "bouncy": {
+      "impact_sound": "tap",
+      "impact_particle": "",
+      "shake_scale": 0.0
+    },
+    "thud": {
+      "impact_sound": "thud",
+      "impact_particle": "",
+      "shake_scale": 0.15
+    },
+    "powder": {
+      "impact_sound": "soft",
+      "impact_particle": "flour_puff",
+      "shake_scale": 0.0
+    }
+  }
+}
