@@ -79,6 +79,10 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 	var item_data: Dictionary = GameManager.craft.get_item(product_key)
 	product.set_item(product_key, item_data)
 	product.quality = quality
+	# 冒桶口：向上 + 轻微偏外的初速度，重力把它带成弧线落桌。
+	# 朝上离开桶口，且产出物是成品（_try_accept 的 is_product 守卫会拦它），不会被自己收回。
+	var out_dir := 1.0 if randf() > 0.5 else -1.0
+	product.linear_velocity = Vector2(out_dir * 90.0, -260.0)
 
 
 func _load_shake_config() -> void:
