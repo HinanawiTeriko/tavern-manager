@@ -142,13 +142,12 @@ func trigger_impact_feedback(impact_speed: float) -> bool:
 	var shake_scale: float = float(feedback_profile.get("shake_scale", 0.0))
 	match impact_sound:
 		"tap":
-			visual.modulate = Color(1.25, 1.18, 0.85, 1.0)
-			visual.scale = Vector2(1.35, 1.35)
+			visual.modulate = Color(1.12, 1.08, 0.9, 1.0)
+			visual.scale = Vector2(1.14, 1.14)
 			_spawn_bouncy_ring()
 		"thud":
 			visual.modulate = Color(0.85, 0.7, 0.6, 1.0)
-			visual.scale = Vector2(1.18 + shake_scale, 0.72 - shake_scale * 0.2)
-			_spawn_thud_block()
+			visual.scale = Vector2(1.04 + shake_scale * 0.25, 0.96 - shake_scale * 0.2)
 		"soft":
 			visual.modulate = Color(1.0, 0.92, 0.72, 1.0)
 			visual.scale = Vector2(1.18, 1.08)
@@ -255,19 +254,19 @@ func _spawn_bouncy_ring() -> void:
 	var root := _impact_root()
 	var ring := Line2D.new()
 	ring.name = "BouncyRing"
-	ring.width = 3.0
-	ring.default_color = Color(1.0, 0.95, 0.45, 0.95)
+	ring.width = 2.0
+	ring.default_color = Color(1.0, 0.95, 0.55, 0.55)
 	var points := PackedVector2Array()
 	for i in range(25):
 		var a := TAU * float(i) / 24.0
-		points.append(Vector2(cos(a), sin(a)) * 18.0)
+		points.append(Vector2(cos(a), sin(a)) * 14.0)
 	ring.points = points
-	ring.scale = Vector2(0.45, 0.45)
+	ring.scale = Vector2(0.65, 0.65)
 	root.add_child(ring)
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2(1.9, 1.9), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "modulate:a", 0.0, 0.22)
+	tw.tween_property(ring, "scale", Vector2(1.35, 1.35), 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.16)
 	tw.chain().tween_callback(ring.queue_free)
 
 

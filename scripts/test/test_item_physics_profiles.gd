@@ -138,12 +138,13 @@ func _test_feedback_profile_triggers_visual_impact() -> void:
 	_ok(visual.modulate != Color.WHITE, "high-speed impact should flash visual color")
 	_ok(visual.scale != Vector2.ONE, "high-speed impact should pop visual scale")
 	_ok(item.has_node("ImpactFeedback/BouncyRing"), "bouncy impact should create visible ring")
+	_ok(visual.scale.x <= 1.18, "bouncy item pop should stay restrained")
 	item.queue_free()
 
 	var thud := _spawn_item()
 	thud.setup_item("meat_raw", {"feedback_profile": "thud"}, _profiles())
 	_ok(thud.trigger_impact_feedback(320.0), "thud impact should trigger feedback")
-	_ok(thud.has_node("ImpactFeedback/ThudBlock"), "thud impact should create visible block")
+	_ok(not thud.has_node("ImpactFeedback/ThudBlock"), "thud impact should not create a distracting block")
 	thud.queue_free()
 
 	var powder := _spawn_item()
