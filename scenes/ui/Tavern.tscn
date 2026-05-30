@@ -1,10 +1,47 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/ui/craft_station.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/ui/mixing_area.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/ui/product_panel.gd" id="4"]
-[ext_resource type="Script" path="res://scripts/ui/seasoning_zone.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
+[ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="dc"]
+[ext_resource type="Script" path="res://scripts/test/brewery.gd" id="brw"]
+
+[sub_resource type="SegmentShape2D" id="tv_ground"]
+a = Vector2(150, 655)
+b = Vector2(1130, 655)
+
+[sub_resource type="SegmentShape2D" id="tv_left"]
+a = Vector2(150, 410)
+b = Vector2(150, 655)
+
+[sub_resource type="SegmentShape2D" id="tv_right"]
+a = Vector2(1130, 410)
+b = Vector2(1130, 655)
+
+[sub_resource type="SegmentShape2D" id="tv_wall_left"]
+a = Vector2(-50, 40)
+b = Vector2(-40, -40)
+
+[sub_resource type="SegmentShape2D" id="tv_wall_right"]
+a = Vector2(50, 40)
+b = Vector2(40, -40)
+
+[sub_resource type="SegmentShape2D" id="tv_wall_bottom"]
+a = Vector2(-50, 40)
+b = Vector2(50, 40)
+
+[sub_resource type="SegmentShape2D" id="tv_rim_left"]
+a = Vector2(-50, -40)
+b = Vector2(-30, -40)
+
+[sub_resource type="SegmentShape2D" id="tv_rim_right"]
+a = Vector2(30, -40)
+b = Vector2(50, -40)
+
+[sub_resource type="RectangleShape2D" id="tv_mouth"]
+size = Vector2(100, 30)
+
+[sub_resource type="RectangleShape2D" id="tv_drop"]
+size = Vector2(410, 328)
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -53,91 +90,6 @@ offset_left = 50.0
 offset_top = 370.0
 offset_right = 350.0
 offset_bottom = 390.0
-
-[node name="CraftStation" type="Control" parent="."]
-script = ExtResource("2")
-layout_mode = 0
-offset_left = 340.0
-offset_top = 505.0
-offset_right = 940.0
-offset_bottom = 690.0
-
-[node name="MixingArea" type="Control" parent="CraftStation"]
-script = ExtResource("3")
-layout_mode = 0
-offset_left = 10.0
-offset_top = 0.0
-offset_right = 480.0
-offset_bottom = 115.0
-
-[node name="ProductPanel" type="Control" parent="CraftStation"]
-script = ExtResource("4")
-layout_mode = 0
-offset_left = 485.0
-offset_top = 0.0
-offset_right = 595.0
-offset_bottom = 55.0
-
-[node name="ResultSlot" type="ColorRect" parent="CraftStation"]
-layout_mode = 0
-offset_left = 485.0
-offset_top = 0.0
-offset_right = 595.0
-offset_bottom = 55.0
-color = Color(0.1, 0.08, 0.06, 1)
-mouse_filter = 2
-
-[node name="Label" type="Label" parent="CraftStation/ResultSlot"]
-layout_mode = 0
-offset_left = 3.0
-offset_top = 12.0
-offset_right = 107.0
-offset_bottom = 43.0
-text = ""
-horizontal_alignment = 1
-
-[node name="SeasoningZone" type="Control" parent="CraftStation"]
-script = ExtResource("5")
-layout_mode = 0
-offset_left = 485.0
-offset_top = 56.0
-offset_right = 685.0
-offset_bottom = 126.0
-
-[node name="CombineQueryBar" type="HBoxContainer" parent="CraftStation"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 118.0
-offset_right = 480.0
-offset_bottom = 162.0
-mouse_filter = 2
-
-[node name="Label" type="Label" parent="CraftStation/CombineQueryBar"]
-layout_mode = 0
-text = "混合？"
-
-[node name="YesBtn" type="Button" parent="CraftStation/CombineQueryBar"]
-layout_mode = 0
-text = "是"
-
-[node name="NoBtn" type="Button" parent="CraftStation/CombineQueryBar"]
-layout_mode = 0
-text = "否"
-
-[node name="OperationButtons" type="HBoxContainer" parent="CraftStation"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 118.0
-offset_right = 480.0
-offset_bottom = 162.0
-
-[node name="ClearBtn" type="Button" parent="CraftStation"]
-layout_mode = 0
-offset_left = 485.0
-offset_top = 130.0
-offset_right = 595.0
-offset_bottom = 174.0
-text = "清空"
 
 [node name="ShortcutBarBg" type="Panel" parent="."]
 layout_mode = 0
@@ -407,3 +359,74 @@ offset_top = 450.0
 offset_right = 390.0
 offset_bottom = 480.0
 text = "关闭"
+
+
+[node name="BarWorkspace" type="Node2D" parent="."]
+script = ExtResource("bw")
+
+[node name="World" type="Node2D" parent="BarWorkspace"]
+
+[node name="Walls" type="StaticBody2D" parent="BarWorkspace/World"]
+
+[node name="Ground" type="CollisionShape2D" parent="BarWorkspace/World/Walls"]
+shape = SubResource("tv_ground")
+one_way_collision = true
+
+[node name="LeftWall" type="CollisionShape2D" parent="BarWorkspace/World/Walls"]
+shape = SubResource("tv_left")
+
+[node name="RightWall" type="CollisionShape2D" parent="BarWorkspace/World/Walls"]
+shape = SubResource("tv_right")
+
+[node name="Items" type="Node2D" parent="BarWorkspace/World"]
+
+[node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
+position = Vector2(960, 600)
+script = ExtResource("brw")
+
+[node name="WallLeft" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
+shape = SubResource("tv_wall_left")
+
+[node name="WallRight" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
+shape = SubResource("tv_wall_right")
+
+[node name="WallBottom" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
+shape = SubResource("tv_wall_bottom")
+
+[node name="RimLeft" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
+shape = SubResource("tv_rim_left")
+
+[node name="RimRight" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
+shape = SubResource("tv_rim_right")
+
+[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Brewery"]
+polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
+color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="PickupArea" type="Area2D" parent="BarWorkspace/World/Brewery"]
+
+[node name="Shape" type="CollisionPolygon2D" parent="BarWorkspace/World/Brewery/PickupArea"]
+polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
+
+[node name="MouthRim" type="Polygon2D" parent="BarWorkspace/World/Brewery"]
+position = Vector2(0, -40)
+polygon = PackedVector2Array(-45, -8, 45, -8, 45, 8, -45, 8)
+color = Color(0.05, 0.03, 0.02, 1)
+
+[node name="Mouth" type="Area2D" parent="BarWorkspace/World/Brewery"]
+position = Vector2(0, -50)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/Brewery/Mouth"]
+shape = SubResource("tv_mouth")
+
+[node name="OutputAnchor" type="Marker2D" parent="BarWorkspace/World/Brewery"]
+position = Vector2(0, -70)
+
+[node name="DragCtrl" type="Node" parent="BarWorkspace"]
+script = ExtResource("dc")
+
+[node name="CustomerDropArea" type="Area2D" parent="BarWorkspace"]
+position = Vector2(637, 234)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/CustomerDropArea"]
+shape = SubResource("tv_drop")

@@ -23,6 +23,8 @@
       "title": "旅行商人",
       "description": "精明干练的女商人，每周来酒馆一次兜售稀有材料",
       "affectionStart": 5,
+      "preferred_styles": ["温柔"],
+      "disliked_styles": ["粗鲁"],
       "scenes": [
         { "day": 4, "dialogue": "mira_day4", "order": "wine", "trigger": {"type": "auto"} },
         { "day": 12, "dialogue": "mira_day12", "order": "spiced_wine", "trigger": {"type": "affection", "threshold": 10} }

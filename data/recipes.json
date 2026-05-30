@@ -1,0 +1,28 @@
+{
+  "ale_beer": {
+    "name": "麦芽酒",
+    "ingredients": ["ale"],
+    "container": "barrel"
+  },
+  "wine": {
+    "name": "葡萄酒",
+    "ingredients": ["grape"],
+    "container": "barrel",
+    "memory_for": { "mira": "day4_road_story" }
+  },
+  "herb_tea": {
+    "name": "草药茶",
+    "ingredients": ["herb"],
+    "container": "barrel"
+  },
+  "herbal_ale": {
+    "name": "草药麦酒",
+    "ingredients": ["ale", "herb"],
+    "container": "barrel"
+  },
+  "spiced_wine": {
+    "name": "香料红酒",
+    "ingredients": ["grape", "herb"],
+    "container": "barrel"
+  }
+}

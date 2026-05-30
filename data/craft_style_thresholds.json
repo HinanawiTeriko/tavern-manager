@@ -1,0 +1,6 @@
+{
+  "serve_drop_speed": {
+    "rough": 500.0,
+    "gentle": 60.0
+  }
+}

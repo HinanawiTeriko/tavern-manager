@@ -63,6 +63,12 @@ func load_npc_data() -> void:
 		npc.affection_start = int(npc_dict["affectionStart"])
 		npc.scenes = _parse_scenes(npc_dict["scenes"])
 		npc.endings = _parse_endings(npc_dict["endings"])
+		if npc_dict.has("preferred_styles"):
+			for s in npc_dict["preferred_styles"]:
+				npc.preferred_styles.append(s)
+		if npc_dict.has("disliked_styles"):
+			for s in npc_dict["disliked_styles"]:
+				npc.disliked_styles.append(s)
 		all_npcs.append(npc)
 		set_affection(npc.id, npc.affection_start)
 	print("[Narrative] 加载 ", all_npcs.size(), " 个 NPC")
@@ -130,3 +136,42 @@ func get_today_npc_fates(day: int) -> Array[Dictionary]:
 						})
 				break
 	return result
+
+func _find_npc(npc_id: String) -> NpcData:
+	for n in all_npcs:
+		if n.id == npc_id:
+			return n
+	return null
+
+## L3 信任阀门。分类已由 CraftStyleSystem 完成；memory_story_key 由 GameManager 经
+## CraftSystem.get_memory_for 查出（L2 信号，空串=该配方对此 NPC 无记忆）。
+## 仅在订单正确(成功上菜)时由 GameManager 调用。
+## 副作用：写对话变量 serve_style / story_told / story_key，应用信任增减。
+func resolve_serve_style(npc_id: String, memory_story_key: String, serve_style: String) -> Dictionary:
+	var npc := _find_npc(npc_id)
+	var preferred: Array = npc.preferred_styles if npc != null else []
+	var disliked: Array = npc.disliked_styles if npc != null else []
+
+	var l2_wants: bool = memory_story_key != ""
+	var l3_willing: bool = preferred.has(serve_style)
+	var l3_dislike: bool = disliked.has(serve_style)
+	var story_told: bool = l2_wants and l3_willing
+
+	var delta: int = 0
+	if l3_willing:
+		delta = 2
+	elif l3_dislike:
+		delta = -2
+	if delta != 0:
+		set_affection(npc_id, get_affection(npc_id) + delta)
+
+	set_var("serve_style", serve_style)
+	set_var("story_told", story_told)
+	set_var("story_key", memory_story_key if story_told else "")
+
+	return {
+		"serve_style": serve_style,
+		"story_told": story_told,
+		"story_key": memory_story_key if story_told else "",
+		"affection_delta": delta,
+	}

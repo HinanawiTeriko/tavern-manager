@@ -11,6 +11,7 @@ var shop: ShopSystem
 var guests: GuestSystem
 var craft: CraftSystem
 var seasoning: SeasoningSystem
+var craft_style: CraftStyleSystem
 
 # Inventory
 var inventory: Dictionary = {}
@@ -41,12 +42,14 @@ func _ready() -> void:
 	shop = ShopSystem.new()
 	craft = CraftSystem.new()
 	seasoning = SeasoningSystem.new()
+	craft_style = CraftStyleSystem.new()
 
 	inventory = _load_initial_inventory()
 	craft.load_data()
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
+	craft_style.load_data()
 
 	guests = GuestSystem.new(func():
 		var available: Array = []
@@ -84,9 +87,6 @@ func register_view(view: Node) -> void:
 		_tavern_view = view
 		_refresh_tavern_ui()
 
-		var craft_station = view.get_node("CraftStation")
-		if craft_station != null:
-			craft_station.serve_requested.connect(_on_serve_requested)
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
 		var tm = _tutorial_manager
@@ -236,18 +236,23 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 		return
 	guests.spawn_important(npc_id, order_key)
 
+## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
+func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_tag: String = "") -> void:
+	_on_serve_requested(item_key, seasoning_tag, craft_style_data)
+
 ## 上菜判定逻辑（从 register_view lambda 提取）
-func _on_serve_requested(item_key: String, seasoning_tag: String) -> void:
+func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_data: Dictionary = {}) -> void:
 	if not guests.has_guest or item_key == "":
 		return
 
 	var is_important = guests.current_guest.has_dialogue
 	var npc_id = guests.current_guest.npc_id
+	var success: bool = (item_key == guests.current_guest.order_key)
 
 	var item: Dictionary = craft.get_item(item_key)
 	var item_price: int = item.get("price", 0)
 
-	if item_key == guests.current_guest.order_key:
+	if success:
 		economy.add_gold(item_price)
 		economy.add_reputation(2)
 		guests.record_order_success()
@@ -262,6 +267,16 @@ func _on_serve_requested(item_key: String, seasoning_tag: String) -> void:
 			_tavern_view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
 		if is_important:
 			narrative.set_var("serve_result", "fail")
+
+	# L3 动作风格 → 信任阀门：仅重要 NPC 且订单正确时评估（失败不叠风格罚）
+	if is_important and success and npc_id != "":
+		var serve_style_label: String = craft_style.classify(craft_style_data)
+		var mem: Dictionary = craft.get_memory_for(item_key)
+		var story_key: String = mem.get(npc_id, "")
+		var l3: Dictionary = narrative.resolve_serve_style(npc_id, story_key, serve_style_label)
+		print("[L3] serve_drop_speed=", craft_style_data.get("serve_drop_speed", 0.0),
+			" style=", serve_style_label, " story_told=", l3["story_told"],
+			" aff_", npc_id, "=", narrative.get_affection(npc_id))
 
 	if seasoning_tag != "":
 		narrative.set_var("seasoning_used", seasoning_tag)

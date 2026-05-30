@@ -241,9 +241,8 @@ func trigger_craft_tutorial() -> void:
 		return
 
 	var rects = {
-		"CraftStation": [330, 490, 620, 210],
-		"ShortcutBar": [485, 650, 470, 55],
-		"MixingArea": [345, 502, 260, 82],
+		"BarWorkspace": [820, 480, 280, 200],
+		"ShortcutBar": [140, 675, 1000, 40],
 	}
 	tm.start_tutorial("craft", rects)
 

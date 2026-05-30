@@ -1,7 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/test/gravity_test.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2_drag_ctrl"]
+[ext_resource type="Script" path="res://scripts/test/brewery.gd" id="3_brewery"]
+[ext_resource type="Script" path="res://scripts/test/sandbox_serve.gd" id="4_sandbox"]
 
 [sub_resource type="SegmentShape2D" id="seg_ground"]
 a = Vector2(80, 318)
@@ -18,6 +20,32 @@ b = Vector2(1200, 318)
 [sub_resource type="SegmentShape2D" id="seg_top"]
 a = Vector2(80, 60)
 b = Vector2(1200, 60)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_left"]
+a = Vector2(-50, 40)
+b = Vector2(-40, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_right"]
+a = Vector2(50, 40)
+b = Vector2(40, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_wall_bottom"]
+a = Vector2(-50, 40)
+b = Vector2(50, 40)
+
+[sub_resource type="SegmentShape2D" id="seg_rim_left"]
+a = Vector2(-50, -40)
+b = Vector2(-30, -40)
+
+[sub_resource type="SegmentShape2D" id="seg_rim_right"]
+a = Vector2(30, -40)
+b = Vector2(50, -40)
+
+[sub_resource type="RectangleShape2D" id="rect_mouth"]
+size = Vector2(100, 30)
+
+[sub_resource type="RectangleShape2D" id="rect_customer"]
+size = Vector2(180, 140)
 
 [node name="GravityTest" type="Node2D"]
 script = ExtResource("1_script")
@@ -54,6 +82,48 @@ shape = SubResource("seg_top")
 
 [node name="Items" type="Node2D" parent="World"]
 
+[node name="Brewery" type="RigidBody2D" parent="World"]
+position = Vector2(900, 280)
+script = ExtResource("3_brewery")
+
+[node name="WallLeft" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_left")
+
+[node name="WallRight" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_right")
+
+[node name="WallBottom" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_wall_bottom")
+
+[node name="RimLeft" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_rim_left")
+
+[node name="RimRight" type="CollisionShape2D" parent="World/Brewery"]
+shape = SubResource("seg_rim_right")
+
+[node name="Visual" type="Polygon2D" parent="World/Brewery"]
+polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
+color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="PickupArea" type="Area2D" parent="World/Brewery"]
+
+[node name="Shape" type="CollisionPolygon2D" parent="World/Brewery/PickupArea"]
+polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
+
+[node name="MouthRim" type="Polygon2D" parent="World/Brewery"]
+position = Vector2(0, -40)
+polygon = PackedVector2Array(-45, -8, 45, -8, 45, 8, -45, 8)
+color = Color(0.05, 0.03, 0.02, 1)
+
+[node name="Mouth" type="Area2D" parent="World/Brewery"]
+position = Vector2(0, -50)
+
+[node name="Shape" type="CollisionShape2D" parent="World/Brewery/Mouth"]
+shape = SubResource("rect_mouth")
+
+[node name="OutputAnchor" type="Marker2D" parent="World/Brewery"]
+position = Vector2(0, -70)
+
 [node name="HotbarUI" type="CanvasLayer" parent="."]
 
 [node name="HotbarRoot" type="Control" parent="HotbarUI"]
@@ -68,6 +138,7 @@ offset_right = 511.0
 offset_bottom = 690.0
 color = Color(0.862745, 0.078431, 0.235294, 1)
 mouse_filter = 2
+metadata/item_key = "ale"
 
 [node name="Slot1" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 523.0
@@ -76,6 +147,7 @@ offset_right = 593.0
 offset_bottom = 690.0
 color = Color(1, 0.843137, 0, 1)
 mouse_filter = 2
+metadata/item_key = "grape"
 
 [node name="Slot2" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 605.0
@@ -84,6 +156,7 @@ offset_right = 675.0
 offset_bottom = 690.0
 color = Color(0.18, 0.55, 0.34, 1)
 mouse_filter = 2
+metadata/item_key = "herb"
 
 [node name="Slot3" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 687.0
@@ -92,6 +165,7 @@ offset_right = 757.0
 offset_bottom = 690.0
 color = Color(0.254902, 0.411765, 0.882353, 1)
 mouse_filter = 2
+metadata/item_key = "flour"
 
 [node name="Slot4" type="ColorRect" parent="HotbarUI/HotbarRoot"]
 offset_left = 769.0
@@ -100,6 +174,45 @@ offset_right = 839.0
 offset_bottom = 690.0
 color = Color(0.6, 0.196078, 0.8, 1)
 mouse_filter = 2
+metadata/item_key = "meat_raw"
 
 [node name="DragCtrl" type="Node" parent="."]
 script = ExtResource("2_drag_ctrl")
+
+[node name="SandboxServe" type="Node2D" parent="."]
+script = ExtResource("4_sandbox")
+
+[node name="CustomerArea" type="Area2D" parent="SandboxServe"]
+position = Vector2(300, 150)
+
+[node name="Shape" type="CollisionShape2D" parent="SandboxServe/CustomerArea"]
+shape = SubResource("rect_customer")
+
+[node name="Visual" type="Polygon2D" parent="SandboxServe/CustomerArea"]
+polygon = PackedVector2Array(-90, -70, 90, -70, 90, 70, -90, 70)
+color = Color(0.2, 0.35, 0.6, 0.45)
+
+[node name="UILayer" type="CanvasLayer" parent="SandboxServe"]
+
+[node name="Root" type="Control" parent="SandboxServe/UILayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="OrderLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 50.0
+
+[node name="MessageLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 56.0
+offset_right = 700.0
+offset_bottom = 86.0
+
+[node name="TopBarLabel" type="Label" parent="SandboxServe/UILayer/Root"]
+offset_left = 20.0
+offset_top = 92.0
+offset_right = 700.0
+offset_bottom = 122.0

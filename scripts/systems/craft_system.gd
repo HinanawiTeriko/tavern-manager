@@ -5,6 +5,8 @@ var items: Dictionary = {}
 var _ops: Dictionary = {}
 var _combine: Dictionary = {}
 var unlocked_recipes: Array = []
+var recipes: Dictionary = {}              # 原始 JSON：product_key -> recipe data
+var _recipes_by_container: Dictionary = {}  # "barrel|ale" -> "ale_beer"
 
 func is_recipe_unlocked(key: String) -> bool:
 	return unlocked_recipes.has(key)
@@ -17,7 +19,8 @@ func load_data() -> void:
 	_load_items()
 	_load_operations()
 	_load_combines()
-	print("[Craft] 加载 ", items.size(), " 种物品, ", _ops.size(), " 个加工节点, ", _combine.size(), " 条组合规则")
+	_load_recipes()
+	print("[Craft] 加载 ", items.size(), " 种物品, ", _ops.size(), " 个加工节点, ", _combine.size(), " 条组合规则, ", recipes.size(), " 条容器配方")
 
 func _load_items() -> void:
 	var file = FileAccess.open("res://data/items.json", FileAccess.READ)
@@ -60,6 +63,30 @@ func _load_combines() -> void:
 		_combine[_make_key(a, b)] = r
 		_combine[_make_key(b, a)] = r
 
+func _load_recipes() -> void:
+	var file = FileAccess.open("res://data/recipes.json", FileAccess.READ)
+	if file == null:
+		push_error("[Craft] recipes.json 未找到")
+		return
+	var json_text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary:
+		push_error("[Craft] recipes.json 格式无效")
+		return
+	recipes = data
+	for product_key in recipes.keys():
+		var recipe: Dictionary = recipes[product_key]
+		var container: String = recipe.get("container", "")
+		var ingredients: Array = recipe.get("ingredients", [])
+		if container == "" or ingredients.is_empty():
+			push_warning("[Craft] recipe %s 缺 container 或 ingredients，跳过" % product_key)
+			continue
+		var sorted_ingr: Array = ingredients.duplicate()
+		sorted_ingr.sort()
+		var key: String = container + "|" + "+".join(sorted_ingr)
+		_recipes_by_container[key] = product_key
+
 func _make_key(a: String, b: String) -> String:
 	return a + "|" + b
 
@@ -76,7 +103,19 @@ func is_product(key: String) -> bool:
 	var item: Dictionary = items.get(key, {})
 	return item.get("type", "") == "product"
 
+func get_memory_for(product_key: String) -> Dictionary:
+	var recipe: Dictionary = recipes.get(product_key, {})
+	return recipe.get("memory_for", {})
+
 func get_combine_result(a: String, b: String) -> String:
 	if a == "" or b == "":
 		return ""
 	return _combine.get(_make_key(a, b), "")
+
+func query_recipe(container: String, ingredients: Array) -> String:
+	if container == "" or ingredients.is_empty():
+		return ""
+	var sorted_ingr: Array = ingredients.duplicate()
+	sorted_ingr.sort()
+	var key: String = container + "|" + "+".join(sorted_ingr)
+	return _recipes_by_container.get(key, "")
