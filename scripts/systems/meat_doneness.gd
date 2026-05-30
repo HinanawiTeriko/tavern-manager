@@ -1,13 +1,10 @@
 class_name MeatDoneness
 extends RefCounted
 
-## 双面熟度:面 0 / 面 1 各累积一个 t。t<COOKED_MIN 生,[COOKED_MIN,BURN_MAX] 熟,>BURN_MAX 焦。
-## 颜色在 生→金黄→焦 之间 lerp,供肉块所见即所得地显示火候(无进度条)。
-
 const COOKED_MIN: float = 1.0
 const BURN_MAX: float = 2.0
-const GOLDEN := Color(0.5, 0.15, 0.05)   # ≈ meat_cooked
-const BURNT := Color(0.1, 0.08, 0.05)    # ≈ meat_burnt
+const GOLDEN := Color(0.5, 0.15, 0.05)
+const BURNT := Color(0.1, 0.08, 0.05)
 
 var _raw_color: Color = Color(0.65, 0.2, 0.1)
 var _t := [0.0, 0.0]
@@ -52,6 +49,5 @@ func result() -> String:
 	return "cooked"
 
 
-## 给两个面中心的世界坐标,返回更贴烤架(y 更大)的面索引。平手返回 0。
 static func down_face_of(face0_world: Vector2, face1_world: Vector2) -> int:
 	return 1 if face1_world.y > face0_world.y else 0

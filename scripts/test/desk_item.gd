@@ -1,9 +1,6 @@
 class_name DeskItem
 extends RigidBody2D
 
-## 桌面物品(物理体)。掉出屏幕下方自动销毁。
-## 烤架按压煎制:被抓着(is_held)且贴在烤架时,朝下那一面累积熟度,颜色随之变化。
-
 const KILL_Y: float = 800.0
 const IMPACT_DEBUG_SPEED: float = 260.0
 const MEAT_DONENESS := preload("res://scripts/systems/meat_doneness.gd")
@@ -133,18 +130,15 @@ func apply_feedback_profile(profile: Dictionary) -> void:
 	feedback_profile = profile.duplicate(true)
 
 
-## 朝下(贴烤架)那一面的索引:0=上半,1=下半,按 marker 世界 y 比较。
 func down_face_index() -> int:
 	return MEAT_DONENESS.down_face_of(_face_top.global_position, _face_bottom.global_position)
 
 
-## 给指定面喂热,并立即刷新两面颜色。
 func add_heat(face: int, amount: float) -> void:
 	_doneness.add_heat(face, amount)
 	_refresh_face_colors()
 
 
-## 取走定稿:返回 "cooked" / "burnt" / "raw"。
 func grill_result() -> String:
 	return _doneness.result()
 
@@ -179,7 +173,7 @@ func _resolve_profile(profiles: Dictionary, section: String, profile_id: String,
 	if section_data.has(profile_id) and section_data[profile_id] is Dictionary:
 		return section_data[profile_id]
 	if profile_id != default_id:
-		push_warning("[DeskItem] 未知 %s profile: %s，用 %s" % [section, profile_id, default_id])
+		push_warning("[DeskItem] Unknown %s profile: %s, using %s" % [section, profile_id, default_id])
 	return section_data.get(default_id, {})
 
 
@@ -196,36 +190,19 @@ func _array_to_vector2(value, fallback: Vector2) -> Vector2:
 
 func _set_visual_rect(size: Vector2) -> void:
 	var half := size * 0.5
-	if is_node_ready():
-		_visual_top.polygon = PackedVector2Array([
-			Vector2(-half.x, -half.y),
-			Vector2(half.x, -half.y),
-			Vector2(half.x, 0.0),
-			Vector2(-half.x, 0.0)
-		])
-		_visual_bottom.polygon = PackedVector2Array([
-			Vector2(-half.x, 0.0),
-			Vector2(half.x, 0.0),
-			Vector2(half.x, half.y),
-			Vector2(-half.x, half.y)
-		])
-	else:
-		var top := get_node_or_null("VisualTop") as Polygon2D
-		var bot := get_node_or_null("VisualBottom") as Polygon2D
-		if top != null:
-			top.polygon = PackedVector2Array([
-				Vector2(-half.x, -half.y),
-				Vector2(half.x, -half.y),
-				Vector2(half.x, 0.0),
-				Vector2(-half.x, 0.0)
-			])
-		if bot != null:
-			bot.polygon = PackedVector2Array([
-				Vector2(-half.x, 0.0),
-				Vector2(half.x, 0.0),
-				Vector2(half.x, half.y),
-				Vector2(-half.x, half.y)
-			])
+	var top_poly := PackedVector2Array([
+		Vector2(-half.x, -half.y),
+		Vector2(half.x, -half.y),
+		Vector2(half.x, 0.0),
+		Vector2(-half.x, 0.0)
+	])
+	var bottom_poly := PackedVector2Array([
+		Vector2(-half.x, 0.0),
+		Vector2(half.x, 0.0),
+		Vector2(half.x, half.y),
+		Vector2(-half.x, half.y)
+	])
+	_apply_split_polygons(top_poly, bottom_poly)
 
 
 func _set_visual_circle(radius: float) -> void:
@@ -238,7 +215,6 @@ func _set_visual_circle(radius: float) -> void:
 			points_top.append(p)
 		else:
 			points_bottom.append(p)
-	# Close the halves at the center line
 	points_top.append(Vector2(radius, 0.0))
 	points_top.append(Vector2(-radius, 0.0))
 	points_bottom.append(Vector2(-radius, 0.0))
