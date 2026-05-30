@@ -2,8 +2,9 @@
 
 > 日期：2026-05-30  
 > 状态：设计稿  
+> 分支：`docs/item-physics-profiles`  
 > 目的：给材料和成品预留可调物理手感、碰撞体和反馈接口，方便后续团队自己接具体碰撞体积与手感参数。  
-> 相关文档：`docs/13_合成系统物理重设计需求文档.md`
+> 相关文档：`docs/specs/13_合成系统物理重设计需求文档.md`
 
 ---
 
@@ -181,7 +182,7 @@ data/item_physics_profiles.json
 
 后续试点顺序建议：
 
-1. `grape` 葡萄接 `circle_small`，验证滚动感。
+1. `grape` 葡萄接 `circle_small`，验证滚动感（圆形最容易让玩家感到"它真的会滚"）。
 2. 酒瓶类成品接 `bottle_tall`，验证易倒和轻放手感。
 3. `meat_raw` 生肉接 `block_flat`，验证重、钝、砸桌的分量。
 
@@ -233,6 +234,8 @@ data/item_physics_profiles.json
 | `meat_raw` 生肉 | `heavy_dull` | `default_box` | `block_flat` | `thud` | 重、钝、砸桌有分量 |
 | `flour` 面粉 | `soft_stable` | `default_box` | 软袋矩形 | `powder` | 轻软、停得快、粉尘戏剧 |
 | `herb` 草药 | `default` | `default_box` | 小散块 | `default` | 第一版走基准物，后续再做轻飘感 |
+
+后续若要强化草药，可以新增 `light_loose` / `leafy` profile，但不放进第一版验收。
 
 成品后续方向：
 

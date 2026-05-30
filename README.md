@@ -94,14 +94,15 @@ tavern-manager/
 
 ## 文档导航
 
-| 文档 | 用途 |
+> 📚 完整索引见 [docs/README.md](docs/README.md)
+
+| 类别 | 文档 |
 |------|------|
-| [01_AI开发规范.md](docs/01_AI开发规范.md) | AI 开发规范和目录约定 |
-| [02_AI项目速查.md](docs/02_AI项目速查.md) | AI 快速理解项目的速查文档 |
-| [03_资源清单.md](docs/03_资源清单.md) | 资源清单、参数速查 |
-| [04_游戏总览.md](docs/04_游戏总览.md) | 游戏定位、体验目标 |
-| [05_核心机制.md](docs/05_核心机制.md) | 核心玩法规则 |
-| [07_美术需求文档.md](docs/07_美术需求文档.md) | 像素风美术需求 |
+| 规范指南 | [01_AI开发规范](docs/guides/01_AI开发规范.md) · [02_项目速查](docs/guides/02_AI项目速查.md) · [12_Git协作](docs/guides/12_Git协作规范.md) |
+| 游戏设计 | [04_游戏总览](docs/design/04_游戏总览.md) · [05_核心机制](docs/design/05_核心机制.md) · [06_重制策划](docs/design/06_游戏重制策划案.md) · [15_宿命自由](docs/design/15_宿命与自由核心设计方案.md) |
+| 美术资源 | [07_美术需求](docs/art/07_美术需求文档.md) · [09_生图提示词](docs/art/09_NanoBanana提示词.md) |
+| 需求规格 | [11_物理效果](docs/specs/11_合成物理效果需求文档.md) · [13_物理重设计](docs/specs/13_合成系统物理重设计需求文档.md) · [16_物理手感](docs/specs/16_物品物理手感Profile接口设计.md) · [17_Day1配方](docs/specs/17_Day1三容器配方与解锁设计.md) |
+| 参考资料 | [03_资源清单](docs/reference/03_资源清单.md) |
 
 ---
 
