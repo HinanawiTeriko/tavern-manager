@@ -12,7 +12,6 @@ var _failures := 0
 func _ready() -> void:
 	_test_profile_values_are_applied_and_clamped()
 	_test_omitted_profiles_fall_back_to_defaults()
-	_test_feedback_profile_triggers_visual_impact()
 	if _failures == 0:
 		print("[TEST-ITEM-PHYSICS] ALL PASS (", _checks, " checks)")
 		get_tree().quit(0)
@@ -70,16 +69,6 @@ func _profiles() -> Dictionary:
 				"impact_sound": "tap",
 				"impact_particle": "",
 				"shake_scale": 0.0
-			},
-			"thud": {
-				"impact_sound": "thud",
-				"impact_particle": "",
-				"shake_scale": 0.15
-			},
-			"powder": {
-				"impact_sound": "soft",
-				"impact_particle": "flour_puff",
-				"shake_scale": 0.0
 			}
 		}
 	}
@@ -123,41 +112,6 @@ func _test_omitted_profiles_fall_back_to_defaults() -> void:
 	_ok(_visual_rect_size(item) == Vector2(56, 56), "visual rect should match default collision box")
 	_ok(item.feedback_profile.get("impact_sound", "") == "normal", "omitted feedback profile should use default")
 	item.queue_free()
-
-
-func _test_feedback_profile_triggers_visual_impact() -> void:
-	var item := _spawn_item()
-	item.setup_item("grape", {
-		"color": [0.6, 0.1, 0.2],
-		"feedback_profile": "bouncy"
-	}, _profiles())
-	var visual := item.get_node("Visual") as Polygon2D
-	_ok(not item.trigger_impact_feedback(120.0), "low-speed impact should not trigger feedback")
-	_ok(visual.modulate == Color.WHITE, "low-speed impact should leave visual modulate unchanged")
-	_ok(item.trigger_impact_feedback(320.0), "high-speed impact should trigger feedback")
-	_ok(visual.modulate != Color.WHITE, "high-speed impact should flash visual color")
-	_ok(visual.scale != Vector2.ONE, "high-speed impact should pop visual scale")
-	_ok(item.has_node("ImpactFeedback/BouncyRing"), "bouncy impact should create visible ring")
-	_ok(visual.scale.x <= 1.18, "bouncy item pop should stay restrained")
-	item.queue_free()
-
-	var thud := _spawn_item()
-	thud.setup_item("meat_raw", {"feedback_profile": "thud"}, _profiles())
-	_ok(thud.trigger_impact_feedback(320.0), "thud impact should trigger feedback")
-	_ok(not thud.has_node("ImpactFeedback/ThudBlock"), "thud impact should not create a distracting block")
-	thud.queue_free()
-
-	var powder := _spawn_item()
-	powder.setup_item("flour", {"feedback_profile": "powder"}, _profiles())
-	_ok(powder.trigger_impact_feedback(320.0), "powder impact should trigger feedback")
-	_ok(powder.get_node("ImpactFeedback").get_child_count() >= 4, "powder impact should create several dust motes")
-	powder.queue_free()
-
-	var baseline := _spawn_item()
-	baseline.setup_item("ale", {}, _profiles())
-	_ok(baseline.trigger_impact_feedback(320.0), "default impact should trigger feedback")
-	_ok(baseline.has_node("ImpactFeedback/DefaultFlash"), "default impact should create a small flash")
-	baseline.queue_free()
 
 
 func _visual_rect_size(item: DeskItem) -> Vector2:

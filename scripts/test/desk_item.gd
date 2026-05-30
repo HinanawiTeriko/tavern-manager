@@ -46,7 +46,6 @@ var item_key: String = ""
 var quality: String = "normal"
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
-var _impact_tween: Tween = null
 
 @onready var _visual: Polygon2D = $Visual
 @onready var _shape: CollisionShape2D = $Shape
@@ -54,7 +53,6 @@ var _impact_tween: Tween = null
 
 func _ready() -> void:
 	_visual.color = _pending_color
-	_ensure_contact_signal()
 
 
 func _physics_process(_delta: float) -> void:
@@ -125,42 +123,6 @@ func apply_collision_profile(profile: Dictionary) -> void:
 
 func apply_feedback_profile(profile: Dictionary) -> void:
 	feedback_profile = profile.duplicate(true)
-	contact_monitor = true
-	max_contacts_reported = maxi(max_contacts_reported, 4)
-	_ensure_contact_signal()
-
-
-func trigger_impact_feedback(impact_speed: float) -> bool:
-	if feedback_profile.is_empty() or impact_speed < IMPACT_DEBUG_SPEED:
-		return false
-	var visual := _get_visual_node()
-	if visual == null:
-		return false
-	if _impact_tween != null and _impact_tween.is_valid():
-		_impact_tween.kill()
-	var impact_sound: String = feedback_profile.get("impact_sound", "normal")
-	var shake_scale: float = float(feedback_profile.get("shake_scale", 0.0))
-	match impact_sound:
-		"tap":
-			visual.modulate = Color(1.12, 1.08, 0.9, 1.0)
-			visual.scale = Vector2(1.14, 1.14)
-			_spawn_bouncy_ring()
-		"thud":
-			visual.modulate = Color(0.85, 0.7, 0.6, 1.0)
-			visual.scale = Vector2(1.04 + shake_scale * 0.25, 0.96 - shake_scale * 0.2)
-		"soft":
-			visual.modulate = Color(1.0, 0.92, 0.72, 1.0)
-			visual.scale = Vector2(1.18, 1.08)
-			_spawn_powder_motes()
-		_:
-			visual.modulate = Color(1.12, 1.12, 1.0, 1.0)
-			visual.scale = Vector2(1.08, 1.08)
-			_spawn_default_flash()
-	_impact_tween = create_tween()
-	_impact_tween.set_parallel(true)
-	_impact_tween.tween_property(visual, "modulate", Color.WHITE, 0.14)
-	_impact_tween.tween_property(visual, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	return true
 
 
 func _merge_with_fallback_profiles(profiles: Dictionary) -> Dictionary:
@@ -237,106 +199,3 @@ func _get_visual_node() -> Polygon2D:
 	if is_node_ready():
 		return _visual
 	return get_node_or_null("Visual") as Polygon2D
-
-
-func _impact_root() -> Node2D:
-	var existing := get_node_or_null("ImpactFeedback") as Node2D
-	if existing != null:
-		return existing
-	var root := Node2D.new()
-	root.name = "ImpactFeedback"
-	root.z_index = 20
-	add_child(root)
-	return root
-
-
-func _spawn_bouncy_ring() -> void:
-	var root := _impact_root()
-	var ring := Line2D.new()
-	ring.name = "BouncyRing"
-	ring.width = 2.0
-	ring.default_color = Color(1.0, 0.95, 0.55, 0.55)
-	var points := PackedVector2Array()
-	for i in range(25):
-		var a := TAU * float(i) / 24.0
-		points.append(Vector2(cos(a), sin(a)) * 14.0)
-	ring.points = points
-	ring.scale = Vector2(0.65, 0.65)
-	root.add_child(ring)
-	var tw := ring.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2(1.35, 1.35), 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "modulate:a", 0.0, 0.16)
-	tw.chain().tween_callback(ring.queue_free)
-
-
-func _spawn_thud_block() -> void:
-	var root := _impact_root()
-	var block := Polygon2D.new()
-	block.name = "ThudBlock"
-	block.polygon = PackedVector2Array([
-		Vector2(-20, 12),
-		Vector2(20, 12),
-		Vector2(14, 22),
-		Vector2(-14, 22)
-	])
-	block.color = Color(0.25, 0.12, 0.08, 0.75)
-	root.add_child(block)
-	var tw := block.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(block, "position:y", 8.0, 0.18)
-	tw.tween_property(block, "scale", Vector2(1.35, 0.6), 0.18)
-	tw.tween_property(block, "modulate:a", 0.0, 0.18)
-	tw.chain().tween_callback(block.queue_free)
-
-
-func _spawn_powder_motes() -> void:
-	var root := _impact_root()
-	for i in range(6):
-		var mote := Polygon2D.new()
-		mote.name = "PowderMote%d" % i
-		var radius := 2.5 + float(i % 3)
-		mote.polygon = PackedVector2Array([
-			Vector2(-radius, -radius),
-			Vector2(radius, -radius),
-			Vector2(radius, radius),
-			Vector2(-radius, radius)
-		])
-		mote.color = Color(0.95, 0.82, 0.52, 0.75)
-		var dir := Vector2(cos(TAU * float(i) / 6.0), sin(TAU * float(i) / 6.0))
-		mote.position = dir * 5.0
-		root.add_child(mote)
-		var tw := mote.create_tween()
-		tw.set_parallel(true)
-		tw.tween_property(mote, "position", dir * (24.0 + float(i) * 3.0), 0.26)
-		tw.tween_property(mote, "scale", Vector2(1.8, 1.8), 0.26)
-		tw.tween_property(mote, "modulate:a", 0.0, 0.26)
-		tw.chain().tween_callback(mote.queue_free)
-
-
-func _spawn_default_flash() -> void:
-	var root := _impact_root()
-	var flash := Polygon2D.new()
-	flash.name = "DefaultFlash"
-	flash.polygon = PackedVector2Array([
-		Vector2(-16, -16),
-		Vector2(16, -16),
-		Vector2(16, 16),
-		Vector2(-16, 16)
-	])
-	flash.color = Color(1.0, 1.0, 0.75, 0.35)
-	root.add_child(flash)
-	var tw := flash.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(flash, "scale", Vector2(1.35, 1.35), 0.16)
-	tw.tween_property(flash, "modulate:a", 0.0, 0.16)
-	tw.chain().tween_callback(flash.queue_free)
-
-
-func _ensure_contact_signal() -> void:
-	if not body_entered.is_connected(_on_body_entered):
-		body_entered.connect(_on_body_entered)
-
-
-func _on_body_entered(_body: Node) -> void:
-	trigger_impact_feedback(linear_velocity.length())
