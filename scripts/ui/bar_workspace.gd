@@ -8,6 +8,7 @@ extends Node2D
 ## 只跟 GameManager 说话，不引用 tavern_view（守 mediator 规则）。
 
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
 const MAX_SLOTS := 10
 
 @onready var _drag_ctrl: DragController = $DragCtrl
@@ -25,7 +26,19 @@ func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	_shortcut_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_brewery.recipe_consumed.connect(func(k): print("[BarWorkspace] 产出 ", k))
+	_drag_ctrl.drag_started.connect(_on_drag_started)
+	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
+
+
+func _on_drag_started(body: RigidBody2D) -> void:
+	if body is DeskItem:
+		body.is_held = true
+
+
+func _on_drag_ended(body: RigidBody2D) -> void:
+	if body is DeskItem:
+		body.is_held = false
 
 
 func _init_material_slots() -> void:
@@ -73,7 +86,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and not _drag_ctrl.is_dragging():
 			_try_pickup(pos)
 		elif not event.pressed and _drag_ctrl.is_dragging():
-			_release_dragged_body()
+			var dragged := _drag_ctrl.get_body()
+			_drag_ctrl.end_drag()
+			if dragged == _brewery:
+				_brewery.end_shake_session()
+			elif _is_kitchen_container(dragged):
+				dragged.end_action_session()
+			elif dragged is DeskItem:
+				_try_serve(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
 
@@ -95,6 +115,16 @@ func _try_pickup(pos: Vector2) -> void:
 	if _hit_test_brewery(pos):
 		_brewery.begin_shake_session()
 		_drag_ctrl.start_drag(_brewery, pos)
+		return
+	var spoon := _hit_test_spoon(pos)
+	if spoon != null:
+		spoon.sleeping = false
+		_drag_ctrl.start_drag(spoon, pos)
+		return
+	var kitchen = _hit_test_kitchen_container(pos)
+	if kitchen != null:
+		kitchen.begin_action_session()
+		_drag_ctrl.start_drag(kitchen, pos)
 		return
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos) and _slot_item_keys[i] != "":
@@ -140,6 +170,38 @@ func _hit_test_brewery(pos: Vector2) -> bool:
 		if collider is Area2D and collider.get_parent() == _brewery:
 			return true
 	return false
+
+
+func _hit_test_spoon(pos: Vector2) -> StirSpoon:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 4)
+	for h in hits:
+		if h.get("collider") is StirSpoon:
+			return h.get("collider")
+	return null
+
+
+func _hit_test_kitchen_container(pos: Vector2):
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	params.collide_with_areas = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		var collider = h.get("collider")
+		if _is_kitchen_container(collider):
+			return collider
+		if collider is Area2D and _is_kitchen_container(collider.get_parent()):
+			return collider.get_parent()
+	return null
+
+
+func _is_kitchen_container(node: Node) -> bool:
+	return node != null and node.get_script() == KITCHEN_CONTAINER_SCRIPT
 
 
 func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
