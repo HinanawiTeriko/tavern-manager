@@ -87,9 +87,6 @@ func register_view(view: Node) -> void:
 		_tavern_view = view
 		_refresh_tavern_ui()
 
-		var craft_station = view.get_node("CraftStation")
-		if craft_station != null:
-			craft_station.serve_requested.connect(_on_serve_requested)
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
 		var tm = _tutorial_manager
