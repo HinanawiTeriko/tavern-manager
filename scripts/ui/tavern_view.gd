@@ -101,8 +101,11 @@ func _apply_theme() -> void:
 
 	var recipe_panel = $OverlayMenu/RecipePanel
 	var backpack_panel = $OverlayMenu/BackpackPanel
+	recipe_panel.visible = true
+	backpack_panel.visible = false
 	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false)
-	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(func(): recipe_panel.visible = false; backpack_panel.visible = true)
+	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
+	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
 
