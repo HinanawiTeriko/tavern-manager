@@ -240,6 +240,6 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 		item.linear_velocity = Vector2.ZERO
 		item.angular_velocity = 0.0
 		item.global_position = _recycle_anchor.global_position
-		item._fell_emitted = false
+		item.reset_fall_state()
 	else:
 		item.queue_free()

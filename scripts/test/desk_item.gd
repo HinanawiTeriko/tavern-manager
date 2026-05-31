@@ -48,7 +48,7 @@ var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
 var _doneness = MEAT_DONENESS.new()
 
-signal fell_out_of_bounds(item)
+signal fell_out_of_bounds(item: DeskItem)
 
 var _fell_emitted: bool = false
 
@@ -67,6 +67,11 @@ func _physics_process(_delta: float) -> void:
 	if global_position.y > KILL_Y and not _fell_emitted:
 		_fell_emitted = true
 		fell_out_of_bounds.emit(self)
+
+
+## 回收复用：被移回回收区后清除越界标记，使其再次掉落仍能触发回收。
+func reset_fall_state() -> void:
+	_fell_emitted = false
 
 
 func set_color(c: Color) -> void:
