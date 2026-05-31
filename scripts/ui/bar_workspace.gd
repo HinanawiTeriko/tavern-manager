@@ -22,6 +22,9 @@ var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
+@onready var _wash_basin: Area2D = $World/WashBasin
+const WASH_DWELL := 0.8
+var _wash_dwell: Dictionary = {}   # 容器 -> 已停留秒数
 
 
 func _ready() -> void:
@@ -243,3 +246,31 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 		item.reset_fall_state()
 	else:
 		item.queue_free()
+
+
+func _physics_process(delta: float) -> void:
+	_update_wash_basin(delta)
+
+
+## 容器停在清洗盆内 0.8s → 清空内部料回库存（剧情物品也是回背包，不销毁）。
+func _update_wash_basin(delta: float) -> void:
+	var inside := {}
+	for body in _wash_basin.get_overlapping_bodies():
+		if body == _brewery or _is_kitchen_container(body):
+			inside[body] = true
+			_wash_dwell[body] = float(_wash_dwell.get(body, 0.0)) + delta
+			if _wash_dwell[body] >= WASH_DWELL:
+				_wash_dwell[body] = 0.0
+				_do_wash(body)
+	for body in _wash_dwell.keys():
+		if not inside.has(body):
+			_wash_dwell.erase(body)
+
+
+func _do_wash(container) -> void:
+	var drained: Array = container.drain_contents()
+	if drained.is_empty():
+		return
+	for key in drained:
+		_gm.add_to_inventory(key, 1)
+	print("[BarWorkspace] 清洗盆清空 ", container, " 退回 ", drained)

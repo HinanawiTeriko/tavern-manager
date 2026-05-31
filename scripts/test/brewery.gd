@@ -129,3 +129,11 @@ func _try_brew() -> void:
 	print("[Brewery] 产出 %s  品质=%s  (摇晃 %d 次)" % [product_key, quality, shakes])
 	_spawn_product(product_key, quality)
 	recipe_consumed.emit(product_key)
+
+
+## 清洗盆清空：返回未结算的投料 key 列表并清空摇晃进度。料未出酒，全部退回。
+func drain_contents() -> Array[String]:
+	var drained := _pending_keys.duplicate()
+	_pending_keys.clear()
+	_shake.reset()
+	return drained

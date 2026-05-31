@@ -209,3 +209,14 @@ func _spawn_product(product_key: String) -> void:
 	var item_data: Dictionary = GameManager.craft.get_item(product_key)
 	product.set_item(product_key, item_data)
 	product.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
+
+
+## 清洗盆清空：仅锅有内部料状态需要退回；返回料 key 列表并重置状态。
+## 烤架物品是桌面独立物体，不在此处（spec §6.4），返回空。
+func drain_contents() -> Array[String]:
+	if container_key != "pot":
+		return []
+	var drained := _state.ingredients()
+	_state.clear()
+	_configure_state()
+	return drained
