@@ -252,22 +252,30 @@ func _physics_process(delta: float) -> void:
 	_update_wash_basin(delta)
 
 
-## 容器停在清洗盆内 0.8s → 清空内部料回库存（剧情物品也是回背包，不销毁）。
+## 容器停在清洗盆内 0.8s → 清空内部料回库存（一次进入只清一次；
+## 离开后重新进入才会再次清洗，避免坐在盆里把后投的料静默清掉）。
 func _update_wash_basin(delta: float) -> void:
 	var inside := {}
 	for body in _wash_basin.get_overlapping_bodies():
 		if body == _brewery or _is_kitchen_container(body):
 			inside[body] = true
-			_wash_dwell[body] = float(_wash_dwell.get(body, 0.0)) + delta
-			if _wash_dwell[body] >= WASH_DWELL:
-				_wash_dwell[body] = 0.0
+			var dwell := float(_wash_dwell.get(body, 0.0))
+			if is_inf(dwell):
+				continue   # 本次停留已清洗过，等离开再重置
+			dwell += delta
+			if dwell >= WASH_DWELL:
+				_wash_dwell[body] = INF
 				_do_wash(body)
+			else:
+				_wash_dwell[body] = dwell
 	for body in _wash_dwell.keys():
 		if not inside.has(body):
 			_wash_dwell.erase(body)
 
 
 func _do_wash(container) -> void:
+	assert(container == _brewery or _is_kitchen_container(container),
+		"_do_wash called on unexpected type: %s" % container)
 	var drained: Array = container.drain_contents()
 	if drained.is_empty():
 		return
