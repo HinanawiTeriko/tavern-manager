@@ -17,6 +17,8 @@ var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
 var _gm
 
+const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
+
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
 	"mira": "mira_neutral",
@@ -296,19 +298,30 @@ func trigger_craft_tutorial() -> void:
 	}
 	tm.start_tutorial("craft", rects)
 
+## 配方表：按 recipes.json 显示「产物 价格 ← 配料 [容器]」，让玩家能学会怎么做。
+## 需购买且未解锁的配方标灰并注明（需解锁）。
 func _build_recipe_list() -> void:
 	var recipe_list = _menu_panel.get_node("RecipePanel/RecipeList")
 	for child in recipe_list.get_children():
 		child.queue_free()
 
-	for key in _gm.craft.items:
-		var item_data: Dictionary = _gm.craft.items[key]
+	var keys: Array = _gm.craft.recipes.keys()
+	keys.sort()
+	for product_key in keys:
+		var recipe: Dictionary = _gm.craft.recipes[product_key]
+		var container: String = recipe.get("container", "")
+		var ingredients: Array = recipe.get("ingredients", [])
+		if container == "" or ingredients.is_empty():
+			continue
+
+		var product_data: Dictionary = _gm.craft.get_item(product_key)
+		var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
 
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		row.custom_minimum_size = Vector2(0, 32)
 
-		var icon_tex = _gm.try_load_material_icon(key)
+		var icon_tex = _gm.try_load_material_icon(product_key)
 		if icon_tex != null:
 			var tex_rect = TextureRect.new()
 			tex_rect.texture = icon_tex
@@ -317,7 +330,7 @@ func _build_recipe_list() -> void:
 			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			row.add_child(tex_rect)
 		else:
-			var col_arr = item_data.get("color", [])
+			var col_arr = product_data.get("color", [])
 			var mat_color = Color.GRAY
 			if col_arr is Array and col_arr.size() >= 3:
 				mat_color = Color(col_arr[0], col_arr[1], col_arr[2])
@@ -326,12 +339,20 @@ func _build_recipe_list() -> void:
 			box.custom_minimum_size = Vector2(36, 20)
 			row.add_child(box)
 
-		var price_str = ""
-		if item_data.get("type", "") == "product":
-			price_str = str(item_data["price"]) + "金"
+		var ingr_names := PackedStringArray()
+		for ing in ingredients:
+			ingr_names.append(String(_gm.craft.get_item(ing).get("name", ing)))
+		var container_name: String = CONTAINER_NAMES.get(container, container)
+		var product_name: String = product_data.get("name", product_key)
+		var price: int = int(product_data.get("price", 0))
+
+		var text: String = "%s  %d金   ← %s  [%s]" % [product_name, price, "＋".join(ingr_names), container_name]
+		if locked:
+			text += "  （需解锁）"
+
 		var name_label = Label.new()
-		name_label.text = " " + item_data.get("name", key) + "  " + price_str
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.text = " " + text
+		name_label.add_theme_color_override("font_color", Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
 		name_label.add_theme_font_size_override("font_size", 14)
 		row.add_child(name_label)
 
