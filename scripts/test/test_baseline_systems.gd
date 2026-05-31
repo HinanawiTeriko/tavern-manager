@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_orderable_products_respect_purchase_unlock()
 	_test_shop_unlock_keys_exist_in_recipes()
+	_test_today_important_npc_resets_on_empty_day()
 	_finish()
 
 
@@ -51,3 +52,11 @@ func _test_shop_unlock_keys_exist_in_recipes() -> void:
 		return
 	for unlock in data.get("recipeUnlocks", []):
 		_ok(craft.recipes.has(unlock["key"]), "shop recipe key should exist: " + unlock["key"])
+
+
+func _test_today_important_npc_resets_on_empty_day() -> void:
+	var narrative := NarrativeManager.new()
+	narrative.load_npc_data()
+	_ok(narrative.select_today_important_npc(1) == "ryan", "Day 1 should select ryan")
+	_ok(narrative.select_today_important_npc(5) == "", "empty day should clear stale NPC")
+	_ok(narrative.today_important_npc == "", "stored NPC id should also be cleared")

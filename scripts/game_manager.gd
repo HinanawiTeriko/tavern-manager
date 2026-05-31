@@ -92,9 +92,7 @@ func register_view(view: Node) -> void:
 			tm.tavern_first_entered = true
 			tm._save_state()
 
-		var npcs_today = narrative.get_today_scenes(economy.current_day)
-		if npcs_today.size() > 0:
-			narrative.today_important_npc = npcs_today[0].id
+		narrative.select_today_important_npc(economy.current_day)
 
 		if narrative.today_important_npc != "":
 			var npc = null

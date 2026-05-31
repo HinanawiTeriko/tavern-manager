@@ -101,6 +101,13 @@ func get_today_scenes(day: int) -> Array[NpcData]:
 				break
 	return result
 
+func select_today_important_npc(day: int) -> String:
+	today_important_npc = ""
+	var scenes := get_today_scenes(day)
+	if scenes.size() > 0:
+		today_important_npc = scenes[0].id
+	return today_important_npc
+
 func _check_trigger(trigger, npc_id: String) -> bool:
 	# 新格式: {"type": "auto"}
 	if trigger is Dictionary and trigger.get("type") == "auto":
