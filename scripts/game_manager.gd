@@ -52,11 +52,7 @@ func _ready() -> void:
 	craft_style.load_data()
 
 	guests = GuestSystem.new(func():
-		var available: Array = []
-		for key in craft.items:
-			if craft.is_product(key):
-				available.append(key)
-		return available
+		return craft.get_orderable_products(economy.current_day)
 	)
 	guests.guest_arrived.connect(_on_guest_arrived)
 	guests.guest_left.connect(_on_guest_left)
