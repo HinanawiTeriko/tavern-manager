@@ -15,6 +15,9 @@ const KILL_Y := 800.0
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
 @onready var _brewery: Brewery = $World/Brewery
+@onready var _grill: KitchenContainer = $World/Grill
+@onready var _pot: KitchenContainer = $World/Pot
+@onready var _spoon: StirSpoon = $World/Spoon
 @onready var _customer_area: Area2D = $CustomerDropArea
 @onready var _shortcut_bar: Control = get_node("../ShortcutBar")
 
@@ -274,7 +277,29 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 
 func _physics_process(delta: float) -> void:
 	_recover_docked_bodies()
+	_update_spoon_depth()
 	_update_wash_basin(delta)
+
+
+func _update_spoon_depth() -> void:
+	_spoon.set_submerged(
+		_brewery.is_spoon_inside(_spoon)
+		or _grill.is_spoon_inside(_spoon)
+		or _pot.is_spoon_inside(_spoon)
+		or _area_contains_spoon_tip(_wash_basin)
+	)
+
+
+func _area_contains_spoon_tip(area: Area2D) -> bool:
+	var collision_shape := area.get_node_or_null("Shape") as CollisionShape2D
+	if collision_shape == null:
+		return false
+	var rectangle := collision_shape.shape as RectangleShape2D
+	if rectangle == null:
+		return false
+	var local_tip := collision_shape.to_local(_spoon.tip_global_position())
+	var half_size := rectangle.size * 0.5
+	return absf(local_tip.x) <= half_size.x and absf(local_tip.y) <= half_size.y
 
 
 ## 容器/工具越界时自动回泊位，避免关键工作台对象永久丢失。

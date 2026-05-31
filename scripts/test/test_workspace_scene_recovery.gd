@@ -12,6 +12,7 @@ func _ready() -> void:
 	await _test_inventory_spawn_deducts_and_recovers()
 	await _test_inventory_overlay_lists_and_drop()
 	await _test_document_overlay_opens_ledger()
+	await _test_spoon_renders_below_container_visuals()
 	_finish()
 
 
@@ -144,6 +145,46 @@ func _test_document_overlay_opens_ledger() -> void:
 	release.position = Vector2(100.0, 200.0)
 	overlay._on_panel_gui_input(release)
 	_ok(overlay.get_current_page_text() == "第三页", "ledger drag beyond threshold advances one spread")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_spoon_renders_below_container_visuals() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var spoon := tavern.get_node("BarWorkspace/World/Spoon") as StirSpoon
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var surface_z_index := spoon.z_index
+	var containers: Array = [
+		[tavern.get_node("BarWorkspace/World/Brewery"), tavern.get_node("BarWorkspace/World/Brewery/Mouth")],
+		[tavern.get_node("BarWorkspace/World/Grill"), tavern.get_node("BarWorkspace/World/Grill/Intake")],
+		[tavern.get_node("BarWorkspace/World/Pot"), tavern.get_node("BarWorkspace/World/Pot/Intake")],
+	]
+	spoon.freeze = true
+	var tip_offset := spoon.tip_global_position() - spoon.global_position
+	for pair in containers:
+		var container = pair[0]
+		var area: Area2D = pair[1]
+		spoon.global_position = area.global_position - tip_offset
+		bar._update_spoon_depth()
+		_ok(container.is_spoon_inside(spoon),
+			"spoon tip enters %s during depth test" % container.name)
+		_ok(spoon.z_index < 0,
+			"spoon renders below %s while inside: got z_index %d" % [container.name, spoon.z_index])
+
+	var wash_basin := tavern.get_node("BarWorkspace/World/WashBasin") as Area2D
+	spoon.global_position = wash_basin.global_position - tip_offset
+	bar._update_spoon_depth()
+	_ok(spoon.z_index < 0,
+		"spoon renders below WashBasin while inside: got z_index %d" % spoon.z_index)
+
+	spoon.global_position = Vector2(120.0, 120.0)
+	bar._update_spoon_depth()
+	_ok(spoon.z_index == surface_z_index,
+		"spoon restores surface depth after leaving containers: expected %d, got %d" % [surface_z_index, spoon.z_index])
 
 	tavern.queue_free()
 	await get_tree().process_frame

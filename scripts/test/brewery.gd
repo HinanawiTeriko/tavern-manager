@@ -66,7 +66,15 @@ func _try_accept_mouth_body(body: Node) -> void:
 
 
 func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
-	var local_pos: Vector2 = to_local(item.global_position)
+	return _is_point_inside_mouth_opening(item.global_position)
+
+
+func is_spoon_inside(spoon: StirSpoon) -> bool:
+	return _is_point_inside_mouth_opening(spoon.tip_global_position())
+
+
+func _is_point_inside_mouth_opening(global_pos: Vector2) -> bool:
+	var local_pos: Vector2 = to_local(global_pos)
 	return absf(local_pos.x) <= MOUTH_INNER_HALF_WIDTH \
 		and local_pos.y >= MOUTH_TOP_Y \
 		and local_pos.y <= MOUTH_BOTTOM_Y

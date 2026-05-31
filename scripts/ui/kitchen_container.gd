@@ -178,6 +178,12 @@ func is_item_inside_intake(item: Node2D) -> bool:
 	return _is_point_inside_intake(item.global_position)
 
 
+func is_spoon_inside(spoon: StirSpoon) -> bool:
+	if container_key == "pot":
+		return _is_point_inside_stir_zone(spoon.tip_global_position())
+	return _is_point_inside_intake(spoon.tip_global_position())
+
+
 func _is_point_inside_intake(global_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(global_pos)
 	return absf(local_pos.x) <= intake_inner_half_width \

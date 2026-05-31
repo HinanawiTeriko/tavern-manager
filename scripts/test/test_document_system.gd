@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_document_state()
 	_test_game_manager_document_mediation()
+	_test_ledger_toggle_matches_tab_keycode()
 	_finish()
 
 
@@ -50,3 +51,10 @@ func _test_game_manager_document_mediation() -> void:
 	_ok(gm.documents is DocumentSystem, "GameManager owns DocumentSystem")
 	var ledger: Dictionary = gm.request_open_document("ledger")
 	_ok(ledger.get("id", "") == "ledger", "GameManager routes ledger open request")
+
+
+func _test_ledger_toggle_matches_tab_keycode() -> void:
+	var tab := InputEventKey.new()
+	tab.keycode = KEY_TAB
+	tab.pressed = true
+	_ok(InputMap.event_is_action(tab, "ledger_toggle"), "ledger toggle matches a Tab key event")
