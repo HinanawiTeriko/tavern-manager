@@ -322,7 +322,7 @@ func _build_shop_ui() -> void:
 	_shop_panel = ScrollContainer.new()
 	_shop_panel.anchor_left = 0.0; _shop_panel.anchor_right = 1.0
 	_shop_panel.offset_left = 0; _shop_panel.offset_top = 95
-	_shop_panel.offset_right = 1000; _shop_panel.offset_bottom = 420
+	_shop_panel.offset_right = 0; _shop_panel.offset_bottom = 420
 	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	_shop_panel.visible = false

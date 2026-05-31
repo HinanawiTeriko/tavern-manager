@@ -9,6 +9,8 @@ func _ready() -> void:
 	var view = day_map_scene.instantiate()
 	add_child(view)
 	await get_tree().process_frame
+	view._switch_tab(true)
+	await get_tree().process_frame
 	_test_visible_scrollbars(view)
 	view.queue_free()
 	_finish()
@@ -43,3 +45,6 @@ func _test_visible_scrollbars(view) -> void:
 	if shop_scroll is ScrollContainer:
 		_ok(shop_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_ALWAYS,
 			"shop scrollbar is always visible")
+		_ok(shop_scroll.get_v_scroll_bar().visible, "shop vertical scrollbar is visibly rendered")
+		_ok(shop_scroll.position.x + shop_scroll.size.x <= view.get_node("MapArea").size.x,
+			"shop scrollbar stays inside the visible map area")
