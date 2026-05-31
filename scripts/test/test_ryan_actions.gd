@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_alternative_requires_warning()
 	_test_informed_route_rejects_drugged_ale()
 	_test_alternative_route()
+	_test_routes_map_to_ending_texts()
 	_finish()
 
 
@@ -131,3 +132,29 @@ func _test_alternative_route() -> void:
 	_ok(alternative.get("interaction_closed", false), "alternative contract closes Ryan interaction")
 	_ok(narrative.get_var("ryan_has_alternative") == true, "alternative contract records ryan_has_alternative")
 	_ok(narrative.get_ryan_route() == "alternative_survivor", "alternative route is reachable")
+
+
+func _ryan_endings() -> Dictionary:
+	for npc in _new_narrative().all_npcs:
+		if npc.id == "ryan":
+			return npc.endings
+	return {}
+
+
+func _test_routes_map_to_ending_texts() -> void:
+	var endings := _ryan_endings()
+	for route in ["uninformed_fallen", "drugged_survivor", "informed_fallen", "alternative_survivor"]:
+		_ok(endings.has(route), "ryan endings include route key %s" % route)
+		_ok(String(endings.get(route, "")) != "", "ryan ending %s has text" % route)
+
+	# finalize_ryan_ending 写入的 key 必须是 endings 里存在的路线
+	var narrative := _new_narrative()
+	narrative.finalize_ryan_ending()
+	_ok(narrative.get_var("ryan_ending") == "uninformed_fallen", "default finalize -> uninformed_fallen")
+	_ok(endings.has(String(narrative.get_var("ryan_ending"))), "default ending key exists in endings")
+
+	var drugged := _new_narrative()
+	drugged.set_var("ryan_drugged", true)
+	drugged.finalize_ryan_ending()
+	_ok(drugged.get_var("ryan_ending") == "drugged_survivor", "finalize maps drugged route to its ending")
+	_ok(drugged.get_var("ryan_ending") == drugged.get_ryan_route(), "finalize ending matches get_ryan_route")

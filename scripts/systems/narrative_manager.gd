@@ -48,6 +48,12 @@ func resolve_action(action: Dictionary) -> Dictionary:
 	return _action_result(false, "unsupported_action")
 
 
+## 按当前路线写入 Ryan 结局（单一真相源：路线优先级只在 get_ryan_route 里定义）。
+## 由 GameManager 在 Day 3 揭晓前调用；对话只读 ryan_ending，不再自行判定路线。
+func finalize_ryan_ending() -> void:
+	set_ending("ryan", get_ryan_route())
+
+
 func get_ryan_route() -> String:
 	if bool(dialogue_vars.get("ryan_has_alternative", false)):
 		return "alternative_survivor"
