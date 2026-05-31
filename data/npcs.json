@@ -7,9 +7,9 @@
       "description": "年轻热血的见习骑士，梦想加入白银阶冒险队伍",
       "affectionStart": 0,
       "scenes": [
-        { "day": 1, "dialogue": "ryan_day1", "order": "bread", "trigger": {"type": "auto"} },
+        { "day": 1, "dialogue": "ryan_day1", "order": "ale_beer", "trigger": {"type": "auto"} },
         { "day": 2, "dialogue": "ryan_day2", "order": "meat_cooked", "trigger": {"type": "auto"} },
-        { "day": 3, "dialogue": "ryan_day3", "order": "herbal_ale", "trigger": {"type": "auto"} }
+        { "day": 3, "dialogue": "ryan_day3", "order": "herb_broth", "trigger": {"type": "auto"} }
       ],
       "endings": {
         "uninformed_fallen": "莱恩毫不知情地奔赴北矿道。血斧小队全军覆没，他到死都不知道那份委托从一开始就是陷阱。",

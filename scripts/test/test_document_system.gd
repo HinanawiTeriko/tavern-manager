@@ -9,6 +9,7 @@ func _ready() -> void:
 	_test_game_manager_document_mediation()
 	_test_ledger_toggle_matches_tab_keycode()
 	_test_capture_restore()
+	_test_ledger_entry_once()
 	_finish()
 
 
@@ -43,6 +44,15 @@ func _test_capture_restore() -> void:
 	_ok(d2.owns_document("ledger"), "ledger always owned after restore")
 	var doc := d2.get_document("ledger")
 	_ok(String(doc["pages"][-1]) == "第三日。莱恩。北矿道。未归。", "restored ledger entry")
+
+
+func _test_ledger_entry_once() -> void:
+	var d := DocumentSystem.new()
+	d.load_data()
+	_ok(d.add_ledger_entry_once("第三日。莱恩。\n北矿道。\n未归。"), "first ledger prediction is added")
+	_ok(not d.add_ledger_entry_once("第三日。莱恩。\n北矿道。\n未归。"), "duplicate ledger prediction is ignored")
+	var ledger := d.get_document("ledger")
+	_ok(ledger.get("pages", []).count("第三日。莱恩。\n北矿道。\n未归。") == 1, "prediction appears once")
 
 
 func _test_document_state() -> void:

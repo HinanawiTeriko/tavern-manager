@@ -45,6 +45,22 @@ func _ready() -> void:
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
 
 
+func configure_day(day: int) -> void:
+	_set_body_available(_brewery, _gm.workspace.is_container_unlocked("barrel", day))
+	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
+	_set_body_available(_pot, _gm.workspace.is_container_unlocked("pot", day))
+	_set_body_available(_spoon, _gm.workspace.is_container_unlocked("spoon", day))
+
+
+func _set_body_available(body: RigidBody2D, available: bool) -> void:
+	body.visible = available
+	body.process_mode = Node.PROCESS_MODE_INHERIT if available else Node.PROCESS_MODE_DISABLED
+	for child in body.find_children("*", "CollisionShape2D", true, false):
+		child.set_deferred("disabled", not available)
+	for child in body.find_children("*", "CollisionPolygon2D", true, false):
+		child.set_deferred("disabled", not available)
+
+
 func _on_drag_started(body: RigidBody2D) -> void:
 	if body is DeskItem:
 		body.is_held = true
@@ -283,6 +299,7 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 	if not _gm.remove_from_inventory(item_key, 1):
 		return null
+	_gm.play_audio_event("drop")
 	return _spawn_desk_item_at(pos, item_key)
 
 
@@ -396,6 +413,7 @@ func _do_wash(container) -> void:
 		return
 	for key in drained:
 		_gm.add_to_inventory(key, 1)
+	_gm.play_audio_event("wash_complete")
 	print("[BarWorkspace] 清洗盆清空 ", container, " 退回 ", drained)
 
 

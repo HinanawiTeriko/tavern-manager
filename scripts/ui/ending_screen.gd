@@ -4,12 +4,14 @@ extends Node2D
 var _npc_endings_list: VBoxContainer
 var _gold_label: Label
 var _rep_label: Label
+var _orders_label: Label
 var _title_label: Label
 
 func _ready() -> void:
 	_npc_endings_list = $Content/NPCEndingsList
 	_gold_label = $Content/Stats/GoldLabel
 	_rep_label = $Content/Stats/RepLabel
+	_orders_label = $Content/Stats/OrdersLabel
 	_title_label = $Content/TitleLabel
 
 	ThemeColors.style_header(_title_label, 36)
@@ -19,6 +21,8 @@ func _ready() -> void:
 	_gold_label.add_theme_font_size_override("font_size", 20)
 	_rep_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 	_rep_label.add_theme_font_size_override("font_size", 20)
+	_orders_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_orders_label.add_theme_font_size_override("font_size", 20)
 
 	ThemeColors.style_button($Content/QuitBtn)
 	ThemeColors.style_button($Content/RestartBtn)
@@ -44,9 +48,10 @@ func _ready() -> void:
 			grad.gradient = g
 			bg_node.texture = grad
 
-func show_endings(gold: int, rep: int, npc_endings: Dictionary) -> void:
+func show_endings(gold: int, rep: int, orders_success: int, npc_endings: Dictionary) -> void:
 	_gold_label.text = "最终金币：" + str(gold)
 	_rep_label.text = "最终声望：" + str(rep)
+	_orders_label.text = "成功订单：" + str(orders_success)
 
 	for child in _npc_endings_list.get_children():
 		child.queue_free()

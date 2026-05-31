@@ -65,6 +65,7 @@ func _try_accept_mouth_body(body: Node) -> void:
 	if not _is_item_inside_mouth_opening(item):
 		return
 	_pending_keys.append(item.item_key)
+	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
 
 
@@ -97,6 +98,7 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 	# 朝上离开桶口，且产出物是成品（_try_accept 的 is_product 守卫会拦它），不会被自己收回。
 	var out_dir := 1.0 if randf() > 0.5 else -1.0
 	product.linear_velocity = Vector2(out_dir * 90.0, -260.0)
+	GameManager.play_audio_event("product_ready")
 
 
 func _load_shake_config() -> void:
@@ -116,6 +118,7 @@ func begin_shake_session() -> void:
 	lock_rotation = false
 	sleeping = false
 	_session_active = true
+	GameManager.play_audio_event("barrel_shake")
 
 
 ## 松手结算：停止采样、尝试出酒；桶保持动态由物理自然落定（不强制冻结）。

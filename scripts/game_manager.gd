@@ -16,6 +16,8 @@ var workspace: WorkspaceSystem
 var documents: DocumentSystem
 var day_map: DayMapSystem
 var save_sys: SaveSystem
+var ryan_slice: RyanSliceSystem
+var audio: AudioManager
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -25,6 +27,7 @@ var current_ledger_data: LedgerData = null
 # Dialogue state
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
+var _important_npc_pending: bool = false
 
 # Scene refs
 var _tavern_view = null
@@ -38,6 +41,13 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"flour": "res://assets/textures/icons/materials/wheat.png",
 	"meat_raw": "res://assets/textures/icons/products/roast.png",
 	"herb": "res://assets/textures/icons/materials/herb.png",
+	"ale_beer": "res://assets/textures/icons/products/ale.png",
+	"bread": "res://assets/textures/icons/products/bread.png",
+	"meat_cooked": "res://assets/textures/icons/products/roast.png",
+	"herb_broth": "res://assets/textures/icons/products/stew.png",
+	"sleep_powder": "res://assets/textures/icons/items/sleep_powder.png",
+	"bloodied_contract": "res://assets/textures/icons/items/bloodied_contract.png",
+	"alternative_contract": "res://assets/textures/icons/items/alternative_contract.png",
 }
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
@@ -76,6 +86,10 @@ func _ready() -> void:
 	day_map = DayMapSystem.new()
 	day_map.load_data()
 	save_sys = SaveSystem.new()
+	ryan_slice = RyanSliceSystem.new()
+	audio = AudioManager.new()
+	audio.name = "AudioManager"
+	add_child(audio)
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -87,6 +101,7 @@ func _ready() -> void:
 	guests.guest_arrived.connect(_on_guest_arrived)
 	guests.guest_left.connect(_on_guest_left)
 	guests.patience_low.connect(_on_patience_low)
+	guests.normal_orders_completed.connect(_on_normal_orders_completed)
 
 	economy.changed.connect(_refresh_tavern_ui)
 	day_cycle.phase_changed.connect(_on_phase_changed)
@@ -115,6 +130,8 @@ func _process(delta: float) -> void:
 func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
+		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
+		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
 
 
@@ -127,6 +144,7 @@ func register_view(view: Node) -> void:
 			tm._save_state()
 
 		narrative.select_today_important_npc(economy.current_day)
+		_important_npc_pending = false
 
 		if narrative.today_important_npc != "":
 			var npc = null
@@ -135,6 +153,7 @@ func register_view(view: Node) -> void:
 					npc = n
 					break
 			if npc != null:
+				_important_npc_pending = true
 				var scene = null
 				for s in npc.scenes:
 					if s.day == economy.current_day:
@@ -158,15 +177,19 @@ func register_view(view: Node) -> void:
 		_day_map_view = view
 		start_day_map(economy.current_day)
 		save_sys.write(_capture_save_state())
-		_day_map_view.show_day(economy.current_day, EconomySystem.MAX_DAYS)
+		_day_map_view.show_day(economy.current_day, ryan_slice.last_day())
 
 	elif view is EndingScreen:
 		_ending_screen = view
-		_ending_screen.show_endings(economy.gold, economy.reputation, narrative.endings)
+		_ending_screen.show_endings(economy.gold, economy.reputation,
+			ryan_slice.total_orders_success, narrative.endings)
 
 func start_day_map(day: int) -> void:
 	day_map.start_day(day)
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
+	for entry in ryan_slice.day_start_ledger_entries(day):
+		if documents.add_ledger_entry_once(String(entry)):
+			play_audio_event("new_document")
 
 
 func visit_day_location(location_id: String) -> Dictionary:
@@ -177,7 +200,10 @@ func visit_day_location(location_id: String) -> Dictionary:
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
-		documents.grant_document(String(document_id))
+		var id := String(document_id)
+		var already_owned := documents.owns_document(id)
+		if documents.grant_document(id) and not already_owned:
+			play_audio_event("new_document")
 	return result
 
 
@@ -238,10 +264,10 @@ func _on_phase_changed(phase: int) -> void:
 	if phase == DayCycleSystem.DayPhase.NIGHT:
 		get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/Tavern.tscn")
 	else:
-		economy.current_day += 1
-		if economy.current_day > EconomySystem.MAX_DAYS:
+		if ryan_slice.should_finish_after_day(economy.current_day):
 			get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/EndingScreen.tscn")
 		else:
+			economy.current_day += 1
 			get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/DayMap.tscn")
 
 func _on_guest_arrived(guest: GuestData) -> void:
@@ -255,6 +281,7 @@ func _on_guest_arrived(guest: GuestData) -> void:
 			if npc.id == guest.npc_id:
 				display_name = npc.npc_name
 				break
+		display_name = ryan_slice.important_display_name(economy.current_day, guest.npc_id, display_name)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), guest.npc_id if guest.npc_id != "" else "guest")
 
 	var tm = get_node_or_null("/root/TutorialManager")
@@ -309,11 +336,14 @@ func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_da
 		economy.add_gold(item_price)
 		economy.add_reputation(2)
 		guests.record_order_success()
+		ryan_slice.record_order_success()
+		play_audio_event("serve_success")
 		_tavern_view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
 		if is_important:
 			narrative.set_var("serve_result", "success")
 	else:
 		guests.record_order_failed()
+		play_audio_event("serve_fail")
 		if item.get("type", "") == "product":
 			_tavern_view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
 		else:
@@ -370,6 +400,8 @@ func _recover_from_dialogue_failure() -> void:
 		guests.clear_guest()
 
 func _on_guest_left() -> void:
+	if guests.current_guest != null and guests.current_guest.has_dialogue:
+		_important_npc_pending = false
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
 
@@ -393,10 +425,13 @@ func _on_patience_low() -> void:
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.show_message("客人等得不耐烦了……", Color.ORANGE)
 
+func _on_normal_orders_completed() -> void:
+	_show_message("本晚的有限订单已经完成，可以打烊了。", Color.LIME_GREEN)
+
 func end_night() -> void:
 	if day_cycle.phase != DayCycleSystem.DayPhase.NIGHT:
 		return
-	if guests.has_guest:
+	if guests.has_guest or _important_npc_pending:
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.show_message("还有客人在等呢！", Color.ORANGE)
 		return
@@ -413,6 +448,7 @@ func end_night() -> void:
 	current_ledger_data.orders_success = guests.orders_success
 	current_ledger_data.orders_failed = guests.orders_failed
 	current_ledger_data.npc_fates = fates
+	ryan_slice.complete_day(economy.current_day)
 
 	economy.reset_daily()
 	guests.reset_daily()
@@ -451,12 +487,17 @@ func buy_recipe_unlock(key: String) -> bool:
 func _refresh_tavern_ui() -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
-	_tavern_view.update_top_bar(economy.gold, economy.reputation, economy.current_day, EconomySystem.MAX_DAYS)
+	_tavern_view.update_top_bar(economy.gold, economy.reputation, economy.current_day, ryan_slice.last_day())
 
 func notify_inventory_changed() -> void:
 	if inventory.get("sleep_powder", 0) > 0:
 		narrative.set_var("has_sleep_powder", true)
 	inventory_changed.emit()
+
+func play_audio_event(event_key: String) -> bool:
+	if audio == null:
+		return false
+	return audio.play_event(event_key)
 
 ## 中介：把物品能力查询(InventorySystem)与越界分类(WorkspaceSystem)串起来。
 func classify_recovery(item_key: String) -> String:
@@ -622,6 +663,7 @@ func _capture_save_state() -> Dictionary:
 		},
 		"craft": {"unlocked_recipes": craft.unlocked_recipes.duplicate()},
 		"tutorial": _capture_tutorial_state(),
+		"ryan_slice": ryan_slice.capture_state(),
 	}
 
 func _capture_tutorial_state() -> Dictionary:
@@ -666,6 +708,7 @@ func _apply_save_state(data: Dictionary) -> void:
 		craft.unlocked_recipes.append(String(r))
 
 	_apply_tutorial_state(data.get("tutorial", {}))
+	ryan_slice.restore_state(data.get("ryan_slice", {}))
 	notify_inventory_changed()
 
 func _apply_tutorial_state(t: Dictionary) -> void:
@@ -715,6 +758,7 @@ func _default_new_game_state() -> Dictionary:
 		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
 			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
 			"first_guest_served": false, "first_ledger_shown": false},
+		"ryan_slice": {"total_orders_success": 0, "completed_days": []},
 	}
 
 ## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。

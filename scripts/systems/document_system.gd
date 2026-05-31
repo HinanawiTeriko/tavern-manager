@@ -82,6 +82,13 @@ func add_ledger_entry(text: String) -> void:
 		_ledger_entries.append(text)
 
 
+func add_ledger_entry_once(text: String) -> bool:
+	if text == "" or _ledger_entries.has(text):
+		return false
+	_ledger_entries.append(text)
+	return true
+
+
 func get_document(document_id: String) -> Dictionary:
 	if not has_document(document_id):
 		return {}

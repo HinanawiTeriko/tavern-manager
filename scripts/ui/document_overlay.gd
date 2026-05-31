@@ -46,12 +46,14 @@ func next_page() -> void:
 	if _page_index + step < _pages.size():
 		_page_index += step
 		_refresh_page()
+		GameManager.play_audio_event("page_turn")
 
 
 func previous_page() -> void:
 	if _page_index > 0:
 		_page_index = maxi(0, _page_index - _page_step())
 		_refresh_page()
+		GameManager.play_audio_event("page_turn")
 
 
 func get_current_page_text() -> String:

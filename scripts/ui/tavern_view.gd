@@ -189,6 +189,11 @@ func show_message(text: String, color: Color) -> void:
 	_message_label.text = text
 	_message_label.add_theme_color_override("font_color", color)
 
+func configure_slice_day(day: int) -> void:
+	var bar = get_node_or_null("BarWorkspace")
+	if bar != null and bar.has_method("configure_day"):
+		bar.configure_day(day)
+
 func set_dialogue_mode(active: bool) -> void:
 	_dialogue_overlay.visible = active
 

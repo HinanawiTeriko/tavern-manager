@@ -52,6 +52,7 @@ var _doneness = MEAT_DONENESS.new()
 signal fell_out_of_bounds(item: DeskItem)
 
 var _fell_emitted: bool = false
+var _last_impact_audio_msec: int = -1000
 
 @onready var _visual_top: Polygon2D = $VisualTop
 @onready var _visual_bottom: Polygon2D = $VisualBottom
@@ -62,12 +63,25 @@ var _fell_emitted: bool = false
 
 func _ready() -> void:
 	_apply_base_color(_pending_color)
+	contact_monitor = true
+	max_contacts_reported = 4
+	body_entered.connect(_on_body_entered)
 
 
 func _physics_process(_delta: float) -> void:
 	if global_position.y > KILL_Y and not _fell_emitted:
 		_fell_emitted = true
 		fell_out_of_bounds.emit(self)
+
+
+func _on_body_entered(_body: Node) -> void:
+	if linear_velocity.length() < IMPACT_DEBUG_SPEED:
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_impact_audio_msec < 100:
+		return
+	_last_impact_audio_msec = now
+	GameManager.play_audio_event("collision")
 
 
 ## 回收复用：被移回回收区后清除越界标记，使其再次掉落仍能触发回收。
