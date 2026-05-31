@@ -15,6 +15,7 @@ var craft_style: CraftStyleSystem
 var workspace: WorkspaceSystem
 var documents: DocumentSystem
 var day_map: DayMapSystem
+var save_sys: SaveSystem
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -74,6 +75,7 @@ func _ready() -> void:
 	documents.load_data()
 	day_map = DayMapSystem.new()
 	day_map.load_data()
+	save_sys = SaveSystem.new()
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -155,6 +157,7 @@ func register_view(view: Node) -> void:
 	elif view is DayMapView:
 		_day_map_view = view
 		start_day_map(economy.current_day)
+		save_sys.write(_capture_save_state())
 		_day_map_view.show_day(economy.current_day, EconomySystem.MAX_DAYS)
 
 	elif view is EndingScreen:
@@ -595,4 +598,129 @@ func _load_initial_inventory() -> Dictionary:
 
 	return {
 		"ale": 20, "grape": 20, "flour": 20, "meat_raw": 20, "herb": 20
+	}
+
+
+## ── 存档（spec §12）。SaveSystem 只管磁盘+字典，业务知识留在 GameManager。──
+
+## 收集当日稳定状态（spec §12.1）。不含夜间物理/拖拽/夜间计数器（§12.2）。
+func _capture_save_state() -> Dictionary:
+	return {
+		"economy": {
+			"current_day": economy.current_day,
+			"gold": economy.gold,
+			"reputation": economy.reputation,
+			"tavern_level": economy.tavern_level,
+		},
+		"inventory": inventory_sys.materials.duplicate(),
+		"documents": documents.capture_state(),
+		"narrative": {
+			"dialogue_vars": narrative.dialogue_vars.duplicate(true),
+			"affection": narrative.affection.duplicate(true),
+			"endings": narrative.endings.duplicate(true),
+			"today_important_npc": narrative.today_important_npc,
+		},
+		"craft": {"unlocked_recipes": craft.unlocked_recipes.duplicate()},
+		"tutorial": _capture_tutorial_state(),
+	}
+
+func _capture_tutorial_state() -> Dictionary:
+	var tm = _tutorial_manager
+	if tm == null:
+		return {}
+	return {
+		"completed_steps": tm._completed_steps.duplicate(),
+		"daymap_first_shown": tm.daymap_first_shown,
+		"tavern_first_entered": tm.tavern_first_entered,
+		"shop_first_visited": tm.shop_first_visited,
+		"first_guest_arrived": tm.first_guest_arrived,
+		"first_product_seasoned": tm.first_product_seasoned,
+		"first_guest_served": tm.first_guest_served,
+		"first_ledger_shown": tm.first_ledger_shown,
+	}
+
+## 把快照写回各子系统。只恢复稳定状态，不推进日期。
+func _apply_save_state(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	var eco: Dictionary = data.get("economy", {})
+	economy.current_day = int(eco.get("current_day", 1))
+	economy.gold = int(eco.get("gold", 0))
+	economy.reputation = int(eco.get("reputation", 0))
+	economy.tavern_level = int(eco.get("tavern_level", 1))
+	economy.gold_today = 0
+	economy.rep_today = 0
+
+	inventory_sys.set_initial(data.get("inventory", {}))
+
+	documents.restore_state(data.get("documents", {}))
+
+	var nar: Dictionary = data.get("narrative", {})
+	narrative.dialogue_vars = (nar.get("dialogue_vars", {}) as Dictionary).duplicate(true)
+	narrative.affection = (nar.get("affection", {}) as Dictionary).duplicate(true)
+	narrative.endings = (nar.get("endings", {}) as Dictionary).duplicate(true)
+	narrative.today_important_npc = String(nar.get("today_important_npc", ""))
+
+	craft.unlocked_recipes.clear()
+	for r in data.get("craft", {}).get("unlocked_recipes", []):
+		craft.unlocked_recipes.append(String(r))
+
+	_apply_tutorial_state(data.get("tutorial", {}))
+	notify_inventory_changed()
+
+func _apply_tutorial_state(t: Dictionary) -> void:
+	var tm = _tutorial_manager
+	if tm == null or t.is_empty():
+		return
+	tm._completed_steps = (t.get("completed_steps", []) as Array).duplicate()
+	tm.daymap_first_shown = bool(t.get("daymap_first_shown", false))
+	tm.tavern_first_entered = bool(t.get("tavern_first_entered", false))
+	tm.shop_first_visited = bool(t.get("shop_first_visited", false))
+	tm.first_guest_arrived = bool(t.get("first_guest_arrived", false))
+	tm.first_product_seasoned = bool(t.get("first_product_seasoned", false))
+	tm.first_guest_served = bool(t.get("first_guest_served", false))
+	tm.first_ledger_shown = bool(t.get("first_ledger_shown", false))
+	tm._save_state()
+
+## 标题页入口（spec §12.3）。
+func has_save() -> bool:
+	return save_sys.has_save()
+
+func continue_game() -> void:
+	var data := save_sys.read()
+	if data.is_empty():
+		return
+	_apply_save_state(data)
+	day_cycle.phase = DayCycleSystem.DayPhase.DAY
+	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
+
+func restart_current_day() -> void:
+	# 只有日初快照，重开当天 == 加载该快照（spec §12 "从稳定初始状态开始"）。
+	continue_game()
+
+func new_game() -> void:
+	save_sys.clear()
+	_apply_save_state(_default_new_game_state())
+	day_cycle.phase = DayCycleSystem.DayPhase.DAY
+	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
+
+func _default_new_game_state() -> Dictionary:
+	return {
+		"economy": {"current_day": 1, "gold": 0, "reputation": 0, "tavern_level": 1},
+		"inventory": _load_initial_inventory(),
+		"documents": {"owned": ["ledger"], "read": {}, "archived": [], "ledger_entries": []},
+		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
+			"endings": {}, "today_important_npc": ""},
+		"craft": {"unlocked_recipes": []},
+		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
+			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
+			"first_guest_served": false, "first_ledger_shown": false},
+	}
+
+## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。
+func _fresh_narrative_vars() -> Dictionary:
+	return {
+		"has_sleep_powder": false, "ryan_informed": false, "ryan_has_alternative": false,
+		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
+		"aff_ryan": 0, "aff_mira": 5,
 	}
