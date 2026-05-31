@@ -73,8 +73,8 @@ func _ready() -> void:
 	_tutorial_manager = get_node_or_null("/root/TutorialManager")
 
 func _process(delta: float) -> void:
-	if Input.is_action_just_pressed("menu_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view.toggle_menu()
+	if Input.is_action_just_pressed("inventory_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.toggle_inventory_overlay()
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active

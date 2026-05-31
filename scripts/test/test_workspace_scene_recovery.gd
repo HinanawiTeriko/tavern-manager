@@ -10,6 +10,7 @@ var _failures := 0
 func _ready() -> void:
 	await _test_docked_body_recovers_when_out_of_bounds()
 	await _test_inventory_spawn_deducts_and_recovers()
+	await _test_inventory_overlay_lists_and_drop()
 	_finish()
 
 
@@ -57,6 +58,8 @@ func _test_docked_body_recovers_when_out_of_bounds() -> void:
 
 	_ok(brewery.global_position.y < KILL_Y,
 		"physics tick returns out-of-bounds brewery to the playable area: got %s" % brewery.global_position)
+	tavern.queue_free()
+	await get_tree().process_frame
 
 
 func _test_inventory_spawn_deducts_and_recovers() -> void:
@@ -76,3 +79,32 @@ func _test_inventory_spawn_deducts_and_recovers() -> void:
 	await get_tree().process_frame
 
 	_ok(gm.inventory_sys.get_count("ale") == before, "out-of-bounds material recovery restores inventory")
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_inventory_overlay_lists_and_drop() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var overlay = tavern.get_node("InventoryOverlay")
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	gm.add_to_inventory("sleep_powder", 1)
+	tavern.toggle_inventory_overlay()
+
+	_ok(overlay.visible, "inventory overlay opens")
+	_ok(tavern.is_menu_open(), "inventory overlay pauses tavern updates")
+	_ok(overlay.get_material_keys().has("ale"), "inventory overlay lists materials")
+	_ok(overlay.get_story_keys().has("sleep_powder"), "inventory overlay lists story items")
+
+	var before: int = gm.inventory_sys.get_count("ale")
+	var item_count: int = items.get_child_count()
+	overlay._drop_data(Vector2(20.0, 20.0), {"item_key": "ale"})
+	_ok(gm.inventory_sys.get_count("ale") == before - 1, "overlay drop deducts inventory")
+	_ok(items.get_child_count() == item_count + 1, "overlay drop spawns a desk item")
+
+	gm.remove_from_inventory("sleep_powder", 1)
+	tavern.queue_free()
+	await get_tree().process_frame

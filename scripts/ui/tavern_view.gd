@@ -13,6 +13,7 @@ var _menu_panel: Panel
 var _message_label: Label
 var _end_night_btn: Button
 var _dialogue_overlay: ColorRect
+var _inventory_overlay: InventoryOverlay
 var _gm
 
 const NPC_TEXTURE_KEYS: Dictionary = {
@@ -33,6 +34,9 @@ func _ready() -> void:
 	_message_label = $BottomBar/MessageLabel
 	_end_night_btn = $TopPanel/EndNightBtn
 	_dialogue_overlay = $DialogueOverlay
+	_inventory_overlay = $InventoryOverlay
+	_inventory_overlay.configure(_gm)
+	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
 
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
@@ -182,7 +186,7 @@ func set_dialogue_mode(active: bool) -> void:
 	_dialogue_overlay.visible = active
 
 func _exit_tree() -> void:
-	if _gm != null:
+	if _gm != null and _gm.inventory_changed.is_connected(_on_inventory_changed):
 		_gm.inventory_changed.disconnect(_on_inventory_changed)
 
 func _on_inventory_changed() -> void:
@@ -195,13 +199,28 @@ func _toggle_menu() -> void:
 	toggle_menu()
 
 func toggle_menu() -> void:
+	_inventory_overlay.close()
 	_menu_panel.visible = not _menu_panel.visible
 	if _menu_panel.visible:
 		_build_recipe_list()
 		_build_backpack_list()
 
 func is_menu_open() -> bool:
-	return _menu_panel != null and _menu_panel.visible
+	return (_menu_panel != null and _menu_panel.visible) or _inventory_overlay.visible
+
+
+func toggle_inventory_overlay() -> void:
+	_menu_panel.visible = false
+	if _inventory_overlay.visible:
+		_inventory_overlay.close()
+	else:
+		_inventory_overlay.open()
+
+
+func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
+	var bar = get_node_or_null("BarWorkspace")
+	if bar != null and bar.has_method("spawn_inventory_item_at"):
+		bar.spawn_inventory_item_at(item_key, global_position)
 
 func _on_end_night() -> void:
 	_gm.end_night()
