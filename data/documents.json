@@ -1,0 +1,23 @@
+{
+  "ledger": {
+    "title": "旅店账本",
+    "kind": "ledger",
+    "pages": [
+      "账本仍有许多空白页。"
+    ]
+  },
+  "bloodied_contract": {
+    "title": "染血委托书",
+    "kind": "evidence",
+    "pages": [
+      "血斧小队委托书。\n北矿道护送任务。\n纸角沾着已经干涸的血迹。"
+    ]
+  },
+  "alternative_contract": {
+    "title": "替代委托书",
+    "kind": "evidence",
+    "pages": [
+      "公会柜台开具的替代委托。\n报酬较低，但路线更稳妥。"
+    ]
+  }
+}
