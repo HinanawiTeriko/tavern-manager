@@ -3,6 +3,7 @@ extends Node2D
 
 signal gathering_confirmed(assignments: Dictionary)
 
+var _location_scroll: ScrollContainer
 var _location_list: VBoxContainer
 var _stamina_label: Label
 var _day_label: Label
@@ -33,7 +34,8 @@ var _recipe_list: VBoxContainer
 var _is_mira_shop: bool = false
 
 func _ready() -> void:
-	_location_list = $MapArea/LocationList
+	_location_scroll = $MapArea/LocationScroll
+	_location_list = $MapArea/LocationScroll/LocationList
 	_stamina_label = $TopBar/StaminaLabel
 	_day_label = $TopBar/DayLabel
 	_go_button = $GoButton
@@ -131,7 +133,7 @@ func show_day(day: int, total_days: int) -> void:
 		_shop_panel.visible = false
 	var map_area = $MapArea
 	map_area.get_node("TitleLabel").visible = true
-	map_area.get_node("LocationList").visible = true
+	map_area.get_node("LocationScroll").visible = true
 	_update_gold_display()
 
 	# 教程：首次进入采集界面
@@ -283,9 +285,9 @@ func _build_tab_buttons() -> void:
 	var title_label = map_area.get_node("TitleLabel")
 	title_label.offset_top = 45
 	title_label.offset_bottom = 80
-	var location_list = map_area.get_node("LocationList")
-	location_list.offset_top = 95
-	location_list.offset_bottom = 420
+	var location_scroll = map_area.get_node("LocationScroll")
+	location_scroll.offset_top = 95
+	location_scroll.offset_bottom = 420
 
 	_update_tab_appearance()
 
@@ -295,7 +297,7 @@ func _switch_tab(shop: bool) -> void:
 
 	var map_area = $MapArea
 	map_area.get_node("TitleLabel").visible = not shop
-	map_area.get_node("LocationList").visible = not shop
+	map_area.get_node("LocationScroll").visible = not shop
 	_shop_panel.visible = shop
 
 	if shop:
@@ -321,6 +323,8 @@ func _build_shop_ui() -> void:
 	_shop_panel.anchor_left = 0.0; _shop_panel.anchor_right = 1.0
 	_shop_panel.offset_left = 0; _shop_panel.offset_top = 95
 	_shop_panel.offset_right = 1000; _shop_panel.offset_bottom = 420
+	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	_shop_panel.visible = false
 	$MapArea.add_child(_shop_panel)
 
