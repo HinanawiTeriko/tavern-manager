@@ -13,6 +13,9 @@ const BARREL_ANGULAR_DAMP := 4.0
 const MOUTH_INNER_HALF_WIDTH := 24.0
 const MOUTH_TOP_Y := -64.0
 const MOUTH_BOTTOM_Y := -34.0
+const SPOON_ZONE_INNER_HALF_WIDTH := 40.0
+const SPOON_ZONE_TOP_Y := MOUTH_TOP_Y
+const SPOON_ZONE_BOTTOM_Y := 40.0
 const BARREL_CONFIG := "res://data/barrel.json"
 
 @onready var _mouth: Area2D = $Mouth
@@ -70,7 +73,10 @@ func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
 
 
 func is_spoon_inside(spoon: StirSpoon) -> bool:
-	return _is_point_inside_mouth_opening(spoon.tip_global_position())
+	var local_pos: Vector2 = to_local(spoon.tip_global_position())
+	return absf(local_pos.x) <= SPOON_ZONE_INNER_HALF_WIDTH \
+		and local_pos.y >= SPOON_ZONE_TOP_Y \
+		and local_pos.y <= SPOON_ZONE_BOTTOM_Y
 
 
 func _is_point_inside_mouth_opening(global_pos: Vector2) -> bool:

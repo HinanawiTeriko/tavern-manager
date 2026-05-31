@@ -178,6 +178,14 @@ func _test_spoon_renders_below_container_visuals() -> void:
 		_ok(spoon.z_index > background.z_index,
 			"submerged spoon remains above Tavern background: spoon %d, background %d" % [spoon.z_index, background.z_index])
 
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	spoon.global_position = brewery.to_global(Vector2.ZERO) - tip_offset
+	bar._update_spoon_depth()
+	_ok(brewery.is_spoon_inside(spoon),
+		"spoon tip remains submerged after passing through Brewery mouth")
+	_ok(spoon.z_index < 0,
+		"spoon remains below Brewery visual after passing through mouth: got z_index %d" % spoon.z_index)
+
 	var wash_basin := tavern.get_node("BarWorkspace/World/WashBasin") as Area2D
 	spoon.global_position = wash_basin.global_position - tip_offset
 	bar._update_spoon_depth()
