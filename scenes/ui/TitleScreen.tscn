@@ -75,16 +75,30 @@ horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="UI" unique_id=2134529780]
 offset_left = 540.0
-offset_top = 370.0
+offset_top = 300.0
 offset_right = 740.0
-offset_bottom = 450.0
-text = "开始营业"
+offset_bottom = 355.0
+text = "开始新游戏"
+
+[node name="ContinueButton" type="Button" parent="UI"]
+offset_left = 540.0
+offset_top = 365.0
+offset_right = 740.0
+offset_bottom = 420.0
+text = "继续游戏"
+
+[node name="RestartButton" type="Button" parent="UI"]
+offset_left = 540.0
+offset_top = 430.0
+offset_right = 740.0
+offset_bottom = 485.0
+text = "重新开始当前日"
 
 [node name="HintLabel" type="Label" parent="UI" unique_id=1707787016]
 offset_left = 440.0
-offset_top = 480.0
+offset_top = 510.0
 offset_right = 840.0
-offset_bottom = 520.0
+offset_bottom = 550.0
 text = "材料无限供应 · 满足冒险者的需求！"
 horizontal_alignment = 1
 

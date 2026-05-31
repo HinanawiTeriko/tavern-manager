@@ -25,7 +25,19 @@ func _ready() -> void:
 
 	var btn = $UI/StartButton
 	ThemeColors.style_button(btn, 22)
-	btn.pressed.connect(_on_start)
+	btn.pressed.connect(_on_new_game)
+
+	var has_save: bool = GameManager.has_save()
+	var continue_btn = get_node_or_null("UI/ContinueButton")
+	if continue_btn != null:
+		ThemeColors.style_button(continue_btn, 22)
+		continue_btn.pressed.connect(GameManager.continue_game)
+		continue_btn.disabled = not has_save
+	var restart_btn = get_node_or_null("UI/RestartButton")
+	if restart_btn != null:
+		ThemeColors.style_button(restart_btn, 22)
+		restart_btn.pressed.connect(GameManager.restart_current_day)
+		restart_btn.disabled = not has_save
 
 	var hint = $UI/HintLabel
 	hint.add_theme_color_override("font_color", Color(ThemeColors.TEXT_LIGHT, 0.6))
@@ -52,5 +64,5 @@ func _try_load_deco(node_path: String, tex_path: String) -> void:
 		if tex != null:
 			node.texture = tex
 
-func _on_start() -> void:
-	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
+func _on_new_game() -> void:
+	GameManager.new_game()
