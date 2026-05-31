@@ -10,6 +10,7 @@ extends Node2D
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
 const MAX_SLOTS := 10
+const KILL_Y := 800.0
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
@@ -243,11 +244,7 @@ func tidy_desk() -> void:
 	for body in _docks:
 		if not is_instance_valid(body):
 			continue
-		body.linear_velocity = Vector2.ZERO
-		body.angular_velocity = 0.0
-		body.global_position = _docks[body]
-		if body is RigidBody2D:
-			body.sleeping = true
+		_dock_body(body)
 
 
 ## 桌面物品越界：材料/剧情物品回背包（释放物体），成品移回回收锚点。
@@ -265,7 +262,22 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_recover_docked_bodies()
 	_update_wash_basin(delta)
+
+
+## 容器/工具越界时自动回泊位，避免关键工作台对象永久丢失。
+func _recover_docked_bodies() -> void:
+	for body in _docks:
+		if is_instance_valid(body) and body.global_position.y > KILL_Y:
+			_dock_body(body)
+
+
+func _dock_body(body: RigidBody2D) -> void:
+	body.linear_velocity = Vector2.ZERO
+	body.angular_velocity = 0.0
+	body.global_position = _docks[body]
+	body.sleeping = true
 
 
 ## 容器停在清洗盆内 0.8s → 清空内部料回库存（一次进入只清一次；
