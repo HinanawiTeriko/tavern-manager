@@ -443,8 +443,8 @@ func _build_recipe_rows(gm) -> void:
 		child.queue_free()
 
 	var unlocks = [
-		["Herbal Ale", "草药麦酒"], ["SpicedWine", "香料红酒"],
-		["MeatSand", "肉夹面包"], ["Meat Stew", "肉汤"]
+		["herbal_ale", "草药麦酒"], ["spiced_wine", "香料红酒"],
+		["meat_sand", "肉夹面包"], ["meat_stew", "肉汤"]
 	]
 
 	for pair in unlocks:
