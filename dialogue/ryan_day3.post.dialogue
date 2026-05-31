@@ -1,3 +1,13 @@
 ~ start
-佣兵甲: ……节哀。
-=> END
+
+if ryan_ending == "drugged_survivor"
+    佣兵甲: ……气归气，他到底是活下来了。也许哪天他会想明白。
+    => END
+
+elif ryan_ending == "alternative_survivor"
+    佣兵甲: ……至少，他还有明天。
+    => END
+
+else
+    佣兵甲: ……节哀。
+    => END
