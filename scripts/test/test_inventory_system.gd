@@ -79,3 +79,6 @@ func _test_game_manager_routes_through_system() -> void:
 	_ok(int(gm.inventory.get("ale", 0)) == before + 2, "gm.inventory read view should reflect the write")
 	_ok(gm.remove_from_inventory("ale", 2), "remove_from_inventory should route through system")
 	_ok(gm.inventory_sys.get_count("ale") == before, "remove should restore previous count")
+	gm.add_to_inventory("sleep_powder", 1)
+	_ok(gm.narrative.dialogue_vars.get("has_sleep_powder", false) == true, "adding sleep_powder should set has_sleep_powder narrative flag")
+	gm.remove_from_inventory("sleep_powder", 1)

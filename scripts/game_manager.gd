@@ -156,7 +156,7 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 			var mat = materials[rng.randi() % materials.size()]
 			inventory_sys.add(mat, 1)
 
-	inventory_changed.emit()
+	notify_inventory_changed()
 	day_cycle.next_phase()
 
 func _load_locations_data() -> Array[LocationData]:
