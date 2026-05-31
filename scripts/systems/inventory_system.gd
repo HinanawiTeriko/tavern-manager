@@ -11,7 +11,7 @@ func set_initial(data: Dictionary) -> void:
 		materials[key] = int(data[key])
 
 func add(key: String, amount: int = 1) -> void:
-	if key == "" or amount == 0:
+	if key == "" or amount <= 0:
 		return
 	materials[key] = int(materials.get(key, 0)) + amount
 

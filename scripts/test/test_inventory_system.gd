@@ -38,3 +38,6 @@ func _test_add_remove_real_deduction() -> void:
 	_ok(inv.remove("ale", 4), "remove all should succeed")
 	_ok(inv.get_count("ale") == 0, "depleted key should report 0")
 	_ok(not inv.has("ale"), "depleted key should not be present")
+	inv.add("ale", -1)
+	_ok(inv.get_count("ale") == 0, "negative add should be a no-op")
+	_ok(not inv.remove("ale", 0), "remove with zero amount should fail")
