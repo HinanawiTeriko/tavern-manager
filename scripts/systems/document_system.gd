@@ -92,3 +92,30 @@ func get_document(document_id: String) -> Dictionary:
 		pages.append_array(_ledger_entries)
 		document["pages"] = pages
 	return document
+
+
+func capture_state() -> Dictionary:
+	return {
+		"owned": _owned.duplicate(),
+		"read": _read.duplicate(),
+		"archived": _archived.duplicate(),
+		"ledger_entries": _ledger_entries.duplicate(),
+	}
+
+
+func restore_state(data: Dictionary) -> void:
+	_owned.clear()
+	for d in data.get("owned", ["ledger"]):
+		_owned.append(String(d))
+	if not _owned.has("ledger"):
+		_owned.append("ledger")
+	_read.clear()
+	var read_dict: Dictionary = data.get("read", {})
+	for k in read_dict:
+		_read[String(k)] = bool(read_dict[k])
+	_archived.clear()
+	for a in data.get("archived", []):
+		_archived.append(String(a))
+	_ledger_entries.clear()
+	for e in data.get("ledger_entries", []):
+		_ledger_entries.append(String(e))

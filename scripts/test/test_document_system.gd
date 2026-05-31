@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_document_state()
 	_test_game_manager_document_mediation()
 	_test_ledger_toggle_matches_tab_keycode()
+	_test_capture_restore()
 	_finish()
 
 
@@ -25,6 +26,23 @@ func _finish() -> void:
 	else:
 		push_error("[TEST-DOCUMENTS] FAILURES: %d / %d checks" % [_failures, _checks])
 		get_tree().quit(1)
+
+
+func _test_capture_restore() -> void:
+	var d := DocumentSystem.new()
+	d.load_data()
+	d.grant_document("bloodied_contract")
+	d.request_open("bloodied_contract")
+	d.add_ledger_entry("第三日。莱恩。北矿道。未归。")
+	var snap := d.capture_state()
+	var d2 := DocumentSystem.new()
+	d2.load_data()
+	d2.restore_state(snap)
+	_ok(d2.owns_document("bloodied_contract"), "restored ownership")
+	_ok(d2.is_read("bloodied_contract"), "restored read state")
+	_ok(d2.owns_document("ledger"), "ledger always owned after restore")
+	var doc := d2.get_document("ledger")
+	_ok(String(doc["pages"][-1]) == "第三日。莱恩。北矿道。未归。", "restored ledger entry")
 
 
 func _test_document_state() -> void:
