@@ -95,6 +95,7 @@ script = ExtResource("1")
 
 [node name="Background" type="Sprite2D" parent="."]
 position = Vector2(640, 360)
+z_index = -100
 centered = true
 
 [node name="CustomerArea" type="Control" parent="."]

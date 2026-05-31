@@ -157,6 +157,7 @@ func _test_spoon_renders_below_container_visuals() -> void:
 
 	var spoon := tavern.get_node("BarWorkspace/World/Spoon") as StirSpoon
 	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var background := tavern.get_node("Background") as Sprite2D
 	var surface_z_index := spoon.z_index
 	var containers: Array = [
 		[tavern.get_node("BarWorkspace/World/Brewery"), tavern.get_node("BarWorkspace/World/Brewery/Mouth")],
@@ -174,12 +175,16 @@ func _test_spoon_renders_below_container_visuals() -> void:
 			"spoon tip enters %s during depth test" % container.name)
 		_ok(spoon.z_index < 0,
 			"spoon renders below %s while inside: got z_index %d" % [container.name, spoon.z_index])
+		_ok(spoon.z_index > background.z_index,
+			"submerged spoon remains above Tavern background: spoon %d, background %d" % [spoon.z_index, background.z_index])
 
 	var wash_basin := tavern.get_node("BarWorkspace/World/WashBasin") as Area2D
 	spoon.global_position = wash_basin.global_position - tip_offset
 	bar._update_spoon_depth()
 	_ok(spoon.z_index < 0,
 		"spoon renders below WashBasin while inside: got z_index %d" % spoon.z_index)
+	_ok(spoon.z_index > background.z_index,
+		"spoon remains above Tavern background inside WashBasin: spoon %d, background %d" % [spoon.z_index, background.z_index])
 
 	spoon.global_position = Vector2(120.0, 120.0)
 	bar._update_spoon_depth()
