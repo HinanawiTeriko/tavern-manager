@@ -39,6 +39,22 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"herb": "res://assets/textures/icons/materials/herb.png",
 }
 
+## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
+## 对话只回应已发生的行为；这里是动作当下的即时反馈（spec §1.1 / §7.3）。
+const ACTION_FEEDBACK: Dictionary = {
+	"ryan_informed": ["莱恩盯着那份染血的委托书，脸色一点点沉了下来。", Color.ORANGE],
+	"ryan_accepts_alternative": ["莱恩收起替代委托，郑重地点了点头。", Color.LIME_GREEN],
+	"ryan_needs_warning_first": ["莱恩疑惑地看着这份委托，似乎还不明白其中的分量。", Color.GRAY],
+	"ryan_accepts_ale": ["莱恩一饮而尽，咧嘴笑了。", Color.LIME_GREEN],
+	"ryan_drugged": ["莱恩喝下那杯酒，眼皮越来越沉……趴在桌上睡了过去。", Color.MEDIUM_PURPLE],
+	"ryan_refuses_drugged_ale": ["莱恩警觉地推开酒杯：今晚我必须保持清醒。", Color.GRAY],
+	"ryan_interaction_closed": ["莱恩已经没有再交谈的心思了。", Color.GRAY],
+	"sleep_powder_added": ["你把沉睡花粉搅入了麦芽酒。", Color.MEDIUM_PURPLE],
+	"unsupported_story_item": ["他不需要这个。", Color.GRAY],
+	"unsupported_npc": ["这东西不该交给他。", Color.GRAY],
+	"unsupported_story_product": ["花粉化不进这样东西里。", Color.GRAY],
+}
+
 func _ready() -> void:
 	economy = EconomySystem.new()
 	day_cycle = DayCycleSystem.new()
@@ -245,6 +261,9 @@ func _on_guest_arrived(guest: GuestData) -> void:
 		var tutorial_active = tm != null and tm._is_active
 		if not tutorial_active:
 			narrative.today_important_npc = guest.npc_id
+			# Day 3 揭晓前按玩家实际行为定格 Ryan 结局，使 ryan_day3 对话能读到 ryan_ending。
+			if economy.current_day == 3 and guest.npc_id == "ryan":
+				narrative.finalize_ryan_ending()
 			var dialogue_path = "res://dialogue/" + guest.npc_id + "_day" + str(economy.current_day) + ".pre.dialogue"
 			_dialogue_phase = "pre"
 			_tavern_view.set_dialogue_mode(true)
@@ -358,12 +377,8 @@ func _on_dialogue_ended() -> void:
 		_dialogue_phase = ""
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.set_dialogue_mode(false)
-
-		var drugged: bool = narrative.dialogue_vars.get("ryan_drugged", false)
-		if drugged and guests.has_guest and guests.current_guest.npc_id == "ryan":
-			guests.clear_guest()
-			if _tavern_view != null and is_instance_valid(_tavern_view):
-				_tavern_view.hide_customer()
+		# 注：药酒导致 Ryan 离场现在由 request_narrative_delivery 在动作发生时处理，
+		# 不再依赖 pre 对话结束（拖拽递交发生在 pre 对话之后）。
 
 	elif _dialogue_phase == "post":
 		_dialogue_phase = ""
@@ -453,6 +468,89 @@ func recover_desk_item_key(item_key: String) -> String:
 	if target == "backpack":
 		add_to_inventory(item_key, 1)
 	return target
+
+
+## null 安全的提示输出（headless 测试无 _tavern_view）。
+func _show_message(text: String, color: Color = Color.WHITE) -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.show_message(text, color)
+
+
+## 把 resolve_action 的 feedback key 翻成玩家可见提示。
+func _show_action_feedback(feedback: String) -> void:
+	if ACTION_FEEDBACK.has(feedback):
+		var entry: Array = ACTION_FEEDBACK[feedback]
+		_show_message(String(entry[0]), entry[1])
+
+
+## 当前客人订单 key（无客人返回 ""）。视图据此区分「正式上菜」与「叙事递交」。
+func current_order_key() -> String:
+	if not guests.has_guest or guests.current_guest == null:
+		return ""
+	return guests.current_guest.order_key
+
+
+## 把沉睡花粉搅进桌面成品（spec §7.3 add_story_item_to_product）。
+## 库存不变：花粉桌面物体已在取出时扣减，接受时由视图 free（＝被搅进酒里消耗）。
+## 返回 resolve_action 结果（接受时含 product_tags）。
+func request_apply_story_item_to_product(story_key: String, product_key: String) -> Dictionary:
+	var r: Dictionary = narrative.resolve_action({
+		"type": "add_story_item_to_product",
+		"item_key": story_key,
+		"product_key": product_key,
+	})
+	_show_action_feedback(String(r.get("feedback", "")))
+	return r
+
+
+## 把剧情物品/叙事载体成品递交给当前客人（spec §7.2 / §7.3）。
+## 物理拖到客人身上时由 BarWorkspace 调用。返回：
+##   handled：本方法是否接管（false 时视图走正常上菜结算）。
+##   accepted / interaction_closed：resolve_action 结果。
+##   consume：视图是否应直接消耗该桌面物体（false 时回收：剧情物品回背包、成品回回收区）。
+func request_narrative_delivery(item_key: String, product_tags: Array = []) -> Dictionary:
+	if not guests.has_guest or guests.current_guest == null:
+		return {"handled": false}
+	var npc_id: String = guests.current_guest.npc_id
+
+	if inventory_sys.is_story_item(item_key):
+		var r: Dictionary = narrative.resolve_action({
+			"type": "give_story_item",
+			"npc_id": npc_id,
+			"item_key": item_key,
+		})
+		var feedback: String = String(r.get("feedback", ""))
+		# 错误递交（递错人/不认得的物品）→ 自动回背包，不显示动作反馈
+		if feedback in ["unsupported_npc", "unsupported_story_item"]:
+			_show_message("他不需要这个，收回了吧。", Color.GRAY)
+			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
+		_show_action_feedback(feedback)
+		var accepted: bool = bool(r.get("accepted", false))
+		return {"handled": true, "accepted": accepted, "consume": accepted,
+			"interaction_closed": bool(r.get("interaction_closed", false)), "feedback": feedback}
+
+	if inventory_sys.is_product(item_key):
+		var r: Dictionary = narrative.resolve_action({
+			"type": "give_product",
+			"npc_id": npc_id,
+			"product_key": item_key,
+			"product_tags": product_tags,
+		})
+		var feedback: String = String(r.get("feedback", ""))
+		# 非叙事载体成品（含正式订单）→ 交回视图走正常上菜结算
+		if feedback in ["unsupported_product", "unsupported_npc"]:
+			return {"handled": false}
+		_show_action_feedback(feedback)
+		var accepted: bool = bool(r.get("accepted", false))
+		# 接受药酒 → Ryan 当场睡过去，离场（spec §10.2）
+		if accepted and feedback == "ryan_drugged":
+			guests.clear_guest()
+			if _tavern_view != null and is_instance_valid(_tavern_view):
+				_tavern_view.hide_customer()
+		return {"handled": true, "accepted": accepted, "consume": accepted,
+			"interaction_closed": bool(r.get("interaction_closed", false)), "feedback": feedback}
+
+	return {"handled": false}
 
 
 func request_open_document(document_id: String) -> Dictionary:
