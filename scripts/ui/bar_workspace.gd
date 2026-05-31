@@ -107,7 +107,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif _is_kitchen_container(dragged):
 				dragged.end_action_session()
 			elif dragged is DeskItem:
-				_try_serve(dragged)
+				_try_deliver(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
 
@@ -118,7 +118,7 @@ func _release_dragged_body() -> void:
 	if dragged == _brewery:
 		_brewery.end_shake_session()
 	elif dragged is DeskItem:
-		_try_serve(dragged)
+		_try_deliver(dragged)
 
 
 func _try_pickup(pos: Vector2) -> void:
@@ -148,14 +148,65 @@ func _try_pickup(pos: Vector2) -> void:
 			return
 
 
-func _try_serve(item: DeskItem) -> void:
-	if item.item_key == "" or not _gm.craft.is_product(item.item_key):
+## 释放桌面物品时的统一分流（spec §7.2/§7.3）：
+##   1) 沉睡花粉压在成品上 → 搅成药酒（打 tag）。
+##   2) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
+##   3) 其它落点 → 不处理，留在桌面（越界自走回收）。
+func _try_deliver(item: DeskItem) -> void:
+	if item.item_key == "":
 		return
+
+	# 1) 沉睡花粉搅进成品
+	if _gm.inventory_sys.is_story_item(item.item_key):
+		var prod := _product_under(item)
+		if prod != null:
+			var ar: Dictionary = _gm.request_apply_story_item_to_product(item.item_key, prod.item_key)
+			if ar.get("accepted", false):
+				for t in ar.get("product_tags", []):
+					prod.add_product_tag(String(t))
+				item.queue_free()   # 花粉被搅进酒里消耗
+			else:
+				_on_desk_item_fell(item)   # 回收花粉到背包
+			return
+
+	# 2) 递交给客人
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
+	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
+	if is_product and item.item_key == _gm.current_order_key():
+		_serve_formal(item)
+		return
+	var r: Dictionary = _gm.request_narrative_delivery(item.item_key, item.product_tags)
+	if not r.get("handled", false):
+		if is_product:
+			_serve_formal(item)   # 普通错单成品：正常上菜（失败反馈）
+		else:
+			_on_desk_item_fell(item)
+		return
+	if r.get("consume", false):
+		item.queue_free()
+	else:
+		_on_desk_item_fell(item)   # 被拒：剧情物品回背包 / 成品回回收区
+
+
+func _serve_formal(item: DeskItem) -> void:
 	var speed: float = _drag_ctrl.get_serve_speed()
 	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality})
 	item.queue_free()
+
+
+## 找到压在拖动物体落点下方的另一个成品 DeskItem（用于花粉搅酒）。
+func _product_under(item: DeskItem) -> DeskItem:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = item.global_position
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		var c = h.get("collider")
+		if c is DeskItem and c != item and _gm.inventory_sys.is_product(c.item_key):
+			return c
+	return null
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
