@@ -554,10 +554,16 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 
 
 func request_open_document(document_id: String) -> Dictionary:
+	# 剧情证据首次读过后进入剧情物品栏（spec §8.3），之后可从背包拖出递交给 NPC。
+	var first_read: bool = documents.owns_document(document_id) and not documents.is_read(document_id)
 	var document := documents.request_open(document_id)
-	if not document.is_empty() and _tavern_view != null and is_instance_valid(_tavern_view):
+	if document.is_empty():
+		return document
+	if first_read and String(document.get("kind", "")) == "evidence" and inventory_sys.is_story_item(document_id):
+		add_to_inventory(document_id, 1)
+	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.open_document(document)
-	elif not document.is_empty() and _day_map_view != null and is_instance_valid(_day_map_view):
+	elif _day_map_view != null and is_instance_valid(_day_map_view):
 		_day_map_view.open_document(document)
 	return document
 
