@@ -37,6 +37,9 @@ func _ready() -> void:
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
+	var tidy_btn = $OverlayMenu/BtnTidy
+	if tidy_btn != null and not tidy_btn.pressed.is_connected(_on_tidy_desk_pressed):
+		tidy_btn.pressed.connect(_on_tidy_desk_pressed)
 	_menu_panel.visible = false
 
 	_end_night_btn.pressed.connect(_on_end_night)
@@ -331,3 +334,11 @@ func _build_backpack_list() -> void:
 		row.add_child(label)
 
 		backpack_list.add_child(row)
+
+
+func _on_tidy_desk_pressed() -> void:
+	var bar = get_node_or_null("BarWorkspace")
+	if bar != null and bar.has_method("tidy_desk"):
+		bar.tidy_desk()
+	if has_method("toggle_menu"):
+		toggle_menu()

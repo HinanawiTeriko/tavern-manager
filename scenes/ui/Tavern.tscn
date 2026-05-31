@@ -404,6 +404,14 @@ offset_right = 390.0
 offset_bottom = 480.0
 text = "关闭"
 
+[node name="BtnTidy" type="Button" parent="OverlayMenu"]
+layout_mode = 0
+offset_left = 155.0
+offset_top = 450.0
+offset_right = 295.0
+offset_bottom = 480.0
+text = "整理桌面"
+
 
 [node name="BarWorkspace" type="Node2D" parent="."]
 script = ExtResource("bw")

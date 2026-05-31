@@ -234,6 +234,22 @@ func _on_items_child_added(child: Node) -> void:
 		child.fell_out_of_bounds.connect(_on_desk_item_fell)
 
 
+## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
+## 容器内部料状态保留（不清空）。
+func tidy_desk() -> void:
+	for child in _items_node.get_children():
+		if child is DeskItem:
+			_on_desk_item_fell(child)
+	for body in _docks:
+		if not is_instance_valid(body):
+			continue
+		body.linear_velocity = Vector2.ZERO
+		body.angular_velocity = 0.0
+		body.global_position = _docks[body]
+		if body is RigidBody2D:
+			body.sleeping = true
+
+
 ## 桌面物品越界：材料/剧情物品回背包（释放物体），成品移回回收锚点。
 func _on_desk_item_fell(item: DeskItem) -> void:
 	if not is_instance_valid(item):
