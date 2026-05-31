@@ -14,6 +14,7 @@ var _message_label: Label
 var _end_night_btn: Button
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
+var _document_overlay: DocumentOverlay
 var _gm
 
 const NPC_TEXTURE_KEYS: Dictionary = {
@@ -37,6 +38,7 @@ func _ready() -> void:
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
+	_document_overlay = $DocumentOverlay
 
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
@@ -200,27 +202,53 @@ func _toggle_menu() -> void:
 
 func toggle_menu() -> void:
 	_inventory_overlay.close()
+	_document_overlay.close()
 	_menu_panel.visible = not _menu_panel.visible
 	if _menu_panel.visible:
 		_build_recipe_list()
 		_build_backpack_list()
 
 func is_menu_open() -> bool:
-	return (_menu_panel != null and _menu_panel.visible) or _inventory_overlay.visible
+	return (_menu_panel != null and _menu_panel.visible) \
+		or _inventory_overlay.visible \
+		or _document_overlay.visible
 
 
 func toggle_inventory_overlay() -> void:
 	_menu_panel.visible = false
+	_document_overlay.close()
 	if _inventory_overlay.visible:
 		_inventory_overlay.close()
 	else:
 		_inventory_overlay.open()
 
 
+func open_document(document: Dictionary) -> void:
+	_menu_panel.visible = false
+	_inventory_overlay.close()
+	_document_overlay.open_document(document)
+
+
+func open_ledger() -> void:
+	_gm.request_open_document("ledger")
+
+
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
 	var bar = get_node_or_null("BarWorkspace")
 	if bar != null and bar.has_method("spawn_inventory_item_at"):
 		bar.spawn_inventory_item_at(item_key, global_position)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	if _document_overlay.visible:
+		_document_overlay.close()
+	elif _inventory_overlay.visible:
+		_inventory_overlay.close()
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 func _on_end_night() -> void:
 	_gm.end_night()

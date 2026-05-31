@@ -13,6 +13,7 @@ var craft: CraftSystem
 var seasoning: SeasoningSystem
 var craft_style: CraftStyleSystem
 var workspace: WorkspaceSystem
+var documents: DocumentSystem
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -52,6 +53,8 @@ func _ready() -> void:
 	inventory_sys.set_initial(_load_initial_inventory())
 	inventory = inventory_sys.materials
 	workspace = WorkspaceSystem.new()
+	documents = DocumentSystem.new()
+	documents.load_data()
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -75,6 +78,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("inventory_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.toggle_inventory_overlay()
+	if Input.is_action_just_pressed("ledger_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
+		request_open_document("ledger")
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
@@ -421,6 +426,13 @@ func recover_desk_item_key(item_key: String) -> String:
 	if target == "backpack":
 		add_to_inventory(item_key, 1)
 	return target
+
+
+func request_open_document(document_id: String) -> Dictionary:
+	var document := documents.request_open(document_id)
+	if not document.is_empty() and _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.open_document(document)
+	return document
 
 func add_to_inventory(key: String, amount: int = 1) -> void:
 	if key == "":

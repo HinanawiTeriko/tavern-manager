@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_document_state()
+	_test_game_manager_document_mediation()
 	_finish()
 
 
@@ -42,3 +43,10 @@ func _test_document_state() -> void:
 	var ledger := docs.request_open("ledger")
 	_ok(ledger.get("kind", "") == "ledger", "ledger opens as ledger kind")
 	_ok(ledger.get("pages", []).has("第三日。莱恩。\n北矿道。\n未归。"), "ledger includes added entry")
+
+
+func _test_game_manager_document_mediation() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.documents is DocumentSystem, "GameManager owns DocumentSystem")
+	var ledger: Dictionary = gm.request_open_document("ledger")
+	_ok(ledger.get("id", "") == "ledger", "GameManager routes ledger open request")

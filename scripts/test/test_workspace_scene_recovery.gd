@@ -11,6 +11,7 @@ func _ready() -> void:
 	await _test_docked_body_recovers_when_out_of_bounds()
 	await _test_inventory_spawn_deducts_and_recovers()
 	await _test_inventory_overlay_lists_and_drop()
+	await _test_document_overlay_opens_ledger()
 	_finish()
 
 
@@ -91,6 +92,7 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	var gm = get_node("/root/GameManager")
 	var overlay = tavern.get_node("InventoryOverlay")
 	var items := tavern.get_node("BarWorkspace/World/Items")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
 	gm.add_to_inventory("sleep_powder", 1)
 	tavern.toggle_inventory_overlay()
 
@@ -98,6 +100,7 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	_ok(tavern.is_menu_open(), "inventory overlay pauses tavern updates")
 	_ok(overlay.get_material_keys().has("ale"), "inventory overlay lists materials")
 	_ok(overlay.get_story_keys().has("sleep_powder"), "inventory overlay lists story items")
+	_ok(not bar._slot_item_keys.has("sleep_powder"), "shortcut bar excludes story items")
 
 	var before: int = gm.inventory_sys.get_count("ale")
 	var item_count: int = items.get_child_count()
@@ -106,5 +109,41 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	_ok(items.get_child_count() == item_count + 1, "overlay drop spawns a desk item")
 
 	gm.remove_from_inventory("sleep_powder", 1)
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_document_overlay_opens_ledger() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var overlay = tavern.get_node("DocumentOverlay")
+	var ledger = tavern.get_node("BarWorkspace/World/Ledger")
+	gm.documents.add_ledger_entry("第二页")
+	gm.documents.add_ledger_entry("第三页")
+	ledger.request_open()
+
+	_ok(InputMap.has_action("ledger_toggle"), "ledger toggle input exists")
+	_ok(overlay.visible, "ledger opens document overlay")
+	_ok(tavern.is_menu_open(), "document overlay pauses tavern updates")
+	_ok(overlay.get_current_page_text() != "", "ledger renders a page")
+	_ok(overlay.get_right_page_text() == "第二页", "ledger renders a two-page spread")
+	overlay.next_page()
+	_ok(overlay.get_current_page_text() == "第三页", "ledger arrow advances by one spread")
+	overlay.previous_page()
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(500.0, 200.0)
+	overlay._on_panel_gui_input(press)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(100.0, 200.0)
+	overlay._on_panel_gui_input(release)
+	_ok(overlay.get_current_page_text() == "第三页", "ledger drag beyond threshold advances one spread")
+
 	tavern.queue_free()
 	await get_tree().process_frame

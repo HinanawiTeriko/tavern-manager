@@ -25,5 +25,7 @@
   "meat_stew":    { "name": "肉汤",        "color": [0.55, 0.3, 0.15], "price": 12, "type": "product" },
   "herb_broth":   { "name": "草药清汤",    "color": [0.35, 0.55, 0.22], "price": 8, "type": "product" },
   "malt_porridge":{ "name": "麦芽粥",      "color": [0.62, 0.48, 0.24], "price": 8, "type": "product" },
-  "sleep_powder": { "name": "沉睡花粉",    "color": [0.55, 0.4, 0.75], "price": 0,  "type": "special", "capabilities": ["story_item"] }
+  "sleep_powder":        { "name": "沉睡花粉",   "color": [0.55, 0.4, 0.75], "price": 0, "type": "special", "capabilities": ["story_item"] },
+  "bloodied_contract":   { "name": "染血委托书", "color": [0.55, 0.18, 0.12], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "alternative_contract": { "name": "替代委托书", "color": [0.72, 0.62, 0.42], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] }
 }

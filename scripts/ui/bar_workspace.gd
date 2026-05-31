@@ -24,6 +24,7 @@ var _slot_item_keys: Array[String] = []
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 @onready var _wash_basin: Area2D = $World/WashBasin
+@onready var _ledger: ReadableDeskItem = $World/Ledger
 const WASH_DWELL := 0.8
 var _wash_dwell: Dictionary = {}   # 容器 -> 已停留秒数
 
@@ -36,6 +37,7 @@ func _ready() -> void:
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
 	_gm.inventory_changed.connect(_init_material_slots)
+	_ledger.open_requested.connect(_gm.request_open_document)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
 
@@ -56,7 +58,7 @@ func _init_material_slots() -> void:
 	_slot_item_keys.clear()
 	var keys: Array = []
 	for k in _gm.inventory.keys():
-		if not _gm.craft.is_product(k):
+		if _gm.inventory_sys.is_material(k):
 			keys.append(k)
 	keys.sort()
 	for i in range(MAX_SLOTS):
