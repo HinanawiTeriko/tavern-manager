@@ -28,10 +28,10 @@ var _ending_screen = null
 var _tutorial_manager = null
 
 const MATERIAL_ICON_PATHS: Dictionary = {
-	"ale": "res://assets/textures/icons/materials/ale.png",
-	"grape": "res://assets/textures/icons/materials/wine.png",
-	"flour": "res://assets/textures/icons/materials/bread.png",
-	"meat_raw": "res://assets/textures/icons/materials/meat.png",
+	"ale": "res://assets/textures/icons/materials/wheat.png",
+	"grape": "res://assets/textures/icons/materials/grape.png",
+	"flour": "res://assets/textures/icons/materials/wheat.png",
+	"meat_raw": "res://assets/textures/icons/products/roast.png",
 	"herb": "res://assets/textures/icons/materials/herb.png",
 }
 

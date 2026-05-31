@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_orderable_products_respect_purchase_unlock()
 	_test_shop_unlock_keys_exist_in_recipes()
 	_test_today_important_npc_resets_on_empty_day()
+	_test_material_icons_load()
 	_finish()
 
 
@@ -60,3 +61,9 @@ func _test_today_important_npc_resets_on_empty_day() -> void:
 	_ok(narrative.select_today_important_npc(1) == "ryan", "Day 1 should select ryan")
 	_ok(narrative.select_today_important_npc(5) == "", "empty day should clear stale NPC")
 	_ok(narrative.today_important_npc == "", "stored NPC id should also be cleared")
+
+
+func _test_material_icons_load() -> void:
+	var gm = get_node("/root/GameManager")
+	for key in ["ale", "grape", "flour", "meat_raw", "herb"]:
+		_ok(gm.try_load_material_icon(key) != null, "material icon should load: " + key)
