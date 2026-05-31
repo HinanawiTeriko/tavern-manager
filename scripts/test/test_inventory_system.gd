@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_add_remove_real_deduction()
 	_test_capability_queries()
+	_test_game_manager_routes_through_system()
 	_finish()
 
 
@@ -66,3 +67,15 @@ func _load_items() -> Dictionary:
 	var data = JSON.parse_string(file.get_as_text())
 	file.close()
 	return data
+
+
+func _test_game_manager_routes_through_system() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.inventory_sys is InventorySystem, "GameManager should own an InventorySystem")
+	_ok(gm.inventory == gm.inventory_sys.materials, "gm.inventory should reference the system stock")
+	var before: int = gm.inventory_sys.get_count("ale")
+	gm.add_to_inventory("ale", 2)
+	_ok(gm.inventory_sys.get_count("ale") == before + 2, "add_to_inventory should route through system")
+	_ok(int(gm.inventory.get("ale", 0)) == before + 2, "gm.inventory read view should reflect the write")
+	_ok(gm.remove_from_inventory("ale", 2), "remove_from_inventory should route through system")
+	_ok(gm.inventory_sys.get_count("ale") == before, "remove should restore previous count")

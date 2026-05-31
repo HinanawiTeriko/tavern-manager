@@ -14,6 +14,7 @@ var seasoning: SeasoningSystem
 var craft_style: CraftStyleSystem
 
 # Inventory
+var inventory_sys: InventorySystem
 var inventory: Dictionary = {}
 var current_ledger_data: LedgerData = null
 
@@ -44,8 +45,11 @@ func _ready() -> void:
 	seasoning = SeasoningSystem.new()
 	craft_style = CraftStyleSystem.new()
 
-	inventory = _load_initial_inventory()
 	craft.load_data()
+	inventory_sys = InventorySystem.new()
+	inventory_sys.load_items(craft.items)
+	inventory_sys.set_initial(_load_initial_inventory())
+	inventory = inventory_sys.materials
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -150,8 +154,7 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 
 		for _i in range(count):
 			var mat = materials[rng.randi() % materials.size()]
-			var existing: int = inventory.get(mat, 0)
-			inventory[mat] = existing + 1
+			inventory_sys.add(mat, 1)
 
 	inventory_changed.emit()
 	day_cycle.next_phase()
@@ -371,8 +374,7 @@ func buy_material(key: String, quantity: int, discount: float = 1.0) -> bool:
 	var total = unit_price * quantity
 	if not economy.spend_gold(total):
 		return false
-	var existing: int = inventory.get(key, 0)
-	inventory[key] = existing + quantity
+	inventory_sys.add(key, quantity)
 	notify_inventory_changed()
 	return true
 
@@ -407,18 +409,12 @@ func notify_inventory_changed() -> void:
 func add_to_inventory(key: String, amount: int = 1) -> void:
 	if key == "":
 		return
-	var cur: int = inventory.get(key, 0)
-	inventory[key] = cur + amount
+	inventory_sys.add(key, amount)
 	notify_inventory_changed()
 
 func remove_from_inventory(key: String, amount: int = 1) -> bool:
-	if key == "" or not inventory.has(key):
+	if not inventory_sys.remove(key, amount):
 		return false
-	var remaining: int = inventory[key] - amount
-	if remaining <= 0:
-		inventory.erase(key)
-	else:
-		inventory[key] = remaining
 	notify_inventory_changed()
 	return true
 
