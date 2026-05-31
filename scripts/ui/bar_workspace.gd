@@ -35,6 +35,7 @@ func _ready() -> void:
 	_drag_ctrl.drag_started.connect(_on_drag_started)
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
+	_gm.inventory_changed.connect(_init_material_slots)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
 
@@ -136,8 +137,9 @@ func _try_pickup(pos: Vector2) -> void:
 		return
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos) and _slot_item_keys[i] != "":
-			var body := _spawn_desk_item_at(pos, _slot_item_keys[i])
-			_drag_ctrl.start_drag(body, pos)
+			var body := spawn_inventory_item_at(_slot_item_keys[i], pos)
+			if body != null:
+				_drag_ctrl.start_drag(body, pos)
 			return
 
 
@@ -219,6 +221,13 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	item.global_position = pos
 	return item
+
+
+## 从背包/快捷栏拖出物品的统一入口：先扣库存，再生成桌面物理体。
+func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
+	if not _gm.remove_from_inventory(item_key, 1):
+		return null
+	return _spawn_desk_item_at(pos, item_key)
 
 
 ## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
@@ -310,3 +319,8 @@ func _do_wash(container) -> void:
 	for key in drained:
 		_gm.add_to_inventory(key, 1)
 	print("[BarWorkspace] 清洗盆清空 ", container, " 退回 ", drained)
+
+
+func _exit_tree() -> void:
+	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
+		_gm.inventory_changed.disconnect(_init_material_slots)
