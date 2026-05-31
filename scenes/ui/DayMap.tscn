@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/day_map_view.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
 
 [node name="DayMap" type="Node2D"]
 script = ExtResource("1")
@@ -50,6 +51,14 @@ offset_top = 8.0
 offset_right = 1270.0
 offset_bottom = 52.0
 text = "实验场景"
+
+[node name="DocumentsBtn" type="Button" parent="TopBar"]
+layout_mode = 0
+offset_left = 650.0
+offset_top = 8.0
+offset_right = 790.0
+offset_bottom = 52.0
+text = "阅读文档"
 
 [node name="MapArea" type="Control" parent="."]
 layout_mode = 0
@@ -105,3 +114,81 @@ offset_top = 350.0
 offset_right = 420.0
 offset_bottom = 390.0
 text = "继续 → 夜晚"
+
+[node name="DocumentOverlay" type="Control" parent="."]
+visible = false
+z_index = 101
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+script = ExtResource("document_overlay")
+
+[node name="Panel" type="Panel" parent="DocumentOverlay"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 90.0
+offset_right = 950.0
+offset_bottom = 630.0
+
+[node name="Title" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 24.0
+offset_right = 590.0
+offset_bottom = 56.0
+text = "文档"
+horizontal_alignment = 1
+
+[node name="LeftBody" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+mouse_filter = 2
+offset_left = 40.0
+offset_top = 90.0
+offset_right = 295.0
+offset_bottom = 420.0
+text = ""
+autowrap_mode = 2
+
+[node name="RightBody" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+mouse_filter = 2
+offset_left = 325.0
+offset_top = 90.0
+offset_right = 580.0
+offset_bottom = 420.0
+text = ""
+autowrap_mode = 2
+
+[node name="PageLabel" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 440.0
+offset_right = 350.0
+offset_bottom = 470.0
+text = "1 / 1"
+horizontal_alignment = 1
+
+[node name="PreviousBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 440.0
+offset_right = 150.0
+offset_bottom = 480.0
+text = "←"
+
+[node name="NextBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 470.0
+offset_top = 440.0
+offset_right = 570.0
+offset_bottom = 480.0
+text = "→"
+
+[node name="CloseBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 490.0
+offset_right = 360.0
+offset_bottom = 525.0
+text = "关闭"

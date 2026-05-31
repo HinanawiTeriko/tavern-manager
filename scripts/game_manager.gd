@@ -14,6 +14,7 @@ var seasoning: SeasoningSystem
 var craft_style: CraftStyleSystem
 var workspace: WorkspaceSystem
 var documents: DocumentSystem
+var day_map: DayMapSystem
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -55,6 +56,8 @@ func _ready() -> void:
 	workspace = WorkspaceSystem.new()
 	documents = DocumentSystem.new()
 	documents.load_data()
+	day_map = DayMapSystem.new()
+	day_map.load_data()
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -78,7 +81,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("inventory_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.toggle_inventory_overlay()
-	if Input.is_action_just_pressed("ledger_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
+	if Input.is_action_just_pressed("ledger_toggle") \
+		and ((_tavern_view != null and is_instance_valid(_tavern_view)) \
+		or (_day_map_view != null and is_instance_valid(_day_map_view))):
 		request_open_document("ledger")
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
@@ -133,12 +138,34 @@ func register_view(view: Node) -> void:
 
 	elif view is DayMapView:
 		_day_map_view = view
+		start_day_map(economy.current_day)
 		_day_map_view.show_day(economy.current_day, EconomySystem.MAX_DAYS)
-		_day_map_view.gathering_confirmed.connect(_on_gathering_confirmed)
 
 	elif view is EndingScreen:
 		_ending_screen = view
 		_ending_screen.show_endings(economy.gold, economy.reputation, narrative.endings)
+
+func start_day_map(day: int) -> void:
+	day_map.start_day(day)
+	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
+
+
+func visit_day_location(location_id: String) -> Dictionary:
+	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
+	var result := day_map.visit(location_id)
+	if not bool(result.get("success", false)):
+		return result
+	for key in result.get("rewards", []):
+		add_to_inventory(String(key), 1)
+	for document_id in result.get("documents", []):
+		documents.grant_document(String(document_id))
+	return result
+
+
+func enter_night_from_day_map() -> void:
+	if day_cycle.phase == DayCycleSystem.DayPhase.DAY:
+		day_cycle.next_phase()
+
 
 func _on_gathering_confirmed(assignments: Dictionary) -> void:
 	var rng = RandomNumberGenerator.new()
@@ -432,6 +459,8 @@ func request_open_document(document_id: String) -> Dictionary:
 	var document := documents.request_open(document_id)
 	if not document.is_empty() and _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.open_document(document)
+	elif not document.is_empty() and _day_map_view != null and is_instance_valid(_day_map_view):
+		_day_map_view.open_document(document)
 	return document
 
 func add_to_inventory(key: String, amount: int = 1) -> void:

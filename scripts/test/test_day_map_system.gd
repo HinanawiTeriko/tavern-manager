@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_day2_investigation_chain()
+	_test_game_manager_routes_visits()
 	_finish()
 
 
@@ -46,3 +47,20 @@ func _test_day2_investigation_chain() -> void:
 	map.start_day(2)
 	var forest := map.visit("mushroom_forest")
 	_ok(forest.get("rewards", []).has("sleep_powder"), "day2 mushroom forest grants sleep powder")
+
+
+func _test_game_manager_routes_visits() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.day_map is DayMapSystem, "GameManager owns DayMapSystem")
+	gm.start_day_map(2)
+	var before: int = gm.inventory_sys.get_count("sleep_powder")
+	_ok(gm.visit_day_location("mushroom_forest").get("success", false), "GameManager routes forest visit")
+	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "forest reward enters inventory")
+	_ok(gm.narrative.get_var("has_sleep_powder") == true, "forest reward triggers narrative hook")
+	gm.start_day_map(2)
+	gm.visit_day_location("mercenary_board")
+	gm.visit_day_location("abandoned_mine")
+	_ok(gm.documents.owns_document("bloodied_contract"), "mine document enters DocumentSystem")
+	gm.request_open_document("bloodied_contract")
+	gm.visit_day_location("guild_counter")
+	_ok(gm.documents.owns_document("alternative_contract"), "read evidence unlocks counter document")
