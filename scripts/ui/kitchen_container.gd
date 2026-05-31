@@ -46,7 +46,9 @@ func _ready() -> void:
 	if container_key == "pot":
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 		freeze = true
-	_intake.body_entered.connect(_on_intake_body_entered)
+	# Intake「吞料」是炖锅机制；烤架只靠 SearZone 按压煎制，不该吞掉放上去的生料。
+	if container_key == "pot":
+		_intake.body_entered.connect(_on_intake_body_entered)
 
 
 func _physics_process(delta: float) -> void:
