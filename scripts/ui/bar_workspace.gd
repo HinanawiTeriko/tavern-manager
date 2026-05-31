@@ -20,6 +20,8 @@ const MAX_SLOTS := 10
 var _gm
 var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
+@onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
+var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
 
 func _ready() -> void:
@@ -28,6 +30,8 @@ func _ready() -> void:
 	_brewery.recipe_consumed.connect(func(k): print("[BarWorkspace] 产出 ", k))
 	_drag_ctrl.drag_started.connect(_on_drag_started)
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
+	_items_node.child_entered_tree.connect(_on_items_child_added)
+	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
 
 
@@ -211,3 +215,31 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	item.global_position = pos
 	return item
+
+
+## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
+func _capture_docks() -> void:
+	_docks[_brewery] = _brewery.global_position
+	for child in _items_node.get_parent().get_children():
+		if _is_kitchen_container(child) or child is StirSpoon:
+			_docks[child] = child.global_position
+
+
+## 任何加进 Items 的 DeskItem（取材/容器产出）都连越界信号；is_connected 守卫避免重复。
+func _on_items_child_added(child: Node) -> void:
+	if child is DeskItem and not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
+		child.fell_out_of_bounds.connect(_on_desk_item_fell)
+
+
+## 桌面物品越界：材料/剧情物品回背包（释放物体），成品移回回收锚点。
+func _on_desk_item_fell(item: DeskItem) -> void:
+	if not is_instance_valid(item):
+		return
+	var target: String = _gm.recover_desk_item_key(item.item_key)
+	if target == "recycle":
+		item.linear_velocity = Vector2.ZERO
+		item.angular_velocity = 0.0
+		item.global_position = _recycle_anchor.global_position
+		item._fell_emitted = false
+	else:
+		item.queue_free()

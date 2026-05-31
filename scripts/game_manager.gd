@@ -12,6 +12,7 @@ var guests: GuestSystem
 var craft: CraftSystem
 var seasoning: SeasoningSystem
 var craft_style: CraftStyleSystem
+var workspace: WorkspaceSystem
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -50,6 +51,7 @@ func _ready() -> void:
 	inventory_sys.load_items(craft.items)
 	inventory_sys.set_initial(_load_initial_inventory())
 	inventory = inventory_sys.materials
+	workspace = WorkspaceSystem.new()
 	narrative.load_npc_data()
 	shop.load_config()
 	seasoning.load_data()
@@ -405,6 +407,20 @@ func notify_inventory_changed() -> void:
 	if inventory.get("sleep_powder", 0) > 0:
 		narrative.set_var("has_sleep_powder", true)
 	inventory_changed.emit()
+
+## 中介：把物品能力查询(InventorySystem)与越界分类(WorkspaceSystem)串起来。
+func classify_recovery(item_key: String) -> String:
+	if item_key == "":
+		return "backpack"
+	return workspace.recovery_target(inventory_sys.get_capabilities(item_key))
+
+## 越界回收一个桌面物品的库存语义。返回回收去向。
+## backpack: 加回库存（材料/剧情物品不丢失）。其它去向由 BarWorkspace 处理物理摆放。
+func recover_desk_item_key(item_key: String) -> String:
+	var target := classify_recovery(item_key)
+	if target == "backpack":
+		add_to_inventory(item_key, 1)
+	return target
 
 func add_to_inventory(key: String, amount: int = 1) -> void:
 	if key == "":

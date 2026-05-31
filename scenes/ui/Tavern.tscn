@@ -421,6 +421,9 @@ shape = SubResource("tv_right")
 
 [node name="Items" type="Node2D" parent="BarWorkspace/World"]
 
+[node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
+position = Vector2(640, 470)
+
 [node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
 position = Vector2(960, 600)
 script = ExtResource("brw")

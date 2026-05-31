@@ -48,6 +48,10 @@ var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
 var _doneness = MEAT_DONENESS.new()
 
+signal fell_out_of_bounds(item)
+
+var _fell_emitted: bool = false
+
 @onready var _visual_top: Polygon2D = $VisualTop
 @onready var _visual_bottom: Polygon2D = $VisualBottom
 @onready var _face_top: Marker2D = $FaceTop
@@ -60,8 +64,9 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if global_position.y > KILL_Y:
-		queue_free()
+	if global_position.y > KILL_Y and not _fell_emitted:
+		_fell_emitted = true
+		fell_out_of_bounds.emit(self)
 
 
 func set_color(c: Color) -> void:

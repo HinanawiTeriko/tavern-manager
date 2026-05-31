@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_container_unlock_by_day()
 	_test_recovery_target_by_capability()
+	_test_game_manager_classify_recovery()
 	_finish()
 
 
@@ -45,3 +46,12 @@ func _test_recovery_target_by_capability() -> void:
 	_ok(ws.recovery_target(["readable"]) == "doc_dock", "readable -> doc_dock")
 	_ok(ws.recovery_target(["story_item", "readable"]) == "backpack", "story+readable -> backpack (story wins)")
 	_ok(ws.recovery_target([]) == "backpack", "empty caps -> backpack (safe default)")
+
+
+func _test_game_manager_classify_recovery() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.workspace is WorkspaceSystem, "GameManager should own a WorkspaceSystem")
+	_ok(gm.classify_recovery("ale") == "backpack", "material ale recovers to backpack")
+	_ok(gm.classify_recovery("ale_beer") == "recycle", "product ale_beer recovers to recycle")
+	_ok(gm.classify_recovery("sleep_powder") == "backpack", "story sleep_powder recovers to backpack")
+	_ok(gm.classify_recovery("") == "backpack", "empty key recovers to backpack")
