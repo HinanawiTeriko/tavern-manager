@@ -33,3 +33,43 @@ func get_count(key: String) -> int:
 
 func has(key: String) -> bool:
 	return get_count(key) > 0
+
+# 物品定义（只读），由 GameManager 从 CraftSystem 注入，用于能力查询。
+var _items: Dictionary = {}
+
+func load_items(items: Dictionary) -> void:
+	_items = items
+
+func get_capabilities(key: String) -> Array[String]:
+	var def: Dictionary = _items.get(key, {})
+	var caps: Array[String] = []
+	if def.has("capabilities"):
+		for c in def["capabilities"]:
+			caps.append(String(c))
+		return caps
+	var t := String(def.get("type", ""))
+	match t:
+		"material":
+			caps.append("material")
+		"product":
+			caps.append("product")
+		"intermediate":
+			caps.append("intermediate")
+	return caps
+
+func is_material(key: String) -> bool:
+	return get_capabilities(key).has("material")
+
+func is_product(key: String) -> bool:
+	return get_capabilities(key).has("product")
+
+func is_story_item(key: String) -> bool:
+	return get_capabilities(key).has("story_item")
+
+func get_story_items() -> Array[String]:
+	var result: Array[String] = []
+	for key in materials:
+		if is_story_item(key):
+			result.append(key)
+	result.sort()
+	return result

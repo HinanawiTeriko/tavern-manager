@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_add_remove_real_deduction()
+	_test_capability_queries()
 	_finish()
 
 
@@ -41,3 +42,27 @@ func _test_add_remove_real_deduction() -> void:
 	inv.add("ale", -1)
 	_ok(inv.get_count("ale") == 0, "negative add should be a no-op")
 	_ok(not inv.remove("ale", 0), "remove with zero amount should fail")
+
+
+func _test_capability_queries() -> void:
+	var inv := InventorySystem.new()
+	inv.load_items(_load_items())
+	_ok(inv.is_material("ale"), "ale should be material")
+	_ok(not inv.is_material("ale_beer"), "ale_beer should not be material")
+	_ok(inv.is_product("ale_beer"), "ale_beer should be product")
+	_ok(not inv.is_product("ale"), "ale should not be product")
+	_ok(inv.is_story_item("sleep_powder"), "sleep_powder should be story item")
+	_ok(not inv.is_story_item("ale"), "ale should not be story item")
+	_ok(inv.get_capabilities("ale") == ["material"], "ale capabilities should be [material]")
+	_ok(inv.get_capabilities("unknown_key").is_empty(), "unknown key should have no capabilities")
+	inv.set_initial({"sleep_powder": 1, "ale": 3})
+	var story := inv.get_story_items()
+	_ok(story.has("sleep_powder"), "held story items should include sleep_powder")
+	_ok(not story.has("ale"), "held story items should exclude plain material")
+
+
+func _load_items() -> Dictionary:
+	var file := FileAccess.open("res://data/items.json", FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	return data
