@@ -58,6 +58,15 @@ func ingredients() -> Array[String]:
 	return _ingredients.duplicate()
 
 
+func pop_last_item() -> String:
+	if _ingredients.is_empty():
+		return ""
+	var item_key: String = _ingredients.pop_back()
+	_elapsed = 0.0
+	_stir_progress = 0.0
+	return item_key
+
+
 func clear() -> void:
 	_ingredients.clear()
 	_elapsed = 0.0

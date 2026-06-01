@@ -148,6 +148,18 @@ func _try_brew() -> void:
 	recipe_consumed.emit(product_key)
 
 
+func pop_last_ingredient() -> String:
+	if _pending_keys.is_empty():
+		return ""
+	var item_key: String = _pending_keys.pop_back()
+	_shake.reset()
+	return item_key
+
+
+func ingredient_output_position() -> Vector2:
+	return _output_anchor.global_position
+
+
 ## 清洗盆清空：返回未结算的投料 key 列表并清空摇晃进度。料未出酒，全部退回。
 func drain_contents() -> Array[String]:
 	var drained := _pending_keys.duplicate()
