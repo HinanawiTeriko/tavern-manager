@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/textures/title/title_pixel_logo.png" id="5"]
 [ext_resource type="Texture2D" path="res://assets/textures/title/title_pixel_menu_bands.png" id="6"]
 [ext_resource type="Texture2D" path="res://assets/textures/title/title_pixel_menu_marker.png" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="8"]
 
 [node name="TitleScreen" type="Node2D" unique_id=259919159]
 script = ExtResource("2")
@@ -123,12 +124,12 @@ offset_right = 1245.0
 offset_bottom = 303.0
 text = "继续游戏"
 
-[node name="RestartButton" type="Button" parent="UI"]
+[node name="SettingsButton" type="Button" parent="UI"]
 offset_left = 995.0
 offset_top = 358.0
 offset_right = 1245.0
 offset_bottom = 408.0
-text = "重新开始当前日"
+text = "设置"
 
 [node name="QuitButton" type="Button" parent="UI"]
 offset_left = 995.0
@@ -153,3 +154,5 @@ offset_right = 1280.0
 offset_bottom = 715.0
 text = "v0.2 | Last Call Below"
 horizontal_alignment = 2
+
+[node name="SettingsPanel" parent="UI" instance=ExtResource("8")]

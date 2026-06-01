@@ -19,9 +19,11 @@ func _ready() -> void:
 	var menu_bands := title_screen.get_node("UI/MenuBands") as TextureRect
 	_check_title_font(title_screen.get_node("UI/StartButton"), failures)
 	_check_title_font(title_screen.get_node("UI/ContinueButton"), failures)
-	_check_title_font(title_screen.get_node("UI/RestartButton"), failures)
+	_check_title_font(title_screen.get_node("UI/SettingsButton"), failures)
 	_check_title_font(title_screen.get_node("UI/QuitButton"), failures)
 	_check_title_font(title_screen.get_node("UI/VersionLabel"), failures)
+	var settings_button := title_screen.get_node("UI/SettingsButton") as Button
+	_check(settings_button.text == "设置", "Title settings button must read 设置: got %s" % settings_button.text, failures)
 	_check(start_button.position.x >= 900.0, "Title menu must be anchored in the right-side readability area", failures)
 	var logo_right := logo.position.x + logo.texture.get_width() * 0.5
 	_check(logo_right <= menu_bands.offset_left, "Title logo must not overlap the runtime menu area: logo_right=%s menu_left=%s" % [logo_right, menu_bands.offset_left], failures)
@@ -127,7 +129,7 @@ func _check_menu_button_band_alignment(title_screen: Node, texture: Texture2D, f
 		if row_visible and not previous_row_visible:
 			band_tops.append(y)
 		previous_row_visible = row_visible
-	var button_paths := ["UI/StartButton", "UI/ContinueButton", "UI/RestartButton", "UI/QuitButton"]
+	var button_paths := ["UI/StartButton", "UI/ContinueButton", "UI/SettingsButton", "UI/QuitButton"]
 	_check(band_tops.size() == button_paths.size(), "Title menu bands and buttons must have the same count", failures)
 	if band_tops.size() != button_paths.size():
 		return

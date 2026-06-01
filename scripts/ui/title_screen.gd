@@ -9,6 +9,7 @@ var _menu_marker_tween: Tween = null
 @onready var _glow_overlay: Sprite2D = $GlowOverlay
 @onready var _logo: Sprite2D = $Logo
 @onready var _menu_marker: TextureRect = $UI/MenuMarker
+@onready var _settings_panel: SettingsPanel = $UI/SettingsPanel
 
 
 func _ready() -> void:
@@ -43,11 +44,11 @@ func _ready() -> void:
 		_style_title_menu_button(continue_btn)
 		continue_btn.pressed.connect(GameManager.continue_game)
 		continue_btn.disabled = not has_save
-	var restart_btn = get_node_or_null("UI/RestartButton")
-	if restart_btn != null:
-		_style_title_menu_button(restart_btn)
-		restart_btn.pressed.connect(GameManager.restart_current_day)
-		restart_btn.disabled = not has_save
+	_settings_panel.configure(GameManager.settings)
+	var settings_btn = get_node_or_null("UI/SettingsButton")
+	if settings_btn != null:
+		_style_title_menu_button(settings_btn)
+		settings_btn.pressed.connect(_settings_panel.open)
 	var quit_btn = get_node_or_null("UI/QuitButton")
 	if quit_btn != null:
 		_style_title_menu_button(quit_btn)
