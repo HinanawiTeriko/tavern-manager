@@ -24,6 +24,24 @@ const MENU_BRUSH_PANEL := "res://assets/textures/ui/menu_brush_panel.png"
 const MENU_BRUSH_BAND := "res://assets/textures/ui/menu_brush_band.png"
 const MENU_BRUSH_TAB := "res://assets/textures/ui/menu_brush_tab.png"
 const MENU_BRUSH_MARKER := "res://assets/textures/title/title_pixel_menu_marker.png"
+const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
+
+static var _menu_font: Font = null
+
+
+static func menu_font() -> Font:
+	if _menu_font == null:
+		_menu_font = load(MENU_FONT_PATH)
+	return _menu_font
+
+
+## 像素字菜单标签：统一字体 + 字号 + 颜色，用于设置面板等刷痕菜单。
+static func style_brush_label(label: Label, font_size: int = 16, color: Color = TEXT_LIGHT) -> void:
+	var font := menu_font()
+	if font != null:
+		label.add_theme_font_override("font", font)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
 
 static var _inst: ThemeColors = null
 
@@ -138,6 +156,9 @@ static func _apply_brush_button_style(button: Button, texture_path: String, font
 	button.add_theme_stylebox_override("pressed", style)
 	button.add_theme_stylebox_override("disabled", style)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var font := menu_font()
+	if font != null:
+		button.add_theme_font_override("font", font)
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", TEXT_LIGHT)
 	button.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
@@ -149,14 +170,20 @@ static func _apply_brush_button_style(button: Button, texture_path: String, font
 	marker.name = "BrushHoverMarker"
 	marker.texture = TextureManager.try_load(MENU_BRUSH_MARKER)
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	marker.stretch_mode = TextureRect.STRETCH_SCALE
 	marker.z_index = 1
 	marker.visible = false
 	button.add_child(marker)
-	marker.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	marker.offset_left = 8.0
-	marker.offset_top = -7.0
-	marker.offset_right = -8.0
-	marker.offset_bottom = -1.0
+	# 居中短下划线：按钮宽度的中间 40%，约 3px 高，随按钮实际尺寸缩放。
+	marker.anchor_left = 0.3
+	marker.anchor_right = 0.7
+	marker.anchor_top = 1.0
+	marker.anchor_bottom = 1.0
+	marker.offset_left = 0.0
+	marker.offset_right = 0.0
+	marker.offset_top = -5.0
+	marker.offset_bottom = -2.0
 	button.mouse_entered.connect(_sync_brush_marker.bind(button))
 	button.mouse_exited.connect(_sync_brush_marker.bind(button))
 

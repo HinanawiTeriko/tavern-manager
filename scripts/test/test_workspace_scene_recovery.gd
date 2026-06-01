@@ -209,9 +209,14 @@ func _test_settings_menu_entry() -> void:
 	tavern.toggle_menu()
 	_ok(tavern.get_node("OverlayMenu").visible, "overlay menu opens before settings")
 	tavern._open_settings()
+	await get_tree().process_frame
 	_ok(settings_panel.visible, "tavern settings entry opens the panel")
 	_ok(not tavern.get_node("OverlayMenu").visible, "opening settings hides the overlay menu")
 	_ok(tavern.is_menu_open(), "open settings panel keeps gameplay input blocked")
+	# 防回归：在 Node2D 根下实例化的设置面板必须居中而不是歪斜。
+	var inner_panel := settings_panel.get_node("Shade/Panel") as Control
+	_ok(inner_panel.global_position.distance_to(Vector2(400.0, 140.0)) < 1.0,
+		"tavern settings panel is centered, not skewed: got %s" % inner_panel.global_position)
 	settings_panel.close()
 	await get_tree().process_frame
 	_ok(not settings_panel.visible, "settings panel closes")

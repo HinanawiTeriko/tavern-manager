@@ -9,7 +9,17 @@ func _ready() -> void:
 	button.text = "设置"
 	ThemeColors.style_brush_button(button)
 	assert(button.get_theme_stylebox("normal") != null)
-	assert(button.get_node_or_null("BrushHoverMarker") != null)
+	# 像素字：菜单按钮使用 fusion-pixel 字体。
+	var btn_font := button.get_theme_font("font")
+	assert(btn_font != null)
+	assert(btn_font.resource_path == ThemeColors.MENU_FONT_PATH)
+	var marker := button.get_node("BrushHoverMarker") as TextureRect
+	assert(marker != null)
+	# 居中短下划线：按钮中间 40%，约 3px 高，随按钮缩放。
+	assert(is_equal_approx(marker.anchor_left, 0.3))
+	assert(is_equal_approx(marker.anchor_right, 0.7))
+	assert(is_equal_approx(marker.anchor_top, 1.0))
+	assert(is_equal_approx(marker.anchor_bottom, 1.0))
 	ThemeColors.set_brush_selected(button, true)
 	assert(button.get_node("BrushHoverMarker").visible)
 	ThemeColors.set_brush_selected(button, false)
