@@ -80,7 +80,7 @@
       "id": "craft_recovery",
       "group": "craft",
       "title": "恢复桌面",
-      "description": "酒桶或炖锅需要清空时，把容器放进右侧清洗盆并停留片刻。桌面太乱时，也可以从菜单点击“整理桌面”。",
+      "description": "酒桶或炖锅放错材料时，右键容器可以让最近投入的一份材料蹦回桌面。连续右键可以逐份取回。桌面太乱时，也可以从菜单点击“整理桌面”。",
       "highlight_node": "BarWorkspace",
       "highlight_rect": [950, 520, 270, 150],
       "desc_pos_x": 0.32,

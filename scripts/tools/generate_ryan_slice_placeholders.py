@@ -113,7 +113,6 @@ def main() -> None:
 
     write_png(TEXTURES / "vfx" / "ingredient_drop.png", 64, 64, vfx_pixel((119, 176, 232), "drop"))
     write_png(TEXTURES / "vfx" / "product_ready.png", 64, 64, vfx_pixel((255, 207, 91), "burst"))
-    write_png(TEXTURES / "vfx" / "wash_complete.png", 64, 64, vfx_pixel((92, 191, 224), "ring"))
     write_png(TEXTURES / "vfx" / "serve_success.png", 64, 64, vfx_pixel((119, 214, 107), "burst"))
     write_png(TEXTURES / "vfx" / "new_document.png", 64, 64, vfx_pixel((237, 186, 99), "ring"))
 

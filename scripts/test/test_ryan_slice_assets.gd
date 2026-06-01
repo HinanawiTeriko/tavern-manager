@@ -16,7 +16,6 @@ func _ready() -> void:
 		"res://assets/textures/icons/items/alternative_contract.png",
 		"res://assets/textures/vfx/ingredient_drop.png",
 		"res://assets/textures/vfx/product_ready.png",
-		"res://assets/textures/vfx/wash_complete.png",
 		"res://assets/textures/vfx/serve_success.png",
 		"res://assets/textures/vfx/new_document.png",
 	]:

@@ -9,7 +9,7 @@ func _ready() -> void:
 	for event_key in [
 		"drop", "collision", "ingredient_drop", "barrel_shake", "grill_sizzle",
 		"pot_stir", "product_ready", "serve_success", "serve_fail", "page_turn",
-		"new_document", "wash_complete",
+		"new_document",
 	]:
 		_ok(audio.has_event(event_key), "event exists: " + event_key)
 		_ok(FileAccess.file_exists(audio.get_event_path(event_key)), "wav exists: " + event_key)
@@ -37,7 +37,7 @@ func _test_hook_wiring() -> void:
 	_expect_tokens("res://scripts/ui/kitchen_container.gd", [
 		"\"ingredient_drop\"", "\"grill_sizzle\"", "\"pot_stir\"", "\"product_ready\"",
 	])
-	_expect_tokens("res://scripts/ui/bar_workspace.gd", ["\"drop\"", "\"wash_complete\""])
+	_expect_tokens("res://scripts/ui/bar_workspace.gd", ["\"drop\""])
 	_expect_tokens("res://scripts/ui/document_overlay.gd", ["\"page_turn\""])
 
 
