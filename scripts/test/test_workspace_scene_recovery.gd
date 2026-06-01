@@ -14,6 +14,7 @@ func _ready() -> void:
 	await _test_document_overlay_opens_ledger()
 	await _test_container_ejection_spawns_lifo_desk_items()
 	await _test_spoon_renders_below_container_visuals()
+	await _test_settings_menu_entry()
 	_finish()
 
 
@@ -189,6 +190,32 @@ func _test_container_ejection_spawns_lifo_desk_items() -> void:
 	bar._eject_last_ingredient(pot)
 	_ok(items.get_child_count() == before + 1, "empty pot eject is a no-op")
 	_ok(tavern.get_node_or_null("BarWorkspace/World/WashBasin") == null, "wash basin node is removed")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_settings_menu_entry() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var settings_panel = tavern.get_node_or_null("SettingsPanel")
+	_ok(settings_panel != null, "tavern instances a settings panel")
+	var btn_settings = tavern.get_node_or_null("OverlayMenu/TabBtns/BtnSettings")
+	_ok(btn_settings != null, "tavern menu has a settings tab button")
+	_ok(btn_settings != null and btn_settings.text == "设置", "settings tab button reads 设置")
+
+	tavern.toggle_menu()
+	_ok(tavern.get_node("OverlayMenu").visible, "overlay menu opens before settings")
+	tavern._open_settings()
+	_ok(settings_panel.visible, "tavern settings entry opens the panel")
+	_ok(not tavern.get_node("OverlayMenu").visible, "opening settings hides the overlay menu")
+	_ok(tavern.is_menu_open(), "open settings panel keeps gameplay input blocked")
+	settings_panel.close()
+	await get_tree().process_frame
+	_ok(not settings_panel.visible, "settings panel closes")
+	_ok(tavern.get_node("OverlayMenu").visible, "closing settings restores the overlay menu")
 
 	tavern.queue_free()
 	await get_tree().process_frame

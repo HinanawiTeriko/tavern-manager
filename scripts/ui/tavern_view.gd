@@ -15,6 +15,7 @@ var _end_night_btn: Button
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
+var _settings_panel: SettingsPanel
 var _gm
 
 const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
@@ -41,10 +42,14 @@ func _ready() -> void:
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
 	_document_overlay = $DocumentOverlay
+	_settings_panel = $SettingsPanel
+	_settings_panel.configure(_gm.settings)
+	_settings_panel.closed.connect(_on_settings_closed)
 
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
+	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
 	var tidy_btn = $OverlayMenu/BtnTidy
 	if tidy_btn != null and not tidy_btn.pressed.is_connected(_on_tidy_desk_pressed):
 		tidy_btn.pressed.connect(_on_tidy_desk_pressed)
@@ -89,21 +94,20 @@ func _apply_theme() -> void:
 	# 添加教程按钮到菜单
 	_add_tutorial_button_to_menu()
 
-	var parchment_tex = ThemeColors.instance().panel_parchment()
-	if parchment_tex != null:
-		_menu_panel.add_theme_stylebox_override("panel", parchment_tex)
-	else:
-		_menu_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
+	ThemeColors.style_brush_panel(_menu_panel)
 
-	ThemeColors.style_button($OverlayMenu/TabBtns/BtnRecipes, 14)
-	ThemeColors.style_button($OverlayMenu/TabBtns/BtnBackpack, 14)
-	ThemeColors.style_button($OverlayMenu/CloseBtn, 14)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnRecipes)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnBackpack)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnSettings)
+	ThemeColors.style_brush_button($OverlayMenu/BtnTidy, 14)
+	ThemeColors.style_brush_button($OverlayMenu/CloseBtn, 14)
 
 	var recipe_panel = $OverlayMenu/RecipePanel
 	var backpack_panel = $OverlayMenu/BackpackPanel
 	recipe_panel.visible = true
 	backpack_panel.visible = false
-	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false)
+	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
+	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
 	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
 
@@ -221,7 +225,24 @@ func toggle_menu() -> void:
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
 		or _inventory_overlay.visible \
-		or _document_overlay.visible
+		or _document_overlay.visible \
+		or (_settings_panel != null and _settings_panel.visible)
+
+
+func _open_settings() -> void:
+	_select_overlay_tab($OverlayMenu/TabBtns/BtnSettings)
+	_menu_panel.visible = false
+	_settings_panel.open()
+
+
+func _on_settings_closed() -> void:
+	_menu_panel.visible = true
+
+
+func _select_overlay_tab(selected: Button) -> void:
+	for tab_button in $OverlayMenu/TabBtns.get_children():
+		if tab_button is Button:
+			ThemeColors.set_brush_selected(tab_button, tab_button == selected)
 
 
 func toggle_inventory_overlay() -> void:
@@ -252,7 +273,9 @@ func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> v
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
 		return
-	if _document_overlay.visible:
+	if _settings_panel.visible:
+		_settings_panel.close()
+	elif _document_overlay.visible:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
@@ -272,7 +295,7 @@ func _add_tutorial_button_to_menu() -> void:
 	tutorial_btn.name = "BtnTutorial"
 	tutorial_btn.text = "教程"
 	tutorial_btn.custom_minimum_size = Vector2(60, 30)
-	ThemeColors.style_button(tutorial_btn, 14)
+	ThemeColors.style_brush_tab_button(tutorial_btn)
 	tutorial_btn.pressed.connect(_on_tutorial_btn_pressed)
 	tab_btns.add_child(tutorial_btn)
 

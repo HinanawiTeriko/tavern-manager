@@ -1,6 +1,7 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="settingspanel"]
 [ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="dc"]
 [ext_resource type="Script" path="res://scripts/test/brewery.gd" id="brw"]
@@ -372,6 +373,11 @@ layout_mode = 0
 custom_minimum_size = Vector2(100, 0)
 text = "背包"
 
+[node name="BtnSettings" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(100, 0)
+text = "设置"
+
 [node name="RecipePanel" type="ScrollContainer" parent="OverlayMenu"]
 layout_mode = 0
 offset_left = 10.0
@@ -416,6 +422,8 @@ offset_top = 450.0
 offset_right = 295.0
 offset_bottom = 480.0
 text = "整理桌面"
+
+[node name="SettingsPanel" parent="." instance=ExtResource("settingspanel")]
 
 
 [node name="BarWorkspace" type="Node2D" parent="."]
