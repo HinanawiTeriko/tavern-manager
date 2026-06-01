@@ -20,6 +20,11 @@ const SUCCESS = Color(0.29, 0.55, 0.25)
 const DANGER = Color(0.65, 0.15, 0.1)
 const PANEL_BORDER = Color(0.333, 0.263, 0.204)
 
+const MENU_BRUSH_PANEL := "res://assets/textures/ui/menu_brush_panel.png"
+const MENU_BRUSH_BAND := "res://assets/textures/ui/menu_brush_band.png"
+const MENU_BRUSH_TAB := "res://assets/textures/ui/menu_brush_tab.png"
+const MENU_BRUSH_MARKER := "res://assets/textures/title/title_pixel_menu_marker.png"
+
 static var _inst: ThemeColors = null
 
 var _cached_btn_wide_normal: StyleBoxTexture = null
@@ -105,6 +110,68 @@ static func style_small_button(btn: Button, font_size: int = 13) -> void:
 		btn.add_theme_stylebox_override("normal", button_normal(1, 2))
 		btn.add_theme_stylebox_override("hover", button_hover(1, 2))
 		btn.add_theme_stylebox_override("pressed", button_pressed(2, 1))
+
+
+static func style_brush_panel(panel: Panel) -> void:
+	var style = TextureManager.try_load_style_box(MENU_BRUSH_PANEL)
+	panel.add_theme_stylebox_override("panel", style if style != null else _brush_fallback())
+
+
+static func style_brush_button(button: Button, font_size: int = 16) -> void:
+	_apply_brush_button_style(button, MENU_BRUSH_BAND, font_size)
+
+
+static func style_brush_tab_button(button: Button, font_size: int = 14) -> void:
+	_apply_brush_button_style(button, MENU_BRUSH_TAB, font_size)
+
+
+static func set_brush_selected(button: Button, selected: bool) -> void:
+	button.set_meta("brush_selected", selected)
+	_sync_brush_marker(button)
+
+
+static func _apply_brush_button_style(button: Button, texture_path: String, font_size: int) -> void:
+	var loaded_style = TextureManager.try_load_style_box(texture_path)
+	var style: StyleBox = loaded_style if loaded_style != null else _brush_fallback()
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style)
+	button.add_theme_stylebox_override("pressed", style)
+	button.add_theme_stylebox_override("disabled", style)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", AMBER_BRIGHT)
+	button.add_theme_color_override("font_disabled_color", TEXT_DIM)
+	if button.get_node_or_null("BrushHoverMarker") != null:
+		return
+	var marker := TextureRect.new()
+	marker.name = "BrushHoverMarker"
+	marker.texture = TextureManager.try_load(MENU_BRUSH_MARKER)
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.z_index = 1
+	marker.visible = false
+	button.add_child(marker)
+	marker.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	marker.offset_left = 8.0
+	marker.offset_top = -7.0
+	marker.offset_right = -8.0
+	marker.offset_bottom = -1.0
+	button.mouse_entered.connect(_sync_brush_marker.bind(button))
+	button.mouse_exited.connect(_sync_brush_marker.bind(button))
+
+
+static func _sync_brush_marker(button: Button) -> void:
+	var marker := button.get_node_or_null("BrushHoverMarker") as TextureRect
+	if marker != null:
+		marker.visible = bool(button.get_meta("brush_selected", false)) or button.is_hovered()
+
+
+static func _brush_fallback() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(SURFACE_LOW, 0.95)
+	return style
+
 
 static func wood_panel() -> StyleBoxFlat:
 	var sb = StyleBoxFlat.new()
