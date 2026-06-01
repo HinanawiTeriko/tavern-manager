@@ -87,9 +87,6 @@ size = Vector2(410, 328)
 radius = 8.0
 height = 88.0
 
-[sub_resource type="RectangleShape2D" id="tv_basin"]
-size = Vector2(120, 90)
-
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
 
@@ -441,16 +438,6 @@ position = Vector2(230, 580)
 
 [node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
 position = Vector2(640, 470)
-
-[node name="WashBasin" type="Area2D" parent="BarWorkspace/World"]
-position = Vector2(1160, 610)
-
-[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/WashBasin"]
-shape = SubResource("tv_basin")
-
-[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/WashBasin"]
-color = Color(0.2, 0.35, 0.45, 0.6)
-polygon = PackedVector2Array(-60, -45, 60, -45, 60, 45, -60, 45)
 
 [node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
 position = Vector2(960, 600)
