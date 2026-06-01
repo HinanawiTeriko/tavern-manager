@@ -18,6 +18,7 @@ var day_map: DayMapSystem
 var save_sys: SaveSystem
 var ryan_slice: RyanSliceSystem
 var audio: AudioManager
+var settings: SettingsManager
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -86,6 +87,8 @@ func _ready() -> void:
 	day_map = DayMapSystem.new()
 	day_map.load_data()
 	save_sys = SaveSystem.new()
+	settings = SettingsManager.new()
+	settings.load_and_apply()
 	ryan_slice = RyanSliceSystem.new()
 	audio = AudioManager.new()
 	audio.name = "AudioManager"
