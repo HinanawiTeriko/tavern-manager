@@ -36,9 +36,92 @@ func set_ending(npc_id: String, ending: String) -> void:
 	dialogue_vars[npc_id + "_ending"] = ending
 	print("[Narrative] ", npc_id, " 结局 → ", ending)
 
+
+func resolve_action(action: Dictionary) -> Dictionary:
+	match String(action.get("type", "")):
+		"add_story_item_to_product":
+			return _resolve_story_item_product_action(action)
+		"give_story_item":
+			return _resolve_ryan_story_item_action(action)
+		"give_product":
+			return _resolve_ryan_product_action(action)
+	return _action_result(false, "unsupported_action")
+
+
+## 按当前路线写入 Ryan 结局（单一真相源：路线优先级只在 get_ryan_route 里定义）。
+## 由 GameManager 在 Day 3 揭晓前调用；对话只读 ryan_ending，不再自行判定路线。
+func finalize_ryan_ending() -> void:
+	set_ending("ryan", get_ryan_route())
+
+
+func get_ryan_route() -> String:
+	if bool(dialogue_vars.get("ryan_has_alternative", false)):
+		return "alternative_survivor"
+	if bool(dialogue_vars.get("ryan_drugged", false)):
+		return "drugged_survivor"
+	if bool(dialogue_vars.get("ryan_informed", false)):
+		return "informed_fallen"
+	return "uninformed_fallen"
+
+
+func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
+	if String(action.get("item_key", "")) != "sleep_powder" \
+		or String(action.get("product_key", "")) != "ale_beer":
+		return _action_result(false, "unsupported_story_product")
+	var result := _action_result(true, "sleep_powder_added")
+	result["product_tags"] = ["sleep_powder"]
+	return result
+
+
+func _resolve_ryan_story_item_action(action: Dictionary) -> Dictionary:
+	if String(action.get("npc_id", "")) != "ryan":
+		return _action_result(false, "unsupported_npc")
+	if bool(dialogue_vars.get("ryan_interaction_closed", false)):
+		return _action_result(false, "ryan_interaction_closed", true)
+	match String(action.get("item_key", "")):
+		"bloodied_contract":
+			set_var("ryan_informed", true)
+			return _action_result(true, "ryan_informed")
+		"alternative_contract":
+			if not bool(dialogue_vars.get("ryan_informed", false)):
+				return _action_result(false, "ryan_needs_warning_first")
+			set_var("ryan_has_alternative", true)
+			set_var("ryan_interaction_closed", true)
+			return _action_result(true, "ryan_accepts_alternative", true)
+	return _action_result(false, "unsupported_story_item")
+
+
+func _resolve_ryan_product_action(action: Dictionary) -> Dictionary:
+	if String(action.get("npc_id", "")) != "ryan":
+		return _action_result(false, "unsupported_npc")
+	if bool(dialogue_vars.get("ryan_interaction_closed", false)):
+		return _action_result(false, "ryan_interaction_closed", true)
+	if String(action.get("product_key", "")) != "ale_beer":
+		return _action_result(false, "unsupported_product")
+	var product_tags: Array = action.get("product_tags", [])
+	if not product_tags.has("sleep_powder"):
+		return _action_result(true, "ryan_accepts_ale")
+	if bool(dialogue_vars.get("ryan_informed", false)):
+		return _action_result(false, "ryan_refuses_drugged_ale")
+	set_var("ryan_drugged", true)
+	set_var("ryan_interaction_closed", true)
+	return _action_result(true, "ryan_drugged", true)
+
+
+func _action_result(accepted: bool, feedback: String, interaction_closed: bool = false) -> Dictionary:
+	return {
+		"accepted": accepted,
+		"feedback": feedback,
+		"interaction_closed": interaction_closed,
+	}
+
+
 func load_npc_data() -> void:
 	dialogue_vars["has_sleep_powder"] = false
+	dialogue_vars["ryan_informed"] = false
+	dialogue_vars["ryan_has_alternative"] = false
 	dialogue_vars["ryan_drugged"] = false
+	dialogue_vars["ryan_interaction_closed"] = false
 	dialogue_vars["ryan_ending"] = ""
 	dialogue_vars["aff_ryan"] = 0
 	dialogue_vars["aff_mira"] = 5
@@ -100,6 +183,13 @@ func get_today_scenes(day: int) -> Array[NpcData]:
 					result.append(npc)
 				break
 	return result
+
+func select_today_important_npc(day: int) -> String:
+	today_important_npc = ""
+	var scenes := get_today_scenes(day)
+	if scenes.size() > 0:
+		today_important_npc = scenes[0].id
+	return today_important_npc
 
 func _check_trigger(trigger, npc_id: String) -> bool:
 	# 新格式: {"type": "auto"}

@@ -115,10 +115,11 @@ func _test_omitted_profiles_fall_back_to_defaults() -> void:
 
 
 func _visual_rect_size(item: DeskItem) -> Vector2:
-	var visual := item.get_node("Visual") as Polygon2D
 	var min_p := Vector2(INF, INF)
 	var max_p := Vector2(-INF, -INF)
-	for p in visual.polygon:
-		min_p = Vector2(minf(min_p.x, p.x), minf(min_p.y, p.y))
-		max_p = Vector2(maxf(max_p.x, p.x), maxf(max_p.y, p.y))
+	for node_name in ["VisualTop", "VisualBottom"]:
+		var visual := item.get_node(node_name) as Polygon2D
+		for p in visual.polygon:
+			min_p = Vector2(minf(min_p.x, p.x), minf(min_p.y, p.y))
+			max_p = Vector2(maxf(max_p.x, p.x), maxf(max_p.y, p.y))
 	return max_p - min_p

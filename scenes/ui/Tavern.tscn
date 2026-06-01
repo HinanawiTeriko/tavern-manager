@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://scripts/test/brewery.gd" id="brw"]
 [ext_resource type="Script" path="res://scripts/ui/kitchen_container.gd" id="kc"]
 [ext_resource type="Script" path="res://scripts/ui/stir_spoon.gd" id="spoon"]
+[ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/readable_desk_item.tscn" id="readable_item"]
+[ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
 a = Vector2(150, 655)
@@ -84,11 +87,15 @@ size = Vector2(410, 328)
 radius = 8.0
 height = 88.0
 
+[sub_resource type="RectangleShape2D" id="tv_basin"]
+size = Vector2(120, 90)
+
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
 
 [node name="Background" type="Sprite2D" parent="."]
 position = Vector2(640, 360)
+z_index = -100
 centered = true
 
 [node name="CustomerArea" type="Control" parent="."]
@@ -401,6 +408,14 @@ offset_right = 390.0
 offset_bottom = 480.0
 text = "关闭"
 
+[node name="BtnTidy" type="Button" parent="OverlayMenu"]
+layout_mode = 0
+offset_left = 155.0
+offset_top = 450.0
+offset_right = 295.0
+offset_bottom = 480.0
+text = "整理桌面"
+
 
 [node name="BarWorkspace" type="Node2D" parent="."]
 script = ExtResource("bw")
@@ -420,6 +435,22 @@ shape = SubResource("tv_left")
 shape = SubResource("tv_right")
 
 [node name="Items" type="Node2D" parent="BarWorkspace/World"]
+
+[node name="Ledger" parent="BarWorkspace/World" instance=ExtResource("readable_item")]
+position = Vector2(230, 580)
+
+[node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
+position = Vector2(640, 470)
+
+[node name="WashBasin" type="Area2D" parent="BarWorkspace/World"]
+position = Vector2(1160, 610)
+
+[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/WashBasin"]
+shape = SubResource("tv_basin")
+
+[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/WashBasin"]
+color = Color(0.2, 0.35, 0.45, 0.6)
+polygon = PackedVector2Array(-60, -45, 60, -45, 60, 45, -60, 45)
 
 [node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
 position = Vector2(960, 600)
@@ -571,3 +602,135 @@ position = Vector2(637, 234)
 
 [node name="Shape" type="CollisionShape2D" parent="BarWorkspace/CustomerDropArea"]
 shape = SubResource("tv_drop")
+
+[node name="InventoryOverlay" type="Control" parent="."]
+visible = false
+z_index = 100
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+script = ExtResource("inventory_overlay")
+
+[node name="Panel" type="Panel" parent="InventoryOverlay"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 90.0
+offset_right = 950.0
+offset_bottom = 630.0
+
+[node name="Title" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 600.0
+offset_bottom = 46.0
+text = "背包：拖动物品到面板外取出"
+
+[node name="MaterialTitle" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 64.0
+offset_right = 290.0
+offset_bottom = 94.0
+text = "材料"
+
+[node name="StoryTitle" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 64.0
+offset_right = 600.0
+offset_bottom = 94.0
+text = "剧情物品"
+
+[node name="MaterialList" type="VBoxContainer" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 100.0
+offset_right = 290.0
+offset_bottom = 500.0
+
+[node name="StoryList" type="VBoxContainer" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 100.0
+offset_right = 600.0
+offset_bottom = 500.0
+
+[node name="DocumentOverlay" type="Control" parent="."]
+visible = false
+z_index = 101
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+script = ExtResource("document_overlay")
+
+[node name="Panel" type="Panel" parent="DocumentOverlay"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 90.0
+offset_right = 950.0
+offset_bottom = 630.0
+
+[node name="Title" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 24.0
+offset_right = 590.0
+offset_bottom = 56.0
+text = "文档"
+horizontal_alignment = 1
+
+[node name="LeftBody" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+mouse_filter = 2
+offset_left = 40.0
+offset_top = 90.0
+offset_right = 295.0
+offset_bottom = 420.0
+text = ""
+autowrap_mode = 2
+
+[node name="RightBody" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+mouse_filter = 2
+offset_left = 325.0
+offset_top = 90.0
+offset_right = 580.0
+offset_bottom = 420.0
+text = ""
+autowrap_mode = 2
+
+[node name="PageLabel" type="Label" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 440.0
+offset_right = 350.0
+offset_bottom = 470.0
+text = "1 / 1"
+horizontal_alignment = 1
+
+[node name="PreviousBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 440.0
+offset_right = 150.0
+offset_bottom = 480.0
+text = "←"
+
+[node name="NextBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 470.0
+offset_top = 440.0
+offset_right = 570.0
+offset_bottom = 480.0
+text = "→"
+
+[node name="CloseBtn" type="Button" parent="DocumentOverlay/Panel"]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 490.0
+offset_right = 360.0
+offset_bottom = 525.0
+text = "关闭"

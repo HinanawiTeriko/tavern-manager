@@ -16,6 +16,21 @@ func unlock_recipe(key: String) -> void:
 	if not unlocked_recipes.has(key):
 		unlocked_recipes.append(key)
 
+func get_orderable_products(day: int) -> Array[String]:
+	var result: Array[String] = []
+	for product_key in recipes:
+		var recipe: Dictionary = recipes[product_key]
+		if not bool(recipe.get("orderable", true)):
+			continue
+		if int(recipe.get("unlock_day", 1)) > day:
+			continue
+		if bool(recipe.get("requires_purchase", false)) and not is_recipe_unlocked(product_key):
+			continue
+		if is_product(product_key):
+			result.append(product_key)
+	result.sort()
+	return result
+
 func load_data() -> void:
 	_load_items()
 	_load_item_physics_profiles()

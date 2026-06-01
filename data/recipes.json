@@ -18,12 +18,14 @@
   "herbal_ale": {
     "name": "草药麦酒",
     "ingredients": ["ale", "herb"],
-    "container": "barrel"
+    "container": "barrel",
+    "requires_purchase": true
   },
   "spiced_wine": {
     "name": "香料红酒",
     "ingredients": ["grape", "herb"],
-    "container": "barrel"
+    "container": "barrel",
+    "requires_purchase": true
   },
   "bread": {
     "name": "面包",
@@ -38,12 +40,14 @@
   "meat_sand": {
     "name": "肉夹面包",
     "ingredients": ["flour", "meat_raw"],
-    "container": "grill"
+    "container": "grill",
+    "requires_purchase": true
   },
   "meat_stew": {
     "name": "肉汤",
     "ingredients": ["meat_raw", "ale"],
-    "container": "pot"
+    "container": "pot",
+    "requires_purchase": true
   },
   "herb_broth": {
     "name": "草药清汤",

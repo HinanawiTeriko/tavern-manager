@@ -30,6 +30,7 @@ var _state = COOK_STATION_STATE.new()
 var _stir_tracking: bool = false
 var _prev_tip_pos: Vector2 = Vector2.ZERO
 var _searing_bodies: Array = []   # 上一帧在烤区内的肉,用于检测离开
+var _last_stir_audio_msec: int = -1000
 
 
 func _ready() -> void:
@@ -46,7 +47,9 @@ func _ready() -> void:
 	if container_key == "pot":
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 		freeze = true
-	_intake.body_entered.connect(_on_intake_body_entered)
+	# Intake「吞料」是炖锅机制；烤架只靠 SearZone 按压煎制，不该吞掉放上去的生料。
+	if container_key == "pot":
+		_intake.body_entered.connect(_on_intake_body_entered)
 
 
 func _physics_process(delta: float) -> void:
@@ -91,6 +94,9 @@ func _accumulate_stir(spoon: StirSpoon, _delta: float) -> void:
 	if moved > 60.0:   # 防瞬移/抓取跳变造成的尖峰
 		return
 	_state.add_stir(moved * stir_scale)
+	if moved > 4.0 and Time.get_ticks_msec() - _last_stir_audio_msec >= 180:
+		_last_stir_audio_msec = Time.get_ticks_msec()
+		GameManager.play_audio_event("pot_stir")
 
 
 ## 烤架:被抓着且贴在 SearZone 内的物品累积单面熟度;离开烤区时定稿。
@@ -106,6 +112,8 @@ func _process_grill_sear(delta: float) -> void:
 			continue
 		now_inside.append(item)
 		if item.is_held:
+			if not _searing_bodies.has(item):
+				GameManager.play_audio_event("grill_sizzle")
 			item.add_heat(item.down_face_index(), heat_rate * delta)
 	# 离开烤区(上一帧在、这一帧不在)→ 定稿
 	for prev in _searing_bodies:
@@ -170,12 +178,19 @@ func _try_accept_body(body: Node) -> void:
 	if not is_item_inside_intake(item):
 		return
 	_state.add_item(item.item_key)
+	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
 	print("[KitchenContainer] ", container_key, " accepted ", item.item_key)
 
 
 func is_item_inside_intake(item: Node2D) -> bool:
 	return _is_point_inside_intake(item.global_position)
+
+
+func is_spoon_inside(spoon: StirSpoon) -> bool:
+	if container_key == "pot":
+		return _is_point_inside_stir_zone(spoon.tip_global_position())
+	return _is_point_inside_intake(spoon.tip_global_position())
 
 
 func _is_point_inside_intake(global_pos: Vector2) -> bool:
@@ -209,3 +224,15 @@ func _spawn_product(product_key: String) -> void:
 	var item_data: Dictionary = GameManager.craft.get_item(product_key)
 	product.set_item(product_key, item_data)
 	product.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
+	GameManager.play_audio_event("product_ready")
+
+
+## 清洗盆清空：仅锅有内部料状态需要退回；返回料 key 列表并重置状态。
+## 烤架物品是桌面独立物体，不在此处（spec §6.4），返回空。
+func drain_contents() -> Array[String]:
+	if container_key != "pot":
+		return []
+	var drained := _state.ingredients()
+	_state.clear()
+	_configure_state()
+	return drained

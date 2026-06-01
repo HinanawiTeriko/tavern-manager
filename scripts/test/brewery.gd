@@ -13,6 +13,9 @@ const BARREL_ANGULAR_DAMP := 4.0
 const MOUTH_INNER_HALF_WIDTH := 24.0
 const MOUTH_TOP_Y := -64.0
 const MOUTH_BOTTOM_Y := -34.0
+const SPOON_ZONE_INNER_HALF_WIDTH := 40.0
+const SPOON_ZONE_TOP_Y := MOUTH_TOP_Y
+const SPOON_ZONE_BOTTOM_Y := 40.0
 const BARREL_CONFIG := "res://data/barrel.json"
 
 @onready var _mouth: Area2D = $Mouth
@@ -62,11 +65,23 @@ func _try_accept_mouth_body(body: Node) -> void:
 	if not _is_item_inside_mouth_opening(item):
 		return
 	_pending_keys.append(item.item_key)
+	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
 
 
 func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
-	var local_pos: Vector2 = to_local(item.global_position)
+	return _is_point_inside_mouth_opening(item.global_position)
+
+
+func is_spoon_inside(spoon: StirSpoon) -> bool:
+	var local_pos: Vector2 = to_local(spoon.tip_global_position())
+	return absf(local_pos.x) <= SPOON_ZONE_INNER_HALF_WIDTH \
+		and local_pos.y >= SPOON_ZONE_TOP_Y \
+		and local_pos.y <= SPOON_ZONE_BOTTOM_Y
+
+
+func _is_point_inside_mouth_opening(global_pos: Vector2) -> bool:
+	var local_pos: Vector2 = to_local(global_pos)
 	return absf(local_pos.x) <= MOUTH_INNER_HALF_WIDTH \
 		and local_pos.y >= MOUTH_TOP_Y \
 		and local_pos.y <= MOUTH_BOTTOM_Y
@@ -83,6 +98,7 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 	# 朝上离开桶口，且产出物是成品（_try_accept 的 is_product 守卫会拦它），不会被自己收回。
 	var out_dir := 1.0 if randf() > 0.5 else -1.0
 	product.linear_velocity = Vector2(out_dir * 90.0, -260.0)
+	GameManager.play_audio_event("product_ready")
 
 
 func _load_shake_config() -> void:
@@ -102,6 +118,7 @@ func begin_shake_session() -> void:
 	lock_rotation = false
 	sleeping = false
 	_session_active = true
+	GameManager.play_audio_event("barrel_shake")
 
 
 ## 松手结算：停止采样、尝试出酒；桶保持动态由物理自然落定（不强制冻结）。
@@ -129,3 +146,11 @@ func _try_brew() -> void:
 	print("[Brewery] 产出 %s  品质=%s  (摇晃 %d 次)" % [product_key, quality, shakes])
 	_spawn_product(product_key, quality)
 	recipe_consumed.emit(product_key)
+
+
+## 清洗盆清空：返回未结算的投料 key 列表并清空摇晃进度。料未出酒，全部退回。
+func drain_contents() -> Array[String]:
+	var drained := _pending_keys.duplicate()
+	_pending_keys.clear()
+	_shake.reset()
+	return drained

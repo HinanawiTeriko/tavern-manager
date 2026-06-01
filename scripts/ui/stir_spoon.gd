@@ -6,10 +6,12 @@ extends RigidBody2D
 ## 搅拌进度由 KitchenContainer 读取本体 linear_velocity 累积（复用 DragController 钉拽手感）。
 
 const RESET_Y: float = 800.0
+const SUBMERGED_Z_INDEX := -1
 
 @onready var _tip: Marker2D = $Tip
 
 var _home_position: Vector2
+var _surface_z_index: int
 
 
 func _ready() -> void:
@@ -20,6 +22,7 @@ func _ready() -> void:
 	lock_rotation = false
 	can_sleep = false   # 常醒着，避免静置后抓起不跟手
 	_home_position = global_position
+	_surface_z_index = z_index
 
 
 func _physics_process(_delta: float) -> void:
@@ -30,6 +33,10 @@ func _physics_process(_delta: float) -> void:
 ## 勺尖（浸入汤里的那一端）的世界坐标，供锅判定是否在锅口内。
 func tip_global_position() -> Vector2:
 	return _tip.global_position if _tip != null else global_position
+
+
+func set_submerged(submerged: bool) -> void:
+	z_index = SUBMERGED_Z_INDEX if submerged else _surface_z_index
 
 
 func _return_home() -> void:

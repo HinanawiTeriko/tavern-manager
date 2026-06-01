@@ -1,134 +1,134 @@
 {
-	"gather": [
-		{
-			"id": "gather_intro",
-			"group": "gather",
-			"title": "白天 · 采集",
-			"description": "在白天阶段，你需要分配体力去不同地点采集材料。\n\n每个地点消耗不同的体力，产出不同的材料。点击 [+] 分配体力，点击 [-] 取消。\n分配完毕后点击「出发」按钮开始采集。",
-			"highlight_node": "MapArea",
-			"highlight_rect": [35, 80, 740, 350],
-			"desc_pos_x": 0.68,
-			"desc_pos_y": 0.55,
-			"desc_width": 400,
-			"desc_height": 150
-		},
-		{
-			"id": "gather_stamina",
-			"group": "gather",
-			"title": "体力管理",
-			"description": "这里显示你的剩余体力。每个采集点都消耗体力，合理分配体力来获取你需要的材料。\n\n注意：体力用完当天就不能再采集了！",
-			"highlight_node": "TopBar",
-			"highlight_rect": [30, 5, 320, 55],
-			"desc_pos_x": 0.22,
-			"desc_pos_y": 0.15,
-			"desc_width": 340,
-			"desc_height": 140
-		},
-		{
-			"id": "gather_go",
-			"group": "gather",
-			"title": "出发采集",
-			"description": "分配完体力后，点击这里出发！\n\n你可以随时在「采集」和「商店」标签之间切换。在商店可以购买材料和解锁新配方。",
-			"highlight_node": "GoButton",
-			"highlight_rect": [200, 540, 220, 56],
-			"desc_pos_x": 0.32,
-			"desc_pos_y": 0.78,
-			"desc_width": 380,
-			"desc_height": 130
-		}
-	],
-	"shop": [
-		{
-			"id": "shop_intro",
-			"group": "shop",
-			"title": "商店系统",
-			"description": "切换到商店标签可以购买材料和解锁新配方。\n\n购买材料：用金币补充材料库存，确保有足够原料。\n\n解锁配方：花费金币解锁新配方，制作更多种类饮品和食物。\n\n注意：米拉的旅行商店在某些日子会以折扣价出售材料！",
-			"highlight_node": "MapArea",
-			"highlight_rect": [35, 80, 740, 350],
-			"desc_pos_x": 0.68,
-			"desc_pos_y": 0.5,
-			"desc_width": 400,
-			"desc_height": 175
-		}
-	],
-	"craft": [
-		{
-			"id": "craft_intro",
-			"group": "craft",
-			"title": "夜晚营业 · 食品合成",
-			"description": "欢迎来到夜晚的酒馆！在服务客人之前，你需要合成各种食物和饮品。\n\n下方的合成台就是你的厨房，所有魔法都在这里发生。",
-			"highlight_node": "CraftStation",
-			"highlight_rect": [330, 490, 620, 210],
-			"desc_pos_x": 0.5,
-			"desc_pos_y": 0.25,
-			"desc_width": 450,
-			"desc_height": 140
-		},
-		{
-			"id": "craft_drag",
-			"group": "craft",
-			"title": "拖拽材料",
-			"description": "从下方的快捷栏拖动材料到合成台的混合区。\n\n按 E 键也可以打开背包菜单，从背包拖动更多材料。\n\n混合多种材料可以创造新的物品！",
-			"highlight_node": "ShortcutBar",
-			"highlight_rect": [485, 650, 470, 55],
-			"desc_pos_x": 0.5,
-			"desc_pos_y": 0.87,
-			"desc_width": 420,
-			"desc_height": 130
-		},
-		{
-			"id": "craft_mix",
-			"group": "craft",
-			"title": "混合区与操作",
-			"description": "材料放入混合区后，如果可以进行操作（加热、搅拌等），对应按钮会出现。\n\n完成操作后，成品会出现在右边的结果槽中。\n\n回收不需要的材料——拖回快捷栏即可。",
-			"highlight_node": "MixingArea",
-			"highlight_rect": [345, 502, 260, 82],
-			"desc_pos_x": 0.32,
-			"desc_pos_y": 0.13,
-			"desc_width": 420,
-			"desc_height": 145
-		}
-	],
-	"seasoning": [
-		{
-			"id": "seasoning_intro",
-			"group": "seasoning",
-			"title": "香料系统",
-			"description": "将成品拖到这个撒粉区，再拖入香料（如草药），可以为食物增添特别的风味！\n\n有些客人特别喜欢加了香料的食物。",
-			"highlight_node": "SeasoningZone",
-			"highlight_rect": [821, 556, 114, 75],
-			"desc_pos_x": 0.82,
-			"desc_pos_y": 0.13,
-			"desc_width": 380,
-			"desc_height": 140
-		}
-	],
-	"serve": [
-		{
-			"id": "serve_intro",
-			"group": "serve",
-			"title": "服务客人",
-			"description": "客人来了！他们头顶会显示想要的食物。\n\n将成品从结果槽拖拽到客人区域即可服务。注意耐心条——如果等待太久，客人会生气离开！\n\n正确交付获得金币和声望，交错了会惹恼客人。",
-			"highlight_node": "CustomerArea",
-			"highlight_rect": [432, 70, 410, 328],
-			"desc_pos_x": 0.5,
-			"desc_pos_y": 0.6,
-			"desc_width": 420,
-			"desc_height": 165
-		}
-	],
-	"ledger": [
-		{
-			"id": "ledger_intro",
-			"group": "ledger",
-			"title": "营业结算",
-			"description": "一天结束了！这是今天的营业账单。\n\n查看金币收入、声望变化、服务客人数和订单成功率。\n\n如果有重要NPC来访，这里还会显示他们的宿命结局。\n\n点击「继续」按钮进入下一天。",
-			"highlight_node": "UI",
-			"highlight_rect": [90, 50, 1100, 560],
-			"desc_pos_x": 0.5,
-			"desc_pos_y": 0.88,
-			"desc_width": 460,
-			"desc_height": 155
-		}
-	]
+  "gather": [
+    {
+      "id": "gather_intro",
+      "group": "gather",
+      "title": "白天 · 逐次访问",
+      "description": "点击地点右侧的“访问”按钮会立刻消耗行动力，并马上获得材料或线索。\n\n你可以根据当前库存决定继续采集、调查新线索，或者提前进入夜晚。",
+      "highlight_node": "MapArea",
+      "highlight_rect": [140, 80, 1000, 420],
+      "desc_pos_x": 0.68,
+      "desc_pos_y": 0.55,
+      "desc_width": 400,
+      "desc_height": 150
+    },
+    {
+      "id": "gather_stamina",
+      "group": "gather",
+      "title": "行动力",
+      "description": "这里显示剩余行动力。访问地点后结果会立即出现；行动力不足时，当天就不能再前往高消耗地点。",
+      "highlight_node": "TopBar",
+      "highlight_rect": [30, 5, 320, 55],
+      "desc_pos_x": 0.22,
+      "desc_pos_y": 0.15,
+      "desc_width": 340,
+      "desc_height": 130
+    },
+    {
+      "id": "gather_go",
+      "group": "gather",
+      "title": "进入夜晚",
+      "description": "准备好后点击“进入夜晚”。不必耗尽所有行动力；保留资源和提前营业也是选择。",
+      "highlight_node": "GoButton",
+      "highlight_rect": [540, 520, 200, 50],
+      "desc_pos_x": 0.32,
+      "desc_pos_y": 0.78,
+      "desc_width": 380,
+      "desc_height": 120
+    }
+  ],
+  "shop": [
+    {
+      "id": "shop_intro",
+      "group": "shop",
+      "title": "商店",
+      "description": "切换到商店页可以购买材料和解锁配方。白天行动和金币都有限，先为今晚真正需要的订单准备库存。",
+      "highlight_node": "MapArea",
+      "highlight_rect": [140, 80, 1000, 420],
+      "desc_pos_x": 0.68,
+      "desc_pos_y": 0.5,
+      "desc_width": 400,
+      "desc_height": 150
+    }
+  ],
+  "craft": [
+    {
+      "id": "craft_intro",
+      "group": "craft",
+      "title": "夜晚 · 物理吧台",
+      "description": "从快捷栏拖出麦芽，投入右侧酒桶。抓住酒桶摇晃，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
+      "highlight_node": "BarWorkspace",
+      "highlight_rect": [150, 410, 980, 245],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.25,
+      "desc_width": 470,
+      "desc_height": 145
+    },
+    {
+      "id": "craft_drag",
+      "group": "craft",
+      "title": "取出材料",
+      "description": "从底部快捷栏拖出常用材料。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
+      "highlight_node": "ShortcutBar",
+      "highlight_rect": [140, 675, 1000, 40],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.84,
+      "desc_width": 460,
+      "desc_height": 140
+    },
+    {
+      "id": "craft_recovery",
+      "group": "craft",
+      "title": "恢复桌面",
+      "description": "酒桶或炖锅需要清空时，把容器放进右侧清洗盆并停留片刻。桌面太乱时，也可以从菜单点击“整理桌面”。",
+      "highlight_node": "BarWorkspace",
+      "highlight_rect": [950, 520, 270, 150],
+      "desc_pos_x": 0.32,
+      "desc_pos_y": 0.15,
+      "desc_width": 450,
+      "desc_height": 130
+    }
+  ],
+  "seasoning": [
+    {
+      "id": "story_delivery_intro",
+      "group": "seasoning",
+      "title": "剧情物品也是动作",
+      "description": "某些证据和特殊材料可以从背包拖到桌面，再直接交给重要客人。你做出的实际动作会改变后续对话。\n\n有些材料还能拖到桌面成品上，例如把花粉加入麦芽酒。",
+      "highlight_node": "CustomerArea",
+      "highlight_rect": [432, 70, 410, 328],
+      "desc_pos_x": 0.82,
+      "desc_pos_y": 0.18,
+      "desc_width": 390,
+      "desc_height": 150
+    }
+  ],
+  "serve": [
+    {
+      "id": "serve_intro",
+      "group": "serve",
+      "title": "服务客人",
+      "description": "客人头顶会显示订单。把桌面上的正确成品拖到客人区域完成服务。\n\n注意耐心条：等待太久，客人会离开。每晚普通订单数量有限，完成后可以打烊。",
+      "highlight_node": "CustomerArea",
+      "highlight_rect": [432, 70, 410, 328],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.6,
+      "desc_width": 430,
+      "desc_height": 150
+    }
+  ],
+  "ledger": [
+    {
+      "id": "ledger_intro",
+      "group": "ledger",
+      "title": "账本",
+      "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。",
+      "highlight_node": "UI",
+      "highlight_rect": [90, 50, 1100, 560],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.88,
+      "desc_width": 460,
+      "desc_height": 145
+    }
+  ]
 }

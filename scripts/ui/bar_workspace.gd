@@ -10,16 +10,26 @@ extends Node2D
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
 const MAX_SLOTS := 10
+const KILL_Y := 800.0
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
 @onready var _brewery: Brewery = $World/Brewery
+@onready var _grill: KitchenContainer = $World/Grill
+@onready var _pot: KitchenContainer = $World/Pot
+@onready var _spoon: StirSpoon = $World/Spoon
 @onready var _customer_area: Area2D = $CustomerDropArea
 @onready var _shortcut_bar: Control = get_node("../ShortcutBar")
 
 var _gm
 var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
+@onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
+var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
+@onready var _wash_basin: Area2D = $World/WashBasin
+@onready var _ledger: ReadableDeskItem = $World/Ledger
+const WASH_DWELL := 0.8
+var _wash_dwell: Dictionary = {}   # 容器 -> 已停留秒数
 
 
 func _ready() -> void:
@@ -28,7 +38,27 @@ func _ready() -> void:
 	_brewery.recipe_consumed.connect(func(k): print("[BarWorkspace] 产出 ", k))
 	_drag_ctrl.drag_started.connect(_on_drag_started)
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
+	_items_node.child_entered_tree.connect(_on_items_child_added)
+	_gm.inventory_changed.connect(_init_material_slots)
+	_ledger.open_requested.connect(_gm.request_open_document)
+	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
+
+
+func configure_day(day: int) -> void:
+	_set_body_available(_brewery, _gm.workspace.is_container_unlocked("barrel", day))
+	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
+	_set_body_available(_pot, _gm.workspace.is_container_unlocked("pot", day))
+	_set_body_available(_spoon, _gm.workspace.is_container_unlocked("spoon", day))
+
+
+func _set_body_available(body: RigidBody2D, available: bool) -> void:
+	body.visible = available
+	body.process_mode = Node.PROCESS_MODE_INHERIT if available else Node.PROCESS_MODE_DISABLED
+	for child in body.find_children("*", "CollisionShape2D", true, false):
+		child.set_deferred("disabled", not available)
+	for child in body.find_children("*", "CollisionPolygon2D", true, false):
+		child.set_deferred("disabled", not available)
 
 
 func _on_drag_started(body: RigidBody2D) -> void:
@@ -47,7 +77,7 @@ func _init_material_slots() -> void:
 	_slot_item_keys.clear()
 	var keys: Array = []
 	for k in _gm.inventory.keys():
-		if not _gm.craft.is_product(k):
+		if _gm.inventory_sys.is_material(k):
 			keys.append(k)
 	keys.sort()
 	for i in range(MAX_SLOTS):
@@ -93,7 +123,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif _is_kitchen_container(dragged):
 				dragged.end_action_session()
 			elif dragged is DeskItem:
-				_try_serve(dragged)
+				_try_deliver(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
 
@@ -104,7 +134,7 @@ func _release_dragged_body() -> void:
 	if dragged == _brewery:
 		_brewery.end_shake_session()
 	elif dragged is DeskItem:
-		_try_serve(dragged)
+		_try_deliver(dragged)
 
 
 func _try_pickup(pos: Vector2) -> void:
@@ -128,19 +158,71 @@ func _try_pickup(pos: Vector2) -> void:
 		return
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos) and _slot_item_keys[i] != "":
-			var body := _spawn_desk_item_at(pos, _slot_item_keys[i])
-			_drag_ctrl.start_drag(body, pos)
+			var body := spawn_inventory_item_at(_slot_item_keys[i], pos)
+			if body != null:
+				_drag_ctrl.start_drag(body, pos)
 			return
 
 
-func _try_serve(item: DeskItem) -> void:
-	if item.item_key == "" or not _gm.craft.is_product(item.item_key):
+## 释放桌面物品时的统一分流（spec §7.2/§7.3）：
+##   1) 沉睡花粉压在成品上 → 搅成药酒（打 tag）。
+##   2) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
+##   3) 其它落点 → 不处理，留在桌面（越界自走回收）。
+func _try_deliver(item: DeskItem) -> void:
+	if item.item_key == "":
 		return
+
+	# 1) 沉睡花粉搅进成品
+	if _gm.inventory_sys.is_story_item(item.item_key):
+		var prod := _product_under(item)
+		if prod != null:
+			var ar: Dictionary = _gm.request_apply_story_item_to_product(item.item_key, prod.item_key)
+			if ar.get("accepted", false):
+				for t in ar.get("product_tags", []):
+					prod.add_product_tag(String(t))
+				item.queue_free()   # 花粉被搅进酒里消耗
+			else:
+				_on_desk_item_fell(item)   # 回收花粉到背包
+			return
+
+	# 2) 递交给客人
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
+	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
+	if is_product and item.item_key == _gm.current_order_key():
+		_serve_formal(item)
+		return
+	var r: Dictionary = _gm.request_narrative_delivery(item.item_key, item.product_tags)
+	if not r.get("handled", false):
+		if is_product:
+			_serve_formal(item)   # 普通错单成品：正常上菜（失败反馈）
+		else:
+			_on_desk_item_fell(item)
+		return
+	if r.get("consume", false):
+		item.queue_free()
+	else:
+		_on_desk_item_fell(item)   # 被拒：剧情物品回背包 / 成品回回收区
+
+
+func _serve_formal(item: DeskItem) -> void:
 	var speed: float = _drag_ctrl.get_serve_speed()
 	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality})
 	item.queue_free()
+
+
+## 找到压在拖动物体落点下方的另一个成品 DeskItem（用于花粉搅酒）。
+func _product_under(item: DeskItem) -> DeskItem:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = item.global_position
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		var c = h.get("collider")
+		if c is DeskItem and c != item and _gm.inventory_sys.is_product(c.item_key):
+			return c
+	return null
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
@@ -211,3 +293,130 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	item.global_position = pos
 	return item
+
+
+## 从背包/快捷栏拖出物品的统一入口：先扣库存，再生成桌面物理体。
+func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
+	if not _gm.remove_from_inventory(item_key, 1):
+		return null
+	_gm.play_audio_event("drop")
+	return _spawn_desk_item_at(pos, item_key)
+
+
+## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
+func _capture_docks() -> void:
+	_docks[_brewery] = _brewery.global_position
+	for child in _items_node.get_parent().get_children():
+		if _is_kitchen_container(child) or child is StirSpoon:
+			_docks[child] = child.global_position
+
+
+## 任何加进 Items 的 DeskItem（取材/容器产出）都连越界信号；is_connected 守卫避免重复。
+func _on_items_child_added(child: Node) -> void:
+	if child is DeskItem and not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
+		child.fell_out_of_bounds.connect(_on_desk_item_fell)
+
+
+## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
+## 容器内部料状态保留（不清空）。
+func tidy_desk() -> void:
+	for child in _items_node.get_children():
+		if child is DeskItem:
+			_on_desk_item_fell(child)
+	for body in _docks:
+		if not is_instance_valid(body):
+			continue
+		_dock_body(body)
+
+
+## 桌面物品越界：材料/剧情物品回背包（释放物体），成品移回回收锚点。
+func _on_desk_item_fell(item: DeskItem) -> void:
+	if not is_instance_valid(item):
+		return
+	var target: String = _gm.recover_desk_item_key(item.item_key)
+	if target == "recycle":
+		item.linear_velocity = Vector2.ZERO
+		item.angular_velocity = 0.0
+		item.global_position = _recycle_anchor.global_position
+		item.reset_fall_state()
+	else:
+		item.queue_free()
+
+
+func _physics_process(delta: float) -> void:
+	_recover_docked_bodies()
+	_update_spoon_depth()
+	_update_wash_basin(delta)
+
+
+func _update_spoon_depth() -> void:
+	_spoon.set_submerged(
+		_brewery.is_spoon_inside(_spoon)
+		or _grill.is_spoon_inside(_spoon)
+		or _pot.is_spoon_inside(_spoon)
+		or _area_contains_spoon_tip(_wash_basin)
+	)
+
+
+func _area_contains_spoon_tip(area: Area2D) -> bool:
+	var collision_shape := area.get_node_or_null("Shape") as CollisionShape2D
+	if collision_shape == null:
+		return false
+	var rectangle := collision_shape.shape as RectangleShape2D
+	if rectangle == null:
+		return false
+	var local_tip := collision_shape.to_local(_spoon.tip_global_position())
+	var half_size := rectangle.size * 0.5
+	return absf(local_tip.x) <= half_size.x and absf(local_tip.y) <= half_size.y
+
+
+## 容器/工具越界时自动回泊位，避免关键工作台对象永久丢失。
+func _recover_docked_bodies() -> void:
+	for body in _docks:
+		if is_instance_valid(body) and body.global_position.y > KILL_Y:
+			_dock_body(body)
+
+
+func _dock_body(body: RigidBody2D) -> void:
+	body.linear_velocity = Vector2.ZERO
+	body.angular_velocity = 0.0
+	body.global_position = _docks[body]
+	body.sleeping = true
+
+
+## 容器停在清洗盆内 0.8s → 清空内部料回库存（一次进入只清一次；
+## 离开后重新进入才会再次清洗，避免坐在盆里把后投的料静默清掉）。
+func _update_wash_basin(delta: float) -> void:
+	var inside := {}
+	for body in _wash_basin.get_overlapping_bodies():
+		if body == _brewery or _is_kitchen_container(body):
+			inside[body] = true
+			var dwell := float(_wash_dwell.get(body, 0.0))
+			if is_inf(dwell):
+				continue   # 本次停留已清洗过，等离开再重置
+			dwell += delta
+			if dwell >= WASH_DWELL:
+				_wash_dwell[body] = INF
+				_do_wash(body)
+			else:
+				_wash_dwell[body] = dwell
+	for body in _wash_dwell.keys():
+		if not inside.has(body):
+			_wash_dwell.erase(body)
+
+
+func _do_wash(container) -> void:
+	assert(container == _brewery or _is_kitchen_container(container),
+		"_do_wash called on unexpected type: %s" % container)
+	var drained: Array = container.drain_contents()
+	if drained.is_empty():
+		return
+	for key in drained:
+		_gm.add_to_inventory(key, 1)
+	_gm.play_audio_event("wash_complete")
+	print("[BarWorkspace] 清洗盆清空 ", container, " 退回 ", drained)
+
+
+func _exit_tree() -> void:
+	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
+		_gm.inventory_changed.disconnect(_init_material_slots)

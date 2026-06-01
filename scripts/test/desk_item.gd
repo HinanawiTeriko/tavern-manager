@@ -43,10 +43,16 @@ const FALLBACK_PROFILES := {
 
 var item_key: String = ""
 var quality: String = "normal"
+var product_tags: Array[String] = []   # 叙事载体标记（如 sleep_powder），递交时透传给 resolve_action
 var is_held: bool = false
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
 var _doneness = MEAT_DONENESS.new()
+
+signal fell_out_of_bounds(item: DeskItem)
+
+var _fell_emitted: bool = false
+var _last_impact_audio_msec: int = -1000
 
 @onready var _visual_top: Polygon2D = $VisualTop
 @onready var _visual_bottom: Polygon2D = $VisualBottom
@@ -57,11 +63,38 @@ var _doneness = MEAT_DONENESS.new()
 
 func _ready() -> void:
 	_apply_base_color(_pending_color)
+	contact_monitor = true
+	max_contacts_reported = 4
+	body_entered.connect(_on_body_entered)
 
 
 func _physics_process(_delta: float) -> void:
-	if global_position.y > KILL_Y:
-		queue_free()
+	if global_position.y > KILL_Y and not _fell_emitted:
+		_fell_emitted = true
+		fell_out_of_bounds.emit(self)
+
+
+func _on_body_entered(_body: Node) -> void:
+	if linear_velocity.length() < IMPACT_DEBUG_SPEED:
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_impact_audio_msec < 100:
+		return
+	_last_impact_audio_msec = now
+	GameManager.play_audio_event("collision")
+
+
+## 回收复用：被移回回收区后清除越界标记，使其再次掉落仍能触发回收。
+func reset_fall_state() -> void:
+	_fell_emitted = false
+
+
+## 打上叙事标记（如 sleep_powder）。药酒标记附带淡紫染色以便辨识（占位视觉，正式 VFX 属 P5）。
+func add_product_tag(tag: String) -> void:
+	if not product_tags.has(tag):
+		product_tags.append(tag)
+	if tag == "sleep_powder":
+		modulate = Color(0.72, 0.58, 0.88)
 
 
 func set_color(c: Color) -> void:

@@ -3,6 +3,7 @@ extends Node2D
 
 signal gathering_confirmed(assignments: Dictionary)
 
+var _location_scroll: ScrollContainer
 var _location_list: VBoxContainer
 var _stamina_label: Label
 var _day_label: Label
@@ -10,6 +11,7 @@ var _go_button: Button
 var _result_panel: Panel
 var _result_label: Label
 var _continue_btn: Button
+var _document_overlay: DocumentOverlay
 
 var _assignments: Dictionary = {}
 var _stamina_left: int = 0
@@ -32,13 +34,15 @@ var _recipe_list: VBoxContainer
 var _is_mira_shop: bool = false
 
 func _ready() -> void:
-	_location_list = $MapArea/LocationList
+	_location_scroll = $MapArea/LocationScroll
+	_location_list = $MapArea/LocationScroll/LocationList
 	_stamina_label = $TopBar/StaminaLabel
 	_day_label = $TopBar/DayLabel
 	_go_button = $GoButton
 	_result_panel = $ResultPanel
 	_result_label = $ResultPanel/ResultLabel
 	_continue_btn = $ResultPanel/ContinueBtn
+	_document_overlay = $DocumentOverlay
 
 	var title_label = $MapArea/TitleLabel
 	ThemeColors.style_header(title_label, 26)
@@ -55,13 +59,11 @@ func _ready() -> void:
 
 	_go_button.pressed.connect(_on_go_pressed)
 	_continue_btn.pressed.connect(_on_continue)
+	$TopBar/DocumentsBtn.pressed.connect(_open_latest_document)
 
 	var exp_btn = $TopBar/ExpTavernBtn
 	ThemeColors.style_small_button(exp_btn, 13)
 	exp_btn.pressed.connect(_on_exp_tavern_pressed)
-
-	_load_locations()
-	_build_location_ui()
 
 	_gold_label = $TopBar/GoldLabel
 	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
@@ -112,20 +114,18 @@ func _load_locations() -> void:
 	_stamina_left = _max_stamina
 
 func show_day(day: int, total_days: int) -> void:
-	_day_label.text = "第 %d/%d 天 — 白天·采集" % [day, total_days]
-	_stamina_left = _max_stamina
+	_day_label.text = "第 %d/%d 天 — 白天·行动" % [day, total_days]
+	var gm = get_node("/root/GameManager")
+	_max_stamina = gm.day_map.max_stamina
+	_stamina_left = gm.day_map.stamina
 	_assignments.clear()
-	for label in _assign_labels.values():
-		label.text = "0"
+	_reload_location_ui()
 	_update_stamina_display()
 	_result_panel.visible = false
 	_continue_btn.visible = true
-	for btn in _loc_add_btns.values():
-		btn.disabled = false
-	for btn in _loc_sub_btns.values():
-		btn.disabled = true
 	_go_button.disabled = false
 	_go_button.visible = true
+	_go_button.text = "进入夜晚"
 	_is_shop_tab = false
 	if _gather_tab_btn != null:
 		_update_tab_appearance()
@@ -133,7 +133,7 @@ func show_day(day: int, total_days: int) -> void:
 		_shop_panel.visible = false
 	var map_area = $MapArea
 	map_area.get_node("TitleLabel").visible = true
-	map_area.get_node("LocationList").visible = true
+	map_area.get_node("LocationScroll").visible = true
 	_update_gold_display()
 
 	# 教程：首次进入采集界面
@@ -153,48 +153,48 @@ func _build_location_ui() -> void:
 		info.custom_minimum_size = Vector2(360, 0)
 
 		var name_label = Label.new()
-		name_label.text = loc.name + "  [" + str(loc.cost) + "体力]"
+		name_label.text = String(loc["name"]) + "  [" + str(loc["cost"]) + "体力]"
 		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 		name_label.add_theme_font_size_override("font_size", 18)
 		info.add_child(name_label)
 
 		var desc_label = Label.new()
-		desc_label.text = loc.description
+		desc_label.text = String(loc["description"])
 		desc_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 		desc_label.add_theme_font_size_override("font_size", 13)
 		info.add_child(desc_label)
 
 		row.add_child(info)
 
-		var count_label = Label.new()
-		count_label.text = "0"
-		count_label.custom_minimum_size = Vector2(40, 0)
-		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		count_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-		count_label.add_theme_font_size_override("font_size", 22)
-		row.add_child(count_label)
-
-		var add_btn = Button.new()
-		add_btn.text = "+"
-		add_btn.custom_minimum_size = Vector2(40, 36)
-		ThemeColors.style_button(add_btn, 16)
-		var loc_id: String = loc.id
-		add_btn.pressed.connect(_add_assignment.bind(loc_id, loc.cost, count_label))
-		row.add_child(add_btn)
-
-		var sub_btn = Button.new()
-		sub_btn.text = "-"
-		sub_btn.custom_minimum_size = Vector2(40, 36)
-		sub_btn.disabled = true
-		ThemeColors.style_button(sub_btn, 16)
-		sub_btn.pressed.connect(_remove_assignment.bind(loc_id, loc.cost, count_label))
-		row.add_child(sub_btn)
-
-		_assign_labels[loc.id] = count_label
-		_loc_add_btns[loc.id] = add_btn
-		_loc_sub_btns[loc.id] = sub_btn
+		var visit_btn = Button.new()
+		visit_btn.text = "访问"
+		visit_btn.custom_minimum_size = Vector2(80, 36)
+		ThemeColors.style_button(visit_btn, 16)
+		var loc_id: String = loc["id"]
+		visit_btn.pressed.connect(_visit_location.bind(loc_id))
+		row.add_child(visit_btn)
+		_loc_add_btns[loc_id] = visit_btn
 
 		_location_list.add_child(row)
+
+
+func _reload_location_ui() -> void:
+	for child in _location_list.get_children():
+		child.queue_free()
+	_loc_add_btns.clear()
+	_locations = get_node("/root/GameManager").day_map.get_locations()
+	_build_location_ui()
+
+
+func _visit_location(location_id: String) -> void:
+	var gm = get_node("/root/GameManager")
+	var result: Dictionary = gm.visit_day_location(location_id)
+	_result_label.text = String(result.get("message", "访问完成。"))
+	_result_panel.visible = true
+	_continue_btn.text = "知道了"
+	_stamina_left = gm.day_map.stamina
+	_update_stamina_display()
+	_reload_location_ui()
 
 func _add_assignment(loc_id: String, cost: int, count_label: Label) -> void:
 	if _stamina_left < cost:
@@ -229,17 +229,30 @@ func _update_stamina_display() -> void:
 	_stamina_label.text = "体力：" + str(_stamina_left) + "/" + str(_max_stamina)
 
 func _on_go_pressed() -> void:
-	if _assignments.size() == 0:
-		_result_label.text = "请至少分配一点体力到采集点！"
-		_result_panel.visible = true
-		_continue_btn.text = "知道了"
-		return
-	_continue_btn.text = "继续 → 夜晚"
 	_go_button.disabled = true
-	gathering_confirmed.emit(_assignments)
+	get_node("/root/GameManager").enter_night_from_day_map()
 
 func _on_continue() -> void:
 	_result_panel.visible = false
+
+
+func _open_latest_document() -> void:
+	var gm = get_node("/root/GameManager")
+	for document_id in gm.documents.get_owned_documents():
+		if document_id != "ledger" and not gm.documents.is_read(document_id):
+			gm.request_open_document(document_id)
+			return
+	gm.request_open_document("ledger")
+
+
+func open_document(document: Dictionary) -> void:
+	_document_overlay.open_document(document)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and _document_overlay.visible:
+		_document_overlay.close()
+		get_viewport().set_input_as_handled()
 
 func _update_gold_display() -> void:
 	var gm = get_node("/root/GameManager")
@@ -272,9 +285,9 @@ func _build_tab_buttons() -> void:
 	var title_label = map_area.get_node("TitleLabel")
 	title_label.offset_top = 45
 	title_label.offset_bottom = 80
-	var location_list = map_area.get_node("LocationList")
-	location_list.offset_top = 95
-	location_list.offset_bottom = 420
+	var location_scroll = map_area.get_node("LocationScroll")
+	location_scroll.offset_top = 95
+	location_scroll.offset_bottom = 420
 
 	_update_tab_appearance()
 
@@ -284,7 +297,7 @@ func _switch_tab(shop: bool) -> void:
 
 	var map_area = $MapArea
 	map_area.get_node("TitleLabel").visible = not shop
-	map_area.get_node("LocationList").visible = not shop
+	map_area.get_node("LocationScroll").visible = not shop
 	_shop_panel.visible = shop
 
 	if shop:
@@ -309,7 +322,9 @@ func _build_shop_ui() -> void:
 	_shop_panel = ScrollContainer.new()
 	_shop_panel.anchor_left = 0.0; _shop_panel.anchor_right = 1.0
 	_shop_panel.offset_left = 0; _shop_panel.offset_top = 95
-	_shop_panel.offset_right = 1000; _shop_panel.offset_bottom = 420
+	_shop_panel.offset_right = 0; _shop_panel.offset_bottom = 420
+	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	_shop_panel.visible = false
 	$MapArea.add_child(_shop_panel)
 
@@ -443,8 +458,8 @@ func _build_recipe_rows(gm) -> void:
 		child.queue_free()
 
 	var unlocks = [
-		["Herbal Ale", "草药麦酒"], ["SpicedWine", "香料红酒"],
-		["MeatSand", "肉夹面包"], ["Meat Stew", "肉汤"]
+		["herbal_ale", "草药麦酒"], ["spiced_wine", "香料红酒"],
+		["meat_sand", "肉夹面包"], ["meat_stew", "肉汤"]
 	]
 
 	for pair in unlocks:

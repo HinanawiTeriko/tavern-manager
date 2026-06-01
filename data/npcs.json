@@ -7,14 +7,15 @@
       "description": "年轻热血的见习骑士，梦想加入白银阶冒险队伍",
       "affectionStart": 0,
       "scenes": [
-        { "day": 1, "dialogue": "ryan_day1", "order": "bread", "trigger": {"type": "auto"} },
+        { "day": 1, "dialogue": "ryan_day1", "order": "ale_beer", "trigger": {"type": "auto"} },
         { "day": 2, "dialogue": "ryan_day2", "order": "meat_cooked", "trigger": {"type": "auto"} },
-        { "day": 3, "dialogue": "ryan_day3", "order": "herbal_ale", "trigger": {"type": "auto"} }
+        { "day": 3, "dialogue": "ryan_day3", "order": "herb_broth", "trigger": {"type": "auto"} }
       ],
       "endings": {
-        "hero": "莱恩加入了白银阶队伍，成为真正的骑士",
-        "fallen": "莱恩在地牢深处失踪，只留下那面裂开的盾牌",
-        "broken": "莱恩活了下来，但血斧小队的覆灭让他一蹶不振"
+        "uninformed_fallen": "莱恩毫不知情地奔赴北矿道。血斧小队全军覆没，他到死都不知道那份委托从一开始就是陷阱。",
+        "drugged_survivor": "那一夜莱恩昏睡在酒馆角落，错过了集结。血斧小队覆灭，他活了下来——却把这份被人替他做的决定记恨了很久。",
+        "informed_fallen": "莱恩读完那份染血的委托书，沉默良久，仍选择如约出发。他知道风险，依旧走向北矿道，再没回来。但这一次，是他自己的选择。",
+        "alternative_survivor": "莱恩带着替代委托离开，放弃了血斧小队和白银阶的快速晋升，改走更慢的安全路线。血斧小队仍然覆灭，而他还活着。"
       }
     },
     {
