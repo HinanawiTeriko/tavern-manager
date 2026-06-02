@@ -15,8 +15,8 @@ const NATIVE_PIXEL_SCALE := 4.0
 const MENU_BUTTON_RECTS := {
 	"UI/StartButton": Rect2(958.0, 165.0, 280.0, 50.0),
 	"UI/ContinueButton": Rect2(958.0, 267.0, 280.0, 50.0),
-	"UI/SettingsButton": Rect2(958.0, 371.0, 280.0, 50.0),
-	"UI/QuitButton": Rect2(958.0, 477.0, 280.0, 50.0),
+	"UI/SettingsButton": Rect2(958.0, 369.0, 280.0, 50.0),
+	"UI/QuitButton": Rect2(958.0, 473.0, 280.0, 50.0),
 }
 
 

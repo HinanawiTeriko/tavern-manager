@@ -123,16 +123,16 @@ text = "继续游戏"
 
 [node name="SettingsButton" type="Button" parent="UI"]
 offset_left = 958.0
-offset_top = 371.0
+offset_top = 369.0
 offset_right = 1238.0
-offset_bottom = 421.0
+offset_bottom = 419.0
 text = "设置"
 
 [node name="QuitButton" type="Button" parent="UI"]
 offset_left = 958.0
-offset_top = 477.0
+offset_top = 473.0
 offset_right = 1238.0
-offset_bottom = 527.0
+offset_bottom = 523.0
 text = "退出游戏"
 
 [node name="HintLabel" type="Label" parent="UI" unique_id=1707787016]
