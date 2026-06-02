@@ -13,10 +13,10 @@ const FULL_CANVAS_SIZE := Vector2(1280.0, 720.0)
 const LOGO_REST_Y := 360.0
 const NATIVE_PIXEL_SCALE := 4.0
 const MENU_BUTTON_RECTS := {
-	"UI/StartButton": Rect2(980.0, 148.0, 280.0, 50.0),
-	"UI/ContinueButton": Rect2(980.0, 252.0, 280.0, 50.0),
-	"UI/SettingsButton": Rect2(980.0, 356.0, 280.0, 50.0),
-	"UI/QuitButton": Rect2(980.0, 460.0, 280.0, 50.0),
+	"UI/StartButton": Rect2(958.0, 165.0, 280.0, 50.0),
+	"UI/ContinueButton": Rect2(958.0, 267.0, 280.0, 50.0),
+	"UI/SettingsButton": Rect2(958.0, 371.0, 280.0, 50.0),
+	"UI/QuitButton": Rect2(958.0, 477.0, 280.0, 50.0),
 }
 
 
@@ -232,26 +232,49 @@ func _check_menu_button_band_alignment(title_screen: Node, texture: Texture2D, f
 	var image := _texture_image(texture, "Title menu bands", failures)
 	if image == null:
 		return
-	var band_tops: Array[int] = []
-	var previous_row_visible := false
-	for y in image.get_height():
-		var row_visible := false
-		for x in image.get_width():
-			if image.get_pixel(x, y).a > 0.0:
-				row_visible = true
-				break
-		if row_visible and not previous_row_visible:
-			band_tops.append(y)
-		previous_row_visible = row_visible
+	var bands := _segment_band_bounds(image)
 	var button_paths := ["UI/StartButton", "UI/ContinueButton", "UI/SettingsButton", "UI/QuitButton"]
-	_check(band_tops.size() == button_paths.size(), "Title menu bands and buttons must have the same count", failures)
-	if band_tops.size() != button_paths.size():
+	_check(bands.size() == button_paths.size(), "Title menu bands and buttons must have the same count: got %s" % bands.size(), failures)
+	if bands.size() != button_paths.size():
 		return
 	var menu_bands := title_screen.get_node("UI/MenuBands") as TextureRect
 	for index in button_paths.size():
 		var button := title_screen.get_node(button_paths[index]) as Button
-		var band_top: float = menu_bands.position.y + band_tops[index]
-		_check(is_equal_approx(button.position.y - band_top, 4.0), "%s must sit 4 px below its menu band top: got %s" % [button.name, button.position.y - band_top], failures)
+		var band_center: Vector2 = menu_bands.position + bands[index].get_center()
+		var button_center: Vector2 = button.position + button.size * 0.5
+		_check(absf(button_center.x - band_center.x) <= 6.0, "%s text must be horizontally centered on its menu band: button_cx=%s band_cx=%s" % [button.name, button_center.x, band_center.x], failures)
+		_check(absf(button_center.y - band_center.y) <= 6.0, "%s text must be vertically centered on its menu band: button_cy=%s band_cy=%s" % [button.name, button_center.y, band_center.y], failures)
+
+
+func _segment_band_bounds(image: Image) -> Array[Rect2]:
+	var bands: Array[Rect2] = []
+	var width := image.get_width()
+	var height := image.get_height()
+	var y := 0
+	while y < height:
+		if not _row_has_opaque(image, y):
+			y += 1
+			continue
+		var top := y
+		while y < height and _row_has_opaque(image, y):
+			y += 1
+		var bottom := y - 1
+		var left := width
+		var right := 0
+		for row in range(top, bottom + 1):
+			for x in width:
+				if image.get_pixel(x, row).a > 0.0:
+					left = mini(left, x)
+					right = maxi(right, x)
+		bands.append(Rect2(left, top, right - left + 1, bottom - top + 1))
+	return bands
+
+
+func _row_has_opaque(image: Image, y: int) -> bool:
+	for x in image.get_width():
+		if image.get_pixel(x, y).a > 0.0:
+			return true
+	return false
 
 
 func _touches_transparency(image: Image, x: int, y: int) -> bool:

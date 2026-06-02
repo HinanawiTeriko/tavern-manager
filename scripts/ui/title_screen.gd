@@ -102,7 +102,10 @@ func _show_menu_marker(btn: Button) -> void:
 	if btn.disabled:
 		return
 	_kill_marker_tween()
-	_menu_marker.position = Vector2(1000.0, btn.position.y + 40.0)
+	_menu_marker.position = Vector2(
+		btn.position.x + (btn.size.x - _menu_marker.size.x) * 0.5,
+		btn.position.y + 40.0,
+	)
 	_menu_marker.modulate.a = 0.0
 	_menu_marker.visible = true
 	_menu_marker_tween = create_tween()
