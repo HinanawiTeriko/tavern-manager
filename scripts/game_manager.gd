@@ -190,6 +190,7 @@ func register_view(view: Node) -> void:
 func start_day_map(day: int) -> void:
 	day_map.start_day(day)
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
+	day_map.set_lead_flag("ryan_warhammer_lead", bool(narrative.get_var("ryan_warhammer_lead")))
 	for entry in ryan_slice.day_start_ledger_entries(day):
 		if documents.add_ledger_entry_once(String(entry)):
 			play_audio_event("new_document")
@@ -768,6 +769,7 @@ func _default_new_game_state() -> Dictionary:
 func _fresh_narrative_vars() -> Dictionary:
 	return {
 		"has_sleep_powder": false, "ryan_informed": false, "ryan_has_alternative": false,
+		"ryan_warhammer_lead": false,
 		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
 		"aff_ryan": 0, "aff_mira": 5,
 	}

@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_day2_investigation_chain()
 	_test_game_manager_routes_visits()
 	_test_get_locations_breadcrumb()
+	_test_board_requires_lead()
 	_finish()
 
 
@@ -31,6 +32,7 @@ func _test_day2_investigation_chain() -> void:
 	var map := DayMapSystem.new()
 	_ok(map.load_data(), "locations data loads")
 	map.start_day(2)
+	map.set_lead_flag("ryan_warhammer_lead", true)
 	_ok(map.stamina == 4, "day2 starts with four stamina")
 	_ok(not map.visit("abandoned_mine").get("success", false), "mine is blocked before board clue")
 	_ok(map.stamina == 4, "blocked visit does not spend stamina")
@@ -58,7 +60,9 @@ func _test_game_manager_routes_visits() -> void:
 	_ok(gm.visit_day_location("mushroom_forest").get("success", false), "GameManager routes forest visit")
 	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "forest reward enters inventory")
 	_ok(gm.narrative.get_var("has_sleep_powder") == true, "forest reward triggers narrative hook")
+	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
+	_ok(_location_ids(gm.day_map.get_locations()).has("mercenary_board"), "GM exposes board after lead set")
 	gm.visit_day_location("mercenary_board")
 	gm.visit_day_location("abandoned_mine")
 	_ok(gm.documents.owns_document("bloodied_contract"), "mine document enters DocumentSystem")
@@ -82,10 +86,11 @@ func _test_get_locations_breadcrumb() -> void:
 	var map := DayMapSystem.new()
 	map.load_data()
 	map.start_day(2)
+	map.set_lead_flag("ryan_warhammer_lead", true)
 	var ids_before := _location_ids(map.get_locations())
 	_ok(not ids_before.has("abandoned_mine"), "mine hidden before board clue")
 	_ok(not ids_before.has("guild_counter"), "counter hidden before reading evidence")
-	_ok(ids_before.has("mercenary_board"), "board visible at day2")
+	_ok(ids_before.has("mercenary_board"), "board visible with lead")
 	map.visit("mercenary_board")
 	var ids_after_board := _location_ids(map.get_locations())
 	_ok(ids_after_board.has("abandoned_mine"), "mine appears after board clue")
@@ -94,3 +99,14 @@ func _test_get_locations_breadcrumb() -> void:
 	map.set_document_read("bloodied_contract", true)
 	var ids_after_read := _location_ids(map.get_locations())
 	_ok(ids_after_read.has("guild_counter"), "counter appears after reading evidence")
+
+
+func _test_board_requires_lead() -> void:
+	var map := DayMapSystem.new()
+	map.load_data()
+	map.start_day(2)
+	_ok(not _location_ids(map.get_locations()).has("mercenary_board"), "board hidden without lead")
+	_ok(not map.visit("mercenary_board").get("success", false), "board blocked without lead")
+	map.set_lead_flag("ryan_warhammer_lead", true)
+	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board appears with lead")
+	_ok(map.visit("mercenary_board").get("success", false), "board visit succeeds with lead")
