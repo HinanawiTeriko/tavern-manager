@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/settings_panel.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://dtshmufb7mbiu" path="res://assets/textures/ui/menu_brush_slider.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/menu_brush_slider_track.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://dlehpihdd6r87" path="res://assets/textures/ui/menu_brush_divider.png" id="3"]
 
 [node name="SettingsPanel" type="Control"]

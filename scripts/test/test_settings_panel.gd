@@ -13,6 +13,18 @@ func _ready() -> void:
 	panel.open()
 	assert(panel.visible)
 	assert(panel.is_open())
+	var mode := panel.get_node("Shade/Panel/Mode") as OptionButton
+	var resolution := panel.get_node("Shade/Panel/Resolution") as OptionButton
+	var volume := panel.get_node("Shade/Panel/Volume") as HSlider
+	var volume_track := panel.get_node("Shade/Panel/VolumeTrack") as TextureRect
+	assert(mode.get_popup().has_theme_stylebox_override("panel"))
+	assert(resolution.get_popup().has_theme_stylebox_override("panel"))
+	assert(mode.get_popup().get_theme_font("font").resource_path == ThemeColors.MENU_FONT_PATH)
+	assert(resolution.get_popup().get_theme_font("font").resource_path == ThemeColors.MENU_FONT_PATH)
+	assert(volume.has_theme_stylebox_override("slider"))
+	assert(volume.has_theme_icon_override("grabber"))
+	assert(volume.get_theme_icon("grabber").resource_path == ThemeColors.MENU_BRUSH_SLIDER_GRABBER)
+	assert(volume_track.texture.resource_path == ThemeColors.MENU_BRUSH_SLIDER_TRACK)
 	panel._on_mode_selected(1)
 	assert(manager.fullscreen)
 	panel._on_resolution_selected(1)
