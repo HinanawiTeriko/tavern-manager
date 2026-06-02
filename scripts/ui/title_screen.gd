@@ -224,8 +224,11 @@ func _set_menu_input(enabled: bool) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _intro_active:
 		return
-	var pressed := (event is InputEventMouseButton and event.pressed) \
-		or (event is InputEventKey and event.pressed)
+	var pressed := false
+	if event is InputEventMouseButton:
+		pressed = event.pressed
+	elif event is InputEventKey:
+		pressed = event.pressed
 	if not pressed:
 		return
 	if _intro_tween != null and _intro_tween.is_valid():
