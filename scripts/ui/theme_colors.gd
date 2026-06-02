@@ -25,7 +25,7 @@ const MENU_BRUSH_BAND := "res://assets/textures/ui/menu_brush_band.png"
 const MENU_BRUSH_TAB := "res://assets/textures/ui/menu_brush_tab.png"
 const MENU_BRUSH_SLIDER_TRACK := "res://assets/textures/ui/menu_brush_slider_track.png"
 const MENU_BRUSH_SLIDER_GRABBER := "res://assets/textures/ui/menu_brush_slider_grabber.png"
-const MENU_BRUSH_MARKER := "res://assets/textures/title/title_pixel_menu_marker.png"
+const MENU_BRUSH_MARKER := "res://assets/textures/ui/menu_brush_hover_marker.png"
 const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
 
 static var _menu_font: Font = null
@@ -216,6 +216,11 @@ static func set_brush_selected(button: Button, selected: bool) -> void:
 
 static func _apply_brush_button_style(button: Button, texture_path: String, font_size: int) -> void:
 	var style := _brush_texture_style(texture_path)
+	# 刷痕两端是透明飞白，把文字/下拉箭头从飞白往里收，避免压出可视范围。
+	style.set_content_margin(SIDE_LEFT, 20.0)
+	style.set_content_margin(SIDE_RIGHT, 24.0)
+	style.set_content_margin(SIDE_TOP, 4.0)
+	style.set_content_margin(SIDE_BOTTOM, 4.0)
 	button.add_theme_stylebox_override("normal", style)
 	button.add_theme_stylebox_override("hover", style)
 	button.add_theme_stylebox_override("pressed", style)
@@ -236,19 +241,19 @@ static func _apply_brush_button_style(button: Button, texture_path: String, font
 	marker.texture = TextureManager.try_load(MENU_BRUSH_MARKER)
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	marker.stretch_mode = TextureRect.STRETCH_SCALE
+	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	marker.z_index = 1
 	marker.visible = false
 	button.add_child(marker)
-	# 居中短下划线：按钮宽度的中间 40%，约 3px 高，随按钮实际尺寸缩放。
-	marker.anchor_left = 0.3
-	marker.anchor_right = 0.7
+	# 居中短标记：固定尺寸盒、底部居中、保持原比例（不再按按钮宽度硬拉伸压扁）。
+	marker.anchor_left = 0.5
+	marker.anchor_right = 0.5
 	marker.anchor_top = 1.0
 	marker.anchor_bottom = 1.0
-	marker.offset_left = 0.0
-	marker.offset_right = 0.0
-	marker.offset_top = -5.0
-	marker.offset_bottom = -2.0
+	marker.offset_left = -48.0
+	marker.offset_right = 48.0
+	marker.offset_top = -18.0
+	marker.offset_bottom = 6.0
 	button.mouse_entered.connect(_sync_brush_marker.bind(button))
 	button.mouse_exited.connect(_sync_brush_marker.bind(button))
 
