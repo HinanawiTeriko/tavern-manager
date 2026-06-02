@@ -2,6 +2,8 @@ class_name TitleScreen
 extends Node2D
 
 const TITLE_MENU_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
+const LOGO_REST_Y := 360.0
+const NATIVE_PIXEL_SCALE := 4.0
 
 var _motion_time: float = 0.0
 var _menu_marker_tween: Tween = null
@@ -77,7 +79,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_motion_time += delta
 	_glow_overlay.modulate.a = 0.14 + sin(_motion_time * 2.1) * 0.025 + sin(_motion_time * 3.7) * 0.01
-	_logo.position.y = 300.0 + sin(_motion_time * 0.9) * 1.0
+	_logo.position.y = LOGO_REST_Y + roundf(sin(_motion_time * 0.9)) * NATIVE_PIXEL_SCALE
 
 
 func _style_title_menu_button(btn: Button) -> void:

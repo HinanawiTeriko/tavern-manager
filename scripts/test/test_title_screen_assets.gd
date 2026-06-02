@@ -1,6 +1,23 @@
 extends Node
 
 const TITLE_SCENE := preload("res://scenes/ui/TitleScreen.tscn")
+const SOURCE_DIR := "res://assets/source/title/"
+const FULL_LAYER_SOURCES := {
+	"Background": "title_pixel_bg_clean_native.png",
+	"GlowOverlay": "title_pixel_glow_mask_native.png",
+	"Logo": "title_pixel_logo_native.png",
+	"UI/MenuBands": "title_pixel_menu_bands_native.png",
+}
+const RUNTIME_SCALE := 4
+const FULL_CANVAS_SIZE := Vector2(1280.0, 720.0)
+const LOGO_REST_Y := 360.0
+const NATIVE_PIXEL_SCALE := 4.0
+const MENU_BUTTON_RECTS := {
+	"UI/StartButton": Rect2(980.0, 148.0, 280.0, 50.0),
+	"UI/ContinueButton": Rect2(980.0, 252.0, 280.0, 50.0),
+	"UI/SettingsButton": Rect2(980.0, 356.0, 280.0, 50.0),
+	"UI/QuitButton": Rect2(980.0, 460.0, 280.0, 50.0),
+}
 
 
 func _ready() -> void:
@@ -13,6 +30,23 @@ func _ready() -> void:
 	_check_textured_node(title_screen, "Logo", failures)
 	_check_textured_node(title_screen, "UI/MenuBands", failures)
 	_check_textured_node(title_screen, "UI/MenuMarker", failures)
+	for node_path in FULL_LAYER_SOURCES:
+		var textured_node := title_screen.get_node_or_null(node_path)
+		if textured_node != null:
+			_check_native_runtime_dimensions(
+				SOURCE_DIR + FULL_LAYER_SOURCES[node_path],
+				textured_node.texture,
+				node_path,
+				failures,
+			)
+	var menu_marker := title_screen.get_node_or_null("UI/MenuMarker") as TextureRect
+	if menu_marker != null:
+		_check_native_runtime_dimensions(
+			SOURCE_DIR + "title_pixel_menu_marker_native.png",
+			menu_marker.texture,
+			"UI/MenuMarker",
+			failures,
+		)
 
 	var start_button := title_screen.get_node("UI/StartButton") as Button
 	var logo := title_screen.get_node("Logo") as Sprite2D
@@ -25,14 +59,26 @@ func _ready() -> void:
 	var settings_button := title_screen.get_node("UI/SettingsButton") as Button
 	_check(settings_button.text == "设置", "Title settings button must read 设置: got %s" % settings_button.text, failures)
 	_check(start_button.position.x >= 900.0, "Title menu must be anchored in the right-side readability area", failures)
-	var logo_right := logo.position.x + logo.texture.get_width() * 0.5
-	_check(logo_right <= menu_bands.offset_left, "Title logo must not overlap the runtime menu area: logo_right=%s menu_left=%s" % [logo_right, menu_bands.offset_left], failures)
-	_check_no_bright_alpha_fringe(menu_bands.texture, failures)
+	_check(logo.position == Vector2(640.0, 360.0), "Title logo must be centered on the full canvas: got %s" % logo.position, failures)
+	_check(menu_bands.position == Vector2.ZERO, "Title menu bands must start at the full-canvas origin: got %s" % menu_bands.position, failures)
+	_check(menu_bands.size == FULL_CANVAS_SIZE, "Title menu bands must cover the full canvas: got %s" % menu_bands.size, failures)
+	if menu_bands.texture != null:
+		_check(menu_bands.size == Vector2(menu_bands.texture.get_size()), "Title menu bands must render at authored runtime size without scaling: rect=%s texture=%s" % [menu_bands.size, menu_bands.texture.get_size()], failures)
+	var logo_texture_origin := logo.position
+	if logo.texture != null:
+		logo_texture_origin -= Vector2(logo.texture.get_size()) * 0.5
+	var logo_visible_bounds := _visible_bounds_screen_space(logo.texture, logo_texture_origin, "Title logo", failures)
+	var menu_visible_bounds := _visible_bounds_screen_space(menu_bands.texture, menu_bands.position, "Title menu bands", failures)
+	_check(logo_visible_bounds.end.x <= menu_visible_bounds.position.x, "Title logo must not overlap visible menu art: logo_right=%s menu_left=%s" % [logo_visible_bounds.end.x, menu_visible_bounds.position.x], failures)
+	_check_menu_button_layout(title_screen, failures)
+	_check_no_bright_alpha_fringe(menu_bands.texture, "Title menu bands", failures)
 	_check_neutral_alpha_fringe(logo.texture, "Title logo", 64, failures)
 	_check_neutral_alpha_fringe(_menu_marker_texture(title_screen), "Title menu marker", 0, failures)
 	_check_no_terminal_alpha_pixels(logo.texture, "Title logo", failures)
 	_check_no_terminal_alpha_pixels(menu_bands.texture, "Title menu bands", failures)
 	_check_menu_button_band_alignment(title_screen, menu_bands.texture, failures)
+	title_screen._process(1.0)
+	_check(is_zero_approx(fposmod(logo.position.y - LOGO_REST_Y, NATIVE_PIXEL_SCALE)), "Title logo ambient motion must remain on the authored 4 px grid: got y=%s" % logo.position.y, failures)
 	_check(not title_screen.get_node("UI/TitlePanel").visible, "Legacy title panel must be hidden", failures)
 	_check(not title_screen.get_node("UI/SubtitleLabel").visible, "Legacy subtitle must be hidden", failures)
 	_check(not title_screen.get_node("UI/HintLabel").visible, "Legacy hint must be hidden", failures)
@@ -61,8 +107,70 @@ func _check_title_font(node: Control, failures: Array[String]) -> void:
 		_check(font.resource_path == "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf", "Wrong title font on %s: %s" % [node.name, font.resource_path], failures)
 
 
-func _check_no_bright_alpha_fringe(texture: Texture2D, failures: Array[String]) -> void:
+func _check_native_runtime_dimensions(native_path: String, texture: Texture2D, label: String, failures: Array[String]) -> void:
+	var native := Image.new()
+	var load_error := native.load(ProjectSettings.globalize_path(native_path))
+	_check(load_error == OK and not native.is_empty(), "%s native source must load: %s" % [label, native_path], failures)
+	if load_error != OK or native.is_empty():
+		return
+	var runtime := _texture_image(texture, label, failures)
+	if runtime == null:
+		return
+	_check(runtime.get_width() == native.get_width() * RUNTIME_SCALE, "%s runtime width must be native width * %s" % [label, RUNTIME_SCALE], failures)
+	_check(runtime.get_height() == native.get_height() * RUNTIME_SCALE, "%s runtime height must be native height * %s" % [label, RUNTIME_SCALE], failures)
+
+
+func _check_menu_button_layout(title_screen: Node, failures: Array[String]) -> void:
+	for node_path in MENU_BUTTON_RECTS:
+		var button := title_screen.get_node_or_null(node_path) as Button
+		_check(button != null, "Missing title menu button: %s" % node_path, failures)
+		if button == null:
+			continue
+		var expected: Rect2 = MENU_BUTTON_RECTS[node_path]
+		_check(button.position == expected.position, "%s must use authored position %s: got %s" % [button.name, expected.position, button.position], failures)
+		_check(button.size == expected.size, "%s must use authored size %s: got %s" % [button.name, expected.size, button.size], failures)
+
+
+func _visible_bounds_screen_space(texture: Texture2D, screen_origin: Vector2, label: String, failures: Array[String]) -> Rect2:
+	var visible_bounds := _visible_bounds(texture, label, failures)
+	return Rect2(screen_origin + Vector2(visible_bounds.position), Vector2(visible_bounds.size))
+
+
+func _visible_bounds(texture: Texture2D, label: String, failures: Array[String]) -> Rect2i:
+	var image := _texture_image(texture, label, failures)
+	if image == null:
+		return Rect2i()
+	var first := Vector2i(image.get_width(), image.get_height())
+	var last := Vector2i.ZERO
+	for y in image.get_height():
+		for x in image.get_width():
+			if image.get_pixel(x, y).a <= 0.0:
+				continue
+			first.x = mini(first.x, x)
+			first.y = mini(first.y, y)
+			last.x = maxi(last.x, x + 1)
+			last.y = maxi(last.y, y + 1)
+	_check(last != Vector2i.ZERO, "%s runtime image must contain visible alpha" % label, failures)
+	if last == Vector2i.ZERO:
+		return Rect2i()
+	return Rect2i(first, last - first)
+
+
+func _texture_image(texture: Texture2D, label: String, failures: Array[String]) -> Image:
+	_check(texture != null, "%s runtime texture must load" % label, failures)
+	if texture == null:
+		return null
 	var image := texture.get_image()
+	_check(image != null and not image.is_empty(), "%s runtime image must load" % label, failures)
+	if image == null or image.is_empty():
+		return null
+	return image
+
+
+func _check_no_bright_alpha_fringe(texture: Texture2D, label: String, failures: Array[String]) -> void:
+	var image := _texture_image(texture, label, failures)
+	if image == null:
+		return
 	var bright_edge_pixels := 0
 	for y in image.get_height():
 		for x in image.get_width():
@@ -81,7 +189,9 @@ func _menu_marker_texture(title_screen: Node) -> Texture2D:
 
 
 func _check_neutral_alpha_fringe(texture: Texture2D, label: String, max_allowed: int, failures: Array[String]) -> void:
-	var image := texture.get_image()
+	var image := _texture_image(texture, label, failures)
+	if image == null:
+		return
 	var neutral_edge_pixels := 0
 	for y in image.get_height():
 		for x in image.get_width():
@@ -98,7 +208,9 @@ func _check_neutral_alpha_fringe(texture: Texture2D, label: String, max_allowed:
 
 
 func _check_no_terminal_alpha_pixels(texture: Texture2D, label: String, failures: Array[String]) -> void:
-	var image := texture.get_image()
+	var image := _texture_image(texture, label, failures)
+	if image == null:
+		return
 	var terminal_pixels := 0
 	for y in image.get_height():
 		for x in image.get_width():
@@ -117,7 +229,9 @@ func _check_no_terminal_alpha_pixels(texture: Texture2D, label: String, failures
 
 
 func _check_menu_button_band_alignment(title_screen: Node, texture: Texture2D, failures: Array[String]) -> void:
-	var image := texture.get_image()
+	var image := _texture_image(texture, "Title menu bands", failures)
+	if image == null:
+		return
 	var band_tops: Array[int] = []
 	var previous_row_visible := false
 	for y in image.get_height():
@@ -137,7 +251,7 @@ func _check_menu_button_band_alignment(title_screen: Node, texture: Texture2D, f
 	for index in button_paths.size():
 		var button := title_screen.get_node(button_paths[index]) as Button
 		var band_top: float = menu_bands.position.y + band_tops[index]
-		_check(is_equal_approx(button.position.y - band_top, 3.0), "%s must sit 3 px below its menu band top: got %s" % [button.name, button.position.y - band_top], failures)
+		_check(is_equal_approx(button.position.y - band_top, 4.0), "%s must sit 4 px below its menu band top: got %s" % [button.name, button.position.y - band_top], failures)
 
 
 func _touches_transparency(image: Image, x: int, y: int) -> bool:
