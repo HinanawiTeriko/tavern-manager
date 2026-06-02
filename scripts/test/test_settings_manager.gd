@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_save_and_reload()
 	_test_setters_persist()
 	_test_invalid_values_are_normalized()
+	_test_pixel_display_configuration()
 	print("[TEST-SETTINGS] ALL PASS")
 	get_tree().quit()
 
@@ -68,3 +69,20 @@ func _test_setters_persist() -> void:
 	assert(reloaded.master_volume_percent == 0.0)
 	manager.set_master_volume_percent(100.0)
 	manager.clear_settings()
+
+
+func _test_pixel_display_configuration() -> void:
+	assert(SettingsManager.RESOLUTIONS == [
+		Vector2i(1280, 720),
+		Vector2i(1600, 900),
+		Vector2i(1920, 1080),
+		Vector2i(2560, 1440),
+		Vector2i(3840, 2160),
+	])
+	assert(ProjectSettings.get_setting("display/window/stretch/mode") == "canvas_items")
+	assert(ProjectSettings.get_setting("display/window/stretch/aspect") == "keep")
+	assert(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter") == 1)
+	var project_config := ConfigFile.new()
+	assert(project_config.load("res://project.godot") == OK)
+	assert(project_config.has_section_key("rendering", "textures/canvas_textures/default_texture_filter"))
+	assert(project_config.get_value("rendering", "textures/canvas_textures/default_texture_filter") == 1)
