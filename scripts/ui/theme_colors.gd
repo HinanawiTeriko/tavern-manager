@@ -23,6 +23,8 @@ const PANEL_BORDER = Color(0.333, 0.263, 0.204)
 const MENU_BRUSH_PANEL := "res://assets/textures/ui/menu_brush_panel.png"
 const MENU_BRUSH_BAND := "res://assets/textures/ui/menu_brush_band.png"
 const MENU_BRUSH_TAB := "res://assets/textures/ui/menu_brush_tab.png"
+const MENU_BRUSH_SLIDER_TRACK := "res://assets/textures/ui/menu_brush_slider_track.png"
+const MENU_BRUSH_SLIDER_GRABBER := "res://assets/textures/ui/menu_brush_slider_grabber.png"
 const MENU_BRUSH_MARKER := "res://assets/textures/title/title_pixel_menu_marker.png"
 const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
 
@@ -130,9 +132,8 @@ static func style_small_button(btn: Button, font_size: int = 13) -> void:
 		btn.add_theme_stylebox_override("pressed", button_pressed(2, 1))
 
 
-static func style_brush_panel(panel: Panel) -> void:
-	var style = TextureManager.try_load_style_box(MENU_BRUSH_PANEL)
-	panel.add_theme_stylebox_override("panel", style if style != null else _brush_fallback())
+static func style_brush_panel(panel: Control) -> void:
+	panel.add_theme_stylebox_override("panel", _brush_texture_style(MENU_BRUSH_PANEL))
 
 
 static func style_brush_button(button: Button, font_size: int = 16) -> void:
@@ -143,14 +144,78 @@ static func style_brush_tab_button(button: Button, font_size: int = 14) -> void:
 	_apply_brush_button_style(button, MENU_BRUSH_TAB, font_size)
 
 
+static func style_brush_popup(popup: PopupMenu) -> void:
+	var font := menu_font()
+	if font != null:
+		popup.add_theme_font_override("font", font)
+	popup.add_theme_font_size_override("font_size", 14)
+	popup.add_theme_color_override("font_color", TEXT_LIGHT)
+	popup.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
+	popup.add_theme_color_override("font_separator_color", TEXT_DIM)
+	popup.add_theme_stylebox_override("panel", _brush_texture_style(MENU_BRUSH_PANEL))
+	popup.add_theme_stylebox_override("hover", _brush_hover_style())
+
+
+static func style_brush_option_button(button: OptionButton) -> void:
+	_apply_brush_button_style(button, MENU_BRUSH_TAB, 14)
+	style_brush_popup(button.get_popup())
+
+
+static func style_brush_slider(slider: HSlider) -> void:
+	var empty := StyleBoxEmpty.new()
+	slider.add_theme_stylebox_override("slider", empty)
+	slider.add_theme_stylebox_override("grabber_area", empty)
+	slider.add_theme_stylebox_override("grabber_area_highlight", empty)
+	var grabber := TextureManager.try_load(MENU_BRUSH_SLIDER_GRABBER)
+	if grabber != null:
+		slider.add_theme_icon_override("grabber", grabber)
+		slider.add_theme_icon_override("grabber_highlight", grabber)
+		slider.add_theme_icon_override("grabber_disabled", grabber)
+
+
+static func style_brush_content_panel(panel: PanelContainer) -> void:
+	panel.add_theme_stylebox_override("panel", _brush_texture_style(MENU_BRUSH_TAB))
+
+
+static func style_shortcut_slot(slot: ColorRect) -> void:
+	slot.color = Color(SURFACE_LOW, 0.86)
+	var background := slot.get_node_or_null("BrushBackground") as TextureRect
+	if background == null:
+		background = TextureRect.new()
+		background.name = "BrushBackground"
+		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		background.texture = TextureManager.try_load(MENU_BRUSH_TAB)
+		background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		background.stretch_mode = TextureRect.STRETCH_SCALE
+		background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		slot.add_child(background)
+		slot.move_child(background, 0)
+
+
+static func set_shortcut_slot_hover(slot: ColorRect, hovered: bool) -> void:
+	var background := slot.get_node_or_null("BrushBackground") as TextureRect
+	if background != null:
+		background.modulate = AMBER_PRIMARY if hovered else Color.WHITE
+
+
+static func _brush_texture_style(texture_path: String) -> StyleBox:
+	var loaded := TextureManager.try_load_style_box(texture_path)
+	return loaded if loaded != null else _brush_fallback()
+
+
+static func _brush_hover_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(AMBER_DARK, 0.28)
+	return style
+
+
 static func set_brush_selected(button: Button, selected: bool) -> void:
 	button.set_meta("brush_selected", selected)
 	_sync_brush_marker(button)
 
 
 static func _apply_brush_button_style(button: Button, texture_path: String, font_size: int) -> void:
-	var loaded_style = TextureManager.try_load_style_box(texture_path)
-	var style: StyleBox = loaded_style if loaded_style != null else _brush_fallback()
+	var style := _brush_texture_style(texture_path)
 	button.add_theme_stylebox_override("normal", style)
 	button.add_theme_stylebox_override("hover", style)
 	button.add_theme_stylebox_override("pressed", style)
