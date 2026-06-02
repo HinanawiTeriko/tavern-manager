@@ -58,6 +58,54 @@ func _set_body_available(body: RigidBody2D, available: bool) -> void:
 		child.set_deferred("disabled", not available)
 
 
+func _process(_delta: float) -> void:
+	_update_shortcut_hover(get_global_mouse_position())
+
+
+func _ensure_shortcut_slot_visuals(slot: ColorRect) -> void:
+	ThemeColors.style_shortcut_slot(slot)
+	var icon := slot.get_node_or_null("Icon") as TextureRect
+	if icon == null:
+		icon = TextureRect.new()
+		icon.name = "Icon"
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.offset_left = 4.0
+		icon.offset_top = 4.0
+		icon.offset_right = 32.0
+		icon.offset_bottom = 32.0
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		slot.add_child(icon)
+	var count := slot.get_node_or_null("Count") as Label
+	if count == null:
+		count = Label.new()
+		count.name = "Count"
+		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		count.offset_left = 68.0
+		count.offset_top = 17.0
+		count.offset_right = 88.0
+		count.offset_bottom = 34.0
+		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		ThemeColors.style_brush_label(count, 11, ThemeColors.AMBER_PRIMARY)
+		slot.add_child(count)
+	var label := slot.get_node_or_null("Label") as Label
+	if label != null:
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.offset_left = 34.0
+		label.offset_top = 4.0
+		label.offset_right = 88.0
+		label.offset_bottom = 22.0
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		ThemeColors.style_brush_label(label, 11)
+
+
+func _update_shortcut_hover(mouse_position: Vector2) -> void:
+	for index in _slot_rects.size():
+		var slot := _shortcut_bar.get_node_or_null("Slot%d" % index) as ColorRect
+		if slot != null:
+			ThemeColors.set_shortcut_slot_hover(slot, _slot_rects[index].has_point(mouse_position))
+
+
 func _on_drag_started(body: RigidBody2D) -> void:
 	if body is DeskItem:
 		body.is_held = true
@@ -81,21 +129,32 @@ func _init_material_slots() -> void:
 		var slot := _shortcut_bar.get_node_or_null("Slot%d" % i) as ColorRect
 		if slot == null:
 			break
+		_ensure_shortcut_slot_visuals(slot)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var key: String = keys[i] if i < keys.size() else ""
 		_slot_item_keys.append(key)
 		_slot_rects.append(Rect2(slot.global_position, slot.size))
 		var label := slot.get_node_or_null("Label") as Label
-		if label:
-			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var icon := slot.get_node_or_null("Icon") as TextureRect
+		var count := slot.get_node_or_null("Count") as Label
 		if key == "":
-			slot.color = Color(0.08, 0.06, 0.04)
-			if label: label.text = ""
+			slot.color = Color(ThemeColors.SURFACE_LOW, 0.86)
+			if label != null:
+				label.text = ""
+			if icon != null:
+				icon.texture = null
+			if count != null:
+				count.text = ""
 			continue
 		var item_data: Dictionary = _gm.craft.get_item(key)
 		var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
-		slot.color = Color(rgb[0], rgb[1], rgb[2])
-		if label: label.text = item_data.get("name", key)
+		slot.color = Color(rgb[0], rgb[1], rgb[2], 0.22)
+		if label != null:
+			label.text = item_data.get("name", key)
+		if icon != null:
+			icon.texture = _gm.try_load_material_icon(key)
+		if count != null:
+			count.text = str(_gm.inventory_sys.get_count(key))
 
 
 func _input(event: InputEvent) -> void:

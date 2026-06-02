@@ -143,17 +143,9 @@ func _apply_theme() -> void:
 			sb.border_color = ThemeColors.PANEL_BORDER
 			top_panel_bg.add_theme_stylebox_override("panel", sb)
 
-	var shortcut_bg_tex = ThemeColors.instance().bar_shortcut_bg()
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
-		if shortcut_bg_tex != null:
-			shortcut_bg.add_theme_stylebox_override("panel", shortcut_bg_tex)
-		else:
-			var sb = StyleBoxFlat.new()
-			sb.bg_color = Color(ThemeColors.SURFACE_LOW, 0.8)
-			sb.border_width_top = 1
-			sb.border_color = ThemeColors.PANEL_BORDER
-			shortcut_bg.add_theme_stylebox_override("panel", sb)
+		ThemeColors.style_brush_panel(shortcut_bg)
 
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
@@ -331,6 +323,16 @@ func trigger_craft_tutorial() -> void:
 
 ## 配方表：按 recipes.json 显示「产物 价格 ← 配料 [容器]」，让玩家能学会怎么做。
 ## 需购买且未解锁的配方标灰并注明（需解锁）。
+func _new_brush_recipe_row() -> Dictionary:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0.0, 36.0)
+	ThemeColors.style_brush_content_panel(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	return {"panel": panel, "row": row}
+
+
 func _build_recipe_list() -> void:
 	var recipe_list = _menu_panel.get_node("RecipePanel/RecipeList")
 	for child in recipe_list.get_children():
@@ -348,9 +350,9 @@ func _build_recipe_list() -> void:
 		var product_data: Dictionary = _gm.craft.get_item(product_key)
 		var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
 
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.custom_minimum_size = Vector2(0, 32)
+		var recipe_row := _new_brush_recipe_row()
+		var row_panel := recipe_row["panel"] as PanelContainer
+		var row := recipe_row["row"] as HBoxContainer
 
 		var icon_tex = _gm.try_load_material_icon(product_key)
 		if icon_tex != null:
@@ -383,11 +385,10 @@ func _build_recipe_list() -> void:
 
 		var name_label = Label.new()
 		name_label.text = " " + text
-		name_label.add_theme_color_override("font_color", Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 14)
+		ThemeColors.style_brush_label(name_label, 14, Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
 		row.add_child(name_label)
 
-		recipe_list.add_child(row)
+		recipe_list.add_child(row_panel)
 
 func _build_backpack_list() -> void:
 	var inventory: Dictionary = _gm.inventory

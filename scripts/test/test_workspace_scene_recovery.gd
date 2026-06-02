@@ -96,11 +96,22 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	var overlay = tavern.get_node("InventoryOverlay")
 	var items := tavern.get_node("BarWorkspace/World/Items")
 	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var slot0 := tavern.get_node("ShortcutBar/Slot0") as ColorRect
+	_ok(slot0.get_node_or_null("BrushBackground") != null, "shortcut slot uses brush background")
+	_ok(slot0.get_node_or_null("Icon") != null, "shortcut slot renders an icon node")
+	_ok(slot0.get_node_or_null("Count") != null, "shortcut slot renders a count node")
 	gm.add_to_inventory("sleep_powder", 1)
 	tavern.toggle_inventory_overlay()
 
 	_ok(overlay.visible, "inventory overlay opens")
 	_ok(tavern.is_menu_open(), "inventory overlay pauses tavern updates")
+	var inventory_panel := overlay.get_node("Panel") as Panel
+	_ok(inventory_panel.has_theme_stylebox_override("panel"), "inventory overlay uses brush panel art")
+	var material_list := overlay.get_node("Panel/MaterialList") as VBoxContainer
+	_ok(material_list.get_child_count() > 0, "inventory material list renders rows")
+	var first_inventory_row := material_list.get_child(0) as InventoryDragRow
+	_ok(first_inventory_row.has_theme_stylebox_override("normal"), "inventory rows use brush art")
+	_ok(first_inventory_row.icon != null, "inventory rows render item icons or color swatches")
 	_ok(overlay.get_material_keys().has("ale"), "inventory overlay lists materials")
 	_ok(overlay.get_story_keys().has("sleep_powder"), "inventory overlay lists story items")
 	_ok(not bar._slot_item_keys.has("sleep_powder"), "shortcut bar excludes story items")
@@ -208,6 +219,8 @@ func _test_settings_menu_entry() -> void:
 
 	tavern.toggle_menu()
 	_ok(tavern.get_node("OverlayMenu").visible, "overlay menu opens before settings")
+	var shortcut_bg := tavern.get_node("ShortcutBarBg") as Panel
+	_ok(shortcut_bg.has_theme_stylebox_override("panel"), "shortcut bar background uses brush art")
 	tavern._open_settings()
 	await get_tree().process_frame
 	_ok(settings_panel.visible, "tavern settings entry opens the panel")
