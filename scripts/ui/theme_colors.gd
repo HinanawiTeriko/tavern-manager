@@ -162,6 +162,9 @@ static func style_brush_option_button(button: OptionButton) -> void:
 
 
 static func style_brush_slider(slider: HSlider) -> void:
+	# 握柄随音量滑到任意亚像素 x，项目默认 Linear 过滤会在亚像素处插值把像素抹糊。
+	# 强制 NEAREST，保持像素脆（与 4px 块 UI 一致）。
+	slider.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var empty := StyleBoxEmpty.new()
 	slider.add_theme_stylebox_override("slider", empty)
 	slider.add_theme_stylebox_override("grabber_area", empty)
