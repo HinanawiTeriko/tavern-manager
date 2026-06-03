@@ -59,6 +59,10 @@ var _cached_slot_shortcut: StyleBoxTexture = null
 var _cached_panel_parchment: StyleBoxTexture = null
 var _cached_bar_shortcut_bg: StyleBoxTexture = null
 var _cached_bar_top_panel: StyleBoxTexture = null
+var _cached_popup_check_icon: ImageTexture = null
+var _cached_popup_empty_icon: ImageTexture = null
+var _cached_popup_submenu_icon: ImageTexture = null
+var _cached_popup_submenu_mirrored_icon: ImageTexture = null
 
 static func instance() -> ThemeColors:
 	if _inst == null:
@@ -154,6 +158,17 @@ static func style_brush_popup(popup: PopupMenu) -> void:
 	popup.add_theme_color_override("font_separator_color", TEXT_DIM)
 	popup.add_theme_stylebox_override("panel", _brush_texture_style(MENU_BRUSH_PANEL))
 	popup.add_theme_stylebox_override("hover", _brush_hover_style())
+	var inst := instance()
+	var check_icon := inst._popup_check_icon()
+	var empty_icon := inst._popup_empty_icon()
+	popup.add_theme_icon_override("checked", check_icon)
+	popup.add_theme_icon_override("checked_disabled", check_icon)
+	popup.add_theme_icon_override("radio_checked", check_icon)
+	popup.add_theme_icon_override("radio_checked_disabled", check_icon)
+	popup.add_theme_icon_override("unchecked", empty_icon)
+	popup.add_theme_icon_override("radio_unchecked", empty_icon)
+	popup.add_theme_icon_override("submenu", inst._popup_submenu_icon(false))
+	popup.add_theme_icon_override("submenu_mirrored", inst._popup_submenu_icon(true))
 
 
 static func style_brush_option_button(button: OptionButton) -> void:
@@ -363,3 +378,58 @@ func bar_top_panel() -> StyleBoxTexture:
 	if _cached_bar_top_panel == null:
 		_cached_bar_top_panel = TextureManager.try_load_style_box("res://assets/textures/ui/bar_top_panel.png")
 	return _cached_bar_top_panel
+
+func _popup_check_icon() -> ImageTexture:
+	if _cached_popup_check_icon == null:
+		var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+		image.fill(Color.TRANSPARENT)
+		var pixels := [
+			Vector2i(4, 8), Vector2i(5, 9), Vector2i(6, 10),
+			Vector2i(7, 9), Vector2i(8, 8), Vector2i(9, 7),
+			Vector2i(10, 6), Vector2i(11, 5)
+		]
+		for i in pixels.size():
+			var color := AMBER_BRIGHT if i >= 4 else AMBER_DARK
+			_paint_icon_block(image, pixels[i], color)
+		_cached_popup_check_icon = ImageTexture.create_from_image(image)
+	return _cached_popup_check_icon
+
+func _popup_empty_icon() -> ImageTexture:
+	if _cached_popup_empty_icon == null:
+		var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+		image.fill(Color.TRANSPARENT)
+		_cached_popup_empty_icon = ImageTexture.create_from_image(image)
+	return _cached_popup_empty_icon
+
+func _popup_submenu_icon(mirrored: bool) -> ImageTexture:
+	if mirrored:
+		if _cached_popup_submenu_mirrored_icon == null:
+			_cached_popup_submenu_mirrored_icon = _make_popup_submenu_icon(true)
+		return _cached_popup_submenu_mirrored_icon
+	if _cached_popup_submenu_icon == null:
+		_cached_popup_submenu_icon = _make_popup_submenu_icon(false)
+	return _cached_popup_submenu_icon
+
+func _make_popup_submenu_icon(mirrored: bool) -> ImageTexture:
+	var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	var rows := [
+		[Vector2i(6, 5)],
+		[Vector2i(6, 6), Vector2i(7, 6)],
+		[Vector2i(6, 7), Vector2i(7, 7), Vector2i(8, 7)],
+		[Vector2i(6, 8), Vector2i(7, 8)],
+		[Vector2i(6, 9)],
+	]
+	for row in rows:
+		for point in row:
+			var p: Vector2i = point
+			if mirrored:
+				p = Vector2i(15 - point.x, point.y)
+			_paint_icon_block(image, p, AMBER_PRIMARY)
+	return ImageTexture.create_from_image(image)
+
+func _paint_icon_block(image: Image, point: Vector2i, color: Color) -> void:
+	for y in range(point.y, point.y + 2):
+		for x in range(point.x, point.x + 2):
+			if x >= 0 and y >= 0 and x < image.get_width() and y < image.get_height():
+				image.set_pixel(x, y, color)

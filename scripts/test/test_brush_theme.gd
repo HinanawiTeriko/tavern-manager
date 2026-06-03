@@ -16,10 +16,12 @@ func _ready() -> void:
 	var marker := button.get_node("BrushHoverMarker") as TextureRect
 	assert(marker != null)
 	# 居中短下划线：按钮中间 40%，约 3px 高，随按钮缩放。
-	assert(is_equal_approx(marker.anchor_left, 0.3))
-	assert(is_equal_approx(marker.anchor_right, 0.7))
+	assert(is_equal_approx(marker.anchor_left, 0.5))
+	assert(is_equal_approx(marker.anchor_right, 0.5))
 	assert(is_equal_approx(marker.anchor_top, 1.0))
 	assert(is_equal_approx(marker.anchor_bottom, 1.0))
+	assert(is_equal_approx(marker.offset_left, -48.0))
+	assert(is_equal_approx(marker.offset_right, 48.0))
 	ThemeColors.set_brush_selected(button, true)
 	assert(button.get_node("BrushHoverMarker").visible)
 	ThemeColors.set_brush_selected(button, false)
@@ -32,10 +34,12 @@ func _ready() -> void:
 	assert(popup.get_theme_stylebox("panel") != null)
 	assert(popup.get_theme_stylebox("hover") != null)
 	assert(popup.get_theme_font("font").resource_path == ThemeColors.MENU_FONT_PATH)
+	_assert_brush_popup_icons(popup)
 
 	var option := OptionButton.new()
 	ThemeColors.style_brush_option_button(option)
 	assert(option.get_popup().get_theme_stylebox("panel") != null)
+	_assert_brush_popup_icons(option.get_popup())
 
 	var slider := HSlider.new()
 	ThemeColors.style_brush_slider(slider)
@@ -57,6 +61,10 @@ func _ready() -> void:
 
 	assert(ResourceLoader.exists(ThemeColors.MENU_BRUSH_SLIDER_TRACK))
 	assert(ResourceLoader.exists(ThemeColors.MENU_BRUSH_SLIDER_GRABBER))
+	var grabber_texture := load(ThemeColors.MENU_BRUSH_SLIDER_GRABBER) as Texture2D
+	assert(grabber_texture.get_width() <= 20)
+	assert(grabber_texture.get_height() <= 40)
+	assert(_count_nontransparent_colors(ThemeColors.MENU_BRUSH_SLIDER_GRABBER) >= 8)
 	panel.free()
 	button.free()
 	tab_button.free()
@@ -67,3 +75,24 @@ func _ready() -> void:
 	slot.free()
 	print("[TEST-BRUSH-THEME] ALL PASS")
 	get_tree().quit()
+
+
+func _count_nontransparent_colors(path: String) -> int:
+	var image := Image.load_from_file(path)
+	assert(image != null)
+	var colors := {}
+	for y in image.get_height():
+		for x in image.get_width():
+			var color := image.get_pixel(x, y)
+			if color.a > 0.01:
+				colors[color.to_html(true)] = true
+	return colors.size()
+
+
+func _assert_brush_popup_icons(popup: PopupMenu) -> void:
+	for icon_name in ["checked", "unchecked", "radio_checked", "radio_unchecked", "submenu", "submenu_mirrored"]:
+		assert(popup.has_theme_icon_override(icon_name))
+		var icon := popup.get_theme_icon(icon_name)
+		assert(icon != null)
+		assert(icon.get_width() <= 16)
+		assert(icon.get_height() <= 16)
