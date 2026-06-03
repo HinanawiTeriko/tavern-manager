@@ -371,6 +371,12 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	var item_data: Dictionary = _gm.craft.get_item(item_key)
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	item.global_position = pos
+	# 可阅读物品：设为可拾取输入，双击时打开关联文档
+	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
+	if capabilities.has("readable"):
+		item.input_pickable = true
+		item.document_id = item_key
+		item.open_requested.connect(_gm.request_open_document)
 	return item
 
 

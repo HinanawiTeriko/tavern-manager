@@ -73,30 +73,36 @@ func _spawn_item(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color,
 #  输入 / 拾取（钉子拖拽，参考 gravity_test）
 # ============================================================
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
+	## _input（非 _unhandled_input）确保在有 CanvasLayer/Control 的场景中也能收到鼠标事件。
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var pos: Vector2 = event.global_position
 		if event.pressed and not _drag_ctrl.is_dragging():
-			_try_pickup(pos)
+			if _try_pickup(pos):
+				get_viewport().set_input_as_handled()
 		elif not event.pressed and _drag_ctrl.is_dragging():
 			_drag_ctrl.end_drag()
+			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_drag_ctrl.update_target_global(event.global_position)
+		get_viewport().set_input_as_handled()
 
 
-func _try_pickup(pos: Vector2) -> void:
+func _try_pickup(pos: Vector2) -> bool:
 	var hit := _hit_test_item(pos)
 	if hit == null:
-		return
+		return false
 	if hit.kind == "backpack" and not _rubble_cleared:
-		return  # 背包还埋着，扒开前抓不到
+		return false  # 背包还埋着，扒开前抓不到
 	if hit.kind == "contract":
 		_take_contract()   # 捡起沾血纸 = 直接阅读，不进入拖拽
-		return
+		hit.queue_free()   # 从场景中移除纸张
+		return true
 	if hit.kind == "rubble":
 		hit.freeze = false   # 解冻，否则 DragController 的钉子拖不动冻结体
 	_drag_ctrl.start_drag(hit, pos)
 	_on_item_grabbed(hit)
+	return true
 
 
 func _hit_test_item(pos: Vector2) -> MineItem:
@@ -105,11 +111,15 @@ func _hit_test_item(pos: Vector2) -> MineItem:
 	params.position = pos
 	params.collide_with_bodies = true
 	var hits := space.intersect_point(params, 8)
+	var any_hit: MineItem = null
 	for h in hits:
 		var collider = h.get("collider")
 		if collider is MineItem and collider.visible:
-			return collider
-	return null
+			# 优先返回 contract，避免硬币/队牌挡住委托书
+			if collider.kind == "contract":
+				return collider
+			any_hit = collider
+	return any_hit
 
 
 func _on_item_grabbed(item: MineItem) -> void:
@@ -154,16 +164,17 @@ func _spill_backpack() -> void:
 	_backpack_spilled = true
 	var mouth := _backpack.global_position + Vector2(0, 40)
 	# 硬币、队牌：纯洒落物（plain），无后续用途（spec 范围内只做演出）
+	# 所有洒落物偏移 Y 向上 15-30px，避免生成时底部穿入地面 StaticBody2D（地面顶 y≈520）
 	var coins := _spawn_item("coins", "plain", Vector2(20, 20), Color(0.85, 0.7, 0.25),
-		"硬币", "", mouth + Vector2(-30, 0))
-	coins.linear_velocity = Vector2(-90, -160)
+		"硬币", "", mouth + Vector2(-30, -15))
+	coins.linear_velocity = Vector2(-90, -200)
 	var token := _spawn_item("warhammer_token", "plain", Vector2(28, 28), Color(0.6, 0.15, 0.12),
-		"血斧队牌", "", mouth + Vector2(10, 0))
-	token.linear_velocity = Vector2(40, -180)
+		"血斧队牌", "", mouth + Vector2(10, -15))
+	token.linear_velocity = Vector2(40, -220)
 	# 沾血纸：捡起触发授予
 	var paper := _spawn_item("bloodied_paper", "contract", Vector2(40, 52), Color(0.7, 0.62, 0.5),
-		"沾血的纸", "", mouth + Vector2(50, 0))
-	paper.linear_velocity = Vector2(120, -150)
+		"沾血的纸", "", mouth + Vector2(50, -30))
+	paper.linear_velocity = Vector2(120, -250)
 	_obs_label.text = "背包一倒，硬币、一枚血斧队牌、还有一张沾血的纸哗啦落了出来。"
 
 
@@ -172,9 +183,8 @@ func _take_contract() -> void:
 		return
 	_contract_taken = true
 	var gm = get_node("/root/GameManager")
-	gm.grant_mine_document("bloodied_contract")      # 授予 + new_document 音效
-	gm.request_open_document("bloodied_contract")    # 标记已读 + 入剧情背包 + 弹 DocumentOverlay
-	_obs_label.text = "你展开那张纸——是一份染血的护送委托书。"
+	gm.grant_mine_document("bloodied_contract")      # 授予 + 放入故事物品背包
+	_obs_label.text = "一张染血的委托书。已放入背包——回头可以翻看。"
 
 
 # ============================================================

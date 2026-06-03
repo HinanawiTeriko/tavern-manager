@@ -65,12 +65,28 @@ func _rebuild_list(list: VBoxContainer, keys: Array[String]) -> void:
 		var item_data: Dictionary = _gm.craft.get_item(key)
 		var row := InventoryDragRow.new()
 		row.custom_minimum_size = Vector2(250.0, 34.0)
-		row.configure(
-			key,
-			"%s  x%d" % [item_data.get("name", key), _gm.inventory_sys.get_count(key)],
-			_item_icon_or_swatch(key, item_data)
-		)
+		var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(key)
+		var display_text := "%s  x%d" % [item_data.get("name", key), _gm.inventory_sys.get_count(key)]
+		if capabilities.has("readable"):
+			row.configure_readable(
+				key,
+				display_text,
+				_item_icon_or_swatch(key, item_data)
+			)
+			row.open_requested.connect(_on_row_open_requested)
+		else:
+			row.configure(
+				key,
+				display_text,
+				_item_icon_or_swatch(key, item_data)
+			)
 		list.add_child(row)
+
+
+func _on_row_open_requested(item_key: String) -> void:
+	# 双击可阅读物品 → 打开文档阅读
+	_gm.request_open_document(item_key)
+	close()
 
 
 func _item_icon_or_swatch(key: String, item_data: Dictionary) -> Texture2D:

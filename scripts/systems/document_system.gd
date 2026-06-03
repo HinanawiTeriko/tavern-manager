@@ -89,6 +89,18 @@ func add_ledger_entry_once(text: String) -> bool:
 	return true
 
 
+func add_document_to_ledger(document_id: String) -> void:
+	## 将 evidence 类型文档的标题和正文追加到账本动态条目中。
+	var doc: Dictionary = _definitions.get(document_id, {})
+	if doc.is_empty() or String(doc.get("kind", "")) != "evidence":
+		return
+	var title := String(doc.get("title", document_id))
+	var pages: Array = doc.get("pages", [])
+	_ledger_entries.append("--- " + title + " ---")
+	for page in pages:
+		_ledger_entries.append(String(page))
+
+
 func get_document(document_id: String) -> Dictionary:
 	if not has_document(document_id):
 		return {}
