@@ -317,11 +317,11 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	guests.spawn_important(npc_id, order_key)
 
 ## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
-func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_tag: String = "") -> void:
-	_on_serve_requested(item_key, seasoning_tag, craft_style_data)
+func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_attribute: String = "") -> void:
+	_on_serve_requested(item_key, seasoning_attribute, craft_style_data)
 
 ## 上菜判定逻辑（从 register_view lambda 提取）
-func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_data: Dictionary = {}) -> void:
+func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_style_data: Dictionary = {}) -> void:
 	if not guests.has_guest or item_key == "":
 		return
 
@@ -361,8 +361,8 @@ func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_da
 			" style=", serve_style_label, " story_told=", l3["story_told"],
 			" aff_", npc_id, "=", narrative.get_affection(npc_id))
 
-	if seasoning_tag != "":
-		narrative.set_var("seasoning_used", seasoning_tag)
+	if seasoning_attribute != "":
+		narrative.set_var("seasoning_used", seasoning_attribute)
 
 	guests.record_guest_served()
 
@@ -556,13 +556,8 @@ func resolve_seasoning_application(seasoning_key: String, product_key: String) -
 		return {"accepted": false, "attribute": "", "product_tags": [], "feedback": "not_seasoning"}
 	var tag: String = seasoning.get_product_tag(seasoning_key)
 	if tag != "":
-		# 效果香料：走既有叙事闸门，feedback/限定产物规则保持不变。
-		var r: Dictionary = narrative.resolve_action({
-			"type": "add_story_item_to_product",
-			"item_key": seasoning_key,
-			"product_key": product_key,
-		})
-		_show_action_feedback(String(r.get("feedback", "")))
+		# 效果香料：复用既有叙事闸门入口（限定产物规则 + 玩家反馈都在 request_apply_story_item_to_product 里）。
+		var r: Dictionary = request_apply_story_item_to_product(seasoning_key, product_key)
 		if not bool(r.get("accepted", false)):
 			return {"accepted": false, "attribute": "", "product_tags": [], "feedback": String(r.get("feedback", ""))}
 		return {

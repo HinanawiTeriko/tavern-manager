@@ -191,7 +191,8 @@ func _try_deliver(item: DeskItem) -> void:
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
-	if is_product and item.item_key == _gm.current_order_key():
+	# 带叙事 tag 的成品（如药酒）必须先走叙事中介，不能被订单匹配直接正常上菜吞掉。
+	if is_product and item.product_tags.is_empty() and item.item_key == _gm.current_order_key():
 		_serve_formal(item)
 		return
 	var r: Dictionary = _gm.request_narrative_delivery(item.item_key, item.product_tags)
