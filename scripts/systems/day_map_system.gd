@@ -13,6 +13,8 @@ var _locations: Dictionary = {}
 var _visited: Dictionary = {}
 var _flags: Dictionary = {}
 var _read_documents: Dictionary = {}
+var _owned_documents: Dictionary = {}
+var _lead_flags: Dictionary = {}
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -45,11 +47,34 @@ func set_document_read(document_id: String, read: bool) -> void:
 	_read_documents[document_id] = read
 
 
+func set_document_owned(document_id: String, owned: bool) -> void:
+	_owned_documents[document_id] = owned
+
+
+func is_document_known(document_id: String) -> bool:
+	return bool(_read_documents.get(document_id, false)) or bool(_owned_documents.get(document_id, false))
+
+
+func set_lead_flag(flag_id: String, active: bool) -> void:
+	_lead_flags[flag_id] = active
+
+
+func _flag_satisfied(flag_id: String) -> bool:
+	return bool(_flags.get(flag_id, false)) or bool(_lead_flags.get(flag_id, false))
+
+
 func get_locations() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for location in _locations.values():
-		if current_day >= int(location.get("dayMin", 1)):
-			result.append(location)
+		if current_day < int(location.get("dayMin", 1)):
+			continue
+		var required_flag := String(location.get("requiresFlag", ""))
+		if required_flag != "" and not _flag_satisfied(required_flag):
+			continue
+		var required_read := String(location.get("requiresRead", ""))
+		if required_read != "" and not is_document_known(required_read):
+			continue
+		result.append(location)
 	return result
 
 
@@ -60,11 +85,11 @@ func visit(location_id: String) -> Dictionary:
 	if current_day < int(location.get("dayMin", 1)):
 		return _failure("这个地点尚未开放。")
 	var required_flag := String(location.get("requiresFlag", ""))
-	if required_flag != "" and not bool(_flags.get(required_flag, false)):
+	if required_flag != "" and not _flag_satisfied(required_flag):
 		return _failure("还没有找到前往这里的线索。")
 	var required_read := String(location.get("requiresRead", ""))
-	if required_read != "" and not bool(_read_documents.get(required_read, false)):
-		return _failure("先读一读手里的证据。")
+	if required_read != "" and not is_document_known(required_read):
+		return _failure("先看看手里的线索。")
 	if not bool(location.get("repeatable", false)) and _visited.has(location_id):
 		return _failure("这里今天已经调查过了。")
 	var cost := int(location.get("cost", 1))

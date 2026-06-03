@@ -24,7 +24,6 @@ EVENTS = {
     "serve_fail": (0.24, 190.0, "fall"),
     "page_turn": (0.16, 330.0, "noise"),
     "new_document": (0.32, 540.0, "chime"),
-    "wash_complete": (0.30, 240.0, "fall"),
 }
 
 

@@ -42,6 +42,7 @@ const FALLBACK_PROFILES := {
 }
 
 var item_key: String = ""
+var document_id: String = ""   # 可阅读文档的 document_id（与 item_key 一致）
 var quality: String = "normal"
 var product_tags: Array[String] = []   # 叙事载体标记（如 sleep_powder），递交时透传给 resolve_action
 var is_held: bool = false
@@ -50,6 +51,7 @@ var _pending_color: Color = Color.WHITE
 var _doneness = MEAT_DONENESS.new()
 
 signal fell_out_of_bounds(item: DeskItem)
+signal open_requested(document_id: String)
 
 var _fell_emitted: bool = false
 var _last_impact_audio_msec: int = -1000
@@ -82,6 +84,16 @@ func _on_body_entered(_body: Node) -> void:
 		return
 	_last_impact_audio_msec = now
 	GameManager.play_audio_event("collision")
+
+
+func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	if not document_id:
+		return
+	if event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_LEFT \
+		and event.pressed \
+		and event.double_click:
+		open_requested.emit(document_id)
 
 
 ## 回收复用：被移回回收区后清除越界标记，使其再次掉落仍能触发回收。

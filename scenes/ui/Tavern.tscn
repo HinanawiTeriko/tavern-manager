@@ -1,6 +1,7 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="settingspanel"]
 [ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="dc"]
 [ext_resource type="Script" path="res://scripts/test/brewery.gd" id="brw"]
@@ -9,6 +10,10 @@
 [ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/ui/readable_desk_item.tscn" id="readable_item"]
 [ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
+[ext_resource type="Texture2D" path="res://assets/textures/workspace/barrel.png" id="workspace_barrel"]
+[ext_resource type="Texture2D" path="res://assets/textures/workspace/grill.png" id="workspace_grill"]
+[ext_resource type="Texture2D" path="res://assets/textures/workspace/pot.png" id="workspace_pot"]
+[ext_resource type="Texture2D" path="res://assets/textures/workspace/spoon.png" id="workspace_spoon"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
 a = Vector2(150, 655)
@@ -86,9 +91,6 @@ size = Vector2(410, 328)
 [sub_resource type="CapsuleShape2D" id="tv_spoon_shape"]
 radius = 8.0
 height = 88.0
-
-[sub_resource type="RectangleShape2D" id="tv_basin"]
-size = Vector2(120, 90)
 
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
@@ -371,6 +373,11 @@ layout_mode = 0
 custom_minimum_size = Vector2(100, 0)
 text = "背包"
 
+[node name="BtnSettings" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(100, 0)
+text = "设置"
+
 [node name="RecipePanel" type="ScrollContainer" parent="OverlayMenu"]
 layout_mode = 0
 offset_left = 10.0
@@ -416,6 +423,8 @@ offset_right = 295.0
 offset_bottom = 480.0
 text = "整理桌面"
 
+[node name="SettingsPanel" parent="." instance=ExtResource("settingspanel")]
+
 
 [node name="BarWorkspace" type="Node2D" parent="."]
 script = ExtResource("bw")
@@ -442,16 +451,6 @@ position = Vector2(230, 580)
 [node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
 position = Vector2(640, 470)
 
-[node name="WashBasin" type="Area2D" parent="BarWorkspace/World"]
-position = Vector2(1160, 610)
-
-[node name="Shape" type="CollisionShape2D" parent="BarWorkspace/World/WashBasin"]
-shape = SubResource("tv_basin")
-
-[node name="Visual" type="Polygon2D" parent="BarWorkspace/World/WashBasin"]
-color = Color(0.2, 0.35, 0.45, 0.6)
-polygon = PackedVector2Array(-60, -45, 60, -45, 60, 45, -60, 45)
-
 [node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
 position = Vector2(960, 600)
 script = ExtResource("brw")
@@ -472,8 +471,13 @@ shape = SubResource("tv_rim_left")
 shape = SubResource("tv_rim_right")
 
 [node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Brewery"]
+visible = false
 polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
 color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="Art" type="Sprite2D" parent="BarWorkspace/World/Brewery"]
+texture_filter = 1
+texture = ExtResource("workspace_barrel")
 
 [node name="PickupArea" type="Area2D" parent="BarWorkspace/World/Brewery"]
 
@@ -481,6 +485,7 @@ color = Color(0.35, 0.2, 0.1, 1)
 polygon = PackedVector2Array(-50, 40, -40, -40, 40, -40, 50, 40)
 
 [node name="MouthRim" type="Polygon2D" parent="BarWorkspace/World/Brewery"]
+visible = false
 position = Vector2(0, -40)
 polygon = PackedVector2Array(-45, -8, 45, -8, 45, 8, -45, 8)
 color = Color(0.05, 0.03, 0.02, 1)
@@ -508,10 +513,16 @@ intake_bottom_y = 0.0
 shape = SubResource("tv_grill_body")
 
 [node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Grill"]
+visible = false
 polygon = PackedVector2Array(-75, 16, 75, 16, 68, -16, -68, -16)
 color = Color(0.42, 0.12, 0.08, 1)
 
+[node name="Art" type="Sprite2D" parent="BarWorkspace/World/Grill"]
+texture_filter = 1
+texture = ExtResource("workspace_grill")
+
 [node name="HeatBars" type="Polygon2D" parent="BarWorkspace/World/Grill"]
+visible = false
 polygon = PackedVector2Array(-56, -6, -44, -6, -44, 6, -56, 6, -16, -6, -4, -6, -4, 6, -16, 6, 24, -6, 36, -6, 36, 6, 24, 6)
 color = Color(1, 0.35, 0.08, 1)
 
@@ -560,15 +571,22 @@ shape = SubResource("tv_pot_rim_right")
 shape = SubResource("tv_pot_pickup")
 
 [node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Pot"]
+visible = false
 z_index = 12
 polygon = PackedVector2Array(-48, 38, 48, 38, 40, -34, -40, -34)
 color = Color(0.16, 0.22, 0.28, 1)
 
 [node name="Soup" type="Polygon2D" parent="BarWorkspace/World/Pot"]
+visible = false
 z_index = 12
 position = Vector2(0, -28)
 polygon = PackedVector2Array(-34, -6, 34, -6, 34, 6, -34, 6)
 color = Color(0.52, 0.32, 0.14, 1)
+
+[node name="Art" type="Sprite2D" parent="BarWorkspace/World/Pot"]
+texture_filter = 1
+z_index = 12
+texture = ExtResource("workspace_pot")
 
 [node name="Intake" type="Area2D" parent="BarWorkspace/World/Pot"]
 position = Vector2(0, -38)
@@ -588,8 +606,13 @@ script = ExtResource("spoon")
 shape = SubResource("tv_spoon_shape")
 
 [node name="Visual" type="Polygon2D" parent="BarWorkspace/World/Spoon"]
+visible = false
 polygon = PackedVector2Array(-5, -44, 5, -44, 5, 28, 11, 34, 11, 44, -11, 44, -11, 34, -5, 28)
 color = Color(0.75, 0.62, 0.4, 1)
+
+[node name="Art" type="Sprite2D" parent="BarWorkspace/World/Spoon"]
+texture_filter = 1
+texture = ExtResource("workspace_spoon")
 
 [node name="Tip" type="Marker2D" parent="BarWorkspace/World/Spoon"]
 position = Vector2(0, 40)

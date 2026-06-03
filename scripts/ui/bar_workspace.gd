@@ -26,10 +26,7 @@ var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
-@onready var _wash_basin: Area2D = $World/WashBasin
 @onready var _ledger: ReadableDeskItem = $World/Ledger
-const WASH_DWELL := 0.8
-var _wash_dwell: Dictionary = {}   # 容器 -> 已停留秒数
 
 
 func _ready() -> void:
@@ -61,6 +58,54 @@ func _set_body_available(body: RigidBody2D, available: bool) -> void:
 		child.set_deferred("disabled", not available)
 
 
+func _process(_delta: float) -> void:
+	_update_shortcut_hover(get_global_mouse_position())
+
+
+func _ensure_shortcut_slot_visuals(slot: ColorRect) -> void:
+	ThemeColors.style_shortcut_slot(slot)
+	var icon := slot.get_node_or_null("Icon") as TextureRect
+	if icon == null:
+		icon = TextureRect.new()
+		icon.name = "Icon"
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.offset_left = 4.0
+		icon.offset_top = 4.0
+		icon.offset_right = 32.0
+		icon.offset_bottom = 32.0
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		slot.add_child(icon)
+	var count := slot.get_node_or_null("Count") as Label
+	if count == null:
+		count = Label.new()
+		count.name = "Count"
+		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		count.offset_left = 68.0
+		count.offset_top = 17.0
+		count.offset_right = 88.0
+		count.offset_bottom = 34.0
+		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		ThemeColors.style_brush_label(count, 11, ThemeColors.AMBER_PRIMARY)
+		slot.add_child(count)
+	var label := slot.get_node_or_null("Label") as Label
+	if label != null:
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.offset_left = 34.0
+		label.offset_top = 4.0
+		label.offset_right = 88.0
+		label.offset_bottom = 22.0
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		ThemeColors.style_brush_label(label, 11)
+
+
+func _update_shortcut_hover(mouse_position: Vector2) -> void:
+	for index in _slot_rects.size():
+		var slot := _shortcut_bar.get_node_or_null("Slot%d" % index) as ColorRect
+		if slot != null:
+			ThemeColors.set_shortcut_slot_hover(slot, _slot_rects[index].has_point(mouse_position))
+
+
 func _on_drag_started(body: RigidBody2D) -> void:
 	if body is DeskItem:
 		body.is_held = true
@@ -84,21 +129,32 @@ func _init_material_slots() -> void:
 		var slot := _shortcut_bar.get_node_or_null("Slot%d" % i) as ColorRect
 		if slot == null:
 			break
+		_ensure_shortcut_slot_visuals(slot)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var key: String = keys[i] if i < keys.size() else ""
 		_slot_item_keys.append(key)
 		_slot_rects.append(Rect2(slot.global_position, slot.size))
 		var label := slot.get_node_or_null("Label") as Label
-		if label:
-			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var icon := slot.get_node_or_null("Icon") as TextureRect
+		var count := slot.get_node_or_null("Count") as Label
 		if key == "":
-			slot.color = Color(0.08, 0.06, 0.04)
-			if label: label.text = ""
+			slot.color = Color(ThemeColors.SURFACE_LOW, 0.86)
+			if label != null:
+				label.text = ""
+			if icon != null:
+				icon.texture = null
+			if count != null:
+				count.text = ""
 			continue
 		var item_data: Dictionary = _gm.craft.get_item(key)
 		var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
-		slot.color = Color(rgb[0], rgb[1], rgb[2])
-		if label: label.text = item_data.get("name", key)
+		slot.color = Color(rgb[0], rgb[1], rgb[2], 0.22)
+		if label != null:
+			label.text = item_data.get("name", key)
+		if icon != null:
+			icon.texture = _gm.try_load_material_icon(key)
+		if count != null:
+			count.text = str(_gm.inventory_sys.get_count(key))
 
 
 func _input(event: InputEvent) -> void:
@@ -111,6 +167,12 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_RIGHT \
+		and event.pressed \
+		and not _drag_ctrl.is_dragging():
+		_try_eject_last_ingredient(event.global_position)
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var pos: Vector2 = event.global_position
 		if event.pressed and not _drag_ctrl.is_dragging():
@@ -162,6 +224,23 @@ func _try_pickup(pos: Vector2) -> void:
 			if body != null:
 				_drag_ctrl.start_drag(body, pos)
 			return
+
+
+func _try_eject_last_ingredient(pos: Vector2) -> void:
+	if _hit_test_brewery(pos):
+		_eject_last_ingredient(_brewery)
+		return
+	var kitchen = _hit_test_kitchen_container(pos)
+	if kitchen != null and kitchen.container_key == "pot":
+		_eject_last_ingredient(kitchen)
+
+
+func _eject_last_ingredient(container) -> void:
+	var item_key: String = container.pop_last_ingredient()
+	if item_key == "":
+		return
+	var item := _spawn_desk_item_at(container.ingredient_output_position(), item_key)
+	item.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
 
 
 ## 释放桌面物品时的统一分流（spec §7.2/§7.3）：
@@ -292,6 +371,12 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	var item_data: Dictionary = _gm.craft.get_item(item_key)
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	item.global_position = pos
+	# 可阅读物品：设为可拾取输入，双击时打开关联文档
+	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
+	if capabilities.has("readable"):
+		item.input_pickable = true
+		item.document_id = item_key
+		item.open_requested.connect(_gm.request_open_document)
 	return item
 
 
@@ -343,10 +428,9 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 		item.queue_free()
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	_recover_docked_bodies()
 	_update_spoon_depth()
-	_update_wash_basin(delta)
 
 
 func _update_spoon_depth() -> void:
@@ -354,20 +438,7 @@ func _update_spoon_depth() -> void:
 		_brewery.is_spoon_inside(_spoon)
 		or _grill.is_spoon_inside(_spoon)
 		or _pot.is_spoon_inside(_spoon)
-		or _area_contains_spoon_tip(_wash_basin)
 	)
-
-
-func _area_contains_spoon_tip(area: Area2D) -> bool:
-	var collision_shape := area.get_node_or_null("Shape") as CollisionShape2D
-	if collision_shape == null:
-		return false
-	var rectangle := collision_shape.shape as RectangleShape2D
-	if rectangle == null:
-		return false
-	var local_tip := collision_shape.to_local(_spoon.tip_global_position())
-	var half_size := rectangle.size * 0.5
-	return absf(local_tip.x) <= half_size.x and absf(local_tip.y) <= half_size.y
 
 
 ## 容器/工具越界时自动回泊位，避免关键工作台对象永久丢失。
@@ -382,39 +453,6 @@ func _dock_body(body: RigidBody2D) -> void:
 	body.angular_velocity = 0.0
 	body.global_position = _docks[body]
 	body.sleeping = true
-
-
-## 容器停在清洗盆内 0.8s → 清空内部料回库存（一次进入只清一次；
-## 离开后重新进入才会再次清洗，避免坐在盆里把后投的料静默清掉）。
-func _update_wash_basin(delta: float) -> void:
-	var inside := {}
-	for body in _wash_basin.get_overlapping_bodies():
-		if body == _brewery or _is_kitchen_container(body):
-			inside[body] = true
-			var dwell := float(_wash_dwell.get(body, 0.0))
-			if is_inf(dwell):
-				continue   # 本次停留已清洗过，等离开再重置
-			dwell += delta
-			if dwell >= WASH_DWELL:
-				_wash_dwell[body] = INF
-				_do_wash(body)
-			else:
-				_wash_dwell[body] = dwell
-	for body in _wash_dwell.keys():
-		if not inside.has(body):
-			_wash_dwell.erase(body)
-
-
-func _do_wash(container) -> void:
-	assert(container == _brewery or _is_kitchen_container(container),
-		"_do_wash called on unexpected type: %s" % container)
-	var drained: Array = container.drain_contents()
-	if drained.is_empty():
-		return
-	for key in drained:
-		_gm.add_to_inventory(key, 1)
-	_gm.play_audio_event("wash_complete")
-	print("[BarWorkspace] 清洗盆清空 ", container, " 退回 ", drained)
 
 
 func _exit_tree() -> void:

@@ -227,12 +227,11 @@ func _spawn_product(product_key: String) -> void:
 	GameManager.play_audio_event("product_ready")
 
 
-## 清洗盆清空：仅锅有内部料状态需要退回；返回料 key 列表并重置状态。
-## 烤架物品是桌面独立物体，不在此处（spec §6.4），返回空。
-func drain_contents() -> Array[String]:
+func pop_last_ingredient() -> String:
 	if container_key != "pot":
-		return []
-	var drained := _state.ingredients()
-	_state.clear()
-	_configure_state()
-	return drained
+		return ""
+	return _state.pop_last_item()
+
+
+func ingredient_output_position() -> Vector2:
+	return _output_anchor.global_position

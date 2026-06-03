@@ -12,6 +12,13 @@ var _material_keys: Array[String] = []
 var _story_keys: Array[String] = []
 
 
+func _ready() -> void:
+	ThemeColors.style_brush_panel(_panel)
+	ThemeColors.style_brush_label($Panel/Title, 18, ThemeColors.AMBER_PRIMARY)
+	ThemeColors.style_brush_label($Panel/MaterialTitle, 16, ThemeColors.AMBER_PRIMARY)
+	ThemeColors.style_brush_label($Panel/StoryTitle, 16, ThemeColors.AMBER_PRIMARY)
+
+
 func configure(game_manager) -> void:
 	_gm = game_manager
 
@@ -57,9 +64,44 @@ func _rebuild_list(list: VBoxContainer, keys: Array[String]) -> void:
 	for key in keys:
 		var item_data: Dictionary = _gm.craft.get_item(key)
 		var row := InventoryDragRow.new()
-		row.custom_minimum_size = Vector2(250.0, 30.0)
-		row.configure(key, "%s  x%d" % [item_data.get("name", key), _gm.inventory_sys.get_count(key)])
+		row.custom_minimum_size = Vector2(250.0, 34.0)
+		var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(key)
+		var display_text := "%s  x%d" % [item_data.get("name", key), _gm.inventory_sys.get_count(key)]
+		if capabilities.has("readable"):
+			row.configure_readable(
+				key,
+				display_text,
+				_item_icon_or_swatch(key, item_data)
+			)
+			row.open_requested.connect(_on_row_open_requested)
+		else:
+			row.configure(
+				key,
+				display_text,
+				_item_icon_or_swatch(key, item_data)
+			)
 		list.add_child(row)
+
+
+func _on_row_open_requested(item_key: String) -> void:
+	# 双击可阅读物品 → 打开文档阅读
+	_gm.request_open_document(item_key)
+	close()
+
+
+func _item_icon_or_swatch(key: String, item_data: Dictionary) -> Texture2D:
+	var icon_texture = _gm.try_load_material_icon(key)
+	if icon_texture != null:
+		return icon_texture
+	var rgb: Array = item_data.get("color", [0.55, 0.5, 0.45])
+	var gradient := Gradient.new()
+	var color := Color(rgb[0], rgb[1], rgb[2])
+	gradient.colors = PackedColorArray([color, color])
+	var texture := GradientTexture2D.new()
+	texture.width = 20
+	texture.height = 20
+	texture.gradient = gradient
+	return texture
 
 
 func _can_drop_data(at_position: Vector2, data) -> bool:

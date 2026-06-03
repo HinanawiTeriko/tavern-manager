@@ -3,6 +3,8 @@ extends Node2D
 
 signal gathering_confirmed(assignments: Dictionary)
 
+const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
+
 var _location_scroll: ScrollContainer
 var _location_list: VBoxContainer
 var _stamina_label: Label
@@ -12,6 +14,7 @@ var _result_panel: Panel
 var _result_label: Label
 var _continue_btn: Button
 var _document_overlay: DocumentOverlay
+var _inventory_overlay: InventoryOverlay
 
 var _assignments: Dictionary = {}
 var _stamina_left: int = 0
@@ -21,6 +24,10 @@ var _locations: Array = []
 var _assign_labels: Dictionary = {}
 var _loc_add_btns: Dictionary = {}
 var _loc_sub_btns: Dictionary = {}
+
+var _mine_scene: Node = null
+var _hidden_for_mine: Array = []
+var _overlay_layer: CanvasLayer = null
 
 # Shop
 var _is_shop_tab: bool = false
@@ -43,6 +50,9 @@ func _ready() -> void:
 	_result_label = $ResultPanel/ResultLabel
 	_continue_btn = $ResultPanel/ContinueBtn
 	_document_overlay = $DocumentOverlay
+	_inventory_overlay = $InventoryOverlay
+	_inventory_overlay.configure(get_node("/root/GameManager"))
+	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
 
 	var title_label = $MapArea/TitleLabel
 	ThemeColors.style_header(title_label, 26)
@@ -189,12 +199,51 @@ func _reload_location_ui() -> void:
 func _visit_location(location_id: String) -> void:
 	var gm = get_node("/root/GameManager")
 	var result: Dictionary = gm.visit_day_location(location_id)
+	if location_id == "abandoned_mine" and bool(result.get("success", false)):
+		_stamina_left = gm.day_map.stamina
+		_update_stamina_display()
+		_enter_mine_investigation()
+		return
 	_result_label.text = String(result.get("message", "访问完成。"))
 	_result_panel.visible = true
 	_continue_btn.text = "知道了"
 	_stamina_left = gm.day_map.stamina
 	_update_stamina_display()
 	_reload_location_ui()
+
+
+func _enter_mine_investigation() -> void:
+	if _mine_scene != null:
+		return
+	_mine_scene = MINE_SCENE.instantiate()
+	add_child(_mine_scene)
+	# DocumentOverlay 提到高层 CanvasLayer，确保挖出委托书时压在矿道场景(含其 UI CanvasLayer)之上
+	_overlay_layer = CanvasLayer.new()
+	_overlay_layer.layer = 10
+	add_child(_overlay_layer)
+	_document_overlay.reparent(_overlay_layer, false)
+	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
+	_hidden_for_mine = [$Background, $TopBar, $MapArea, $GoButton, $ResultPanel]
+	for n in _hidden_for_mine:
+		if n != null:
+			n.visible = false
+	_mine_scene.finished.connect(_on_mine_finished)
+
+
+func _on_mine_finished() -> void:
+	if _mine_scene != null:
+		_mine_scene.queue_free()
+		_mine_scene = null
+	if _overlay_layer != null:
+		_document_overlay.reparent(self, false)
+		_overlay_layer.queue_free()
+		_overlay_layer = null
+	for n in _hidden_for_mine:
+		if n != null and is_instance_valid(n):
+			n.visible = true
+	_hidden_for_mine.clear()
+	_reload_location_ui()
+
 
 func _add_assignment(loc_id: String, cost: int, count_label: Label) -> void:
 	if _stamina_left < cost:
@@ -237,12 +286,8 @@ func _on_continue() -> void:
 
 
 func _open_latest_document() -> void:
-	var gm = get_node("/root/GameManager")
-	for document_id in gm.documents.get_owned_documents():
-		if document_id != "ledger" and not gm.documents.is_read(document_id):
-			gm.request_open_document(document_id)
-			return
-	gm.request_open_document("ledger")
+	# 简化：点击按钮直接打开账本（证据文档从背包双击阅读）
+	get_node("/root/GameManager").request_open_document("ledger")
 
 
 func open_document(document: Dictionary) -> void:
@@ -250,9 +295,24 @@ func open_document(document: Dictionary) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and _document_overlay.visible:
-		_document_overlay.close()
+	if event.is_action_pressed("ui_cancel"):
+		if _document_overlay.visible:
+			_document_overlay.close()
+			get_viewport().set_input_as_handled()
+		elif _inventory_overlay.visible:
+			_inventory_overlay.close()
+			get_viewport().set_input_as_handled()
+	if event.is_action_pressed("inventory_toggle"):
+		if _inventory_overlay.visible:
+			_inventory_overlay.close()
+		else:
+			_inventory_overlay.open()
 		get_viewport().set_input_as_handled()
+
+
+func _on_inventory_item_dropped(item_key: String, _global_position: Vector2) -> void:
+	# DayMap 场景无法拖出物品使用，意外拖出时放回背包
+	get_node("/root/GameManager").add_to_inventory(item_key, 1)
 
 func _update_gold_display() -> void:
 	var gm = get_node("/root/GameManager")
