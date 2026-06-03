@@ -154,6 +154,7 @@ func _test_alternative_declined_when_low_trust() -> void:
 	_ok(not decided.get("accepted", true), "信任不足上菜后婉拒替代委托")
 	_ok(narrative.get_var("ryan_has_alternative") == false, "婉拒不写 ryan_has_alternative")
 	_ok(narrative.get_var("ryan_alternative_declined") == true, "婉拒置 ryan_alternative_declined")
+	_ok(narrative.get_var("ryan_interaction_closed") == true, "婉拒亦封闭交互（终局）")
 	_ok(narrative.get_ryan_route() == "informed_fallen", "婉拒后落在 informed_fallen")
 
 

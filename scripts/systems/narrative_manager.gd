@@ -107,6 +107,7 @@ func resolve_pending_alternative(npc_id: String) -> Dictionary:
 		set_var("ryan_interaction_closed", true)
 		return {"resolved": true, "accepted": true}
 	set_var("ryan_alternative_declined", true)
+	set_var("ryan_interaction_closed", true)  # 婉拒亦为终局，封住后续重递
 	return {"resolved": true, "accepted": false}
 
 
