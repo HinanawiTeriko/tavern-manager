@@ -253,20 +253,14 @@ func _eject_last_ingredient(container) -> void:
 
 
 ## 释放桌面物品时的统一分流：
-##   1) 香料（口味/效果）落在香料罐上 → 装填罐子（消耗该物体；库存已在取出时扣减）。
-##   2) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
-##   3) 其它落点 → 不处理，留在桌面（越界自走回收）。
+##   1) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
+##   2) 其它落点 → 不处理，留在桌面（越界自走回收）。
+##   注：香料装罐由 SeasoningShaker.Mouth Area2D 自动吸入（body_entered），不走本方法。
 func _try_deliver(item: DeskItem) -> void:
 	if item.item_key == "":
 		return
 
-	# 1) 香料装罐：撒香料统一走香料罐（取代旧的"压花粉在成品上"）
-	if _gm.seasoning.is_seasoning(item.item_key) and _over_shaker(item):
-		_shaker.load_seasoning(item.item_key)
-		item.queue_free()
-		return
-
-	# 2) 递交给客人
+	# 递交给客人
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
@@ -291,23 +285,6 @@ func _serve_formal(item: DeskItem) -> void:
 	var speed: float = _drag_ctrl.get_serve_speed()
 	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality}, item.attribute)
 	item.queue_free()
-
-
-## 拖动物体落点是否压在香料罐上（用于装填）。
-func _over_shaker(item: DeskItem) -> bool:
-	var space := get_world_2d().direct_space_state
-	var params := PhysicsPointQueryParameters2D.new()
-	params.position = item.global_position
-	params.collide_with_bodies = true
-	params.collide_with_areas = true
-	var hits := space.intersect_point(params, 8)
-	for h in hits:
-		var c = h.get("collider")
-		if c == _shaker:
-			return true
-		if c is Area2D and c.get_parent() == _shaker:
-			return true
-	return false
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
