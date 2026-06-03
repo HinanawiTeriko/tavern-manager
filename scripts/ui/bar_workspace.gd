@@ -207,7 +207,7 @@ func _try_deliver(item: DeskItem) -> void:
 
 func _serve_formal(item: DeskItem) -> void:
 	var speed: float = _drag_ctrl.get_serve_speed()
-	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality})
+	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality}, item.attribute)
 	item.queue_free()
 
 
