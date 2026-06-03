@@ -21,7 +21,6 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "documents": ["bloodied_contract"],
       "description": "北矿道深处散落着战斗痕迹。",
       "dayMin": 2,
       "repeatable": false,
