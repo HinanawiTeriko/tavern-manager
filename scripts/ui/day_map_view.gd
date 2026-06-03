@@ -26,6 +26,7 @@ var _loc_sub_btns: Dictionary = {}
 
 var _mine_scene: Node = null
 var _hidden_for_mine: Array = []
+var _overlay_layer: CanvasLayer = null
 
 # Shop
 var _is_shop_tab: bool = false
@@ -208,12 +209,17 @@ func _visit_location(location_id: String) -> void:
 
 
 func _enter_mine_investigation() -> void:
+	if _mine_scene != null:
+		return
 	_mine_scene = MINE_SCENE.instantiate()
 	add_child(_mine_scene)
-	# DocumentOverlay 移到最末子节点，确保挖出委托书时压在矿道场景之上
-	move_child(_document_overlay, get_child_count() - 1)
+	# DocumentOverlay 提到高层 CanvasLayer，确保挖出委托书时压在矿道场景(含其 UI CanvasLayer)之上
+	_overlay_layer = CanvasLayer.new()
+	_overlay_layer.layer = 10
+	add_child(_overlay_layer)
+	_document_overlay.reparent(_overlay_layer, false)
 	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
-	_hidden_for_mine = [$Background, $TopBar, $MapArea, $GoButton]
+	_hidden_for_mine = [$Background, $TopBar, $MapArea, $GoButton, $ResultPanel]
 	for n in _hidden_for_mine:
 		if n != null:
 			n.visible = false
@@ -224,6 +230,10 @@ func _on_mine_finished() -> void:
 	if _mine_scene != null:
 		_mine_scene.queue_free()
 		_mine_scene = null
+	if _overlay_layer != null:
+		_document_overlay.reparent(self, false)
+		_overlay_layer.queue_free()
+		_overlay_layer = null
 	for n in _hidden_for_mine:
 		if n != null and is_instance_valid(n):
 			n.visible = true

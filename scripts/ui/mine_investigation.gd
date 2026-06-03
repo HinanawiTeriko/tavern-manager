@@ -8,7 +8,7 @@ signal finished()
 
 const MINE_ITEM_SCENE := preload("res://scenes/ui/components/MineItem.tscn")
 const RUBBLE_REVEAL_DIST := 120.0   # 碎石被拖离原位多远算「扒开」
-const SPILL_TILT := 2.0             # 背包倾斜超过此弧度算「倾倒」
+const SPILL_TILT := 1.2             # 背包倾斜超过此弧度算「倾倒」
 
 @onready var _world: Node2D = $World
 @onready var _drag_ctrl: DragController = $DragCtrl
@@ -90,6 +90,11 @@ func _try_pickup(pos: Vector2) -> void:
 		return
 	if hit.kind == "backpack" and not _rubble_cleared:
 		return  # 背包还埋着，扒开前抓不到
+	if hit.kind == "contract":
+		_take_contract()   # 捡起沾血纸 = 直接阅读，不进入拖拽
+		return
+	if hit.kind == "rubble":
+		hit.freeze = false   # 解冻，否则 DragController 的钉子拖不动冻结体
 	_drag_ctrl.start_drag(hit, pos)
 	_on_item_grabbed(hit)
 
@@ -108,12 +113,8 @@ func _hit_test_item(pos: Vector2) -> MineItem:
 
 
 func _on_item_grabbed(item: MineItem) -> void:
-	match item.kind:
-		"observation":
-			if item.observation != "":
-				_obs_label.text = item.observation
-		"contract":
-			_take_contract()   # === Task 7 ===
+	if item.kind == "observation" and item.observation != "":
+		_obs_label.text = item.observation
 
 
 # ============================================================
