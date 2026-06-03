@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/bar_workspace.gd" id="bw"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/ui/readable_desk_item.tscn" id="readable_item"]
 [ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SeasoningShaker.tscn" id="ss"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
 a = Vector2(150, 655)
@@ -421,6 +422,9 @@ text = "整理桌面"
 script = ExtResource("bw")
 
 [node name="World" type="Node2D" parent="BarWorkspace"]
+
+[node name="SeasoningShaker" parent="BarWorkspace/World" instance=ExtResource("ss")]
+position = Vector2(720, 470)
 
 [node name="Walls" type="StaticBody2D" parent="BarWorkspace/World"]
 

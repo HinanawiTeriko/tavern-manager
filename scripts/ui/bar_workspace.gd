@@ -15,6 +15,7 @@ const KILL_Y := 800.0
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
 @onready var _brewery: Brewery = $World/Brewery
+@onready var _shaker: SeasoningShaker = $World/SeasoningShaker
 @onready var _grill: KitchenContainer = $World/Grill
 @onready var _pot: KitchenContainer = $World/Pot
 @onready var _spoon: StirSpoon = $World/Spoon
@@ -120,6 +121,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag_ctrl.end_drag()
 			if dragged == _brewery:
 				_brewery.end_shake_session()
+			elif dragged == _shaker:
+				_shaker.end_shake_session()
 			elif _is_kitchen_container(dragged):
 				dragged.end_action_session()
 			elif dragged is DeskItem:
@@ -133,6 +136,8 @@ func _release_dragged_body() -> void:
 	_drag_ctrl.end_drag()
 	if dragged == _brewery:
 		_brewery.end_shake_session()
+	elif dragged == _shaker:
+		_shaker.end_shake_session()
 	elif dragged is DeskItem:
 		_try_deliver(dragged)
 
@@ -145,6 +150,10 @@ func _try_pickup(pos: Vector2) -> void:
 	if _hit_test_brewery(pos):
 		_brewery.begin_shake_session()
 		_drag_ctrl.start_drag(_brewery, pos)
+		return
+	if _hit_test_shaker(pos):
+		_shaker.begin_shake_session()
+		_drag_ctrl.start_drag(_shaker, pos)
 		return
 	var spoon := _hit_test_spoon(pos)
 	if spoon != null:
@@ -164,26 +173,19 @@ func _try_pickup(pos: Vector2) -> void:
 			return
 
 
-## 释放桌面物品时的统一分流（spec §7.2/§7.3）：
-##   1) 沉睡花粉压在成品上 → 搅成药酒（打 tag）。
+## 释放桌面物品时的统一分流：
+##   1) 香料（口味/效果）落在香料罐上 → 装填罐子（消耗该物体；库存已在取出时扣减）。
 ##   2) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
 ##   3) 其它落点 → 不处理，留在桌面（越界自走回收）。
 func _try_deliver(item: DeskItem) -> void:
 	if item.item_key == "":
 		return
 
-	# 1) 沉睡花粉搅进成品
-	if _gm.inventory_sys.is_story_item(item.item_key):
-		var prod := _product_under(item)
-		if prod != null:
-			var ar: Dictionary = _gm.request_apply_story_item_to_product(item.item_key, prod.item_key)
-			if ar.get("accepted", false):
-				for t in ar.get("product_tags", []):
-					prod.add_product_tag(String(t))
-				item.queue_free()   # 花粉被搅进酒里消耗
-			else:
-				_on_desk_item_fell(item)   # 回收花粉到背包
-			return
+	# 1) 香料装罐：撒香料统一走香料罐（取代旧的"压花粉在成品上"）
+	if _gm.seasoning.is_seasoning(item.item_key) and _over_shaker(item):
+		_shaker.load_seasoning(item.item_key)
+		item.queue_free()
+		return
 
 	# 2) 递交给客人
 	if not _customer_area.get_overlapping_bodies().has(item):
@@ -211,18 +213,21 @@ func _serve_formal(item: DeskItem) -> void:
 	item.queue_free()
 
 
-## 找到压在拖动物体落点下方的另一个成品 DeskItem（用于花粉搅酒）。
-func _product_under(item: DeskItem) -> DeskItem:
+## 拖动物体落点是否压在香料罐上（用于装填）。
+func _over_shaker(item: DeskItem) -> bool:
 	var space := get_world_2d().direct_space_state
 	var params := PhysicsPointQueryParameters2D.new()
 	params.position = item.global_position
 	params.collide_with_bodies = true
+	params.collide_with_areas = true
 	var hits := space.intersect_point(params, 8)
 	for h in hits:
 		var c = h.get("collider")
-		if c is DeskItem and c != item and _gm.inventory_sys.is_product(c.item_key):
-			return c
-	return null
+		if c == _shaker:
+			return true
+		if c is Area2D and c.get_parent() == _shaker:
+			return true
+	return false
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
@@ -250,6 +255,22 @@ func _hit_test_brewery(pos: Vector2) -> bool:
 		if collider == _brewery:
 			return true
 		if collider is Area2D and collider.get_parent() == _brewery:
+			return true
+	return false
+
+
+func _hit_test_shaker(pos: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	params.collide_with_areas = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		var collider = h.get("collider")
+		if collider == _shaker:
+			return true
+		if collider is Area2D and collider.get_parent() == _shaker:
 			return true
 	return false
 
@@ -306,6 +327,7 @@ func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 ## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
 func _capture_docks() -> void:
 	_docks[_brewery] = _brewery.global_position
+	_docks[_shaker] = _shaker.global_position
 	for child in _items_node.get_parent().get_children():
 		if _is_kitchen_container(child) or child is StirSpoon:
 			_docks[child] = child.global_position
