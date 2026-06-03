@@ -3,6 +3,8 @@ extends Node2D
 
 signal gathering_confirmed(assignments: Dictionary)
 
+const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
+
 var _location_scroll: ScrollContainer
 var _location_list: VBoxContainer
 var _stamina_label: Label
@@ -21,6 +23,9 @@ var _locations: Array = []
 var _assign_labels: Dictionary = {}
 var _loc_add_btns: Dictionary = {}
 var _loc_sub_btns: Dictionary = {}
+
+var _mine_scene: Node = null
+var _hidden_for_mine: Array = []
 
 # Shop
 var _is_shop_tab: bool = false
@@ -189,12 +194,42 @@ func _reload_location_ui() -> void:
 func _visit_location(location_id: String) -> void:
 	var gm = get_node("/root/GameManager")
 	var result: Dictionary = gm.visit_day_location(location_id)
+	if location_id == "abandoned_mine" and bool(result.get("success", false)):
+		_stamina_left = gm.day_map.stamina
+		_update_stamina_display()
+		_enter_mine_investigation()
+		return
 	_result_label.text = String(result.get("message", "访问完成。"))
 	_result_panel.visible = true
 	_continue_btn.text = "知道了"
 	_stamina_left = gm.day_map.stamina
 	_update_stamina_display()
 	_reload_location_ui()
+
+
+func _enter_mine_investigation() -> void:
+	_mine_scene = MINE_SCENE.instantiate()
+	add_child(_mine_scene)
+	# DocumentOverlay 移到最末子节点，确保挖出委托书时压在矿道场景之上
+	move_child(_document_overlay, get_child_count() - 1)
+	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
+	_hidden_for_mine = [$Background, $TopBar, $MapArea, $GoButton]
+	for n in _hidden_for_mine:
+		if n != null:
+			n.visible = false
+	_mine_scene.finished.connect(_on_mine_finished)
+
+
+func _on_mine_finished() -> void:
+	if _mine_scene != null:
+		_mine_scene.queue_free()
+		_mine_scene = null
+	for n in _hidden_for_mine:
+		if n != null and is_instance_valid(n):
+			n.visible = true
+	_hidden_for_mine.clear()
+	_reload_location_ui()
+
 
 func _add_assignment(loc_id: String, cost: int, count_label: Label) -> void:
 	if _stamina_left < cost:
