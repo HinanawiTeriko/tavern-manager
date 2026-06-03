@@ -204,11 +204,19 @@ func visit_day_location(location_id: String) -> Dictionary:
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
-		var id := String(document_id)
-		var already_owned := documents.owns_document(id)
-		if documents.grant_document(id) and not already_owned:
-			play_audio_event("new_document")
+		grant_mine_document(String(document_id))
 	return result
+
+
+func grant_mine_document(document_id: String) -> bool:
+	# 矿道场景捡起委托书时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
+	# 返回是否「本次新授予」。授予逻辑与 visit_day_location 的文档循环一致。
+	var id := String(document_id)
+	var already_owned := documents.owns_document(id)
+	var newly := documents.grant_document(id) and not already_owned
+	if newly:
+		play_audio_event("new_document")
+	return newly
 
 
 func enter_night_from_day_map() -> void:
