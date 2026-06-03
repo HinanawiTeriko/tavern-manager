@@ -1,6 +1,9 @@
 class_name NarrativeManager
 extends RefCounted
 
+## L3 信任阀门：Ryan 接受"替代委托"所需的最低 aff_ryan（手法攒出来的信任）。编辑器内可调。
+const TRUST_THRESHOLD := 7
+
 var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
 var key_items: Array = []
@@ -85,6 +88,9 @@ func _resolve_ryan_story_item_action(action: Dictionary) -> Dictionary:
 		"alternative_contract":
 			if not bool(dialogue_vars.get("ryan_informed", false)):
 				return _action_result(false, "ryan_needs_warning_first")
+			if get_affection("ryan") < TRUST_THRESHOLD:
+				# 信任不足：拒绝但不关闭交互，玩家可在攒够信任后重试。
+				return _action_result(false, "ryan_trust_too_low")
 			set_var("ryan_has_alternative", true)
 			set_var("ryan_interaction_closed", true)
 			return _action_result(true, "ryan_accepts_alternative", true)
