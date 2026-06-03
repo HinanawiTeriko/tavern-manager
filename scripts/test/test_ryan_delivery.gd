@@ -12,7 +12,7 @@ func _ready() -> void:
 	_test_current_order_key()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
-	_test_alternative_after_warning_closes()
+	_test_alternative_pending_then_serve_decides()
 	_test_apply_sleep_powder_to_ale()
 	_test_drugged_ale_uninformed_passes_out()
 	_test_informed_refuses_drugged_ale()
@@ -45,9 +45,11 @@ func _gm():
 ## 重置 Ryan 剧情变量并让指定客人在场（不依赖 _tavern_view，headless 安全）。
 func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 	var n = _gm().narrative
-	for v in ["ryan_informed", "ryan_has_alternative", "ryan_drugged", "ryan_interaction_closed"]:
+	for v in ["ryan_informed", "ryan_has_alternative", "ryan_drugged", "ryan_interaction_closed",
+			"ryan_alternative_pending", "ryan_alternative_declined"]:
 		n.set_var(v, false)
 	n.set_var("ryan_ending", "")
+	n.set_affection("ryan", 0)
 	_gm().guests.clear_guest()
 	_gm().guests.spawn_important(npc_id, order_key)
 
@@ -77,13 +79,19 @@ func _test_alternative_requires_warning() -> void:
 	_ok(_gm().narrative.get_var("ryan_has_alternative") == false, "rejected alternative not recorded")
 
 
-func _test_alternative_after_warning_closes() -> void:
+func _test_alternative_pending_then_serve_decides() -> void:
 	_reset_ryan()
 	_gm().request_narrative_delivery("bloodied_contract", [])
 	var r: Dictionary = _gm().request_narrative_delivery("alternative_contract", [])
-	_ok(r.get("accepted", false), "informed Ryan accepts alternative")
-	_ok(r.get("interaction_closed", false), "alternative closes interaction")
-	_ok(_gm().narrative.get_var("ryan_has_alternative") == true, "alternative records ryan_has_alternative")
+	_ok(r.get("accepted", false), "informed Ryan 收下替代委托（提请）")
+	_ok(not r.get("interaction_closed", true), "提请不关闭交互（待上菜定夺）")
+	_ok(_gm().narrative.get_var("ryan_alternative_pending") == true, "递交置 ryan_alternative_pending")
+	_ok(_gm().narrative.get_var("ryan_has_alternative") == false, "提请阶段未写 ryan_has_alternative")
+	# 当晚上菜手法定夺：信任达标 → 收下
+	_gm().narrative.set_affection("ryan", _gm().narrative.TRUST_THRESHOLD)
+	var d: Dictionary = _gm().narrative.resolve_pending_alternative("ryan")
+	_ok(d.get("accepted", false), "信任达标上菜后收下替代委托")
+	_ok(_gm().narrative.get_var("ryan_has_alternative") == true, "决断后写 ryan_has_alternative")
 
 
 func _test_apply_sleep_powder_to_ale() -> void:
