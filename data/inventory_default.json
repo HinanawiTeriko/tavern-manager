@@ -4,5 +4,8 @@
   "flour": 20,
   "meat_raw": 20,
   "herb": 20,
-  "sleep_powder": 0
+  "sleep_powder": 0,
+  "spice": 5,
+  "herb_spice": 5,
+  "salt": 5
 }

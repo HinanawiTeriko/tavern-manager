@@ -22,3 +22,12 @@ func get_seasoning(key: String) -> Dictionary:
 
 func is_seasoning(key: String) -> bool:
 	return seasonings.has(key)
+
+func get_attribute(key: String) -> String:
+	return String(seasonings.get(key, {}).get("attribute", ""))
+
+func get_category(key: String) -> String:
+	return String(seasonings.get(key, {}).get("category", ""))
+
+func get_product_tag(key: String) -> String:
+	return String(seasonings.get(key, {}).get("product_tag", ""))

@@ -1,6 +1,6 @@
 {
-  "spice":        { "name": "辣",       "tag": "spicy",   "color": [0.9, 0.2, 0.1] },
-  "herb_spice":   { "name": "香草",     "tag": "herbal",  "color": [0.2, 0.8, 0.3] },
-  "salt":         { "name": "盐",       "tag": "salty",   "color": [0.9, 0.9, 0.9] },
-  "sleep_powder": { "tag": "drugged" }
+  "spice":        { "name": "辣椒粉",   "tag": "spicy",   "attribute": "辛辣", "category": "taste",  "color": [0.9, 0.2, 0.1] },
+  "herb_spice":   { "name": "香草",     "tag": "herbal",  "attribute": "清香", "category": "taste",  "color": [0.2, 0.8, 0.3] },
+  "salt":         { "name": "盐",       "tag": "salty",   "attribute": "咸香", "category": "taste",  "color": [0.9, 0.9, 0.9] },
+  "sleep_powder": { "name": "迷睡花粉", "tag": "drugged", "attribute": "安眠", "category": "effect", "color": [0.5, 0.2, 0.7], "product_tag": "sleep_powder" }
 }
