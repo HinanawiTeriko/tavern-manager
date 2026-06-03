@@ -57,7 +57,7 @@ const ACTION_FEEDBACK: Dictionary = {
 	"ryan_informed": ["莱恩盯着那份染血的委托书，脸色一点点沉了下来。", Color.ORANGE],
 	"ryan_accepts_alternative": ["莱恩收起替代委托，郑重地点了点头。", Color.LIME_GREEN],
 	"ryan_needs_warning_first": ["莱恩疑惑地看着这份委托，似乎还不明白其中的分量。", Color.GRAY],
-	"ryan_trust_too_low": ["莱恩攥着那份替代委托，摇了摇头：我凭什么信你？这事关我的前途。", Color.GRAY],
+	"ryan_alternative_pending": ["莱恩默默收起替代委托：让我看看你今晚怎么待我。", Color.GRAY],
 	"ryan_accepts_ale": ["莱恩一饮而尽，咧嘴笑了。", Color.LIME_GREEN],
 	"ryan_drugged": ["莱恩喝下那杯酒，眼皮越来越沉……趴在桌上睡了过去。", Color.MEDIUM_PURPLE],
 	"ryan_refuses_drugged_ale": ["莱恩警觉地推开酒杯：今晚我必须保持清醒。", Color.GRAY],
@@ -375,6 +375,7 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		var mem: Dictionary = craft.get_memory_for(item_key)
 		var story_key: String = mem.get(npc_id, "")
 		var l3: Dictionary = narrative.resolve_serve_style(npc_id, story_key, serve_style_label)
+		narrative.resolve_pending_alternative(npc_id)
 		print("[L3] serve_drop_speed=", craft_style_data.get("serve_drop_speed", 0.0),
 			" style=", serve_style_label, " story_told=", l3["story_told"],
 			" aff_", npc_id, "=", narrative.get_affection(npc_id))
@@ -808,5 +809,6 @@ func _fresh_narrative_vars() -> Dictionary:
 		"has_sleep_powder": false, "ryan_informed": false, "ryan_has_alternative": false,
 		"ryan_warhammer_lead": false,
 		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
+		"ryan_alternative_pending": false, "ryan_alternative_declined": false,
 		"aff_ryan": 0, "aff_mira": 5,
 	}

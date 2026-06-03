@@ -11,8 +11,8 @@ func _ready() -> void:
 	_test_alternative_requires_warning()
 	_test_informed_route_rejects_drugged_ale()
 	_test_alternative_route()
-	_test_alternative_blocked_by_low_trust()
-	_test_alternative_retry_after_trust()
+	_test_alternative_declined_when_low_trust()
+	_test_resolve_pending_alternative_noop_without_pending()
 	_test_ryan_style_affection_delta()
 	_test_routes_map_to_ending_texts()
 	_finish()
@@ -95,6 +95,7 @@ func _test_alternative_requires_warning() -> void:
 	_ok(result.get("feedback", "") == "ryan_needs_warning_first",
 		"pre-warning rejection uses ryan_needs_warning_first, not trust gate")
 	_ok(narrative.get_var("ryan_has_alternative") == false, "rejected alternative is not recorded")
+	_ok(narrative.get_var("ryan_alternative_pending") == false, "未警告则不提请")
 
 
 func _test_informed_route_rejects_drugged_ale() -> void:
@@ -124,51 +125,43 @@ func _test_alternative_route() -> void:
 	if not narrative.has_method("resolve_action") or not narrative.has_method("get_ryan_route"):
 		return
 	narrative.resolve_action({
-		"type": "give_story_item",
-		"npc_id": "ryan",
-		"item_key": "bloodied_contract",
+		"type": "give_story_item", "npc_id": "ryan", "item_key": "bloodied_contract",
 	})
-	narrative.set_affection("ryan", narrative.TRUST_THRESHOLD)  # 信任足额
-	var alternative: Dictionary = narrative.resolve_action({
-		"type": "give_story_item",
-		"npc_id": "ryan",
-		"item_key": "alternative_contract",
+	var pending: Dictionary = narrative.resolve_action({
+		"type": "give_story_item", "npc_id": "ryan", "item_key": "alternative_contract",
 	})
-	_ok(alternative.get("accepted", false), "informed + 信任足额 Ryan accepts alternative contract")
-	_ok(alternative.get("interaction_closed", false), "alternative contract closes Ryan interaction")
-	_ok(narrative.get_var("ryan_has_alternative") == true, "alternative contract records ryan_has_alternative")
-	_ok(narrative.get_ryan_route() == "alternative_survivor", "alternative route is reachable")
+	_ok(pending.get("accepted", false), "informed Ryan 收下替代委托（提请）")
+	_ok(pending.get("feedback", "") == "ryan_alternative_pending", "递交反馈为 ryan_alternative_pending")
+	_ok(narrative.get_var("ryan_has_alternative") == false, "提请阶段尚未写 ryan_has_alternative")
+	# 当晚上菜：信任达标 → 收下
+	narrative.set_affection("ryan", narrative.TRUST_THRESHOLD)
+	var decided: Dictionary = narrative.resolve_pending_alternative("ryan")
+	_ok(decided.get("accepted", false), "信任达标上菜后收下替代委托")
+	_ok(narrative.get_var("ryan_has_alternative") == true, "决断后写 ryan_has_alternative")
+	_ok(narrative.get_ryan_route() == "alternative_survivor", "alternative route reachable")
 
 
-func _test_alternative_blocked_by_low_trust() -> void:
+func _test_alternative_declined_when_low_trust() -> void:
 	var narrative := _new_narrative()
 	narrative.resolve_action({
 		"type": "give_story_item", "npc_id": "ryan", "item_key": "bloodied_contract",
+	})
+	narrative.resolve_action({
+		"type": "give_story_item", "npc_id": "ryan", "item_key": "alternative_contract",
 	})
 	# aff_ryan 默认 0 < TRUST_THRESHOLD
-	var blocked: Dictionary = narrative.resolve_action({
-		"type": "give_story_item", "npc_id": "ryan", "item_key": "alternative_contract",
-	})
-	_ok(not blocked.get("accepted", true), "信任不足时替代委托被拒")
-	_ok(blocked.get("feedback", "") == "ryan_trust_too_low", "拒绝 feedback 为 ryan_trust_too_low")
-	_ok(not blocked.get("interaction_closed", true), "信任不足不关闭交互（可重试）")
-	_ok(narrative.get_var("ryan_has_alternative") == false, "被拒不写 ryan_has_alternative")
+	var decided: Dictionary = narrative.resolve_pending_alternative("ryan")
+	_ok(not decided.get("accepted", true), "信任不足上菜后婉拒替代委托")
+	_ok(narrative.get_var("ryan_has_alternative") == false, "婉拒不写 ryan_has_alternative")
+	_ok(narrative.get_var("ryan_alternative_declined") == true, "婉拒置 ryan_alternative_declined")
+	_ok(narrative.get_ryan_route() == "informed_fallen", "婉拒后落在 informed_fallen")
 
 
-func _test_alternative_retry_after_trust() -> void:
+func _test_resolve_pending_alternative_noop_without_pending() -> void:
 	var narrative := _new_narrative()
-	narrative.resolve_action({
-		"type": "give_story_item", "npc_id": "ryan", "item_key": "bloodied_contract",
-	})
-	narrative.resolve_action({
-		"type": "give_story_item", "npc_id": "ryan", "item_key": "alternative_contract",
-	})  # 首次：信任不足，被拒但未关闭
-	narrative.set_affection("ryan", narrative.TRUST_THRESHOLD)  # 之后攒够信任
-	var retry: Dictionary = narrative.resolve_action({
-		"type": "give_story_item", "npc_id": "ryan", "item_key": "alternative_contract",
-	})
-	_ok(retry.get("accepted", false), "攒够信任后重试可接受")
-	_ok(narrative.get_var("ryan_has_alternative") == true, "重试成功写 ryan_has_alternative")
+	var r: Dictionary = narrative.resolve_pending_alternative("ryan")
+	_ok(not r.get("resolved", true), "无待定项时 resolve 为空操作")
+	_ok(narrative.get_var("ryan_has_alternative") == false, "空操作不写 ryan_has_alternative")
 
 
 func _test_ryan_style_affection_delta() -> void:

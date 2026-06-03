@@ -6,6 +6,11 @@ if ryan_has_alternative
     set aff_ryan = aff_ryan + 2
     => END
 
+elif ryan_alternative_declined
+    莱恩: 你给的那条退路……我收下了，可对不住，我信不过你。
+    莱恩: 这一趟，我还是得自己走。谢谢你的肉。
+    => END
+
 elif ryan_informed
     莱恩: 那份染血的委托书……我看过了。
     莱恩: 可我答应过队友，不能临阵退缩。谢谢你的肉，明天我会小心的。

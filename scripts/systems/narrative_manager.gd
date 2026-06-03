@@ -1,8 +1,8 @@
 class_name NarrativeManager
 extends RefCounted
 
-## L3 信任阀门：Ryan 接受"替代委托"所需的最低 aff_ryan（手法攒出来的信任）。改此文件调整阈值。
-const TRUST_THRESHOLD := 7
+## L3 信任阀门：上菜手法定夺替代委托所需的最低 aff_ryan。范围约 [-1, 7]（Day1风格+Day1post+3+Day2风格）。改此文件调整。
+const TRUST_THRESHOLD := 5
 
 var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
@@ -88,13 +88,26 @@ func _resolve_ryan_story_item_action(action: Dictionary) -> Dictionary:
 		"alternative_contract":
 			if not bool(dialogue_vars.get("ryan_informed", false)):
 				return _action_result(false, "ryan_needs_warning_first")
-			if get_affection("ryan") < TRUST_THRESHOLD:
-				# 信任不足：拒绝但不关闭交互，玩家可在攒够信任后重试。
-				return _action_result(false, "ryan_trust_too_low")
-			set_var("ryan_has_alternative", true)
-			set_var("ryan_interaction_closed", true)
-			return _action_result(true, "ryan_accepts_alternative", true)
+			# 递交=提请；是否收下由当晚上菜手法在 resolve_pending_alternative 定夺。
+			set_var("ryan_alternative_pending", true)
+			return _action_result(true, "ryan_alternative_pending")
 	return _action_result(false, "unsupported_story_item")
+
+
+## 上菜手法定夺待定的替代委托：当晚上菜（风格已计入 aff_ryan）后由 GameManager 调用。
+## 信任达标 → 收下替代委托（活路）；不足 → 婉拒，留在知情赴死。无待定项则空操作。
+func resolve_pending_alternative(npc_id: String) -> Dictionary:
+	if npc_id != "ryan":
+		return {"resolved": false}
+	if not bool(dialogue_vars.get("ryan_alternative_pending", false)):
+		return {"resolved": false}
+	set_var("ryan_alternative_pending", false)
+	if get_affection("ryan") >= TRUST_THRESHOLD:
+		set_var("ryan_has_alternative", true)
+		set_var("ryan_interaction_closed", true)
+		return {"resolved": true, "accepted": true}
+	set_var("ryan_alternative_declined", true)
+	return {"resolved": true, "accepted": false}
 
 
 func _resolve_ryan_product_action(action: Dictionary) -> Dictionary:
@@ -129,6 +142,8 @@ func load_npc_data() -> void:
 	dialogue_vars["ryan_has_alternative"] = false
 	dialogue_vars["ryan_drugged"] = false
 	dialogue_vars["ryan_interaction_closed"] = false
+	dialogue_vars["ryan_alternative_pending"] = false
+	dialogue_vars["ryan_alternative_declined"] = false
 	dialogue_vars["ryan_ending"] = ""
 	dialogue_vars["aff_ryan"] = 0
 	dialogue_vars["aff_mira"] = 5
