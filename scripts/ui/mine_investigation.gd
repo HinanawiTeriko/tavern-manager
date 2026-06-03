@@ -137,12 +137,34 @@ func _check_rubble_cleared() -> void:
 
 
 func _check_backpack_spill() -> void:
-	pass  # === Task 6 ===
+	if _backpack_spilled or _backpack == null or not _rubble_cleared:
+		return
+	# 被抓着且倾斜过阈值 → 倒出
+	if _drag_ctrl.is_dragging() and _drag_ctrl.get_body() == _backpack:
+		if absf(wrapf(_backpack.rotation, -PI, PI)) >= SPILL_TILT:
+			_spill_backpack()
 
 
 # ============================================================
 #  授予委托书（Task 7 填）
 # ============================================================
+
+func _spill_backpack() -> void:
+	_backpack_spilled = true
+	var mouth := _backpack.global_position + Vector2(0, 40)
+	# 硬币、队牌：纯洒落物（plain），无后续用途（spec 范围内只做演出）
+	var coins := _spawn_item("coins", "plain", Vector2(20, 20), Color(0.85, 0.7, 0.25),
+		"硬币", "", mouth + Vector2(-30, 0))
+	coins.linear_velocity = Vector2(-90, -160)
+	var token := _spawn_item("warhammer_token", "plain", Vector2(28, 28), Color(0.6, 0.15, 0.12),
+		"血斧队牌", "", mouth + Vector2(10, 0))
+	token.linear_velocity = Vector2(40, -180)
+	# 沾血纸：捡起触发授予
+	var paper := _spawn_item("bloodied_paper", "contract", Vector2(40, 52), Color(0.7, 0.62, 0.5),
+		"沾血的纸", "", mouth + Vector2(50, 0))
+	paper.linear_velocity = Vector2(120, -150)
+	_obs_label.text = "背包一倒，硬币、一枚血斧队牌、还有一张沾血的纸哗啦落了出来。"
+
 
 func _take_contract() -> void:
 	pass  # === Task 7 ===
