@@ -44,6 +44,7 @@ const FALLBACK_PROFILES := {
 var item_key: String = ""
 var quality: String = "normal"
 var product_tags: Array[String] = []   # 叙事载体标记（如 sleep_powder），递交时透传给 resolve_action
+var attribute: String = ""   # L1 单属性（辛辣/清香/咸香/安眠）；覆盖式：set_attribute 直接替换
 var is_held: bool = false
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
@@ -95,6 +96,11 @@ func add_product_tag(tag: String) -> void:
 		product_tags.append(tag)
 	if tag == "sleep_powder":
 		modulate = Color(0.72, 0.58, 0.88)
+
+
+## 覆盖式写 L1 属性（后撒覆盖前者）。空串清除。
+func set_attribute(a: String) -> void:
+	attribute = a
 
 
 func set_color(c: Color) -> void:
