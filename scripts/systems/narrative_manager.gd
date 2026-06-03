@@ -1,7 +1,7 @@
 class_name NarrativeManager
 extends RefCounted
 
-## L3 信任阀门：Ryan 接受"替代委托"所需的最低 aff_ryan（手法攒出来的信任）。编辑器内可调。
+## L3 信任阀门：Ryan 接受"替代委托"所需的最低 aff_ryan（手法攒出来的信任）。改此文件调整阈值。
 const TRUST_THRESHOLD := 7
 
 var all_npcs: Array[NpcData] = []

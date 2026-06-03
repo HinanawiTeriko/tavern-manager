@@ -92,6 +92,8 @@ func _test_alternative_requires_warning() -> void:
 		"item_key": "alternative_contract",
 	})
 	_ok(not result.get("accepted", true), "alternative contract is rejected before warning")
+	_ok(result.get("feedback", "") == "ryan_needs_warning_first",
+		"pre-warning rejection uses ryan_needs_warning_first, not trust gate")
 	_ok(narrative.get_var("ryan_has_alternative") == false, "rejected alternative is not recorded")
 
 
