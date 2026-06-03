@@ -9,6 +9,7 @@ const SHAKER_MASS := 1.2
 const SHAKER_LINEAR_DAMP := 0.8
 const SHAKER_ANGULAR_DAMP := 4.0
 const PROBE_DOWN := 56.0   # 罐口朝下探测成品的偏移
+const PROBE_SIZE := Vector2(48, 48)   # 探测盒大小：用形状查询替代脆弱的点查询
 const PROBE_QUERY_COUNT := 8
 const EMPTY_COLOR := Color(0.55, 0.55, 0.6)
 
@@ -34,6 +35,7 @@ func _load_shake_config() -> void:
 	# 复用酒桶摇晃阈值（同一手感语言）。
 	var file = FileAccess.open("res://data/barrel.json", FileAccess.READ)
 	if file == null:
+		push_warning("[SeasoningShaker] barrel.json 未找到，用默认摇晃阈值")
 		return
 	var data = JSON.parse_string(file.get_as_text())
 	file.close()
@@ -88,16 +90,21 @@ func end_shake_session() -> void:
 	GameManager.play_audio_event("product_ready")
 
 
-## 罐口朝下探测一个成品 DeskItem。
+## 罐口朝下探测一个成品 DeskItem。用小方盒形状查询而非点查询，
+## 容忍罐子与成品之间几像素的错位（点查询会系统性漏掉正下方成品）。
 func _find_product_under() -> DeskItem:
 	var space := get_world_2d().direct_space_state
-	var params := PhysicsPointQueryParameters2D.new()
-	params.position = global_position + Vector2(0, PROBE_DOWN)
+	var shape := RectangleShape2D.new()
+	shape.size = PROBE_SIZE
+	var params := PhysicsShapeQueryParameters2D.new()
+	params.shape = shape
+	params.transform = Transform2D(0.0, global_position + Vector2(0, PROBE_DOWN))
 	params.collide_with_bodies = true
-	var hits := space.intersect_point(params, PROBE_QUERY_COUNT)
+	params.exclude = [get_rid()]
+	var hits := space.intersect_shape(params, PROBE_QUERY_COUNT)
 	for h in hits:
 		var c = h.get("collider")
-		if c is DeskItem and c != self and GameManager.craft.is_product(c.item_key):
+		if c is DeskItem and GameManager.craft.is_product(c.item_key):
 			return c
 	return null
 
@@ -109,4 +116,5 @@ func _refresh_visual() -> void:
 		_visual.color = EMPTY_COLOR
 		return
 	var rgb: Array = GameManager.craft.get_item(loaded_key).get("color", [0.8, 0.8, 0.8])
-	_visual.color = Color(rgb[0], rgb[1], rgb[2])
+	if rgb.size() >= 3:
+		_visual.color = Color(rgb[0], rgb[1], rgb[2])
