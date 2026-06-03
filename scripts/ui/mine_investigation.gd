@@ -48,7 +48,17 @@ func _spawn_shallow_items() -> void:
 
 
 func _spawn_deep_layer() -> void:
-	pass  # === Task 5 === 碎石 + 埋藏背包
+	# 深层：血迹尽头的塌方碎石，底下压着撕裂的背包。
+	# 背包先生成、冻结、隐藏；碎石盖在其上。扒开碎石才解封背包。
+	_backpack = _spawn_item("torn_backpack", "backpack", Vector2(72, 56), Color(0.3, 0.22, 0.16),
+		"撕裂的背包", "", Vector2(980, 470))
+	_backpack.visible = false
+	_backpack.freeze = true
+
+	_rubble = _spawn_item("rubble", "rubble", Vector2(120, 90), Color(0.4, 0.38, 0.36),
+		"塌方碎石", "", Vector2(980, 455))
+	_rubble.freeze = true   # 不让碎石自己滚走；拖拽时 DragController 钉住仍能拖动
+	_rubble_origin = _rubble.global_position
 
 
 func _spawn_item(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color, p_label: String, p_obs: String, p_pos: Vector2) -> MineItem:
@@ -116,7 +126,14 @@ func _physics_process(_delta: float) -> void:
 
 
 func _check_rubble_cleared() -> void:
-	pass  # === Task 5 ===
+	if _rubble_cleared or _rubble == null:
+		return
+	if _rubble.global_position.distance_to(_rubble_origin) >= RUBBLE_REVEAL_DIST:
+		_rubble_cleared = true
+		_backpack.visible = true
+		_backpack.freeze = false   # 解封：背包现在可抓、可倒、受重力
+		_obs_label.text = "碎石底下露出一只撕裂的背包。"
+		_hint_label.text = ""
 
 
 func _check_backpack_spill() -> void:
