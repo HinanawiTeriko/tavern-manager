@@ -547,6 +547,34 @@ func request_apply_story_item_to_product(story_key: String, product_key: String)
 	return r
 
 
+## 香料罐撒料的纯判定入口（spec §5）。SeasoningShaker 摇够后调用。
+## 口味香料无条件写 attribute；效果香料（带 product_tag）复用既有叙事闸门
+## （add_story_item_to_product：迷睡花粉只接受 ale_beer），通过才写 attribute + tag。
+## 返回 {accepted, attribute, product_tags, feedback}；视图据此写到成品 DeskItem。
+func resolve_seasoning_application(seasoning_key: String, product_key: String) -> Dictionary:
+	if not seasoning.is_seasoning(seasoning_key):
+		return {"accepted": false, "attribute": "", "product_tags": [], "feedback": "not_seasoning"}
+	var tag: String = seasoning.get_product_tag(seasoning_key)
+	if tag != "":
+		# 效果香料：走既有叙事闸门，feedback/限定产物规则保持不变。
+		var r: Dictionary = narrative.resolve_action({
+			"type": "add_story_item_to_product",
+			"item_key": seasoning_key,
+			"product_key": product_key,
+		})
+		_show_action_feedback(String(r.get("feedback", "")))
+		if not bool(r.get("accepted", false)):
+			return {"accepted": false, "attribute": "", "product_tags": [], "feedback": String(r.get("feedback", ""))}
+		return {
+			"accepted": true,
+			"attribute": seasoning.get_attribute(seasoning_key),
+			"product_tags": r.get("product_tags", []),
+			"feedback": String(r.get("feedback", "")),
+		}
+	# 口味香料：无条件应用。
+	return {"accepted": true, "attribute": seasoning.get_attribute(seasoning_key), "product_tags": [], "feedback": ""}
+
+
 ## 把剧情物品/叙事载体成品递交给当前客人（spec §7.2 / §7.3）。
 ## 物理拖到客人身上时由 BarWorkspace 调用。返回：
 ##   handled：本方法是否接管（false 时视图走正常上菜结算）。
