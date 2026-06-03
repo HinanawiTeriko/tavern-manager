@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/day_map_view.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
+[ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
 
 [node name="DayMap" type="Node2D"]
 script = ExtResource("1")
@@ -58,7 +59,7 @@ offset_left = 650.0
 offset_top = 8.0
 offset_right = 790.0
 offset_bottom = 52.0
-text = "阅读文档"
+text = "账本"
 
 [node name="MapArea" type="Control" parent="."]
 layout_mode = 0
@@ -197,3 +198,57 @@ offset_top = 490.0
 offset_right = 360.0
 offset_bottom = 525.0
 text = "关闭"
+
+[node name="InventoryOverlay" type="Control" parent="."]
+visible = false
+z_index = 100
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+script = ExtResource("inventory_overlay")
+
+[node name="Panel" type="Panel" parent="InventoryOverlay"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 90.0
+offset_right = 950.0
+offset_bottom = 630.0
+
+[node name="Title" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 600.0
+offset_bottom = 46.0
+text = "背包"
+
+[node name="MaterialTitle" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 64.0
+offset_right = 290.0
+offset_bottom = 94.0
+text = "材料"
+
+[node name="StoryTitle" type="Label" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 64.0
+offset_right = 600.0
+offset_bottom = 94.0
+text = "剧情物品"
+
+[node name="MaterialList" type="VBoxContainer" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 100.0
+offset_right = 290.0
+offset_bottom = 500.0
+
+[node name="StoryList" type="VBoxContainer" parent="InventoryOverlay/Panel"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 100.0
+offset_right = 600.0
+offset_bottom = 500.0

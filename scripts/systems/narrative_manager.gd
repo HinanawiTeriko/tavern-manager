@@ -119,6 +119,7 @@ func _action_result(accepted: bool, feedback: String, interaction_closed: bool =
 func load_npc_data() -> void:
 	dialogue_vars["has_sleep_powder"] = false
 	dialogue_vars["ryan_informed"] = false
+	dialogue_vars["ryan_warhammer_lead"] = false
 	dialogue_vars["ryan_has_alternative"] = false
 	dialogue_vars["ryan_drugged"] = false
 	dialogue_vars["ryan_interaction_closed"] = false

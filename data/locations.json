@@ -10,6 +10,7 @@
       "rewards": [],
       "description": "血斧小队正在招募北矿道护送任务。",
       "dayMin": 2,
+      "requiresFlag": "ryan_warhammer_lead",
       "repeatable": false,
       "unlocksFlag": "mine_clue",
       "result": "你记下了血斧小队的委托，废弃矿道出现了可疑线索。"
@@ -20,7 +21,6 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "documents": ["bloodied_contract"],
       "description": "北矿道深处散落着战斗痕迹。",
       "dayMin": 2,
       "repeatable": false,

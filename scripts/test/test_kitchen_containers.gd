@@ -8,6 +8,8 @@ func _ready() -> void:
 	_test_meat_doneness()
 	_test_meat_orientation()
 	_test_pot_stir_progress()
+	_test_pot_pop_last_item()
+	_test_barrel_pop_last_ingredient()
 	_test_pot_intake_requires_center_inside_mouth()
 	_test_grill_continues_searing_cooked_items()
 	_test_pot_unfreezes_while_held()
@@ -59,6 +61,35 @@ func _test_pot_stir_progress() -> void:
 	_ok(state.ingredients() == ["meat_raw", "ale"], "pot should preserve ingredient order for caller")
 	state.clear()
 	_ok(state.ingredients().is_empty(), "clear should remove consumed ingredients")
+
+
+func _test_pot_pop_last_item() -> void:
+	var state = _new_state()
+	state.configure_pot(3.0)
+	state.add_item("ale")
+	state.add_item("herb")
+	state.add_stir(2.0)
+	_ok(state.pop_last_item() == "herb", "pot pops newest ingredient first")
+	_ok(state.ingredients() == ["ale"], "pot keeps older ingredients after pop")
+	state.add_stir(1.0)
+	_ok(not state.is_ready(), "pot pop resets prior stir progress")
+	_ok(state.pop_last_item() == "ale", "pot pops remaining ingredient")
+	_ok(state.pop_last_item() == "", "empty pot pop is a no-op")
+
+
+func _test_barrel_pop_last_ingredient() -> void:
+	var scene := load("res://scenes/ui/Tavern.tscn") as PackedScene
+	_ok(scene != null, "Tavern scene should load for barrel pop test")
+	var tavern := scene.instantiate()
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	brewery._pending_keys = ["ale", "herb"]
+	brewery._shake.shake_count = 3
+	_ok(brewery.pop_last_ingredient() == "herb", "barrel pops newest ingredient first")
+	_ok(brewery._pending_keys == ["ale"], "barrel keeps older ingredients after pop")
+	_ok(brewery._shake.shake_count == 0, "barrel pop resets prior shake progress")
+	_ok(brewery.pop_last_ingredient() == "ale", "barrel pops remaining ingredient")
+	_ok(brewery.pop_last_ingredient() == "", "empty barrel pop is a no-op")
+	tavern.free()
 
 
 func _test_pot_intake_requires_center_inside_mouth() -> void:

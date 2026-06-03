@@ -12,7 +12,9 @@ func _ready() -> void:
 	await _test_inventory_spawn_deducts_and_recovers()
 	await _test_inventory_overlay_lists_and_drop()
 	await _test_document_overlay_opens_ledger()
+	await _test_container_ejection_spawns_lifo_desk_items()
 	await _test_spoon_renders_below_container_visuals()
+	await _test_settings_menu_entry()
 	_finish()
 
 
@@ -94,11 +96,22 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	var overlay = tavern.get_node("InventoryOverlay")
 	var items := tavern.get_node("BarWorkspace/World/Items")
 	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var slot0 := tavern.get_node("ShortcutBar/Slot0") as ColorRect
+	_ok(slot0.get_node_or_null("BrushBackground") != null, "shortcut slot uses brush background")
+	_ok(slot0.get_node_or_null("Icon") != null, "shortcut slot renders an icon node")
+	_ok(slot0.get_node_or_null("Count") != null, "shortcut slot renders a count node")
 	gm.add_to_inventory("sleep_powder", 1)
 	tavern.toggle_inventory_overlay()
 
 	_ok(overlay.visible, "inventory overlay opens")
 	_ok(tavern.is_menu_open(), "inventory overlay pauses tavern updates")
+	var inventory_panel := overlay.get_node("Panel") as Panel
+	_ok(inventory_panel.has_theme_stylebox_override("panel"), "inventory overlay uses brush panel art")
+	var material_list := overlay.get_node("Panel/MaterialList") as VBoxContainer
+	_ok(material_list.get_child_count() > 0, "inventory material list renders rows")
+	var first_inventory_row := material_list.get_child(0) as InventoryDragRow
+	_ok(first_inventory_row.has_theme_stylebox_override("normal"), "inventory rows use brush art")
+	_ok(first_inventory_row.icon != null, "inventory rows render item icons or color swatches")
 	_ok(overlay.get_material_keys().has("ale"), "inventory overlay lists materials")
 	_ok(overlay.get_story_keys().has("sleep_powder"), "inventory overlay lists story items")
 	_ok(not bar._slot_item_keys.has("sleep_powder"), "shortcut bar excludes story items")
@@ -150,6 +163,91 @@ func _test_document_overlay_opens_ledger() -> void:
 	await get_tree().process_frame
 
 
+func _test_container_ejection_spawns_lifo_desk_items() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	brewery._pending_keys = ["ale", "herb"]
+	var before := items.get_child_count()
+	_right_click(bar, brewery.global_position)
+	_ok(items.get_child_count() == before + 1, "barrel right-click eject spawns one desk item")
+	var spawned = items.get_child(items.get_child_count() - 1)
+	_ok(spawned.item_key == "herb", "barrel ejects newest ingredient first")
+	_ok(brewery._pending_keys == ["ale"], "barrel keeps older ingredient")
+
+	var pot = tavern.get_node("BarWorkspace/World/Pot")
+	bar.configure_day(3)
+	# CollisionShape2D toggles are deferred; wait until the broadphase sees the day-3 pot.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_ok(pot.visible, "day 3 enables pot visibility for right-click test")
+	_ok(not pot.get_node("PickupArea/Shape").disabled, "day 3 enables pot pickup collision for right-click test")
+	_ok(bar._hit_test_kitchen_container(pot.global_position) == pot, "pot center resolves through kitchen-container hit test")
+	pot._state.add_item("ale")
+	pot._state.add_item("meat_raw")
+	before = items.get_child_count()
+	_right_click(bar, pot.global_position)
+	_ok(items.get_child_count() == before + 1, "pot right-click eject spawns one desk item")
+	spawned = items.get_child(items.get_child_count() - 1)
+	_ok(spawned.item_key == "meat_raw", "pot ejects newest ingredient first")
+	_ok(pot._state.ingredients() == ["ale"], "pot keeps older ingredient")
+
+	before = items.get_child_count()
+	bar._eject_last_ingredient(pot)
+	bar._eject_last_ingredient(pot)
+	_ok(items.get_child_count() == before + 1, "empty pot eject is a no-op")
+	_ok(tavern.get_node_or_null("BarWorkspace/World/WashBasin") == null, "wash basin node is removed")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_settings_menu_entry() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var settings_panel = tavern.get_node_or_null("SettingsPanel")
+	_ok(settings_panel != null, "tavern instances a settings panel")
+	var btn_settings = tavern.get_node_or_null("OverlayMenu/TabBtns/BtnSettings")
+	_ok(btn_settings != null, "tavern menu has a settings tab button")
+	_ok(btn_settings != null and btn_settings.text == "设置", "settings tab button reads 设置")
+
+	tavern.toggle_menu()
+	_ok(tavern.get_node("OverlayMenu").visible, "overlay menu opens before settings")
+	var shortcut_bg := tavern.get_node("ShortcutBarBg") as Panel
+	_ok(shortcut_bg.has_theme_stylebox_override("panel"), "shortcut bar background uses brush art")
+	tavern._open_settings()
+	await get_tree().process_frame
+	_ok(settings_panel.visible, "tavern settings entry opens the panel")
+	_ok(not tavern.get_node("OverlayMenu").visible, "opening settings hides the overlay menu")
+	_ok(tavern.is_menu_open(), "open settings panel keeps gameplay input blocked")
+	# 防回归：在 Node2D 根下实例化的设置面板必须居中而不是歪斜。
+	var inner_panel := settings_panel.get_node("Shade/Panel") as Control
+	_ok(inner_panel.global_position.distance_to(Vector2(400.0, 140.0)) < 1.0,
+		"tavern settings panel is centered, not skewed: got %s" % inner_panel.global_position)
+	settings_panel.close()
+	await get_tree().process_frame
+	_ok(not settings_panel.visible, "settings panel closes")
+	_ok(tavern.get_node("OverlayMenu").visible, "closing settings restores the overlay menu")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _right_click(bar: BarWorkspace, pos: Vector2) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	event.position = pos
+	event.global_position = pos
+	bar._unhandled_input(event)
+
+
 func _test_spoon_renders_below_container_visuals() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
@@ -185,14 +283,6 @@ func _test_spoon_renders_below_container_visuals() -> void:
 		"spoon tip remains submerged after passing through Brewery mouth")
 	_ok(spoon.z_index < 0,
 		"spoon remains below Brewery visual after passing through mouth: got z_index %d" % spoon.z_index)
-
-	var wash_basin := tavern.get_node("BarWorkspace/World/WashBasin") as Area2D
-	spoon.global_position = wash_basin.global_position - tip_offset
-	bar._update_spoon_depth()
-	_ok(spoon.z_index < 0,
-		"spoon renders below WashBasin while inside: got z_index %d" % spoon.z_index)
-	_ok(spoon.z_index > background.z_index,
-		"spoon remains above Tavern background inside WashBasin: spoon %d, background %d" % [spoon.z_index, background.z_index])
 
 	spoon.global_position = Vector2(120.0, 120.0)
 	bar._update_spoon_depth()

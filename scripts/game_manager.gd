@@ -18,6 +18,7 @@ var day_map: DayMapSystem
 var save_sys: SaveSystem
 var ryan_slice: RyanSliceSystem
 var audio: AudioManager
+var settings: SettingsManager
 
 # Inventory
 var inventory_sys: InventorySystem
@@ -86,6 +87,8 @@ func _ready() -> void:
 	day_map = DayMapSystem.new()
 	day_map.load_data()
 	save_sys = SaveSystem.new()
+	settings = SettingsManager.new()
+	settings.load_and_apply()
 	ryan_slice = RyanSliceSystem.new()
 	audio = AudioManager.new()
 	audio.name = "AudioManager"
@@ -187,6 +190,7 @@ func register_view(view: Node) -> void:
 func start_day_map(day: int) -> void:
 	day_map.start_day(day)
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
+	day_map.set_lead_flag("ryan_warhammer_lead", bool(narrative.get_var("ryan_warhammer_lead")))
 	for entry in ryan_slice.day_start_ledger_entries(day):
 		if documents.add_ledger_entry_once(String(entry)):
 			play_audio_event("new_document")
@@ -200,11 +204,24 @@ func visit_day_location(location_id: String) -> Dictionary:
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
-		var id := String(document_id)
-		var already_owned := documents.owns_document(id)
-		if documents.grant_document(id) and not already_owned:
-			play_audio_event("new_document")
+		grant_mine_document(String(document_id))
 	return result
+
+
+func grant_mine_document(document_id: String) -> bool:
+	# 矿道场景捡起委托书时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
+	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
+	var id := String(document_id)
+	var already_owned := documents.owns_document(id)
+	var newly := documents.grant_document(id) and not already_owned
+	if newly:
+		play_audio_event("new_document")
+		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
+		if inventory_sys.is_story_item(id):
+			add_to_inventory(id, 1)
+		# 同步到大世界：拥有文档即视为已获取线索（无需先阅读），公会柜台等依赖 requiresRead 的地点可解锁
+		day_map.set_document_owned(id, true)
+	return newly
 
 
 func enter_night_from_day_map() -> void:
@@ -621,13 +638,13 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 
 
 func request_open_document(document_id: String) -> Dictionary:
-	# 剧情证据首次读过后进入剧情物品栏（spec §8.3），之后可从背包拖出递交给 NPC。
+	# 首次阅读 evidence 类型文档时，将其标题和正文记入账本。
 	var first_read: bool = documents.owns_document(document_id) and not documents.is_read(document_id)
 	var document := documents.request_open(document_id)
 	if document.is_empty():
 		return document
-	if first_read and String(document.get("kind", "")) == "evidence" and inventory_sys.is_story_item(document_id):
-		add_to_inventory(document_id, 1)
+	if first_read and String(document.get("kind", "")) == "evidence":
+		documents.add_document_to_ledger(document_id)
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.open_document(document)
 	elif _day_map_view != null and is_instance_valid(_day_map_view):
@@ -788,6 +805,7 @@ func _default_new_game_state() -> Dictionary:
 func _fresh_narrative_vars() -> Dictionary:
 	return {
 		"has_sleep_powder": false, "ryan_informed": false, "ryan_has_alternative": false,
+		"ryan_warhammer_lead": false,
 		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
 		"aff_ryan": 0, "aff_mira": 5,
 	}

@@ -15,6 +15,7 @@ var _end_night_btn: Button
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
+var _settings_panel: SettingsPanel
 var _gm
 
 const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
@@ -41,10 +42,14 @@ func _ready() -> void:
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
 	_document_overlay = $DocumentOverlay
+	_settings_panel = $SettingsPanel
+	_settings_panel.configure(_gm.settings)
+	_settings_panel.closed.connect(_on_settings_closed)
 
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
+	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
 	var tidy_btn = $OverlayMenu/BtnTidy
 	if tidy_btn != null and not tidy_btn.pressed.is_connected(_on_tidy_desk_pressed):
 		tidy_btn.pressed.connect(_on_tidy_desk_pressed)
@@ -89,21 +94,20 @@ func _apply_theme() -> void:
 	# 添加教程按钮到菜单
 	_add_tutorial_button_to_menu()
 
-	var parchment_tex = ThemeColors.instance().panel_parchment()
-	if parchment_tex != null:
-		_menu_panel.add_theme_stylebox_override("panel", parchment_tex)
-	else:
-		_menu_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
+	ThemeColors.style_brush_panel(_menu_panel)
 
-	ThemeColors.style_button($OverlayMenu/TabBtns/BtnRecipes, 14)
-	ThemeColors.style_button($OverlayMenu/TabBtns/BtnBackpack, 14)
-	ThemeColors.style_button($OverlayMenu/CloseBtn, 14)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnRecipes)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnBackpack)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnSettings)
+	ThemeColors.style_brush_button($OverlayMenu/BtnTidy, 14)
+	ThemeColors.style_brush_button($OverlayMenu/CloseBtn, 14)
 
 	var recipe_panel = $OverlayMenu/RecipePanel
 	var backpack_panel = $OverlayMenu/BackpackPanel
 	recipe_panel.visible = true
 	backpack_panel.visible = false
-	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false)
+	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
+	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
 	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
 
@@ -139,17 +143,9 @@ func _apply_theme() -> void:
 			sb.border_color = ThemeColors.PANEL_BORDER
 			top_panel_bg.add_theme_stylebox_override("panel", sb)
 
-	var shortcut_bg_tex = ThemeColors.instance().bar_shortcut_bg()
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
-		if shortcut_bg_tex != null:
-			shortcut_bg.add_theme_stylebox_override("panel", shortcut_bg_tex)
-		else:
-			var sb = StyleBoxFlat.new()
-			sb.bg_color = Color(ThemeColors.SURFACE_LOW, 0.8)
-			sb.border_width_top = 1
-			sb.border_color = ThemeColors.PANEL_BORDER
-			shortcut_bg.add_theme_stylebox_override("panel", sb)
+		ThemeColors.style_brush_panel(shortcut_bg)
 
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
@@ -221,7 +217,24 @@ func toggle_menu() -> void:
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
 		or _inventory_overlay.visible \
-		or _document_overlay.visible
+		or _document_overlay.visible \
+		or (_settings_panel != null and _settings_panel.visible)
+
+
+func _open_settings() -> void:
+	_select_overlay_tab($OverlayMenu/TabBtns/BtnSettings)
+	_menu_panel.visible = false
+	_settings_panel.open()
+
+
+func _on_settings_closed() -> void:
+	_menu_panel.visible = true
+
+
+func _select_overlay_tab(selected: Button) -> void:
+	for tab_button in $OverlayMenu/TabBtns.get_children():
+		if tab_button is Button:
+			ThemeColors.set_brush_selected(tab_button, tab_button == selected)
 
 
 func toggle_inventory_overlay() -> void:
@@ -252,7 +265,9 @@ func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> v
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
 		return
-	if _document_overlay.visible:
+	if _settings_panel.visible:
+		_settings_panel.close()
+	elif _document_overlay.visible:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
@@ -272,7 +287,7 @@ func _add_tutorial_button_to_menu() -> void:
 	tutorial_btn.name = "BtnTutorial"
 	tutorial_btn.text = "教程"
 	tutorial_btn.custom_minimum_size = Vector2(60, 30)
-	ThemeColors.style_button(tutorial_btn, 14)
+	ThemeColors.style_brush_tab_button(tutorial_btn)
 	tutorial_btn.pressed.connect(_on_tutorial_btn_pressed)
 	tab_btns.add_child(tutorial_btn)
 
@@ -308,6 +323,16 @@ func trigger_craft_tutorial() -> void:
 
 ## 配方表：按 recipes.json 显示「产物 价格 ← 配料 [容器]」，让玩家能学会怎么做。
 ## 需购买且未解锁的配方标灰并注明（需解锁）。
+func _new_brush_recipe_row() -> Dictionary:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0.0, 36.0)
+	ThemeColors.style_brush_content_panel(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	return {"panel": panel, "row": row}
+
+
 func _build_recipe_list() -> void:
 	var recipe_list = _menu_panel.get_node("RecipePanel/RecipeList")
 	for child in recipe_list.get_children():
@@ -325,9 +350,9 @@ func _build_recipe_list() -> void:
 		var product_data: Dictionary = _gm.craft.get_item(product_key)
 		var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
 
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.custom_minimum_size = Vector2(0, 32)
+		var recipe_row := _new_brush_recipe_row()
+		var row_panel := recipe_row["panel"] as PanelContainer
+		var row := recipe_row["row"] as HBoxContainer
 
 		var icon_tex = _gm.try_load_material_icon(product_key)
 		if icon_tex != null:
@@ -360,11 +385,10 @@ func _build_recipe_list() -> void:
 
 		var name_label = Label.new()
 		name_label.text = " " + text
-		name_label.add_theme_color_override("font_color", Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 14)
+		ThemeColors.style_brush_label(name_label, 14, Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
 		row.add_child(name_label)
 
-		recipe_list.add_child(row)
+		recipe_list.add_child(row_panel)
 
 func _build_backpack_list() -> void:
 	var inventory: Dictionary = _gm.inventory

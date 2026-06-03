@@ -19,7 +19,7 @@ func _ready() -> void:
 	var text := JSON.stringify(parsed)
 	for stale in ["[+]", "[-]", "分配体力", "合成台", "混合区", "结果槽", "撒粉区"]:
 		_ok(not text.contains(stale), "stale tutorial term removed: " + stale)
-	for required in ["访问", "酒桶", "清洗盆", "整理桌面", "Tab", "E"]:
+	for required in ["访问", "酒桶", "右键", "整理桌面", "Tab", "E"]:
 		_ok(text.contains(required), "Ryan slice tutorial mentions: " + required)
 	_finish()
 

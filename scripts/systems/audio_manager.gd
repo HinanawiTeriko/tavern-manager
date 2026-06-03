@@ -13,7 +13,6 @@ const EVENT_PATHS := {
 	"serve_fail": "res://assets/audio/placeholders/serve_fail.wav",
 	"page_turn": "res://assets/audio/placeholders/page_turn.wav",
 	"new_document": "res://assets/audio/placeholders/new_document.wav",
-	"wash_complete": "res://assets/audio/placeholders/wash_complete.wav",
 }
 
 var _active_players: Array[AudioStreamPlayer] = []
