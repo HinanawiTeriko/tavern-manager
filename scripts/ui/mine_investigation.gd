@@ -167,7 +167,13 @@ func _spill_backpack() -> void:
 
 
 func _take_contract() -> void:
-	pass  # === Task 7 ===
+	if _contract_taken:
+		return
+	_contract_taken = true
+	var gm = get_node("/root/GameManager")
+	gm.grant_mine_document("bloodied_contract")      # 授予 + new_document 音效
+	gm.request_open_document("bloodied_contract")    # 标记已读 + 入剧情背包 + 弹 DocumentOverlay
+	_obs_label.text = "你展开那张纸——是一份染血的护送委托书。"
 
 
 # ============================================================
