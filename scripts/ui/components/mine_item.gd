@@ -20,7 +20,11 @@ func setup(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color, p_lab
 	observation = p_observation
 	var hx := p_size.x * 0.5
 	var hy := p_size.y * 0.5
-	(_shape.shape as RectangleShape2D).size = p_size
+	# 每个实例独立的碰撞形状——.tscn 里的 sub_resource 在多实例间默认共享，
+	# 原地改 size 会牵连其他 MineItem；这里换成全新 RectangleShape2D 隔离。
+	var rect := RectangleShape2D.new()
+	rect.size = p_size
+	_shape.shape = rect
 	_visual.polygon = PackedVector2Array([Vector2(-hx, -hy), Vector2(hx, -hy), Vector2(hx, hy), Vector2(-hx, hy)])
 	_visual.color = p_color
 	_label.text = p_label
