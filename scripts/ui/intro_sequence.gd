@@ -25,7 +25,6 @@ static func load_intro(path: String) -> Dictionary:
 
 
 @onready var _background: Sprite2D = $Background
-@onready var _gradient: ColorRect = $GradientOverlay
 @onready var _narration: Label = $NarrationLabel
 @onready var _skip_hint: Label = $SkipHint
 
@@ -60,6 +59,7 @@ func _play() -> void:
 		var hold := float(beat.get("hold", 2.0))
 		var bg_path := String(beat.get("bg", ""))
 		var cam = beat.get("camera", null)
+		# 镜头只在背景图成功载入时生效：camera 段依附于真实背景，bg 为空时被忽略
 		var has_cam: bool = _bg_cache.has(bg_path) and cam != null
 		# 换拍起点：设背景纹理 + 镜头起点(from)，再设旁白文字
 		_timeline.tween_callback(func(): _apply_background(bg_path, cam))
