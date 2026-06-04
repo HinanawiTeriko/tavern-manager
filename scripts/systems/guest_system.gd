@@ -34,14 +34,18 @@ func _init(available_orders_callable: Callable) -> void:
 	_load_reaction_pools()
 
 func _load_reaction_pools() -> void:
-	var path := "res://data/guest_reactions.json"
-	if not FileAccess.file_exists(path):
-		push_error("[GuestSystem] 缺少 guest_reactions.json")
+	var file = FileAccess.open("res://data/guest_reactions.json", FileAccess.READ)
+	if file == null:
+		push_error("[GuestSystem] guest_reactions.json 未找到")
 		return
-	var f := FileAccess.open(path, FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
-	if parsed is Dictionary:
-		_reaction_pools = parsed
+	var json_text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary:
+		push_error("[GuestSystem] guest_reactions.json 解析失败或格式错误")
+		return
+	_reaction_pools = data
+	print("[GuestSystem] 加载 ", _reaction_pools.size(), " 组反应台词")
 
 func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 	if not has_guest_flag and not menu_open:
