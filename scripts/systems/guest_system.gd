@@ -26,10 +26,22 @@ var orders_failed: int = 0
 var _normal_order_limit: int = 0
 var _normal_orders_spawned: int = 0
 var _normal_completion_emitted: bool = false
+var _reaction_pools: Dictionary = {}
 
 func _init(available_orders_callable: Callable) -> void:
 	_get_available_orders = available_orders_callable
 	_rng.randomize()
+	_load_reaction_pools()
+
+func _load_reaction_pools() -> void:
+	var path := "res://data/guest_reactions.json"
+	if not FileAccess.file_exists(path):
+		push_error("[GuestSystem] 缺少 guest_reactions.json")
+		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	var parsed = JSON.parse_string(f.get_as_text())
+	if parsed is Dictionary:
+		_reaction_pools = parsed
 
 func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 	if not has_guest_flag and not menu_open:
@@ -116,3 +128,11 @@ func reset_daily() -> void:
 	guests_served_today = 0
 	orders_success = 0
 	orders_failed = 0
+
+## 取某结果（success/fail_wrong/fail_weird/impatient）的随机客人反应台词。
+## npc_id 预留 per-npc override，暂未实现内容。池缺失时返回安全兜底。
+func get_reaction_line(outcome: String, _npc_id: String = "") -> String:
+	var pool = _reaction_pools.get(outcome, [])
+	if pool is Array and pool.size() > 0:
+		return String(pool[_rng.randi() % pool.size()])
+	return "「……」"
