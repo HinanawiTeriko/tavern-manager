@@ -31,6 +31,9 @@ var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
 var _guest_lingering: bool = false
 
+# 开场交接：刚看完开场后置位，DayMap 一次性消费以走 match-cut 拉镜
+var _pending_intro_handoff: bool = false
+
 # Scene refs
 var _tavern_view = null
 var _day_map_view = null
@@ -816,6 +819,12 @@ func continue_game() -> void:
 func restart_current_day() -> void:
 	# 只有日初快照，重开当天 == 加载该快照（spec §12 "从稳定初始状态开始"）。
 	continue_game()
+
+## 一次性消费「刚看完开场」标志：返回是否应走 match-cut 拉镜，读后即清。
+func consume_intro_handoff() -> bool:
+	var v := _pending_intro_handoff
+	_pending_intro_handoff = false
+	return v
 
 func new_game() -> void:
 	save_sys.clear()

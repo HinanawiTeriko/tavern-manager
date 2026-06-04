@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_load_intro()
+	_test_handoff_flag()
 	_finish()
 
 
@@ -35,3 +36,13 @@ func _test_load_intro() -> void:
 	_ok(beats[beats.size() - 1].get("camera", null) != null, "last beat carries a camera segment")
 	var empty := IntroSequence.load_intro("res://data/__no_such__.json")
 	_ok(empty.get("beats", []).is_empty(), "missing file degrades to empty beats")
+
+
+func _test_handoff_flag() -> void:
+	var gm = get_node("/root/GameManager")
+	# 默认不交接
+	_ok(gm.consume_intro_handoff() == false, "handoff defaults to false")
+	# 置位后只兑现一次
+	gm._pending_intro_handoff = true
+	_ok(gm.consume_intro_handoff() == true, "first consume returns true")
+	_ok(gm.consume_intro_handoff() == false, "second consume returns false (one-shot)")
