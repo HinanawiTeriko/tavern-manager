@@ -133,18 +133,12 @@ func show_day(day: int, total_days: int) -> void:
 	_selected_id = ""
 	_update_gold_display()
 	_ensure_home_marker()
-	var gm2 = get_node("/root/GameManager")
-	if gm2 != null and gm2.consume_intro_handoff():
+	if gm.consume_intro_handoff():
 		_play_intro_handoff()
 	else:
 		_camera.position = HOME_POS
 		_refresh_map()
-
-	var tm = get_node_or_null("/root/TutorialManager")
-	if tm != null and not tm.daymap_first_shown:
-		tm.daymap_first_shown = true
-		tm._save_state()
-		call_deferred("_trigger_gather_tutorial")
+		_maybe_trigger_gather_tutorial()
 
 
 func _play_intro_handoff() -> void:
@@ -155,6 +149,16 @@ func _play_intro_handoff() -> void:
 	if not is_instance_valid(self):
 		return
 	_refresh_map()
+	# 教程在拉镜+亮相之后才触发，避免盖在空地图上（与 else 分支同序）
+	_maybe_trigger_gather_tutorial()
+
+
+func _maybe_trigger_gather_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.daymap_first_shown:
+		tm.daymap_first_shown = true
+		tm._save_state()
+		call_deferred("_trigger_gather_tutorial")
 
 
 func _refresh_map() -> void:
