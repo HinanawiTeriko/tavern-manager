@@ -830,7 +830,8 @@ func new_game() -> void:
 	save_sys.clear()
 	_apply_save_state(_default_new_game_state())
 	day_cycle.phase = DayCycleSystem.DayPhase.DAY
-	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
+	_pending_intro_handoff = true
+	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/IntroSequence.tscn")
 
 func _default_new_game_state() -> Dictionary:
 	return {

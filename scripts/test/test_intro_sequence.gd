@@ -46,3 +46,6 @@ func _test_handoff_flag() -> void:
 	gm._pending_intro_handoff = true
 	_ok(gm.consume_intro_handoff() == true, "first consume returns true")
 	_ok(gm.consume_intro_handoff() == false, "second consume returns false (one-shot)")
+	# new_game 应置位 handoff（场景切换为 deferred，本帧 quit 前不会真正切走）
+	gm.new_game()
+	_ok(gm.consume_intro_handoff() == true, "new_game sets handoff for match-cut")
