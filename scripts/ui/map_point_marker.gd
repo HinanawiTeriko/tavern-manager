@@ -7,16 +7,21 @@ extends Area2D
 signal clicked(location_id: String)
 
 const RADIUS := 18.0
-const COLOR_NORMAL := Color(0.85, 0.7, 0.35)      # 琥珀
+const HOME_RADIUS := 26.0
+const COLOR_NORMAL := Color(0.85, 0.7, 0.35)      # 琥珀（采集点）
 const COLOR_HOVER := Color(1.0, 0.88, 0.5)
 const COLOR_SELECTED := Color(1.0, 0.95, 0.7)
+const COLOR_HOME := Color(0.95, 0.62, 0.22)       # 暖金（酒馆/家）
+const COLOR_HOME_HOVER := Color(1.0, 0.78, 0.4)
 const RING_COLOR := Color(1.0, 0.95, 0.7, 0.9)
 
 var location_id: String = ""
 
 var _hovered: bool = false
 var _selected: bool = false
+var _is_home: bool = false
 var _label: Label
+var _shape: CollisionShape2D
 
 
 func setup(loc: Dictionary) -> void:
@@ -34,6 +39,7 @@ func _ready() -> void:
 	circle.radius = RADIUS + 6.0
 	shape.shape = circle
 	add_child(shape)
+	_shape = shape
 
 	_label = Label.new()
 	_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
@@ -54,18 +60,33 @@ func set_selected(value: bool) -> void:
 	queue_redraw()
 
 
+func set_home(value: bool) -> void:
+	_is_home = value
+	var r := _radius()
+	if _shape != null and _shape.shape is CircleShape2D:
+		(_shape.shape as CircleShape2D).radius = r + 6.0
+	if _label != null:
+		_label.position = Vector2(-60, r + 6)
+	queue_redraw()
+
+
+func _radius() -> float:
+	return HOME_RADIUS if _is_home else RADIUS
+
+
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		clicked.emit(location_id)
 
 
 func _draw() -> void:
-	var fill := COLOR_NORMAL
+	var r := _radius()
+	var fill := COLOR_HOME if _is_home else COLOR_NORMAL
 	if _selected:
 		fill = COLOR_SELECTED
 	elif _hovered:
-		fill = COLOR_HOVER
-	draw_circle(Vector2.ZERO, RADIUS, fill)
-	draw_arc(Vector2.ZERO, RADIUS, 0, TAU, 32, Color(0.2, 0.15, 0.1, 0.9), 3.0, true)
+		fill = COLOR_HOME_HOVER if _is_home else COLOR_HOVER
+	draw_circle(Vector2.ZERO, r, fill)
+	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(0.2, 0.15, 0.1, 0.9), 3.0, true)
 	if _selected:
-		draw_arc(Vector2.ZERO, RADIUS + 8, 0, TAU, 40, RING_COLOR, 3.0, true)
+		draw_arc(Vector2.ZERO, r + 8, 0, TAU, 40, RING_COLOR, 3.0, true)
