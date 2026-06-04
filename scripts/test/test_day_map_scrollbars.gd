@@ -33,18 +33,16 @@ func _finish() -> void:
 
 
 func _test_visible_scrollbars(view) -> void:
-	var location_scroll = view.get_node_or_null("MapArea/LocationScroll")
-	_ok(location_scroll is ScrollContainer, "gathering locations use a scroll container")
-	if location_scroll is ScrollContainer:
-		_ok(location_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_ALWAYS,
-			"gathering scrollbar is always visible")
-		_ok(location_scroll.get_node_or_null("LocationList") is VBoxContainer,
-			"gathering list belongs to the scrolling viewport")
+	# 采集区已从滚动列表改为交互地图：验证地图结构而非旧的 LocationScroll
+	_ok(view.get_node_or_null("MapWorld/Points") is Node2D,
+		"gathering uses an interactive map (MapWorld/Points)")
+	_ok(view.get_node_or_null("UILayer/DetailPanel") is Panel,
+		"map has a right-side detail panel")
 	var shop_scroll = view._shop_panel
 	_ok(shop_scroll is ScrollContainer, "shop uses a scroll container")
 	if shop_scroll is ScrollContainer:
 		_ok(shop_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_ALWAYS,
 			"shop scrollbar is always visible")
 		_ok(shop_scroll.get_v_scroll_bar().visible, "shop vertical scrollbar is visibly rendered")
-		_ok(shop_scroll.position.x + shop_scroll.size.x <= view.get_node("MapArea").size.x,
+		_ok(shop_scroll.position.x + shop_scroll.size.x <= view.get_node("UILayer/MapArea").size.x,
 			"shop scrollbar stays inside the visible map area")
