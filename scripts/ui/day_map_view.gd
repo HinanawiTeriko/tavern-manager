@@ -133,14 +133,28 @@ func show_day(day: int, total_days: int) -> void:
 	_selected_id = ""
 	_update_gold_display()
 	_ensure_home_marker()
-	_camera.position = HOME_POS
-	_refresh_map()
+	var gm2 = get_node("/root/GameManager")
+	if gm2 != null and gm2.consume_intro_handoff():
+		_play_intro_handoff()
+	else:
+		_camera.position = HOME_POS
+		_refresh_map()
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null and not tm.daymap_first_shown:
 		tm.daymap_first_shown = true
 		tm._save_state()
 		call_deferred("_trigger_gather_tutorial")
+
+
+func _play_intro_handoff() -> void:
+	# match-cut：相机先贴紧酒馆(紧 zoom)，再拉开到正常视距，然后才 reveal 地点
+	_camera.position = HOME_POS
+	_camera.zoom = Vector2(_camera.MAX_ZOOM, _camera.MAX_ZOOM)
+	await _camera.fly_to(HOME_POS, 1.0, 1.2).finished
+	if not is_instance_valid(self):
+		return
+	_refresh_map()
 
 
 func _refresh_map() -> void:
