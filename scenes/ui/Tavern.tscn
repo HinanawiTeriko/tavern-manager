@@ -342,6 +342,15 @@ offset_right = 1270.0
 offset_bottom = 25.0
 text = "欢迎！"
 
+[node name="StageCaption" type="Label" parent="."]
+offset_left = 240.0
+offset_top = 470.0
+offset_right = 1040.0
+offset_bottom = 510.0
+text = ""
+horizontal_alignment = 1
+modulate = Color(1, 1, 1, 0)
+
 [node name="DialogueOverlay" type="ColorRect" parent="."]
 visible = false
 offset_right = 1280.0

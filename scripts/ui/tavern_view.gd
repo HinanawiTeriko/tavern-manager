@@ -12,6 +12,8 @@ var _day_label: Label
 var _menu_panel: Panel
 var _message_label: Label
 var _end_night_btn: Button
+var _stage_caption: Label
+var _caption_tween: Tween
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
@@ -37,6 +39,7 @@ func _ready() -> void:
 	_day_label = $TopPanel/DayLabel
 	_message_label = $BottomBar/MessageLabel
 	_end_night_btn = $TopPanel/EndNightBtn
+	_stage_caption = $StageCaption
 	_dialogue_overlay = $DialogueOverlay
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
@@ -147,6 +150,9 @@ func _apply_theme() -> void:
 	if shortcut_bg != null:
 		ThemeColors.style_brush_panel(shortcut_bg)
 
+	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_stage_caption.add_theme_font_size_override("font_size", 15)
+
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
@@ -184,6 +190,27 @@ func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
 func show_message(text: String, color: Color) -> void:
 	_message_label.text = text
 	_message_label.add_theme_color_override("font_color", color)
+
+## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
+func customer_say(text: String) -> void:
+	_order_bubble.text = text
+	_order_bubble.visible = true
+
+## 出口②：舞台提示浮字——第三人称动作描写，淡入→停留→淡出。
+func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
+	_stage_caption.text = text
+	_stage_caption.add_theme_color_override("font_color", color)
+	if _caption_tween != null and _caption_tween.is_valid():
+		_caption_tween.kill()
+	_stage_caption.modulate.a = 0.0
+	_caption_tween = create_tween()
+	_caption_tween.tween_property(_stage_caption, "modulate:a", 1.0, 0.3)
+	_caption_tween.tween_interval(2.5)
+	_caption_tween.tween_property(_stage_caption, "modulate:a", 0.0, 0.5)
+
+## 出口③：打烊按钮可用状态（有客人/pending/上菜停留中时禁用）。
+func set_close_enabled(enabled: bool) -> void:
+	_end_night_btn.disabled = not enabled
 
 func configure_slice_day(day: int) -> void:
 	var bar = get_node_or_null("BarWorkspace")
