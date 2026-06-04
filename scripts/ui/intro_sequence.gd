@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const INTRO_DATA := "res://data/intro.json"
 const DAYMAP_SCENE := "res://scenes/ui/DayMap.tscn"
+const FADE_OUT := 0.6  # 每拍旁白淡出时长（淡入/停留由 beat 数据驱动）
 
 
 ## 解析开场数据为 {bgm, beats[]}。缺失/损坏文件优雅降级为空。静态以便单测。
@@ -58,7 +59,7 @@ func _play() -> void:
 		_timeline.tween_callback(func(): _narration.text = String(beat.get("text", "")))
 		_timeline.tween_property(_narration, "modulate:a", 1.0, fade_in)
 		_timeline.tween_interval(hold)
-		_timeline.tween_property(_narration, "modulate:a", 0.0, 0.6)
+		_timeline.tween_property(_narration, "modulate:a", 0.0, FADE_OUT)
 	_timeline.tween_callback(_exit_to_daymap)
 
 
