@@ -4,9 +4,15 @@ extends Node2D
 signal gathering_confirmed(assignments: Dictionary)
 
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
+const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
 
-var _location_scroll: ScrollContainer
-var _location_list: VBoxContainer
+var _camera: DayMapCamera
+var _points_root: Node2D
+var _detail_panel: Panel
+var _markers: Dictionary = {}      # location_id -> MapPointMarker
+var _selected_id: String = ""
+var _revealing: bool = false
+
 var _stamina_label: Label
 var _day_label: Label
 var _go_button: Button
@@ -16,14 +22,8 @@ var _continue_btn: Button
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
 
-var _assignments: Dictionary = {}
 var _stamina_left: int = 0
 var _max_stamina: int = 5
-var _locations: Array = []
-
-var _assign_labels: Dictionary = {}
-var _loc_add_btns: Dictionary = {}
-var _loc_sub_btns: Dictionary = {}
 
 var _mine_scene: Node = null
 var _hidden_for_mine: Array = []
@@ -41,95 +41,85 @@ var _recipe_list: VBoxContainer
 var _is_mira_shop: bool = false
 
 func _ready() -> void:
-	_location_scroll = $MapArea/LocationScroll
-	_location_list = $MapArea/LocationScroll/LocationList
-	_stamina_label = $TopBar/StaminaLabel
-	_day_label = $TopBar/DayLabel
-	_go_button = $GoButton
-	_result_panel = $ResultPanel
-	_result_label = $ResultPanel/ResultLabel
-	_continue_btn = $ResultPanel/ContinueBtn
-	_document_overlay = $DocumentOverlay
-	_inventory_overlay = $InventoryOverlay
+	_stamina_label = $UILayer/TopBar/StaminaLabel
+	_day_label = $UILayer/TopBar/DayLabel
+	_go_button = $UILayer/GoButton
+	_result_panel = $UILayer/ResultPanel
+	_result_label = $UILayer/ResultPanel/ResultLabel
+	_continue_btn = $UILayer/ResultPanel/ContinueBtn
+	_document_overlay = $UILayer/DocumentOverlay
+	_inventory_overlay = $UILayer/InventoryOverlay
 	_inventory_overlay.configure(get_node("/root/GameManager"))
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
 
-	var title_label = $MapArea/TitleLabel
-	ThemeColors.style_header(title_label, 26)
-	ThemeColors.style_header(_day_label, 22)
+	_camera = $MapWorld/Camera2D
+	_points_root = $MapWorld/Points
+	_detail_panel = $UILayer/DetailPanel
+
 	_stamina_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	_stamina_label.add_theme_font_size_override("font_size", 20)
-
+	ThemeColors.style_header(_day_label, 22)
 	ThemeColors.style_button(_go_button, 24)
 	ThemeColors.style_button(_continue_btn, 16)
-
 	_result_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
 	_result_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 	_result_label.add_theme_font_size_override("font_size", 18)
 
 	_go_button.pressed.connect(_on_go_pressed)
 	_continue_btn.pressed.connect(_on_continue)
-	$TopBar/DocumentsBtn.pressed.connect(_open_latest_document)
+	$UILayer/TopBar/DocumentsBtn.pressed.connect(_open_latest_document)
 
-	var exp_btn = $TopBar/ExpTavernBtn
+	var exp_btn = $UILayer/TopBar/ExpTavernBtn
 	ThemeColors.style_small_button(exp_btn, 13)
 	exp_btn.pressed.connect(_on_exp_tavern_pressed)
 
-	_gold_label = $TopBar/GoldLabel
+	_gold_label = $UILayer/TopBar/GoldLabel
 	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	_gold_label.add_theme_font_size_override("font_size", 20)
 
-	# Register with GameManager
+	_setup_detail_panel()
+
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
 
 	_build_tab_buttons()
 	_build_shop_ui()
+	_setup_background()
 
-	var bg_node = get_node_or_null("Background")
-	if bg_node != null:
-		# 使用程序化渐变，避免占位图上的 "DAYMAP" 文字
-		var grad = GradientTexture2D.new()
-		grad.width = 1280; grad.height = 720
-		var g = Gradient.new()
-		g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
-		g.offsets = [0.0, 1.0]
-		grad.gradient = g
-		bg_node.texture = grad
 
-func _load_locations() -> void:
-	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
-	if file == null:
-		push_error("[DayMapView] 无法加载 locations.json")
+func _setup_background() -> void:
+	var bg: Sprite2D = $MapWorld/Background
+	if bg == null:
 		return
-	var json_text = file.get_as_text()
-	file.close()
-	var data = JSON.parse_string(json_text)
-	if data == null:
-		push_error("[DayMapView] locations.json 格式无效")
-		return
-	_locations = []
-	for loc_dict in data["locations"]:
-		var loc = LocationData.new()
-		loc.id = loc_dict["id"]
-		loc.name = loc_dict["name"]
-		loc.cost = loc_dict["cost"]
-		loc.materials = []
-		for m in loc_dict["materials"]:
-			loc.materials.append(m)
-		loc.description = loc_dict["description"]
-		_locations.append(loc)
-	_max_stamina = data["maxStamina"]
-	_stamina_left = _max_stamina
+	var grad := GradientTexture2D.new()
+	grad.width = 2000; grad.height = 1400
+	var g := Gradient.new()
+	g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
+	g.offsets = [0.0, 1.0]
+	grad.gradient = g
+	bg.texture = grad
+
+
+func _setup_detail_panel() -> void:
+	_detail_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
+	var name_label: Label = _detail_panel.get_node("Name")
+	ThemeColors.style_header(name_label, 22)
+	for n in ["Desc", "Cost", "Yield"]:
+		var lbl: Label = _detail_panel.get_node(n)
+		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		lbl.add_theme_font_size_override("font_size", 16)
+	var go_here: Button = _detail_panel.get_node("GoHereBtn")
+	ThemeColors.style_button(go_here, 18)
+	go_here.pressed.connect(_on_go_here_pressed)
+	_detail_panel.visible = false
+
 
 func show_day(day: int, total_days: int) -> void:
 	_day_label.text = "第 %d/%d 天 — 白天·行动" % [day, total_days]
 	var gm = get_node("/root/GameManager")
 	_max_stamina = gm.day_map.max_stamina
 	_stamina_left = gm.day_map.stamina
-	_assignments.clear()
-	_reload_location_ui()
 	_update_stamina_display()
 	_result_panel.visible = false
 	_continue_btn.visible = true
@@ -141,59 +131,141 @@ func show_day(day: int, total_days: int) -> void:
 		_update_tab_appearance()
 	if _shop_panel != null:
 		_shop_panel.visible = false
-	var map_area = $MapArea
-	map_area.get_node("TitleLabel").visible = true
-	map_area.get_node("LocationScroll").visible = true
+	_camera.set_active(true)
+	_detail_panel.visible = false
+	_selected_id = ""
 	_update_gold_display()
+	_refresh_map()
 
-	# 教程：首次进入采集界面
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null and not tm.daymap_first_shown:
 		tm.daymap_first_shown = true
 		tm._save_state()
 		call_deferred("_trigger_gather_tutorial")
 
-func _build_location_ui() -> void:
-	for loc in _locations:
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		row.custom_minimum_size = Vector2(0, 52)
 
-		var info = VBoxContainer.new()
-		info.custom_minimum_size = Vector2(360, 0)
+func _refresh_map() -> void:
+	if _revealing:
+		return
+	var gm = get_node("/root/GameManager")
+	var locations: Array = gm.day_map.get_locations()
+	var current_ids := {}
+	for loc in locations:
+		current_ids[String(loc.get("id", ""))] = loc
 
-		var name_label = Label.new()
-		name_label.text = String(loc["name"]) + "  [" + str(loc["cost"]) + "体力]"
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 18)
-		info.add_child(name_label)
+	for id in _markers.keys():
+		if not current_ids.has(id):
+			_fade_out_marker(_markers[id])
+			_markers.erase(id)
+			if _selected_id == id:
+				_selected_id = ""
+				_detail_panel.visible = false
 
-		var desc_label = Label.new()
-		desc_label.text = String(loc["description"])
-		desc_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		desc_label.add_theme_font_size_override("font_size", 13)
-		info.add_child(desc_label)
+	for id in current_ids:
+		if not _markers.has(id) and gm.day_map.is_revealed(id):
+			_create_marker(current_ids[id], false)
 
-		row.add_child(info)
-
-		var visit_btn = Button.new()
-		visit_btn.text = "访问"
-		visit_btn.custom_minimum_size = Vector2(80, 36)
-		ThemeColors.style_button(visit_btn, 16)
-		var loc_id: String = loc["id"]
-		visit_btn.pressed.connect(_visit_location.bind(loc_id))
-		row.add_child(visit_btn)
-		_loc_add_btns[loc_id] = visit_btn
-
-		_location_list.add_child(row)
+	var new_locs: Array = gm.day_map.get_new_locations()
+	if not new_locs.is_empty():
+		_play_reveal_sequence(new_locs)
 
 
-func _reload_location_ui() -> void:
-	for child in _location_list.get_children():
-		child.queue_free()
-	_loc_add_btns.clear()
-	_locations = get_node("/root/GameManager").day_map.get_locations()
-	_build_location_ui()
+func _create_marker(loc: Dictionary, hidden: bool) -> MapPointMarker:
+	var marker: MapPointMarker = POINT_MARKER.instantiate()
+	_points_root.add_child(marker)
+	marker.setup(loc)
+	marker.clicked.connect(_on_marker_clicked)
+	marker.modulate.a = 0.0 if hidden else 1.0
+	_markers[String(loc.get("id", ""))] = marker
+	return marker
+
+
+func _fade_out_marker(marker: MapPointMarker) -> void:
+	if marker == null or not is_instance_valid(marker):
+		return
+	var tw := create_tween()
+	tw.tween_property(marker, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(marker.queue_free)
+
+
+func _play_reveal_sequence(new_locs: Array) -> void:
+	_revealing = true
+	var gm = get_node("/root/GameManager")
+	if new_locs.size() > 3:
+		_camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM)
+		await get_tree().create_timer(0.6).timeout
+		for loc in new_locs:
+			var m := _create_marker(loc, true)
+			_fade_in_marker(m)
+			gm.day_map.mark_revealed(String(loc.get("id", "")))
+	else:
+		for loc in new_locs:
+			var pos_arr: Array = loc.get("pos", [1000, 700])
+			var wp := Vector2(float(pos_arr[0]), float(pos_arr[1]))
+			await _camera.fly_to(wp, 1.0).finished
+			var m := _create_marker(loc, true)
+			_fade_in_marker(m)
+			gm.day_map.mark_revealed(String(loc.get("id", "")))
+			await get_tree().create_timer(0.3).timeout
+	_revealing = false
+
+
+func _fade_in_marker(marker: MapPointMarker) -> void:
+	var tw := create_tween()
+	tw.tween_property(marker, "modulate:a", 1.0, 0.35)
+	tw.parallel().tween_property(marker, "scale", Vector2(1.25, 1.25), 0.18)
+	tw.tween_property(marker, "scale", Vector2(1, 1), 0.18)
+
+
+func _on_marker_clicked(location_id: String) -> void:
+	_select_marker(location_id)
+
+
+func _select_marker(location_id: String) -> void:
+	if _selected_id != "" and _markers.has(_selected_id):
+		_markers[_selected_id].set_selected(false)
+	_selected_id = location_id
+	if _markers.has(location_id):
+		_markers[location_id].set_selected(true)
+	_show_detail(location_id)
+
+
+func _show_detail(location_id: String) -> void:
+	var gm = get_node("/root/GameManager")
+	var loc: Dictionary = {}
+	for l in gm.day_map.get_locations():
+		if String(l.get("id", "")) == location_id:
+			loc = l
+			break
+	if loc.is_empty():
+		_detail_panel.visible = false
+		return
+	_detail_panel.get_node("Name").text = String(loc.get("name", ""))
+	_detail_panel.get_node("Desc").text = String(loc.get("description", ""))
+	_detail_panel.get_node("Cost").text = "体力消耗：%d" % int(loc.get("cost", 1))
+	_detail_panel.get_node("Yield").text = _yield_text(loc)
+	_detail_panel.visible = true
+
+
+func _yield_text(loc: Dictionary) -> String:
+	var day := int(get_node("/root/GameManager").day_map.current_day)
+	var day_rewards: Dictionary = loc.get("dayRewards", {})
+	var items: Array = []
+	if day_rewards.has(str(day)):
+		items = day_rewards[str(day)]
+	elif not loc.get("rewards", []).is_empty():
+		items = loc.get("rewards", [])
+	elif not loc.get("materials", []).is_empty():
+		items = loc.get("materials", [])
+	if items.is_empty():
+		return "产出：—"
+	return "产出：" + ", ".join(PackedStringArray(items))
+
+
+func _on_go_here_pressed() -> void:
+	if _selected_id == "":
+		return
+	_visit_location(_selected_id)
 
 
 func _visit_location(location_id: String) -> void:
@@ -209,7 +281,9 @@ func _visit_location(location_id: String) -> void:
 	_continue_btn.text = "知道了"
 	_stamina_left = gm.day_map.stamina
 	_update_stamina_display()
-	_reload_location_ui()
+	_detail_panel.visible = false
+	_selected_id = ""
+	_refresh_map()
 
 
 func _enter_mine_investigation() -> void:
@@ -223,7 +297,7 @@ func _enter_mine_investigation() -> void:
 	add_child(_overlay_layer)
 	_document_overlay.reparent(_overlay_layer, false)
 	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
-	_hidden_for_mine = [$Background, $TopBar, $MapArea, $GoButton, $ResultPanel]
+	_hidden_for_mine = [$MapWorld, $UILayer/TopBar, $UILayer/GoButton, $UILayer/ResultPanel, _detail_panel]
 	for n in _hidden_for_mine:
 		if n != null:
 			n.visible = false
@@ -242,37 +316,9 @@ func _on_mine_finished() -> void:
 		if n != null and is_instance_valid(n):
 			n.visible = true
 	_hidden_for_mine.clear()
-	_reload_location_ui()
+	_camera.set_active(true)
+	_refresh_map()
 
-
-func _add_assignment(loc_id: String, cost: int, count_label: Label) -> void:
-	if _stamina_left < cost:
-		return
-	_stamina_left -= cost
-	var cur: int = _assignments.get(loc_id, 0)
-	_assignments[loc_id] = cur + 1
-	count_label.text = str(_assignments[loc_id])
-	_update_stamina_display()
-	if _loc_sub_btns.has(loc_id):
-		_loc_sub_btns[loc_id].disabled = false
-	if _stamina_left < 1:
-		for btn in _loc_add_btns.values():
-			btn.disabled = true
-
-func _remove_assignment(loc_id: String, cost: int, count_label: Label) -> void:
-	var cur: int = _assignments.get(loc_id, 0)
-	if cur < 1:
-		return
-	_stamina_left += cost
-	_assignments[loc_id] = cur - 1
-	if _assignments[loc_id] <= 0:
-		_assignments.erase(loc_id)
-	count_label.text = str(_assignments.get(loc_id, 0))
-	_update_stamina_display()
-	for btn in _loc_add_btns.values():
-		btn.disabled = false
-	if _loc_sub_btns.has(loc_id):
-		_loc_sub_btns[loc_id].disabled = not _assignments.has(loc_id)
 
 func _update_stamina_display() -> void:
 	_stamina_label.text = "体力：" + str(_stamina_left) + "/" + str(_max_stamina)
@@ -320,7 +366,7 @@ func _update_gold_display() -> void:
 		_gold_label.text = "金币：" + str(gm.economy.gold)
 
 func _build_tab_buttons() -> void:
-	var map_area = $MapArea
+	var map_area = $UILayer/MapArea
 	var tab_row = HBoxContainer.new()
 	tab_row.add_theme_constant_override("separation", 8)
 	tab_row.custom_minimum_size = Vector2(0, 40)
@@ -342,34 +388,22 @@ func _build_tab_buttons() -> void:
 	map_area.add_child(tab_row)
 	map_area.move_child(tab_row, 0)
 
-	var title_label = map_area.get_node("TitleLabel")
-	title_label.offset_top = 45
-	title_label.offset_bottom = 80
-	var location_scroll = map_area.get_node("LocationScroll")
-	location_scroll.offset_top = 95
-	location_scroll.offset_bottom = 420
-
 	_update_tab_appearance()
 
 func _switch_tab(shop: bool) -> void:
 	_is_shop_tab = shop
 	_update_tab_appearance()
-
-	var map_area = $MapArea
-	map_area.get_node("TitleLabel").visible = not shop
-	map_area.get_node("LocationScroll").visible = not shop
+	$MapWorld.visible = not shop
+	_detail_panel.visible = false
+	_camera.set_active(not shop)
 	_shop_panel.visible = shop
-
 	if shop:
 		_refresh_shop_ui()
-
-		# 教程：首次访问商店
 		var tm = get_node_or_null("/root/TutorialManager")
 		if tm != null and not tm.shop_first_visited:
 			tm.shop_first_visited = true
 			tm._save_state()
 			call_deferred("_trigger_shop_tutorial")
-
 	_go_button.visible = not shop
 
 func _update_tab_appearance() -> void:
@@ -386,7 +420,7 @@ func _build_shop_ui() -> void:
 	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	_shop_panel.visible = false
-	$MapArea.add_child(_shop_panel)
+	$UILayer/MapArea.add_child(_shop_panel)
 
 	var shop_content = VBoxContainer.new()
 	shop_content.add_theme_constant_override("separation", 8)
@@ -459,7 +493,7 @@ func _build_material_rows(gm) -> void:
 		var price: int = gm.shop.get_material_price(key, discount)
 		var price_label = Label.new()
 		if _is_mira_shop:
-			price_label.text = str(gm.shop.get_material_price(key)) + "\u2192" + str(price) + "\u91d1"
+			price_label.text = str(gm.shop.get_material_price(key)) + "→" + str(price) + "金"
 		else:
 			price_label.text = str(price) + "金"
 		price_label.custom_minimum_size = Vector2(70, 0)
