@@ -443,7 +443,9 @@ func _on_guest_left() -> void:
 		_important_npc_pending = false
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
-	_refresh_close_button()
+	# 注：guest_left 在 clear_guest 内 emit，此刻 has_guest 仍为 true（随后才置 false）。
+	# 必须延迟刷新，等 clear_guest 收尾后再算，否则按钮会卡在禁用，整段"等待中"无法打烊。
+	call_deferred("_refresh_close_button")
 
 func _on_dialogue_ended() -> void:
 	_is_dialogue_active = false
