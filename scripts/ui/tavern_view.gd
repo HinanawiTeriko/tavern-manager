@@ -10,7 +10,6 @@ var _gold_label: Label
 var _rep_label: Label
 var _day_label: Label
 var _menu_panel: Panel
-var _message_label: Label
 var _end_night_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
@@ -37,7 +36,6 @@ func _ready() -> void:
 	_gold_label = $TopPanel/GoldLabel
 	_rep_label = $TopPanel/ReputationLabel
 	_day_label = $TopPanel/DayLabel
-	_message_label = $BottomBar/MessageLabel
 	_end_night_btn = $TopPanel/EndNightBtn
 	_stage_caption = $StageCaption
 	_dialogue_overlay = $DialogueOverlay
@@ -61,8 +59,6 @@ func _ready() -> void:
 	_end_night_btn.pressed.connect(_on_end_night)
 
 	_apply_theme()
-
-	$BottomBar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_gm.register_view(self)
 
@@ -115,9 +111,6 @@ func _apply_theme() -> void:
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
-
-	_message_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_message_label.add_theme_font_size_override("font_size", 14)
 
 	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_bg.png")
 	var patience_fill = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_fill.png")
@@ -186,10 +179,6 @@ func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
 	_gold_label.text = "金币：" + str(gold)
 	_rep_label.text = "声望：" + str(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
-
-func show_message(text: String, color: Color) -> void:
-	_message_label.text = text
-	_message_label.add_theme_color_override("font_color", color)
 
 ## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
 func customer_say(text: String) -> void:
@@ -330,11 +319,11 @@ func _on_tutorial_btn_pressed() -> void:
 	   tm.is_group_completed("serve") and tm.is_group_completed("ledger"):
 		# 全部完成，点击重新开始
 		tm.replay_all()
-		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 	else:
 		# 还有未完成的教程，重新开始全部
 		tm.replay_all()
-		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 
 
 func trigger_craft_tutorial() -> void:
