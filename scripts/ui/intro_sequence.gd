@@ -4,6 +4,7 @@ extends CanvasLayer
 const INTRO_DATA := "res://data/intro.json"
 const DAYMAP_SCENE := "res://scenes/ui/DayMap.tscn"
 const FADE_OUT := 0.6  # 每拍旁白淡出时长（淡入/停留由 beat 数据驱动）
+const SCREEN_CENTER := Vector2(640, 360)  # 1280×720 基准屏幕中心，背景 Sprite 锚点
 
 
 ## 解析开场数据为 {bgm, beats[]}。缺失/损坏文件优雅降级为空。静态以便单测。
@@ -31,6 +32,7 @@ static func load_intro(path: String) -> Dictionary:
 var _beats: Array = []
 var _timeline: Tween = null
 var _exited: bool = false
+var _bg_cache: Dictionary = {}  # bg_path -> Texture，开场前预载，避免播放中同步 load 卡顿
 
 
 func _ready() -> void:
@@ -44,6 +46,7 @@ func _ready() -> void:
 
 	var data := load_intro(INTRO_DATA)
 	_beats = data.get("beats", [])
+	_preload_backgrounds()
 	_play()
 
 
@@ -55,25 +58,29 @@ func _play() -> void:
 	for beat in _beats:
 		var fade_in := float(beat.get("fade_in", 1.0))
 		var hold := float(beat.get("hold", 2.0))
-		# —— 背景 + L1 镜头（Ken Burns）——
 		var bg_path := String(beat.get("bg", ""))
 		var cam = beat.get("camera", null)
-		var has_bg := bg_path != "" and ResourceLoader.exists(bg_path)
-		_timeline.tween_callback(func(): _apply_background(bg_path, has_bg, cam))
-		if has_bg and cam != null:
+		var has_cam: bool = _bg_cache.has(bg_path) and cam != null
+		# 换拍起点：设背景纹理 + 镜头起点(from)，再设旁白文字
+		_timeline.tween_callback(func(): _apply_background(bg_path, cam))
+		_timeline.tween_callback(func(): _narration.text = String(beat.get("text", "")))
+		# 旁白淡入（作为并行锚点）
+		_timeline.tween_property(_narration, "modulate:a", 1.0, fade_in)
+		if has_cam:
+			# L1 镜头：与旁白可见窗口并行推拉。并行组时长 = fade_in+hold，
+			# 既完成镜头、又承担 hold，故此分支不再单独 tween_interval。
+			var dur := fade_in + hold
 			var to_dict: Dictionary = cam.get("to", {})
 			var to_zoom := float(to_dict.get("zoom", 1.0))
 			var to_off: Array = to_dict.get("offset", [0, 0])
-			var dur := float(beat.get("fade_in", 1.0)) + float(beat.get("hold", 2.0))
 			_timeline.parallel().tween_property(_background, "scale", Vector2(to_zoom, to_zoom),
 				dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			_timeline.parallel().tween_property(_background, "position",
-				Vector2(640, 360) + Vector2(float(to_off[0]), float(to_off[1])),
+				SCREEN_CENTER + Vector2(float(to_off[0]), float(to_off[1])),
 				dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		# 换拍：先设文字，再淡入，停留，淡出
-		_timeline.tween_callback(func(): _narration.text = String(beat.get("text", "")))
-		_timeline.tween_property(_narration, "modulate:a", 1.0, fade_in)
-		_timeline.tween_interval(hold)
+		else:
+			_timeline.tween_interval(hold)
+		# 旁白淡出
 		_timeline.tween_property(_narration, "modulate:a", 0.0, FADE_OUT)
 	_timeline.tween_callback(_exit_to_daymap)
 
@@ -99,15 +106,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _apply_background(bg_path: String, has_bg: bool, cam) -> void:
-	if has_bg:
-		_background.texture = load(bg_path)
+func _preload_backgrounds() -> void:
+	for beat in _beats:
+		var bg_path := String(beat.get("bg", ""))
+		if bg_path != "" and ResourceLoader.exists(bg_path):
+			_bg_cache[bg_path] = load(bg_path)
+
+
+func _apply_background(bg_path: String, cam) -> void:
+	if _bg_cache.has(bg_path):
+		_background.texture = _bg_cache[bg_path]
 		_background.visible = true
-		# 设镜头起点（from）
+		# 镜头起点(from)
 		var from_dict: Dictionary = (cam.get("from", {}) if cam != null else {})
 		var from_zoom := float(from_dict.get("zoom", 1.0))
 		var from_off: Array = from_dict.get("offset", [0, 0])
 		_background.scale = Vector2(from_zoom, from_zoom)
-		_background.position = Vector2(640, 360) + Vector2(float(from_off[0]), float(from_off[1]))
+		_background.position = SCREEN_CENTER + Vector2(float(from_off[0]), float(from_off[1]))
 	else:
 		_background.visible = false
