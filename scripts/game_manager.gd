@@ -29,6 +29,7 @@ var current_ledger_data: LedgerData = null
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
+var _guest_lingering: bool = false
 
 # Scene refs
 var _tavern_view = null
@@ -126,7 +127,7 @@ func _process(delta: float) -> void:
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
 		var menu_open = _tavern_view.is_menu_open()
-		if not _is_dialogue_active and not tutorial_active:
+		if not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
 			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
@@ -137,7 +138,7 @@ func register_view(view: Node) -> void:
 		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
-
+		_refresh_close_button()
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
 		var tm = _tutorial_manager
@@ -176,6 +177,8 @@ func register_view(view: Node) -> void:
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
+
+		_refresh_close_button()
 
 	elif view is DayMapView:
 		_day_map_view = view
@@ -291,6 +294,7 @@ func _on_phase_changed(phase: int) -> void:
 func _on_guest_arrived(guest: GuestData) -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
+	_refresh_close_button()
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	var display_name = guest.guest_name
@@ -356,16 +360,11 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		guests.record_order_success()
 		ryan_slice.record_order_success()
 		play_audio_event("serve_success")
-		_tavern_view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
 		if is_important:
 			narrative.set_var("serve_result", "success")
 	else:
 		guests.record_order_failed()
 		play_audio_event("serve_fail")
-		if item.get("type", "") == "product":
-			_tavern_view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
-		else:
-			_tavern_view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
 		if is_important:
 			narrative.set_var("serve_result", "fail")
 
@@ -385,16 +384,35 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 
 	guests.record_guest_served()
 
+	var outcome: String
+	if success:
+		outcome = "success"
+	elif item.get("type", "") == "product":
+		outcome = "fail_wrong"
+	else:
+		outcome = "fail_weird"
+
 	if is_important and npc_id != "":
 		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
 		if FileAccess.file_exists(post_path):
+			# 有 post.dialogue：对话本身就是反应，不再补气泡（消除冗余）。
 			_dialogue_phase = "post"
 			_tavern_view.set_dialogue_mode(true)
 			call_deferred("_start_dialogue_deferred", post_path)
 		else:
-			guests.clear_guest()
+			_react_then_clear(outcome)
 	else:
-		guests.clear_guest()
+		_react_then_clear(outcome)
+
+## 散客 / 无 post 重要客人：气泡反应一句 → 停留让玩家读到 → 清场。
+func _react_then_clear(outcome: String) -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		var line: String = guests.get_reaction_line(outcome, guests.current_guest.npc_id)
+		_tavern_view.customer_say(line)
+	_guest_lingering = true
+	await get_tree().create_timer(1.8).timeout
+	_guest_lingering = false
+	guests.clear_guest()
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
@@ -423,6 +441,7 @@ func _on_guest_left() -> void:
 		_important_npc_pending = false
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
+	_refresh_close_button()
 
 func _on_dialogue_ended() -> void:
 	_is_dialogue_active = false
@@ -441,18 +460,16 @@ func _on_dialogue_ended() -> void:
 			_tavern_view.set_dialogue_mode(false)
 
 func _on_patience_low() -> void:
-	if _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view.show_message("客人等得不耐烦了……", Color.ORANGE)
+	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		_tavern_view.customer_say(guests.get_reaction_line("impatient", guests.current_guest.npc_id))
 
 func _on_normal_orders_completed() -> void:
-	_show_message("本晚的有限订单已经完成，可以打烊了。", Color.LIME_GREEN)
+	_refresh_close_button()
 
 func end_night() -> void:
 	if day_cycle.phase != DayCycleSystem.DayPhase.NIGHT:
 		return
-	if guests.has_guest or _important_npc_pending:
-		if _tavern_view != null and is_instance_valid(_tavern_view):
-			_tavern_view.show_message("还有客人在等呢！", Color.ORANGE)
+	if guests.has_guest or _important_npc_pending or _guest_lingering:
 		return
 
 	var fates = narrative.get_today_npc_fates(economy.current_day)
@@ -533,17 +550,20 @@ func recover_desk_item_key(item_key: String) -> String:
 	return target
 
 
-## null 安全的提示输出（headless 测试无 _tavern_view）。
-func _show_message(text: String, color: Color = Color.WHITE) -> void:
-	if _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view.show_message(text, color)
+## 出口③：按钮可用 = 无客人 且 无 pending 且 不在上菜停留中。
+func _refresh_close_button() -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	var enabled := not guests.has_guest and not _important_npc_pending and not _guest_lingering
+	_tavern_view.set_close_enabled(enabled)
 
 
-## 把 resolve_action 的 feedback key 翻成玩家可见提示。
+## 把 resolve_action 的 feedback key 翻成玩家可见提示（出口②舞台浮字）。
 func _show_action_feedback(feedback: String) -> void:
 	if ACTION_FEEDBACK.has(feedback):
 		var entry: Array = ACTION_FEEDBACK[feedback]
-		_show_message(String(entry[0]), entry[1])
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			_tavern_view.show_stage_caption(String(entry[0]), entry[1])
 
 
 ## 当前客人订单 key（无客人返回 ""）。视图据此区分「正式上菜」与「叙事递交」。
@@ -608,7 +628,8 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 		var feedback: String = String(r.get("feedback", ""))
 		# 错误递交（递错人/不认得的物品）→ 自动回背包，不显示动作反馈
 		if feedback in ["unsupported_npc", "unsupported_story_item"]:
-			_show_message("他不需要这个，收回了吧。", Color.GRAY)
+			if _tavern_view != null and is_instance_valid(_tavern_view):
+				_tavern_view.show_stage_caption("他不需要这个，收回了吧。", Color.GRAY)
 			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
 		_show_action_feedback(feedback)
 		var accepted: bool = bool(r.get("accepted", false))
