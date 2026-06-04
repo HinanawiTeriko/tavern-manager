@@ -192,8 +192,7 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	_revealing = true
 	var gm = get_node("/root/GameManager")
 	if new_locs.size() > 3:
-		_camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM)
-		await get_tree().create_timer(0.6).timeout
+		await _camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM).finished
 		for loc in new_locs:
 			var m := _create_marker(loc, true)
 			_fade_in_marker(m)
