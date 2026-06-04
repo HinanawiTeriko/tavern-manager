@@ -29,7 +29,7 @@ func _gm():
 
 func _test_known_outcomes() -> void:
 	var g = _gm().guests
-	for outcome in ["success", "fail_wrong", "fail_weird", "impatient"]:
+	for outcome in ["success", "fail_wrong", "fail_weird", "impatient", "fail_abandon"]:
 		var line: String = g.get_reaction_line(outcome, "")
 		_ok(line != "", outcome + " 返回非空台词")
 

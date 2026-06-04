@@ -5,6 +5,7 @@ signal guest_arrived(guest)
 signal guest_left()
 signal patience_low()
 signal normal_orders_completed()
+signal guest_abandoned()
 
 const _normal_names: Array = [
 	"铁锤格鲁姆", "冰霜莱拉", "暗影德恩", "圣光凯尔", "疾风维克斯",
@@ -62,7 +63,7 @@ func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 			patience_low.emit()
 		if current_guest.patience <= 0.0:
 			record_order_failed()
-			clear_guest()
+			guest_abandoned.emit()
 
 func _spawn_normal() -> void:
 	if _normal_orders_spawned >= _normal_order_limit:

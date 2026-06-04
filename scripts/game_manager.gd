@@ -107,6 +107,7 @@ func _ready() -> void:
 	guests.guest_left.connect(_on_guest_left)
 	guests.patience_low.connect(_on_patience_low)
 	guests.normal_orders_completed.connect(_on_normal_orders_completed)
+	guests.guest_abandoned.connect(_on_guest_abandoned)
 
 	economy.changed.connect(_refresh_tavern_ui)
 	day_cycle.phase_changed.connect(_on_phase_changed)
@@ -463,6 +464,9 @@ func _on_dialogue_ended() -> void:
 func _on_patience_low() -> void:
 	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
 		_tavern_view.customer_say(guests.get_reaction_line("impatient", guests.current_guest.npc_id))
+
+func _on_guest_abandoned() -> void:
+	_react_then_clear("fail_abandon")
 
 func _on_normal_orders_completed() -> void:
 	_refresh_close_button()
