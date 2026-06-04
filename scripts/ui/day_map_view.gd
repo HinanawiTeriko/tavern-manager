@@ -6,16 +6,19 @@ signal gathering_confirmed(assignments: Dictionary)
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
 
+const HOME_ID := "__home__"
+const HOME_POS := Vector2(1000, 1080)
+
 var _camera: DayMapCamera
 var _points_root: Node2D
 var _detail_panel: Panel
 var _markers: Dictionary = {}      # location_id -> MapPointMarker
+var _home_marker: MapPointMarker
 var _selected_id: String = ""
 var _revealing: bool = false
 
 var _stamina_label: Label
 var _day_label: Label
-var _go_button: Button
 var _result_panel: Panel
 var _result_label: Label
 var _continue_btn: Button
@@ -43,7 +46,6 @@ var _is_mira_shop: bool = false
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
 	_day_label = $UILayer/TopBar/DayLabel
-	_go_button = $UILayer/GoButton
 	_result_panel = $UILayer/ResultPanel
 	_result_label = $UILayer/ResultPanel/ResultLabel
 	_continue_btn = $UILayer/ResultPanel/ContinueBtn
@@ -59,13 +61,11 @@ func _ready() -> void:
 	_stamina_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	_stamina_label.add_theme_font_size_override("font_size", 20)
 	ThemeColors.style_header(_day_label, 22)
-	ThemeColors.style_button(_go_button, 24)
 	ThemeColors.style_button(_continue_btn, 16)
 	_result_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
 	_result_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 	_result_label.add_theme_font_size_override("font_size", 18)
 
-	_go_button.pressed.connect(_on_go_pressed)
 	_continue_btn.pressed.connect(_on_continue)
 	$UILayer/TopBar/DocumentsBtn.pressed.connect(_open_latest_document)
 
@@ -123,9 +123,6 @@ func show_day(day: int, total_days: int) -> void:
 	_update_stamina_display()
 	_result_panel.visible = false
 	_continue_btn.visible = true
-	_go_button.disabled = false
-	_go_button.visible = true
-	_go_button.text = "进入夜晚"
 	_is_shop_tab = false
 	if _gather_tab_btn != null:
 		_update_tab_appearance()
@@ -135,6 +132,8 @@ func show_day(day: int, total_days: int) -> void:
 	_detail_panel.visible = false
 	_selected_id = ""
 	_update_gold_display()
+	_ensure_home_marker()
+	_camera.position = HOME_POS
 	_refresh_map()
 
 	var tm = get_node_or_null("/root/TutorialManager")
@@ -178,6 +177,18 @@ func _create_marker(loc: Dictionary, hidden: bool) -> MapPointMarker:
 	marker.modulate.a = 0.0 if hidden else 1.0
 	_markers[String(loc.get("id", ""))] = marker
 	return marker
+
+
+func _ensure_home_marker() -> void:
+	# 酒馆/家：常驻专用标记，不进 _markers、不参与采集 diff 与亮相
+	if _home_marker != null and is_instance_valid(_home_marker):
+		return
+	var marker: MapPointMarker = POINT_MARKER.instantiate()
+	_points_root.add_child(marker)
+	marker.setup({"id": HOME_ID, "name": "你的酒馆", "pos": [HOME_POS.x, HOME_POS.y]})
+	marker.set_home(true)
+	marker.clicked.connect(_on_marker_clicked)
+	_home_marker = marker
 
 
 func _fade_out_marker(marker: MapPointMarker) -> void:
@@ -229,15 +240,30 @@ func _on_marker_clicked(location_id: String) -> void:
 
 
 func _select_marker(location_id: String) -> void:
-	if _selected_id != "" and _markers.has(_selected_id):
-		_markers[_selected_id].set_selected(false)
+	_set_marker_selected(_selected_id, false)
 	_selected_id = location_id
-	if _markers.has(location_id):
-		_markers[location_id].set_selected(true)
+	_set_marker_selected(location_id, true)
 	_show_detail(location_id)
 
 
+func _set_marker_selected(id: String, value: bool) -> void:
+	if id == HOME_ID:
+		if _home_marker != null and is_instance_valid(_home_marker):
+			_home_marker.set_selected(value)
+	elif _markers.has(id):
+		_markers[id].set_selected(value)
+
+
 func _show_detail(location_id: String) -> void:
+	var go_here: Button = _detail_panel.get_node("GoHereBtn")
+	if location_id == HOME_ID:
+		_detail_panel.get_node("Name").text = "你的酒馆"
+		_detail_panel.get_node("Desc").text = "今晚开门营业，结束今天的白天。"
+		_detail_panel.get_node("Cost").text = ("还有 %d 点体力未用" % _stamina_left) if _stamina_left > 0 else ""
+		_detail_panel.get_node("Yield").text = ""
+		go_here.text = "开门营业"
+		_detail_panel.visible = true
+		return
 	var gm = get_node("/root/GameManager")
 	var loc: Dictionary = {}
 	for l in gm.day_map.get_locations():
@@ -251,6 +277,7 @@ func _show_detail(location_id: String) -> void:
 	_detail_panel.get_node("Desc").text = String(loc.get("description", ""))
 	_detail_panel.get_node("Cost").text = "体力消耗：%d" % int(loc.get("cost", 1))
 	_detail_panel.get_node("Yield").text = _yield_text(loc)
+	go_here.text = "前往"
 	_detail_panel.visible = true
 
 
@@ -271,6 +298,11 @@ func _yield_text(loc: Dictionary) -> String:
 
 func _on_go_here_pressed() -> void:
 	if _selected_id == "":
+		return
+	if _selected_id == HOME_ID:
+		if _revealing:
+			return  # 亮相动画中防误触结束白天
+		get_node("/root/GameManager").enter_night_from_day_map()
 		return
 	_visit_location(_selected_id)
 
@@ -304,7 +336,7 @@ func _enter_mine_investigation() -> void:
 	add_child(_overlay_layer)
 	_document_overlay.reparent(_overlay_layer, false)
 	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
-	_hidden_for_mine = [$MapWorld, $UILayer/TopBar, $UILayer/GoButton, $UILayer/ResultPanel, _detail_panel]
+	_hidden_for_mine = [$MapWorld, $UILayer/TopBar, $UILayer/ResultPanel, _detail_panel]
 	for n in _hidden_for_mine:
 		if n != null:
 			n.visible = false
@@ -329,10 +361,6 @@ func _on_mine_finished() -> void:
 
 func _update_stamina_display() -> void:
 	_stamina_label.text = "体力：" + str(_stamina_left) + "/" + str(_max_stamina)
-
-func _on_go_pressed() -> void:
-	_go_button.disabled = true
-	get_node("/root/GameManager").enter_night_from_day_map()
 
 func _on_continue() -> void:
 	_result_panel.visible = false
@@ -410,7 +438,6 @@ func _switch_tab(shop: bool) -> void:
 			tm.shop_first_visited = true
 			tm._save_state()
 			call_deferred("_trigger_shop_tutorial")
-	_go_button.visible = not shop
 
 func _update_tab_appearance() -> void:
 	if _gather_tab_btn == null or _shop_tab_btn == null:
@@ -619,7 +646,6 @@ func _trigger_gather_tutorial() -> void:
 	var rects = {
 		"MapArea": [140, 80, 1000, 420],
 		"TopBar": [30, 5, 320, 55],
-		"GoButton": [540, 520, 200, 50],
 	}
 	tm.start_tutorial("gather", rects)
 
