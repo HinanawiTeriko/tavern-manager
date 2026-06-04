@@ -89,7 +89,7 @@ func _ready() -> void:
 
 
 func _setup_background() -> void:
-	var bg: Sprite2D = $MapWorld/Background
+	var bg: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
 	if bg == null:
 		return
 	var grad := GradientTexture2D.new()
@@ -193,6 +193,8 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	var gm = get_node("/root/GameManager")
 	if new_locs.size() > 3:
 		await _camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM).finished
+		if not is_instance_valid(self):
+			return  # 亮相中切换了场景，协程被遗弃
 		for loc in new_locs:
 			var m := _create_marker(loc, true)
 			_fade_in_marker(m)
@@ -202,11 +204,17 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 			var pos_arr: Array = loc.get("pos", [1000, 700])
 			var wp := Vector2(float(pos_arr[0]), float(pos_arr[1]))
 			await _camera.fly_to(wp, 1.0).finished
+			if not is_instance_valid(self):
+				return
 			var m := _create_marker(loc, true)
 			_fade_in_marker(m)
 			gm.day_map.mark_revealed(String(loc.get("id", "")))
 			await get_tree().create_timer(0.3).timeout
+			if not is_instance_valid(self):
+				return
 	_revealing = false
+	# 亮相期间若有访问/解锁被 _revealing 拦下，这里补刷一次
+	_refresh_map()
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:
