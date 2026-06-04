@@ -35,47 +35,48 @@ offset_bottom = 60.0
 [node name="DayLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 20.0
+offset_left = 24.0
 offset_top = 10.0
-offset_right = 600.0
+offset_right = 360.0
 offset_bottom = 50.0
 text = "第 1/30 天 — 白天·采集"
+vertical_alignment = 1
 
 [node name="StaminaLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 1000.0
+offset_left = 380.0
 offset_top = 10.0
-offset_right = 1260.0
+offset_right = 560.0
 offset_bottom = 50.0
 text = "体力：5/5"
-horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="GoldLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 800.0
+offset_left = 580.0
 offset_top = 10.0
-offset_right = 990.0
+offset_right = 760.0
 offset_bottom = 50.0
 text = "金币：0"
-horizontal_alignment = 2
-
-[node name="ExpTavernBtn" type="Button" parent="UILayer/TopBar"]
-layout_mode = 0
-offset_left = 1100.0
-offset_top = 8.0
-offset_right = 1270.0
-offset_bottom = 52.0
-text = "实验场景"
+vertical_alignment = 1
 
 [node name="DocumentsBtn" type="Button" parent="UILayer/TopBar"]
 layout_mode = 0
-offset_left = 650.0
+offset_left = 1006.0
 offset_top = 8.0
-offset_right = 790.0
+offset_right = 1126.0
 offset_bottom = 52.0
 text = "账本"
+
+[node name="ExpTavernBtn" type="Button" parent="UILayer/TopBar"]
+layout_mode = 0
+offset_left = 1136.0
+offset_top = 8.0
+offset_right = 1268.0
+offset_bottom = 52.0
+text = "实验场景"
 
 [node name="MapArea" type="Control" parent="UILayer"]
 layout_mode = 3
@@ -87,10 +88,10 @@ offset_right = 1140.0
 offset_bottom = 500.0
 
 [node name="GoButton" type="Button" parent="UILayer"]
-offset_left = 540.0
-offset_top = 520.0
-offset_right = 740.0
-offset_bottom = 570.0
+offset_left = 1040.0
+offset_top = 596.0
+offset_right = 1248.0
+offset_bottom = 652.0
 text = "出发！"
 
 [node name="DetailPanel" type="Panel" parent="UILayer"]

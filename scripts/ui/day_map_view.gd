@@ -373,27 +373,26 @@ func _update_gold_display() -> void:
 		_gold_label.text = "金币：" + str(gm.economy.gold)
 
 func _build_tab_buttons() -> void:
-	var map_area = $UILayer/MapArea
+	# 居中分段标签页，挂在 UILayer 顶部（不放进 MapArea，避免随商店容器移动）
 	var tab_row = HBoxContainer.new()
-	tab_row.add_theme_constant_override("separation", 8)
-	tab_row.custom_minimum_size = Vector2(0, 40)
+	tab_row.add_theme_constant_override("separation", 0)
+	tab_row.position = Vector2(530, 66)
 
 	_gather_tab_btn = Button.new()
 	_gather_tab_btn.text = "采集"
-	_gather_tab_btn.custom_minimum_size = Vector2(100, 36)
+	_gather_tab_btn.custom_minimum_size = Vector2(110, 38)
 	ThemeColors.style_button(_gather_tab_btn, 16)
 	_gather_tab_btn.pressed.connect(_switch_tab.bind(false))
 	tab_row.add_child(_gather_tab_btn)
 
 	_shop_tab_btn = Button.new()
 	_shop_tab_btn.text = "商店"
-	_shop_tab_btn.custom_minimum_size = Vector2(100, 36)
+	_shop_tab_btn.custom_minimum_size = Vector2(110, 38)
 	ThemeColors.style_button(_shop_tab_btn, 16)
 	_shop_tab_btn.pressed.connect(_switch_tab.bind(true))
 	tab_row.add_child(_shop_tab_btn)
 
-	map_area.add_child(tab_row)
-	map_area.move_child(tab_row, 0)
+	$UILayer.add_child(tab_row)
 
 	_update_tab_appearance()
 
