@@ -474,7 +474,12 @@ func _on_normal_orders_completed() -> void:
 func end_night() -> void:
 	if day_cycle.phase != DayCycleSystem.DayPhase.NIGHT:
 		return
-	if guests.has_guest or _important_npc_pending or _guest_lingering:
+	if guests.has_guest or _guest_lingering:
+		return
+	if _important_npc_pending:
+		# 等待中允许点「打烊」，但今晚还有要紧客人没到——场内浮字提示并拒绝关门，避免跳过其剧情。
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			_tavern_view.show_stage_caption("今晚还有要紧的客人没露面……", Color.ORANGE)
 		return
 
 	var fates = narrative.get_today_npc_fates(economy.current_day)
@@ -555,11 +560,12 @@ func recover_desk_item_key(item_key: String) -> String:
 	return target
 
 
-## 出口③：按钮可用 = 无客人 且 无 pending 且 不在上菜停留中。
+## 出口③：按钮可用 = 无客人在场 且 不在上菜停留中（等待中即可按；若今晚还有要紧客人没到，
+## 点击会被 end_night 以场内浮字拦下、不关门，避免跳过其剧情）。
 func _refresh_close_button() -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
-	var enabled := not guests.has_guest and not _important_npc_pending and not _guest_lingering
+	var enabled := not guests.has_guest and not _guest_lingering
 	_tavern_view.set_close_enabled(enabled)
 
 
