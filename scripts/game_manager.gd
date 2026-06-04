@@ -135,6 +135,7 @@ func _process(delta: float) -> void:
 func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
+		_guest_lingering = false
 		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
@@ -344,7 +345,7 @@ func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasonin
 
 ## 上菜判定逻辑（从 register_view lambda 提取）
 func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_style_data: Dictionary = {}) -> void:
-	if not guests.has_guest or item_key == "":
+	if not guests.has_guest or item_key == "" or _guest_lingering:
 		return
 
 	var is_important = guests.current_guest.has_dialogue
