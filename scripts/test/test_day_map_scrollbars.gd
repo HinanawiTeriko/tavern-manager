@@ -38,6 +38,11 @@ func _test_visible_scrollbars(view) -> void:
 		"gathering uses an interactive map (MapWorld/Points)")
 	_ok(view.get_node_or_null("UILayer/DetailPanel") is Panel,
 		"map has a right-side detail panel")
+	# 回归：覆盖在地图上的容器 Control 必须放行点击，否则盖住的点点不了
+	_ok(view.get_node("UILayer/MapArea").mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"MapArea does not eat clicks on map points")
+	_ok(view.get_node("UILayer/TopBar").mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"TopBar does not eat clicks on map points")
 	var shop_scroll = view._shop_panel
 	_ok(shop_scroll is ScrollContainer, "shop uses a scroll container")
 	if shop_scroll is ScrollContainer:

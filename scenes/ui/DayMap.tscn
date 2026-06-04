@@ -26,6 +26,7 @@ script = ExtResource("camera")
 [node name="TopBar" type="Control" parent="UILayer"]
 layout_mode = 3
 anchors_preset = 0
+mouse_filter = 2
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1280.0
@@ -33,6 +34,7 @@ offset_bottom = 60.0
 
 [node name="DayLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
+mouse_filter = 2
 offset_left = 20.0
 offset_top = 10.0
 offset_right = 600.0
@@ -41,6 +43,7 @@ text = "第 1/30 天 — 白天·采集"
 
 [node name="StaminaLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
+mouse_filter = 2
 offset_left = 1000.0
 offset_top = 10.0
 offset_right = 1260.0
@@ -50,6 +53,7 @@ horizontal_alignment = 2
 
 [node name="GoldLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
+mouse_filter = 2
 offset_left = 800.0
 offset_top = 10.0
 offset_right = 990.0
@@ -76,6 +80,7 @@ text = "账本"
 [node name="MapArea" type="Control" parent="UILayer"]
 layout_mode = 3
 anchors_preset = 0
+mouse_filter = 2
 offset_left = 140.0
 offset_top = 80.0
 offset_right = 1140.0
