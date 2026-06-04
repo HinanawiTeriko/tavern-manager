@@ -1,0 +1,45 @@
+{
+  "bgm": "",
+  "beats": [
+    {
+      "text": "地下城的深处，灯火稀疏。",
+      "bg": "",
+      "fade_in": 1.2,
+      "hold": 2.2,
+      "camera": null,
+      "sfx": ""
+    },
+    {
+      "text": "一纸契约把你带到这座被遗忘的小镇。",
+      "bg": "",
+      "fade_in": 1.0,
+      "hold": 2.4,
+      "camera": null,
+      "sfx": ""
+    },
+    {
+      "text": "镇子的尽头，立着一间空了许久的酒馆。",
+      "bg": "",
+      "fade_in": 1.0,
+      "hold": 2.4,
+      "camera": null,
+      "sfx": ""
+    },
+    {
+      "text": "从今往后，它归你打理。",
+      "bg": "",
+      "fade_in": 1.0,
+      "hold": 2.0,
+      "camera": null,
+      "sfx": ""
+    },
+    {
+      "text": "你深吸一口气，推开了门。",
+      "bg": "",
+      "fade_in": 1.0,
+      "hold": 1.8,
+      "camera": { "from": { "zoom": 1.0, "offset": [0, 0] }, "to": { "zoom": 1.12, "offset": [0, -30] } },
+      "sfx": ""
+    }
+  ]
+}
