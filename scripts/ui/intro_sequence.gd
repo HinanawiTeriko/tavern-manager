@@ -13,6 +13,7 @@ static func load_intro(path: String) -> Dictionary:
 	if f == null:
 		return {"bgm": "", "beats": []}
 	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {"bgm": "", "beats": []}
 	var beats = parsed.get("beats", [])
