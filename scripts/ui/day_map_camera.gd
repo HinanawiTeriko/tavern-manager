@@ -15,7 +15,6 @@ var map_max := Vector2(2000, 1400)
 var active: bool = true
 
 var _dragging: bool = false
-var _drag_last: Vector2 = Vector2.ZERO
 var _fly_tween: Tween = null
 
 
@@ -42,7 +41,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			_dragging = event.pressed
-			_drag_last = event.position
 	elif event is InputEventMouseMotion and _dragging:
 		# 屏幕位移换算到世界位移（除以 zoom）；zoom 越小看得越广，位移越大
 		var delta: Vector2 = event.relative / zoom
