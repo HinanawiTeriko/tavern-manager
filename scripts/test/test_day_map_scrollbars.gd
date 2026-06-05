@@ -9,6 +9,7 @@ func _ready() -> void:
 	var view = day_map_scene.instantiate()
 	add_child(view)
 	await get_tree().process_frame
+	_test_daymap_art_assets(view)
 	_test_tavern_node(view)
 	view._switch_tab(true)
 	await get_tree().process_frame
@@ -66,3 +67,18 @@ func _test_visible_scrollbars(view) -> void:
 		_ok(shop_scroll.get_v_scroll_bar().visible, "shop vertical scrollbar is visibly rendered")
 		_ok(shop_scroll.position.x + shop_scroll.size.x <= view.get_node("UILayer/MapArea").size.x,
 			"shop scrollbar stays inside the visible map area")
+
+
+func _test_daymap_art_assets(view) -> void:
+	var background := view.get_node("MapWorld/Background") as Sprite2D
+	_ok(background.texture != null, "daymap background has a runtime texture")
+	if background.texture != null:
+		_ok(background.texture.resource_path.ends_with("assets/textures/daymap/daymap_bg.png"),
+			"daymap background uses the native-pipeline runtime art")
+	_ok(view._home_marker != null and is_instance_valid(view._home_marker),
+		"home marker exists before checking art")
+	if view._home_marker != null and is_instance_valid(view._home_marker):
+		_ok(view._home_marker.has_method("has_icon_texture"),
+			"marker exposes icon texture state for tests")
+		if view._home_marker.has_method("has_icon_texture"):
+			_ok(view._home_marker.has_icon_texture(), "home marker has an icon texture")
