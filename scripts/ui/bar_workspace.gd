@@ -398,8 +398,11 @@ func _capture_docks() -> void:
 
 ## 任何加进 Items 的 DeskItem（取材/容器产出）都连越界信号；is_connected 守卫避免重复。
 func _on_items_child_added(child: Node) -> void:
-	if child is DeskItem and not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
-		child.fell_out_of_bounds.connect(_on_desk_item_fell)
+	if child is DeskItem:
+		if not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
+			child.fell_out_of_bounds.connect(_on_desk_item_fell)
+		if not child.body_entered.is_connected(_on_item_collision.bind(child)):
+			child.body_entered.connect(_on_item_collision.bind(child))
 
 
 ## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
@@ -458,3 +461,58 @@ func _dock_body(body: RigidBody2D) -> void:
 func _exit_tree() -> void:
 	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
 		_gm.inventory_changed.disconnect(_init_material_slots)
+
+
+## 两个材料 DeskItem 高速对撞 → 按力度窗口砸合成。
+## b=被撞对象（body_entered 传入），a=信号发出者（bind 的自己）。产物/容器/低速碰撞不触发。
+func _on_item_collision(b: Node, a: DeskItem) -> void:
+	if not (b is DeskItem):
+		return
+	var other: DeskItem = b as DeskItem
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	var key_a: String = a.item_key
+	var key_b: String = other.item_key
+	if key_a == "" or key_b == "":
+		return
+	# 仅材料参与砸合成（产物不可再砸）
+	if _gm.craft.is_product(key_a) or _gm.craft.is_product(key_b):
+		return
+	var rel_speed: float = (a.linear_velocity - other.linear_velocity).length()
+	var force_tier: String = _gm.craft.classify_slam_force(rel_speed)
+	if force_tier == "none":
+		return
+	var recipe: Dictionary = _gm.craft.find_slam_recipe([key_a, key_b])
+	if recipe.is_empty():
+		return
+	var center: Vector2 = (a.global_position + other.global_position) * 0.5
+	var conserved: Vector2 = (a.linear_velocity + other.linear_velocity) * 0.5
+	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier: String, center: Vector2, conserved: Vector2) -> void:
+	if not is_instance_valid(a) or not is_instance_valid(other):
+		return
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	a.queue_free()
+	other.queue_free()
+	var quality: String = "poor" if force_tier == "poor" else "normal"
+	var product_key: String = recipe["product"]
+	if bool(recipe.get("double", false)):
+		var p1 := _spawn_slam_product(center + Vector2(-18, 0), product_key, quality)
+		p1.linear_velocity = conserved + Vector2(0, -40)
+		var p2 := _spawn_slam_product(center + Vector2(18, 0), product_key, quality)
+		p2.linear_velocity = conserved + Vector2(0, 40)
+	else:
+		var p := _spawn_slam_product(center, product_key, quality)
+		p.linear_velocity = conserved
+	_gm.play_audio_event("product_ready")
+	if quality == "poor":
+		_gm.notify_stage_caption("手重了，砸出了次品", ThemeColors.TEXT_SUBTITLE)
+
+
+func _spawn_slam_product(pos: Vector2, product_key: String, quality: String) -> DeskItem:
+	var item := _spawn_desk_item_at(pos, product_key)
+	item.quality = quality
+	return item

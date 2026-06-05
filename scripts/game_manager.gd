@@ -561,6 +561,11 @@ func _refresh_tavern_ui() -> void:
 		return
 	_tavern_view.update_top_bar(economy.gold, economy.reputation, economy.current_day, ryan_slice.last_day())
 
+
+func notify_stage_caption(text: String, color: Color = Color.WHITE) -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.show_stage_caption(text, color)
+
 func notify_inventory_changed() -> void:
 	if inventory.get("sleep_powder", 0) > 0:
 		narrative.set_var("has_sleep_powder", true)
