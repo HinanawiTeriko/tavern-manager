@@ -13,6 +13,7 @@ func _ready() -> void:
 	_test_find_slam_recipe()
 	_test_quality_payoff()
 	_test_buy_and_serve()
+	_test_save_roundtrip()
 	_finish()
 
 
@@ -126,3 +127,15 @@ func _test_buy_and_serve() -> void:
 
 	# 未知能力 key 被拒
 	_ok(not gm.buy_ability("nope"), "未知能力购买被拒")
+
+
+func _test_save_roundtrip() -> void:
+	var gm = _gm()
+	gm.craft.unlocked_slam_containers.clear()
+	gm.craft.unlock_slam("barrel")
+	var snap: Dictionary = gm._capture_save_state()
+	# 改脏后再恢复，验证从快照读回
+	gm.craft.unlocked_slam_containers.clear()
+	gm._apply_save_state(snap)
+	_ok(gm.craft.is_slam_unlocked("barrel"), "存档往返保住已购能力")
+	_ok(not gm.craft.is_slam_unlocked("pot"), "未购的不应被恢复出来")

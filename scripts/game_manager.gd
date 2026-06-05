@@ -761,7 +761,10 @@ func _capture_save_state() -> Dictionary:
 			"endings": narrative.endings.duplicate(true),
 			"today_important_npc": narrative.today_important_npc,
 		},
-		"craft": {"unlocked_recipes": craft.unlocked_recipes.duplicate()},
+		"craft": {
+			"unlocked_recipes": craft.unlocked_recipes.duplicate(),
+			"unlocked_slam_containers": craft.unlocked_slam_containers.duplicate(),
+		},
 		"tutorial": _capture_tutorial_state(),
 		"ryan_slice": ryan_slice.capture_state(),
 	}
@@ -806,6 +809,9 @@ func _apply_save_state(data: Dictionary) -> void:
 	craft.unlocked_recipes.clear()
 	for r in data.get("craft", {}).get("unlocked_recipes", []):
 		craft.unlocked_recipes.append(String(r))
+	craft.unlocked_slam_containers.clear()
+	for sc in data.get("craft", {}).get("unlocked_slam_containers", []):
+		craft.unlocked_slam_containers.append(String(sc))
 
 	_apply_tutorial_state(data.get("tutorial", {}))
 	ryan_slice.restore_state(data.get("ryan_slice", {}))
@@ -861,7 +867,7 @@ func _default_new_game_state() -> Dictionary:
 		"documents": {"owned": ["ledger"], "read": {}, "archived": [], "ledger_entries": []},
 		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
 			"endings": {}, "today_important_npc": ""},
-		"craft": {"unlocked_recipes": []},
+		"craft": {"unlocked_recipes": [], "unlocked_slam_containers": []},
 		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
 			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
 			"first_guest_served": false, "first_ledger_shown": false},
