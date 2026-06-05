@@ -15,6 +15,7 @@ const KILL_Y := 800.0
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
 @onready var _brewery: Brewery = $World/Brewery
+@onready var _shaker: SeasoningShaker = $World/SeasoningShaker
 @onready var _grill: KitchenContainer = $World/Grill
 @onready var _pot: KitchenContainer = $World/Pot
 @onready var _spoon: StirSpoon = $World/Spoon
@@ -182,6 +183,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag_ctrl.end_drag()
 			if dragged == _brewery:
 				_brewery.end_shake_session()
+			elif dragged == _shaker:
+				_shaker.end_shake_session()
 			elif _is_kitchen_container(dragged):
 				dragged.end_action_session()
 			elif dragged is DeskItem:
@@ -195,6 +198,8 @@ func _release_dragged_body() -> void:
 	_drag_ctrl.end_drag()
 	if dragged == _brewery:
 		_brewery.end_shake_session()
+	elif dragged == _shaker:
+		_shaker.end_shake_session()
 	elif dragged is DeskItem:
 		_try_deliver(dragged)
 
@@ -207,6 +212,10 @@ func _try_pickup(pos: Vector2) -> void:
 	if _hit_test_brewery(pos):
 		_brewery.begin_shake_session()
 		_drag_ctrl.start_drag(_brewery, pos)
+		return
+	if _hit_test_shaker(pos):
+		_shaker.begin_shake_session()
+		_drag_ctrl.start_drag(_shaker, pos)
 		return
 	var spoon := _hit_test_spoon(pos)
 	if spoon != null:
@@ -243,32 +252,20 @@ func _eject_last_ingredient(container) -> void:
 	item.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
 
 
-## 释放桌面物品时的统一分流（spec §7.2/§7.3）：
-##   1) 沉睡花粉压在成品上 → 搅成药酒（打 tag）。
-##   2) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
-##   3) 其它落点 → 不处理，留在桌面（越界自走回收）。
+## 释放桌面物品时的统一分流：
+##   1) 落在客人区：正式订单成品 → 正常上菜；剧情物品/叙事载体成品 → 叙事递交中介。
+##   2) 其它落点 → 不处理，留在桌面（越界自走回收）。
+##   注：香料装罐由 SeasoningShaker.Mouth Area2D 自动吸入（body_entered），不走本方法。
 func _try_deliver(item: DeskItem) -> void:
 	if item.item_key == "":
 		return
 
-	# 1) 沉睡花粉搅进成品
-	if _gm.inventory_sys.is_story_item(item.item_key):
-		var prod := _product_under(item)
-		if prod != null:
-			var ar: Dictionary = _gm.request_apply_story_item_to_product(item.item_key, prod.item_key)
-			if ar.get("accepted", false):
-				for t in ar.get("product_tags", []):
-					prod.add_product_tag(String(t))
-				item.queue_free()   # 花粉被搅进酒里消耗
-			else:
-				_on_desk_item_fell(item)   # 回收花粉到背包
-			return
-
-	# 2) 递交给客人
+	# 递交给客人
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
-	if is_product and item.item_key == _gm.current_order_key():
+	# 带叙事 tag 的成品（如药酒）必须先走叙事中介，不能被订单匹配直接正常上菜吞掉。
+	if is_product and item.product_tags.is_empty() and item.item_key == _gm.current_order_key():
 		_serve_formal(item)
 		return
 	var r: Dictionary = _gm.request_narrative_delivery(item.item_key, item.product_tags)
@@ -286,22 +283,8 @@ func _try_deliver(item: DeskItem) -> void:
 
 func _serve_formal(item: DeskItem) -> void:
 	var speed: float = _drag_ctrl.get_serve_speed()
-	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality})
+	_gm.request_serve(item.item_key, {"serve_drop_speed": speed, "quality": item.quality}, item.attribute)
 	item.queue_free()
-
-
-## 找到压在拖动物体落点下方的另一个成品 DeskItem（用于花粉搅酒）。
-func _product_under(item: DeskItem) -> DeskItem:
-	var space := get_world_2d().direct_space_state
-	var params := PhysicsPointQueryParameters2D.new()
-	params.position = item.global_position
-	params.collide_with_bodies = true
-	var hits := space.intersect_point(params, 8)
-	for h in hits:
-		var c = h.get("collider")
-		if c is DeskItem and c != item and _gm.inventory_sys.is_product(c.item_key):
-			return c
-	return null
 
 
 func _hit_test_item(pos: Vector2) -> DeskItem:
@@ -329,6 +312,22 @@ func _hit_test_brewery(pos: Vector2) -> bool:
 		if collider == _brewery:
 			return true
 		if collider is Area2D and collider.get_parent() == _brewery:
+			return true
+	return false
+
+
+func _hit_test_shaker(pos: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	params.collide_with_areas = true
+	var hits := space.intersect_point(params, 8)
+	for h in hits:
+		var collider = h.get("collider")
+		if collider == _shaker:
+			return true
+		if collider is Area2D and collider.get_parent() == _shaker:
 			return true
 	return false
 
@@ -391,6 +390,7 @@ func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 ## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
 func _capture_docks() -> void:
 	_docks[_brewery] = _brewery.global_position
+	_docks[_shaker] = _shaker.global_position
 	for child in _items_node.get_parent().get_children():
 		if _is_kitchen_container(child) or child is StirSpoon:
 			_docks[child] = child.global_position
@@ -398,8 +398,11 @@ func _capture_docks() -> void:
 
 ## 任何加进 Items 的 DeskItem（取材/容器产出）都连越界信号；is_connected 守卫避免重复。
 func _on_items_child_added(child: Node) -> void:
-	if child is DeskItem and not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
-		child.fell_out_of_bounds.connect(_on_desk_item_fell)
+	if child is DeskItem:
+		if not child.fell_out_of_bounds.is_connected(_on_desk_item_fell):
+			child.fell_out_of_bounds.connect(_on_desk_item_fell)
+		if not child.body_entered.is_connected(_on_item_collision.bind(child)):
+			child.body_entered.connect(_on_item_collision.bind(child))
 
 
 ## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
@@ -458,3 +461,58 @@ func _dock_body(body: RigidBody2D) -> void:
 func _exit_tree() -> void:
 	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
 		_gm.inventory_changed.disconnect(_init_material_slots)
+
+
+## 两个材料 DeskItem 高速对撞 → 按力度窗口砸合成。
+## b=被撞对象（body_entered 传入），a=信号发出者（bind 的自己）。产物/容器/低速碰撞不触发。
+func _on_item_collision(b: Node, a: DeskItem) -> void:
+	if not (b is DeskItem):
+		return
+	var other: DeskItem = b as DeskItem
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	var key_a: String = a.item_key
+	var key_b: String = other.item_key
+	if key_a == "" or key_b == "":
+		return
+	# 仅材料参与砸合成（产物不可再砸）
+	if _gm.craft.is_product(key_a) or _gm.craft.is_product(key_b):
+		return
+	var rel_speed: float = (a.linear_velocity - other.linear_velocity).length()
+	var force_tier: String = _gm.craft.classify_slam_force(rel_speed)
+	if force_tier == "none":
+		return
+	var recipe: Dictionary = _gm.craft.find_slam_recipe([key_a, key_b])
+	if recipe.is_empty():
+		return
+	var center: Vector2 = (a.global_position + other.global_position) * 0.5
+	var conserved: Vector2 = (a.linear_velocity + other.linear_velocity) * 0.5
+	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier: String, center: Vector2, conserved: Vector2) -> void:
+	if not is_instance_valid(a) or not is_instance_valid(other):
+		return
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	a.queue_free()
+	other.queue_free()
+	var quality: String = "poor" if force_tier == "poor" else "normal"
+	var product_key: String = recipe["product"]
+	if bool(recipe.get("double", false)):
+		var p1 := _spawn_slam_product(center + Vector2(-18, 0), product_key, quality)
+		p1.linear_velocity = conserved + Vector2(0, -40)
+		var p2 := _spawn_slam_product(center + Vector2(18, 0), product_key, quality)
+		p2.linear_velocity = conserved + Vector2(0, 40)
+	else:
+		var p := _spawn_slam_product(center, product_key, quality)
+		p.linear_velocity = conserved
+	_gm.play_audio_event("product_ready")
+	if quality == "poor":
+		_gm.notify_stage_caption("手重了，砸出了次品", ThemeColors.TEXT_SUBTITLE)
+
+
+func _spawn_slam_product(pos: Vector2, product_key: String, quality: String) -> DeskItem:
+	var item := _spawn_desk_item_at(pos, product_key)
+	item.quality = quality
+	return item

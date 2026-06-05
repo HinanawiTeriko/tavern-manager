@@ -29,6 +29,10 @@ var current_ledger_data: LedgerData = null
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
+var _guest_lingering: bool = false
+
+# 开场交接：刚看完开场后置位，DayMap 一次性消费以走 match-cut 拉镜
+var _pending_intro_handoff: bool = false
 
 # Scene refs
 var _tavern_view = null
@@ -57,6 +61,7 @@ const ACTION_FEEDBACK: Dictionary = {
 	"ryan_informed": ["莱恩盯着那份染血的委托书，脸色一点点沉了下来。", Color.ORANGE],
 	"ryan_accepts_alternative": ["莱恩收起替代委托，郑重地点了点头。", Color.LIME_GREEN],
 	"ryan_needs_warning_first": ["莱恩疑惑地看着这份委托，似乎还不明白其中的分量。", Color.GRAY],
+	"ryan_alternative_pending": ["莱恩默默收起替代委托：让我看看你今晚怎么待我。", Color.GRAY],
 	"ryan_accepts_ale": ["莱恩一饮而尽，咧嘴笑了。", Color.LIME_GREEN],
 	"ryan_drugged": ["莱恩喝下那杯酒，眼皮越来越沉……趴在桌上睡了过去。", Color.MEDIUM_PURPLE],
 	"ryan_refuses_drugged_ale": ["莱恩警觉地推开酒杯：今晚我必须保持清醒。", Color.GRAY],
@@ -105,8 +110,9 @@ func _ready() -> void:
 	guests.guest_left.connect(_on_guest_left)
 	guests.patience_low.connect(_on_patience_low)
 	guests.normal_orders_completed.connect(_on_normal_orders_completed)
+	guests.guest_abandoned.connect(_on_guest_abandoned)
 
-	economy.changed.connect(_refresh_tavern_ui)
+	economy.changed.connect(_refresh_tavern_ui.unbind(3))
 	day_cycle.phase_changed.connect(_on_phase_changed)
 
 	DialogueManager.dialogue_started.connect(func(_resource): _is_dialogue_active = true)
@@ -125,7 +131,7 @@ func _process(delta: float) -> void:
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
 		var menu_open = _tavern_view.is_menu_open()
-		if not _is_dialogue_active and not tutorial_active:
+		if not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
 			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
@@ -133,10 +139,11 @@ func _process(delta: float) -> void:
 func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
+		_guest_lingering = false
 		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
-
+		_refresh_close_button()
 
 		# 教程：首次进入酒馆，先检查是否需要触发教程
 		var tm = _tutorial_manager
@@ -175,6 +182,8 @@ func register_view(view: Node) -> void:
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
+
+		_refresh_close_button()
 
 	elif view is DayMapView:
 		_day_map_view = view
@@ -290,6 +299,7 @@ func _on_phase_changed(phase: int) -> void:
 func _on_guest_arrived(guest: GuestData) -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
+	_refresh_close_button()
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	var display_name = guest.guest_name
@@ -334,12 +344,12 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	guests.spawn_important(npc_id, order_key)
 
 ## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
-func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_tag: String = "") -> void:
-	_on_serve_requested(item_key, seasoning_tag, craft_style_data)
+func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_attribute: String = "") -> void:
+	_on_serve_requested(item_key, seasoning_attribute, craft_style_data)
 
 ## 上菜判定逻辑（从 register_view lambda 提取）
-func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_data: Dictionary = {}) -> void:
-	if not guests.has_guest or item_key == "":
+func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_style_data: Dictionary = {}) -> void:
+	if not guests.has_guest or item_key == "" or _guest_lingering:
 		return
 
 	var is_important = guests.current_guest.has_dialogue
@@ -350,21 +360,17 @@ func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_da
 	var item_price: int = item.get("price", 0)
 
 	if success:
-		economy.add_gold(item_price)
-		economy.add_reputation(2)
+		var serve_quality: String = String(craft_style_data.get("quality", "normal"))
+		economy.add_gold(economy.gold_for_quality(item_price, serve_quality))
+		economy.add_reputation(economy.reputation_for_quality(serve_quality))
 		guests.record_order_success()
 		ryan_slice.record_order_success()
 		play_audio_event("serve_success")
-		_tavern_view.show_message("完美！" + guests.current_guest.guest_name + " 很满意！", Color.LIME_GREEN)
 		if is_important:
 			narrative.set_var("serve_result", "success")
 	else:
 		guests.record_order_failed()
 		play_audio_event("serve_fail")
-		if item.get("type", "") == "product":
-			_tavern_view.show_message("错了！" + guests.current_guest.guest_name + " 要的不是这个！", Color.RED)
-		else:
-			_tavern_view.show_message("这看起来不太对劲……" + guests.current_guest.guest_name + " 很失望。", Color.RED)
 		if is_important:
 			narrative.set_var("serve_result", "fail")
 
@@ -374,25 +380,45 @@ func _on_serve_requested(item_key: String, seasoning_tag: String, craft_style_da
 		var mem: Dictionary = craft.get_memory_for(item_key)
 		var story_key: String = mem.get(npc_id, "")
 		var l3: Dictionary = narrative.resolve_serve_style(npc_id, story_key, serve_style_label)
+		narrative.resolve_pending_alternative(npc_id)
 		print("[L3] serve_drop_speed=", craft_style_data.get("serve_drop_speed", 0.0),
 			" style=", serve_style_label, " story_told=", l3["story_told"],
 			" aff_", npc_id, "=", narrative.get_affection(npc_id))
 
-	if seasoning_tag != "":
-		narrative.set_var("seasoning_used", seasoning_tag)
+	if seasoning_attribute != "":
+		narrative.set_var("seasoning_used", seasoning_attribute)
 
 	guests.record_guest_served()
+
+	var outcome: String
+	if success:
+		outcome = "success"
+	elif item.get("type", "") == "product":
+		outcome = "fail_wrong"
+	else:
+		outcome = "fail_weird"
 
 	if is_important and npc_id != "":
 		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
 		if FileAccess.file_exists(post_path):
+			# 有 post.dialogue：对话本身就是反应，不再补气泡（消除冗余）。
 			_dialogue_phase = "post"
 			_tavern_view.set_dialogue_mode(true)
 			call_deferred("_start_dialogue_deferred", post_path)
 		else:
-			guests.clear_guest()
+			_react_then_clear(outcome)
 	else:
-		guests.clear_guest()
+		_react_then_clear(outcome)
+
+## 散客 / 无 post 重要客人：气泡反应一句 → 停留让玩家读到 → 清场。
+func _react_then_clear(outcome: String) -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		var line: String = guests.get_reaction_line(outcome, guests.current_guest.npc_id)
+		_tavern_view.customer_say(line)
+	_guest_lingering = true
+	await get_tree().create_timer(1.8).timeout
+	_guest_lingering = false
+	guests.clear_guest()
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
@@ -421,6 +447,9 @@ func _on_guest_left() -> void:
 		_important_npc_pending = false
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
+	# 注：guest_left 在 clear_guest 内 emit，此刻 has_guest 仍为 true（随后才置 false）。
+	# 必须延迟刷新，等 clear_guest 收尾后再算，否则按钮会卡在禁用，整段"等待中"无法打烊。
+	call_deferred("_refresh_close_button")
 
 func _on_dialogue_ended() -> void:
 	_is_dialogue_active = false
@@ -439,18 +468,24 @@ func _on_dialogue_ended() -> void:
 			_tavern_view.set_dialogue_mode(false)
 
 func _on_patience_low() -> void:
-	if _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view.show_message("客人等得不耐烦了……", Color.ORANGE)
+	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		_tavern_view.customer_say(guests.get_reaction_line("impatient", guests.current_guest.npc_id))
+
+func _on_guest_abandoned() -> void:
+	_react_then_clear("fail_abandon")
 
 func _on_normal_orders_completed() -> void:
-	_show_message("本晚的有限订单已经完成，可以打烊了。", Color.LIME_GREEN)
+	_refresh_close_button()
 
 func end_night() -> void:
 	if day_cycle.phase != DayCycleSystem.DayPhase.NIGHT:
 		return
-	if guests.has_guest or _important_npc_pending:
+	if guests.has_guest or _guest_lingering:
+		return
+	if _important_npc_pending:
+		# 等待中允许点「打烊」，但今晚还有要紧客人没到——场内浮字提示并拒绝关门，避免跳过其剧情。
 		if _tavern_view != null and is_instance_valid(_tavern_view):
-			_tavern_view.show_message("还有客人在等呢！", Color.ORANGE)
+			_tavern_view.show_stage_caption("今晚还有要紧的客人没露面……", Color.ORANGE)
 		return
 
 	var fates = narrative.get_today_npc_fates(economy.current_day)
@@ -501,10 +536,35 @@ func buy_recipe_unlock(key: String) -> bool:
 	craft.unlock_recipe(key)
 	return true
 
+const ABILITY_TO_CONTAINER := {"slam_pot": "pot", "slam_barrel": "barrel"}
+
+func buy_ability(key: String) -> bool:
+	var container: String = ABILITY_TO_CONTAINER.get(key, "")
+	if container == "":
+		return false
+	if craft.is_slam_unlocked(container):
+		return false
+	var price: int = shop.get_ability_price(key)
+	if price <= 0:
+		return false
+	if not economy.spend_gold(price):
+		return false
+	craft.unlock_slam(container)
+	return true
+
+func is_ability_owned(key: String) -> bool:
+	var container: String = ABILITY_TO_CONTAINER.get(key, "")
+	return container != "" and craft.is_slam_unlocked(container)
+
 func _refresh_tavern_ui() -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
 	_tavern_view.update_top_bar(economy.gold, economy.reputation, economy.current_day, ryan_slice.last_day())
+
+
+func notify_stage_caption(text: String, color: Color = Color.WHITE) -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.show_stage_caption(text, color)
 
 func notify_inventory_changed() -> void:
 	if inventory.get("sleep_powder", 0) > 0:
@@ -531,17 +591,21 @@ func recover_desk_item_key(item_key: String) -> String:
 	return target
 
 
-## null 安全的提示输出（headless 测试无 _tavern_view）。
-func _show_message(text: String, color: Color = Color.WHITE) -> void:
-	if _tavern_view != null and is_instance_valid(_tavern_view):
-		_tavern_view.show_message(text, color)
+## 出口③：按钮可用 = 无客人在场 且 不在上菜停留中（等待中即可按；若今晚还有要紧客人没到，
+## 点击会被 end_night 以场内浮字拦下、不关门，避免跳过其剧情）。
+func _refresh_close_button() -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	var enabled := not guests.has_guest and not _guest_lingering
+	_tavern_view.set_close_enabled(enabled)
 
 
-## 把 resolve_action 的 feedback key 翻成玩家可见提示。
+## 把 resolve_action 的 feedback key 翻成玩家可见提示（出口②舞台浮字）。
 func _show_action_feedback(feedback: String) -> void:
 	if ACTION_FEEDBACK.has(feedback):
 		var entry: Array = ACTION_FEEDBACK[feedback]
-		_show_message(String(entry[0]), entry[1])
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			_tavern_view.show_stage_caption(String(entry[0]), entry[1])
 
 
 ## 当前客人订单 key（无客人返回 ""）。视图据此区分「正式上菜」与「叙事递交」。
@@ -564,6 +628,29 @@ func request_apply_story_item_to_product(story_key: String, product_key: String)
 	return r
 
 
+## 香料罐撒料的纯判定入口（spec §5）。SeasoningShaker 摇够后调用。
+## 口味香料无条件写 attribute；效果香料（带 product_tag）复用既有叙事闸门
+## （add_story_item_to_product：迷睡花粉只接受 ale_beer），通过才写 attribute + tag。
+## 返回 {accepted, attribute, product_tags, feedback}；视图据此写到成品 DeskItem。
+func resolve_seasoning_application(seasoning_key: String, product_key: String) -> Dictionary:
+	if not seasoning.is_seasoning(seasoning_key):
+		return {"accepted": false, "attribute": "", "product_tags": [], "feedback": "not_seasoning"}
+	var tag: String = seasoning.get_product_tag(seasoning_key)
+	if tag != "":
+		# 效果香料：复用既有叙事闸门入口（限定产物规则 + 玩家反馈都在 request_apply_story_item_to_product 里）。
+		var r: Dictionary = request_apply_story_item_to_product(seasoning_key, product_key)
+		if not bool(r.get("accepted", false)):
+			return {"accepted": false, "attribute": "", "product_tags": [], "feedback": String(r.get("feedback", ""))}
+		return {
+			"accepted": true,
+			"attribute": seasoning.get_attribute(seasoning_key),
+			"product_tags": r.get("product_tags", []),
+			"feedback": String(r.get("feedback", "")),
+		}
+	# 口味香料：无条件应用。
+	return {"accepted": true, "attribute": seasoning.get_attribute(seasoning_key), "product_tags": [], "feedback": ""}
+
+
 ## 把剧情物品/叙事载体成品递交给当前客人（spec §7.2 / §7.3）。
 ## 物理拖到客人身上时由 BarWorkspace 调用。返回：
 ##   handled：本方法是否接管（false 时视图走正常上菜结算）。
@@ -583,7 +670,8 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 		var feedback: String = String(r.get("feedback", ""))
 		# 错误递交（递错人/不认得的物品）→ 自动回背包，不显示动作反馈
 		if feedback in ["unsupported_npc", "unsupported_story_item"]:
-			_show_message("他不需要这个，收回了吧。", Color.GRAY)
+			if _tavern_view != null and is_instance_valid(_tavern_view):
+				_tavern_view.show_stage_caption("他不需要这个，收回了吧。", Color.GRAY)
 			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
 		_show_action_feedback(feedback)
 		var accepted: bool = bool(r.get("accepted", false))
@@ -678,7 +766,10 @@ func _capture_save_state() -> Dictionary:
 			"endings": narrative.endings.duplicate(true),
 			"today_important_npc": narrative.today_important_npc,
 		},
-		"craft": {"unlocked_recipes": craft.unlocked_recipes.duplicate()},
+		"craft": {
+			"unlocked_recipes": craft.unlocked_recipes.duplicate(),
+			"unlocked_slam_containers": craft.unlocked_slam_containers.duplicate(),
+		},
 		"tutorial": _capture_tutorial_state(),
 		"ryan_slice": ryan_slice.capture_state(),
 	}
@@ -723,6 +814,9 @@ func _apply_save_state(data: Dictionary) -> void:
 	craft.unlocked_recipes.clear()
 	for r in data.get("craft", {}).get("unlocked_recipes", []):
 		craft.unlocked_recipes.append(String(r))
+	craft.unlocked_slam_containers.clear()
+	for sc in data.get("craft", {}).get("unlocked_slam_containers", []):
+		craft.unlocked_slam_containers.append(String(sc))
 
 	_apply_tutorial_state(data.get("tutorial", {}))
 	ryan_slice.restore_state(data.get("ryan_slice", {}))
@@ -758,11 +852,18 @@ func restart_current_day() -> void:
 	# 只有日初快照，重开当天 == 加载该快照（spec §12 "从稳定初始状态开始"）。
 	continue_game()
 
+## 一次性消费「刚看完开场」标志：返回是否应走 match-cut 拉镜，读后即清。
+func consume_intro_handoff() -> bool:
+	var v := _pending_intro_handoff
+	_pending_intro_handoff = false
+	return v
+
 func new_game() -> void:
 	save_sys.clear()
 	_apply_save_state(_default_new_game_state())
 	day_cycle.phase = DayCycleSystem.DayPhase.DAY
-	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
+	_pending_intro_handoff = true
+	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/IntroSequence.tscn")
 
 func _default_new_game_state() -> Dictionary:
 	return {
@@ -771,7 +872,7 @@ func _default_new_game_state() -> Dictionary:
 		"documents": {"owned": ["ledger"], "read": {}, "archived": [], "ledger_entries": []},
 		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
 			"endings": {}, "today_important_npc": ""},
-		"craft": {"unlocked_recipes": []},
+		"craft": {"unlocked_recipes": [], "unlocked_slam_containers": []},
 		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
 			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
 			"first_guest_served": false, "first_ledger_shown": false},
@@ -784,5 +885,6 @@ func _fresh_narrative_vars() -> Dictionary:
 		"has_sleep_powder": false, "ryan_informed": false, "ryan_has_alternative": false,
 		"ryan_warhammer_lead": false,
 		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
+		"ryan_alternative_pending": false, "ryan_alternative_declined": false,
 		"aff_ryan": 0, "aff_mira": 5,
 	}

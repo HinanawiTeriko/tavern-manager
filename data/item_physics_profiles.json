@@ -54,6 +54,11 @@
       "shape": "rect",
       "size": [48, 28],
       "offset": [0, 0]
+    },
+    "seasoning_tiny": {
+      "shape": "rect",
+      "size": [22, 22],
+      "offset": [0, 0]
     }
   },
   "feedback": {

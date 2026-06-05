@@ -10,8 +10,9 @@ var _gold_label: Label
 var _rep_label: Label
 var _day_label: Label
 var _menu_panel: Panel
-var _message_label: Label
 var _end_night_btn: Button
+var _stage_caption: Label
+var _caption_tween: Tween
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
@@ -35,8 +36,8 @@ func _ready() -> void:
 	_gold_label = $TopPanel/GoldLabel
 	_rep_label = $TopPanel/ReputationLabel
 	_day_label = $TopPanel/DayLabel
-	_message_label = $BottomBar/MessageLabel
 	_end_night_btn = $TopPanel/EndNightBtn
+	_stage_caption = $StageCaption
 	_dialogue_overlay = $DialogueOverlay
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
@@ -58,8 +59,6 @@ func _ready() -> void:
 	_end_night_btn.pressed.connect(_on_end_night)
 
 	_apply_theme()
-
-	$BottomBar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_gm.register_view(self)
 
@@ -113,9 +112,6 @@ func _apply_theme() -> void:
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
 
-	_message_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_message_label.add_theme_font_size_override("font_size", 14)
-
 	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_bg.png")
 	var patience_fill = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_fill.png")
 	if patience_bg != null:
@@ -146,6 +142,9 @@ func _apply_theme() -> void:
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
 		ThemeColors.style_brush_panel(shortcut_bg)
+
+	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_stage_caption.add_theme_font_size_override("font_size", 15)
 
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
@@ -181,9 +180,26 @@ func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
 	_rep_label.text = "声望：" + str(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
 
-func show_message(text: String, color: Color) -> void:
-	_message_label.text = text
-	_message_label.add_theme_color_override("font_color", color)
+## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
+func customer_say(text: String) -> void:
+	_order_bubble.text = text
+	_order_bubble.visible = true
+
+## 出口②：舞台提示浮字——第三人称动作描写，淡入→停留→淡出。
+func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
+	_stage_caption.text = text
+	_stage_caption.add_theme_color_override("font_color", color)
+	if _caption_tween != null and _caption_tween.is_valid():
+		_caption_tween.kill()
+	_stage_caption.modulate.a = 0.0
+	_caption_tween = create_tween()
+	_caption_tween.tween_property(_stage_caption, "modulate:a", 1.0, 0.3)
+	_caption_tween.tween_interval(2.5)
+	_caption_tween.tween_property(_stage_caption, "modulate:a", 0.0, 0.5)
+
+## 出口③：打烊按钮可用状态（有客人/pending/上菜停留中时禁用）。
+func set_close_enabled(enabled: bool) -> void:
+	_end_night_btn.disabled = not enabled
 
 func configure_slice_day(day: int) -> void:
 	var bar = get_node_or_null("BarWorkspace")
@@ -303,11 +319,11 @@ func _on_tutorial_btn_pressed() -> void:
 	   tm.is_group_completed("serve") and tm.is_group_completed("ledger"):
 		# 全部完成，点击重新开始
 		tm.replay_all()
-		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 	else:
 		# 还有未完成的教程，重新开始全部
 		tm.replay_all()
-		show_message("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 
 
 func trigger_craft_tutorial() -> void:

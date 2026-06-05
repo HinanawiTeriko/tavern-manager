@@ -55,6 +55,8 @@ func get_capabilities(key: String) -> Array[String]:
 			caps.append("product")
 		"intermediate":
 			caps.append("intermediate")
+		"special":
+			caps.append("material")
 	return caps
 
 func is_material(key: String) -> bool:

@@ -42,7 +42,7 @@ func refresh() -> void:
 			continue
 		if _gm.inventory_sys.is_story_item(key):
 			_story_keys.append(key)
-		elif _gm.inventory_sys.is_material(key):
+		elif _gm.inventory_sys.is_material(key) or _gm.seasoning.is_seasoning(key):
 			_material_keys.append(key)
 	_material_keys.sort()
 	_story_keys.sort()

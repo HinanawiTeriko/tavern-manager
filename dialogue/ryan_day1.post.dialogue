@@ -4,7 +4,11 @@ if serve_result == "success"
     莱恩: 呼——这杯下肚，浑身是劲！老板，你这手艺，够白银阶的队伍抢着来喝了！
     莱恩: 对了——告示板上有支「血斧小队」在招北矿道的护送，赏金抵我跑三个月！
     莱恩: 我明天就去报名。攒够这一笔，妹妹的学费就有着落了——明天见，老板！
-    set aff_ryan = 5
+    if serve_style == "粗鲁"
+        莱恩: （抹了把嘴）老板你这股豪爽劲儿，对我胃口！咱俩处得来。
+    elif serve_style == "温柔"
+        莱恩: ……老板你递酒怎么轻手轻脚的？我又不是会摔的瓷娃娃。
+    set aff_ryan = aff_ryan + 3
     set ryan_warhammer_lead = true
     => END
 

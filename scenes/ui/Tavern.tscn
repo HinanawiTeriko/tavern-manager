@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/ui/readable_desk_item.tscn" id="readable_item"]
 [ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SeasoningShaker.tscn" id="ss"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/barrel.png" id="workspace_barrel"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/grill.png" id="workspace_grill"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/pot.png" id="workspace_pot"]
@@ -326,20 +327,14 @@ layout_mode = 0
 custom_minimum_size = Vector2(80, 0)
 text = "打烊"
 
-[node name="BottomBar" type="Control" parent="."]
-layout_mode = 0
-offset_left = 0.0
-offset_top = 695.0
-offset_right = 1280.0
-offset_bottom = 720.0
-
-[node name="MessageLabel" type="Label" parent="BottomBar"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 0.0
-offset_right = 1270.0
-offset_bottom = 25.0
-text = "欢迎！"
+[node name="StageCaption" type="Label" parent="."]
+offset_left = 240.0
+offset_top = 470.0
+offset_right = 1040.0
+offset_bottom = 510.0
+text = ""
+horizontal_alignment = 1
+modulate = Color(1, 1, 1, 0)
 
 [node name="DialogueOverlay" type="ColorRect" parent="."]
 visible = false
@@ -430,6 +425,9 @@ text = "整理桌面"
 script = ExtResource("bw")
 
 [node name="World" type="Node2D" parent="BarWorkspace"]
+
+[node name="SeasoningShaker" parent="BarWorkspace/World" instance=ExtResource("ss")]
+position = Vector2(720, 470)
 
 [node name="Walls" type="StaticBody2D" parent="BarWorkspace/World"]
 

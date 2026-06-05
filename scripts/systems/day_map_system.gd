@@ -15,6 +15,7 @@ var _flags: Dictionary = {}
 var _read_documents: Dictionary = {}
 var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
+var _revealed: Dictionary = {}
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -75,6 +76,22 @@ func get_locations() -> Array[Dictionary]:
 		if required_read != "" and not is_document_known(required_read):
 			continue
 		result.append(location)
+	return result
+
+
+func is_revealed(location_id: String) -> bool:
+	return bool(_revealed.get(location_id, false))
+
+
+func mark_revealed(location_id: String) -> void:
+	_revealed[location_id] = true
+
+
+func get_new_locations() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for location in get_locations():
+		if not is_revealed(String(location.get("id", ""))):
+			result.append(location)
 	return result
 
 

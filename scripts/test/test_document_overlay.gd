@@ -9,8 +9,8 @@ func _ready() -> void:
 	var view = day_map_scene.instantiate()
 	add_child(view)
 	await get_tree().process_frame
-	_test_document_buttons(view.get_node("DocumentOverlay"))
-	_test_ledger_buttons(view.get_node("DocumentOverlay"))
+	_test_document_buttons(view.get_node("UILayer/DocumentOverlay"))
+	_test_ledger_buttons(view.get_node("UILayer/DocumentOverlay"))
 	view.queue_free()
 	_finish()
 

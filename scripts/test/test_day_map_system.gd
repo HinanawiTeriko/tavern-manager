@@ -9,6 +9,7 @@ func _ready() -> void:
 	_test_game_manager_routes_visits()
 	_test_get_locations_breadcrumb()
 	_test_board_requires_lead()
+	_test_reveal_tracking()
 	_finish()
 
 
@@ -114,3 +115,23 @@ func _test_board_requires_lead() -> void:
 	map.set_lead_flag("ryan_warhammer_lead", true)
 	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board appears with lead")
 	_ok(map.visit("mercenary_board").get("success", false), "board visit succeeds with lead")
+
+
+func _test_reveal_tracking() -> void:
+	var map := DayMapSystem.new()
+	map.load_data()
+	map.start_day(2)
+	var forest: Dictionary = {}
+	for loc in map.get_locations():
+		if String(loc.get("id", "")) == "mushroom_forest":
+			forest = loc
+	_ok(forest.has("pos"), "location dict carries pos field")
+	_ok(forest["pos"].size() == 2, "pos is [x, y]")
+	_ok(not map.is_revealed("mushroom_forest"), "location starts unrevealed")
+	var new_ids := _location_ids(map.get_new_locations())
+	_ok(new_ids.has("mushroom_forest"), "unrevealed visible location is 'new'")
+	map.mark_revealed("mushroom_forest")
+	_ok(map.is_revealed("mushroom_forest"), "mark_revealed sticks")
+	_ok(not _location_ids(map.get_new_locations()).has("mushroom_forest"), "revealed location not 'new'")
+	map.start_day(3)
+	_ok(map.is_revealed("mushroom_forest"), "reveal persists across start_day")

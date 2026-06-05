@@ -3,7 +3,12 @@
 if ryan_has_alternative
     莱恩: 你说得对……也许我不该急着去送命。这份替代委托，我接了。
     莱恩: 谢谢你的肉，也谢谢你拦了我一把。
-    set aff_ryan = 8
+    set aff_ryan = aff_ryan + 2
+    => END
+
+elif ryan_alternative_declined
+    莱恩: 你给的那条退路……我收下了，可对不住，我信不过你。
+    莱恩: 这一趟，我还是得自己走。谢谢你的肉。
     => END
 
 elif ryan_informed
@@ -13,7 +18,11 @@ elif ryan_informed
 
 elif serve_result == "success"
     莱恩: 好肉！明天就靠这块肉打赢地牢了！谢了老板！
-    set aff_ryan = 10
+    if serve_style == "粗鲁"
+        莱恩: 就爱你这干脆劲儿——盘子往桌上一拍，够意思！
+    elif serve_style == "温柔"
+        莱恩: 你伺候得也太精细了，搞得我浑身不自在。
+    set aff_ryan = aff_ryan + 3
     => END
 
 else

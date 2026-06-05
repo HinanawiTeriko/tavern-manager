@@ -5,6 +5,7 @@ signal guest_arrived(guest)
 signal guest_left()
 signal patience_low()
 signal normal_orders_completed()
+signal guest_abandoned()
 
 const _normal_names: Array = [
 	"铁锤格鲁姆", "冰霜莱拉", "暗影德恩", "圣光凯尔", "疾风维克斯",
@@ -26,10 +27,26 @@ var orders_failed: int = 0
 var _normal_order_limit: int = 0
 var _normal_orders_spawned: int = 0
 var _normal_completion_emitted: bool = false
+var _reaction_pools: Dictionary = {}
 
 func _init(available_orders_callable: Callable) -> void:
 	_get_available_orders = available_orders_callable
 	_rng.randomize()
+	_load_reaction_pools()
+
+func _load_reaction_pools() -> void:
+	var file = FileAccess.open("res://data/guest_reactions.json", FileAccess.READ)
+	if file == null:
+		push_error("[GuestSystem] guest_reactions.json 未找到")
+		return
+	var json_text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(json_text)
+	if data == null or not data is Dictionary:
+		push_error("[GuestSystem] guest_reactions.json 解析失败或格式错误")
+		return
+	_reaction_pools = data
+	print("[GuestSystem] 加载 ", _reaction_pools.size(), " 组反应台词")
 
 func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 	if not has_guest_flag and not menu_open:
@@ -46,7 +63,7 @@ func update(dt: float, has_guest_flag: bool, menu_open: bool) -> void:
 			patience_low.emit()
 		if current_guest.patience <= 0.0:
 			record_order_failed()
-			clear_guest()
+			guest_abandoned.emit()
 
 func _spawn_normal() -> void:
 	if _normal_orders_spawned >= _normal_order_limit:
@@ -116,3 +133,11 @@ func reset_daily() -> void:
 	guests_served_today = 0
 	orders_success = 0
 	orders_failed = 0
+
+## 取某结果（success/fail_wrong/fail_weird/impatient）的随机客人反应台词。
+## npc_id 预留 per-npc override，暂未实现内容。池缺失时返回安全兜底。
+func get_reaction_line(outcome: String, _npc_id: String = "") -> String:
+	var pool = _reaction_pools.get(outcome, [])
+	if pool is Array and pool.size() > 0:
+		return String(pool[_rng.randi() % pool.size()])
+	return "「……」"

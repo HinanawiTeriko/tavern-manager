@@ -12,5 +12,9 @@
     { "key": "meat_sand", "price": 30 },
     { "key": "meat_stew", "price": 40 }
   ],
+  "abilities": [
+    { "key": "slam_pot", "name": "冲击魔法·炖锅", "price": 60 },
+    { "key": "slam_barrel", "name": "冲击魔法·酒桶", "price": 100 }
+  ],
   "miraDiscount": 0.8
 }
