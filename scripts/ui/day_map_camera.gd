@@ -10,7 +10,7 @@ const ZOOM_STEP := 0.1
 
 # 地图逻辑范围（与 locations.json pos 同坐标系）
 var map_min := Vector2(0, 0)
-var map_max := Vector2(2000, 1400)
+var map_max := Vector2(1280, 720)
 
 var active: bool = true
 

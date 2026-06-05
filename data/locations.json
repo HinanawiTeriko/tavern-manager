@@ -5,7 +5,7 @@
     {
       "id": "mercenary_board",
       "name": "佣兵告示板",
-      "pos": [520, 380],
+      "pos": [505, 360],
       "cost": 1,
       "materials": [],
       "rewards": [],
@@ -19,7 +19,7 @@
     {
       "id": "abandoned_mine",
       "name": "废弃矿道",
-      "pos": [1000, 250],
+      "pos": [930, 225],
       "cost": 1,
       "materials": [],
       "rewards": [],
@@ -32,7 +32,7 @@
     {
       "id": "guild_counter",
       "name": "公会柜台",
-      "pos": [350, 720],
+      "pos": [785, 335],
       "cost": 2,
       "materials": [],
       "rewards": [],
@@ -46,7 +46,7 @@
     {
       "id": "mushroom_forest",
       "name": "菌菇林地",
-      "pos": [760, 820],
+      "pos": [555, 555],
       "cost": 1,
       "materials": ["herb"],
       "rewards": ["herb"],
@@ -58,7 +58,7 @@
     {
       "id": "dark_river",
       "name": "暗河沿岸",
-      "pos": [980, 1180],
+      "pos": [660, 575],
       "cost": 2,
       "materials": ["meat_raw"],
       "rewards": ["meat_raw"],
@@ -69,7 +69,7 @@
     {
       "id": "grape_trellis",
       "name": "葡萄藤架",
-      "pos": [1480, 560],
+      "pos": [955, 470],
       "cost": 1,
       "materials": ["grape"],
       "rewards": ["grape"],
@@ -80,7 +80,7 @@
     {
       "id": "mill_farm",
       "name": "农庄磨坊",
-      "pos": [1620, 1040],
+      "pos": [875, 520],
       "cost": 1,
       "materials": ["ale"],
       "rewards": ["ale"],

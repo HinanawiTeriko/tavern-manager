@@ -75,6 +75,13 @@ func _test_daymap_art_assets(view) -> void:
 	if background.texture != null:
 		_ok(background.texture.resource_path.ends_with("assets/textures/daymap/daymap_bg.png"),
 			"daymap background uses the native-pipeline runtime art")
+	_ok(background.position == Vector2(640, 360),
+		"daymap background is centered on the 1280x720 runtime map")
+	_ok(view._camera.map_max == Vector2(1280, 720),
+		"daymap camera clamps to the 1280x720 runtime map")
+	_ok(view._home_marker.position.x >= 0.0 and view._home_marker.position.x <= 1280.0
+			and view._home_marker.position.y >= 0.0 and view._home_marker.position.y <= 720.0,
+		"home marker stays inside the runtime map bounds")
 	_ok(view._home_marker != null and is_instance_valid(view._home_marker),
 		"home marker exists before checking art")
 	if view._home_marker != null and is_instance_valid(view._home_marker):

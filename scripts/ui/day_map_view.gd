@@ -5,9 +5,10 @@ signal gathering_confirmed(assignments: Dictionary)
 
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
+const DAYMAP_BACKGROUND := preload("res://assets/textures/daymap/daymap_bg.png")
 
 const HOME_ID := "__home__"
-const HOME_POS := Vector2(1000, 1080)
+const HOME_POS := Vector2(345, 500)
 const INTRO_HANDOFF_ZOOM := 1.32
 const INTRO_HANDOFF_DURATION := 1.8
 
@@ -95,13 +96,8 @@ func _setup_background() -> void:
 	var bg: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
 	if bg == null:
 		return
-	var grad := GradientTexture2D.new()
-	grad.width = 2000; grad.height = 1400
-	var g := Gradient.new()
-	g.colors = [ThemeColors.BACKGROUND_DEEP, ThemeColors.SURFACE_MID]
-	g.offsets = [0.0, 1.0]
-	grad.gradient = g
-	bg.texture = grad
+	bg.position = Vector2(640, 360)
+	bg.texture = DAYMAP_BACKGROUND
 
 
 func _setup_detail_panel() -> void:
@@ -250,6 +246,8 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:
+	if marker.has_method("play_reveal"):
+		marker.play_reveal()
 	var tw := create_tween()
 	tw.tween_property(marker, "modulate:a", 1.0, 0.35)
 	tw.parallel().tween_property(marker, "scale", Vector2(1.25, 1.25), 0.18)
