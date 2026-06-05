@@ -41,6 +41,7 @@ var _shop_title: Label
 var _gold_label: Label
 var _material_list: VBoxContainer
 var _recipe_list: VBoxContainer
+var _ability_list: VBoxContainer
 var _is_mira_shop: bool = false
 
 func _ready() -> void:
@@ -504,6 +505,17 @@ func _build_shop_ui() -> void:
 	_recipe_list.add_theme_constant_override("separation", 4)
 	shop_content.add_child(_recipe_list)
 
+	var ability_title = Label.new()
+	ability_title.text = "—— 技法 ——"
+	ability_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	ability_title.add_theme_font_size_override("font_size", 16)
+	ability_title.custom_minimum_size = Vector2(0, 30)
+	shop_content.add_child(ability_title)
+
+	_ability_list = VBoxContainer.new()
+	_ability_list.add_theme_constant_override("separation", 4)
+	shop_content.add_child(_ability_list)
+
 func _refresh_shop_ui() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm == null:
@@ -514,6 +526,7 @@ func _refresh_shop_ui() -> void:
 
 	_build_material_rows(gm)
 	_build_recipe_rows(gm)
+	_build_ability_rows(gm)
 	_update_gold_display()
 
 func _build_material_rows(gm) -> void:
@@ -653,6 +666,51 @@ func _build_recipe_rows(gm) -> void:
 			row.add_child(unlock_btn)
 
 		_recipe_list.add_child(row)
+
+func _build_ability_rows(gm) -> void:
+	for child in _ability_list.get_children():
+		child.queue_free()
+
+	for key in gm.shop.get_ability_keys():
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		row.custom_minimum_size = Vector2(0, 40)
+
+		var name_label = Label.new()
+		name_label.text = gm.shop.get_ability_name(key)
+		name_label.custom_minimum_size = Vector2(150, 0)
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 16)
+		row.add_child(name_label)
+
+		var owned: bool = gm.is_ability_owned(key)
+		if owned:
+			var owned_label = Label.new()
+			owned_label.text = "已掌握"
+			owned_label.custom_minimum_size = Vector2(80, 0)
+			owned_label.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
+			owned_label.add_theme_font_size_override("font_size", 14)
+			row.add_child(owned_label)
+		else:
+			var price_label = Label.new()
+			price_label.text = str(gm.shop.get_ability_price(key)) + "金"
+			price_label.custom_minimum_size = Vector2(60, 0)
+			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			price_label.add_theme_font_size_override("font_size", 14)
+			row.add_child(price_label)
+
+			var buy_btn = Button.new()
+			buy_btn.text = "购买"
+			buy_btn.custom_minimum_size = Vector2(56, 30)
+			ThemeColors.style_button(buy_btn, 14)
+			buy_btn.pressed.connect(func():
+				if gm.buy_ability(key):
+					_update_gold_display()
+					_build_ability_rows(gm)
+			)
+			row.add_child(buy_btn)
+
+		_ability_list.add_child(row)
 
 
 # 教程触发方法
