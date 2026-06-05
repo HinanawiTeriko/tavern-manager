@@ -112,7 +112,7 @@ func _ready() -> void:
 	guests.normal_orders_completed.connect(_on_normal_orders_completed)
 	guests.guest_abandoned.connect(_on_guest_abandoned)
 
-	economy.changed.connect(_refresh_tavern_ui)
+	economy.changed.connect(_refresh_tavern_ui.unbind(3))
 	day_cycle.phase_changed.connect(_on_phase_changed)
 
 	DialogueManager.dialogue_started.connect(func(_resource): _is_dialogue_active = true)
