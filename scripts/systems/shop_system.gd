@@ -7,6 +7,8 @@ const MIRA_DISCOUNT: float = 0.8
 
 var _material_prices: Dictionary = {}
 var _recipe_unlock_prices: Dictionary = {}
+var _ability_prices: Dictionary = {}
+var _ability_names: Dictionary = {}
 
 func load_config() -> void:
 	var file = FileAccess.open("res://data/shop.json", FileAccess.READ)
@@ -27,6 +29,12 @@ func load_config() -> void:
 	if data.has("recipeUnlocks") and data["recipeUnlocks"] != null:
 		for r in data["recipeUnlocks"]:
 			_recipe_unlock_prices[r["key"]] = r["price"]
+	_ability_prices.clear()
+	_ability_names.clear()
+	if data.has("abilities") and data["abilities"] != null:
+		for a in data["abilities"]:
+			_ability_prices[a["key"]] = a["price"]
+			_ability_names[a["key"]] = a["name"]
 	print("[Shop] 加载 ", _material_prices.size(), " 种材料, ", _recipe_unlock_prices.size(), " 种可解锁配方")
 
 func get_material_price(key: String, discount: float = 1.0) -> int:
@@ -41,3 +49,12 @@ func get_recipe_unlock_price(key: String) -> int:
 	if _recipe_unlock_prices.has(key):
 		return _recipe_unlock_prices[key]
 	return INVALID_RECIPE_PRICE
+
+func get_ability_price(key: String) -> int:
+	return _ability_prices.get(key, INVALID_RECIPE_PRICE)
+
+func get_ability_name(key: String) -> String:
+	return _ability_names.get(key, key)
+
+func get_ability_keys() -> Array:
+	return _ability_prices.keys()
