@@ -8,6 +8,8 @@ const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(1000, 1080)
+const INTRO_HANDOFF_ZOOM := 1.32
+const INTRO_HANDOFF_DURATION := 1.8
 
 var _camera: DayMapCamera
 var _points_root: Node2D
@@ -145,8 +147,8 @@ func show_day(day: int, total_days: int) -> void:
 func _play_intro_handoff() -> void:
 	# match-cut：相机先贴紧酒馆(紧 zoom)，再拉开到正常视距，然后才 reveal 地点
 	_camera.position = HOME_POS
-	_camera.zoom = Vector2(_camera.MAX_ZOOM, _camera.MAX_ZOOM)
-	await _camera.fly_to(HOME_POS, 1.0, 1.2).finished
+	_camera.zoom = Vector2(INTRO_HANDOFF_ZOOM, INTRO_HANDOFF_ZOOM)
+	await _camera.fly_to(HOME_POS, 1.0, INTRO_HANDOFF_DURATION).finished
 	if not is_instance_valid(self):
 		return
 	_refresh_map()

@@ -10,6 +10,7 @@ func _ready() -> void:
 	_test_get_locations_breadcrumb()
 	_test_board_requires_lead()
 	_test_reveal_tracking()
+	_test_intro_handoff_timing_contract()
 	_finish()
 
 
@@ -135,3 +136,15 @@ func _test_reveal_tracking() -> void:
 	_ok(not _location_ids(map.get_new_locations()).has("mushroom_forest"), "revealed location not 'new'")
 	map.start_day(3)
 	_ok(map.is_revealed("mushroom_forest"), "reveal persists across start_day")
+
+
+func _test_intro_handoff_timing_contract() -> void:
+	var script := FileAccess.open("res://scripts/ui/day_map_view.gd", FileAccess.READ)
+	_ok(script != null, "DayMapView script is readable")
+	if script == null:
+		return
+	var source := script.get_as_text()
+	script.close()
+	_ok(source.contains("const INTRO_HANDOFF_ZOOM"), "intro handoff uses a named zoom constant")
+	_ok(source.contains("const INTRO_HANDOFF_DURATION"), "intro handoff uses a named duration constant")
+	_ok(not source.contains("_camera.zoom = Vector2(_camera.MAX_ZOOM, _camera.MAX_ZOOM)"), "intro handoff does not start at hard max zoom")
