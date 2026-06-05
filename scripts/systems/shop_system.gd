@@ -35,7 +35,7 @@ func load_config() -> void:
 		for a in data["abilities"]:
 			_ability_prices[a["key"]] = a["price"]
 			_ability_names[a["key"]] = a["name"]
-	print("[Shop] 加载 ", _material_prices.size(), " 种材料, ", _recipe_unlock_prices.size(), " 种可解锁配方")
+	print("[Shop] 加载 ", _material_prices.size(), " 种材料, ", _recipe_unlock_prices.size(), " 种可解锁配方, ", _ability_prices.size(), " 种技法")
 
 func get_material_price(key: String, discount: float = 1.0) -> int:
 	if not _material_prices.has(key):
