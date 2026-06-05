@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_slam_state()
 	_test_find_slam_recipe()
 	_test_quality_payoff()
+	_test_buy_and_serve()
 	_finish()
 
 
@@ -101,3 +102,27 @@ func _test_quality_payoff() -> void:
 	_ok(e.reputation_for_quality("normal") == 2, "normal 声望 +2")
 	_ok(e.reputation_for_quality("poor") == 0, "poor 声望 +0")
 	_ok(e.reputation_for_quality("") == 2, "未知品质声望回退 +2")
+
+
+func _test_buy_and_serve() -> void:
+	var gm = _gm()
+	gm.craft.unlocked_slam_containers.clear()
+
+	# 钱不够买不了
+	gm.economy.gold = 0
+	_ok(not gm.buy_ability("slam_pot"), "无钱不能购买")
+	_ok(not gm.craft.is_slam_unlocked("pot"), "购买失败不解锁")
+
+	# 钱够：扣钱 + 解锁
+	gm.economy.gold = 200
+	_ok(gm.buy_ability("slam_pot"), "有钱购买成功")
+	_ok(gm.economy.gold == 140, "购买后扣 60 金")
+	_ok(gm.craft.is_slam_unlocked("pot"), "购买后 pot 解锁")
+	_ok(gm.is_ability_owned("slam_pot"), "is_ability_owned 反映已购")
+
+	# 重复购买被拒、不二次扣钱
+	_ok(not gm.buy_ability("slam_pot"), "重复购买被拒")
+	_ok(gm.economy.gold == 140, "重复购买不扣钱")
+
+	# 未知能力 key 被拒
+	_ok(not gm.buy_ability("nope"), "未知能力购买被拒")

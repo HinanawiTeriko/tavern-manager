@@ -360,8 +360,9 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 	var item_price: int = item.get("price", 0)
 
 	if success:
-		economy.add_gold(item_price)
-		economy.add_reputation(2)
+		var serve_quality: String = String(craft_style_data.get("quality", "normal"))
+		economy.add_gold(economy.gold_for_quality(item_price, serve_quality))
+		economy.add_reputation(economy.reputation_for_quality(serve_quality))
 		guests.record_order_success()
 		ryan_slice.record_order_success()
 		play_audio_event("serve_success")
@@ -534,6 +535,26 @@ func buy_recipe_unlock(key: String) -> bool:
 		return false
 	craft.unlock_recipe(key)
 	return true
+
+const ABILITY_TO_CONTAINER := {"slam_pot": "pot", "slam_barrel": "barrel"}
+
+func buy_ability(key: String) -> bool:
+	var container: String = ABILITY_TO_CONTAINER.get(key, "")
+	if container == "":
+		return false
+	if craft.is_slam_unlocked(container):
+		return false
+	var price: int = shop.get_ability_price(key)
+	if price <= 0:
+		return false
+	if not economy.spend_gold(price):
+		return false
+	craft.unlock_slam(container)
+	return true
+
+func is_ability_owned(key: String) -> bool:
+	var container: String = ABILITY_TO_CONTAINER.get(key, "")
+	return container != "" and craft.is_slam_unlocked(container)
 
 func _refresh_tavern_ui() -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
