@@ -184,3 +184,27 @@ func query_recipe(container: String, ingredients: Array) -> String:
 	sorted_ingr.sort()
 	var key: String = container + "|" + "+".join(sorted_ingr)
 	return _recipes_by_container.get(key, "")
+
+## 砸合成配方反查。keys=两个材料 key（可相同）。
+## 返回 {product, container, double} 或 {}。
+## double=true 表示单料配方撞两个同料 → 产双份。
+## 仅匹配已 is_slam_unlocked 的 container；requires_purchase 配方需已解锁。
+func find_slam_recipe(keys: Array) -> Dictionary:
+	if keys.size() != 2:
+		return {}
+	var sorted_keys: Array = keys.duplicate()
+	sorted_keys.sort()
+	for product_key in recipes:
+		var recipe: Dictionary = recipes[product_key]
+		var container: String = recipe.get("container", "")
+		if not is_slam_unlocked(container):
+			continue
+		if bool(recipe.get("requires_purchase", false)) and not is_recipe_unlocked(product_key):
+			continue
+		var ingr: Array = (recipe.get("ingredients", []) as Array).duplicate()
+		ingr.sort()
+		if ingr.size() == 2 and ingr == sorted_keys:
+			return {"product": product_key, "container": container, "double": false}
+		if ingr.size() == 1 and keys[0] == keys[1] and ingr[0] == keys[0]:
+			return {"product": product_key, "container": container, "double": true}
+	return {}

@@ -10,6 +10,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_shop_abilities()
 	_test_slam_state()
+	_test_find_slam_recipe()
 	_finish()
 
 
@@ -55,3 +56,34 @@ func _test_slam_state() -> void:
 	_ok(c.classify_slam_force(100.0) == "none", "100 应不合成")
 	_ok(c.classify_slam_force(500.0) == "normal", "窗口内应 normal")
 	_ok(c.classify_slam_force(1500.0) == "poor", "超上限应 poor")
+
+
+func _test_find_slam_recipe() -> void:
+	var c = _gm().craft
+	c.unlocked_slam_containers.clear()
+	c.unlocked_recipes.clear()
+
+	# 未解锁任何砸 → 无匹配
+	_ok(c.find_slam_recipe(["herb", "ale"]).is_empty(), "未解锁 pot 时草药清汤不可砸")
+
+	c.unlock_slam("pot")
+	# 双料 pot 配方：herb_broth = herb + ale（不需购买）
+	var r1 = c.find_slam_recipe(["herb", "ale"])
+	_ok(r1.get("product", "") == "herb_broth", "草药清汤可砸")
+	_ok(r1.get("double", true) == false, "双料配方 double=false")
+	# 顺序无关
+	_ok(c.find_slam_recipe(["ale", "herb"]).get("product", "") == "herb_broth", "食材顺序无关")
+
+	# requires_purchase 的 pot 配方 meat_stew（生肉+麦芽）：未解锁配方 → 不可砸
+	_ok(c.find_slam_recipe(["meat_raw", "ale"]).is_empty(), "肉汤配方未购则不可砸")
+	c.unlock_recipe("meat_stew")
+	_ok(c.find_slam_recipe(["meat_raw", "ale"]).get("product", "") == "meat_stew", "购配方后肉汤可砸")
+
+	# 单料 barrel 配方 ale_beer = ale：需解锁 barrel + 撞两个相同
+	_ok(c.find_slam_recipe(["ale", "ale"]).is_empty(), "未解锁 barrel 时麦芽酒不可砸")
+	c.unlock_slam("barrel")
+	var r2 = c.find_slam_recipe(["ale", "ale"])
+	_ok(r2.get("product", "") == "ale_beer", "麦芽酒可砸（同料）")
+	_ok(r2.get("double", false) == true, "单料配方 double=true")
+	# 两个不同材料但无双料配方 → 无匹配
+	_ok(c.find_slam_recipe(["ale", "grape"]).is_empty(), "无对应双料配方应空")
