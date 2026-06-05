@@ -9,6 +9,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_shop_abilities()
+	_test_slam_state()
 	_finish()
 
 
@@ -39,3 +40,18 @@ func _test_shop_abilities() -> void:
 	_ok(s.get_ability_name("slam_pot") == "冲击魔法·炖锅", "slam_pot 名称")
 	_ok(s.get_ability_price("nope") == -1, "未知能力价格应为 -1")
 	_ok(s.get_ability_keys().size() == 2, "应有 2 个能力")
+
+
+func _test_slam_state() -> void:
+	var c = _gm().craft
+	# 解锁状态从干净起步（测试间互不污染：先清）
+	c.unlocked_slam_containers.clear()
+	_ok(not c.is_slam_unlocked("pot"), "初始 pot 未解锁")
+	c.unlock_slam("pot")
+	_ok(c.is_slam_unlocked("pot"), "解锁后 pot 已解锁")
+	c.unlock_slam("pot")  # 幂等
+	_ok(c.unlocked_slam_containers.size() == 1, "重复解锁不应增加")
+	# 力度分档
+	_ok(c.classify_slam_force(100.0) == "none", "100 应不合成")
+	_ok(c.classify_slam_force(500.0) == "normal", "窗口内应 normal")
+	_ok(c.classify_slam_force(1500.0) == "poor", "超上限应 poor")

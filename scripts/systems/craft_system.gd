@@ -6,6 +6,9 @@ var _ops: Dictionary = {}
 var _combine: Dictionary = {}
 var item_physics_profiles: Dictionary = {}
 var unlocked_recipes: Array = []
+var unlocked_slam_containers: Array = []   # 已购冲击魔法的容器类，如 ["pot","barrel"]
+var slam_merge_low: float = 350.0
+var slam_merge_high: float = 1000.0
 var recipes: Dictionary = {}              # 原始 JSON：product_key -> recipe data
 var _recipes_by_container: Dictionary = {}  # "barrel|ale" -> "ale_beer"
 
@@ -15,6 +18,34 @@ func is_recipe_unlocked(key: String) -> bool:
 func unlock_recipe(key: String) -> void:
 	if not unlocked_recipes.has(key):
 		unlocked_recipes.append(key)
+
+func _load_slam_config() -> void:
+	var file = FileAccess.open("res://data/slam.json", FileAccess.READ)
+	if file == null:
+		push_warning("[Craft] slam.json 未找到，用默认力度阈值")
+		return
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	if data == null or not data is Dictionary:
+		push_error("[Craft] slam.json 格式无效")
+		return
+	slam_merge_low = float(data.get("merge_low", slam_merge_low))
+	slam_merge_high = float(data.get("merge_high", slam_merge_high))
+
+func is_slam_unlocked(container: String) -> bool:
+	return unlocked_slam_containers.has(container)
+
+func unlock_slam(container: String) -> void:
+	if not unlocked_slam_containers.has(container):
+		unlocked_slam_containers.append(container)
+
+## 力度分档：none=太轻不合成 / normal=窗口内 / poor=砸太狠降级
+func classify_slam_force(speed: float) -> String:
+	if speed < slam_merge_low:
+		return "none"
+	if speed > slam_merge_high:
+		return "poor"
+	return "normal"
 
 func get_orderable_products(day: int) -> Array[String]:
 	var result: Array[String] = []
@@ -37,6 +68,7 @@ func load_data() -> void:
 	_load_operations()
 	_load_combines()
 	_load_recipes()
+	_load_slam_config()
 	print("[Craft] 加载 ", items.size(), " 种物品, ", _ops.size(), " 个加工节点, ", _combine.size(), " 条组合规则, ", recipes.size(), " 条容器配方")
 
 func _load_items() -> void:
