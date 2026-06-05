@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_shop_abilities()
 	_test_slam_state()
 	_test_find_slam_recipe()
+	_test_quality_payoff()
 	_finish()
 
 
@@ -87,3 +88,16 @@ func _test_find_slam_recipe() -> void:
 	_ok(r2.get("double", false) == true, "单料配方 double=true")
 	# 两个不同材料但无双料配方 → 无匹配
 	_ok(c.find_slam_recipe(["ale", "grape"]).is_empty(), "无对应双料配方应空")
+
+
+func _test_quality_payoff() -> void:
+	var e = _gm().economy
+	_ok(e.gold_for_quality(10, "good") == 15, "good 金币 ×1.5")
+	_ok(e.gold_for_quality(10, "normal") == 10, "normal 金币 ×1")
+	_ok(e.gold_for_quality(10, "poor") == 5, "poor 金币 ×0.5")
+	_ok(e.gold_for_quality(7, "poor") == 3, "poor 金币向下取整 floor(3.5)=3")
+	_ok(e.gold_for_quality(10, "") == 10, "未知品质回退 ×1")
+	_ok(e.reputation_for_quality("good") == 3, "good 声望 +3")
+	_ok(e.reputation_for_quality("normal") == 2, "normal 声望 +2")
+	_ok(e.reputation_for_quality("poor") == 0, "poor 声望 +0")
+	_ok(e.reputation_for_quality("") == 2, "未知品质声望回退 +2")
