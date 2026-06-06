@@ -79,18 +79,55 @@ git add -- assets/source/intro/reference/tavern_continuity_master.png assets/sou
 git commit -m "art(intro): approve pixel tavern continuity master"
 ```
 
-### Task 2: Generate the Warm Memory and Dark Tavern Pair
+### Task 2: Generate the Interior Spatial Master
 
 **Files:**
 - Read: `assets/source/intro/reference/tavern_continuity_master.png`
+- Read: `assets/source/title/reference/title_pixel_composite_reference.png`
+- Create: `assets/source/intro/reference/tavern_interior_spatial_master-v2.png`
+- Replace after approval: `assets/source/intro/reference/tavern_interior_spatial_master.png`
+
+- [ ] **Step 1: Generate an unoccupied interior spatial master**
+
+Use the approved unified interior design. The image must lock the right-rear stone
+fireplace, foreground L-shaped bar, left-rear entrance door, sparse left-wall shelves,
+top timber beams, central passage, and low-density decoration.
+
+- [ ] **Step 2: Review the master at full and native size**
+
+Reject it unless:
+
+```text
+- The fireplace is the primary architectural identity in the right rear.
+- The L-shaped bar reads clearly and can support a future behind-the-bar camera.
+- The left entrance door matches the approved entrance master.
+- The left wall has only 2–3 broad shelf levels with sparse bottle silhouettes.
+- The center remains low contrast and usable as a customer stage.
+- The interior contains no barrels, crates, sign, bottle wall, cookware wall or clutter.
+- At 320x180, the door, shelves, bar and fireplace remain distinct large shapes.
+```
+
+- [ ] **Step 3: Promote and commit the approved interior master**
+
+```powershell
+git add -- assets/source/intro/reference/tavern_interior_spatial_master*.png
+git commit -m "art(intro): approve unified tavern interior master"
+```
+
+### Task 3: Generate the Warm Memory and Dark Tavern Pair
+
+**Files:**
+- Read: `assets/source/intro/reference/tavern_interior_spatial_master.png`
 - Create: `assets/source/intro/reference/intro_hearth_memory-v2.png`
 - Create: `assets/source/intro/reference/intro_tavern_dark-v2.png`
 - Replace after approval: `assets/source/intro/reference/intro_hearth_memory.png`
 - Replace after approval: `assets/source/intro/reference/intro_tavern_dark.png`
 
-- [ ] **Step 1: Generate `intro_hearth_memory` as an edit of the master**
+- [ ] **Step 1: Generate `intro_hearth_memory` as an edit of the interior master**
 
-Use the approved `intro_hearth_memory` prompt plus the common prompt and negative prompt. Preserve the master architecture and camera. Include only 3–5 broad anonymous patron silhouettes.
+Preserve the approved interior architecture and camera. Include exactly four broad
+anonymous patrons in varied directions: two conversing, one attending to a mug, and
+one near the entrance. Do not arrange them around the fireplace.
 
 - [ ] **Step 2: Review the warm memory before generating the dark version**
 
@@ -99,7 +136,8 @@ The candidate passes only when:
 ```text
 - The hearth is the sole strong amber focal point.
 - Patrons read as large silhouettes without faces or clothing detail.
-- The scene feels quiet and ritual-like, not crowded or festive.
+- The scene feels like a quiet last drink before a dangerous descent, not crowded,
+  festive, religious or ceremonial.
 - At least about 70% of the frame remains dark teal or coal black.
 ```
 
@@ -121,7 +159,7 @@ git add -- assets/source/intro/reference/intro_hearth_memory*.png assets/source/
 git commit -m "art(intro): approve tavern memory contrast pair"
 ```
 
-### Task 3: Generate the Threshold Shot
+### Task 4: Generate the Threshold Shot
 
 **Files:**
 - Read: `assets/source/intro/reference/tavern_continuity_master.png`
@@ -151,7 +189,7 @@ git add -- assets/source/intro/reference/intro_threshold*.png
 git commit -m "art(intro): approve tavern threshold shot"
 ```
 
-### Task 4: Generate the Descent and Rusted Key Shots
+### Task 5: Generate the Descent and Rusted Key Shots
 
 **Files:**
 - Read: `assets/source/title/reference/title_pixel_composite_reference.png`
@@ -179,7 +217,7 @@ git add -- assets/source/intro/reference/intro_descent*.png assets/source/intro/
 git commit -m "art(intro): approve descent and inherited key shots"
 ```
 
-### Task 5: Rebuild Native and Runtime Assets
+### Task 6: Rebuild Native and Runtime Assets
 
 **Files:**
 - Replace: `assets/source/intro/intro_descent_native.png`
@@ -241,7 +279,7 @@ git add -- assets/source/intro assets/textures/intro
 git commit -m "art(intro): rebuild title-matched opening stills"
 ```
 
-### Task 6: Verify the Intro in Godot
+### Task 7: Verify the Intro in Godot
 
 **Files:**
 - Verify: `data/intro.json`

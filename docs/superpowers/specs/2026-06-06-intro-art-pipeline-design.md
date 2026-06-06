@@ -5,6 +5,7 @@
 - 状态：重构设计已确认，待用户生成 reference
 - 依赖：`docs/art_pipeline.md`
 - 配套叙事设计：`docs/superpowers/specs/2026-06-05-souls-style-intro-design.md`
+- 配套内景设计：`docs/superpowers/specs/2026-06-06-tavern-interior-spatial-design.md`
 
 ## 目标
 
@@ -25,13 +26,14 @@ clusters、明确的大轮廓和硬边阴影。庄严悲壮感只能通过尺度
 
 - 主角始终匿名，不露脸；只出现远处小剪影和握钥匙的手。
 - 第 2、3、5 拍必须是同一间酒馆，并保持建筑结构连续。
+- 第 2、3 拍使用同一室内机位；第 5 拍使用入口机位。两组机位共享同一空间布局。
 - 酒馆就是标题画面左侧的酒馆，沿用石砌拱门、厚木门、壁灯、桶箱和地下巷道语言。
 - 酒馆没有悬挂招牌、墙牌或其他标识物。
 - 门板位于门洞左侧，使用竖向木板、上下两根横向木加固条，以及中部靠自由边的横向黑铁拉手。
 - 门外右侧固定放置一个酒桶、一个板条箱和箱上的单把酒杯；酒桶顶部为空。
 - 酒馆室内不放置酒桶或板条箱，只保留壁炉、桌椅和必要留白。
 - 第 2、3 拍使用几乎相同的机位，以暖盛和冷寂形成兴衰对照。
-- 第 2 拍只出现 3–5 名顾客，全部处理为无面部、无服饰细节的大块剪影。
+- 第 2 拍只出现四名顾客，全部处理为无面部、无服饰细节的大块剪影，并采用不同朝向。
 - 第 5 拍从门槛看向室内，壁炉位置必须与连续性母版一致。
 - 画面不包含文字、UI、按钮、logo、水印或旁白。
 - 主要叙事焦点避开屏幕下方旁白区域，四边保留轻微运镜余量。
@@ -45,7 +47,7 @@ clusters、明确的大轮廓和硬边阴影。庄严悲壮感只能通过尺度
 | 拍 | Reference / Native / Runtime 名称 | 画面职责 |
 |---|---|---|
 | 1 | `intro_descent` | 巨大环形竖井占据画面，石阶沿井壁向下消失；人物只是一枚小剪影，零星 amber 灯火逐级熄灭 |
-| 2 | `intro_hearth_memory` | 酒馆拱门如圣堂入口，炉火是唯一强光；3–5 名顾客以大块剪影围绕桌杯，形成安静的仪式感 |
+| 2 | `intro_hearth_memory` | 室内斜视角展示右后壁炉、L 形吧台和左后酒架；四名顾客以不同朝向自然交谈、饮酒或准备下井 |
 | 3 | `intro_tavern_dark` | 与第 2 拍几乎同机位；人物和暖光全部消失，只剩封闭木门、入口道具剪影与熄灭壁灯 |
 | 4 | `intro_rusted_key` | 粗布袖口的手掌托起轮廓清晰的巨大锈钥匙；背景只保留酒馆门的暗色拱形 |
 | 5 | `intro_threshold` | 从人物身后看向开启的厚木门；冷暗酒馆占大部分画面，远处壁炉只留一颗极小余烬 |
@@ -61,10 +63,12 @@ Reference 由用户在生图界面生成，Codex 提供结构化 prompt、负面
    作为风格锚点。
 2. 先生成新的 `tavern_continuity_master.png`，明确拱门、左侧木门、壁灯、远端壁炉、
    右侧入口道具组和室内桌椅位置。
-3. 第 2、3、5 拍必须使用母版作为编辑输入派生，禁止重新随机设计酒馆。
-4. 第 1、4 拍使用标题合成参考作为风格输入独立生成。
-5. 候选图使用 `-v2`、`-v3` 后缀保存，未批准前不得覆盖无后缀正式 reference。
-6. 每张图进入仓库后先进行肉眼审查；构图、结构或风格不合格时不进入生产管线。
+3. 入口母版批准后，再生成无人物的 `tavern_interior_spatial_master`，锁定壁炉、L 形吧台、
+   左后酒架、入口门和顶部木梁。
+4. 第 2、3 拍必须从室内空间母版派生；第 5 拍从入口母版派生，禁止重新随机设计酒馆。
+5. 第 1、4 拍使用标题合成参考作为风格输入独立生成。
+6. 候选图使用 `-v2`、`-v3` 后缀保存，未批准前不得覆盖无后缀正式 reference。
+7. 每张图进入仓库后先进行肉眼审查；构图、结构或风格不合格时不进入生产管线。
 
 母版与五拍 reference 均保存在 `assets/source/intro/reference/`，使用描述性文件名，不覆盖被否决
 的版本；迭代稿可使用 `-v2`、`-v3` 后缀。
@@ -124,14 +128,25 @@ Show the entrance framing, connected floor perspective and interior hearth relat
 clearly.
 ```
 
-`intro_hearth_memory`，以母版为编辑输入：
+`intro_hearth_memory`，以室内空间母版为编辑输入：
 
 ```text
-Preserve the exact tavern architecture and camera position from the continuity master.
-The stone arch reads like a humble sanctuary entrance. The hearth is the only strong
-amber light. Add only three to five patrons as broad anonymous silhouettes around one
-or two tables, with simple mug shapes and no faces, clothing detail or individual
-portrait features. The gathering feels quiet and ritual-like, not busy or festive.
+Preserve the exact architecture, camera and furniture positions from the approved
+interior spatial master. The interior occupies at least 80 percent of the frame.
+Keep the entrance door as a narrow continuity anchor on the far left, sparse shelves
+on the left rear wall, the L-shaped bar in the foreground and right side, and the stone
+hearth in the right rear third.
+
+Add exactly four patrons as broad anonymous silhouettes with varied directions:
+two converse at one table, one attends to a simple single-handled mug, and one remains
+near the entrance as if preparing to descend. At least two appear in side profile or
+three-quarter silhouette. Do not make everyone face the hearth. Do not arrange them
+symmetrically, in a semicircle, kneeling, praying or performing a ritual.
+
+The hearth is the primary amber light but remains a background element. Small table
+highlights are secondary. The scene feels like a quiet last drink before a dangerous
+descent: solemn, intimate, weary and briefly safe, not festive or ceremonial.
+No faces, clothing detail, interior barrel, interior crate, bottle wall or clutter.
 ```
 
 `intro_tavern_dark`，以 `intro_hearth_memory` 为编辑输入：
@@ -171,6 +186,7 @@ sunbeam, volumetric light or triumphant glow.
 ```text
 assets/source/intro/reference/
   tavern_continuity_master.png
+  tavern_interior_spatial_master.png
   intro_descent.png
   intro_hearth_memory.png
   intro_tavern_dark.png
