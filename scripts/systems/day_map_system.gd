@@ -16,6 +16,7 @@ var _read_documents: Dictionary = {}
 var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
 var _revealed: Dictionary = {}
+var _regions: Array = []
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -30,8 +31,17 @@ func load_data(path: String = DEFAULT_PATH) -> bool:
 		return false
 	_default_stamina = int(parsed.get("maxStamina", 5))
 	_stamina_by_day = parsed.get("maxStaminaByDay", {})
+	_regions = parsed.get("regions", [])
 	_locations.clear()
+	var region_origin := {}
+	for r in _regions:
+		region_origin[String(r.get("id", ""))] = r.get("origin", [0, 0])
 	for location in parsed.get("locations", []):
+		var rid := String(location.get("region", ""))
+		if region_origin.has(rid):
+			var o = region_origin[rid]
+			var p = location.get("pos", [0, 0])
+			location["pos"] = [float(o[0]) + float(p[0]), float(o[1]) + float(p[1])]
 		_locations[String(location["id"])] = location
 	return true
 
@@ -137,3 +147,23 @@ func visit(location_id: String) -> Dictionary:
 
 func _failure(message: String) -> Dictionary:
 	return {"success": false, "message": message, "stamina": stamina}
+
+
+func get_regions() -> Array:
+	return _regions
+
+
+## 相机边界 = 所有区域矩形的并集；无区域时回退到单屏 1280×720。
+func get_map_bounds() -> Dictionary:
+	if _regions.is_empty():
+		return {"min": Vector2(0, 0), "max": Vector2(1280, 720)}
+	var mn := Vector2(INF, INF)
+	var mx := Vector2(-INF, -INF)
+	for r in _regions:
+		var o = r.get("origin", [0, 0])
+		var s = r.get("size", [1280, 720])
+		mn.x = minf(mn.x, float(o[0]))
+		mn.y = minf(mn.y, float(o[1]))
+		mx.x = maxf(mx.x, float(o[0]) + float(s[0]))
+		mx.y = maxf(mx.y, float(o[1]) + float(s[1]))
+	return {"min": mn, "max": mx}
