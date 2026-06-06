@@ -181,6 +181,20 @@ class IntroAssetPipelineTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "fully opaque"):
             validate_source(STILLS[0], partial_alpha)
 
+    def test_export_rejects_binary_alpha_vignette(self) -> None:
+        binary_alpha = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
+        binary_alpha.putpixel((0, 0), (0, 0, 0, 255))
+
+        with self.assertRaisesRegex(ValueError, "intermediate alpha"):
+            validate_source("intro_vignette", binary_alpha)
+
+    def test_export_rejects_nearly_invisible_vignette(self) -> None:
+        nearly_invisible = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
+        nearly_invisible.putpixel((0, 0), (0, 0, 0, 1))
+
+        with self.assertRaisesRegex(ValueError, "maximum alpha"):
+            validate_source("intro_vignette", nearly_invisible)
+
     def test_runtime_stills_are_exact_nearest_exports(self) -> None:
         for name in RUNTIME_EXPORTS:
             native_path = SOURCE / f"{name}_native.png"
