@@ -1,13 +1,18 @@
 ~ start
 
-if serve_result == "success"
-    米拉: 完美！看来我没找错人。
-    米拉: 今天就签协议吧。
-    set aff_mira = 15
-    set mira_ending = "partner"
+if mira_ending == "she_finally_stopped"
+    米拉: （她把协议推开，久久没说话）……那孩子，叫托比是吧。
+    米拉: 协议先不签了。这一回，我回去接他。
     => END
-
+elif mira_ending == "never_turned_back"
+    米拉: （她读完那份委托，沉默良久，提笔签了字）……我帮不了他。
+    米拉: 一个人走，才轻快。这是第二次了，我知道。
+    => END
+elif mira_ending == "closed_the_door"
+    米拉: 完美！协议就这么定了。看来我没找错人。
+    米拉: （她不会知道，那孩子的委托已被人悄悄换掉。）
+    => END
 else
-    米拉: 看来你今天状态不太好……协议的事我再考虑考虑。
-    set mira_ending = "farewell"
+    米拉: 痛快！协议签了，我这就上路。
+    米拉: （她始终不会知道，有个孩子正走向那条回不来的路。）
     => END
