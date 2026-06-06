@@ -407,6 +407,11 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 			" style=", serve_style_label, " story_told=", l3["story_told"],
 			" aff_", npc_id, "=", narrative.get_affection(npc_id))
 
+	# Day12 当晚上菜结算后定格 Mira 结局：此刻温柔上菜的 +2 已计入 aff_mira，
+	# 担责判定看的是最终信任值。无论成功失败都定格（失败也是一种走向）。
+	if is_important and npc_id == "mira" and economy.current_day == 12:
+		narrative.finalize_mira_ending()
+
 	if seasoning_attribute != "":
 		narrative.set_var("seasoning_used", seasoning_attribute)
 
