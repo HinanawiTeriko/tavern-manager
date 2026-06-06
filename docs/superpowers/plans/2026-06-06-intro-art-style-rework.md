@@ -30,15 +30,15 @@
 - Create: `assets/source/intro/reference/tavern_continuity_master-v2.png`
 - Create if needed: `assets/source/intro/reference/tavern_continuity_master-v3.png`
 
-- [ ] **Step 1: Upload the title composite as the sole style reference**
+- [x] **Step 1: Upload the title composite as the sole style reference**
 
 Use `assets/source/title/reference/title_pixel_composite_reference.png`, not the current realistic intro images.
 
-- [ ] **Step 2: Generate two master candidates**
+- [x] **Step 2: Generate two master candidates**
 
 Use the `tavern_continuity_master` scene prompt, followed by the common prompt and common negative prompt from the approved design document. Generate at 16:9 and at least `1280x720`.
 
-- [ ] **Step 3: Save candidates without replacing the approved file**
+- [x] **Step 3: Save candidates without replacing the approved file**
 
 Save the first two viable outputs as:
 
@@ -47,20 +47,22 @@ assets/source/intro/reference/tavern_continuity_master-v2.png
 assets/source/intro/reference/tavern_continuity_master-v3.png
 ```
 
-- [ ] **Step 4: Review the candidates with Codex**
+- [x] **Step 4: Review the candidates with Codex**
 
 Reject a candidate if any of these are true:
 
 ```text
 - It looks like realistic concept art with a pixel filter.
 - Stone, wood, dust, or metal contain dense uniform texture.
-- The hearth, door, arch, sign, lantern, tables, barrels, and crates are not large readable shapes.
+- The hearth, left-side door, arch, lantern, tables, and right-side entrance props are not large readable shapes.
+- A sign, plaque, banner, interior barrel, or interior crate appears anywhere.
+- The exterior mug has two handles, or the exterior barrel has an object on top.
 - Amber light spreads across most of the image.
 - The composition cannot support both an exterior/entrance view and a threshold-to-hearth view.
 - It does not look like the title screen was made by the same artist.
 ```
 
-- [ ] **Step 5: Promote only the approved candidate**
+- [x] **Step 5: Promote only the approved candidate**
 
 After visual approval, replace:
 
@@ -70,7 +72,7 @@ assets/source/intro/reference/tavern_continuity_master.png
 
 Keep rejected and alternate candidates with version suffixes.
 
-- [ ] **Step 6: Commit the approved master**
+- [x] **Step 6: Commit the approved master**
 
 ```powershell
 git add -- assets/source/intro/reference/tavern_continuity_master.png assets/source/intro/reference/tavern_continuity_master-v*.png
@@ -107,7 +109,10 @@ Do not regenerate from text alone. Preserve the exact camera and architecture. R
 
 - [ ] **Step 4: Review both images side by side**
 
-Reject the pair unless the large door, arch, sign, lantern, hearth, tables, and barrel/crate masses occupy matching positions. The emotional contrast must come from removed light and people, not added decay texture.
+Reject the pair unless the left-side door, arch, lantern, hearth, tables, and right-side
+barrel/crate/mug group occupy matching positions. The emotional contrast must come from
+removed light and people, not added decay texture. Neither image may introduce a sign,
+interior barrel, or interior crate.
 
 - [ ] **Step 5: Promote and commit the approved pair**
 
