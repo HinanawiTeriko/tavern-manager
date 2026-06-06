@@ -17,6 +17,7 @@ var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
 var _revealed: Dictionary = {}
 var _regions: Array = []
+var _announced_postings: Dictionary = {}
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -77,16 +78,55 @@ func _flag_satisfied(flag_id: String) -> bool:
 func get_locations() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for location in _locations.values():
-		if current_day < int(location.get("dayMin", 1)):
-			continue
-		var required_flag := String(location.get("requiresFlag", ""))
-		if required_flag != "" and not _flag_satisfied(required_flag):
-			continue
-		var required_read := String(location.get("requiresRead", ""))
-		if required_read != "" and not is_document_known(required_read):
-			continue
-		result.append(location)
+		if _passes_filters(location):
+			result.append(_effective(location))
 	return result
+
+
+func _passes_filters(location: Dictionary) -> bool:
+	if current_day < int(location.get("dayMin", 1)):
+		return false
+	var required_flag := String(location.get("requiresFlag", ""))
+	if required_flag != "" and not _flag_satisfied(required_flag):
+		return false
+	var required_read := String(location.get("requiresRead", ""))
+	if required_read != "" and not is_document_known(required_read):
+		return false
+	return true
+
+
+## 当前激活贴文 = 满足 dayMin+requiresFlag、数组里最靠后的那条（后者为更新的贴文，优先）。无则空。
+func _active_posting(location: Dictionary) -> Dictionary:
+	var best := {}
+	for p in location.get("postings", []):
+		if current_day < int(p.get("dayMin", 1)):
+			continue
+		var rf := String(p.get("requiresFlag", ""))
+		if rf != "" and not _flag_satisfied(rf):
+			continue
+		best = p
+	return best
+
+
+func _active_posting_id(location: Dictionary) -> String:
+	return String(_active_posting(location).get("id", ""))
+
+
+## 把当前激活贴文的描述/产出并入返回副本（地点持久、内容随贴文演变）。无 postings 原样返回。
+func _effective(location: Dictionary) -> Dictionary:
+	if not location.has("postings"):
+		return location
+	var loc := location.duplicate(true)
+	var ap := _active_posting(location)
+	if ap.is_empty():
+		loc["documents"] = []
+		loc["active_posting"] = ""
+	else:
+		loc["description"] = ap.get("description", loc.get("description", ""))
+		loc["result"] = ap.get("result", loc.get("result", ""))
+		loc["documents"] = (ap.get("documents", []) as Array).duplicate()
+		loc["active_posting"] = String(ap.get("id", ""))
+	return loc
 
 
 func is_revealed(location_id: String) -> bool:
@@ -95,6 +135,8 @@ func is_revealed(location_id: String) -> bool:
 
 func mark_revealed(location_id: String) -> void:
 	_revealed[location_id] = true
+	if _locations.has(location_id):
+		_announced_postings[location_id] = _active_posting_id(_locations[location_id])
 
 
 func get_new_locations() -> Array[Dictionary]:
@@ -103,6 +145,25 @@ func get_new_locations() -> Array[Dictionary]:
 		if not is_revealed(String(location.get("id", ""))):
 			result.append(location)
 	return result
+
+
+## 已亮相、但当前激活贴文与"已宣告贴文"不同的地点 → 需要重新拉镜头高亮 + 刷新描述。
+func get_updated_locations() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for location in _locations.values():
+		if not location.has("postings"):
+			continue
+		var id := String(location.get("id", ""))
+		if not is_revealed(id) or not _passes_filters(location):
+			continue
+		if String(_announced_postings.get(id, "__none__")) != _active_posting_id(location):
+			result.append(_effective(location))
+	return result
+
+
+func mark_posting_announced(location_id: String) -> void:
+	if _locations.has(location_id):
+		_announced_postings[location_id] = _active_posting_id(_locations[location_id])
 
 
 func visit(location_id: String) -> Dictionary:
@@ -125,7 +186,19 @@ func visit(location_id: String) -> Dictionary:
 
 	stamina -= cost
 	_visited[location_id] = int(_visited.get(location_id, 0)) + 1
+	# 有 postings 时，产出取当前激活贴文（无激活贴文=闲置，不产出）。
 	var unlocked_flag := String(location.get("unlocksFlag", ""))
+	var documents: Array = location.get("documents", []).duplicate()
+	var message := String(location.get("result", "访问完成。"))
+	if location.has("postings"):
+		var ap := _active_posting(location)
+		if ap.is_empty():
+			unlocked_flag = ""
+			documents = []
+		else:
+			unlocked_flag = String(ap.get("unlocksFlag", ""))
+			documents = (ap.get("documents", []) as Array).duplicate()
+			message = String(ap.get("result", location.get("result", "访问完成。")))
 	if unlocked_flag != "":
 		_flags[unlocked_flag] = true
 	var rewards: Array = location.get("rewards", []).duplicate()
@@ -135,9 +208,9 @@ func visit(location_id: String) -> Dictionary:
 	return {
 		"success": true,
 		"location_id": location_id,
-		"message": String(location.get("result", "访问完成。")),
+		"message": message,
 		"rewards": rewards,
-		"documents": location.get("documents", []).duplicate(),
+		"documents": documents,
 		"stamina": stamina,
 		"affection": location.get("affection", null),
 		"goldCost": int(location.get("goldCost", 0)),

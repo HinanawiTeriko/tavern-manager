@@ -11,17 +11,32 @@
     {
       "id": "mercenary_board",
       "name": "佣兵告示板",
-      "region": "north_road",
-      "pos": [505, 360],
+      "region": "market",
+      "pos": [560, 230],
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "description": "血斧小队正在招募北矿道护送任务。",
-      "dayMin": 2,
-      "requiresFlag": "ryan_warhammer_lead",
-      "repeatable": false,
-      "unlocksFlag": "mine_clue",
-      "result": "你记下了血斧小队的委托，废弃矿道出现了可疑线索。"
+      "dayMin": 1,
+      "repeatable": true,
+      "description": "市集角落的佣兵告示板，时常贴着各种委托。",
+      "result": "告示板上暂时没有适合你的新委托。",
+      "postings": [
+        {
+          "id": "ryan_warhammer",
+          "dayMin": 2,
+          "requiresFlag": "ryan_warhammer_lead",
+          "description": "血斧小队正在招募北矿道护送任务。",
+          "unlocksFlag": "mine_clue",
+          "result": "你记下了血斧小队的委托，废弃矿道出现了可疑线索。"
+        },
+        {
+          "id": "toby_commission",
+          "dayMin": 6,
+          "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
+          "documents": ["toby_contract"],
+          "result": "你记下了托比接的那份委托——报酬高得不正常。"
+        }
+      ]
     },
     {
       "id": "abandoned_mine",
@@ -100,20 +115,6 @@
       "description": "地牢入口附近的农庄，可以交换麦芽。",
       "repeatable": true,
       "result": "你从农庄带回了麦芽。"
-    },
-    {
-      "id": "toby_board",
-      "name": "佣兵告示板（托比的委托）",
-      "region": "market",
-      "pos": [300, 240],
-      "cost": 1,
-      "materials": [],
-      "rewards": [],
-      "documents": ["toby_contract"],
-      "description": "告示板角落贴着一份黑齿矿脉的护送委托，落款是个生涩的名字。",
-      "dayMin": 6,
-      "repeatable": false,
-      "result": "你记下了托比接的那份委托——报酬高得不正常。"
     },
     {
       "id": "toby_lodging",

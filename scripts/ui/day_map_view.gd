@@ -222,6 +222,9 @@ func _refresh_map() -> void:
 	var new_locs: Array = gm.day_map.get_new_locations()
 	if not new_locs.is_empty():
 		_play_reveal_sequence(new_locs)
+		return
+	# 已亮相地点的贴文更新 → 重新拉镜头高亮 + 刷新描述（地点持久、内容演变）
+	_play_update_sequence(gm.day_map.get_updated_locations())
 
 
 func _create_marker(loc: Dictionary, hidden: bool) -> MapPointMarker:
@@ -281,6 +284,32 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	_revealing = false
 	# 亮相期间若有访问/解锁被 _revealing 拦下，这里补刷一次
 	_refresh_map()
+
+
+## 已亮相地点的贴文更新：相机飞过去、marker 脉冲一次、刷新描述，并标记已宣告。
+func _play_update_sequence(updated: Array) -> void:
+	if updated.is_empty():
+		return
+	_revealing = true
+	var gm = get_node("/root/GameManager")
+	for loc in updated:
+		var id := String(loc.get("id", ""))
+		var pos_arr: Array = loc.get("pos", [1280, 720])
+		var wp := Vector2(float(pos_arr[0]), float(pos_arr[1]))
+		await _camera.fly_to(wp, 1.0).finished
+		if not is_instance_valid(self):
+			return
+		var marker = _markers.get(id, null)
+		if marker != null and is_instance_valid(marker):
+			_fade_in_marker(marker)
+		gm.day_map.mark_posting_announced(id)
+		await get_tree().create_timer(0.4).timeout
+		if not is_instance_valid(self):
+			return
+	_revealing = false
+	# 若当前选中的是被更新的地点，刷新其详情描述
+	if _selected_id != "":
+		_show_detail(_selected_id)
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:

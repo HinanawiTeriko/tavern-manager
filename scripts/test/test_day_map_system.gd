@@ -108,14 +108,18 @@ func _test_get_locations_breadcrumb() -> void:
 
 
 func _test_board_requires_lead() -> void:
+	# 告示板现为市集常驻地点；门控落在「贴文」而非地点本身。
 	var map := DayMapSystem.new()
 	map.load_data()
 	map.start_day(2)
-	_ok(not _location_ids(map.get_locations()).has("mercenary_board"), "board hidden without lead")
-	_ok(not map.visit("mercenary_board").get("success", false), "board blocked without lead")
+	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board is persistent and visible")
+	# 无血斧 lead → 闲置贴文：访问成功但不产 mine_clue（矿道不解锁）
+	_ok(map.visit("mercenary_board").get("success", false), "idle board visit succeeds")
+	_ok(not _location_ids(map.get_locations()).has("abandoned_mine"), "idle board grants no mine clue")
+	# 拿到 lead → 血斧贴文激活：访问产 mine_clue → 矿道解锁
 	map.set_lead_flag("ryan_warhammer_lead", true)
-	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board appears with lead")
-	_ok(map.visit("mercenary_board").get("success", false), "board visit succeeds with lead")
+	map.visit("mercenary_board")
+	_ok(_location_ids(map.get_locations()).has("abandoned_mine"), "ryan posting unlocks the mine")
 
 
 func _test_reveal_tracking() -> void:
