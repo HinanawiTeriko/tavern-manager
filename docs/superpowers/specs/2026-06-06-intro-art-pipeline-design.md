@@ -6,6 +6,7 @@
 - 依赖：`docs/art_pipeline.md`
 - 配套叙事设计：`docs/superpowers/specs/2026-06-05-souls-style-intro-design.md`
 - 配套内景设计：`docs/superpowers/specs/2026-06-06-tavern-interior-spatial-design.md`
+- 第二拍重绘设计：`docs/superpowers/specs/2026-06-07-intro-second-beat-redraw-design.md`
 
 ## 目标
 
@@ -26,14 +27,16 @@ clusters、明确的大轮廓和硬边阴影。庄严悲壮感只能通过尺度
 
 - 主角始终匿名，不露脸；只出现远处小剪影和握钥匙的手。
 - 第 2、3、5 拍必须是同一间酒馆，并保持建筑结构连续。
-- 第 2、3 拍使用同一室内机位；第 5 拍使用入口机位。两组机位共享同一空间布局。
+- 第 2 拍严格保留当前 `intro_hearth_memory.png` 的镜头、中央炉火、地面纵深和满座人群
+  分布，只将巨大门扇改为厚石门框窥视。
+- 第 3 拍的最终构图在新版第 2 拍验收后确定；第 5 拍继续使用入口机位。
 - 酒馆就是标题画面左侧的酒馆，沿用石砌拱门、厚木门、壁灯、桶箱和地下巷道语言。
 - 酒馆没有悬挂招牌、墙牌或其他标识物。
 - 门板位于门洞左侧，使用竖向木板、上下两根横向木加固条，以及中部靠自由边的横向黑铁拉手。
 - 门外右侧固定放置一个酒桶、一个板条箱和箱上的单把酒杯；酒桶顶部为空。
 - 酒馆室内不放置酒桶或板条箱，只保留壁炉、桌椅和必要留白。
-- 第 2、3 拍使用几乎相同的机位，以暖盛和冷寂形成兴衰对照。
-- 第 2 拍只出现四名顾客，全部处理为无面部、无服饰细节的大块剪影，并采用不同朝向。
+- 第 2 拍保留约 10–14 名顾客的满座规模和现有分布，全部处理为无面部、无服饰细节的
+  大块剪影或剪影组。
 - 第 5 拍从门槛看向室内，壁炉位置必须与连续性母版一致。
 - 画面不包含文字、UI、按钮、logo、水印或旁白。
 - 主要叙事焦点避开屏幕下方旁白区域，四边保留轻微运镜余量。
@@ -47,8 +50,8 @@ clusters、明确的大轮廓和硬边阴影。庄严悲壮感只能通过尺度
 | 拍 | Reference / Native / Runtime 名称 | 画面职责 |
 |---|---|---|
 | 1 | `intro_descent` | 巨大环形竖井占据画面，石阶沿井壁向下消失；人物只是一枚小剪影，零星 amber 灯火逐级熄灭 |
-| 2 | `intro_hearth_memory` | 室内斜视角展示右后壁炉、左后酒架和右下局部直吧台；四名顾客以不同朝向自然交谈、饮酒或准备下井 |
-| 3 | `intro_tavern_dark` | 与第 2 拍几乎同机位；人物和暖光全部消失，只剩封闭木门、入口道具剪影与熄灭壁灯 |
+| 2 | `intro_hearth_memory` | 严格保留当前门槛窥视构图、中央炉火、地面纵深和两侧满座人群；删除巨大门扇并以标题画面语言重绘 |
+| 3 | `intro_tavern_dark` | 待新版第 2 拍验收后，以批准图为构图依据设计冷寂版本 |
 | 4 | `intro_rusted_key` | 粗布袖口的手掌托起轮廓清晰的巨大锈钥匙；背景只保留酒馆门的暗色拱形 |
 | 5 | `intro_threshold` | 从人物身后看向开启的厚木门；冷暗酒馆占大部分画面，远处壁炉只留一颗极小余烬 |
 
@@ -63,9 +66,9 @@ Reference 由用户在生图界面生成，Codex 提供结构化 prompt、负面
    作为风格锚点。
 2. 先生成新的 `tavern_continuity_master.png`，明确拱门、左侧木门、壁灯、远端壁炉、
    右侧入口道具组和室内桌椅位置。
-3. 入口母版批准后，再生成无人物的 `tavern_interior_spatial_master`，锁定壁炉、左后酒架、
-   入口门、顶部木梁和右下角被画框裁切的局部直吧台。该母版只服务开场，不兼顾营业界面。
-4. 第 2、3 拍必须从室内空间母版派生；第 5 拍从入口母版派生，禁止重新随机设计酒馆。
+3. 第 2 拍以当前 `intro_hearth_memory.png` 为严格构图输入，以标题合成参考为严格风格输入，
+   采用构图描摹式重绘。
+4. 第 3 拍在新版第 2 拍批准后从其派生；第 5 拍从入口母版派生。
 5. 第 1、4 拍使用标题合成参考作为风格输入独立生成。
 6. 候选图使用 `-v2`、`-v3` 后缀保存，未批准前不得覆盖无后缀正式 reference。
 7. 每张图进入仓库后先进行肉眼审查；构图、结构或风格不合格时不进入生产管线。
@@ -128,36 +131,32 @@ Show the entrance framing, connected floor perspective and interior hearth relat
 clearly.
 ```
 
-`intro_hearth_memory`，以室内空间母版为编辑输入：
+`intro_hearth_memory`，以当前第二拍为严格构图输入：
 
 ```text
-Preserve the exact architecture, camera and furniture positions from the approved
-interior spatial master. The interior occupies at least 80 percent of the frame.
-Keep the entrance door as a narrow continuity anchor on the far left, sparse shelves
-on the left rear wall, the small straight counter segment cropped by the bottom-right
-frame edge, and the stone hearth in the right rear third.
+Use the current intro_hearth_memory image as a strict composition template. Preserve
+its camera height, central hearth, floor perspective, crowded seating layout, right-side
+shelving, ceiling structure and depth rhythm. Replace the oversized wooden door on the
+left with only a thick dark stone doorway frame and a narrow shadowed door edge.
 
-Add exactly four patrons as broad anonymous silhouettes with varied directions:
-two converse at one table, one attends to a simple single-handled mug, and one remains
-near the entrance as if preparing to descend. At least two appear in side profile or
-three-quarter silhouette. Do not make everyone face the hearth. Do not arrange them
-symmetrically, in a semicircle, kneeling, praying or performing a ritual.
+Keep approximately 10 to 14 patrons in the existing distribution, but render them as
+broad anonymous silhouette groups without faces, costume detail or individual portrait
+features. The central hearth is the only strong amber focal point. Keep the chandelier,
+wall lamps and table candles as dim secondary marks.
 
-The hearth is the primary amber light but remains a background element. Small table
-highlights are secondary. The scene feels like a quiet last drink before a dangerous
-descent: solemn, intimate, weary and briefly safe, not festive or ceremonial.
-No faces, clothing detail, interior barrel, interior crate, bottle wall or clutter.
+Redraw every material in the title screen's low-density dark teal, coal-black and
+restrained amber pixel language. Do not change the camera, hearth position, vanishing
+path, crowd scale, table distribution or right-side shelving.
 ```
 
-`intro_tavern_dark`，以 `intro_hearth_memory` 为编辑输入：
+`intro_tavern_dark`：新版第二拍验收后再细化。最低连续性约束如下：
 
 ```text
 Preserve the exact camera, architecture and large shapes from the warm memory image.
-Remove every patron and almost all amber light. Close the heavy wooden door, extinguish
-the wall lantern and hearth, preserve the right-side barrel, crate and mug as dark
-silhouettes, and add only a few large patches of dust and neglect. The composition must
-feel empty because the former light and silhouettes are absent, not because extra decay
-detail was added. Do not add a sign, plaque, banner or text.
+Remove every patron and almost all amber light. Preserve the doorway frame, central
+hearth, floor perspective, tables and right-side shelving. The composition must feel
+empty because the former light and silhouettes are absent, not because extra decay
+detail was added.
 ```
 
 `intro_rusted_key`：

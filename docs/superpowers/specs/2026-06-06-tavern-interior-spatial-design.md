@@ -3,8 +3,13 @@
 - 日期：2026-06-06
 - 修订：2026-06-07
 - 分支：`feat/blacksouls-intro`
-- 状态：修订设计已确认，待生成开场内景母版
+- 状态：已被第二拍重绘设计取代，不再作为第二拍实施依据
 - 关联：`docs/superpowers/specs/2026-06-06-intro-art-pipeline-design.md`
+
+> 2026-06-07：第二拍已改为严格保留当前 `intro_hearth_memory.png` 构图并重绘风格。
+> 第二拍的人群规模、入口、壁炉位置和家具布局以
+> `docs/superpowers/specs/2026-06-07-intro-second-beat-redraw-design.md` 为准。
+> 本文仅保留为此前空间母版方案的历史记录。
 
 ## 目标
 
