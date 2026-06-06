@@ -97,3 +97,10 @@ func _test_toby_survival_flags() -> void:
 	nm3.finalize_mira_ending()
 	_ok(nm3.get_var("mira_ending") == "never_turned_back", "finalize 写 mira_ending")
 	_ok(nm3.get_var("toby_survived") == false, "finalize 写 toby_survived")
+	_ok(nm3.endings.get("toby", "") == "lost", "finalize 写 toby 结局 lost")
+	# 担责存活时托比结局为 saved
+	var nm4 := _nm()
+	nm4.set_var("told_mira_truth", true)
+	nm4.set_affection("mira", nm4.MIRA_TRUST_THRESHOLD)
+	nm4.finalize_mira_ending()
+	_ok(nm4.endings.get("toby", "") == "saved", "finalize 写 toby 结局 saved")

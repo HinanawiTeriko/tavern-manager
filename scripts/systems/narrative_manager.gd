@@ -88,7 +88,9 @@ func get_mira_route() -> String:
 ## Day12 当晚上菜结算后由 GameManager 调用：定格 Mira 结局与托比 fate。
 func finalize_mira_ending() -> void:
 	set_ending("mira", get_mira_route())
-	set_var("toby_survived", toby_survived())
+	var survived := toby_survived()
+	set_var("toby_survived", survived)
+	set_ending("toby", "saved" if survived else "lost")
 
 
 func get_ryan_route() -> String:
