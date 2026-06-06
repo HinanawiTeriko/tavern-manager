@@ -31,13 +31,15 @@ func _finish() -> void:
 
 func _test_three_day_boundary() -> void:
 	var slice := RyanSliceSystem.new()
-	_ok(slice.last_day() == 3, "slice ends on Day 3")
+	# [走查脚手架] 收尾日临时延至 Day12 以走查 Mira 线高潮（见 ryan_slice_system.gd LAST_DAY 注释）。
+	_ok(slice.last_day() == 12, "slice ends on Day 12 (走查脚手架)")
 	_ok(slice.normal_order_limit(1) == 2, "Day 1 has two normal orders")
 	_ok(slice.normal_order_limit(2) == 2, "Day 2 has two normal orders")
 	_ok(slice.normal_order_limit(3) == 2, "Day 3 has two normal orders")
 	_ok(slice.day_start_ledger_entries(2).has("第三日。莱恩。\n北矿道。\n未归。"), "Day 2 adds Ryan prediction")
 	_ok(not slice.should_finish_after_day(2), "Day 2 continues")
-	_ok(slice.should_finish_after_day(3), "Day 3 finishes the slice")
+	_ok(not slice.should_finish_after_day(3), "Day 3 continues (走查脚手架)")
+	_ok(slice.should_finish_after_day(12), "Day 12 finishes the slice")
 
 
 func _test_state_roundtrip() -> void:
