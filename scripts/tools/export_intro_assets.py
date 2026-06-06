@@ -37,11 +37,11 @@ def validate_source(name: str, image: Image.Image) -> None:
 
     if name in STILLS:
         if "A" in image.getbands():
-            minimum_alpha, _ = image.getchannel("A").getextrema()
-            if minimum_alpha < 250:
+            alpha_range = image.getchannel("A").getextrema()
+            if alpha_range != (255, 255):
                 raise ValueError(
-                    f"{name}: still must be effectively opaque, "
-                    f"minimum alpha is {minimum_alpha}"
+                    f"{name}: still must be fully opaque, "
+                    f"alpha range is {alpha_range}"
                 )
         return
 

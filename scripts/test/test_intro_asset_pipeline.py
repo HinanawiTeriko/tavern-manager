@@ -9,6 +9,8 @@ import unittest
 
 from PIL import Image
 
+from scripts.tools.export_intro_assets import validate_source
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "intro"
@@ -172,6 +174,12 @@ class IntroAssetPipelineTest(unittest.TestCase):
             runtime = load_image(runtime_path)
             self.assertEqual(native.size, NATIVE_SIZE, f"{name}: wrong native size")
             self.assertEqual(runtime.size, RUNTIME_SIZE, f"{name}: wrong runtime size")
+
+    def test_export_rejects_still_with_partial_alpha(self) -> None:
+        partial_alpha = Image.new("RGBA", NATIVE_SIZE, (12, 24, 36, 254))
+
+        with self.assertRaisesRegex(ValueError, "fully opaque"):
+            validate_source(STILLS[0], partial_alpha)
 
     def test_runtime_stills_are_exact_nearest_exports(self) -> None:
         for name in RUNTIME_EXPORTS:
