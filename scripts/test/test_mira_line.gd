@@ -8,8 +8,8 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_parse_and_init()
-	# 以下方法在 Task 1.2 / 1.3 解注释
-	# _test_toby_contract_informs_mira()
+	_test_toby_contract_informs_mira()
+	# 以下方法在 Task 1.3 解注释
 	# _test_route_she_finally_stopped()
 	# _test_route_never_turned_back()
 	# _test_route_closed_the_door()
@@ -46,3 +46,14 @@ func _test_parse_and_init() -> void:
 	_ok(nm.get_affection("mira") == 5, "aff_mira 初始 5")
 	_ok(nm.get_var("told_mira_truth") == false, "told_mira_truth 初始 false")
 	_ok(nm.get_var("toby_secured") == false, "toby_secured 初始 false")
+
+func _test_toby_contract_informs_mira() -> void:
+	var nm := _nm()
+	# 递给 mira：告知真相
+	var r := nm.resolve_action({"type": "give_story_item", "npc_id": "mira", "item_key": "toby_contract"})
+	_ok(r.get("accepted", false), "Mira 收下托比委托书")
+	_ok(nm.get_var("told_mira_truth") == true, "递交置 told_mira_truth")
+	# 递给非 mira：不认
+	var nm2 := _nm()
+	var bad := nm2.resolve_action({"type": "give_story_item", "npc_id": "toby", "item_key": "toby_contract"})
+	_ok(not bad.get("accepted", true), "托比本人不接收真相文档")

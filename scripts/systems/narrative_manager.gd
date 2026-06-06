@@ -45,7 +45,12 @@ func resolve_action(action: Dictionary) -> Dictionary:
 		"add_story_item_to_product":
 			return _resolve_story_item_product_action(action)
 		"give_story_item":
-			return _resolve_ryan_story_item_action(action)
+			match String(action.get("npc_id", "")):
+				"ryan":
+					return _resolve_ryan_story_item_action(action)
+				"mira":
+					return _resolve_mira_story_item_action(action)
+			return _action_result(false, "unsupported_npc")
 		"give_product":
 			return _resolve_ryan_product_action(action)
 	return _action_result(false, "unsupported_action")
@@ -74,6 +79,14 @@ func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
 	var result := _action_result(true, "sleep_powder_added")
 	result["product_tags"] = ["sleep_powder"]
 	return result
+
+
+func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
+	match String(action.get("item_key", "")):
+		"toby_contract":
+			set_var("told_mira_truth", true)
+			return _action_result(true, "mira_informed")
+	return _action_result(false, "unsupported_story_item")
 
 
 func _resolve_ryan_story_item_action(action: Dictionary) -> Dictionary:
