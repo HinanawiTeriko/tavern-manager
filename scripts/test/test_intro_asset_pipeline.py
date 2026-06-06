@@ -223,8 +223,13 @@ class IntroAssetPipelineTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
+            output = f"{result.stdout}\n{result.stderr}"
 
             self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "intro_threshold: approved reference is blank or low-complexity",
+                output,
+            )
             assert_destinations_unchanged(self, original_hashes)
 
     def test_export_does_not_replace_outputs_when_validation_fails(self) -> None:
@@ -258,8 +263,13 @@ class IntroAssetPipelineTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
+            output = f"{result.stdout}\n{result.stderr}"
 
             self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "intro_threshold: native source must be (320, 180), got (3, 3)",
+                output,
+            )
             assert_destinations_unchanged(self, original_hashes)
 
     def test_native_and_runtime_files_exist_at_expected_sizes(self) -> None:
