@@ -148,6 +148,11 @@ func load_npc_data() -> void:
 	dialogue_vars["ryan_ending"] = ""
 	dialogue_vars["aff_ryan"] = 0
 	dialogue_vars["aff_mira"] = 5
+	dialogue_vars["told_mira_truth"] = false
+	dialogue_vars["toby_secured"] = false
+	dialogue_vars["toby_survived"] = false
+	dialogue_vars["mira_ending"] = ""
+	dialogue_vars["aff_toby"] = 0
 
 	var file = FileAccess.open("res://data/npcs.json", FileAccess.READ)
 	if file == null:
