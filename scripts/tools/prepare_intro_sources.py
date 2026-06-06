@@ -17,8 +17,8 @@ STILLS = [
     "intro_threshold",
 ]
 REFERENCE_NAMES = [*STILLS, "tavern_continuity_master"]
-MAX_COLORS = 56
-BASE_COLORS = 52
+PRODUCTION_QUANTIZATION_COLORS = 52
+MAX_VALIDATED_NATIVE_COLORS = 64
 MIN_DARK_PIXELS = 18_000
 MIN_COOL_PIXELS = 4_000
 MIN_WARM_PIXELS = {
@@ -29,7 +29,13 @@ MIN_WARM_PIXELS = {
     "intro_threshold": 0,
 }
 MIN_REFERENCE_DETAIL_RESIDUAL = 1.0
-MIN_TEXTURED_BLOCKS = 96
+REFERENCE_TILE_SIZE = 20
+REFERENCE_MEAN_BIN = 16.0
+REFERENCE_STDDEV_BIN = 3.0
+REFERENCE_EDGE_BIN = 1.5
+REFERENCE_EDGE_LEVEL_BIN = 0.25
+MIN_REFERENCE_TILE_SIGNATURES = 36
+MIN_REFERENCE_EDGE_LEVELS_PER_AXIS = 20
 
 BRIGHTNESS = {
     "intro_descent": 1.00,
@@ -98,15 +104,46 @@ def validate_reference(name: str, image: Image.Image) -> None:
     detail_residual = sum(
         value * count for value, count in enumerate(detail_histogram)
     ) / sum(detail_histogram)
-    textured_blocks = 0
-    for top in range(0, NATIVE_SIZE[1], 10):
-        for left in range(0, NATIVE_SIZE[0], 10):
-            block = normalized.crop((left, top, left + 10, top + 10))
-            textured_blocks += ImageStat.Stat(block).stddev[0] >= 5.0
+    tile_signatures: set[tuple[int, int, int, int]] = set()
+    horizontal_edge_levels: set[int] = set()
+    vertical_edge_levels: set[int] = set()
+    pixels = normalized.load()
+    # Real scenes vary by tile in tone, contrast, and edge energy along both axes.
+    # Procedural gradients, stripes, and waves repeat too few of these 2D signatures.
+    for top in range(0, NATIVE_SIZE[1], REFERENCE_TILE_SIZE):
+        for left in range(0, NATIVE_SIZE[0], REFERENCE_TILE_SIZE):
+            right = left + REFERENCE_TILE_SIZE
+            bottom = top + REFERENCE_TILE_SIZE
+            block = normalized.crop((left, top, right, bottom))
+            statistics = ImageStat.Stat(block)
+            horizontal_edge = sum(
+                abs(pixels[x + 1, y] - pixels[x, y])
+                for y in range(top, bottom)
+                for x in range(left, right - 1)
+            ) / (REFERENCE_TILE_SIZE * (REFERENCE_TILE_SIZE - 1))
+            vertical_edge = sum(
+                abs(pixels[x, y + 1] - pixels[x, y])
+                for y in range(top, bottom - 1)
+                for x in range(left, right)
+            ) / ((REFERENCE_TILE_SIZE - 1) * REFERENCE_TILE_SIZE)
+            tile_signatures.add(
+                (
+                    int(statistics.mean[0] / REFERENCE_MEAN_BIN),
+                    int(statistics.stddev[0] / REFERENCE_STDDEV_BIN),
+                    int(horizontal_edge / REFERENCE_EDGE_BIN),
+                    int(vertical_edge / REFERENCE_EDGE_BIN),
+                )
+            )
+            horizontal_edge_levels.add(
+                int(horizontal_edge / REFERENCE_EDGE_LEVEL_BIN)
+            )
+            vertical_edge_levels.add(int(vertical_edge / REFERENCE_EDGE_LEVEL_BIN))
     if (
         tonal_range < 24
         or detail_residual < MIN_REFERENCE_DETAIL_RESIDUAL
-        or textured_blocks < MIN_TEXTURED_BLOCKS
+        or len(tile_signatures) < MIN_REFERENCE_TILE_SIGNATURES
+        or len(horizontal_edge_levels) < MIN_REFERENCE_EDGE_LEVELS_PER_AXIS
+        or len(vertical_edge_levels) < MIN_REFERENCE_EDGE_LEVELS_PER_AXIS
     ):
         raise ValueError(f"{name}: approved reference is blank or low-complexity")
 
@@ -154,7 +191,7 @@ def grade_native(image: Image.Image, name: str) -> Image.Image:
 
 def quantize_native(image: Image.Image, name: str) -> Image.Image:
     quantized = image.quantize(
-        colors=BASE_COLORS,
+        colors=PRODUCTION_QUANTIZATION_COLORS,
         method=Image.Quantize.MEDIANCUT,
         dither=Image.Dither.NONE,
     ).convert("RGBA")
@@ -241,7 +278,7 @@ def validate_still(name: str, image: Image.Image) -> None:
         raise ValueError(f"{name}: expected {NATIVE_SIZE}, got {image.size}")
     colors = image.convert("RGB").getcolors(maxcolors=65536)
     color_total = len(colors) if colors is not None else 65536
-    if not 24 <= color_total <= 64:
+    if not 24 <= color_total <= MAX_VALIDATED_NATIVE_COLORS:
         raise ValueError(f"{name}: invalid native color count {color_total}")
     dark, cool, warm = pixel_counts(image)
     if dark < MIN_DARK_PIXELS:

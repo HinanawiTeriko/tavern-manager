@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -36,6 +37,7 @@ MIN_WARM_PIXELS = {
 }
 MAX_NATIVE_COLORS = 64
 PREPARE_TOOL = ROOT / "scripts" / "tools" / "prepare_intro_sources.py"
+CONTACT_SHEET_POSITIONS = [(0, 0), (320, 0), (640, 0), (160, 180), (480, 180)]
 
 
 def load_image(path: Path) -> Image.Image:
@@ -76,6 +78,27 @@ def edge_change_ratio(image: Image.Image) -> float:
     return changes / total
 
 
+def run_prepare_with_continuity_reference(reference: Image.Image) -> subprocess.CompletedProcess[str]:
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary_root = Path(temporary)
+        tool = temporary_root / "scripts" / "tools" / PREPARE_TOOL.name
+        tool.parent.mkdir(parents=True)
+        shutil.copy2(PREPARE_TOOL, tool)
+
+        temporary_reference = (
+            temporary_root / "assets" / "source" / "intro" / "reference"
+        )
+        shutil.copytree(REFERENCE, temporary_reference)
+        reference.convert("RGB").save(
+            temporary_reference / "tavern_continuity_master.png"
+        )
+        return subprocess.run(
+            [sys.executable, str(tool)],
+            capture_output=True,
+            text=True,
+        )
+
+
 class IntroAssetPipelineTest(unittest.TestCase):
     def test_approved_references_exist(self) -> None:
         for name in REFERENCE_FILES:
@@ -86,37 +109,51 @@ class IntroAssetPipelineTest(unittest.TestCase):
             self.assertGreaterEqual(image.height, RUNTIME_SIZE[1], f"{name}: reference is too short")
 
     def test_prepare_rejects_smooth_gradient_reference(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            temporary_root = Path(temporary)
-            tool = temporary_root / "scripts" / "tools" / PREPARE_TOOL.name
-            tool.parent.mkdir(parents=True)
-            shutil.copy2(PREPARE_TOOL, tool)
+        gradient = Image.new("L", (1672, 941))
+        gradient_pixels = gradient.load()
+        for y in range(gradient.height):
+            for x in range(gradient.width):
+                gradient_pixels[x, y] = round(x / (gradient.width - 1) * 255)
+        result = run_prepare_with_continuity_reference(gradient)
 
-            temporary_reference = (
-                temporary_root / "assets" / "source" / "intro" / "reference"
-            )
-            shutil.copytree(REFERENCE, temporary_reference)
-            gradient = Image.new("L", (1672, 941))
-            gradient_pixels = gradient.load()
-            for y in range(gradient.height):
-                for x in range(gradient.width):
-                    gradient_pixels[x, y] = round(x / (gradient.width - 1) * 255)
-            gradient.convert("RGB").save(
-                temporary_reference / "tavern_continuity_master.png"
-            )
+        self.assertNotEqual(
+            result.returncode,
+            0,
+            "prepare accepted a smooth grayscale gradient reference",
+        )
+        self.assertIn("blank or low-complexity", result.stderr)
 
-            result = subprocess.run(
-                [sys.executable, str(tool)],
-                capture_output=True,
-                text=True,
-            )
+    def test_prepare_rejects_regular_stripes_reference(self) -> None:
+        stripes = Image.new("L", (1672, 941))
+        pixels = stripes.load()
+        for y in range(stripes.height):
+            for x in range(stripes.width):
+                pixels[x, y] = 36 if (x // 24) % 2 == 0 else 196
+        result = run_prepare_with_continuity_reference(stripes)
 
-            self.assertNotEqual(
-                result.returncode,
-                0,
-                "prepare accepted a smooth grayscale gradient reference",
-            )
-            self.assertIn("blank or low-complexity", result.stderr)
+        self.assertNotEqual(
+            result.returncode,
+            0,
+            "prepare accepted a regular stripes reference",
+        )
+        self.assertIn("blank or low-complexity", result.stderr)
+
+    def test_prepare_rejects_smooth_periodic_reference(self) -> None:
+        periodic = Image.new("L", (1672, 941))
+        pixels = periodic.load()
+        for y in range(periodic.height):
+            for x in range(periodic.width):
+                horizontal = math.sin(x * math.tau / 140)
+                vertical = math.sin(y * math.tau / 96)
+                pixels[x, y] = round(128 + 58 * horizontal + 48 * vertical)
+        result = run_prepare_with_continuity_reference(periodic)
+
+        self.assertNotEqual(
+            result.returncode,
+            0,
+            "prepare accepted a smooth periodic reference",
+        )
+        self.assertIn("blank or low-complexity", result.stderr)
 
     def test_native_and_runtime_files_exist_at_expected_sizes(self) -> None:
         self.assertEqual(
@@ -181,8 +218,17 @@ class IntroAssetPipelineTest(unittest.TestCase):
 
     def test_contact_sheet_contains_all_five_native_stills(self) -> None:
         path = SOURCE / "intro_contact_sheet.png"
-        sheet = load_image(path)
+        sheet = load_image(path).convert("RGB")
         self.assertEqual(sheet.size, (960, 360))
+        for name, position in zip(STILLS, CONTACT_SHEET_POSITIONS):
+            left, top = position
+            region = sheet.crop((left, top, left + 320, top + 180))
+            native = load_image(SOURCE / f"{name}_native.png").convert("RGB")
+            self.assertEqual(
+                region.tobytes(),
+                native.tobytes(),
+                f"{name}: contact sheet region differs from native still",
+            )
 
     def test_runtime_manifest_uses_the_five_pipeline_textures_in_order(self) -> None:
         with INTRO_DATA.open(encoding="utf-8") as handle:
