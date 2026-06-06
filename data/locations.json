@@ -87,6 +87,58 @@
       "description": "地牢入口附近的农庄，可以交换麦芽。",
       "repeatable": true,
       "result": "你从农庄带回了麦芽。"
+    },
+    {
+      "id": "toby_board",
+      "name": "佣兵告示板（托比的委托）",
+      "pos": [520, 540],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": ["toby_contract"],
+      "description": "告示板角落贴着一份黑齿矿脉的护送委托，落款是个生涩的名字。",
+      "dayMin": 6,
+      "repeatable": false,
+      "result": "你记下了托比接的那份委托——报酬高得不正常。"
+    },
+    {
+      "id": "toby_lodging",
+      "name": "托比的落脚处",
+      "pos": [760, 980],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "description": "酒馆后巷，托比缩在那儿擦拭一把不合手的短剑。",
+      "dayMin": 6,
+      "repeatable": false,
+      "result": "托比说，他要靠这趟委托证明自己一个人也行。"
+    },
+    {
+      "id": "mira_stall",
+      "name": "米拉的货摊",
+      "pos": [1480, 760],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "affection": { "npc": "mira", "amount": 3 },
+      "description": "米拉支起货摊歇脚，似乎并不急着赶路。",
+      "dayMin": 6,
+      "repeatable": true,
+      "result": "你陪米拉聊了会儿，她神色松了些。"
+    },
+    {
+      "id": "fixer_den",
+      "name": "掮客的暗格",
+      "pos": [350, 980],
+      "cost": 2,
+      "materials": [],
+      "rewards": [],
+      "goldCost": 40,
+      "securesToby": true,
+      "description": "一个能把危险委托悄悄换掉的掮客，开价不低。",
+      "dayMin": 6,
+      "repeatable": false,
+      "result": "掮客点了头：托比那份委托，会被一份安全的活计顶替。"
     }
   ]
 }
