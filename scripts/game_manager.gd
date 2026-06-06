@@ -203,6 +203,16 @@ func start_day_map(day: int) -> void:
 	for entry in ryan_slice.day_start_ledger_entries(day):
 		if documents.add_ledger_entry_once(String(entry)):
 			play_audio_event("new_document")
+	for entry in _mira_day_start_ledger_entries(day):
+		if documents.add_ledger_entry_once(String(entry)):
+			play_audio_event("new_document")
+
+
+## Mira 线随日推进的账本预记（与 ryan_slice 的预记并行）。
+func _mira_day_start_ledger_entries(day: int) -> Array:
+	if day == 6:
+		return ["托比，黑齿矿脉护送委托，未归。"]
+	return []
 
 
 func visit_day_location(location_id: String) -> Dictionary:
