@@ -349,13 +349,19 @@ func _enter_mine_investigation() -> void:
 		return
 	_mine_scene = MINE_SCENE.instantiate()
 	add_child(_mine_scene)
+	# 让出地图相机：矿道场景按 world==screen 的恒等坐标编写（物品在世界坐标拾取/命中），
+	# 而 DayMapCamera 此刻是缩放/平移过的当前相机。禁用它使视口回到恒等变换，否则
+	# 物品渲染错位、event.global_position 命中测试全落空（表现为"什么都点不到"）。
+	_camera.set_active(false)
+	_camera.enabled = false
 	# DocumentOverlay 提到高层 CanvasLayer，确保挖出委托书时压在矿道场景(含其 UI CanvasLayer)之上
 	_overlay_layer = CanvasLayer.new()
 	_overlay_layer.layer = 10
 	add_child(_overlay_layer)
 	_document_overlay.reparent(_overlay_layer, false)
-	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
-	_hidden_for_mine = [$MapWorld, $UILayer/TopBar, $UILayer/ResultPanel, _detail_panel]
+	# 整层隐藏 DayMap UI（含运行时建的采集/商店标签与商店面板），避免与矿道 UI 并存、截获输入。
+	# DocumentOverlay 已先移出 $UILayer 到 _overlay_layer，故不受此隐藏影响。
+	_hidden_for_mine = [$MapWorld, $UILayer]
 	for n in _hidden_for_mine:
 		if n != null:
 			n.visible = false
@@ -367,13 +373,15 @@ func _on_mine_finished() -> void:
 		_mine_scene.queue_free()
 		_mine_scene = null
 	if _overlay_layer != null:
-		_document_overlay.reparent(self, false)
+		# 归位到 $UILayer（其本就声明于此 CanvasLayer，屏幕空间），避免相机恢复后在世界空间错位。
+		_document_overlay.reparent($UILayer, false)
 		_overlay_layer.queue_free()
 		_overlay_layer = null
 	for n in _hidden_for_mine:
 		if n != null and is_instance_valid(n):
 			n.visible = true
 	_hidden_for_mine.clear()
+	_camera.enabled = true
 	_camera.set_active(true)
 	_refresh_map()
 
