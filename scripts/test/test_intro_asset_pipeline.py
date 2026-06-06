@@ -25,6 +25,7 @@ STILLS = [
     "intro_rusted_key",
     "intro_threshold",
 ]
+RUNTIME_EXPORTS = [*STILLS, "intro_vignette"]
 REFERENCE_FILES = [*STILLS, "tavern_continuity_master"]
 MIN_DARK_PIXELS = 18_000
 MIN_COOL_PIXELS = 4_000
@@ -171,6 +172,29 @@ class IntroAssetPipelineTest(unittest.TestCase):
             runtime = load_image(runtime_path)
             self.assertEqual(native.size, NATIVE_SIZE, f"{name}: wrong native size")
             self.assertEqual(runtime.size, RUNTIME_SIZE, f"{name}: wrong runtime size")
+
+    def test_runtime_stills_are_exact_nearest_exports(self) -> None:
+        for name in RUNTIME_EXPORTS:
+            native_path = SOURCE / f"{name}_native.png"
+            runtime_path = RUNTIME / f"{name}.png"
+            self.assertTrue(native_path.exists(), f"{native_path}: missing native source")
+            self.assertTrue(runtime_path.exists(), f"{runtime_path}: missing runtime texture")
+
+            native = load_image(native_path)
+            runtime = load_image(runtime_path)
+            expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
+
+            self.assertEqual(runtime.size, RUNTIME_SIZE, f"{name}: wrong runtime size")
+            self.assertEqual(
+                runtime.mode,
+                expected.mode,
+                f"{name}: runtime mode differs from nearest export",
+            )
+            self.assertEqual(
+                runtime.tobytes(),
+                expected.tobytes(),
+                f"{name}: runtime pixels differ from exact nearest export",
+            )
 
     def test_native_stills_match_visual_guardrails(self) -> None:
         for name in STILLS:
