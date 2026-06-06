@@ -1,5 +1,6 @@
 import json
 import math
+from hashlib import sha256
 from pathlib import Path
 import shutil
 import subprocess
@@ -29,6 +30,7 @@ STILLS = [
 ]
 RUNTIME_EXPORTS = [*STILLS, "intro_vignette"]
 REFERENCE_FILES = [*STILLS, "tavern_continuity_master"]
+NATIVE_NAMES = RUNTIME_EXPORTS
 MIN_DARK_PIXELS = 18_000
 MIN_COOL_PIXELS = 4_000
 MIN_WARM_PIXELS = {
@@ -39,7 +41,9 @@ MIN_WARM_PIXELS = {
     "intro_threshold": 0,
 }
 MAX_NATIVE_COLORS = 64
-PREPARE_TOOL = ROOT / "scripts" / "tools" / "prepare_intro_sources.py"
+TOOLS = ROOT / "scripts" / "tools"
+PREPARE_TOOL = TOOLS / "prepare_intro_sources.py"
+EXPORT_TOOL = TOOLS / "export_intro_assets.py"
 CONTACT_SHEET_POSITIONS = [(0, 0), (320, 0), (640, 0), (160, 180), (480, 180)]
 
 
@@ -63,6 +67,34 @@ def rgba_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
 def color_count(image: Image.Image) -> int:
     colors = image.convert("RGB").getcolors(maxcolors=65536)
     return len(colors) if colors is not None else 65536
+
+
+def file_hash(path: Path) -> str:
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def seed_destinations(paths: list[Path]) -> dict[Path, str]:
+    for index, path in enumerate(paths):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.new(
+            "RGBA",
+            (2, 2),
+            (17 + index, 31 + index, 47 + index, 255),
+        ).save(path)
+    return {path: file_hash(path) for path in paths}
+
+
+def assert_destinations_unchanged(
+    test_case: unittest.TestCase,
+    expected_hashes: dict[Path, str],
+) -> None:
+    for path, expected_hash in expected_hashes.items():
+        test_case.assertTrue(path.exists(), f"{path}: seeded destination was removed")
+        test_case.assertEqual(
+            file_hash(path),
+            expected_hash,
+            f"{path}: destination changed after failed pipeline run",
+        )
 
 
 def edge_change_ratio(image: Image.Image) -> float:
@@ -157,6 +189,78 @@ class IntroAssetPipelineTest(unittest.TestCase):
             "prepare accepted a smooth periodic reference",
         )
         self.assertIn("blank or low-complexity", result.stderr)
+
+    def test_prepare_does_not_replace_outputs_when_validation_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_root = Path(temporary)
+            temporary_tool = (
+                temporary_root / "scripts" / "tools" / PREPARE_TOOL.name
+            )
+            temporary_tool.parent.mkdir(parents=True)
+            shutil.copy2(PREPARE_TOOL, temporary_tool)
+
+            temporary_source = temporary_root / "assets" / "source" / "intro"
+            temporary_reference = temporary_source / "reference"
+            temporary_reference.mkdir(parents=True)
+            for name in REFERENCE_FILES:
+                shutil.copy2(
+                    REFERENCE / f"{name}.png",
+                    temporary_reference / f"{name}.png",
+                )
+            Image.new("RGB", (1672, 941), (0, 0, 0)).save(
+                temporary_reference / "intro_threshold.png"
+            )
+
+            destinations = [
+                *(temporary_source / f"{name}_native.png" for name in STILLS),
+                temporary_source / "intro_vignette_native.png",
+                temporary_source / "intro_contact_sheet.png",
+            ]
+            original_hashes = seed_destinations(destinations)
+
+            result = subprocess.run(
+                [sys.executable, str(temporary_tool)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            assert_destinations_unchanged(self, original_hashes)
+
+    def test_export_does_not_replace_outputs_when_validation_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_root = Path(temporary)
+            temporary_tool = (
+                temporary_root / "scripts" / "tools" / EXPORT_TOOL.name
+            )
+            temporary_tool.parent.mkdir(parents=True)
+            shutil.copy2(EXPORT_TOOL, temporary_tool)
+
+            temporary_source = temporary_root / "assets" / "source" / "intro"
+            temporary_source.mkdir(parents=True)
+            for name in NATIVE_NAMES:
+                shutil.copy2(
+                    SOURCE / f"{name}_native.png",
+                    temporary_source / f"{name}_native.png",
+                )
+            Image.new("RGBA", (3, 3), (0, 0, 0, 255)).save(
+                temporary_source / "intro_threshold_native.png"
+            )
+
+            temporary_runtime = temporary_root / "assets" / "textures" / "intro"
+            destinations = [
+                temporary_runtime / f"{name}.png" for name in NATIVE_NAMES
+            ]
+            original_hashes = seed_destinations(destinations)
+
+            result = subprocess.run(
+                [sys.executable, str(temporary_tool)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            assert_destinations_unchanged(self, original_hashes)
 
     def test_native_and_runtime_files_exist_at_expected_sizes(self) -> None:
         self.assertEqual(
