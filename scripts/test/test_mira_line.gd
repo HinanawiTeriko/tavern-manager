@@ -9,12 +9,11 @@ var _failures := 0
 func _ready() -> void:
 	_test_parse_and_init()
 	_test_toby_contract_informs_mira()
-	# 以下方法在 Task 1.3 解注释
-	# _test_route_she_finally_stopped()
-	# _test_route_never_turned_back()
-	# _test_route_closed_the_door()
-	# _test_route_another_light_out()
-	# _test_toby_survival_flags()
+	_test_route_she_finally_stopped()
+	_test_route_never_turned_back()
+	_test_route_closed_the_door()
+	_test_route_another_light_out()
+	_test_toby_survival_flags()
 	_finish()
 
 func _ok(cond: bool, msg: String) -> void:
@@ -57,3 +56,44 @@ func _test_toby_contract_informs_mira() -> void:
 	var nm2 := _nm()
 	var bad := nm2.resolve_action({"type": "give_story_item", "npc_id": "toby", "item_key": "toby_contract"})
 	_ok(not bad.get("accepted", true), "托比本人不接收真相文档")
+
+func _test_route_she_finally_stopped() -> void:
+	var nm := _nm()
+	nm.set_var("told_mira_truth", true)
+	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD)
+	_ok(nm.get_mira_route() == "she_finally_stopped", "告知+信任达标 → 她终于停下")
+
+func _test_route_never_turned_back() -> void:
+	var nm := _nm()
+	nm.set_var("told_mira_truth", true)
+	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD - 1)
+	_ok(nm.get_mira_route() == "never_turned_back", "告知+信任不足 → 再没回头")
+
+func _test_route_closed_the_door() -> void:
+	var nm := _nm()
+	nm.set_var("toby_secured", true)
+	_ok(nm.get_mira_route() == "closed_the_door", "未告知+兜底 → 替他合上门")
+
+func _test_route_another_light_out() -> void:
+	var nm := _nm()
+	_ok(nm.get_mira_route() == "another_light_out", "未告知+未兜底 → 另一盏熄灭的灯")
+
+func _test_toby_survival_flags() -> void:
+	var nm := _nm()
+	# 担责救活
+	nm.set_var("told_mira_truth", true)
+	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD)
+	_ok(nm.toby_survived(), "担责 → 托比存活")
+	# 仅兜底救活（未告知）
+	var nm2 := _nm()
+	nm2.set_var("toby_secured", true)
+	_ok(nm2.toby_survived(), "兜底 → 托比存活")
+	# 告知但信任不足且未兜底 → 死
+	var nm3 := _nm()
+	nm3.set_var("told_mira_truth", true)
+	nm3.set_affection("mira", nm3.MIRA_TRUST_THRESHOLD - 1)
+	_ok(not nm3.toby_survived(), "知情仍逃且未兜底 → 托比赴死")
+	# finalize 写入 ending 与 toby_survived
+	nm3.finalize_mira_ending()
+	_ok(nm3.get_var("mira_ending") == "never_turned_back", "finalize 写 mira_ending")
+	_ok(nm3.get_var("toby_survived") == false, "finalize 写 toby_survived")
