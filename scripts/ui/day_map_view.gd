@@ -220,7 +220,7 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	_revealing = true
 	var gm = get_node("/root/GameManager")
 	if new_locs.size() > 3:
-		await _camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM).finished
+		await _camera.fly_to(Vector2(1280, 720), _camera.min_zoom).finished
 		if not is_instance_valid(self):
 			return  # 亮相中切换了场景，协程被遗弃
 		for loc in new_locs:
