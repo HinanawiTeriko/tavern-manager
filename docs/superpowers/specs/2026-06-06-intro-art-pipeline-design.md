@@ -47,7 +47,7 @@ clusters、明确的大轮廓和硬边阴影。庄严悲壮感只能通过尺度
 | 拍 | Reference / Native / Runtime 名称 | 画面职责 |
 |---|---|---|
 | 1 | `intro_descent` | 巨大环形竖井占据画面，石阶沿井壁向下消失；人物只是一枚小剪影，零星 amber 灯火逐级熄灭 |
-| 2 | `intro_hearth_memory` | 室内斜视角展示右后壁炉、L 形吧台和左后酒架；四名顾客以不同朝向自然交谈、饮酒或准备下井 |
+| 2 | `intro_hearth_memory` | 室内斜视角展示右后壁炉、左后酒架和右下局部直吧台；四名顾客以不同朝向自然交谈、饮酒或准备下井 |
 | 3 | `intro_tavern_dark` | 与第 2 拍几乎同机位；人物和暖光全部消失，只剩封闭木门、入口道具剪影与熄灭壁灯 |
 | 4 | `intro_rusted_key` | 粗布袖口的手掌托起轮廓清晰的巨大锈钥匙；背景只保留酒馆门的暗色拱形 |
 | 5 | `intro_threshold` | 从人物身后看向开启的厚木门；冷暗酒馆占大部分画面，远处壁炉只留一颗极小余烬 |
@@ -63,8 +63,8 @@ Reference 由用户在生图界面生成，Codex 提供结构化 prompt、负面
    作为风格锚点。
 2. 先生成新的 `tavern_continuity_master.png`，明确拱门、左侧木门、壁灯、远端壁炉、
    右侧入口道具组和室内桌椅位置。
-3. 入口母版批准后，再生成无人物的 `tavern_interior_spatial_master`，锁定壁炉、L 形吧台、
-   左后酒架、入口门和顶部木梁。
+3. 入口母版批准后，再生成无人物的 `tavern_interior_spatial_master`，锁定壁炉、左后酒架、
+   入口门、顶部木梁和右下角被画框裁切的局部直吧台。该母版只服务开场，不兼顾营业界面。
 4. 第 2、3 拍必须从室内空间母版派生；第 5 拍从入口母版派生，禁止重新随机设计酒馆。
 5. 第 1、4 拍使用标题合成参考作为风格输入独立生成。
 6. 候选图使用 `-v2`、`-v3` 后缀保存，未批准前不得覆盖无后缀正式 reference。
@@ -134,8 +134,8 @@ clearly.
 Preserve the exact architecture, camera and furniture positions from the approved
 interior spatial master. The interior occupies at least 80 percent of the frame.
 Keep the entrance door as a narrow continuity anchor on the far left, sparse shelves
-on the left rear wall, the L-shaped bar in the foreground and right side, and the stone
-hearth in the right rear third.
+on the left rear wall, the small straight counter segment cropped by the bottom-right
+frame edge, and the stone hearth in the right rear third.
 
 Add exactly four patrons as broad anonymous silhouettes with varied directions:
 two converse at one table, one attends to a simple single-handled mug, and one remains

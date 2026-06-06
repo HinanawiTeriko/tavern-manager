@@ -84,14 +84,21 @@ git commit -m "art(intro): approve pixel tavern continuity master"
 **Files:**
 - Read: `assets/source/intro/reference/tavern_continuity_master.png`
 - Read: `assets/source/title/reference/title_pixel_composite_reference.png`
-- Create: `assets/source/intro/reference/tavern_interior_spatial_master-v2.png`
+- Edit input: `assets/source/intro/reference/tavern_interior_spatial_master-v4.png`
+- Create: `assets/source/intro/reference/tavern_interior_spatial_master-v6.png`
 - Replace after approval: `assets/source/intro/reference/tavern_interior_spatial_master.png`
 
-- [ ] **Step 1: Generate an unoccupied interior spatial master**
+- [ ] **Step 1: Edit the rejected interior master**
 
-Use the approved unified interior design. The image must lock the right-rear stone
-fireplace, foreground L-shaped bar, left-rear entrance door, sparse left-wall shelves,
-top timber beams, central passage, and low-density decoration.
+Use `tavern_interior_spatial_master-v4.png` as the edit input. Preserve its camera,
+right-rear stone fireplace, left entrance door, sparse shelves, central tables and top
+timber beams. Remove the entire large L/U-shaped foreground counter and replace it with
+one small straight rectangular counter segment in the bottom-right corner, cropped by
+the right frame edge. It must occupy about 20% of the image width and 18% of the image
+height, show only its left end, narrow top and front face, and hold exactly one rough
+single-handled ceramic mug.
+
+Do not regenerate the room from text alone.
 
 - [ ] **Step 2: Review the master at full and native size**
 
@@ -99,12 +106,18 @@ Reject it unless:
 
 ```text
 - The fireplace is the primary architectural identity in the right rear.
-- The L-shaped bar reads clearly and can support a future behind-the-bar camera.
+- The counter is a single straight rectangular segment cropped by the right frame edge.
+- The counter has no bend, corner, return, diagonal extension or second segment.
+- The counter occupies no more than about 20% width and 18% height.
+- The counter holds exactly one rough single-handled ceramic mug.
 - The left entrance door matches the approved entrance master.
 - The left wall has only 2–3 broad shelf levels with sparse bottle silhouettes.
 - The center remains low contrast and usable as a customer stage.
-- The interior contains no barrels, crates, sign, bottle wall, cookware wall or clutter.
+- The interior contains no bar stools, candles, ledgers, barrels, crates, sign, bottle
+  wall, cookware wall or clutter.
 - At 320x180, the door, shelves, bar and fireplace remain distinct large shapes.
+- If the counter geometry is wrong, reject the candidate instead of hiding it through
+  cropping or runtime paint-over.
 ```
 
 - [ ] **Step 3: Promote and commit the approved interior master**
@@ -147,10 +160,10 @@ Do not regenerate from text alone. Preserve the exact camera and architecture. R
 
 - [ ] **Step 4: Review both images side by side**
 
-Reject the pair unless the left-side door, arch, lantern, hearth, tables, and right-side
-barrel/crate/mug group occupy matching positions. The emotional contrast must come from
-removed light and people, not added decay texture. Neither image may introduce a sign,
-interior barrel, or interior crate.
+Reject the pair unless the left-side door, shelves, hearth, tables, and bottom-right
+straight counter with its single mug occupy matching positions. The emotional contrast
+must come from removed light and people, not added decay texture. Neither image may
+introduce a sign, interior barrel, interior crate, or additional counter objects.
 
 - [ ] **Step 5: Promote and commit the approved pair**
 
