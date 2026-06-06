@@ -1,10 +1,17 @@
 {
   "maxStamina": 5,
   "maxStaminaByDay": { "2": 4 },
+  "regions": [
+    { "id": "market",     "origin": [0, 0],      "size": [1280, 720] },
+    { "id": "wilds",      "origin": [1280, 0],   "size": [1280, 720] },
+    { "id": "north_road", "origin": [0, 720],    "size": [1280, 720] },
+    { "id": "fog",        "origin": [1280, 720], "size": [1280, 720] }
+  ],
   "locations": [
     {
       "id": "mercenary_board",
       "name": "佣兵告示板",
+      "region": "north_road",
       "pos": [505, 360],
       "cost": 1,
       "materials": [],
@@ -19,6 +26,7 @@
     {
       "id": "abandoned_mine",
       "name": "废弃矿道",
+      "region": "north_road",
       "pos": [930, 225],
       "cost": 1,
       "materials": [],
@@ -32,6 +40,7 @@
     {
       "id": "guild_counter",
       "name": "公会柜台",
+      "region": "north_road",
       "pos": [785, 335],
       "cost": 2,
       "materials": [],
@@ -46,6 +55,7 @@
     {
       "id": "mushroom_forest",
       "name": "菌菇林地",
+      "region": "wilds",
       "pos": [555, 555],
       "cost": 1,
       "materials": ["herb"],
@@ -58,6 +68,7 @@
     {
       "id": "dark_river",
       "name": "暗河沿岸",
+      "region": "wilds",
       "pos": [660, 575],
       "cost": 2,
       "materials": ["meat_raw"],
@@ -69,6 +80,7 @@
     {
       "id": "grape_trellis",
       "name": "葡萄藤架",
+      "region": "wilds",
       "pos": [955, 470],
       "cost": 1,
       "materials": ["grape"],
@@ -80,6 +92,7 @@
     {
       "id": "mill_farm",
       "name": "农庄磨坊",
+      "region": "wilds",
       "pos": [875, 520],
       "cost": 1,
       "materials": ["ale"],
@@ -91,7 +104,8 @@
     {
       "id": "toby_board",
       "name": "佣兵告示板（托比的委托）",
-      "pos": [520, 540],
+      "region": "market",
+      "pos": [300, 240],
       "cost": 1,
       "materials": [],
       "rewards": [],
@@ -104,7 +118,8 @@
     {
       "id": "toby_lodging",
       "name": "托比的落脚处",
-      "pos": [760, 980],
+      "region": "market",
+      "pos": [250, 620],
       "cost": 1,
       "materials": [],
       "rewards": [],
@@ -116,7 +131,8 @@
     {
       "id": "mira_stall",
       "name": "米拉的货摊",
-      "pos": [1480, 760],
+      "region": "market",
+      "pos": [980, 300],
       "cost": 1,
       "materials": [],
       "rewards": [],
@@ -129,7 +145,8 @@
     {
       "id": "fixer_den",
       "name": "掮客的暗格",
-      "pos": [350, 980],
+      "region": "market",
+      "pos": [1000, 600],
       "cost": 2,
       "materials": [],
       "rewards": [],
