@@ -129,6 +129,9 @@ func visit(location_id: String) -> Dictionary:
 		"rewards": rewards,
 		"documents": location.get("documents", []).duplicate(),
 		"stamina": stamina,
+		"affection": location.get("affection", null),
+		"goldCost": int(location.get("goldCost", 0)),
+		"securesToby": bool(location.get("securesToby", false)),
 	}
 
 

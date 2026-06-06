@@ -214,6 +214,18 @@ func visit_day_location(location_id: String) -> Dictionary:
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
 		grant_mine_document(String(document_id))
+	var aff = result.get("affection", null)
+	if aff is Dictionary and String(aff.get("npc", "")) != "":
+		var npc_id := String(aff["npc"])
+		narrative.set_affection(npc_id, narrative.get_affection(npc_id) + int(aff.get("amount", 0)))
+	if bool(result.get("securesToby", false)):
+		var cost := int(result.get("goldCost", 0))
+		if economy.gold >= cost:
+			economy.add_gold(-cost)
+			narrative.set_var("toby_secured", true)
+		else:
+			result["blocked_reason"] = "not_enough_gold"
+			narrative.set_var("toby_secured", false)
 	return result
 
 
