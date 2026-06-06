@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps, ImageStat
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,6 +28,8 @@ MIN_WARM_PIXELS = {
     "intro_rusted_key": 10,
     "intro_threshold": 0,
 }
+MIN_REFERENCE_DETAIL_RESIDUAL = 1.0
+MIN_TEXTURED_BLOCKS = 96
 
 BRIGHTNESS = {
     "intro_descent": 1.00,
@@ -85,7 +87,27 @@ def validate_reference(name: str, image: Image.Image) -> None:
         raise ValueError(f"{name}: approved reference is smaller than 1280x720")
     extrema = image.getextrema()
     tonal_range = max(high - low for low, high in extrema)
-    if tonal_range < 24 or edge_change_ratio(image.resize((320, 180))) < 0.04:
+    normalized = ImageOps.fit(
+        image,
+        NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
+    ).convert("L")
+    blurred = normalized.filter(ImageFilter.GaussianBlur(2.0))
+    detail_histogram = ImageChops.difference(normalized, blurred).histogram()
+    detail_residual = sum(
+        value * count for value, count in enumerate(detail_histogram)
+    ) / sum(detail_histogram)
+    textured_blocks = 0
+    for top in range(0, NATIVE_SIZE[1], 10):
+        for left in range(0, NATIVE_SIZE[0], 10):
+            block = normalized.crop((left, top, left + 10, top + 10))
+            textured_blocks += ImageStat.Stat(block).stddev[0] >= 5.0
+    if (
+        tonal_range < 24
+        or detail_residual < MIN_REFERENCE_DETAIL_RESIDUAL
+        or textured_blocks < MIN_TEXTURED_BLOCKS
+    ):
         raise ValueError(f"{name}: approved reference is blank or low-complexity")
 
 

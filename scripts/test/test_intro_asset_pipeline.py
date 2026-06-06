@@ -1,5 +1,9 @@
 import json
 from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from PIL import Image
@@ -31,6 +35,7 @@ MIN_WARM_PIXELS = {
     "intro_threshold": 0,
 }
 MAX_NATIVE_COLORS = 64
+PREPARE_TOOL = ROOT / "scripts" / "tools" / "prepare_intro_sources.py"
 
 
 def load_image(path: Path) -> Image.Image:
@@ -79,6 +84,39 @@ class IntroAssetPipelineTest(unittest.TestCase):
             image = load_image(path)
             self.assertGreaterEqual(image.width, RUNTIME_SIZE[0], f"{name}: reference is too narrow")
             self.assertGreaterEqual(image.height, RUNTIME_SIZE[1], f"{name}: reference is too short")
+
+    def test_prepare_rejects_smooth_gradient_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_root = Path(temporary)
+            tool = temporary_root / "scripts" / "tools" / PREPARE_TOOL.name
+            tool.parent.mkdir(parents=True)
+            shutil.copy2(PREPARE_TOOL, tool)
+
+            temporary_reference = (
+                temporary_root / "assets" / "source" / "intro" / "reference"
+            )
+            shutil.copytree(REFERENCE, temporary_reference)
+            gradient = Image.new("L", (1672, 941))
+            gradient_pixels = gradient.load()
+            for y in range(gradient.height):
+                for x in range(gradient.width):
+                    gradient_pixels[x, y] = round(x / (gradient.width - 1) * 255)
+            gradient.convert("RGB").save(
+                temporary_reference / "tavern_continuity_master.png"
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(tool)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(
+                result.returncode,
+                0,
+                "prepare accepted a smooth grayscale gradient reference",
+            )
+            self.assertIn("blank or low-complexity", result.stderr)
 
     def test_native_and_runtime_files_exist_at_expected_sizes(self) -> None:
         self.assertEqual(
