@@ -320,6 +320,19 @@ def prepare_outputs() -> dict[Path, Image.Image]:
     }
 
 
+def prepare_named_outputs(names: list[str]) -> dict[Path, Image.Image]:
+    unknown = [name for name in names if name not in STILLS]
+    if unknown:
+        raise ValueError(f"Unknown intro stills: {', '.join(unknown)}")
+
+    outputs: dict[Path, Image.Image] = {}
+    for name in names:
+        image = build_native(name)
+        validate_still(name, image)
+        outputs[SOURCE / f"{name}_native.png"] = image
+    return outputs
+
+
 def main() -> None:
     outputs = prepare_outputs()
     SOURCE.mkdir(parents=True, exist_ok=True)

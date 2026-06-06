@@ -7,10 +7,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from PIL import Image
 
 from scripts.tools.export_intro_assets import validate_source
+from scripts.tools.prepare_intro_sources import prepare_named_outputs
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -135,6 +137,28 @@ def run_prepare_with_continuity_reference(reference: Image.Image) -> subprocess.
 
 
 class IntroAssetPipelineTest(unittest.TestCase):
+    def test_prepare_named_outputs_builds_only_requested_still(self) -> None:
+        sentinel = Image.new("RGBA", NATIVE_SIZE, (12, 24, 36, 255))
+        with patch(
+            "scripts.tools.prepare_intro_sources.build_native",
+            return_value=sentinel,
+        ) as build_native_mock, patch(
+            "scripts.tools.prepare_intro_sources.validate_still",
+        ) as validate_still_mock:
+            outputs = prepare_named_outputs(["intro_hearth_memory"])
+
+        self.assertEqual(
+            list(outputs),
+            [SOURCE / "intro_hearth_memory_native.png"],
+        )
+        self.assertIs(outputs[SOURCE / "intro_hearth_memory_native.png"], sentinel)
+        build_native_mock.assert_called_once_with("intro_hearth_memory")
+        validate_still_mock.assert_called_once_with("intro_hearth_memory", sentinel)
+
+    def test_prepare_named_outputs_rejects_unknown_still(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Unknown intro stills: missing"):
+            prepare_named_outputs(["missing"])
+
     def test_approved_references_exist(self) -> None:
         for name in REFERENCE_FILES:
             path = REFERENCE / f"{name}.png"
