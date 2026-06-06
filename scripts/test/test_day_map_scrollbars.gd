@@ -70,22 +70,26 @@ func _test_visible_scrollbars(view) -> void:
 
 
 func _test_daymap_art_assets(view) -> void:
-	var background := view.get_node("MapWorld/Background") as Sprite2D
-	_ok(background.texture != null, "daymap background has a runtime texture")
-	if background.texture != null:
-		_ok(background.texture.resource_path.ends_with("assets/textures/daymap/daymap_bg.png"),
-			"daymap background uses the native-pipeline runtime art")
-	_ok(background.position == Vector2(640, 360),
-		"daymap background is centered on the 1280x720 runtime map")
-	_ok(view._camera.map_max == Vector2(1280, 720),
-		"daymap camera clamps to the 1280x720 runtime map")
-	_ok(view._home_marker.position.x >= 0.0 and view._home_marker.position.x <= 1280.0
-			and view._home_marker.position.y >= 0.0 and view._home_marker.position.y <= 720.0,
-		"home marker stays inside the runtime map bounds")
+	# 四个区域拼块都摆出来了
+	var gm = view.get_node("/root/GameManager")
+	var regions: Array = gm.day_map.get_regions()
+	_ok(regions.size() == 4, "摆出 4 个区域拼块")
+	for r in regions:
+		var rid := String(r.get("id", ""))
+		var tile = view.get_node_or_null("MapWorld/RegionTile_" + rid)
+		_ok(tile is Sprite2D and tile.texture != null,
+			"区域 %s 有背景拼块且有纹理" % rid)
+	# 相机边界 = 区域并集 (0,0)-(2560,1440)，动态最小缩放=0.5
+	_ok(view._camera.map_max == Vector2(2560, 1440),
+		"相机 map_max = (2560,1440)")
+	_ok(absf(view._camera.min_zoom - 0.5) < 0.01,
+		"2×2 下动态最小缩放 = 0.5（缩到看全整图不露灰）")
+	# home marker 存在且在地图边界内
 	_ok(view._home_marker != null and is_instance_valid(view._home_marker),
-		"home marker exists before checking art")
+		"home marker 存在")
 	if view._home_marker != null and is_instance_valid(view._home_marker):
-		_ok(view._home_marker.has_method("has_icon_texture"),
-			"marker exposes icon texture state for tests")
+		_ok(view._home_marker.position.x >= 0.0 and view._home_marker.position.x <= 2560.0
+				and view._home_marker.position.y >= 0.0 and view._home_marker.position.y <= 1440.0,
+			"home marker 在地图边界内")
 		if view._home_marker.has_method("has_icon_texture"):
-			_ok(view._home_marker.has_icon_texture(), "home marker has an icon texture")
+			_ok(view._home_marker.has_icon_texture(), "home marker 有图标纹理")

@@ -93,11 +93,49 @@ func _ready() -> void:
 
 
 func _setup_background() -> void:
-	var bg: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
-	if bg == null:
-		return
-	bg.position = Vector2(640, 360)
-	bg.texture = DAYMAP_BACKGROUND
+	var gm = get_node("/root/GameManager")
+	var map_world := $MapWorld
+	var regions: Array = gm.day_map.get_regions()
+	# 复用 .tscn 里的 Background 节点作第一块，其余程序生成
+	var existing: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
+	for i in regions.size():
+		var r: Dictionary = regions[i]
+		var rid := String(r.get("id", ""))
+		var o = r.get("origin", [0, 0])
+		var s = r.get("size", [1280, 720])
+		var center := Vector2(float(o[0]) + float(s[0]) * 0.5, float(o[1]) + float(s[1]) * 0.5)
+		var tile: Sprite2D
+		if i == 0 and existing != null:
+			tile = existing
+		else:
+			tile = Sprite2D.new()
+			tile.z_index = -10
+			map_world.add_child(tile)
+		tile.name = "RegionTile_" + rid
+		tile.centered = true
+		tile.position = center
+		tile.texture = _region_texture(rid, Vector2(float(s[0]), float(s[1])))
+	# 注入相机边界（区域并集）→ 动态最小缩放 + 钳制
+	var b: Dictionary = gm.day_map.get_map_bounds()
+	_camera.set_bounds(b["min"], b["max"])
+
+
+## 区域背景纹理：优先 runtime PNG；缺席（Codex 美术未到）回退到按 id tint 的纯色占位。
+func _region_texture(rid: String, size: Vector2) -> Texture2D:
+	var path := "res://assets/textures/daymap/regions/%s.png" % rid
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex != null:
+			return tex
+	var tints := {
+		"market": Color(0.32, 0.27, 0.20),
+		"wilds": Color(0.20, 0.30, 0.22),
+		"north_road": Color(0.26, 0.24, 0.28),
+		"fog": Color(0.16, 0.17, 0.19),
+	}
+	var img := Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
+	img.fill(tints.get(rid, Color(0.2, 0.2, 0.2)))
+	return ImageTexture.create_from_image(img)
 
 
 func _setup_detail_panel() -> void:
