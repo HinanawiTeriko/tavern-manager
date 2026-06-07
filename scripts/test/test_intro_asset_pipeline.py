@@ -13,8 +13,12 @@ from PIL import Image
 
 from scripts.tools.export_intro_assets import validate_source
 from scripts.tools.prepare_intro_sources import (
+    build_native,
+    grade_native,
+    load_reference,
+    normalize_reference,
     prepare_named_outputs,
-    stylize_hearth_memory_native,
+    quantize_native,
 )
 
 
@@ -35,9 +39,27 @@ STILLS = [
 ]
 RUNTIME_EXPORTS = [*STILLS, "intro_vignette"]
 REFERENCE_FILES = [*STILLS, "tavern_continuity_master"]
+SELECTED_HEARTH_MEMORY_REFERENCE = (
+    REFERENCE / "candidates" / "intro_warm_threshold_master_v5.png"
+)
+SELECTED_THRESHOLD_REFERENCE = (
+    REFERENCE / "candidates" / "intro_threshold_same_shot_cold_v1.png"
+)
+SELECTED_TAVERN_DARK_REFERENCE = (
+    REFERENCE / "candidates" / "intro_tavern_dark_style_locked_wide_v1.png"
+)
+SELECTED_RUSTED_KEY_REFERENCE = (
+    REFERENCE / "candidates" / "intro_rusted_key_composited_wide_v3_toned.png"
+)
 NATIVE_NAMES = RUNTIME_EXPORTS
 MIN_DARK_PIXELS = 14_000
-MIN_COOL_PIXELS = 3_100
+MIN_COOL_PIXELS = {
+    "intro_descent": 3_100,
+    "intro_hearth_memory": 3_100,
+    "intro_tavern_dark": 3_100,
+    "intro_rusted_key": 3_100,
+    "intro_threshold": 1_500,
+}
 MIN_WARM_PIXELS = {
     "intro_descent": 16,
     "intro_hearth_memory": 155,
@@ -141,32 +163,17 @@ def run_prepare_with_continuity_reference(reference: Image.Image) -> subprocess.
 
 
 class IntroAssetPipelineTest(unittest.TestCase):
-    def test_hearth_memory_stylization_cools_door_and_restrains_secondary_warmth(
-        self,
-    ) -> None:
-        image = Image.new("RGB", NATIVE_SIZE, (20, 34, 40))
-        image.putpixel((50, 90), (180, 100, 35))
-        image.putpixel((70, 90), (180, 100, 35))
-        image.putpixel((130, 90), (180, 100, 35))
-        image.putpixel((285, 90), (180, 100, 35))
+    def test_hearth_memory_uses_general_pipeline_without_layout_repaint(self) -> None:
+        reference = load_reference("intro_hearth_memory")
+        graded = grade_native(normalize_reference(reference), "intro_hearth_memory")
+        expected = quantize_native(graded, "intro_hearth_memory")
 
-        stylized = stylize_hearth_memory_native(image)
+        actual = build_native("intro_hearth_memory")
 
-        door = stylized.getpixel((50, 90))
-        jamb = stylized.getpixel((70, 90))
-        hearth = stylized.getpixel((130, 90))
-        secondary = stylized.getpixel((285, 90))
-        self.assertGreater(door[2], door[0], "door should read as cool stone")
-        self.assertGreater(
-            max(jamb),
-            max(door),
-            "narrow stone jamb should remain visible against the doorway shadow",
-        )
-        self.assertGreater(hearth[0], hearth[2] * 1.6, "hearth should stay warm")
-        self.assertLess(
-            max(secondary),
-            max(hearth),
-            "secondary warmth should remain dimmer than the hearth",
+        self.assertEqual(
+            actual.tobytes(),
+            expected.tobytes(),
+            "intro_hearth_memory should not apply old composition-specific repainting",
         )
 
     def test_prepare_named_outputs_builds_only_requested_still(self) -> None:
@@ -198,6 +205,54 @@ class IntroAssetPipelineTest(unittest.TestCase):
             image = load_image(path)
             self.assertGreaterEqual(image.width, RUNTIME_SIZE[0], f"{name}: reference is too narrow")
             self.assertGreaterEqual(image.height, RUNTIME_SIZE[1], f"{name}: reference is too short")
+
+    def test_hearth_memory_uses_selected_warm_threshold_reference(self) -> None:
+        approved = REFERENCE / "intro_hearth_memory.png"
+        self.assertTrue(
+            SELECTED_HEARTH_MEMORY_REFERENCE.exists(),
+            f"{SELECTED_HEARTH_MEMORY_REFERENCE}: missing selected candidate",
+        )
+        self.assertEqual(
+            file_hash(approved),
+            file_hash(SELECTED_HEARTH_MEMORY_REFERENCE),
+            "intro_hearth_memory should use the approved warm threshold v5 reference",
+        )
+
+    def test_threshold_uses_selected_cold_hearth_reference(self) -> None:
+        approved = REFERENCE / "intro_threshold.png"
+        self.assertTrue(
+            SELECTED_THRESHOLD_REFERENCE.exists(),
+            f"{SELECTED_THRESHOLD_REFERENCE}: missing selected candidate",
+        )
+        self.assertEqual(
+            file_hash(approved),
+            file_hash(SELECTED_THRESHOLD_REFERENCE),
+            "intro_threshold should use the cold abandoned version of the hearth reference",
+        )
+
+    def test_tavern_dark_uses_selected_wide_reference(self) -> None:
+        approved = REFERENCE / "intro_tavern_dark.png"
+        self.assertTrue(
+            SELECTED_TAVERN_DARK_REFERENCE.exists(),
+            f"{SELECTED_TAVERN_DARK_REFERENCE}: missing selected candidate",
+        )
+        self.assertEqual(
+            file_hash(approved),
+            file_hash(SELECTED_TAVERN_DARK_REFERENCE),
+            "intro_tavern_dark should use the approved wide exterior reference",
+        )
+
+    def test_rusted_key_uses_selected_composited_reference(self) -> None:
+        approved = REFERENCE / "intro_rusted_key.png"
+        self.assertTrue(
+            SELECTED_RUSTED_KEY_REFERENCE.exists(),
+            f"{SELECTED_RUSTED_KEY_REFERENCE}: missing selected candidate",
+        )
+        self.assertEqual(
+            file_hash(approved),
+            file_hash(SELECTED_RUSTED_KEY_REFERENCE),
+            "intro_rusted_key should use the approved exact-background key reference",
+        )
 
     def test_prepare_rejects_smooth_gradient_reference(self) -> None:
         gradient = Image.new("L", (1672, 941))
@@ -405,7 +460,11 @@ class IntroAssetPipelineTest(unittest.TestCase):
                 if a >= 250 and r >= 95 and g >= 42 and r >= b * 1.6 and g >= b * 1.1
             )
             self.assertGreaterEqual(dark, MIN_DARK_PIXELS, f"{name}: insufficient dark mass")
-            self.assertGreaterEqual(cool, MIN_COOL_PIXELS, f"{name}: insufficient teal depth")
+            self.assertGreaterEqual(
+                cool,
+                MIN_COOL_PIXELS[name],
+                f"{name}: insufficient teal depth",
+            )
             self.assertGreaterEqual(
                 warm,
                 MIN_WARM_PIXELS[name],

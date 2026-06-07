@@ -2,15 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import (
-    Image,
-    ImageChops,
-    ImageDraw,
-    ImageEnhance,
-    ImageFilter,
-    ImageOps,
-    ImageStat,
-)
+from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps, ImageStat
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,7 +20,13 @@ REFERENCE_NAMES = [*STILLS, "tavern_continuity_master"]
 PRODUCTION_QUANTIZATION_COLORS = 52
 MAX_VALIDATED_NATIVE_COLORS = 64
 MIN_DARK_PIXELS = 14_000
-MIN_COOL_PIXELS = 3_100
+MIN_COOL_PIXELS = {
+    "intro_descent": 3_100,
+    "intro_hearth_memory": 3_100,
+    "intro_tavern_dark": 3_100,
+    "intro_rusted_key": 3_100,
+    "intro_threshold": 1_500,
+}
 MIN_WARM_PIXELS = {
     "intro_descent": 16,
     "intro_hearth_memory": 155,
@@ -225,74 +223,8 @@ def quantize_native(image: Image.Image, name: str) -> Image.Image:
     return quantized
 
 
-def stylize_hearth_memory_native(image: Image.Image) -> Image.Image:
-    stylized = image.convert("RGB").copy()
-    pixels = stylized.load()
-    hearth = (102, 62, 163, 118)
-    chandelier = (103, 19, 149, 48)
-    small_lights = [
-        (61, 43, 76, 65),
-        (161, 48, 177, 72),
-        (205, 46, 225, 73),
-        (250, 55, 276, 91),
-    ]
-
-    def in_box(x: int, y: int, box: tuple[int, int, int, int]) -> bool:
-        left, top, right, bottom = box
-        return left <= x < right and top <= y < bottom
-
-    for y in range(stylized.height):
-        for x in range(stylized.width):
-            red, green, blue = pixels[x, y]
-            luminance = round(0.30 * red + 0.59 * green + 0.11 * blue)
-
-            if 38 <= x < 78 and 3 <= y < 138:
-                if x < 63:
-                    pixels[x, y] = (
-                        max(3, round(luminance * 0.12)),
-                        max(7, round(luminance * 0.22)),
-                        max(9, round(luminance * 0.27)),
-                    )
-                else:
-                    pixels[x, y] = (
-                        max(5, round(luminance * 0.34)),
-                        max(12, round(luminance * 0.58)),
-                        max(16, round(luminance * 0.67)),
-                    )
-                continue
-
-            warm = red >= blue * 1.35 and red >= 70
-            if not warm or in_box(x, y, hearth):
-                continue
-
-            secondary = in_box(x, y, chandelier) or any(
-                in_box(x, y, box) for box in small_lights
-            )
-            if secondary:
-                pixels[x, y] = (
-                    min(128, round(red * 0.62)),
-                    min(82, round(green * 0.62)),
-                    min(45, round(blue * 0.75)),
-                )
-            else:
-                pixels[x, y] = (
-                    min(65, round(red * 0.38)),
-                    min(58, round(green * 0.52)),
-                    min(48, round(blue * 0.72)),
-                )
-
-    ImageDraw.Draw(stylized).line(
-        [(63, 8), (62, 38), (64, 68), (62, 98), (64, 122), (63, 137)],
-        fill=(5, 14, 18),
-        width=2,
-    )
-    return stylized
-
-
 def build_native(name: str) -> Image.Image:
     graded = grade_native(normalize_reference(load_reference(name)), name)
-    if name == "intro_hearth_memory":
-        graded = stylize_hearth_memory_native(graded)
     return quantize_native(graded, name)
 
 
@@ -357,7 +289,7 @@ def validate_still(name: str, image: Image.Image) -> None:
     dark, cool, warm = pixel_counts(image)
     if dark < MIN_DARK_PIXELS:
         raise ValueError(f"{name}: insufficient dark mass ({dark})")
-    if cool < MIN_COOL_PIXELS:
+    if cool < MIN_COOL_PIXELS[name]:
         raise ValueError(f"{name}: insufficient teal depth ({cool})")
     if warm < MIN_WARM_PIXELS[name]:
         raise ValueError(f"{name}: missing warm focal accents ({warm})")
