@@ -7,7 +7,6 @@ const INTRO_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-1
 const VIGNETTE_TEXTURE := "res://assets/textures/intro/intro_vignette.png"
 const FADE_OUT := 0.6
 const SCREEN_CENTER := Vector2(640, 360)
-const OVERSCAN := 1.12               # 基数：保证有图铺满、运镜不露黑边
 const LETTERBOX_HEIGHT := 80.0       # ≈ 720 * 0.11
 const LETTERBOX_SLIDE := 0.6
 const NARRATION_FONT_SIZE := 22
@@ -68,6 +67,12 @@ func _style_narration() -> void:
 
 
 func _setup_vignette() -> void:
+	_vignette.offset_left = 0.0
+	_vignette.offset_top = LETTERBOX_HEIGHT
+	_vignette.offset_right = 1280.0
+	_vignette.offset_bottom = 720.0 - LETTERBOX_HEIGHT
+	_vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_vignette.stretch_mode = TextureRect.STRETCH_SCALE
 	if ResourceLoader.exists(VIGNETTE_TEXTURE):
 		_vignette.texture = load(VIGNETTE_TEXTURE)
 		_vignette.visible = true
@@ -76,13 +81,17 @@ func _setup_vignette() -> void:
 
 
 func _setup_letterbox() -> void:
+	_letter_top.position = Vector2(0.0, 0.0)
+	_letter_top.size = Vector2(1280.0, 360.0)
+	_letter_bottom.position = Vector2(0.0, 360.0)
+	_letter_bottom.size = Vector2(1280.0, 360.0)
 	var bottom_y := 720.0 - LETTERBOX_HEIGHT
-	_letter_top.position.y = -LETTERBOX_HEIGHT
-	_letter_bottom.position.y = 720.0
 	var t := create_tween().set_parallel(true)
-	t.tween_property(_letter_top, "position:y", 0.0, LETTERBOX_SLIDE) \
+	t.tween_property(_letter_top, "size:y", LETTERBOX_HEIGHT, LETTERBOX_SLIDE) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	t.tween_property(_letter_bottom, "position:y", bottom_y, LETTERBOX_SLIDE) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(_letter_bottom, "size:y", LETTERBOX_HEIGHT, LETTERBOX_SLIDE) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
@@ -105,34 +114,27 @@ func _play() -> void:
 		var fade_out := float(beat_data.get("fade_out", FADE_OUT))
 		var path := String(beat_data.get("image", ""))
 		var has_image := _texture_cache.has(path)
-		var kb: Dictionary = beat_data.get("kenburns", {})
 
-		_timeline.tween_callback(func(): _apply_still(path, kb))
+		_timeline.tween_callback(func(): _apply_still(path))
 		_timeline.tween_callback(func(): _narration.text = String(beat_data.get("text", "")))
 		_timeline.tween_property(_narration, "modulate:a", 1.0, fade_in)
 		if has_image:
-			var dur := fade_in + hold
 			_timeline.parallel().tween_property(_still, "modulate:a", 1.0, fade_in)
-			_timeline.parallel().tween_property(_still, "scale", _kb_scale(kb, "to"), dur) \
-				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-			_timeline.parallel().tween_property(_still, "position", _kb_position(kb, "to"), dur) \
-				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		else:
-			_timeline.tween_interval(hold)
-		# 旁白与画面用同一 fade_out 一起穿黑（保持淡出同步）
+		_timeline.tween_interval(hold)
 		_timeline.tween_property(_narration, "modulate:a", 0.0, fade_out)
 		if has_image:
 			_timeline.parallel().tween_property(_still, "modulate:a", 0.0, fade_out)
 	_timeline.tween_callback(_exit_to_daymap)
 
 
-func _apply_still(path: String, kb: Dictionary) -> void:
+func _apply_still(path: String) -> void:
+	_still.centered = true
+	_still.scale = Vector2.ONE
+	_still.position = SCREEN_CENTER
 	if _texture_cache.has(path):
 		_still.texture = _texture_cache[path]
 		_still.visible = true
 		_still.modulate.a = 0.0
-		_still.scale = _kb_scale(kb, "from")
-		_still.position = _kb_position(kb, "from")
 	else:
 		_still.texture = null
 		_still.visible = false
@@ -160,23 +162,3 @@ func _unhandled_input(event: InputEvent) -> void:
 		# 之后 get_viewport() 会返回 null。
 		get_viewport().set_input_as_handled()
 		_exit_to_daymap()
-
-
-func _kb_zoom(kb: Dictionary, key: String) -> float:
-	var seg: Dictionary = kb.get(key, {})
-	return float(seg.get("zoom", 1.0))
-
-
-func _kb_offset(kb: Dictionary, key: String) -> Vector2:
-	var seg: Dictionary = kb.get(key, {})
-	var off: Array = seg.get("offset", [0, 0])
-	return Vector2(float(off[0]), float(off[1]))
-
-
-func _kb_scale(kb: Dictionary, key: String) -> Vector2:
-	var z := OVERSCAN * _kb_zoom(kb, key)
-	return Vector2(z, z)
-
-
-func _kb_position(kb: Dictionary, key: String) -> Vector2:
-	return SCREEN_CENTER + _kb_offset(kb, key)
