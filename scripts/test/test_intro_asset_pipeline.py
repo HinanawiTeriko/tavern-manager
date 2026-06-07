@@ -12,7 +12,10 @@ from unittest.mock import patch
 from PIL import Image
 
 from scripts.tools.export_intro_assets import validate_source
-from scripts.tools.prepare_intro_sources import prepare_named_outputs
+from scripts.tools.prepare_intro_sources import (
+    prepare_named_outputs,
+    stylize_hearth_memory_native,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,8 +23,8 @@ SOURCE = ROOT / "assets" / "source" / "intro"
 REFERENCE = SOURCE / "reference"
 RUNTIME = ROOT / "assets" / "textures" / "intro"
 INTRO_DATA = ROOT / "data" / "intro.json"
-NATIVE_SIZE = (320, 180)
-RUNTIME_SIZE = (1280, 720)
+NATIVE_SIZE = (320, 140)
+RUNTIME_SIZE = (1280, 560)
 SCALE = 4
 STILLS = [
     "intro_descent",
@@ -33,20 +36,21 @@ STILLS = [
 RUNTIME_EXPORTS = [*STILLS, "intro_vignette"]
 REFERENCE_FILES = [*STILLS, "tavern_continuity_master"]
 NATIVE_NAMES = RUNTIME_EXPORTS
-MIN_DARK_PIXELS = 18_000
-MIN_COOL_PIXELS = 4_000
+MIN_DARK_PIXELS = 14_000
+MIN_COOL_PIXELS = 3_100
 MIN_WARM_PIXELS = {
-    "intro_descent": 20,
-    "intro_hearth_memory": 200,
+    "intro_descent": 16,
+    "intro_hearth_memory": 155,
     "intro_tavern_dark": 0,
-    "intro_rusted_key": 10,
+    "intro_rusted_key": 8,
     "intro_threshold": 0,
 }
 MAX_NATIVE_COLORS = 64
 TOOLS = ROOT / "scripts" / "tools"
 PREPARE_TOOL = TOOLS / "prepare_intro_sources.py"
 EXPORT_TOOL = TOOLS / "export_intro_assets.py"
-CONTACT_SHEET_POSITIONS = [(0, 0), (320, 0), (640, 0), (160, 180), (480, 180)]
+CONTACT_SHEET_SIZE = (960, 280)
+CONTACT_SHEET_POSITIONS = [(0, 0), (320, 0), (640, 0), (160, 140), (480, 140)]
 
 
 def load_image(path: Path) -> Image.Image:
@@ -137,6 +141,34 @@ def run_prepare_with_continuity_reference(reference: Image.Image) -> subprocess.
 
 
 class IntroAssetPipelineTest(unittest.TestCase):
+    def test_hearth_memory_stylization_cools_door_and_restrains_secondary_warmth(
+        self,
+    ) -> None:
+        image = Image.new("RGB", NATIVE_SIZE, (20, 34, 40))
+        image.putpixel((50, 90), (180, 100, 35))
+        image.putpixel((70, 90), (180, 100, 35))
+        image.putpixel((130, 90), (180, 100, 35))
+        image.putpixel((285, 90), (180, 100, 35))
+
+        stylized = stylize_hearth_memory_native(image)
+
+        door = stylized.getpixel((50, 90))
+        jamb = stylized.getpixel((70, 90))
+        hearth = stylized.getpixel((130, 90))
+        secondary = stylized.getpixel((285, 90))
+        self.assertGreater(door[2], door[0], "door should read as cool stone")
+        self.assertGreater(
+            max(jamb),
+            max(door),
+            "narrow stone jamb should remain visible against the doorway shadow",
+        )
+        self.assertGreater(hearth[0], hearth[2] * 1.6, "hearth should stay warm")
+        self.assertLess(
+            max(secondary),
+            max(hearth),
+            "secondary warmth should remain dimmer than the hearth",
+        )
+
     def test_prepare_named_outputs_builds_only_requested_still(self) -> None:
         sentinel = Image.new("RGBA", NATIVE_SIZE, (12, 24, 36, 255))
         with patch(
@@ -291,7 +323,7 @@ class IntroAssetPipelineTest(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn(
-                "intro_threshold: native source must be (320, 180), got (3, 3)",
+                "intro_threshold: native source must be (320, 140), got (3, 3)",
                 output,
             )
             assert_destinations_unchanged(self, original_hashes)
@@ -397,16 +429,18 @@ class IntroAssetPipelineTest(unittest.TestCase):
         alpha = vignette.getchannel("A")
         self.assertEqual(alpha.getextrema()[0], 0)
         self.assertGreater(alpha.getextrema()[1], 0)
-        self.assertLess(alpha.getpixel((160, 90)), 40)
+        self.assertLess(alpha.getpixel((160, 70)), 40)
         self.assertGreater(alpha.getpixel((0, 0)), 80)
 
     def test_contact_sheet_contains_all_five_native_stills(self) -> None:
         path = SOURCE / "intro_contact_sheet.png"
         sheet = load_image(path).convert("RGB")
-        self.assertEqual(sheet.size, (960, 360))
+        self.assertEqual(sheet.size, CONTACT_SHEET_SIZE)
         for name, position in zip(STILLS, CONTACT_SHEET_POSITIONS):
             left, top = position
-            region = sheet.crop((left, top, left + 320, top + 180))
+            region = sheet.crop(
+                (left, top, left + NATIVE_SIZE[0], top + NATIVE_SIZE[1])
+            )
             native = load_image(SOURCE / f"{name}_native.png").convert("RGB")
             self.assertEqual(
                 region.tobytes(),

@@ -2,13 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps, ImageStat
+from PIL import (
+    Image,
+    ImageChops,
+    ImageDraw,
+    ImageEnhance,
+    ImageFilter,
+    ImageOps,
+    ImageStat,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "intro"
 REFERENCE = SOURCE / "reference"
-NATIVE_SIZE = (320, 180)
+NATIVE_SIZE = (320, 140)
 STILLS = [
     "intro_descent",
     "intro_hearth_memory",
@@ -19,13 +27,13 @@ STILLS = [
 REFERENCE_NAMES = [*STILLS, "tavern_continuity_master"]
 PRODUCTION_QUANTIZATION_COLORS = 52
 MAX_VALIDATED_NATIVE_COLORS = 64
-MIN_DARK_PIXELS = 18_000
-MIN_COOL_PIXELS = 4_000
+MIN_DARK_PIXELS = 14_000
+MIN_COOL_PIXELS = 3_100
 MIN_WARM_PIXELS = {
-    "intro_descent": 20,
-    "intro_hearth_memory": 200,
+    "intro_descent": 16,
+    "intro_hearth_memory": 155,
     "intro_tavern_dark": 0,
-    "intro_rusted_key": 10,
+    "intro_rusted_key": 8,
     "intro_threshold": 0,
 }
 MIN_REFERENCE_DETAIL_RESIDUAL = 1.0
@@ -34,8 +42,8 @@ REFERENCE_MEAN_BIN = 16.0
 REFERENCE_STDDEV_BIN = 3.0
 REFERENCE_EDGE_BIN = 1.5
 REFERENCE_EDGE_LEVEL_BIN = 0.25
-MIN_REFERENCE_TILE_SIGNATURES = 36
-MIN_REFERENCE_EDGE_LEVELS_PER_AXIS = 20
+MIN_REFERENCE_TILE_SIGNATURES = 28
+MIN_REFERENCE_EDGE_LEVELS_PER_AXIS = 16
 
 BRIGHTNESS = {
     "intro_descent": 1.00,
@@ -89,8 +97,8 @@ def edge_change_ratio(image: Image.Image) -> float:
 
 
 def validate_reference(name: str, image: Image.Image) -> None:
-    if image.width < 1280 or image.height < 720:
-        raise ValueError(f"{name}: approved reference is smaller than 1280x720")
+    if image.width < 1280 or image.height < 560:
+        raise ValueError(f"{name}: approved reference is smaller than 1280x560")
     extrema = image.getextrema()
     tonal_range = max(high - low for low, high in extrema)
     normalized = ImageOps.fit(
@@ -151,7 +159,7 @@ def validate_reference(name: str, image: Image.Image) -> None:
 def normalize_reference(image: Image.Image) -> Image.Image:
     intermediate = ImageOps.fit(
         image,
-        (640, 360),
+        (640, 280),
         method=Image.Resampling.LANCZOS,
         centering=(0.5, 0.5),
     )
@@ -217,8 +225,74 @@ def quantize_native(image: Image.Image, name: str) -> Image.Image:
     return quantized
 
 
+def stylize_hearth_memory_native(image: Image.Image) -> Image.Image:
+    stylized = image.convert("RGB").copy()
+    pixels = stylized.load()
+    hearth = (102, 62, 163, 118)
+    chandelier = (103, 19, 149, 48)
+    small_lights = [
+        (61, 43, 76, 65),
+        (161, 48, 177, 72),
+        (205, 46, 225, 73),
+        (250, 55, 276, 91),
+    ]
+
+    def in_box(x: int, y: int, box: tuple[int, int, int, int]) -> bool:
+        left, top, right, bottom = box
+        return left <= x < right and top <= y < bottom
+
+    for y in range(stylized.height):
+        for x in range(stylized.width):
+            red, green, blue = pixels[x, y]
+            luminance = round(0.30 * red + 0.59 * green + 0.11 * blue)
+
+            if 38 <= x < 78 and 3 <= y < 138:
+                if x < 63:
+                    pixels[x, y] = (
+                        max(3, round(luminance * 0.12)),
+                        max(7, round(luminance * 0.22)),
+                        max(9, round(luminance * 0.27)),
+                    )
+                else:
+                    pixels[x, y] = (
+                        max(5, round(luminance * 0.34)),
+                        max(12, round(luminance * 0.58)),
+                        max(16, round(luminance * 0.67)),
+                    )
+                continue
+
+            warm = red >= blue * 1.35 and red >= 70
+            if not warm or in_box(x, y, hearth):
+                continue
+
+            secondary = in_box(x, y, chandelier) or any(
+                in_box(x, y, box) for box in small_lights
+            )
+            if secondary:
+                pixels[x, y] = (
+                    min(128, round(red * 0.62)),
+                    min(82, round(green * 0.62)),
+                    min(45, round(blue * 0.75)),
+                )
+            else:
+                pixels[x, y] = (
+                    min(65, round(red * 0.38)),
+                    min(58, round(green * 0.52)),
+                    min(48, round(blue * 0.72)),
+                )
+
+    ImageDraw.Draw(stylized).line(
+        [(63, 8), (62, 38), (64, 68), (62, 98), (64, 122), (63, 137)],
+        fill=(5, 14, 18),
+        width=2,
+    )
+    return stylized
+
+
 def build_native(name: str) -> Image.Image:
     graded = grade_native(normalize_reference(load_reference(name)), name)
+    if name == "intro_hearth_memory":
+        graded = stylize_hearth_memory_native(graded)
     return quantize_native(graded, name)
 
 
@@ -239,8 +313,8 @@ def build_vignette() -> Image.Image:
 
 
 def build_contact_sheet(stills: dict[str, Image.Image]) -> Image.Image:
-    sheet = Image.new("RGB", (960, 360), (2, 12, 16))
-    positions = [(0, 0), (320, 0), (640, 0), (160, 180), (480, 180)]
+    sheet = Image.new("RGB", (960, 280), (2, 12, 16))
+    positions = [(0, 0), (320, 0), (640, 0), (160, 140), (480, 140)]
     for name, position in zip(STILLS, positions):
         sheet.paste(stills[name].convert("RGB"), position)
     return sheet
@@ -299,7 +373,7 @@ def validate_vignette(image: Image.Image) -> None:
     minimum, maximum = alpha.getextrema()
     if minimum != 0 or maximum <= 80:
         raise ValueError("intro_vignette: invalid alpha range")
-    if alpha.getpixel((160, 90)) >= 40 or alpha.getpixel((0, 0)) <= 80:
+    if alpha.getpixel((160, 70)) >= 40 or alpha.getpixel((0, 0)) <= 80:
         raise ValueError("intro_vignette: invalid center or corner alpha")
 
 
@@ -311,7 +385,7 @@ def prepare_outputs() -> dict[Path, Image.Image]:
     vignette = build_vignette()
     validate_vignette(vignette)
     contact_sheet = build_contact_sheet(stills)
-    if contact_sheet.size != (960, 360):
+    if contact_sheet.size != (960, 280):
         raise ValueError("intro_contact_sheet: invalid size")
     return {
         **{SOURCE / f"{name}_native.png": image for name, image in stills.items()},
