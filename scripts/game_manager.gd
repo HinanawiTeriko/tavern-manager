@@ -333,7 +333,7 @@ func _on_guest_arrived(guest: GuestData) -> void:
 			await get_tree().create_timer(0.5).timeout
 			if tm != null and is_instance_valid(tm):
 				var rects = {
-					"CustomerArea": [432, 70, 410, 328],
+					"CustomerNode": [432, 70, 410, 328],
 				}
 				tm.start_tutorial("serve", rects)
 

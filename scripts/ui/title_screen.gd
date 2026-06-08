@@ -78,11 +78,6 @@ func _ready() -> void:
 	ver.add_theme_color_override("font_color", Color(ThemeColors.TEXT_SUBTITLE, 0.35))
 	ver.add_theme_font_size_override("font_size", 12)
 
-	_try_load_deco("Deco/CandleLeft", "res://assets/textures/ui/deco_candle_left.png")
-	_try_load_deco("Deco/CandleRight", "res://assets/textures/ui/deco_candle_right.png")
-	_try_load_deco("Deco/Mug", "res://assets/textures/ui/deco_mug.png")
-	_try_load_deco("Deco/Emblem", "res://assets/textures/ui/deco_emblem.png")
-
 	# 隐藏 TitleSign，避免占位符生成的 "TAVERN" 文字与中文标题重叠
 	var title_sign = get_node_or_null("UI/TitlePanel/TitleSign")
 	if title_sign != null:

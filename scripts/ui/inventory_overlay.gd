@@ -17,6 +17,17 @@ func _ready() -> void:
 	ThemeColors.style_brush_label($Panel/Title, 18, ThemeColors.AMBER_PRIMARY)
 	ThemeColors.style_brush_label($Panel/MaterialTitle, 16, ThemeColors.AMBER_PRIMARY)
 	ThemeColors.style_brush_label($Panel/StoryTitle, 16, ThemeColors.AMBER_PRIMARY)
+	_add_close_button()
+
+func _add_close_button() -> void:
+	var close_btn = Button.new()
+	close_btn.name = "CloseBtn"
+	close_btn.text = "关闭"
+	close_btn.custom_minimum_size = Vector2(80, 36)
+	close_btn.position = Vector2(540, 8)
+	ThemeColors.style_brush_button(close_btn, 14)
+	close_btn.pressed.connect(close)
+	_panel.add_child(close_btn)
 
 
 func configure(game_manager) -> void:

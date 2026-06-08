@@ -2,22 +2,24 @@ class_name TavernView
 extends Node2D
 
 var _bg_sprite: Sprite2D
-var _customer_sprite: TextureRect
+var _customer_sprite: Sprite2D
 var _customer_name: Label
 var _order_bubble: Label
 var _timer_bar: ProgressBar
-var _gold_label: Label
-var _rep_label: Label
+var _revenue_label: Label
 var _day_label: Label
 var _menu_panel: Panel
 var _end_night_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
-var _dialogue_overlay: ColorRect
+var _dialogue_dim: Sprite2D
+var _desk_overlay: Sprite2D
+var _revenue_panel: Panel
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
 var _settings_panel: SettingsPanel
 var _gm
+var _today_gold: int = 0
 
 const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
 
@@ -29,16 +31,17 @@ const NPC_TEXTURE_KEYS: Dictionary = {
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	_bg_sprite = $Background
-	_customer_sprite = $CustomerArea/CustomerSprite
-	_customer_name = $CustomerArea/CustomerName
-	_order_bubble = $CustomerArea/OrderBubble
-	_timer_bar = $CustomerArea/TimerBar
-	_gold_label = $TopPanel/GoldLabel
-	_rep_label = $TopPanel/ReputationLabel
-	_day_label = $TopPanel/DayLabel
-	_end_night_btn = $TopPanel/EndNightBtn
+	_customer_sprite = $CustomerNode/CustomerSprite
+	_customer_name = $CustomerName
+	_order_bubble = $OrderBubble
+	_timer_bar = $TimerBar
+	_revenue_label = $RightArea/RevenuePanel/RevenueLabel
+	_day_label = $DayLabel
+	_end_night_btn = $RightArea/EndNightBtn
 	_stage_caption = $StageCaption
-	_dialogue_overlay = $DialogueOverlay
+	_dialogue_dim = $DialogueDim
+	_desk_overlay = $DeskOverlay
+	_revenue_panel = $RightArea/RevenuePanel
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
@@ -48,7 +51,7 @@ func _ready() -> void:
 	_settings_panel.closed.connect(_on_settings_closed)
 
 	_menu_panel = $OverlayMenu
-	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
+	$RightArea/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
 	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
 	var tidy_btn = $OverlayMenu/BtnTidy
@@ -75,19 +78,41 @@ func _apply_theme() -> void:
 		grad.gradient = g
 		_bg_sprite.texture = grad
 
+	# Load desk overlay (covers full screen width: 0-1280 x, 410-655 y = 1280x245)
+	var desk_tex = TextureManager.try_load("res://assets/textures/workspace/desk_overlay.png")
+	if desk_tex != null:
+		_desk_overlay.texture = desk_tex
+	else:
+		# Fallback to gradient if image not found
+		var desk_grad = GradientTexture2D.new()
+		desk_grad.width = 1280; desk_grad.height = 245
+		var dg = Gradient.new()
+		dg.colors = [Color(0.12, 0.08, 0.04, 0.0), Color(0.18, 0.12, 0.06, 0.95)]
+		dg.offsets = [0.0, 1.0]
+		desk_grad.gradient = dg
+		_desk_overlay.texture = desk_grad
+
+	# Generate dialogue dim texture
+	var dim_grad = GradientTexture2D.new()
+	dim_grad.width = 1280; dim_grad.height = 720
+	var dim_g = Gradient.new()
+	dim_g.colors = [Color(0, 0, 0, 0.55), Color(0, 0, 0, 0.55)]
+	dim_g.offsets = [0.0, 1.0]
+	dim_grad.gradient = dim_g
+	_dialogue_dim.texture = dim_grad
+
 	_customer_name.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
 	_customer_name.add_theme_font_size_override("font_size", 18)
 	_order_bubble.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_order_bubble.add_theme_font_size_override("font_size", 15)
 
-	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_gold_label.add_theme_font_size_override("font_size", 16)
-	_rep_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_rep_label.add_theme_font_size_override("font_size", 16)
+	_revenue_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_revenue_label.add_theme_font_size_override("font_size", 13)
 	_day_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_day_label.add_theme_font_size_override("font_size", 15)
 
-	ThemeColors.style_button($TopPanel/MenuButton, 14)
+	ThemeColors.style_brush_panel(_revenue_panel)
+	ThemeColors.style_button($RightArea/MenuButton, 14)
 	ThemeColors.style_button(_end_night_btn, 14)
 
 	# 添加教程按钮到菜单
@@ -151,21 +176,30 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
 	if tex != null:
 		_customer_sprite.texture = tex
+		_customer_sprite.scale = Vector2(3.0, 3.0)
+		# 3x scale: 48x64 → 144x192. 左侧居中, 立于桌面后方.
+		# 画面 1280x720, 桌面遮罩 y=410 起. 角色脚部在 y≈360, 上半身露出.
+		_customer_sprite.position = Vector2(60, 168)
 		_customer_sprite.modulate = Color.WHITE
 	else:
-		var grad = GradientTexture2D.new()
-		grad.width = 200; grad.height = 250
-		var g = Gradient.new()
-		g.colors = [Color(0.35, 0.25, 0.4), Color(0.2, 0.15, 0.25)]
-		g.offsets = [0.0, 1.0]
-		grad.gradient = g
-		_customer_sprite.texture = grad
+		_customer_sprite.texture = _make_placeholder_texture(200, 250, Color(0.35, 0.25, 0.4), Color(0.2, 0.15, 0.25))
+		_customer_sprite.scale = Vector2(1.0, 1.0)
+		_customer_sprite.position = Vector2(140, 100)
 		_customer_sprite.modulate = Color.WHITE
 
 	_customer_sprite.visible = true
 	_customer_name.text = customer_name
 	_order_bubble.text = "「来一份" + order + "！」"
 	_order_bubble.visible = true
+
+func _make_placeholder_texture(width: int, height: int, color1: Color, color2: Color) -> GradientTexture2D:
+	var grad = GradientTexture2D.new()
+	grad.width = width; grad.height = height
+	var g = Gradient.new()
+	g.colors = [color1, color2]
+	g.offsets = [0.0, 1.0]
+	grad.gradient = g
+	return grad
 
 func hide_customer() -> void:
 	_customer_sprite.visible = false
@@ -176,9 +210,21 @@ func update_timer(ratio: float) -> void:
 	_timer_bar.value = ratio * 100.0
 
 func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
-	_gold_label.text = "金币：" + str(gold)
-	_rep_label.text = "声望：" + str(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
+	_revenue_label.text = "今日 +%d金 | 累计 %d金 | 声望 %d" % [_today_gold, gold, rep]
+
+## 更新今日收入（供 GameManager 在上菜后调用）
+func add_today_gold(amount: int) -> void:
+	_today_gold += amount
+	# 同步更新收入面板单行文本
+	var total_gold = _gm.gold if _gm != null else 0
+	var rep = _gm.reputation if _gm != null else 0
+	_revenue_label.text = "今日 +%d金 | 累计 %d金 | 声望 %d" % [_today_gold, total_gold, rep]
+
+## 重置每日收入（新的一天开始）
+func reset_today_gold() -> void:
+	_today_gold = 0
+	_revenue_label.text = "今日 +0金 | 累计 %d金 | 声望 %d" % [_gm.gold if _gm != null else 0, _gm.reputation if _gm != null else 0]
 
 ## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
 func customer_say(text: String) -> void:
@@ -207,7 +253,7 @@ func configure_slice_day(day: int) -> void:
 		bar.configure_day(day)
 
 func set_dialogue_mode(active: bool) -> void:
-	_dialogue_overlay.visible = active
+	_dialogue_dim.visible = active
 
 func _exit_tree() -> void:
 	if _gm != null and _gm.inventory_changed.is_connected(_on_inventory_changed):
