@@ -1,157 +1,96 @@
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageEnhance, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "daymap" / "shop_redesign"
+REFERENCE_DIR = SOURCE / "reference"
 RUNTIME = ROOT / "assets" / "textures" / "daymap" / "shop_redesign"
-BASE_SHOP_BACKDROP = ROOT / "assets" / "source" / "daymap" / "ui" / "shop_backdrop_native.png"
+SHOP_MASTER_REFERENCE = REFERENCE_DIR / "shop_master_composition_generated.png"
 
-COLORS = {
-    "transparent": (0, 0, 0, 0),
-    "teal_deep": (10, 24, 28, 255),
-    "teal_mid": (18, 45, 48, 255),
-    "stone": (24, 48, 50, 255),
-    "wood_dark": (53, 30, 20, 255),
-    "wood": (93, 56, 31, 255),
-    "wood_light": (133, 85, 45, 255),
-    "amber": (194, 123, 47, 255),
-    "amber_bright": (235, 171, 80, 255),
-    "parchment": (170, 125, 73, 255),
-    "parchment_light": (203, 154, 88, 255),
-    "ink": (67, 43, 30, 255),
-    "disabled": (72, 61, 53, 215),
+SCENE_NATIVE_SIZE = (320, 180)
+SCENE_RUNTIME_SIZE = (1280, 720)
+
+MASTER_ASSET_SPECS = {
+    "shop_book": ((48, 30, 296, 134), (992, 416)),
+    "bookmark_materials_normal": ((104, 30, 140, 46), (144, 64)),
+    "bookmark_materials_selected": ((104, 30, 140, 46), (144, 64)),
+    "bookmark_recipes_normal": ((142, 30, 178, 46), (144, 64)),
+    "bookmark_recipes_selected": ((142, 30, 178, 46), (144, 64)),
+    "bookmark_abilities_normal": ((180, 30, 216, 46), (144, 64)),
+    "bookmark_abilities_selected": ((180, 30, 216, 46), (144, 64)),
+    "item_row_normal": ((88, 50, 204, 68), (464, 72)),
+    "item_row_selected": ((88, 50, 204, 68), (464, 72)),
+    "item_row_disabled": ((88, 80, 204, 98), (464, 72)),
+    "purchase_seal_normal": ((195, 136, 241, 154), (184, 72)),
+    "purchase_seal_pressed": ((195, 136, 241, 154), (184, 72)),
+    "purchase_seal_disabled": ((195, 136, 241, 154), (184, 72)),
+    "close_tag_normal": ((238, 134, 282, 150), (176, 64)),
+    "close_tag_selected": ((238, 134, 282, 150), (176, 64)),
+    "quantity_abacus": ((124, 130, 172, 148), (192, 72)),
+    "status_owned": ((172, 102, 212, 116), (160, 56)),
+    "status_discount": ((194, 106, 234, 120), (160, 56)),
 }
+
+
+def load_master_reference() -> Image.Image:
+    if not SHOP_MASTER_REFERENCE.exists():
+        raise FileNotFoundError(f"Missing generated shop master composition: {SHOP_MASTER_REFERENCE}")
+    return Image.open(SHOP_MASTER_REFERENCE).convert("RGBA")
+
+
+def normalize_master(reference: Image.Image) -> Image.Image:
+    native = ImageOps.fit(
+        reference,
+        SCENE_NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
+    ).convert("RGBA")
+    native = ImageEnhance.Color(native).enhance(0.82)
+    native = ImageEnhance.Contrast(native).enhance(1.12)
+    alpha = native.getchannel("A")
+    native = native.convert("RGB").quantize(colors=48, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+    native.putalpha(alpha)
+    return native
+
+
+def crop_reference(reference: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
+    return reference.crop(box).convert("RGBA")
+
+
+def adjust_state(name: str, image: Image.Image) -> Image.Image:
+    if name.endswith("_selected"):
+        image = ImageEnhance.Brightness(image).enhance(1.16)
+        image = ImageEnhance.Contrast(image).enhance(1.10)
+        image = ImageEnhance.Color(image).enhance(1.08)
+    elif name.endswith("_pressed"):
+        image = ImageEnhance.Brightness(image).enhance(0.84)
+        image = ImageEnhance.Contrast(image).enhance(1.18)
+    elif name.endswith("_disabled") or name == "item_row_disabled":
+        image = ImageEnhance.Brightness(image).enhance(0.58)
+        image = ImageEnhance.Color(image).enhance(0.46)
+    return image
 
 
 def nearest_export(native: Image.Image, runtime_size: tuple[int, int]) -> Image.Image:
     return native.resize(runtime_size, Image.Resampling.NEAREST)
 
 
-def save_pair(name: str, image: Image.Image, runtime_size: tuple[int, int]) -> None:
+def save_pair(name: str, native: Image.Image, runtime_size: tuple[int, int]) -> None:
     SOURCE.mkdir(parents=True, exist_ok=True)
     RUNTIME.mkdir(parents=True, exist_ok=True)
-    image.save(SOURCE / f"{name}_native.png")
-    nearest_export(image, runtime_size).save(RUNTIME / f"{name}.png")
-
-
-def rect(draw: ImageDraw.ImageDraw, xy, fill: str) -> None:
-    draw.rectangle(xy, fill=COLORS[fill])
-
-
-def make_scene() -> Image.Image:
-    if BASE_SHOP_BACKDROP.exists():
-        return Image.open(BASE_SHOP_BACKDROP).convert("RGBA")
-
-    image = Image.new("RGBA", (320, 180), COLORS["teal_deep"])
-    draw = ImageDraw.Draw(image)
-
-    for y in range(0, 116, 18):
-        rect(draw, (0, y, 319, y + 12), "teal_mid" if y % 36 == 0 else "stone")
-        for x in range((y * 3) % 22, 320, 36):
-            rect(draw, (x, y + 2, x + 18, y + 9), "teal_deep")
-
-    rect(draw, (0, 82, 319, 122), "wood_dark")
-    rect(draw, (0, 90, 319, 96), "wood")
-    rect(draw, (0, 121, 319, 178), "wood_dark")
-    rect(draw, (0, 126, 319, 140), "wood")
-    rect(draw, (0, 159, 319, 166), "wood")
-
-    for x in [18, 38, 244, 268, 292]:
-        rect(draw, (x, 36, x + 26, 41), "wood")
-        rect(draw, (x + 2, 42, x + 22, 57), "wood_dark")
-
-    for x, y in [(42, 65), (246, 62), (272, 68), (24, 70)]:
-        rect(draw, (x, y, x + 8, y + 14), "wood_light")
-        rect(draw, (x + 2, y + 2, x + 6, y + 12), "wood_dark")
-
-    for x, y in [(55, 78), (258, 76), (300, 118)]:
-        rect(draw, (x, y, x + 3, y + 13), "amber_bright")
-        rect(draw, (x - 4, y + 8, x + 7, y + 18), "amber")
-        rect(draw, (x - 8, y + 18, x + 11, y + 20), "wood_light")
-
-    # Sparse counter clutter that stays behind dynamic UI text.
-    for x, y in [(12, 132), (34, 147), (284, 132), (302, 146), (238, 150)]:
-        rect(draw, (x, y, x + 11, y + 5), "wood_light")
-        rect(draw, (x + 2, y + 6, x + 9, y + 12), "wood")
-
-    return image
-
-
-def make_book() -> Image.Image:
-    if BASE_SHOP_BACKDROP.exists():
-        backdrop = Image.open(BASE_SHOP_BACKDROP).convert("RGBA")
-        crop = backdrop.crop((42, 78, 278, 170))
-        crop = crop.resize((232, 90), Image.Resampling.NEAREST)
-        image = Image.new("RGBA", (240, 104), COLORS["transparent"])
-        image.alpha_composite(crop, (4, 6))
-        return image
-
-    image = Image.new("RGBA", (240, 104), COLORS["transparent"])
-    draw = ImageDraw.Draw(image)
-    rect(draw, (6, 8, 236, 98), "ink")
-    rect(draw, (12, 6, 118, 94), "parchment")
-    rect(draw, (122, 6, 230, 94), "parchment")
-    rect(draw, (116, 8, 124, 98), "ink")
-    rect(draw, (16, 10, 114, 21), "parchment_light")
-    rect(draw, (126, 10, 224, 21), "parchment_light")
-    for y in range(30, 88, 12):
-        rect(draw, (20, y, 108, y + 1), "ink")
-        rect(draw, (130, y, 220, y + 1), "ink")
-    for x, y in [(18, 88), (104, 92), (132, 88), (214, 92)]:
-        rect(draw, (x, y, x + 12, y + 2), "ink")
-    return image
-
-
-def make_tab(selected: bool) -> Image.Image:
-    image = Image.new("RGBA", (42, 14), COLORS["transparent"])
-    draw = ImageDraw.Draw(image)
-    base = "amber" if selected else "wood"
-    rect(draw, (2, 2, 39, 12), "ink")
-    rect(draw, (4, 1, 37, 10), base)
-    if selected:
-        rect(draw, (8, 10, 33, 12), "amber_bright")
-    return image
-
-
-def make_card(state: str) -> Image.Image:
-    image = Image.new("RGBA", (58, 28), COLORS["transparent"])
-    draw = ImageDraw.Draw(image)
-    fill = "disabled" if state == "disabled" else "parchment"
-    edge = "amber" if state == "selected" else "ink"
-    rect(draw, (1, 1, 56, 26), edge)
-    rect(draw, (3, 3, 54, 24), fill)
-    rect(draw, (6, 6, 21, 21), "wood_dark")
-    rect(draw, (9, 9, 18, 18), "wood_light")
-    rect(draw, (26, 8, 50, 9), "ink")
-    rect(draw, (26, 16, 43, 17), "ink")
-    if state == "selected":
-        rect(draw, (4, 24, 53, 25), "amber_bright")
-    return image
-
-
-def make_button(disabled: bool) -> Image.Image:
-    image = Image.new("RGBA", (44, 14), COLORS["transparent"])
-    draw = ImageDraw.Draw(image)
-    fill = "disabled" if disabled else "amber"
-    rect(draw, (1, 2, 42, 12), "ink")
-    rect(draw, (3, 1, 40, 10), fill)
-    if not disabled:
-        rect(draw, (9, 10, 35, 11), "amber_bright")
-    return image
+    native.save(SOURCE / f"{name}_native.png")
+    nearest_export(native, runtime_size).save(RUNTIME / f"{name}.png")
 
 
 def main() -> None:
-    save_pair("shop_scene", make_scene(), (1280, 720))
-    save_pair("shop_book", make_book(), (960, 416))
-    save_pair("shop_tab_normal", make_tab(False), (168, 56))
-    save_pair("shop_tab_selected", make_tab(True), (168, 56))
-    save_pair("shop_item_card_normal", make_card("normal"), (232, 112))
-    save_pair("shop_item_card_selected", make_card("selected"), (232, 112))
-    save_pair("shop_item_card_disabled", make_card("disabled"), (232, 112))
-    save_pair("shop_purchase_button_normal", make_button(False), (176, 56))
-    save_pair("shop_purchase_button_disabled", make_button(True), (176, 56))
+    scene_native = normalize_master(load_master_reference())
+    save_pair("shop_scene", scene_native, SCENE_RUNTIME_SIZE)
+    for name, (box, runtime_size) in MASTER_ASSET_SPECS.items():
+        native = crop_reference(scene_native, box)
+        native = adjust_state(name, native)
+        save_pair(name, native, runtime_size)
 
 
 if __name__ == "__main__":
