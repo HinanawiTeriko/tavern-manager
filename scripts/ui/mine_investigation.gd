@@ -183,7 +183,7 @@ func _take_contract() -> void:
 		return
 	_contract_taken = true
 	var gm = get_node("/root/GameManager")
-	gm.grant_mine_document("bloodied_contract")      # 授予 + 放入故事物品背包
+	gm.grant_investigation_document("bloodied_contract")      # 授予 + 放入故事物品背包
 	_obs_label.text = "一张染血的委托书。已放入背包——回头可以翻看。"
 
 
