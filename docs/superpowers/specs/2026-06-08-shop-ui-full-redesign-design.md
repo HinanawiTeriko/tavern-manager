@@ -180,3 +180,14 @@ Mira 折扣不需要完整米拉人物。折扣状态通过柜台上的小折扣
 3. 没有完整商人入镜，但有手、袖口、背包、影子或其他经营者存在感。
 4. 所有核心视觉资产来自 native-pixel 管线，并有测试证明 exact nearest-neighbor 导出。
 5. `ShopOverlay` 的业务行为与现有商店一致，材料、配方、技法、Mira 折扣和关闭返回都不回退。
+
+## 2026-06-08 Master Composition Revision
+
+The asset route is tightened to avoid a visible collage effect. The shop redesign now starts from one final-screen master composition retained as `assets/source/daymap/shop_redesign/reference/shop_master_composition_generated.png`.
+
+- The master composition is the only production visual source consumed by `scripts/tools/export_daymap_shop_redesign_assets.py`.
+- The old full-scene reference can remain as style history, but it is not the exporter input.
+- A separate UI pieces sheet is not used for production assets, because independently generated pieces risk mismatched lighting, silhouette, and material language.
+- `shop_scene_native.png` is the baked full-screen composition normalized to `320x180`.
+- `shop_book_native.png`, bookmarks, item rows, seal, close tag, abacus, and status marks are fixed-region crops or state variants derived from the same master composition.
+- Runtime interaction still uses transparent Godot `Control`/`Button` zones, but visual sprites stay aligned to the master composition instead of being freely re-arranged.

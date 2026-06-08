@@ -14,14 +14,24 @@
 
 The current worktree contains unrelated DayMap and asset changes. Do not use `git add .` or `git add -A`. Before every commit step, run `git status --short` and stage only files listed in that task. If unrelated files are dirty, leave them alone.
 
+## 2026-06-08 Execution Revision: Master Composition Only
+
+The user reviewed the crop/pieces-sheet approach and rejected the remaining collage risk. Execute this plan with the following override:
+
+- Generate one final-screen master composition first: `assets/source/daymap/shop_redesign/reference/shop_master_composition_generated.png`.
+- Treat that master composition as the only production visual source for the exporter.
+- Do not use or require `SHOP_PIECES_REFERENCE`, `shop_ui_pieces_reference_generated.png`, or any separately generated UI pieces sheet.
+- Export the baked full-screen `shop_scene` and all aligned overlay/state assets from fixed regions of the master composition.
+- Rectangular crops are acceptable when they are placed back at the exact master-aligned runtime location; transparency is only needed for overlays that would otherwise visibly cover neighboring scene material.
+
 ## File Structure
 
 | Path | Action | Responsibility |
 | --- | --- | --- |
-| `assets/source/daymap/shop_redesign/reference/shop_stall_reference_generated.png` | Create | Project-bound AI reference art for the whole merchant stall and ledger composition. |
+| `assets/source/daymap/shop_redesign/reference/shop_master_composition_generated.png` | Create | Project-bound AI master composition for the final shop screen: baked stall, ledger, controls, and reserved text zones. |
 | `assets/source/daymap/shop_redesign/*.png` | Replace/Create | Native-pixel sources derived from the reference: scene, ledger, bookmarks, item rows, seal, tags, quantity controls, status marks. |
 | `assets/textures/daymap/shop_redesign/*.png` | Replace/Create | Runtime textures exported exactly from native sources with nearest-neighbor scaling. |
-| `scripts/tools/export_daymap_shop_redesign_assets.py` | Replace | Deterministic reference-driven exporter; no `ImageDraw` for core UI. |
+| `scripts/tools/export_daymap_shop_redesign_assets.py` | Replace | Deterministic master-composition exporter; no separate UI pieces sheet and no `ImageDraw` for core UI. |
 | `scripts/test/test_daymap_ui_asset_pipeline.py` | Modify | Add hard tests for reference use, exact exports, and non-placeholder visual density. |
 | `scripts/test/test_shop_overlay.gd` | Modify | Change UI contract from tabs/grid/buttons to ledger/bookmark/scene-object zones. |
 | `scripts/ui/shop_overlay.gd` | Replace visual layer | Preserve purchase/data methods, rebuild view hierarchy around scene-object nodes and transparent click zones. |
