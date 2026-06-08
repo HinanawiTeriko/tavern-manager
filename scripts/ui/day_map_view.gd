@@ -93,11 +93,49 @@ func _ready() -> void:
 
 
 func _setup_background() -> void:
-	var bg: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
-	if bg == null:
-		return
-	bg.position = Vector2(640, 360)
-	bg.texture = DAYMAP_BACKGROUND
+	var gm = get_node("/root/GameManager")
+	var map_world := $MapWorld
+	var regions: Array = gm.day_map.get_regions()
+	# 复用 .tscn 里的 Background 节点作第一块，其余程序生成
+	var existing: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
+	for i in regions.size():
+		var r: Dictionary = regions[i]
+		var rid := String(r.get("id", ""))
+		var o = r.get("origin", [0, 0])
+		var s = r.get("size", [1280, 720])
+		var center := Vector2(float(o[0]) + float(s[0]) * 0.5, float(o[1]) + float(s[1]) * 0.5)
+		var tile: Sprite2D
+		if i == 0 and existing != null:
+			tile = existing
+		else:
+			tile = Sprite2D.new()
+			tile.z_index = -10
+			map_world.add_child(tile)
+		tile.name = "RegionTile_" + rid
+		tile.centered = true
+		tile.position = center
+		tile.texture = _region_texture(rid, Vector2(float(s[0]), float(s[1])))
+	# 注入相机边界（区域并集）→ 动态最小缩放 + 钳制
+	var b: Dictionary = gm.day_map.get_map_bounds()
+	_camera.set_bounds(b["min"], b["max"])
+
+
+## 区域背景纹理：优先 runtime PNG；缺席（Codex 美术未到）回退到按 id tint 的纯色占位。
+func _region_texture(rid: String, size: Vector2) -> Texture2D:
+	var path := "res://assets/textures/daymap/regions/%s.png" % rid
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex != null:
+			return tex
+	var tints := {
+		"market": Color(0.32, 0.27, 0.20),
+		"wilds": Color(0.20, 0.30, 0.22),
+		"north_road": Color(0.26, 0.24, 0.28),
+		"fog": Color(0.16, 0.17, 0.19),
+	}
+	var img := Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
+	img.fill(tints.get(rid, Color(0.2, 0.2, 0.2)))
+	return ImageTexture.create_from_image(img)
 
 
 func _setup_detail_panel() -> void:
@@ -184,6 +222,9 @@ func _refresh_map() -> void:
 	var new_locs: Array = gm.day_map.get_new_locations()
 	if not new_locs.is_empty():
 		_play_reveal_sequence(new_locs)
+		return
+	# 已亮相地点的贴文更新 → 重新拉镜头高亮 + 刷新描述（地点持久、内容演变）
+	_play_update_sequence(gm.day_map.get_updated_locations())
 
 
 func _create_marker(loc: Dictionary, hidden: bool) -> MapPointMarker:
@@ -220,7 +261,7 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	_revealing = true
 	var gm = get_node("/root/GameManager")
 	if new_locs.size() > 3:
-		await _camera.fly_to(Vector2(1000, 700), _camera.MIN_ZOOM).finished
+		await _camera.fly_to(Vector2(1280, 720), _camera.min_zoom).finished
 		if not is_instance_valid(self):
 			return  # 亮相中切换了场景，协程被遗弃
 		for loc in new_locs:
@@ -243,6 +284,32 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 	_revealing = false
 	# 亮相期间若有访问/解锁被 _revealing 拦下，这里补刷一次
 	_refresh_map()
+
+
+## 已亮相地点的贴文更新：相机飞过去、marker 脉冲一次、刷新描述，并标记已宣告。
+func _play_update_sequence(updated: Array) -> void:
+	if updated.is_empty():
+		return
+	_revealing = true
+	var gm = get_node("/root/GameManager")
+	for loc in updated:
+		var id := String(loc.get("id", ""))
+		var pos_arr: Array = loc.get("pos", [1280, 720])
+		var wp := Vector2(float(pos_arr[0]), float(pos_arr[1]))
+		await _camera.fly_to(wp, 1.0).finished
+		if not is_instance_valid(self):
+			return
+		var marker = _markers.get(id, null)
+		if marker != null and is_instance_valid(marker):
+			_fade_in_marker(marker)
+		gm.day_map.mark_posting_announced(id)
+		await get_tree().create_timer(0.4).timeout
+		if not is_instance_valid(self):
+			return
+	_revealing = false
+	# 若当前选中的是被更新的地点，刷新其详情描述
+	if _selected_id != "":
+		_show_detail(_selected_id)
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:
@@ -349,13 +416,19 @@ func _enter_mine_investigation() -> void:
 		return
 	_mine_scene = MINE_SCENE.instantiate()
 	add_child(_mine_scene)
+	# 让出地图相机：矿道场景按 world==screen 的恒等坐标编写（物品在世界坐标拾取/命中），
+	# 而 DayMapCamera 此刻是缩放/平移过的当前相机。禁用它使视口回到恒等变换，否则
+	# 物品渲染错位、event.global_position 命中测试全落空（表现为"什么都点不到"）。
+	_camera.set_active(false)
+	_camera.enabled = false
 	# DocumentOverlay 提到高层 CanvasLayer，确保挖出委托书时压在矿道场景(含其 UI CanvasLayer)之上
 	_overlay_layer = CanvasLayer.new()
 	_overlay_layer.layer = 10
 	add_child(_overlay_layer)
 	_document_overlay.reparent(_overlay_layer, false)
-	# 隐藏 DayMap 主体，避免输入穿透到下面的按钮
-	_hidden_for_mine = [$MapWorld, $UILayer/TopBar, $UILayer/ResultPanel, _detail_panel]
+	# 整层隐藏 DayMap UI（含运行时建的采集/商店标签与商店面板），避免与矿道 UI 并存、截获输入。
+	# DocumentOverlay 已先移出 $UILayer 到 _overlay_layer，故不受此隐藏影响。
+	_hidden_for_mine = [$MapWorld, $UILayer]
 	for n in _hidden_for_mine:
 		if n != null:
 			n.visible = false
@@ -367,13 +440,15 @@ func _on_mine_finished() -> void:
 		_mine_scene.queue_free()
 		_mine_scene = null
 	if _overlay_layer != null:
-		_document_overlay.reparent(self, false)
+		# 归位到 $UILayer（其本就声明于此 CanvasLayer，屏幕空间），避免相机恢复后在世界空间错位。
+		_document_overlay.reparent($UILayer, false)
 		_overlay_layer.queue_free()
 		_overlay_layer = null
 	for n in _hidden_for_mine:
 		if n != null and is_instance_valid(n):
 			n.visible = true
 	_hidden_for_mine.clear()
+	_camera.enabled = true
 	_camera.set_active(true)
 	_refresh_map()
 

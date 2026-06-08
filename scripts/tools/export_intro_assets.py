@@ -8,8 +8,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "intro"
 RUNTIME = ROOT / "assets" / "textures" / "intro"
-NATIVE_SIZE = (320, 180)
-RUNTIME_SIZE = (1280, 720)
+NATIVE_SIZE = (320, 140)
+RUNTIME_SIZE = (1280, 560)
 VIGNETTE_MIN_VISIBLE_ALPHA = 96
 VIGNETTE_INTERMEDIATE_ALPHA_RANGE = range(16, 240)
 NAMES = [

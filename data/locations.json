@@ -1,24 +1,47 @@
 {
   "maxStamina": 5,
   "maxStaminaByDay": { "2": 4 },
+  "regions": [
+    { "id": "market",     "origin": [0, 0],      "size": [1280, 720] },
+    { "id": "wilds",      "origin": [1280, 0],   "size": [1280, 720] },
+    { "id": "north_road", "origin": [0, 720],    "size": [1280, 720] },
+    { "id": "fog",        "origin": [1280, 720], "size": [1280, 720] }
+  ],
   "locations": [
     {
       "id": "mercenary_board",
       "name": "佣兵告示板",
-      "pos": [505, 360],
+      "region": "market",
+      "pos": [560, 230],
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "description": "血斧小队正在招募北矿道护送任务。",
-      "dayMin": 2,
-      "requiresFlag": "ryan_warhammer_lead",
-      "repeatable": false,
-      "unlocksFlag": "mine_clue",
-      "result": "你记下了血斧小队的委托，废弃矿道出现了可疑线索。"
+      "dayMin": 1,
+      "repeatable": true,
+      "description": "市集角落的佣兵告示板，时常贴着各种委托。",
+      "result": "告示板上暂时没有适合你的新委托。",
+      "postings": [
+        {
+          "id": "ryan_warhammer",
+          "dayMin": 2,
+          "requiresFlag": "ryan_warhammer_lead",
+          "description": "血斧小队正在招募北矿道护送任务。",
+          "unlocksFlag": "mine_clue",
+          "result": "你记下了血斧小队的委托，废弃矿道出现了可疑线索。"
+        },
+        {
+          "id": "toby_commission",
+          "dayMin": 6,
+          "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
+          "documents": ["toby_contract"],
+          "result": "你记下了托比接的那份委托——报酬高得不正常。"
+        }
+      ]
     },
     {
       "id": "abandoned_mine",
       "name": "废弃矿道",
+      "region": "north_road",
       "pos": [930, 225],
       "cost": 1,
       "materials": [],
@@ -32,6 +55,7 @@
     {
       "id": "guild_counter",
       "name": "公会柜台",
+      "region": "north_road",
       "pos": [785, 335],
       "cost": 2,
       "materials": [],
@@ -46,6 +70,7 @@
     {
       "id": "mushroom_forest",
       "name": "菌菇林地",
+      "region": "wilds",
       "pos": [555, 555],
       "cost": 1,
       "materials": ["herb"],
@@ -58,6 +83,7 @@
     {
       "id": "dark_river",
       "name": "暗河沿岸",
+      "region": "wilds",
       "pos": [660, 575],
       "cost": 2,
       "materials": ["meat_raw"],
@@ -69,6 +95,7 @@
     {
       "id": "grape_trellis",
       "name": "葡萄藤架",
+      "region": "wilds",
       "pos": [955, 470],
       "cost": 1,
       "materials": ["grape"],
@@ -80,6 +107,7 @@
     {
       "id": "mill_farm",
       "name": "农庄磨坊",
+      "region": "wilds",
       "pos": [875, 520],
       "cost": 1,
       "materials": ["ale"],
@@ -87,6 +115,48 @@
       "description": "地牢入口附近的农庄，可以交换麦芽。",
       "repeatable": true,
       "result": "你从农庄带回了麦芽。"
+    },
+    {
+      "id": "toby_lodging",
+      "name": "托比的落脚处",
+      "region": "market",
+      "pos": [250, 620],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "description": "酒馆后巷，托比缩在那儿擦拭一把不合手的短剑。",
+      "dayMin": 6,
+      "repeatable": false,
+      "result": "托比说，他要靠这趟委托证明自己一个人也行。"
+    },
+    {
+      "id": "mira_stall",
+      "name": "米拉的货摊",
+      "region": "market",
+      "pos": [980, 300],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "affection": { "npc": "mira", "amount": 3 },
+      "description": "米拉支起货摊歇脚，似乎并不急着赶路。",
+      "dayMin": 6,
+      "repeatable": true,
+      "result": "你陪米拉聊了会儿，她神色松了些。"
+    },
+    {
+      "id": "fixer_den",
+      "name": "掮客的暗格",
+      "region": "market",
+      "pos": [1000, 600],
+      "cost": 2,
+      "materials": [],
+      "rewards": [],
+      "goldCost": 40,
+      "securesToby": true,
+      "description": "一个能把危险委托悄悄换掉的掮客，开价不低。",
+      "dayMin": 6,
+      "repeatable": false,
+      "result": "掮客点了头：托比那份委托，会被一份安全的活计顶替。"
     }
   ]
 }

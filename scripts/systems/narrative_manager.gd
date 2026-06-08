@@ -4,6 +4,9 @@ extends RefCounted
 ## L3 信任阀门：上菜手法定夺替代委托所需的最低 aff_ryan。范围约 [-1, 7]（Day1风格+Day1post+3+Day2风格）。改此文件调整。
 const TRUST_THRESHOLD := 5
 
+## Mira 线信任阀门：告知真相后 aff_mira 达此值她才肯担责。Mira 专属，不复用 Ryan 的 TRUST_THRESHOLD。
+const MIRA_TRUST_THRESHOLD := 10
+
 var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
 var key_items: Array = []
@@ -45,7 +48,12 @@ func resolve_action(action: Dictionary) -> Dictionary:
 		"add_story_item_to_product":
 			return _resolve_story_item_product_action(action)
 		"give_story_item":
-			return _resolve_ryan_story_item_action(action)
+			match String(action.get("npc_id", "")):
+				"ryan":
+					return _resolve_ryan_story_item_action(action)
+				"mira":
+					return _resolve_mira_story_item_action(action)
+			return _action_result(false, "unsupported_npc")
 		"give_product":
 			return _resolve_ryan_product_action(action)
 	return _action_result(false, "unsupported_action")
@@ -55,6 +63,34 @@ func resolve_action(action: Dictionary) -> Dictionary:
 ## 由 GameManager 在 Day 3 揭晓前调用；对话只读 ryan_ending，不再自行判定路线。
 func finalize_ryan_ending() -> void:
 	set_ending("ryan", get_ryan_route())
+
+
+## 托比存活充要：Mira 担责（告知真相且信任达标）或玩家在掮客处兜底。
+func toby_survived() -> bool:
+	var told := bool(dialogue_vars.get("told_mira_truth", false))
+	var trust_ok := get_affection("mira") >= MIRA_TRUST_THRESHOLD
+	return (told and trust_ok) or bool(dialogue_vars.get("toby_secured", false))
+
+
+## Mira 结局路线（单一真相源；对话只读 mira_ending，不自行判定）。
+func get_mira_route() -> String:
+	var told := bool(dialogue_vars.get("told_mira_truth", false))
+	var trust_ok := get_affection("mira") >= MIRA_TRUST_THRESHOLD
+	if told and trust_ok:
+		return "she_finally_stopped"
+	if told:
+		return "never_turned_back"
+	if bool(dialogue_vars.get("toby_secured", false)):
+		return "closed_the_door"
+	return "another_light_out"
+
+
+## Day12 当晚上菜结算后由 GameManager 调用：定格 Mira 结局与托比 fate。
+func finalize_mira_ending() -> void:
+	set_ending("mira", get_mira_route())
+	var survived := toby_survived()
+	set_var("toby_survived", survived)
+	set_ending("toby", "saved" if survived else "lost")
 
 
 func get_ryan_route() -> String:
@@ -74,6 +110,14 @@ func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
 	var result := _action_result(true, "sleep_powder_added")
 	result["product_tags"] = ["sleep_powder"]
 	return result
+
+
+func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
+	match String(action.get("item_key", "")):
+		"toby_contract":
+			set_var("told_mira_truth", true)
+			return _action_result(true, "mira_informed")
+	return _action_result(false, "unsupported_story_item")
 
 
 func _resolve_ryan_story_item_action(action: Dictionary) -> Dictionary:
@@ -148,6 +192,11 @@ func load_npc_data() -> void:
 	dialogue_vars["ryan_ending"] = ""
 	dialogue_vars["aff_ryan"] = 0
 	dialogue_vars["aff_mira"] = 5
+	dialogue_vars["told_mira_truth"] = false
+	dialogue_vars["toby_secured"] = false
+	dialogue_vars["toby_survived"] = false
+	dialogue_vars["mira_ending"] = ""
+	dialogue_vars["aff_toby"] = 0
 
 	var file = FileAccess.open("res://data/npcs.json", FileAccess.READ)
 	if file == null:

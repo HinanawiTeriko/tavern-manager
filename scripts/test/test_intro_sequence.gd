@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_schema_contract()
 	_test_visual_contract()
 	_test_scene_tree()
+	_test_letterbox_curtain()
 	_test_missing_image_degrades()
 	_test_skip_input_reachable()
 	_test_handoff_flag()
@@ -50,18 +51,26 @@ func _test_schema_contract() -> void:
 	for index in beats.size():
 		var beat: Dictionary = beats[index]
 		_ok(beat.has("image") and typeof(beat["image"]) == TYPE_STRING, "beat %d has string image field" % index)
-		_ok(beat.has("kenburns"), "beat %d has kenburns" % index)
-		var kb: Dictionary = beat.get("kenburns", {})
-		_ok(kb.has("from") and kb.has("to"), "beat %d kenburns has from/to" % index)
-		var from_off := _kb_offset(kb, "from")
-		var to_off := _kb_offset(kb, "to")
-		var zoom_delta := absf(_kb_zoom(kb, "to") - _kb_zoom(kb, "from"))
-		_ok(from_off.distance_to(to_off) > 0.0 or zoom_delta > 0.0, "beat %d has Ken Burns motion" % index)
+		_ok(beat.has("text") and typeof(beat["text"]) == TYPE_STRING, "beat %d has string text" % index)
+		_ok(beat.has("fade_in") and beat.has("hold"), "beat %d carries fade_in/hold" % index)
+		_ok(not beat.has("kenburns"), "beat %d is static (no kenburns field)" % index)
 
 
 func _test_visual_contract() -> void:
 	_ok(IntroSequence.INTRO_FONT != null, "IntroSequence exposes a pixel font")
 	_ok(ResourceLoader.exists("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"), "pixel font resource exists")
+
+	var intro := INTRO_SCENE.instantiate()
+	add_child(intro)
+	intro._apply_still("res://assets/textures/intro/intro_descent.png")
+	var still: Sprite2D = intro.get_node("Still")
+	_ok(still.scale == Vector2.ONE, "Still has no overscan/zoom scaling")
+	_ok(still.position == Vector2(640, 360), "Still stays centered (no Ken Burns pan)")
+
+	var vignette: TextureRect = intro.get_node("Vignette")
+	_ok(vignette.position == Vector2(0, 80), "Vignette starts at the visible wide window top (got pos %s)" % [vignette.position])
+	_ok(vignette.size == Vector2(1280, 560), "Vignette covers only the visible wide window (got pos %s size %s anchors [%s,%s,%s,%s] offsets [%s,%s,%s,%s])" % [vignette.position, vignette.size, vignette.anchor_left, vignette.anchor_top, vignette.anchor_right, vignette.anchor_bottom, vignette.offset_left, vignette.offset_top, vignette.offset_right, vignette.offset_bottom])
+	intro.queue_free()
 
 
 func _test_handoff_flag() -> void:
@@ -82,6 +91,16 @@ func _test_scene_tree() -> void:
 	_ok(intro.get_node_or_null("LetterTop") != null, "scene has LetterTop")
 	_ok(intro.get_node_or_null("LetterBottom") != null, "scene has LetterBottom")
 	_ok(intro.get_node_or_null("BackgroundBack") == null, "old parallax layers removed")
+	intro.queue_free()
+
+
+func _test_letterbox_curtain() -> void:
+	var intro := INTRO_SCENE.instantiate()
+	add_child(intro)
+	var top: ColorRect = intro.get_node("LetterTop")
+	var bottom: ColorRect = intro.get_node("LetterBottom")
+	_ok(top.position.y <= 0.0 and top.size.y >= 360.0, "curtain starts covering top half (got pos %s size %s)" % [top.position.y, top.size.y])
+	_ok(is_equal_approx(bottom.position.y, 360.0) and bottom.size.y >= 360.0, "curtain starts covering bottom half (got pos %s size %s)" % [bottom.position.y, bottom.size.y])
 	intro.queue_free()
 
 
@@ -109,14 +128,3 @@ func _controls_blocking_mouse(node: Node) -> Array:
 	for child in node.get_children():
 		blocking.append_array(_controls_blocking_mouse(child))
 	return blocking
-
-
-func _kb_offset(kb: Dictionary, key: String) -> Vector2:
-	var seg: Dictionary = kb.get(key, {})
-	var off: Array = seg.get("offset", [0, 0])
-	return Vector2(float(off[0]), float(off[1]))
-
-
-func _kb_zoom(kb: Dictionary, key: String) -> float:
-	var seg: Dictionary = kb.get(key, {})
-	return float(seg.get("zoom", 1.0))
