@@ -19,10 +19,11 @@ func _ready() -> void:
 	_test_default_selection(overlay)
 	_test_mira_discount_state(overlay)
 	_test_material_quantity_total(overlay)
-	_test_purchase_updates_inventory_and_gold(overlay)
-	_test_owned_recipe_state(overlay)
-	_test_close_signal(overlay)
+	await _test_purchase_updates_inventory_and_gold(overlay)
+	await _test_owned_recipe_state(overlay)
+	await _test_close_signal(overlay)
 	overlay.queue_free()
+	await get_tree().process_frame
 	_finish()
 
 
@@ -111,9 +112,9 @@ func _test_owned_recipe_state(overlay) -> void:
 
 
 func _test_close_signal(overlay) -> void:
-	var closed := false
-	overlay.closed.connect(func(): closed = true)
+	var state := {"closed": false}
+	overlay.closed.connect(func(): state["closed"] = true)
 	overlay.close()
 	await get_tree().process_frame
-	_ok(closed, "close emits closed signal")
+	_ok(bool(state["closed"]), "close emits closed signal")
 	_ok(not overlay.visible, "overlay hides after close")
