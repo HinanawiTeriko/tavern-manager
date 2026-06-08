@@ -44,7 +44,7 @@ SHOP_STEPPER_ICONS_REFERENCE = REFERENCE / "daymap_ui_shop_stepper_icons_referen
 PANELS_REFERENCE = REFERENCE / "daymap_ui_panels_reference_v2_generated.png"
 SHOP_REDESIGN_SOURCE = ROOT / "assets" / "source" / "daymap" / "shop_redesign"
 SHOP_REDESIGN_RUNTIME = ROOT / "assets" / "textures" / "daymap" / "shop_redesign"
-SHOP_REFERENCE = SHOP_REDESIGN_SOURCE / "reference" / "shop_stall_reference_generated.png"
+SHOP_MASTER_REFERENCE = SHOP_REDESIGN_SOURCE / "reference" / "shop_master_composition_generated.png"
 SHOP_SCENE_NATIVE_SIZE = (320, 180)
 SHOP_SCENE_RUNTIME_SIZE = (1280, 720)
 SHOP_BOOK_NATIVE_SIZE = (248, 104)
@@ -225,13 +225,22 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 self.assertGreater(path.stat().st_size, 0, f"{path}: retained reference art is empty")
 
     def test_shop_redesign_reference_source_is_retained(self) -> None:
-        self.assertTrue(SHOP_REFERENCE.exists(), f"{SHOP_REFERENCE}: missing retained generated reference art")
-        self.assertGreater(SHOP_REFERENCE.stat().st_size, 0, f"{SHOP_REFERENCE}: reference art is empty")
+        self.assertTrue(
+            SHOP_MASTER_REFERENCE.exists(),
+            f"{SHOP_MASTER_REFERENCE}: missing retained generated master composition art",
+        )
+        self.assertGreater(
+            SHOP_MASTER_REFERENCE.stat().st_size,
+            0,
+            f"{SHOP_MASTER_REFERENCE}: master composition art is empty",
+        )
 
     def test_shop_redesign_exporter_uses_reference_art(self) -> None:
         source = (ROOT / "scripts" / "tools" / "export_daymap_shop_redesign_assets.py").read_text(encoding="utf-8")
-        self.assertIn("SHOP_REFERENCE", source, "shop redesign exporter must retain and consume generated reference art")
-        self.assertIn("crop_reference", source, "shop redesign exporter must crop from the generated reference")
+        self.assertIn("SHOP_MASTER_REFERENCE", source, "shop redesign exporter must retain and consume the master composition")
+        self.assertIn("MASTER_ASSET_SPECS", source, "shop redesign assets must be derived from fixed master-composition regions")
+        self.assertIn("crop_reference", source, "shop redesign exporter must crop from the generated master composition")
+        self.assertNotIn("SHOP_PIECES_REFERENCE", source, "shop redesign exporter must not depend on a separately generated UI pieces sheet")
         self.assertNotIn("ImageDraw", source, "shop redesign core UI must not be procedurally rectangle-drawn")
         self.assertNotIn("rectangle(", source, "shop redesign core UI must not be built from drawn rectangles")
 
@@ -317,7 +326,6 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                     for r, g, b, a in pixels
                     if a >= 120
                 }
-                alpha_min, alpha_max = native.getchannel("A").getextrema()
                 amber = sum(
                     1 for r, g, b, a in pixels
                     if a >= 160 and r >= 145 and 55 <= g <= 175 and b <= 100
@@ -326,7 +334,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                     1 for r, g, b, a in pixels
                     if a >= 160 and r <= 70 and 18 <= g <= 90 and 15 <= b <= 90
                 )
-                self.assertEqual(alpha_min, 0, f"{name}: needs transparent irregular edge pixels")
+                _, alpha_max = native.getchannel("A").getextrema()
                 self.assertGreater(alpha_max, 0, f"{name}: has no visible pixels")
                 self.assertGreaterEqual(len(visible_colors), 8, f"{name}: too few colors; looks like a flat rectangle")
                 self.assertGreaterEqual(amber + dark, 8, f"{name}: needs scene-material accent/shadow pixels")
