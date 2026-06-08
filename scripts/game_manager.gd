@@ -236,6 +236,12 @@ func visit_day_location(location_id: String) -> Dictionary:
 		else:
 			result["blocked_reason"] = "not_enough_gold"
 			narrative.set_var("toby_secured", false)
+	# 聚合 rewards 数组为 {item_key: count} 字典，供 UI Toast 展示
+	var reward_counts: Dictionary = {}
+	for key in result.get("rewards", []):
+		var k := String(key)
+		reward_counts[k] = int(reward_counts.get(k, 0)) + 1
+	result["reward_counts"] = reward_counts
 	return result
 
 

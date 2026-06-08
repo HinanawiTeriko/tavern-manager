@@ -27,6 +27,7 @@ var _result_label: Label
 var _continue_btn: Button
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
+var _gathering_toast: GatheringToast
 
 var _stamina_left: int = 0
 var _max_stamina: int = 5
@@ -86,6 +87,18 @@ func _ready() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
+
+	# 采集提示 Toast
+	_gathering_toast = GatheringToast.new()
+	_gathering_toast.visible = false
+	_gathering_toast.anchor_left = 0.5
+	_gathering_toast.anchor_right = 0.5
+	_gathering_toast.anchor_top = 0.0
+	_gathering_toast.offset_left = -210.0
+	_gathering_toast.offset_right = 210.0
+	_gathering_toast.offset_top = 10.0
+	_gathering_toast.offset_bottom = 54.0
+	$UILayer.add_child(_gathering_toast)
 
 	_build_tab_buttons()
 	_build_shop_ui()
@@ -401,9 +414,12 @@ func _visit_location(location_id: String) -> void:
 		_update_stamina_display()
 		_enter_mine_investigation()
 		return
-	_result_label.text = String(result.get("message", "访问完成。"))
-	_result_panel.visible = true
-	_continue_btn.text = "知道了"
+	var message := String(result.get("message", "访问完成。"))
+	var reward_counts: Dictionary = result.get("reward_counts", {})
+	if bool(result.get("success", false)):
+		_gathering_toast.show_rewards(reward_counts, message)
+	else:
+		_gathering_toast.show_rewards({}, message)
 	_stamina_left = gm.day_map.stamina
 	_update_stamina_display()
 	_detail_panel.visible = false
