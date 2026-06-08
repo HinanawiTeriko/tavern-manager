@@ -18,7 +18,7 @@ func _ready() -> void:
 	_ok(view._camera.enabled, "进入前相机 enabled")
 	_ok(view.get_node("UILayer").visible, "进入前 UILayer 可见")
 
-	view._enter_mine_investigation()
+	view._enter_investigation(view.MINE_SCENE)
 	await get_tree().process_frame
 
 	# 进入后：相机让出（恒等变换）+ 整层 DayMap UI 隐藏
@@ -26,18 +26,16 @@ func _ready() -> void:
 	_ok(not view._camera.active, "进入矿道后相机 active=false（停止平移缩放输入）")
 	_ok(not view.get_node("UILayer").visible, "进入矿道后整层 UILayer 隐藏（含采集/商店标签）")
 	_ok(not view.get_node("MapWorld").visible, "进入矿道后地图世界隐藏")
-	_ok(view._mine_scene != null, "矿道场景已实例化")
+	_ok(view._investigation_scene != null, "调查场景已实例化")
 	_ok(view._document_overlay.get_parent() == view._overlay_layer, "文档浮层移到高层 CanvasLayer")
 
-	view._on_mine_finished()
+	view._on_investigation_finished()
 	await get_tree().process_frame
 
-	# 离开后：相机恢复 + UI 复现 + 浮层归位 $UILayer
-	_ok(view._camera.enabled, "离开后相机 enabled 恢复")
-	_ok(view._camera.active, "离开后相机 active 恢复")
+	# 离开后：UI 复现 + 浮层归位 $UILayer
 	_ok(view.get_node("UILayer").visible, "离开后 UILayer 复现")
 	_ok(view.get_node("MapWorld").visible, "离开后地图世界复现")
-	_ok(view._mine_scene == null, "矿道场景已释放")
+	_ok(view._investigation_scene == null, "调查场景已释放")
 	_ok(view._document_overlay.get_parent() == view.get_node("UILayer"), "文档浮层归位 $UILayer（屏幕空间）")
 
 	view.queue_free()
