@@ -32,7 +32,9 @@ func _ready() -> void:
 	view._on_investigation_finished()
 	await get_tree().process_frame
 
-	# 离开后：UI 复现 + 浮层归位 $UILayer
+	# 离开后：相机恢复 + UI 复现 + 浮层归位 $UILayer
+	_ok(view._camera.enabled, "离开后相机 enabled 恢复")
+	_ok(view._camera.active, "离开后相机 active 恢复")
 	_ok(view.get_node("UILayer").visible, "离开后 UILayer 复现")
 	_ok(view.get_node("MapWorld").visible, "离开后地图世界复现")
 	_ok(view._investigation_scene == null, "调查场景已释放")

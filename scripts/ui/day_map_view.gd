@@ -717,6 +717,10 @@ func _on_investigation_finished() -> void:
 		if n != null and is_instance_valid(n):
 			n.visible = true
 	_hidden_for_investigation.clear()
+	# 恢复 DayMap 相机：_enter_investigation 让出了相机（enabled/active=false），离开时必须复位，
+	# 否则退出调查后地图无法平移/缩放（test_mine_enter_exit 守此）。
+	_camera.enabled = true
+	_camera.set_active(true)
 
 
 func _update_stamina_display() -> void:
