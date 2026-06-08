@@ -1,6 +1,9 @@
 class_name TavernView
 extends Node2D
 
+enum Phase { PREPARATION, BUSINESS }
+
+var _phase: Phase = Phase.PREPARATION
 var _bg_sprite: Sprite2D
 var _customer_sprite: Sprite2D
 var _customer_name: Label
@@ -11,6 +14,8 @@ var _day_label: Label
 var _menu_panel: Panel
 var _end_night_btn: Button
 var _ledger_btn: Button
+var _menu_config_btn: Button
+var _option_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
 var _dialogue_dim: Sprite2D
@@ -19,14 +24,30 @@ var _revenue_panel: Panel
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
 var _settings_panel: SettingsPanel
+var _menu_config_panel: Panel
+var _cyclopedia_panel: Control
 var _gm
 var _today_gold: int = 0
+
+## 当日菜单配置: {product_key: {"price": int, "enabled": bool}}
+var daily_menu: Dictionary = {}
+var daily_menu_confirmed: bool = false
 
 const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
 
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
 	"mira": "mira_neutral",
+}
+
+## 食物属性名（魔幻化名称）
+const ATTRIBUTE_NAMES: Dictionary = {
+	"might": "蛮勇之力",
+	"alacrity": "疾风之敏",
+	"fortune": "命运眷顾",
+	"arcana": "奥术灵韵",
+	"vitality": "磐石之躯",
+	"charm": "魅惑之息",
 }
 
 func _ready() -> void:
@@ -38,6 +59,8 @@ func _ready() -> void:
 	_timer_bar = $TimerBar
 	_revenue_label = $RightArea/RevenuePanel/RevenueLabel
 	_ledger_btn = $RightArea/LedgerBtn
+	_menu_config_btn = $RightArea/MenuConfigBtn
+	_option_btn = $RightArea/OptionButton
 	_day_label = $DayLabel
 	_end_night_btn = $RightArea/EndNightBtn
 	_stage_caption = $StageCaption
@@ -53,7 +76,8 @@ func _ready() -> void:
 	_settings_panel.closed.connect(_on_settings_closed)
 
 	_menu_panel = $OverlayMenu
-	$RightArea/MenuButton.pressed.connect(_toggle_menu)
+	_option_btn.pressed.connect(_toggle_menu)
+	_menu_config_btn.pressed.connect(_toggle_menu_config)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
 	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
 	var tidy_btn = $OverlayMenu/BtnTidy
@@ -64,8 +88,13 @@ func _ready() -> void:
 	_end_night_btn.pressed.connect(_on_end_night)
 	_ledger_btn.pressed.connect(open_ledger)
 
+	_create_menu_config_panel()
+	_create_encyclopedia_panel()
+
 	_apply_theme()
 
+	# 进入准备阶段
+	_enter_preparation_phase()
 	_gm.register_view(self)
 
 func _apply_theme() -> void:
@@ -115,7 +144,8 @@ func _apply_theme() -> void:
 	_day_label.add_theme_font_size_override("font_size", 15)
 
 	ThemeColors.style_brush_panel(_revenue_panel)
-	ThemeColors.style_button($RightArea/MenuButton, 14)
+	ThemeColors.style_button(_option_btn, 14)
+	ThemeColors.style_button(_menu_config_btn, 14)
 	ThemeColors.style_button(_ledger_btn, 14)
 	ThemeColors.style_button(_end_night_btn, 14)
 
@@ -127,6 +157,7 @@ func _apply_theme() -> void:
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnRecipes)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnBackpack)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnSettings)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnEncyclopedia)
 	ThemeColors.style_brush_button($OverlayMenu/BtnTidy, 14)
 	ThemeColors.style_brush_button($OverlayMenu/CloseBtn, 14)
 
@@ -134,10 +165,13 @@ func _apply_theme() -> void:
 	var backpack_panel = $OverlayMenu/BackpackPanel
 	recipe_panel.visible = true
 	backpack_panel.visible = false
+	_cyclopedia_panel.visible = false
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
-	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
+	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _cyclopedia_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
 	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
+	# 图鉴选项卡
+	$OverlayMenu/TabBtns/BtnEncyclopedia.pressed.connect(func(): recipe_panel.visible = false; backpack_panel.visible = false; _cyclopedia_panel.visible = true; _select_overlay_tab($OverlayMenu/TabBtns/BtnEncyclopedia))
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
 
@@ -215,20 +249,20 @@ func update_timer(ratio: float) -> void:
 
 func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
 	_day_label.text = "第%d/%d天" % [day, max_day]
-	_revenue_label.text = "今日 +%d金 | 累计 %d金 | 声望 %d" % [_today_gold, gold, rep]
+	_revenue_label.text = "今日+%d金 | 共%d金 | ★%d" % [_today_gold, gold, rep]
 
 ## 更新今日收入（供 GameManager 在上菜后调用）
 func add_today_gold(amount: int) -> void:
 	_today_gold += amount
 	# 同步更新收入面板单行文本
-	var total_gold = _gm.gold if _gm != null else 0
-	var rep = _gm.reputation if _gm != null else 0
-	_revenue_label.text = "今日 +%d金 | 累计 %d金 | 声望 %d" % [_today_gold, total_gold, rep]
+	var total_gold = _gm.economy.gold if _gm != null else 0
+	var rep = _gm.economy.reputation if _gm != null else 0
+	_revenue_label.text = "今日+%d金 | 共%d金 | ★%d" % [_today_gold, total_gold, rep]
 
 ## 重置每日收入（新的一天开始）
 func reset_today_gold() -> void:
 	_today_gold = 0
-	_revenue_label.text = "今日 +0金 | 累计 %d金 | 声望 %d" % [_gm.gold if _gm != null else 0, _gm.reputation if _gm != null else 0]
+	_revenue_label.text = "今日+0金 | 共%d金 | ★%d" % [_gm.economy.gold if _gm != null else 0, _gm.economy.reputation if _gm != null else 0]
 
 ## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
 func customer_say(text: String) -> void:
@@ -279,6 +313,12 @@ func toggle_menu() -> void:
 	if _menu_panel.visible:
 		_build_recipe_list()
 		_build_backpack_list()
+		_build_encyclopedia()
+		# 默认显示配方选项卡
+		$OverlayMenu/RecipePanel.visible = true
+		$OverlayMenu/BackpackPanel.visible = false
+		_cyclopedia_panel.visible = false
+		_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
 
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
@@ -508,3 +548,389 @@ func _on_tidy_desk_pressed() -> void:
 		bar.tidy_desk()
 	if has_method("toggle_menu"):
 		toggle_menu()
+
+## ── 准备阶段 ──
+
+func _enter_preparation_phase() -> void:
+	_phase = Phase.PREPARATION
+	daily_menu_confirmed = false
+	# 初始化当日菜单：从可点单产品中，默认启用基础产品
+	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
+	for key in products:
+		var item: Dictionary = _gm.craft.get_item(key)
+		daily_menu[key] = {"price": int(item.get("price", 0)), "enabled": false}
+	# 默认启用前3项（至少3项要求）
+	var default_enabled = products.slice(0, min(3, products.size()))
+	for key in default_enabled:
+		daily_menu[key]["enabled"] = true
+	set_close_enabled(false)
+	show_stage_caption("准备阶段 — 点击右上角「菜单」配置当日菜品", ThemeColors.AMBER_PRIMARY)
+	_refresh_menu_config_panel()
+	# 教程进行时不自动弹出菜单面板
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or not tm._is_active:
+		_toggle_menu_config()
+
+func _confirm_menu() -> void:
+	var enabled_count := 0
+	for key in daily_menu:
+		if daily_menu[key].get("enabled", false):
+			enabled_count += 1
+	if enabled_count < 3:
+		show_stage_caption("至少需要选择3道菜品！", Color.ORANGE_RED)
+		return
+	daily_menu_confirmed = true
+	_phase = Phase.BUSINESS
+	_menu_config_panel.visible = false
+	show_stage_caption("菜单已确认，准备迎接客人！", ThemeColors.AMBER_PRIMARY)
+	set_close_enabled(not _gm.guests.has_guest)
+	# 通知 GuestSystem 配置完毕，可以开始刷客人
+	if _gm != null and _gm.guests != null:
+		_gm.guests.configure_night(_gm.ryan_slice.normal_order_limit(_gm.economy.current_day), _gm.economy.current_day)
+	# 通知 GM 准备阶段结束，可以生成重要NPC
+	if _gm != null and _gm.has_method("on_menu_confirmed"):
+		_gm.call_deferred("on_menu_confirmed")
+
+func _toggle_menu_config() -> void:
+	_menu_panel.visible = false
+	_inventory_overlay.close()
+	_document_overlay.close()
+	_menu_config_panel.visible = not _menu_config_panel.visible
+	if _menu_config_panel.visible:
+		_refresh_menu_config_panel()
+
+func _refresh_menu_config_panel() -> void:
+	if _menu_config_panel == null:
+		return
+	var list: VBoxContainer = _menu_config_panel.get_node_or_null("Scroll/ProductList")
+	if list == null:
+		return
+	for child in list.get_children():
+		child.queue_free()
+
+	# 标题
+	var status_label: Label = _menu_config_panel.get_node_or_null("StatusLabel")
+	if status_label != null:
+		var count := 0
+		for key in daily_menu:
+			if daily_menu[key].get("enabled", false):
+				count += 1
+		status_label.text = "已选 %d 道菜品（至少3项）" % count
+
+	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
+	for product_key in products:
+		var item: Dictionary = _gm.craft.get_item(product_key)
+		var product_name: String = item.get("name", product_key)
+		var base_price: int = int(item.get("price", 0))
+		var menu_entry: Dictionary = daily_menu.get(product_key, {"price": base_price, "enabled": false})
+
+		var row := PanelContainer.new()
+		row.custom_minimum_size = Vector2(0, 38)
+		ThemeColors.style_brush_content_panel(row)
+
+		var hbox := HBoxContainer.new()
+		hbox.add_theme_constant_override("separation", 8)
+		row.add_child(hbox)
+
+		var cb := CheckBox.new()
+		cb.text = product_name
+		cb.button_pressed = menu_entry.get("enabled", false)
+		cb.custom_minimum_size = Vector2(280, 0)
+		var cb_key = product_key
+		cb.pressed.connect(func():
+			daily_menu[cb_key]["enabled"] = cb.button_pressed
+			_refresh_menu_config_panel()
+		)
+		hbox.add_child(cb)
+
+		var price_label := Label.new()
+		price_label.text = "基础价 %d金" % base_price
+		price_label.custom_minimum_size = Vector2(100, 0)
+
+		var price_spin := SpinBox.new()
+		price_spin.min_value = 1
+		price_spin.max_value = 99
+		price_spin.value = menu_entry.get("price", base_price)
+		price_spin.custom_minimum_size = Vector2(70, 0)
+		var pk_price = product_key
+		price_spin.value_changed.connect(func(v: float):
+			daily_menu[pk_price]["price"] = int(v)
+		)
+		price_spin.editable = true
+
+		hbox.add_child(price_label)
+		hbox.add_child(price_spin)
+
+		list.add_child(row)
+
+func _create_menu_config_panel() -> void:
+	_menu_config_panel = Panel.new()
+	_menu_config_panel.name = "MenuConfigPanel"
+	_menu_config_panel.visible = false
+	_menu_config_panel.layout_mode = 0
+	_menu_config_panel.offset_left = 290.0
+	_menu_config_panel.offset_top = 80.0
+	_menu_config_panel.offset_right = 990.0
+	_menu_config_panel.offset_bottom = 620.0
+	_menu_config_panel.z_index = 200
+	add_child(_menu_config_panel)
+
+	ThemeColors.style_brush_panel(_menu_config_panel)
+
+	# 标题
+	var title := Label.new()
+	title.name = "TitleLabel"
+	title.text = "当日菜单配置"
+	title.layout_mode = 0
+	title.offset_left = 20; title.offset_top = 12
+	title.offset_right = 680; title.offset_bottom = 40
+	title.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	title.add_theme_font_size_override("font_size", 20)
+	_menu_config_panel.add_child(title)
+
+	# 状态提示
+	var status := Label.new()
+	status.name = "StatusLabel"
+	status.text = "已选 0 道菜品（至少3项）"
+	status.layout_mode = 0
+	status.offset_left = 20; status.offset_top = 42
+	status.offset_right = 680; status.offset_bottom = 64
+	status.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	status.add_theme_font_size_override("font_size", 14)
+	_menu_config_panel.add_child(status)
+
+	# 滚动列表
+	var scroll := ScrollContainer.new()
+	scroll.name = "Scroll"
+	scroll.layout_mode = 0
+	scroll.offset_left = 20; scroll.offset_top = 72
+	scroll.offset_right = 680; scroll.offset_bottom = 470
+	_menu_config_panel.add_child(scroll)
+
+	var product_list := VBoxContainer.new()
+	product_list.name = "ProductList"
+	product_list.layout_mode = 0
+	scroll.add_child(product_list)
+
+	# 提示文字
+	var hint := Label.new()
+	hint.name = "HintLabel"
+	hint.text = "勾选菜品并设定售价，至少选择3项。已解锁的配方产物均可选择。"
+	hint.layout_mode = 0
+	hint.offset_left = 20; hint.offset_top = 478
+	hint.offset_right = 680; hint.offset_bottom = 500
+	hint.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	hint.add_theme_font_size_override("font_size", 12)
+	_menu_config_panel.add_child(hint)
+
+	# 确认按钮
+	var confirm_btn := Button.new()
+	confirm_btn.name = "ConfirmBtn"
+	confirm_btn.text = "确认菜单"
+	confirm_btn.layout_mode = 0
+	confirm_btn.offset_left = 280; confirm_btn.offset_top = 505
+	confirm_btn.offset_right = 420; confirm_btn.offset_bottom = 540
+	confirm_btn.pressed.connect(_confirm_menu)
+	_menu_config_panel.add_child(confirm_btn)
+	ThemeColors.style_button(confirm_btn, 16)
+
+	# 关闭按钮
+	var close_btn := Button.new()
+	close_btn.name = "CloseBtn"
+	close_btn.text = "关闭"
+	close_btn.layout_mode = 0
+	close_btn.offset_left = 430; close_btn.offset_top = 505
+	close_btn.offset_right = 570; close_btn.offset_bottom = 540
+	close_btn.pressed.connect(_toggle_menu_config)
+	_menu_config_panel.add_child(close_btn)
+	ThemeColors.style_button(close_btn, 16)
+
+## ── 图鉴面板 ──
+
+func _create_encyclopedia_panel() -> void:
+	_cyclopedia_panel = Control.new()
+	_cyclopedia_panel.name = "EncyclopediaPanel"
+	_cyclopedia_panel.visible = false
+	_cyclopedia_panel.layout_mode = 0
+	_cyclopedia_panel.offset_left = 10; _cyclopedia_panel.offset_top = 60
+	_cyclopedia_panel.offset_right = 690; _cyclopedia_panel.offset_bottom = 440
+	# 添加到 OverlayMenu 下
+	var menu = $OverlayMenu
+	menu.add_child(_cyclopedia_panel)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "EncycScroll"
+	scroll.layout_mode = 0
+	scroll.offset_left = 0; scroll.offset_top = 0
+	scroll.offset_right = 680; scroll.offset_bottom = 370
+	_cyclopedia_panel.add_child(scroll)
+
+	var main_vbox := VBoxContainer.new()
+	main_vbox.name = "EncycContent"
+	main_vbox.layout_mode = 0
+	scroll.add_child(main_vbox)
+
+func _build_encyclopedia() -> void:
+	var content: VBoxContainer = _cyclopedia_panel.get_node_or_null("EncycScroll/EncycContent")
+	if content == null:
+		return
+	for child in content.get_children():
+		child.queue_free()
+
+	# === 食品图鉴 ===
+	var food_header := Label.new()
+	food_header.text = "— 食品图鉴 —"
+	food_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	food_header.add_theme_font_size_override("font_size", 18)
+	content.add_child(food_header)
+
+	content.add_child(_make_spacer(4))
+
+	# 加载属性数据
+	var attr_data: Dictionary = _load_food_attributes()
+
+	var product_keys: Array = []
+	for key in _gm.craft.items:
+		var item: Dictionary = _gm.craft.items[key]
+		if item.get("type", "") == "product":
+			product_keys.append(key)
+	product_keys.sort()
+
+	for product_key in product_keys:
+		var item: Dictionary = _gm.craft.get_item(product_key)
+		var attrs: Dictionary = attr_data.get(product_key, {})
+		var row_panel := PanelContainer.new()
+		row_panel.custom_minimum_size = Vector2(0, 32)
+		ThemeColors.style_brush_content_panel(row_panel)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row_panel.add_child(row)
+
+		var icon_tex = _gm.try_load_material_icon(product_key)
+		if icon_tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = icon_tex
+			tex_rect.custom_minimum_size = Vector2(24, 24)
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(tex_rect)
+
+		var name_label := Label.new()
+		name_label.text = " %s  %d金" % [item.get("name", product_key), int(item.get("price", 0))]
+		name_label.custom_minimum_size = Vector2(180, 0)
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 14)
+		row.add_child(name_label)
+
+		# 属性标签
+		if attrs.is_empty():
+			var none_l := Label.new()
+			none_l.text = "（无特殊属性）"
+			none_l.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			none_l.add_theme_font_size_override("font_size", 12)
+			row.add_child(none_l)
+		else:
+			for attr_key in attrs:
+				var val: int = int(attrs[attr_key])
+				var attr_name: String = ATTRIBUTE_NAMES.get(attr_key, attr_key)
+				var sign := "+" if val >= 0 else ""
+				var al := Label.new()
+				al.text = "%s%s%d" % [attr_name, sign, val]
+				al.add_theme_color_override("font_color", _attribute_color(attr_key))
+				al.add_theme_font_size_override("font_size", 12)
+				row.add_child(al)
+
+		content.add_child(row_panel)
+
+	content.add_child(_make_spacer(8))
+
+	# === 剧情道具 ===
+	var story_header := Label.new()
+	story_header.text = "— 剧情道具 —"
+	story_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	story_header.add_theme_font_size_override("font_size", 18)
+	content.add_child(story_header)
+
+	content.add_child(_make_spacer(4))
+
+	# 遍历已获得的文档/剧情道具（排除"账本"）
+	var doc_sys = _gm.documents if _gm != null else null
+	if doc_sys != null and doc_sys.has_method("get_owned_documents"):
+		for doc_id in doc_sys.get_owned_documents():
+			if doc_id == "ledger":
+				continue  # 账本不显示在图鉴中
+			var doc: Dictionary = doc_sys.get_document(doc_id)
+			if doc.is_empty():
+				continue
+			var dp := PanelContainer.new()
+			dp.custom_minimum_size = Vector2(0, 32)
+			ThemeColors.style_brush_content_panel(dp)
+			var dh := HBoxContainer.new()
+			dp.add_child(dh)
+
+			var dn := Label.new()
+			dn.text = " %s" % doc.get("title", doc_id)
+			dn.custom_minimum_size = Vector2(200, 0)
+			dn.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+			dn.add_theme_font_size_override("font_size", 14)
+			dh.add_child(dn)
+
+			var dd := Label.new()
+			dd.text = doc.get("description", "")
+			dd.custom_minimum_size = Vector2(420, 0)
+			dd.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			dd.add_theme_font_size_override("font_size", 12)
+			dh.add_child(dd)
+
+			content.add_child(dp)
+
+func _make_spacer(height: int) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, height)
+	return c
+
+func _attribute_color(attr_key: String) -> Color:
+	match attr_key:
+		"might": return Color(0.95, 0.3, 0.2)      # 红
+		"alacrity": return Color(0.2, 0.7, 0.4)   # 绿
+		"fortune": return Color(0.95, 0.85, 0.1)   # 金
+		"arcana": return Color(0.5, 0.3, 0.9)      # 紫
+		"vitality": return Color(0.3, 0.5, 0.8)    # 蓝
+		"charm": return Color(0.95, 0.45, 0.65)    # 粉
+		_: return ThemeColors.TEXT_SUBTITLE
+
+func _load_food_attributes() -> Dictionary:
+	var file = FileAccess.open("res://data/food_attributes.json", FileAccess.READ)
+	if file == null:
+		return {}
+	var text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(text)
+	if data == null or not data is Dictionary:
+		return {}
+	return data
+
+## 获取当日菜单（供 GuestSystem 点单）: Array[{key, price, name}]
+func get_daily_menu_items() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for key in daily_menu:
+		var entry: Dictionary = daily_menu[key]
+		if entry.get("enabled", false):
+			var item: Dictionary = _gm.craft.get_item(key)
+			result.append({
+				"key": key,
+				"price": int(entry.get("price", item.get("price", 0))),
+				"name": item.get("name", key),
+			})
+	return result
+
+## 当前阶段
+func is_preparation_phase() -> bool:
+	return _phase == Phase.PREPARATION
+
+func is_business_phase() -> bool:
+	return _phase == Phase.BUSINESS
+
+## 菜单面板是否开启（用于暂停顾客生成）
+func is_menu_config_open() -> bool:
+	return _menu_config_panel != null and _menu_config_panel.visible

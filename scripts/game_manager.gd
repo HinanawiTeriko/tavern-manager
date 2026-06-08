@@ -104,13 +104,16 @@ func _ready() -> void:
 	craft_style.load_data()
 
 	guests = GuestSystem.new(func():
-		return craft.get_orderable_products(economy.current_day)
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			return _tavern_view.get_daily_menu_items()
+		return _get_fallback_menu()
 	)
 	guests.guest_arrived.connect(_on_guest_arrived)
 	guests.guest_left.connect(_on_guest_left)
 	guests.patience_low.connect(_on_patience_low)
 	guests.normal_orders_completed.connect(_on_normal_orders_completed)
 	guests.guest_abandoned.connect(_on_guest_abandoned)
+	guests.all_guests_served.connect(_on_all_guests_served)
 
 	economy.changed.connect(_refresh_tavern_ui.unbind(3))
 	day_cycle.phase_changed.connect(_on_phase_changed)
@@ -130,8 +133,9 @@ func _process(delta: float) -> void:
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
-		var menu_open = _tavern_view.is_menu_open()
-		if not _is_dialogue_active and not tutorial_active and not _guest_lingering:
+		var menu_open = _tavern_view.is_menu_open() or _tavern_view.is_menu_config_open()
+		var in_prep = _tavern_view.is_preparation_phase() or not _tavern_view.daily_menu_confirmed
+		if not in_prep and not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
 			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
@@ -140,7 +144,7 @@ func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
 		_guest_lingering = false
-		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
+		# 准备阶段由 TavernView 自己处理，确认菜单后才 configure_night
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
 		_refresh_close_button()
@@ -177,8 +181,7 @@ func register_view(view: Node) -> void:
 						_spawn_npc_after_tutorial.bind(npc.id, order_key),
 						CONNECT_ONE_SHOT
 					)
-				else:
-					guests.spawn_important(npc.id, order_key)
+				# 否则等待菜单确认后通过 on_menu_confirmed() 生成
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
@@ -369,7 +372,52 @@ func _on_guest_arrived(guest: GuestData) -> void:
 func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: String) -> void:
 	if group_id != "craft":
 		return
+	# 如果准备阶段还未结束（菜单未确认），推迟到 on_menu_confirmed
+	if _tavern_view != null and is_instance_valid(_tavern_view) and not _tavern_view.daily_menu_confirmed:
+		return  # on_menu_confirmed 会在菜单确认后生成
 	guests.spawn_important(npc_id, order_key)
+
+## 准备阶段结束后延迟生成重要NPC
+func _spawn_important_deferred(npc_id: String, order_key: String) -> void:
+	await get_tree().create_timer(1.0).timeout
+	if _tavern_view != null and _tavern_view.daily_menu_confirmed:
+		guests.spawn_important(npc_id, order_key)
+
+## 菜单确认后的回调：触发生成重要NPC（由 TavernView._confirm_menu 调用）
+func on_menu_confirmed() -> void:
+	if _important_npc_pending and narrative.today_important_npc != "":
+		var npc_id = narrative.today_important_npc
+		var npc = null
+		for n in narrative.all_npcs:
+			if n.id == npc_id:
+				npc = n
+				break
+		if npc != null:
+			var scene = null
+			for s in npc.scenes:
+				if s.day == economy.current_day:
+					scene = s
+					break
+			var order_key = scene.order if scene != null else "bread"
+			guests.spawn_important(npc_id, order_key)
+
+## 当所有客人都招待完毕后提示打烊
+func _on_all_guests_served() -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.show_stage_caption("今日客流招待完毕，可以打烊了！", ThemeColors.AMBER_PRIMARY)
+
+## 当日菜单回退（从已解锁配方获取，用于 guest_system 初始化回调）
+func _get_fallback_menu() -> Array:
+	var result: Array[Dictionary] = []
+	var products: Array = craft.get_orderable_products(economy.current_day)
+	for key in products:
+		var item: Dictionary = craft.get_item(key)
+		result.append({
+			"key": key,
+			"price": int(item.get("price", 0)),
+			"name": item.get("name", key),
+		})
+	return result
 
 ## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
 func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_attribute: String = "") -> void:
@@ -386,6 +434,9 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 
 	var item: Dictionary = craft.get_item(item_key)
 	var item_price: int = item.get("price", 0)
+	# 使用当日菜单定价（如果已配置）
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.daily_menu.has(item_key):
+		item_price = int(_tavern_view.daily_menu[item_key].get("price", item_price))
 
 	if success:
 		var serve_quality: String = String(craft_style_data.get("quality", "normal"))
@@ -537,6 +588,10 @@ func end_night() -> void:
 
 	economy.reset_daily()
 	guests.reset_daily()
+	if _tavern_view != null:
+		_tavern_view.reset_today_gold()
+		_tavern_view.daily_menu.clear()
+		_tavern_view.daily_menu_confirmed = false
 
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn")
 
@@ -805,6 +860,7 @@ func _capture_save_state() -> Dictionary:
 		},
 		"tutorial": _capture_tutorial_state(),
 		"ryan_slice": ryan_slice.capture_state(),
+		"guests": guests.capture_state(),
 	}
 
 func _capture_tutorial_state() -> Dictionary:
@@ -853,6 +909,7 @@ func _apply_save_state(data: Dictionary) -> void:
 
 	_apply_tutorial_state(data.get("tutorial", {}))
 	ryan_slice.restore_state(data.get("ryan_slice", {}))
+	guests.restore_state(data.get("guests", {}))
 	notify_inventory_changed()
 
 func _apply_tutorial_state(t: Dictionary) -> void:
@@ -910,6 +967,7 @@ func _default_new_game_state() -> Dictionary:
 			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
 			"first_guest_served": false, "first_ledger_shown": false},
 		"ryan_slice": {"total_orders_success": 0, "completed_days": []},
+		"guests": {"customers": [], "next_seq": 1},
 	}
 
 ## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。

@@ -297,7 +297,7 @@ text = "第1/30天"
 
 [node name="RightArea" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 740.0
+offset_left = 690.0
 offset_top = 2.0
 offset_right = 1280.0
 offset_bottom = 38.0
@@ -305,17 +305,23 @@ alignment = 2
 
 [node name="RevenuePanel" type="Panel" parent="RightArea"]
 layout_mode = 0
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(250, 0)
 mouse_filter = 2
 
 [node name="RevenueLabel" type="Label" parent="RightArea/RevenuePanel"]
 layout_mode = 0
 offset_left = 6.0
 offset_top = 4.0
-offset_right = 254.0
+offset_right = 244.0
 offset_bottom = 32.0
-text = "今日 +0金 | 累计 0金 | 声望 0"
+text = "今日+0金 | 共0金 | ★0"
 horizontal_alignment = 2
+
+[node name="MenuConfigBtn" type="Button" parent="RightArea"]
+layout_mode = 0
+custom_minimum_size = Vector2(75, 0)
+alignment = 1
+text = "菜单"
 
 [node name="LedgerBtn" type="Button" parent="RightArea"]
 layout_mode = 0
@@ -329,11 +335,11 @@ custom_minimum_size = Vector2(75, 0)
 alignment = 1
 text = "打烊"
 
-[node name="MenuButton" type="Button" parent="RightArea"]
+[node name="OptionButton" type="Button" parent="RightArea"]
 layout_mode = 0
 custom_minimum_size = Vector2(75, 0)
 alignment = 1
-text = "菜单"
+text = "选项"
 
 [node name="StageCaption" type="Label" parent="."]
 offset_left = 240.0
@@ -374,6 +380,11 @@ text = "背包"
 layout_mode = 0
 custom_minimum_size = Vector2(100, 0)
 text = "设置"
+
+[node name="BtnEncyclopedia" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(100, 0)
+text = "图鉴"
 
 [node name="RecipePanel" type="ScrollContainer" parent="OverlayMenu"]
 layout_mode = 0
