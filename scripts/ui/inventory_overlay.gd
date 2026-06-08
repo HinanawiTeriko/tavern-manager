@@ -2,6 +2,7 @@ class_name InventoryOverlay
 extends Control
 
 signal item_dropped(item_key: String, global_position: Vector2)
+signal closed
 
 @onready var _panel: Panel = $Panel
 @onready var _material_list: VBoxContainer = $Panel/MaterialList
@@ -22,12 +23,17 @@ func _ready() -> void:
 func _add_close_button() -> void:
 	var close_btn = Button.new()
 	close_btn.name = "CloseBtn"
-	close_btn.text = "关闭"
+	close_btn.text = "返回"
 	close_btn.custom_minimum_size = Vector2(80, 36)
 	close_btn.position = Vector2(540, 8)
 	ThemeColors.style_brush_button(close_btn, 14)
-	close_btn.pressed.connect(close)
+	close_btn.pressed.connect(_on_return_pressed)
 	_panel.add_child(close_btn)
+
+
+func _on_return_pressed() -> void:
+	closed.emit()
+	close()
 
 
 func configure(game_manager) -> void:

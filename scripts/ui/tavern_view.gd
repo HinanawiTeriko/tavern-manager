@@ -28,6 +28,7 @@ var _menu_config_panel: Panel
 var _cyclopedia_panel: Control
 var _gm
 var _today_gold: int = 0
+var _inventory_opened_from_menu: bool = false
 
 ## 当日菜单配置: {product_key: {"price": int, "enabled": bool}}
 var daily_menu: Dictionary = {}
@@ -70,6 +71,7 @@ func _ready() -> void:
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
+	_inventory_overlay.closed.connect(_on_inventory_closed)
 	_document_overlay = $DocumentOverlay
 	_settings_panel = $SettingsPanel
 	_settings_panel.configure(_gm.settings)
@@ -337,6 +339,12 @@ func _on_settings_closed() -> void:
 	_menu_panel.visible = true
 
 
+func _on_inventory_closed() -> void:
+	if _inventory_opened_from_menu:
+		_menu_panel.visible = true
+	_inventory_opened_from_menu = false
+
+
 func _select_overlay_tab(selected: Button) -> void:
 	for tab_button in $OverlayMenu/TabBtns.get_children():
 		if tab_button is Button:
@@ -344,11 +352,12 @@ func _select_overlay_tab(selected: Button) -> void:
 
 
 func toggle_inventory_overlay() -> void:
-	_menu_panel.visible = false
 	_document_overlay.close()
 	if _inventory_overlay.visible:
 		_inventory_overlay.close()
 	else:
+		_inventory_opened_from_menu = _menu_panel.visible
+		_menu_panel.visible = false
 		_inventory_overlay.open()
 
 
@@ -377,6 +386,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
+		if _inventory_opened_from_menu:
+			_menu_panel.visible = true
+		_inventory_opened_from_menu = false
 	else:
 		return
 	get_viewport().set_input_as_handled()

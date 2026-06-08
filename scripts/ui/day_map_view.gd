@@ -42,7 +42,13 @@ var _gather_tab_btn: Button
 var _shop_tab_btn: Button
 var _shop_panel: ScrollContainer
 var _shop_title: Label
-var _gold_label: Label
+var _status_label: Label
+var _option_btn: Button
+var _ledger_btn: Button
+var _overlay_menu: Panel
+var _recipe_panel: Control
+var _backpack_panel: Control
+var _encyclopedia_panel: Control
 var _material_list: VBoxContainer
 var _recipe_list: VBoxContainer
 var _ability_list: VBoxContainer
@@ -72,21 +78,34 @@ func _ready() -> void:
 	_result_label.add_theme_font_size_override("font_size", 18)
 
 	_continue_btn.pressed.connect(_on_continue)
-	$UILayer/TopBar/DocumentsBtn.pressed.connect(_open_latest_document)
 
-	var exp_btn = $UILayer/TopBar/ExpTavernBtn
-	ThemeColors.style_small_button(exp_btn, 13)
-	exp_btn.pressed.connect(_on_exp_tavern_pressed)
+	# 右上角按钮
+	_option_btn = $UILayer/TopBar/RightArea/OptionBtn
+	_ledger_btn = $UILayer/TopBar/RightArea/LedgerBtn
+	_status_label = $UILayer/TopBar/RightArea/StatusPanel/StatusLabel
 
-	_gold_label = $UILayer/TopBar/GoldLabel
-	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_gold_label.add_theme_font_size_override("font_size", 20)
+	var right_area = $UILayer/TopBar/RightArea
+	right_area.add_theme_constant_override("separation", 8)
+
+	var status_panel = $UILayer/TopBar/RightArea/StatusPanel
+	ThemeColors.style_brush_panel(status_panel)
+
+	ThemeColors.style_button(_option_btn, 14)
+	ThemeColors.style_button(_ledger_btn, 14)
+	_status_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_status_label.add_theme_font_size_override("font_size", 13)
+
+	_option_btn.pressed.connect(_toggle_menu)
+	_ledger_btn.pressed.connect(open_ledger)
+
+	_build_overlay_menu()
 
 	_setup_detail_panel()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
+		gm.inventory_changed.connect(_on_inventory_changed)
 
 	# 采集提示 Toast
 	_gathering_toast = GatheringToast.new()
@@ -181,7 +200,7 @@ func show_day(day: int, total_days: int) -> void:
 	_camera.set_active(true)
 	_detail_panel.visible = false
 	_selected_id = ""
-	_update_gold_display()
+	_update_status_bar()
 	_ensure_home_marker()
 	if gm.consume_intro_handoff():
 		_play_intro_handoff()
@@ -476,13 +495,417 @@ func _on_continue() -> void:
 	_result_panel.visible = false
 
 
-func _open_latest_document() -> void:
-	# 简化：点击按钮直接打开账本（证据文档从背包双击阅读）
+func open_ledger() -> void:
 	get_node("/root/GameManager").request_open_document("ledger")
 
 
 func open_document(document: Dictionary) -> void:
 	_document_overlay.open_document(document)
+
+
+func _toggle_menu() -> void:
+	_inventory_overlay.close()
+	_document_overlay.close()
+	_overlay_menu.visible = not _overlay_menu.visible
+	if _overlay_menu.visible:
+		_build_recipe_list_overlay()
+		_build_backpack_list_overlay()
+		_build_encyclopedia_content()
+		_recipe_panel.visible = true
+		_backpack_panel.visible = false
+		_encyclopedia_panel.visible = false
+		_select_overlay_tab(_overlay_menu.get_node("TabBtns/BtnRecipes") as Button)
+
+
+func _build_overlay_menu() -> void:
+	_overlay_menu = Panel.new()
+	_overlay_menu.name = "OverlayMenu"
+	_overlay_menu.visible = false
+	_overlay_menu.z_index = 200
+	_overlay_menu.offset_left = 300.0
+	_overlay_menu.offset_top = 64.0
+	_overlay_menu.offset_right = 980.0
+	_overlay_menu.offset_bottom = 440.0
+	$UILayer.add_child(_overlay_menu)
+	ThemeColors.style_brush_panel(_overlay_menu)
+
+	# 选项卡按钮行
+	var tab_btns := HBoxContainer.new()
+	tab_btns.name = "TabBtns"
+	tab_btns.add_theme_constant_override("separation", 2)
+	tab_btns.offset_left = 14.0
+	tab_btns.offset_top = 10.0
+	tab_btns.offset_right = 666.0
+	tab_btns.offset_bottom = 42.0
+	_overlay_menu.add_child(tab_btns)
+
+	var tab_configs: Array = [
+		["BtnRecipes", "配方"], ["BtnBackpack", "背包"],
+		["BtnEncyclopedia", "图鉴"], ["BtnTutorial", "教程"],
+	]
+	for pair in tab_configs:
+		var id: String = pair[0]
+		var label: String = pair[1]
+		var btn := Button.new()
+		btn.name = id
+		btn.text = label
+		btn.custom_minimum_size = Vector2(60, 30)
+		ThemeColors.style_brush_tab_button(btn)
+		tab_btns.add_child(btn)
+
+	# 配方面板
+	_recipe_panel = Control.new()
+	_recipe_panel.name = "RecipePanel"
+	_recipe_panel.visible = true
+	_recipe_panel.offset_left = 10.0
+	_recipe_panel.offset_top = 50.0
+	_recipe_panel.offset_right = 670.0
+	_recipe_panel.offset_bottom = 370.0
+	_overlay_menu.add_child(_recipe_panel)
+
+	var recipe_scroll := ScrollContainer.new()
+	recipe_scroll.name = "RecipeScroll"
+	recipe_scroll.offset_right = 660.0
+	recipe_scroll.offset_bottom = 320.0
+	_recipe_panel.add_child(recipe_scroll)
+
+	var recipe_list := VBoxContainer.new()
+	recipe_list.name = "RecipeList"
+	recipe_scroll.add_child(recipe_list)
+
+	# 背包面板
+	_backpack_panel = Control.new()
+	_backpack_panel.name = "BackpackPanel"
+	_backpack_panel.visible = false
+	_backpack_panel.offset_left = 10.0
+	_backpack_panel.offset_top = 50.0
+	_backpack_panel.offset_right = 670.0
+	_backpack_panel.offset_bottom = 370.0
+	_overlay_menu.add_child(_backpack_panel)
+
+	var backpack_scroll := ScrollContainer.new()
+	backpack_scroll.name = "BackpackScroll"
+	backpack_scroll.offset_right = 660.0
+	backpack_scroll.offset_bottom = 320.0
+	_backpack_panel.add_child(backpack_scroll)
+
+	var backpack_list := VBoxContainer.new()
+	backpack_list.name = "BackpackList"
+	backpack_scroll.add_child(backpack_list)
+
+	# 图鉴面板
+	_encyclopedia_panel = Control.new()
+	_encyclopedia_panel.name = "EncyclopediaPanel"
+	_encyclopedia_panel.visible = false
+	_encyclopedia_panel.offset_left = 10.0
+	_encyclopedia_panel.offset_top = 50.0
+	_encyclopedia_panel.offset_right = 670.0
+	_encyclopedia_panel.offset_bottom = 370.0
+	_overlay_menu.add_child(_encyclopedia_panel)
+
+	var encyc_scroll := ScrollContainer.new()
+	encyc_scroll.name = "EncycScroll"
+	encyc_scroll.offset_right = 660.0
+	encyc_scroll.offset_bottom = 320.0
+	_encyclopedia_panel.add_child(encyc_scroll)
+
+	var encyc_content := VBoxContainer.new()
+	encyc_content.name = "EncycContent"
+	encyc_scroll.add_child(encyc_content)
+
+	# 关闭按钮
+	var close_btn := Button.new()
+	close_btn.name = "CloseBtn"
+	close_btn.text = "关闭"
+	close_btn.custom_minimum_size = Vector2(80, 34)
+	close_btn.offset_left = 300.0
+	close_btn.offset_top = 378.0
+	close_btn.offset_right = 380.0
+	close_btn.offset_bottom = 414.0
+	close_btn.pressed.connect(_toggle_menu)
+	_overlay_menu.add_child(close_btn)
+	ThemeColors.style_brush_button(close_btn, 14)
+
+	# 整理按钮
+	var tidy_btn := Button.new()
+	tidy_btn.name = "BtnTidy"
+	tidy_btn.text = "整理桌面"
+	tidy_btn.custom_minimum_size = Vector2(80, 34)
+	tidy_btn.offset_left = 385.0
+	tidy_btn.offset_top = 378.0
+	tidy_btn.offset_right = 465.0
+	tidy_btn.offset_bottom = 414.0
+	_overlay_menu.add_child(tidy_btn)
+	ThemeColors.style_brush_button(tidy_btn, 14)
+
+	# 选项卡信号
+	tab_btns.get_node("BtnRecipes").pressed.connect(func():
+		_recipe_panel.visible = true
+		_backpack_panel.visible = false
+		_encyclopedia_panel.visible = false
+		_select_overlay_tab(tab_btns.get_node("BtnRecipes") as Button)
+	)
+	tab_btns.get_node("BtnBackpack").pressed.connect(func():
+		_recipe_panel.visible = false
+		_inventory_overlay.close()
+		_inventory_overlay.open()
+		_overlay_menu.visible = false
+	)
+	tab_btns.get_node("BtnEncyclopedia").pressed.connect(func():
+		_recipe_panel.visible = false
+		_backpack_panel.visible = false
+		_encyclopedia_panel.visible = true
+		_select_overlay_tab(tab_btns.get_node("BtnEncyclopedia") as Button)
+	)
+	tab_btns.get_node("BtnTutorial").pressed.connect(func():
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null:
+			tm.replay_all()
+			# 显示简单提示
+		_select_overlay_tab(tab_btns.get_node("BtnTutorial") as Button)
+	)
+
+
+func _select_overlay_tab(selected: Button) -> void:
+	var tab_btns = selected.get_parent()
+	for child in tab_btns.get_children():
+		if child is Button:
+			ThemeColors.set_brush_selected(child, child == selected)
+
+
+func _build_recipe_list_overlay() -> void:
+	var gm = get_node("/root/GameManager")
+	var recipe_list = _overlay_menu.get_node("RecipePanel/RecipeScroll/RecipeList")
+	for child in recipe_list.get_children():
+		child.queue_free()
+
+	var keys: Array = gm.craft.recipes.keys()
+	keys.sort()
+	for product_key in keys:
+		var recipe: Dictionary = gm.craft.recipes[product_key]
+		var container: String = recipe.get("container", "")
+		var ingredients: Array = recipe.get("ingredients", [])
+		if container == "" or ingredients.is_empty():
+			continue
+
+		var product_data: Dictionary = gm.craft.get_item(product_key)
+		var locked: bool = bool(recipe.get("requires_purchase", false)) and not gm.craft.is_recipe_unlocked(product_key)
+
+		var row_panel := PanelContainer.new()
+		row_panel.custom_minimum_size = Vector2(0.0, 34.0)
+		ThemeColors.style_brush_content_panel(row_panel)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row_panel.add_child(row)
+
+		var icon_tex = gm.try_load_material_icon(product_key)
+		if icon_tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = icon_tex
+			tex_rect.custom_minimum_size = Vector2(28, 28)
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(tex_rect)
+
+		var ingr_names := PackedStringArray()
+		for ing in ingredients:
+			ingr_names.append(String(gm.craft.get_item(ing).get("name", ing)))
+		var product_name: String = product_data.get("name", product_key)
+		var price: int = int(product_data.get("price", 0))
+
+		var text: String = "%s  %d金   ← %s" % [product_name, price, "＋".join(ingr_names)]
+		if locked:
+			text += "  （需解锁）"
+
+		var name_label = Label.new()
+		name_label.text = " " + text
+		ThemeColors.style_brush_label(name_label, 13, Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
+		row.add_child(name_label)
+
+		recipe_list.add_child(row_panel)
+
+
+func _build_backpack_list_overlay() -> void:
+	var gm = get_node("/root/GameManager")
+	var inventory: Dictionary = gm.inventory
+	var backpack_list = _overlay_menu.get_node("BackpackPanel/BackpackScroll/BackpackList")
+	for child in backpack_list.get_children():
+		child.queue_free()
+
+	for mat in inventory:
+		var count: int = inventory[mat]
+		if count <= 0:
+			continue
+
+		var row_panel := PanelContainer.new()
+		row_panel.custom_minimum_size = Vector2(0.0, 30.0)
+		ThemeColors.style_brush_content_panel(row_panel)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row_panel.add_child(row)
+
+		var icon_tex = gm.try_load_material_icon(mat)
+		if icon_tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = icon_tex
+			tex_rect.custom_minimum_size = Vector2(24, 24)
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(tex_rect)
+
+		var mat_item: Dictionary = gm.craft.get_item(mat)
+		var display_name = mat_item.get("name", mat)
+		var label = Label.new()
+		label.text = display_name + "  x" + str(count)
+		label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		label.add_theme_font_size_override("font_size", 13)
+		row.add_child(label)
+
+		backpack_list.add_child(row_panel)
+
+
+const ATTRIBUTE_NAMES: Dictionary = {
+	"might": "蛮勇之力",
+	"alacrity": "疾风之敏",
+	"fortune": "命运眷顾",
+	"arcana": "奥术灵韵",
+	"vitality": "磐石之躯",
+	"charm": "魅惑之息",
+}
+
+
+func _build_encyclopedia_content() -> void:
+	var gm = get_node("/root/GameManager")
+	var content: VBoxContainer = _encyclopedia_panel.get_node("EncycScroll/EncycContent")
+	for child in content.get_children():
+		child.queue_free()
+
+	# 食品图鉴
+	var food_header := Label.new()
+	food_header.text = "— 食品图鉴 —"
+	food_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	food_header.add_theme_font_size_override("font_size", 16)
+	content.add_child(food_header)
+	content.add_child(_make_spacer(4))
+
+	var attr_data: Dictionary = _load_food_attributes()
+
+	var product_keys: Array = []
+	for key in gm.craft.items:
+		var item: Dictionary = gm.craft.items[key]
+		if item.get("type", "") == "product":
+			product_keys.append(key)
+	product_keys.sort()
+
+	for product_key in product_keys:
+		var item: Dictionary = gm.craft.get_item(product_key)
+		var attrs: Dictionary = attr_data.get(product_key, {})
+		var row_panel := PanelContainer.new()
+		row_panel.custom_minimum_size = Vector2(0, 28)
+		ThemeColors.style_brush_content_panel(row_panel)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		row_panel.add_child(row)
+
+		var icon_tex = gm.try_load_material_icon(product_key)
+		if icon_tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = icon_tex
+			tex_rect.custom_minimum_size = Vector2(20, 20)
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(tex_rect)
+
+		var name_label := Label.new()
+		name_label.text = " %s  %d金" % [item.get("name", product_key), int(item.get("price", 0))]
+		name_label.custom_minimum_size = Vector2(170, 0)
+		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+		name_label.add_theme_font_size_override("font_size", 12)
+		row.add_child(name_label)
+
+		if attrs.is_empty():
+			var none_l := Label.new()
+			none_l.text = "（无特殊属性）"
+			none_l.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			none_l.add_theme_font_size_override("font_size", 11)
+			row.add_child(none_l)
+		else:
+			for attr_key in attrs:
+				var val: int = int(attrs[attr_key])
+				var attr_name: String = ATTRIBUTE_NAMES.get(attr_key, attr_key)
+				var sign := "+" if val >= 0 else ""
+				var al := Label.new()
+				al.text = "%s%s%d" % [attr_name, sign, val]
+				al.add_theme_color_override("font_color", _attribute_color(attr_key))
+				al.add_theme_font_size_override("font_size", 11)
+				row.add_child(al)
+
+		content.add_child(row_panel)
+
+	# 剧情道具
+	content.add_child(_make_spacer(6))
+	var story_header := Label.new()
+	story_header.text = "— 剧情道具 —"
+	story_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	story_header.add_theme_font_size_override("font_size", 16)
+	content.add_child(story_header)
+	content.add_child(_make_spacer(4))
+
+	var doc_sys = gm.documents if gm != null else null
+	if doc_sys != null and doc_sys.has_method("get_owned_documents"):
+		for doc_id in doc_sys.get_owned_documents():
+			if doc_id == "ledger":
+				continue
+			var doc: Dictionary = doc_sys.get_document(doc_id)
+			if doc.is_empty():
+				continue
+			var dp := PanelContainer.new()
+			dp.custom_minimum_size = Vector2(0, 28)
+			ThemeColors.style_brush_content_panel(dp)
+			var dh := HBoxContainer.new()
+			dp.add_child(dh)
+			var dn := Label.new()
+			dn.text = " %s" % doc.get("title", doc_id)
+			dn.custom_minimum_size = Vector2(180, 0)
+			dn.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+			dn.add_theme_font_size_override("font_size", 13)
+			dh.add_child(dn)
+			var dd := Label.new()
+			dd.text = doc.get("description", "")
+			dd.custom_minimum_size = Vector2(420, 0)
+			dd.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+			dd.add_theme_font_size_override("font_size", 11)
+			dh.add_child(dd)
+			content.add_child(dp)
+
+
+func _make_spacer(height: int) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, height)
+	return c
+
+
+func _attribute_color(attr_key: String) -> Color:
+	match attr_key:
+		"might": return Color(0.95, 0.3, 0.2)
+		"alacrity": return Color(0.2, 0.7, 0.4)
+		"fortune": return Color(0.95, 0.85, 0.1)
+		"arcana": return Color(0.5, 0.3, 0.9)
+		"vitality": return Color(0.3, 0.5, 0.8)
+		"charm": return Color(0.95, 0.45, 0.65)
+		_: return ThemeColors.TEXT_SUBTITLE
+
+
+func _load_food_attributes() -> Dictionary:
+	var file = FileAccess.open("res://data/food_attributes.json", FileAccess.READ)
+	if file == null:
+		return {}
+	var text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(text)
+	if data == null or not data is Dictionary:
+		return {}
+	return data
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -492,6 +915,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif _inventory_overlay.visible:
 			_inventory_overlay.close()
+			get_viewport().set_input_as_handled()
+		elif _overlay_menu != null and _overlay_menu.visible:
+			_overlay_menu.visible = false
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("inventory_toggle"):
 		if _inventory_overlay.visible:
@@ -505,10 +931,10 @@ func _on_inventory_item_dropped(item_key: String, _global_position: Vector2) -> 
 	# DayMap 场景无法拖出物品使用，意外拖出时放回背包
 	get_node("/root/GameManager").add_to_inventory(item_key, 1)
 
-func _update_gold_display() -> void:
+func _update_status_bar() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm != null:
-		_gold_label.text = "金币：" + str(gm.economy.gold)
+		_status_label.text = "金币：%d | 声望：%d" % [gm.economy.gold, gm.economy.reputation]
 
 func _build_tab_buttons() -> void:
 	# 居中分段标签页，挂在 UILayer 顶部（不放进 MapArea，避免随商店容器移动）
@@ -618,7 +1044,7 @@ func _refresh_shop_ui() -> void:
 	_build_material_rows(gm)
 	_build_recipe_rows(gm)
 	_build_ability_rows(gm)
-	_update_gold_display()
+	_update_status_bar()
 
 func _build_material_rows(gm) -> void:
 	for child in _material_list.get_children():
@@ -693,7 +1119,7 @@ func _build_material_rows(gm) -> void:
 				return
 			if gm.buy_material(key, qty, 0.8 if _is_mira_shop else 1.0):
 				qty_label.text = "0"
-				_update_gold_display()
+				_update_status_bar()
 		)
 
 		row.add_child(sub_btn)
@@ -751,7 +1177,7 @@ func _build_recipe_rows(gm) -> void:
 			ThemeColors.style_button(unlock_btn, 14)
 			unlock_btn.pressed.connect(func():
 				if gm.buy_recipe_unlock(key):
-					_update_gold_display()
+					_update_status_bar()
 					_build_recipe_rows(gm)
 			)
 			row.add_child(unlock_btn)
@@ -796,7 +1222,7 @@ func _build_ability_rows(gm) -> void:
 			ThemeColors.style_button(buy_btn, 14)
 			buy_btn.pressed.connect(func():
 				if gm.buy_ability(key):
-					_update_gold_display()
+					_update_status_bar()
 					_build_ability_rows(gm)
 			)
 			row.add_child(buy_btn)
@@ -828,5 +1254,14 @@ func _trigger_shop_tutorial() -> void:
 	tm.start_tutorial("shop", rects)
 
 
-func _on_exp_tavern_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/ui/ExperimentalTavern.tscn")
+func _on_inventory_changed() -> void:
+	if not is_instance_valid(self):
+		return
+	if _overlay_menu != null and _overlay_menu.visible:
+		_build_backpack_list_overlay()
+
+
+func _exit_tree() -> void:
+	var gm = get_node("/root/GameManager")
+	if gm != null and gm.inventory_changed.is_connected(_on_inventory_changed):
+		gm.inventory_changed.disconnect(_on_inventory_changed)
