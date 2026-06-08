@@ -10,6 +10,7 @@ var _revenue_label: Label
 var _day_label: Label
 var _menu_panel: Panel
 var _end_night_btn: Button
+var _ledger_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
 var _dialogue_dim: Sprite2D
@@ -36,6 +37,7 @@ func _ready() -> void:
 	_order_bubble = $OrderBubble
 	_timer_bar = $TimerBar
 	_revenue_label = $RightArea/RevenuePanel/RevenueLabel
+	_ledger_btn = $RightArea/LedgerBtn
 	_day_label = $DayLabel
 	_end_night_btn = $RightArea/EndNightBtn
 	_stage_caption = $StageCaption
@@ -60,6 +62,7 @@ func _ready() -> void:
 	_menu_panel.visible = false
 
 	_end_night_btn.pressed.connect(_on_end_night)
+	_ledger_btn.pressed.connect(open_ledger)
 
 	_apply_theme()
 
@@ -113,6 +116,7 @@ func _apply_theme() -> void:
 
 	ThemeColors.style_brush_panel(_revenue_panel)
 	ThemeColors.style_button($RightArea/MenuButton, 14)
+	ThemeColors.style_button(_ledger_btn, 14)
 	ThemeColors.style_button(_end_night_btn, 14)
 
 	# 添加教程按钮到菜单
@@ -176,15 +180,15 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
 	if tex != null:
 		_customer_sprite.texture = tex
-		_customer_sprite.scale = Vector2(3.0, 3.0)
-		# 3x scale: 48x64 → 144x192. 左侧居中, 立于桌面后方.
-		# 画面 1280x720, 桌面遮罩 y=410 起. 角色脚部在 y≈360, 上半身露出.
-		_customer_sprite.position = Vector2(60, 168)
+		_customer_sprite.scale = Vector2(1.0, 1.0)
+		# 200×250 半身像, 左侧, 吧台后方.
+		# 画面 1280x720, 桌面遮罩 y=410 起. 角色腰部在 y≈350, 上半身完整露出.
+		_customer_sprite.position = Vector2(60, 100)
 		_customer_sprite.modulate = Color.WHITE
 	else:
 		_customer_sprite.texture = _make_placeholder_texture(200, 250, Color(0.35, 0.25, 0.4), Color(0.2, 0.15, 0.25))
 		_customer_sprite.scale = Vector2(1.0, 1.0)
-		_customer_sprite.position = Vector2(140, 100)
+		_customer_sprite.position = Vector2(60, 100)
 		_customer_sprite.modulate = Color.WHITE
 
 	_customer_sprite.visible = true

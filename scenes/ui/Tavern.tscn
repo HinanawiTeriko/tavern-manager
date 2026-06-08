@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="settingspanel"]
@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/ui/kitchen_container.gd" id="kc"]
 [ext_resource type="Script" path="res://scripts/ui/stir_spoon.gd" id="spoon"]
 [ext_resource type="Script" path="res://scripts/ui/inventory_overlay.gd" id="inventory_overlay"]
-[ext_resource type="PackedScene" path="res://scenes/ui/readable_desk_item.tscn" id="readable_item"]
+
 [ext_resource type="Script" path="res://scripts/ui/document_overlay.gd" id="document_overlay"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SeasoningShaker.tscn" id="ss"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/barrel.png" id="workspace_barrel"]
@@ -79,7 +79,7 @@ size = Vector2(86, 42)
 size = Vector2(104, 92)
 
 [sub_resource type="RectangleShape2D" id="tv_drop"]
-size = Vector2(410, 328)
+size = Vector2(200, 200)
 
 [sub_resource type="CapsuleShape2D" id="tv_spoon_shape"]
 radius = 8.0
@@ -118,19 +118,19 @@ offset_bottom = 115.0
 
 [node name="CustomerName" type="Label" parent="."]
 layout_mode = 0
-offset_left = 224.0
-offset_top = 168.0
-offset_right = 624.0
-offset_bottom = 198.0
+offset_left = 280.0
+offset_top = 130.0
+offset_right = 680.0
+offset_bottom = 160.0
 text = "等待中……"
 horizontal_alignment = 0
 
 [node name="OrderBubble" type="Label" parent="."]
 layout_mode = 0
-offset_left = 224.0
-offset_top = 202.0
-offset_right = 624.0
-offset_bottom = 252.0
+offset_left = 280.0
+offset_top = 170.0
+offset_right = 680.0
+offset_bottom = 220.0
 text = ""
 horizontal_alignment = 0
 
@@ -317,14 +317,22 @@ offset_bottom = 32.0
 text = "今日 +0金 | 累计 0金 | 声望 0"
 horizontal_alignment = 2
 
+[node name="LedgerBtn" type="Button" parent="RightArea"]
+layout_mode = 0
+custom_minimum_size = Vector2(80, 0)
+alignment = 1
+text = "账本"
+
 [node name="EndNightBtn" type="Button" parent="RightArea"]
 layout_mode = 0
 custom_minimum_size = Vector2(80, 0)
+alignment = 1
 text = "打烊"
 
 [node name="MenuButton" type="Button" parent="RightArea"]
 layout_mode = 0
 custom_minimum_size = Vector2(80, 0)
+alignment = 1
 text = "菜单"
 
 [node name="StageCaption" type="Label" parent="."]
@@ -431,9 +439,6 @@ shape = SubResource("tv_ground")
 one_way_collision = true
 
 [node name="Items" type="Node2D" parent="BarWorkspace/World"]
-
-[node name="Ledger" parent="BarWorkspace/World" instance=ExtResource("readable_item")]
-position = Vector2(230, 580)
 
 [node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
 position = Vector2(640, 470)
@@ -608,7 +613,7 @@ position = Vector2(0, 40)
 script = ExtResource("dc")
 
 [node name="CustomerDropArea" type="Area2D" parent="BarWorkspace"]
-position = Vector2(637, 234)
+position = Vector2(132, 258)
 
 [node name="Shape" type="CollisionShape2D" parent="BarWorkspace/CustomerDropArea"]
 shape = SubResource("tv_drop")
