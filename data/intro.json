@@ -2,44 +2,29 @@
   "bgm": "",
   "beats": [
     {
-      "text": "地下城的深处，灯火稀疏。",
-      "bg": "",
-      "fade_in": 1.2,
-      "hold": 2.2,
-      "camera": null,
-      "sfx": ""
+      "text": "人们说，世界的尽头不在远方，而在脚下。越往下，光越稀薄。",
+      "image": "res://assets/textures/intro/intro_descent.png",
+      "fade_in": 1.4, "hold": 3.0, "fade_out": 0.9
     },
     {
-      "text": "一纸契约把你带到这座被遗忘的小镇。",
-      "bg": "",
-      "fade_in": 1.0,
-      "hold": 2.4,
-      "camera": null,
-      "sfx": ""
+      "text": "可就在这最深、最冷的地方，曾有一盏不灭的灯。下井的人，临行前都来这儿喝上一杯。",
+      "image": "res://assets/textures/intro/intro_hearth_memory.png",
+      "fade_in": 1.2, "hold": 3.0, "fade_out": 0.9
     },
     {
-      "text": "镇子的尽头，立着一间空了许久的酒馆。",
-      "bg": "",
-      "fade_in": 1.0,
-      "hold": 2.4,
-      "camera": null,
-      "sfx": ""
+      "text": "后来，灯灭了。门再没开过。",
+      "image": "res://assets/textures/intro/intro_tavern_dark.png",
+      "fade_in": 1.2, "hold": 2.6, "fade_out": 0.9
     },
     {
-      "text": "从今往后，它归你打理。",
-      "bg": "",
-      "fade_in": 1.0,
-      "hold": 2.0,
-      "camera": null,
-      "sfx": ""
+      "text": "如今，一把锈钥匙落到你手里——连同这间死去的酒馆，和它欠下的一切。",
+      "image": "res://assets/textures/intro/intro_rusted_key.png",
+      "fade_in": 1.2, "hold": 2.8, "fade_out": 0.9
     },
     {
-      "text": "你深吸一口气，推开了门。",
-      "bg": "",
-      "fade_in": 1.0,
-      "hold": 1.8,
-      "camera": { "from": { "zoom": 1.0, "offset": [0, 0] }, "to": { "zoom": 1.12, "offset": [0, -30] } },
-      "sfx": ""
+      "text": "你拂去门牌上的灰，深吸一口气——推开了门。",
+      "image": "res://assets/textures/intro/intro_threshold.png",
+      "fade_in": 1.0, "hold": 2.2, "fade_out": 0.7
     }
   ]
 }

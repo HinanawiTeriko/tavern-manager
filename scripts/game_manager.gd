@@ -203,6 +203,16 @@ func start_day_map(day: int) -> void:
 	for entry in ryan_slice.day_start_ledger_entries(day):
 		if documents.add_ledger_entry_once(String(entry)):
 			play_audio_event("new_document")
+	for entry in _mira_day_start_ledger_entries(day):
+		if documents.add_ledger_entry_once(String(entry)):
+			play_audio_event("new_document")
+
+
+## Mira 线随日推进的账本预记（与 ryan_slice 的预记并行）。
+func _mira_day_start_ledger_entries(day: int) -> Array:
+	if day == 6:
+		return ["托比，黑齿矿脉护送委托，未归。"]
+	return []
 
 
 func visit_day_location(location_id: String) -> Dictionary:
@@ -213,12 +223,24 @@ func visit_day_location(location_id: String) -> Dictionary:
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
-		grant_mine_document(String(document_id))
+		grant_investigation_document(String(document_id))
+	var aff = result.get("affection", null)
+	if aff is Dictionary and String(aff.get("npc", "")) != "":
+		var npc_id := String(aff["npc"])
+		narrative.set_affection(npc_id, narrative.get_affection(npc_id) + int(aff.get("amount", 0)))
+	if bool(result.get("securesToby", false)):
+		var cost := int(result.get("goldCost", 0))
+		if economy.gold >= cost:
+			economy.add_gold(-cost)
+			narrative.set_var("toby_secured", true)
+		else:
+			result["blocked_reason"] = "not_enough_gold"
+			narrative.set_var("toby_secured", false)
 	return result
 
 
-func grant_mine_document(document_id: String) -> bool:
-	# 矿道场景捡起委托书时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
+func grant_investigation_document(document_id: String) -> bool:
+	# 物理调查场景捡起/拼合出线索时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
 	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
 	var id := String(document_id)
 	var already_owned := documents.owns_document(id)
@@ -228,7 +250,7 @@ func grant_mine_document(document_id: String) -> bool:
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
 			add_to_inventory(id, 1)
-		# 同步到大世界：拥有文档即视为已获取线索（无需先阅读），公会柜台等依赖 requiresRead 的地点可解锁
+		# 同步到大世界：拥有文档即视为已获取线索，公会柜台等依赖 requiresRead 的地点可解锁
 		day_map.set_document_owned(id, true)
 	return newly
 
@@ -384,6 +406,11 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		print("[L3] serve_drop_speed=", craft_style_data.get("serve_drop_speed", 0.0),
 			" style=", serve_style_label, " story_told=", l3["story_told"],
 			" aff_", npc_id, "=", narrative.get_affection(npc_id))
+
+	# Day12 当晚上菜结算后定格 Mira 结局：此刻温柔上菜的 +2 已计入 aff_mira，
+	# 担责判定看的是最终信任值。无论成功失败都定格（失败也是一种走向）。
+	if is_important and npc_id == "mira" and economy.current_day == 12:
+		narrative.finalize_mira_ending()
 
 	if seasoning_attribute != "":
 		narrative.set_var("seasoning_used", seasoning_attribute)

@@ -10,6 +10,7 @@ func _ready() -> void:
 	_test_get_locations_breadcrumb()
 	_test_board_requires_lead()
 	_test_reveal_tracking()
+	_test_intro_handoff_timing_contract()
 	_finish()
 
 
@@ -69,11 +70,11 @@ func _test_game_manager_routes_visits() -> void:
 	gm.visit_day_location("mercenary_board")
 	gm.visit_day_location("abandoned_mine")
 	_ok(not gm.documents.owns_document("bloodied_contract"), "visiting mine alone does not grant evidence")
-	gm.grant_mine_document("bloodied_contract")
+	gm.grant_investigation_document("bloodied_contract")
 	_ok(gm.documents.owns_document("bloodied_contract"), "digging out contract grants it via GameManager")
-	_ok(gm.inventory_sys.get_count("bloodied_contract") == 0, "evidence not in story bag before reading")
+	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "granting evidence adds it to the story bag")
 	gm.request_open_document("bloodied_contract")
-	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "read evidence enters story bag (spec 8.3)")
+	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "reading evidence does not duplicate it")
 	gm.request_open_document("bloodied_contract")
 	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "re-reading evidence does not duplicate it")
 	gm.visit_day_location("guild_counter")
@@ -107,14 +108,18 @@ func _test_get_locations_breadcrumb() -> void:
 
 
 func _test_board_requires_lead() -> void:
+	# 告示板现为市集常驻地点；门控落在「贴文」而非地点本身。
 	var map := DayMapSystem.new()
 	map.load_data()
 	map.start_day(2)
-	_ok(not _location_ids(map.get_locations()).has("mercenary_board"), "board hidden without lead")
-	_ok(not map.visit("mercenary_board").get("success", false), "board blocked without lead")
+	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board is persistent and visible")
+	# 无血斧 lead → 闲置贴文：访问成功但不产 mine_clue（矿道不解锁）
+	_ok(map.visit("mercenary_board").get("success", false), "idle board visit succeeds")
+	_ok(not _location_ids(map.get_locations()).has("abandoned_mine"), "idle board grants no mine clue")
+	# 拿到 lead → 血斧贴文激活：访问产 mine_clue → 矿道解锁
 	map.set_lead_flag("ryan_warhammer_lead", true)
-	_ok(_location_ids(map.get_locations()).has("mercenary_board"), "board appears with lead")
-	_ok(map.visit("mercenary_board").get("success", false), "board visit succeeds with lead")
+	map.visit("mercenary_board")
+	_ok(_location_ids(map.get_locations()).has("abandoned_mine"), "ryan posting unlocks the mine")
 
 
 func _test_reveal_tracking() -> void:
@@ -135,3 +140,15 @@ func _test_reveal_tracking() -> void:
 	_ok(not _location_ids(map.get_new_locations()).has("mushroom_forest"), "revealed location not 'new'")
 	map.start_day(3)
 	_ok(map.is_revealed("mushroom_forest"), "reveal persists across start_day")
+
+
+func _test_intro_handoff_timing_contract() -> void:
+	var script := FileAccess.open("res://scripts/ui/day_map_view.gd", FileAccess.READ)
+	_ok(script != null, "DayMapView script is readable")
+	if script == null:
+		return
+	var source := script.get_as_text()
+	script.close()
+	_ok(source.contains("const INTRO_HANDOFF_ZOOM"), "intro handoff uses a named zoom constant")
+	_ok(source.contains("const INTRO_HANDOFF_DURATION"), "intro handoff uses a named duration constant")
+	_ok(not source.contains("_camera.zoom = Vector2(_camera.MAX_ZOOM, _camera.MAX_ZOOM)"), "intro handoff does not start at hard max zoom")

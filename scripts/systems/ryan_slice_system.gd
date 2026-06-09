@@ -1,7 +1,9 @@
 class_name RyanSliceSystem
 extends RefCounted
 
-const LAST_DAY := 3
+# [走查脚手架] Mira 线高潮在 Day12，需游戏推进到 Day12 才能走查四结局。
+# 原值为 3（Ryan 切片收尾日）。合入 main 前须决策：正式接 30 天循环，还是回退为 3。
+const LAST_DAY := 12
 const DAY_CONFIG := {
 	1: {
 		"normal_order_limit": 2,
