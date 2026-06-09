@@ -3,15 +3,20 @@ extends Area2D
 
 signal clicked(location_id: String)
 
-const RADIUS := 20.0
+const RADIUS := 24.0
 const HOME_RADIUS := 28.0
-const CLICK_PADDING := 10.0
-const ICON_DISPLAY_SIZE := 54.0
-const HOME_ICON_DISPLAY_SIZE := 64.0
-const BASE_DISPLAY_SIZE := 72.0
-const HOME_BASE_DISPLAY_SIZE := 86.0
-const SELECTED_RING_DISPLAY_SIZE := 92.0
-const REVEAL_DISPLAY_SIZE := 104.0
+const CLICK_PADDING := 8.0
+const ICON_DISPLAY_SIZE := 40.0
+const HOME_ICON_DISPLAY_SIZE := 46.0
+const BASE_DISPLAY_SIZE := 60.0
+const HOME_BASE_DISPLAY_SIZE := 68.0
+const SELECTED_RING_DISPLAY_SIZE := 78.0
+const REVEAL_DISPLAY_SIZE := 88.0
+const MARKER_LABEL_FONT_SIZE := 12
+const MARKER_LABEL_DEFAULT_ALPHA := 0.22
+const MARKER_LABEL_HOME_ALPHA := 0.56
+const MARKER_LABEL_ACTIVE_ALPHA := 0.94
+const MARKER_LABEL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
 
 const STATE_TEXTURES := {
 	"base": "res://assets/textures/daymap/markers/marker_base.png",
@@ -57,9 +62,9 @@ func setup(loc: Dictionary) -> void:
 
 func _ready() -> void:
 	_base = _new_sprite("base", 0)
-	_hover_ring = _new_sprite("hover", 1)
-	_selected_ring = _new_sprite("selected", 1)
-	_reveal_burst = _new_sprite("reveal", 3)
+	_hover_ring = _new_sprite("hover", 4)
+	_selected_ring = _new_sprite("selected", 4)
+	_reveal_burst = _new_sprite("reveal", 5)
 	_icon = Sprite2D.new()
 	_icon.centered = true
 	_icon.z_index = 2
@@ -73,12 +78,15 @@ func _ready() -> void:
 	_shape = shape
 
 	_label = Label.new()
-	_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_label.add_theme_font_size_override("font_size", 18)
+	_label.add_theme_font_override("font", MARKER_LABEL_FONT)
+	_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_label.add_theme_font_size_override("font_size", MARKER_LABEL_FONT_SIZE)
+	_label.add_theme_constant_override("outline_size", 2)
+	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.62))
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.position = Vector2(-60, _radius() + 8)
-	_label.custom_minimum_size = Vector2(120, 0)
-	_label.size = Vector2(120, 24)
+	_label.position = Vector2(-72, _label_top_offset())
+	_label.custom_minimum_size = Vector2(144, 0)
+	_label.size = Vector2(144, 24)
 	add_child(_label)
 
 	_hover_ring.visible = false
@@ -101,7 +109,7 @@ func set_home(value: bool) -> void:
 	if _shape != null and _shape.shape is CircleShape2D:
 		(_shape.shape as CircleShape2D).radius = _radius() + CLICK_PADDING
 	if _label != null:
-		_label.position = Vector2(-60, _radius() + 8)
+		_label.position = Vector2(-72, _label_top_offset())
 	if _icon_key == "" or _icon_key == location_id:
 		_icon_key = "home"
 	_apply_icon_texture()
@@ -127,6 +135,10 @@ func play_reveal() -> void:
 
 func _radius() -> float:
 	return HOME_RADIUS if _is_home else RADIUS
+
+
+func _label_top_offset() -> float:
+	return ((HOME_BASE_DISPLAY_SIZE if _is_home else BASE_DISPLAY_SIZE) * 0.5) + 6.0
 
 
 func _new_sprite(state: String, z: int) -> Sprite2D:
@@ -157,6 +169,13 @@ func _sync_state() -> void:
 	if _selected_ring != null:
 		_selected_ring.visible = _selected
 		_selected_ring.scale = _scale_for(_selected_ring, SELECTED_RING_DISPLAY_SIZE)
+	if _label != null:
+		if _selected or _hovered:
+			_label.modulate.a = MARKER_LABEL_ACTIVE_ALPHA
+		elif _is_home:
+			_label.modulate.a = MARKER_LABEL_HOME_ALPHA
+		else:
+			_label.modulate.a = MARKER_LABEL_DEFAULT_ALPHA
 
 
 func _scale_for(sprite: Sprite2D, display_size: float) -> Vector2:

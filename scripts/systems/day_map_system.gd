@@ -17,6 +17,8 @@ var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
 var _revealed: Dictionary = {}
 var _regions: Array = []
+var _anchors: Array = []
+var _anchor_by_id: Dictionary = {}
 var _announced_postings: Dictionary = {}
 
 
@@ -33,13 +35,31 @@ func load_data(path: String = DEFAULT_PATH) -> bool:
 	_default_stamina = int(parsed.get("maxStamina", 5))
 	_stamina_by_day = parsed.get("maxStaminaByDay", {})
 	_regions = parsed.get("regions", [])
+	_anchors.clear()
+	_anchor_by_id.clear()
 	_locations.clear()
 	var region_origin := {}
 	for r in _regions:
 		region_origin[String(r.get("id", ""))] = r.get("origin", [0, 0])
-	for location in parsed.get("locations", []):
-		var rid := String(location.get("region", ""))
+	for anchor in parsed.get("anchors", []):
+		var resolved_anchor: Dictionary = (anchor as Dictionary).duplicate(true)
+		var rid := String(resolved_anchor.get("region", ""))
 		if region_origin.has(rid):
+			var o = region_origin[rid]
+			var p = resolved_anchor.get("pos", [0, 0])
+			resolved_anchor["pos"] = [float(o[0]) + float(p[0]), float(o[1]) + float(p[1])]
+		_anchors.append(resolved_anchor)
+		_anchor_by_id[String(resolved_anchor.get("id", ""))] = resolved_anchor
+	for location in parsed.get("locations", []):
+		var anchor_id := String(location.get("anchor", ""))
+		if anchor_id != "" and _anchor_by_id.has(anchor_id):
+			var anchor: Dictionary = _anchor_by_id[anchor_id]
+			location["region"] = String(anchor.get("region", location.get("region", "")))
+			location["pos"] = (anchor.get("pos", [0, 0]) as Array).duplicate()
+			location["anchor_kind"] = String(anchor.get("kind", ""))
+			location["anchor_tags"] = (anchor.get("tags", []) as Array).duplicate()
+		var rid := String(location.get("region", ""))
+		if anchor_id == "" and region_origin.has(rid):
 			var o = region_origin[rid]
 			var p = location.get("pos", [0, 0])
 			location["pos"] = [float(o[0]) + float(p[0]), float(o[1]) + float(p[1])]
@@ -224,6 +244,10 @@ func _failure(message: String) -> Dictionary:
 
 func get_regions() -> Array:
 	return _regions
+
+
+func get_anchors() -> Array:
+	return _anchors.duplicate(true)
 
 
 ## 相机边界 = 所有区域矩形的并集；无区域时回退到单屏 1280×720。

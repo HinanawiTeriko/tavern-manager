@@ -12,12 +12,14 @@ RUNTIME = ROOT / "assets" / "textures" / "daymap"
 RUNTIME_MARKERS = RUNTIME / "markers"
 SCALE = 4
 BG_SIZE = (320, 180)
+FULL_MAP_SIZE = (640, 360)
 MARKER_SIZE = (24, 24)
 MARKER_STATE_SIZE = (32, 32)
 RUNTIME_BG_SIZE = (1280, 720)
+RUNTIME_FULL_MAP_SIZE = (2560, 1440)
 RUNTIME_MARKER_SIZE = (96, 96)
 RUNTIME_MARKER_STATE_SIZE = (128, 128)
-MAX_MARKER_COLORS = 16
+MAX_MARKER_COLORS = 10
 
 MARKERS = [
     "home",
@@ -50,18 +52,24 @@ def color_count(image: Image.Image) -> int:
 def source_path(name: str) -> Path:
     if name == "daymap_bg":
         return SOURCE / "daymap_bg_native.png"
+    if name == "daymap_full":
+        return SOURCE / "daymap_full_native.png"
     return SOURCE_MARKERS / f"{name}_native.png"
 
 
 def runtime_path(name: str) -> Path:
     if name == "daymap_bg":
         return RUNTIME / "daymap_bg.png"
+    if name == "daymap_full":
+        return RUNTIME / "daymap_full.png"
     return RUNTIME_MARKERS / f"{name}.png"
 
 
 def expected_source_size(name: str) -> tuple[int, int]:
     if name == "daymap_bg":
         return BG_SIZE
+    if name == "daymap_full":
+        return FULL_MAP_SIZE
     if name in MARKER_STATES:
         return MARKER_STATE_SIZE
     return MARKER_SIZE
@@ -70,6 +78,8 @@ def expected_source_size(name: str) -> tuple[int, int]:
 def expected_runtime_size(name: str) -> tuple[int, int]:
     if name == "daymap_bg":
         return RUNTIME_BG_SIZE
+    if name == "daymap_full":
+        return RUNTIME_FULL_MAP_SIZE
     if name in MARKER_STATES:
         return RUNTIME_MARKER_STATE_SIZE
     return RUNTIME_MARKER_SIZE
@@ -88,9 +98,9 @@ def validate_source(name: str, image: Image.Image) -> None:
     if image.size != expected_size:
         raise ValueError(f"{name}: expected {expected_size}, got {image.size}")
     alpha_extrema = image.getchannel("A").getextrema()
-    if name == "daymap_bg":
+    if name == "daymap_bg" or name == "daymap_full":
         if alpha_extrema[0] < 250:
-            raise ValueError("daymap_bg: expected opaque native background")
+            raise ValueError(f"{name}: expected opaque native background")
         return
     if alpha_extrema[0] != 0 or alpha_extrema[1] == 0:
         raise ValueError(f"{name}: expected transparent and visible pixels")
@@ -112,7 +122,7 @@ def export_runtime(name: str, source: Image.Image) -> Image.Image:
 
 
 def main() -> None:
-    names = ["daymap_bg", *MARKERS, *MARKER_STATES]
+    names = ["daymap_bg", "daymap_full", *MARKERS, *MARKER_STATES]
     RUNTIME.mkdir(parents=True, exist_ok=True)
     RUNTIME_MARKERS.mkdir(parents=True, exist_ok=True)
     for name in names:

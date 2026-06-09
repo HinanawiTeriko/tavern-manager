@@ -9,6 +9,7 @@ const INVESTIGATION_SCENES := {
 	"abandoned_mine": MINE_SCENE,
 	"toby_lodging": TOBY_SCENE,
 }
+const SHOP_OVERLAY_SCENE := preload("res://scenes/ui/ShopOverlay.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
 const DAYMAP_BACKGROUND := preload("res://assets/textures/daymap/daymap_full.png")
 const DAYMAP_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
@@ -22,30 +23,13 @@ const DAYMAP_BUTTON_LEDGER_PRESSED := "res://assets/textures/daymap/ui/button_le
 const DAYMAP_LEDGER_BUTTON_SIZE := Vector2(132, 44)
 const DAYMAP_PANEL_DETAIL := "res://assets/textures/daymap/ui/panel_detail.png"
 const DAYMAP_PANEL_RESULT := "res://assets/textures/daymap/ui/panel_result.png"
-const DAYMAP_PANEL_SHOP := "res://assets/textures/daymap/ui/panel_shop.png"
-const DAYMAP_SHOP_BACKDROP := "res://assets/textures/daymap/ui/shop_backdrop.png"
-const DAYMAP_SCROLL_TRACK := "res://assets/textures/daymap/ui/scroll_track.png"
-const DAYMAP_SCROLL_GRABBER := "res://assets/textures/daymap/ui/scroll_grabber.png"
 const DAYMAP_TOPBAR_STRIP := "res://assets/textures/daymap/ui/topbar_strip.png"
-const DAYMAP_BUTTON_SHOP_SQUARE_NORMAL := "res://assets/textures/daymap/ui/button_shop_square_normal.png"
-const DAYMAP_BUTTON_SHOP_SQUARE_HOVER := "res://assets/textures/daymap/ui/button_shop_square_hover.png"
-const DAYMAP_BUTTON_SHOP_SQUARE_PRESSED := "res://assets/textures/daymap/ui/button_shop_square_pressed.png"
-const DAYMAP_BUTTON_SHOP_WIDE_NORMAL := "res://assets/textures/daymap/ui/button_shop_wide_normal.png"
-const DAYMAP_BUTTON_SHOP_WIDE_HOVER := "res://assets/textures/daymap/ui/button_shop_wide_hover.png"
-const DAYMAP_BUTTON_SHOP_WIDE_PRESSED := "res://assets/textures/daymap/ui/button_shop_wide_pressed.png"
-const DAYMAP_SHOP_SQUARE_BUTTON_SIZE := Vector2(36, 36)
-const DAYMAP_SHOP_WIDE_BUTTON_SIZE := Vector2(72, 36)
 const DAYMAP_STATUS_FONT_SIZE := 18
 const DAYMAP_HEADER_FONT_SIZE := 20
 const DAYMAP_BODY_FONT_SIZE := 15
 const DAYMAP_RESULT_FONT_SIZE := 16
 const DAYMAP_PRIMARY_BUTTON_FONT_SIZE := 18
 const DAYMAP_LEDGER_BUTTON_FONT_SIZE := 15
-const DAYMAP_SHOP_SECTION_FONT_SIZE := 15
-const DAYMAP_SHOP_ROW_FONT_SIZE := 15
-const DAYMAP_SHOP_META_FONT_SIZE := 13
-const DAYMAP_SHOP_QTY_FONT_SIZE := 16
-const DAYMAP_SHOP_BUTTON_FONT_SIZE := 13
 const DAYMAP_TOPBAR_DAY_POS := Vector2(72, 10)
 const DAYMAP_TOPBAR_DAY_SIZE := Vector2(300, 40)
 const DAYMAP_TOPBAR_STAMINA_POS := Vector2(420, 10)
@@ -59,11 +43,6 @@ const DAYMAP_DETAIL_BODY_WIDTH := 204.0
 const DAYMAP_RESULT_INSET := Vector2(48, 42)
 const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
 const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
-const DAYMAP_SHOP_BACKGROUND_POS := Vector2(0, 84)
-const DAYMAP_SHOP_BACKGROUND_SIZE := Vector2(1000, 336)
-const DAYMAP_SHOP_SCROLL_POS := Vector2(28, 106)
-const DAYMAP_SHOP_SCROLL_SIZE := Vector2(944, 300)
-const DAYMAP_SHOP_CONTENT_WIDTH := 900.0
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
 
@@ -97,16 +76,8 @@ var _overlay_layer: CanvasLayer = null
 
 # Shop
 var _shop_open: bool = false
-var _shop_close_btn: Button
-var _shop_backdrop: TextureRect
-var _shop_background: Panel
-var _shop_panel: ScrollContainer
-var _shop_title: Label
+var _shop_overlay: ShopOverlay = null
 var _gold_label: Label
-var _material_list: VBoxContainer
-var _recipe_list: VBoxContainer
-var _ability_list: VBoxContainer
-var _is_mira_shop: bool = false
 
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
@@ -157,7 +128,7 @@ func _ready() -> void:
 	if gm != null:
 		gm.register_view(self)
 
-	_build_shop_ui()
+	_ensure_shop_overlay()
 	_setup_background()
 
 
@@ -310,89 +281,6 @@ func _daymap_panel_style(path: String) -> StyleBoxTexture:
 	return style
 
 
-func _daymap_shop_panel_style() -> StyleBoxTexture:
-	var style := TextureManager.try_load_style_box(DAYMAP_PANEL_SHOP)
-	if style == null:
-		return StyleBoxTexture.new()
-	style.set_content_margin(SIDE_LEFT, 36.0)
-	style.set_content_margin(SIDE_RIGHT, 36.0)
-	style.set_content_margin(SIDE_TOP, 38.0)
-	style.set_content_margin(SIDE_BOTTOM, 28.0)
-	return style
-
-
-func _style_daymap_shop_square_button(button: Button, font_size: int = DAYMAP_SHOP_BUTTON_FONT_SIZE) -> void:
-	_style_daymap_shop_button(
-		button,
-		font_size,
-		DAYMAP_SHOP_SQUARE_BUTTON_SIZE,
-		DAYMAP_BUTTON_SHOP_SQUARE_NORMAL,
-		DAYMAP_BUTTON_SHOP_SQUARE_HOVER,
-		DAYMAP_BUTTON_SHOP_SQUARE_PRESSED
-	)
-
-
-func _style_daymap_shop_wide_button(button: Button, font_size: int = DAYMAP_SHOP_BUTTON_FONT_SIZE) -> void:
-	_style_daymap_shop_button(
-		button,
-		font_size,
-		DAYMAP_SHOP_WIDE_BUTTON_SIZE,
-		DAYMAP_BUTTON_SHOP_WIDE_NORMAL,
-		DAYMAP_BUTTON_SHOP_WIDE_HOVER,
-		DAYMAP_BUTTON_SHOP_WIDE_PRESSED
-	)
-
-
-func _style_daymap_shop_button(button: Button, font_size: int, size: Vector2, normal: String, hover: String, pressed: String) -> void:
-	button.custom_minimum_size = size
-	button.size = size
-	button.add_theme_font_override("font", DAYMAP_FONT)
-	button.add_theme_font_size_override("font_size", font_size)
-	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
-	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
-	button.add_theme_stylebox_override("normal", _daymap_shop_texture_style(normal))
-	button.add_theme_stylebox_override("hover", _daymap_shop_texture_style(hover))
-	button.add_theme_stylebox_override("pressed", _daymap_shop_texture_style(pressed))
-	button.add_theme_stylebox_override("disabled", _daymap_shop_texture_style(normal))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-
-
-func _daymap_shop_texture_style(path: String) -> StyleBoxTexture:
-	var style := TextureManager.try_load_style_box(path)
-	if style == null:
-		return StyleBoxTexture.new()
-	style.set_content_margin(SIDE_LEFT, 8.0)
-	style.set_content_margin(SIDE_RIGHT, 8.0)
-	style.set_content_margin(SIDE_TOP, 4.0)
-	style.set_content_margin(SIDE_BOTTOM, 5.0)
-	return style
-
-
-func _style_daymap_shop_scrollbar(scroll: ScrollContainer) -> void:
-	scroll.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	var vbar: VScrollBar = scroll.get_v_scroll_bar()
-	vbar.custom_minimum_size = Vector2(16, 0)
-	var track := _daymap_scroll_texture_style(DAYMAP_SCROLL_TRACK)
-	var grabber := _daymap_scroll_texture_style(DAYMAP_SCROLL_GRABBER)
-	vbar.add_theme_stylebox_override("scroll", track)
-	vbar.add_theme_stylebox_override("scroll_focus", track)
-	vbar.add_theme_stylebox_override("grabber", grabber)
-	vbar.add_theme_stylebox_override("grabber_highlight", grabber)
-	vbar.add_theme_stylebox_override("grabber_pressed", grabber)
-
-
-func _daymap_scroll_texture_style(path: String) -> StyleBoxTexture:
-	var style := TextureManager.try_load_style_box(path)
-	if style == null:
-		return StyleBoxTexture.new()
-	style.set_content_margin(SIDE_LEFT, 0.0)
-	style.set_content_margin(SIDE_RIGHT, 0.0)
-	style.set_content_margin(SIDE_TOP, 0.0)
-	style.set_content_margin(SIDE_BOTTOM, 0.0)
-	return style
-
-
 func show_day(day: int, total_days: int) -> void:
 	_day_label.text = "第 %d/%d 天 — 白天·行动" % [day, total_days]
 	var gm = get_node("/root/GameManager")
@@ -402,14 +290,9 @@ func show_day(day: int, total_days: int) -> void:
 	_result_panel.visible = false
 	_continue_btn.visible = true
 	_shop_open = false
-	if _shop_panel != null:
-		_shop_panel.visible = false
-	if _shop_backdrop != null:
-		_shop_backdrop.visible = false
-	if _shop_background != null:
-		_shop_background.visible = false
-	if _shop_close_btn != null:
-		_shop_close_btn.visible = false
+	if _shop_overlay != null:
+		_shop_overlay.visible = false
+	$MapWorld.visible = true
 	_camera.set_active(true)
 	_detail_panel.visible = false
 	_clear_selection()
@@ -767,20 +650,24 @@ func _update_gold_display() -> void:
 	if gm != null:
 		_gold_label.text = "金币：" + str(gm.economy.gold)
 
+func _ensure_shop_overlay() -> void:
+	if _shop_overlay != null:
+		return
+	_shop_overlay = SHOP_OVERLAY_SCENE.instantiate() as ShopOverlay
+	_shop_overlay.name = "ShopOverlay"
+	_shop_overlay.visible = false
+	_shop_overlay.configure(get_node("/root/GameManager"))
+	_shop_overlay.closed.connect(_close_shop)
+	$UILayer.add_child(_shop_overlay)
+
 func _open_shop() -> void:
 	_shop_open = true
+	_ensure_shop_overlay()
 	$MapWorld.visible = false
 	_detail_panel.visible = false
 	_clear_selection()
 	_camera.set_active(false)
-	if _shop_backdrop != null:
-		_shop_backdrop.visible = true
-	if _shop_background != null:
-		_shop_background.visible = true
-	_shop_panel.visible = true
-	if _shop_close_btn != null:
-		_shop_close_btn.visible = true
-	_refresh_shop_ui()
+	_shop_overlay.open()
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null and not tm.shop_first_visited:
 		tm.shop_first_visited = true
@@ -788,307 +675,14 @@ func _open_shop() -> void:
 		call_deferred("_trigger_shop_tutorial")
 
 func _close_shop() -> void:
+	if not _shop_open:
+		return
 	_shop_open = false
-	if _shop_backdrop != null:
-		_shop_backdrop.visible = false
-	if _shop_background != null:
-		_shop_background.visible = false
-	_shop_panel.visible = false
-	if _shop_close_btn != null:
-		_shop_close_btn.visible = false
+	if _shop_overlay != null:
+		_shop_overlay.visible = false
 	$MapWorld.visible = true
 	_camera.set_active(true)
 	_refresh_map()
-
-func _build_shop_ui() -> void:
-	var ui_layer := $UILayer
-	_shop_backdrop = TextureRect.new()
-	_shop_backdrop.name = "ShopBackdrop"
-	_shop_backdrop.texture = load(DAYMAP_SHOP_BACKDROP) as Texture2D
-	_shop_backdrop.position = Vector2.ZERO
-	_shop_backdrop.size = Vector2(1280, 720)
-	_shop_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_shop_backdrop.stretch_mode = TextureRect.STRETCH_SCALE
-	_shop_backdrop.visible = false
-	ui_layer.add_child(_shop_backdrop)
-	ui_layer.move_child(_shop_backdrop, 0)
-
-	_shop_close_btn = Button.new()
-	_shop_close_btn.name = "ShopCloseBtn"
-	_shop_close_btn.text = "离开"
-	_style_daymap_ledger_button(_shop_close_btn, DAYMAP_LEDGER_BUTTON_FONT_SIZE)
-	_shop_close_btn.position = Vector2(1088, 90)
-	_shop_close_btn.size = DAYMAP_LEDGER_BUTTON_SIZE
-	_shop_close_btn.visible = false
-	_shop_close_btn.pressed.connect(_close_shop)
-	ui_layer.add_child(_shop_close_btn)
-
-	var map_area := $UILayer/MapArea
-	_shop_background = Panel.new()
-	_shop_background.name = "ShopBackground"
-	_shop_background.position = DAYMAP_SHOP_BACKGROUND_POS
-	_shop_background.size = DAYMAP_SHOP_BACKGROUND_SIZE
-	_shop_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_shop_background.visible = false
-	_shop_background.add_theme_stylebox_override("panel", _daymap_shop_panel_style())
-	map_area.add_child(_shop_background)
-
-	_shop_panel = ScrollContainer.new()
-	_shop_panel.position = DAYMAP_SHOP_SCROLL_POS
-	_shop_panel.size = DAYMAP_SHOP_SCROLL_SIZE
-	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-	_shop_panel.visible = false
-	_style_daymap_shop_scrollbar(_shop_panel)
-	map_area.add_child(_shop_panel)
-
-	var shop_content = VBoxContainer.new()
-	shop_content.add_theme_constant_override("separation", 8)
-	shop_content.custom_minimum_size = Vector2(DAYMAP_SHOP_CONTENT_WIDTH, 0)
-	_shop_panel.add_child(shop_content)
-
-	_shop_title = Label.new()
-	_shop_title.custom_minimum_size = Vector2(0, 36)
-	ThemeColors.style_header(_shop_title, DAYMAP_HEADER_FONT_SIZE)
-	_apply_daymap_label_font(_shop_title)
-	shop_content.add_child(_shop_title)
-
-	var mat_title = Label.new()
-	mat_title.text = "—— 购买材料 ——"
-	mat_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	mat_title.add_theme_font_size_override("font_size", DAYMAP_SHOP_SECTION_FONT_SIZE)
-	_apply_daymap_label_font(mat_title)
-	mat_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(mat_title)
-
-	_material_list = VBoxContainer.new()
-	_material_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_material_list)
-
-	var recipe_title = Label.new()
-	recipe_title.text = "—— 解锁配方 ——"
-	recipe_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	recipe_title.add_theme_font_size_override("font_size", DAYMAP_SHOP_SECTION_FONT_SIZE)
-	_apply_daymap_label_font(recipe_title)
-	recipe_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(recipe_title)
-
-	_recipe_list = VBoxContainer.new()
-	_recipe_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_recipe_list)
-
-	var ability_title = Label.new()
-	ability_title.text = "—— 技法 ——"
-	ability_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	ability_title.add_theme_font_size_override("font_size", DAYMAP_SHOP_SECTION_FONT_SIZE)
-	_apply_daymap_label_font(ability_title)
-	ability_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(ability_title)
-
-	_ability_list = VBoxContainer.new()
-	_ability_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_ability_list)
-
-func _refresh_shop_ui() -> void:
-	var gm = get_node("/root/GameManager")
-	if gm == null:
-		return
-
-	_is_mira_shop = gm.is_mira_in_shop_today()
-	_shop_title.text = "米拉的旅行商店" if _is_mira_shop else "商店"
-
-	_build_material_rows(gm)
-	_build_recipe_rows(gm)
-	_build_ability_rows(gm)
-	_update_gold_display()
-
-func _build_material_rows(gm) -> void:
-	for child in _material_list.get_children():
-		child.queue_free()
-
-	var materials = [
-		["ale", "麦芽"], ["grape", "葡萄"], ["flour", "面粉"],
-		["meat_raw", "生肉"], ["herb", "草药"]
-	]
-
-	for pair in materials:
-		var key: String = pair[0]
-		var mat_name: String = pair[1]
-
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = mat_name
-		name_label.custom_minimum_size = Vector2(70, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		name_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_ROW_FONT_SIZE)
-		_apply_daymap_label_font(name_label)
-		row.add_child(name_label)
-
-		var discount: float = 0.8 if _is_mira_shop else 1.0
-		var price: int = gm.shop.get_material_price(key, discount)
-		var price_label = Label.new()
-		if _is_mira_shop:
-			price_label.text = str(gm.shop.get_material_price(key)) + "→" + str(price) + "金"
-		else:
-			price_label.text = str(price) + "金"
-		price_label.custom_minimum_size = Vector2(70, 0)
-		price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		price_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_META_FONT_SIZE)
-		_apply_daymap_label_font(price_label)
-		row.add_child(price_label)
-
-		var sub_btn = Button.new()
-		sub_btn.text = "-"
-		_style_daymap_shop_square_button(sub_btn, DAYMAP_SHOP_BUTTON_FONT_SIZE)
-		var qty_label = Label.new()
-		qty_label.text = "0"
-		qty_label.custom_minimum_size = Vector2(30, 0)
-		qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		qty_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-		qty_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_QTY_FONT_SIZE)
-		_apply_daymap_label_font(qty_label)
-		var add_btn = Button.new()
-		add_btn.text = "+"
-		_style_daymap_shop_square_button(add_btn, DAYMAP_SHOP_BUTTON_FONT_SIZE)
-
-		sub_btn.pressed.connect(func():
-			var cur = int(qty_label.text)
-			if cur > 0:
-				cur -= 1
-				qty_label.text = str(cur)
-		)
-		add_btn.pressed.connect(func():
-			var cur = int(qty_label.text)
-			cur += 1
-			qty_label.text = str(cur)
-		)
-
-		var buy_btn = Button.new()
-		buy_btn.text = "购买"
-		_style_daymap_shop_wide_button(buy_btn, DAYMAP_SHOP_BUTTON_FONT_SIZE)
-		buy_btn.pressed.connect(func():
-			var qty = int(qty_label.text)
-			if qty < 1:
-				return
-			if gm.buy_material(key, qty, 0.8 if _is_mira_shop else 1.0):
-				qty_label.text = "0"
-				_update_gold_display()
-		)
-
-		row.add_child(sub_btn)
-		row.add_child(qty_label)
-		row.add_child(add_btn)
-		row.add_child(buy_btn)
-		_material_list.add_child(row)
-
-func _build_recipe_rows(gm) -> void:
-	for child in _recipe_list.get_children():
-		child.queue_free()
-
-	var unlocks = [
-		["herbal_ale", "草药麦酒"], ["spiced_wine", "香料红酒"],
-		["meat_sand", "肉夹面包"], ["meat_stew", "肉汤"]
-	]
-
-	for pair in unlocks:
-		var key: String = pair[0]
-		var mat_name: String = pair[1]
-
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = mat_name
-		name_label.custom_minimum_size = Vector2(100, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		name_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_ROW_FONT_SIZE)
-		_apply_daymap_label_font(name_label)
-		row.add_child(name_label)
-
-		if gm.craft.is_recipe_unlocked(key):
-			var owned = Label.new()
-			owned.text = "已拥有"
-			owned.custom_minimum_size = Vector2(80, 0)
-			owned.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
-			owned.add_theme_font_size_override("font_size", DAYMAP_SHOP_META_FONT_SIZE)
-			_apply_daymap_label_font(owned)
-			row.add_child(owned)
-		else:
-			var price: int = gm.shop.get_recipe_unlock_price(key)
-			if price < 0:
-				_recipe_list.add_child(row)
-				continue
-			var price_label = Label.new()
-			price_label.text = str(price) + "金"
-			price_label.custom_minimum_size = Vector2(60, 0)
-			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			price_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_META_FONT_SIZE)
-			_apply_daymap_label_font(price_label)
-			row.add_child(price_label)
-
-			var unlock_btn = Button.new()
-			unlock_btn.text = "解锁"
-			_style_daymap_shop_wide_button(unlock_btn, DAYMAP_SHOP_BUTTON_FONT_SIZE)
-			unlock_btn.pressed.connect(func():
-				if gm.buy_recipe_unlock(key):
-					_update_gold_display()
-					_build_recipe_rows(gm)
-			)
-			row.add_child(unlock_btn)
-
-		_recipe_list.add_child(row)
-
-func _build_ability_rows(gm) -> void:
-	for child in _ability_list.get_children():
-		child.queue_free()
-
-	for key in gm.shop.get_ability_keys():
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = gm.shop.get_ability_name(key)
-		name_label.custom_minimum_size = Vector2(150, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		name_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_ROW_FONT_SIZE)
-		_apply_daymap_label_font(name_label)
-		row.add_child(name_label)
-
-		var owned: bool = gm.is_ability_owned(key)
-		if owned:
-			var owned_label = Label.new()
-			owned_label.text = "已掌握"
-			owned_label.custom_minimum_size = Vector2(80, 0)
-			owned_label.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
-			owned_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_META_FONT_SIZE)
-			_apply_daymap_label_font(owned_label)
-			row.add_child(owned_label)
-		else:
-			var price_label = Label.new()
-			price_label.text = str(gm.shop.get_ability_price(key)) + "金"
-			price_label.custom_minimum_size = Vector2(60, 0)
-			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			price_label.add_theme_font_size_override("font_size", DAYMAP_SHOP_META_FONT_SIZE)
-			_apply_daymap_label_font(price_label)
-			row.add_child(price_label)
-
-			var buy_btn = Button.new()
-			buy_btn.text = "购买"
-			_style_daymap_shop_wide_button(buy_btn, DAYMAP_SHOP_BUTTON_FONT_SIZE)
-			buy_btn.pressed.connect(func():
-				if gm.buy_ability(key):
-					_update_gold_display()
-					_build_ability_rows(gm)
-			)
-			row.add_child(buy_btn)
-
-		_ability_list.add_child(row)
-
 
 # 教程触发方法
 func _trigger_gather_tutorial() -> void:

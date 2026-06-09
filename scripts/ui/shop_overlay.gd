@@ -4,24 +4,29 @@ extends Control
 signal closed
 
 const FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
-const SCENE_TEX := "res://assets/textures/daymap/shop_redesign/shop_scene.png"
-const BOOK_TEX := "res://assets/textures/daymap/shop_redesign/shop_book.png"
-const BOOKMARK_MATERIALS_NORMAL := "res://assets/textures/daymap/shop_redesign/bookmark_materials_normal.png"
-const BOOKMARK_MATERIALS_SELECTED := "res://assets/textures/daymap/shop_redesign/bookmark_materials_selected.png"
-const BOOKMARK_RECIPES_NORMAL := "res://assets/textures/daymap/shop_redesign/bookmark_recipes_normal.png"
-const BOOKMARK_RECIPES_SELECTED := "res://assets/textures/daymap/shop_redesign/bookmark_recipes_selected.png"
-const BOOKMARK_ABILITIES_NORMAL := "res://assets/textures/daymap/shop_redesign/bookmark_abilities_normal.png"
-const BOOKMARK_ABILITIES_SELECTED := "res://assets/textures/daymap/shop_redesign/bookmark_abilities_selected.png"
-const ITEM_ROW_SELECTED := "res://assets/textures/daymap/shop_redesign/item_row_selected.png"
-const ITEM_ROW_DISABLED := "res://assets/textures/daymap/shop_redesign/item_row_disabled.png"
-const PURCHASE_SEAL_NORMAL := "res://assets/textures/daymap/shop_redesign/purchase_seal_normal.png"
-const PURCHASE_SEAL_PRESSED := "res://assets/textures/daymap/shop_redesign/purchase_seal_pressed.png"
-const PURCHASE_SEAL_DISABLED := "res://assets/textures/daymap/shop_redesign/purchase_seal_disabled.png"
-const CLOSE_TAG_NORMAL := "res://assets/textures/daymap/shop_redesign/close_tag_normal.png"
-const CLOSE_TAG_SELECTED := "res://assets/textures/daymap/shop_redesign/close_tag_selected.png"
-const QUANTITY_ABACUS := "res://assets/textures/daymap/shop_redesign/quantity_abacus.png"
-const STATUS_OWNED := "res://assets/textures/daymap/shop_redesign/status_owned.png"
-const STATUS_DISCOUNT := "res://assets/textures/daymap/shop_redesign/status_discount.png"
+const SHOP_BRUSH_BACKDROP := "res://assets/textures/daymap/shop_brush/shop_brush_backdrop.png"
+const SHOP_BRUSH_PANEL_LIST := "res://assets/textures/daymap/shop_brush/shop_brush_panel_list.png"
+const SHOP_BRUSH_PANEL_DETAIL := "res://assets/textures/daymap/shop_brush/shop_brush_panel_detail.png"
+const SHOP_BRUSH_ROW_NORMAL := "res://assets/textures/daymap/shop_brush/shop_brush_row_normal.png"
+const SHOP_BRUSH_ROW_HOVER := "res://assets/textures/daymap/shop_brush/shop_brush_row_hover.png"
+const SHOP_BRUSH_ROW_SELECTED := "res://assets/textures/daymap/shop_brush/shop_brush_row_selected.png"
+const SHOP_BRUSH_ROW_DISABLED := "res://assets/textures/daymap/shop_brush/shop_brush_row_disabled.png"
+const SHOP_BRUSH_CATEGORY_NORMAL := "res://assets/textures/daymap/shop_brush/shop_brush_category_normal.png"
+const SHOP_BRUSH_CATEGORY_SELECTED := "res://assets/textures/daymap/shop_brush/shop_brush_category_selected.png"
+const SHOP_BRUSH_BUTTON_NORMAL := "res://assets/textures/daymap/shop_brush/shop_brush_button_normal.png"
+const SHOP_BRUSH_BUTTON_HOVER := "res://assets/textures/daymap/shop_brush/shop_brush_button_hover.png"
+const SHOP_BRUSH_BUTTON_PRESSED := "res://assets/textures/daymap/shop_brush/shop_brush_button_pressed.png"
+const SHOP_BRUSH_BUTTON_DISABLED := "res://assets/textures/daymap/shop_brush/shop_brush_button_disabled.png"
+const SHOP_BRUSH_CLOSE_NORMAL := "res://assets/textures/daymap/shop_brush/shop_brush_close_normal.png"
+const SHOP_BRUSH_CLOSE_HOVER := "res://assets/textures/daymap/shop_brush/shop_brush_close_hover.png"
+const SHOP_BRUSH_CLOSE_PRESSED := "res://assets/textures/daymap/shop_brush/shop_brush_close_pressed.png"
+const SHOP_BRUSH_CHECKOUT_STRIP := "res://assets/textures/daymap/shop_brush/shop_brush_checkout_strip.png"
+const SHOP_BRUSH_GOLD_AREA := "res://assets/textures/daymap/shop_brush/shop_brush_gold_area.png"
+const SHOP_BRUSH_QUANTITY_MINUS := "res://assets/textures/daymap/shop_brush/shop_brush_quantity_minus.png"
+const SHOP_BRUSH_QUANTITY_BODY := "res://assets/textures/daymap/shop_brush/shop_brush_quantity_body.png"
+const SHOP_BRUSH_QUANTITY_PLUS := "res://assets/textures/daymap/shop_brush/shop_brush_quantity_plus.png"
+const SHOP_BRUSH_STATUS_OWNED := "res://assets/textures/daymap/shop_brush/shop_brush_status_owned.png"
+const SHOP_BRUSH_STATUS_DISCOUNT := "res://assets/textures/daymap/shop_brush/shop_brush_status_discount.png"
 
 const CATEGORIES := {
 	"materials": "材料",
@@ -29,7 +34,7 @@ const CATEGORIES := {
 	"abilities": "技法",
 }
 
-const ROW_SPACING := 60
+const ROW_SPACING := 76
 const MAX_VISIBLE_ROWS := 5
 
 var _gm = null
@@ -40,14 +45,14 @@ var _quantity := 0
 var _items_by_category: Dictionary = {}
 
 var _backdrop: TextureRect
-var _book: TextureRect
+var _main_panel: Control
 var _bookmarks: Control
 var _bookmark_textures: Dictionary = {}
 var _item_rows: Control
 var _row_nodes: Dictionary = {}
 var _detail_page: Control
 var _coin_tray: Control
-var _quantity_abacus: Control
+var _quantity_control: Control
 var _purchase_seal: Control
 var _close_tag: Control
 var _detail_title: Label
@@ -239,88 +244,102 @@ func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	_backdrop = _add_texture(self, "SceneBackdrop", SCENE_TEX, Vector2.ZERO, Vector2(1280, 720))
-	_book = _add_texture(self, "BookLayer", BOOK_TEX, Vector2(192, 120), Vector2(992, 416))
+	_backdrop = _add_texture(self, "ShopBackdrop", SHOP_BRUSH_BACKDROP, Vector2.ZERO, Vector2(1280, 720))
+
+	_main_panel = Control.new()
+	_main_panel.name = "MainBrushPanel"
+	_main_panel.size = Vector2(1280, 720)
+	add_child(_main_panel)
+	_add_texture(_main_panel, "ListPanel", SHOP_BRUSH_PANEL_LIST, Vector2(54, 112), Vector2(760, 396))
+	_add_texture(_main_panel, "DetailPanelArt", SHOP_BRUSH_PANEL_DETAIL, Vector2(864, 112), Vector2(360, 396))
 
 	_bookmarks = Control.new()
-	_bookmarks.name = "CategoryBookmarks"
+	_bookmarks.name = "CategoryTabs"
 	_bookmarks.size = Vector2(1280, 720)
 	add_child(_bookmarks)
-	_add_bookmark("materials", "Materials", Vector2(416, 120), BOOKMARK_MATERIALS_NORMAL, BOOKMARK_MATERIALS_SELECTED)
-	_add_bookmark("recipes", "Recipes", Vector2(568, 120), BOOKMARK_RECIPES_NORMAL, BOOKMARK_RECIPES_SELECTED)
-	_add_bookmark("abilities", "Abilities", Vector2(720, 120), BOOKMARK_ABILITIES_NORMAL, BOOKMARK_ABILITIES_SELECTED)
+	_add_bookmark("materials", "Materials", Vector2(142, 58), SHOP_BRUSH_CATEGORY_NORMAL, SHOP_BRUSH_CATEGORY_SELECTED)
+	_add_bookmark("recipes", "Recipes", Vector2(354, 58), SHOP_BRUSH_CATEGORY_NORMAL, SHOP_BRUSH_CATEGORY_SELECTED)
+	_add_bookmark("abilities", "Abilities", Vector2(566, 58), SHOP_BRUSH_CATEGORY_NORMAL, SHOP_BRUSH_CATEGORY_SELECTED)
 
 	_item_rows = Control.new()
-	_item_rows.name = "ItemRows"
-	_item_rows.position = Vector2(352, 200)
-	_item_rows.size = Vector2(464, 312)
+	_item_rows.name = "ItemList"
+	_item_rows.position = Vector2(116, 132)
+	_item_rows.size = Vector2(580, 368)
 	add_child(_item_rows)
 
 	_detail_page = Control.new()
-	_detail_page.name = "DetailPage"
-	_detail_page.position = Vector2(680, 196)
-	_detail_page.size = Vector2(380, 300)
+	_detail_page.name = "DetailPanel"
+	_detail_page.position = Vector2(908, 140)
+	_detail_page.size = Vector2(288, 360)
 	add_child(_detail_page)
-	_detail_title = _add_label(_detail_page, "Title", Vector2(0, 0), Vector2(316, 40), 19, ThemeColors.AMBER_PRIMARY)
-	_detail_desc = _add_label(_detail_page, "Description", Vector2(0, 54), Vector2(316, 64), 14, ThemeColors.TEXT_SUBTITLE)
-	_detail_uses = _add_label(_detail_page, "Uses", Vector2(0, 126), Vector2(316, 78), 14, ThemeColors.TEXT_LIGHT)
-	_detail_state = _add_label(_detail_page, "State", Vector2(0, 216), Vector2(316, 42), 14, ThemeColors.TEXT_DIM)
-	_owned_mark = _add_texture(_detail_page, "OwnedMark", STATUS_OWNED, Vector2(8, 212), Vector2(160, 56))
-	_discount_mark = _add_texture(_detail_page, "DiscountMark", STATUS_DISCOUNT, Vector2(96, 228), Vector2(160, 56))
+	_detail_title = _add_label(_detail_page, "Title", Vector2(0, 8), Vector2(288, 42), 19, ThemeColors.AMBER_PRIMARY)
+	_detail_desc = _add_label(_detail_page, "Description", Vector2(0, 60), Vector2(288, 80), 14, ThemeColors.TEXT_SUBTITLE)
+	_detail_uses = _add_label(_detail_page, "Uses", Vector2(0, 150), Vector2(288, 100), 14, ThemeColors.TEXT_LIGHT)
+	_detail_state = _add_label(_detail_page, "State", Vector2(0, 270), Vector2(288, 46), 14, ThemeColors.TEXT_DIM)
+	_owned_mark = _add_texture(_detail_page, "OwnedMark", SHOP_BRUSH_STATUS_OWNED, Vector2(0, 304), Vector2(56, 48))
+	_discount_mark = _add_texture(_detail_page, "DiscountMark", SHOP_BRUSH_STATUS_DISCOUNT, Vector2(72, 304), Vector2(56, 52))
 
 	_coin_tray = Control.new()
-	_coin_tray.name = "CoinTray"
-	_coin_tray.position = Vector2(64, 548)
-	_coin_tray.size = Vector2(320, 100)
+	_coin_tray.name = "CheckoutBar"
+	_coin_tray.position = Vector2(120, 568)
+	_coin_tray.size = Vector2(1040, 128)
 	add_child(_coin_tray)
-	_gold_label = _add_label(_coin_tray, "GoldLabel", Vector2(0, 0), Vector2(248, 38), 16, ThemeColors.TEXT_LIGHT)
-	_total_label = _add_label(_coin_tray, "TotalLabel", Vector2(0, 42), Vector2(278, 38), 16, ThemeColors.AMBER_PRIMARY)
+	_add_texture(_coin_tray, "StripArt", SHOP_BRUSH_CHECKOUT_STRIP, Vector2.ZERO, Vector2(1040, 128))
+	_add_texture(_coin_tray, "GoldAreaArt", SHOP_BRUSH_GOLD_AREA, Vector2(24, 36), Vector2(144, 56))
+	_gold_label = _add_label(_coin_tray, "GoldLabel", Vector2(176, 20), Vector2(250, 30), 16, ThemeColors.TEXT_LIGHT)
+	_total_label = _add_label(_coin_tray, "TotalLabel", Vector2(176, 64), Vector2(250, 30), 16, ThemeColors.AMBER_PRIMARY)
 
-	_quantity_abacus = Control.new()
-	_quantity_abacus.name = "QuantityAbacus"
-	_quantity_abacus.position = Vector2(496, 520)
-	_quantity_abacus.size = Vector2(192, 72)
-	add_child(_quantity_abacus)
-	_add_texture(_quantity_abacus, "AbacusArt", QUANTITY_ABACUS, Vector2.ZERO, Vector2(192, 72))
-	_minus_btn = _make_input_zone("MinusZone", Vector2(60, 72))
+	_quantity_control = Control.new()
+	_quantity_control.name = "QuantityControl"
+	_quantity_control.position = Vector2(410, 28)
+	_quantity_control.size = Vector2(320, 72)
+	_coin_tray.add_child(_quantity_control)
+	_add_texture(_quantity_control, "MinusArt", SHOP_BRUSH_QUANTITY_MINUS, Vector2.ZERO, Vector2(72, 72))
+	_add_texture(_quantity_control, "BodyArt", SHOP_BRUSH_QUANTITY_BODY, Vector2(72, 0), Vector2(176, 72))
+	_add_texture(_quantity_control, "PlusArt", SHOP_BRUSH_QUANTITY_PLUS, Vector2(248, 0), Vector2(72, 72))
+	_minus_btn = _make_input_zone("MinusZone", Vector2(72, 72))
 	_minus_btn.pressed.connect(func(): set_quantity(_quantity - 1))
-	_quantity_abacus.add_child(_minus_btn)
-	_qty_label = _add_label(_quantity_abacus, "QuantityLabel", Vector2(62, 12), Vector2(68, 44), 18, ThemeColors.AMBER_PRIMARY)
+	_quantity_control.add_child(_minus_btn)
+	_qty_label = _add_label(_quantity_control, "QuantityLabel", Vector2(102, 12), Vector2(116, 44), 18, ThemeColors.AMBER_PRIMARY)
 	_qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_plus_btn = _make_input_zone("PlusZone", Vector2(60, 72))
-	_plus_btn.position = Vector2(132, 0)
+	_plus_btn = _make_input_zone("PlusZone", Vector2(72, 72))
+	_plus_btn.position = Vector2(248, 0)
 	_plus_btn.pressed.connect(func(): set_quantity(_quantity + 1))
-	_quantity_abacus.add_child(_plus_btn)
+	_quantity_control.add_child(_plus_btn)
 
 	_purchase_seal = Control.new()
-	_purchase_seal.name = "PurchaseSeal"
-	_purchase_seal.position = Vector2(780, 544)
-	_purchase_seal.size = Vector2(184, 72)
-	add_child(_purchase_seal)
-	_seal_art = _add_texture(_purchase_seal, "SealArt", PURCHASE_SEAL_NORMAL, Vector2.ZERO, Vector2(184, 72))
-	_purchase_btn = _make_input_zone("PurchaseZone", Vector2(184, 72))
+	_purchase_seal.name = "PurchaseButton"
+	_purchase_seal.position = Vector2(720, 28)
+	_purchase_seal.size = Vector2(256, 72)
+	_coin_tray.add_child(_purchase_seal)
+	_seal_art = _add_texture(_purchase_seal, "ButtonArt", SHOP_BRUSH_BUTTON_NORMAL, Vector2.ZERO, Vector2(256, 72))
+	_purchase_btn = _make_input_zone("PurchaseZone", Vector2(256, 72))
+	_purchase_btn.mouse_entered.connect(func():
+		if not _purchase_btn.disabled:
+			_seal_art.texture = TextureManager.try_load(SHOP_BRUSH_BUTTON_HOVER)
+	)
+	_purchase_btn.mouse_exited.connect(_sync_purchase_seal)
 	_purchase_btn.button_down.connect(_set_purchase_pressed)
 	_purchase_btn.button_up.connect(_sync)
 	_purchase_btn.pressed.connect(purchase_selected)
 	_purchase_seal.add_child(_purchase_btn)
-	var purchase_label := _add_label(_purchase_seal, "PurchaseLabel", Vector2(32, 14), Vector2(120, 42), 16, ThemeColors.TEXT_LIGHT)
+	var purchase_label := _add_label(_purchase_seal, "PurchaseLabel", Vector2(36, 14), Vector2(168, 42), 16, ThemeColors.TEXT_LIGHT)
 	purchase_label.text = "购买"
 	purchase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	_close_tag = Control.new()
-	_close_tag.name = "CloseTag"
-	_close_tag.position = Vector2(952, 536)
-	_close_tag.size = Vector2(176, 104)
-	add_child(_close_tag)
-	_close_tag_art = _add_texture(_close_tag, "TagArt", CLOSE_TAG_NORMAL, Vector2.ZERO, Vector2(176, 64))
-	var close_zone := _make_input_zone("CloseZone", Vector2(176, 104))
-	close_zone.mouse_entered.connect(func(): _close_tag_art.texture = TextureManager.try_load(CLOSE_TAG_SELECTED))
-	close_zone.mouse_exited.connect(func(): _close_tag_art.texture = TextureManager.try_load(CLOSE_TAG_NORMAL))
+	_close_tag.name = "CloseButton"
+	_close_tag.position = Vector2(992, 28)
+	_close_tag.size = Vector2(72, 72)
+	_coin_tray.add_child(_close_tag)
+	_close_tag_art = _add_texture(_close_tag, "ButtonArt", SHOP_BRUSH_CLOSE_NORMAL, Vector2.ZERO, Vector2(72, 72))
+	var close_zone := _make_input_zone("CloseZone", Vector2(72, 72))
+	close_zone.mouse_entered.connect(func(): _close_tag_art.texture = TextureManager.try_load(SHOP_BRUSH_CLOSE_HOVER))
+	close_zone.mouse_exited.connect(func(): _close_tag_art.texture = TextureManager.try_load(SHOP_BRUSH_CLOSE_NORMAL))
+	close_zone.button_down.connect(func(): _close_tag_art.texture = TextureManager.try_load(SHOP_BRUSH_CLOSE_PRESSED))
+	close_zone.button_up.connect(func(): _close_tag_art.texture = TextureManager.try_load(SHOP_BRUSH_CLOSE_HOVER if close_zone.is_hovered() else SHOP_BRUSH_CLOSE_NORMAL))
 	close_zone.pressed.connect(close)
 	_close_tag.add_child(close_zone)
-	var close_label := _add_label(_close_tag, "CloseLabel", Vector2(24, 20), Vector2(120, 38), 16, ThemeColors.TEXT_LIGHT)
-	close_label.text = "离开"
-	close_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 func _add_texture(parent: Node, node_name: String, path: String, pos: Vector2, node_size: Vector2) -> TextureRect:
@@ -364,12 +383,12 @@ func _make_input_zone(node_name: String, node_size: Vector2) -> Button:
 
 
 func _add_bookmark(category: String, title: String, pos: Vector2, normal_path: String, selected_path: String) -> void:
-	var art := _add_texture(_bookmarks, title + "Art", normal_path, pos, Vector2(144, 64))
-	var zone := _make_input_zone(title + "Zone", Vector2(144, 64))
+	var art := _add_texture(_bookmarks, title + "Art", normal_path, pos, Vector2(192, 64))
+	var zone := _make_input_zone(title + "Zone", Vector2(192, 64))
 	zone.position = pos
 	zone.pressed.connect(select_category.bind(category))
 	_bookmarks.add_child(zone)
-	var label := _add_label(_bookmarks, title + "Label", pos + Vector2(18, 9), Vector2(108, 34), 15, ThemeColors.TEXT_LIGHT)
+	var label := _add_label(_bookmarks, title + "Label", pos + Vector2(34, 12), Vector2(120, 34), 15, ThemeColors.TEXT_LIGHT)
 	label.text = CATEGORIES[category]
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_bookmark_textures[category] = {
@@ -411,19 +430,20 @@ func _add_item_row(key: String, index: int) -> void:
 	var row := Control.new()
 	row.name = "Item_%s" % key
 	row.position = Vector2(0, index * ROW_SPACING)
-	row.size = Vector2(464, ROW_SPACING)
+	row.size = Vector2(580, 64)
 	_item_rows.add_child(row)
-	var art := _add_texture(row, "RowArt", ITEM_ROW_SELECTED, Vector2.ZERO, Vector2(464, 72))
-	art.visible = false
-	var zone := _make_input_zone("ClickZone", Vector2(464, ROW_SPACING))
+	var art := _add_texture(row, "RowArt", SHOP_BRUSH_ROW_NORMAL, Vector2.ZERO, Vector2(580, 64))
+	var zone := _make_input_zone("ClickZone", Vector2(580, 64))
+	zone.mouse_entered.connect(_set_row_hover.bind(key, true))
+	zone.mouse_exited.connect(_set_row_hover.bind(key, false))
 	zone.pressed.connect(select_item.bind(key))
 	row.add_child(zone)
-	var name_label := _add_label(row, "Name", Vector2(72, 8), Vector2(236, 30), 14, ThemeColors.TEXT_LIGHT)
+	var name_label := _add_label(row, "Name", Vector2(34, 8), Vector2(340, 34), 14, ThemeColors.TEXT_LIGHT)
 	name_label.text = _display_name(key)
-	var price_label := _add_label(row, "Price", Vector2(322, 8), Vector2(104, 30), 14, ThemeColors.AMBER_PRIMARY)
+	var price_label := _add_label(row, "Price", Vector2(410, 8), Vector2(120, 34), 14, ThemeColors.AMBER_PRIMARY)
 	price_label.text = str(_price_for(key)) + "金"
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_row_nodes[key] = {"root": row, "art": art}
+	_row_nodes[key] = {"root": row, "art": art, "hover": false}
 
 
 func _select_first_available() -> void:
@@ -449,7 +469,7 @@ func _sync() -> void:
 	_detail_uses.text = _uses_for_selected(_selected_key)
 	_detail_state.text = _state_for(_selected_key)
 	var material_mode := _active_category == "materials"
-	_quantity_abacus.visible = material_mode
+	_quantity_control.visible = material_mode
 	_minus_btn.visible = material_mode
 	_plus_btn.visible = material_mode
 	_qty_label.visible = material_mode
@@ -467,26 +487,35 @@ func _sync_rows() -> void:
 		var art := data["art"] as TextureRect
 		var owned := _active_category != "materials" and _is_owned(String(key))
 		if owned:
-			art.texture = TextureManager.try_load(ITEM_ROW_DISABLED)
-			art.visible = true
+			art.texture = TextureManager.try_load(SHOP_BRUSH_ROW_DISABLED)
 		elif String(key) == _selected_key:
-			art.texture = TextureManager.try_load(ITEM_ROW_SELECTED)
-			art.visible = true
+			art.texture = TextureManager.try_load(SHOP_BRUSH_ROW_SELECTED)
+		elif bool(data.get("hover", false)):
+			art.texture = TextureManager.try_load(SHOP_BRUSH_ROW_HOVER)
 		else:
-			art.visible = false
+			art.texture = TextureManager.try_load(SHOP_BRUSH_ROW_NORMAL)
+
+
+func _set_row_hover(key: String, hovered: bool) -> void:
+	if not _row_nodes.has(key):
+		return
+	var data: Dictionary = _row_nodes[key]
+	data["hover"] = hovered
+	_row_nodes[key] = data
+	_sync_rows()
 
 
 func _set_purchase_pressed() -> void:
 	if _purchase_btn != null and not _purchase_btn.disabled:
-		_seal_art.texture = TextureManager.try_load(PURCHASE_SEAL_PRESSED)
+		_seal_art.texture = TextureManager.try_load(SHOP_BRUSH_BUTTON_PRESSED)
 
 
 func _sync_purchase_seal() -> void:
 	if _seal_art == null:
 		return
-	var path := PURCHASE_SEAL_NORMAL
+	var path := SHOP_BRUSH_BUTTON_NORMAL
 	if _purchase_btn.disabled:
-		path = PURCHASE_SEAL_DISABLED
+		path = SHOP_BRUSH_BUTTON_DISABLED
 	_seal_art.texture = TextureManager.try_load(path)
 
 

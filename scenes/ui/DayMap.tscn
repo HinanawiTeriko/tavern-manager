@@ -35,19 +35,19 @@ offset_bottom = 60.0
 [node name="DayLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 24.0
+offset_left = 72.0
 offset_top = 10.0
-offset_right = 360.0
+offset_right = 372.0
 offset_bottom = 50.0
-text = "第 1/30 天 — 白天·采集"
+text = "第 1/30 天 — 白天·行动"
 vertical_alignment = 1
 
 [node name="StaminaLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 380.0
+offset_left = 420.0
 offset_top = 10.0
-offset_right = 560.0
+offset_right = 590.0
 offset_bottom = 50.0
 text = "体力：5/5"
 vertical_alignment = 1
@@ -55,28 +55,20 @@ vertical_alignment = 1
 [node name="GoldLabel" type="Label" parent="UILayer/TopBar"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 580.0
+offset_left = 610.0
 offset_top = 10.0
-offset_right = 760.0
+offset_right = 780.0
 offset_bottom = 50.0
 text = "金币：0"
 vertical_alignment = 1
 
 [node name="DocumentsBtn" type="Button" parent="UILayer/TopBar"]
 layout_mode = 0
-offset_left = 1006.0
+offset_left = 1060.0
 offset_top = 8.0
-offset_right = 1126.0
+offset_right = 1192.0
 offset_bottom = 52.0
 text = "账本"
-
-[node name="ExpTavernBtn" type="Button" parent="UILayer/TopBar"]
-layout_mode = 0
-offset_left = 1136.0
-offset_top = 8.0
-offset_right = 1268.0
-offset_bottom = 52.0
-text = "实验场景"
 
 [node name="MapArea" type="Control" parent="UILayer"]
 layout_mode = 3
@@ -95,32 +87,33 @@ offset_right = 1260.0
 offset_bottom = 560.0
 
 [node name="Name" type="Label" parent="UILayer/DetailPanel"]
-offset_left = 20.0
-offset_top = 18.0
-offset_right = 300.0
-offset_bottom = 54.0
+offset_left = 36.0
+offset_top = 34.0
+offset_right = 284.0
+offset_bottom = 70.0
 text = ""
+horizontal_alignment = 1
 
 [node name="Desc" type="Label" parent="UILayer/DetailPanel"]
-offset_left = 20.0
-offset_top = 64.0
-offset_right = 300.0
-offset_bottom = 240.0
+offset_left = 58.0
+offset_top = 88.0
+offset_right = 262.0
+offset_bottom = 228.0
 text = ""
 autowrap_mode = 2
 
 [node name="Cost" type="Label" parent="UILayer/DetailPanel"]
-offset_left = 20.0
+offset_left = 58.0
 offset_top = 250.0
-offset_right = 300.0
+offset_right = 262.0
 offset_bottom = 286.0
 text = ""
 
 [node name="Yield" type="Label" parent="UILayer/DetailPanel"]
-offset_left = 20.0
-offset_top = 296.0
-offset_right = 300.0
-offset_bottom = 380.0
+offset_left = 58.0
+offset_top = 306.0
+offset_right = 262.0
+offset_bottom = 368.0
 text = ""
 autowrap_mode = 2
 
@@ -139,10 +132,10 @@ offset_right = 990.0
 offset_bottom = 560.0
 
 [node name="ResultLabel" type="Label" parent="UILayer/ResultPanel"]
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 680.0
-offset_bottom = 340.0
+offset_left = 90.0
+offset_top = 76.0
+offset_right = 610.0
+offset_bottom = 286.0
 text = ""
 vertical_alignment = 0
 
@@ -171,64 +164,64 @@ offset_bottom = 630.0
 
 [node name="Title" type="Label" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 24.0
-offset_right = 590.0
-offset_bottom = 56.0
+offset_left = 46.0
+offset_top = 28.0
+offset_right = 574.0
+offset_bottom = 64.0
 text = "文档"
 horizontal_alignment = 1
 
 [node name="LeftBody" type="Label" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 40.0
-offset_top = 90.0
-offset_right = 295.0
-offset_bottom = 420.0
+offset_left = 58.0
+offset_top = 96.0
+offset_right = 296.0
+offset_bottom = 412.0
 text = ""
 autowrap_mode = 2
 
 [node name="RightBody" type="Label" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
 mouse_filter = 2
-offset_left = 325.0
-offset_top = 90.0
-offset_right = 580.0
-offset_bottom = 420.0
+offset_left = 326.0
+offset_top = 96.0
+offset_right = 564.0
+offset_bottom = 412.0
 text = ""
 autowrap_mode = 2
 
 [node name="PageLabel" type="Label" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
-offset_left = 270.0
-offset_top = 440.0
-offset_right = 350.0
-offset_bottom = 470.0
+offset_left = 260.0
+offset_top = 438.0
+offset_right = 360.0
+offset_bottom = 466.0
 text = "1 / 1"
 horizontal_alignment = 1
 
 [node name="PreviousBtn" type="Button" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
-offset_left = 50.0
-offset_top = 440.0
-offset_right = 150.0
-offset_bottom = 480.0
+offset_left = 58.0
+offset_top = 438.0
+offset_right = 154.0
+offset_bottom = 478.0
 text = "←"
 
 [node name="NextBtn" type="Button" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
-offset_left = 470.0
-offset_top = 440.0
-offset_right = 570.0
-offset_bottom = 480.0
+offset_left = 466.0
+offset_top = 438.0
+offset_right = 562.0
+offset_bottom = 478.0
 text = "→"
 
 [node name="CloseBtn" type="Button" parent="UILayer/DocumentOverlay/Panel"]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 490.0
-offset_right = 360.0
-offset_bottom = 525.0
+offset_left = 262.0
+offset_top = 488.0
+offset_right = 358.0
+offset_bottom = 528.0
 text = "关闭"
 
 [node name="InventoryOverlay" type="Control" parent="UILayer"]
