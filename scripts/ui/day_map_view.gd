@@ -4,11 +4,50 @@ extends Node2D
 signal gathering_confirmed(assignments: Dictionary)
 
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
+const TOBY_SCENE := preload("res://scenes/ui/TobyLodgingInvestigation.tscn")
+const INVESTIGATION_SCENES := {
+	"abandoned_mine": MINE_SCENE,
+	"toby_lodging": TOBY_SCENE,
+}
+const SHOP_OVERLAY_SCENE := preload("res://scenes/ui/ShopOverlay.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
-const DAYMAP_BACKGROUND := preload("res://assets/textures/daymap/daymap_bg.png")
+const DAYMAP_BACKGROUND := preload("res://assets/textures/daymap/daymap_full.png")
+const DAYMAP_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
+const DAYMAP_BUTTON_PRIMARY_NORMAL := "res://assets/textures/daymap/ui/button_primary_normal.png"
+const DAYMAP_BUTTON_PRIMARY_HOVER := "res://assets/textures/daymap/ui/button_primary_hover.png"
+const DAYMAP_BUTTON_PRIMARY_PRESSED := "res://assets/textures/daymap/ui/button_primary_pressed.png"
+const DAYMAP_PRIMARY_BUTTON_SIZE := Vector2(280, 72)
+const DAYMAP_BUTTON_LEDGER_NORMAL := "res://assets/textures/daymap/ui/button_ledger_normal.png"
+const DAYMAP_BUTTON_LEDGER_HOVER := "res://assets/textures/daymap/ui/button_ledger_hover.png"
+const DAYMAP_BUTTON_LEDGER_PRESSED := "res://assets/textures/daymap/ui/button_ledger_pressed.png"
+const DAYMAP_LEDGER_BUTTON_SIZE := Vector2(132, 44)
+const DAYMAP_PANEL_DETAIL := "res://assets/textures/daymap/ui/panel_detail.png"
+const DAYMAP_PANEL_RESULT := "res://assets/textures/daymap/ui/panel_result.png"
+const DAYMAP_TOPBAR_STRIP := "res://assets/textures/daymap/ui/topbar_strip.png"
+const DAYMAP_STATUS_FONT_SIZE := 18
+const DAYMAP_HEADER_FONT_SIZE := 20
+const DAYMAP_BODY_FONT_SIZE := 15
+const DAYMAP_RESULT_FONT_SIZE := 16
+const DAYMAP_PRIMARY_BUTTON_FONT_SIZE := 18
+const DAYMAP_LEDGER_BUTTON_FONT_SIZE := 15
+const DAYMAP_TOPBAR_DAY_POS := Vector2(72, 10)
+const DAYMAP_TOPBAR_DAY_SIZE := Vector2(300, 40)
+const DAYMAP_TOPBAR_STAMINA_POS := Vector2(420, 10)
+const DAYMAP_TOPBAR_STAMINA_SIZE := Vector2(170, 40)
+const DAYMAP_TOPBAR_GOLD_POS := Vector2(610, 10)
+const DAYMAP_TOPBAR_GOLD_SIZE := Vector2(170, 40)
+const DAYMAP_LEDGER_BUTTON_POS := Vector2(1060, 8)
+const DAYMAP_DETAIL_INSET := Vector2(36, 34)
+const DAYMAP_DETAIL_BODY_X := 58.0
+const DAYMAP_DETAIL_BODY_WIDTH := 204.0
+const DAYMAP_RESULT_INSET := Vector2(48, 42)
+const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
+const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
+const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
+const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
 
 const HOME_ID := "__home__"
-const HOME_POS := Vector2(345, 500)
+const HOME_POS := Vector2(760, 845)
 const INTRO_HANDOFF_ZOOM := 1.32
 const INTRO_HANDOFF_DURATION := 1.8
 
@@ -27,32 +66,18 @@ var _result_label: Label
 var _continue_btn: Button
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
-var _gathering_toast: GatheringToast
 
 var _stamina_left: int = 0
 var _max_stamina: int = 5
 
-var _mine_scene: Node = null
-var _hidden_for_mine: Array = []
+var _investigation_scene: Node = null
+var _hidden_for_investigation: Array = []
 var _overlay_layer: CanvasLayer = null
 
 # Shop
-var _is_shop_tab: bool = false
-var _gather_tab_btn: Button
-var _shop_tab_btn: Button
-var _shop_panel: ScrollContainer
-var _shop_title: Label
-var _status_label: Label
-var _option_btn: Button
-var _ledger_btn: Button
-var _overlay_menu: Panel
-var _recipe_panel: Control
-var _backpack_panel: Control
-var _encyclopedia_panel: Control
-var _material_list: VBoxContainer
-var _recipe_list: VBoxContainer
-var _ability_list: VBoxContainer
-var _is_mira_shop: bool = false
+var _shop_open: bool = false
+var _shop_overlay: ShopOverlay = null
+var _gold_label: Label
 
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
@@ -68,120 +93,192 @@ func _ready() -> void:
 	_camera = $MapWorld/Camera2D
 	_points_root = $MapWorld/Points
 	_detail_panel = $UILayer/DetailPanel
+	_setup_topbar_material()
 
-	_stamina_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_stamina_label.add_theme_font_size_override("font_size", 20)
-	ThemeColors.style_header(_day_label, 22)
-	ThemeColors.style_button(_continue_btn, 16)
-	_result_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
-	_result_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_result_label.add_theme_font_size_override("font_size", 18)
+	_stamina_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_stamina_label.add_theme_font_size_override("font_size", DAYMAP_STATUS_FONT_SIZE)
+	_apply_daymap_label_font(_stamina_label)
+	ThemeColors.style_header(_day_label, DAYMAP_HEADER_FONT_SIZE)
+	_apply_daymap_label_font(_day_label)
+	_style_daymap_primary_button(_continue_btn, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	_continue_btn.position = Vector2(210, 312)
+	_continue_btn.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	_result_panel.add_theme_stylebox_override("panel", _daymap_panel_style(DAYMAP_PANEL_RESULT))
+	_result_label.position = DAYMAP_RESULT_TEXT_POS
+	_result_label.size = DAYMAP_RESULT_TEXT_SIZE
+	_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_result_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_result_label.add_theme_font_size_override("font_size", DAYMAP_RESULT_FONT_SIZE)
+	_apply_daymap_label_font(_result_label)
 
 	_continue_btn.pressed.connect(_on_continue)
+	var documents_btn: Button = $UILayer/TopBar/DocumentsBtn
+	_style_daymap_ledger_button(documents_btn, DAYMAP_LEDGER_BUTTON_FONT_SIZE)
+	documents_btn.pressed.connect(_open_latest_document)
 
-	# 右上角按钮
-	_option_btn = $UILayer/TopBar/RightArea/OptionBtn
-	_ledger_btn = $UILayer/TopBar/RightArea/LedgerBtn
-	_status_label = $UILayer/TopBar/RightArea/StatusPanel/StatusLabel
-
-	var right_area = $UILayer/TopBar/RightArea
-	right_area.add_theme_constant_override("separation", 8)
-
-	var status_panel = $UILayer/TopBar/RightArea/StatusPanel
-	ThemeColors.style_brush_panel(status_panel)
-
-	ThemeColors.style_button(_option_btn, 14)
-	ThemeColors.style_button(_ledger_btn, 14)
-	_status_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_status_label.add_theme_font_size_override("font_size", 13)
-
-	_option_btn.pressed.connect(_toggle_menu)
-	_ledger_btn.pressed.connect(open_ledger)
-
-	_build_overlay_menu()
+	_gold_label = $UILayer/TopBar/GoldLabel
+	_gold_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	_gold_label.add_theme_font_size_override("font_size", DAYMAP_STATUS_FONT_SIZE)
+	_apply_daymap_label_font(_gold_label)
+	_apply_topbar_layout(documents_btn)
 
 	_setup_detail_panel()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
-		gm.inventory_changed.connect(_on_inventory_changed)
 
-	# 采集提示 Toast
-	_gathering_toast = GatheringToast.new()
-	_gathering_toast.visible = false
-	_gathering_toast.anchor_left = 0.5
-	_gathering_toast.anchor_right = 0.5
-	_gathering_toast.anchor_top = 0.0
-	_gathering_toast.offset_left = -210.0
-	_gathering_toast.offset_right = 210.0
-	_gathering_toast.offset_top = 10.0
-	_gathering_toast.offset_bottom = 54.0
-	$UILayer.add_child(_gathering_toast)
-
-	_build_tab_buttons()
-	_build_shop_ui()
+	_ensure_shop_overlay()
 	_setup_background()
 
 
 func _setup_background() -> void:
 	var gm = get_node("/root/GameManager")
 	var map_world := $MapWorld
-	var regions: Array = gm.day_map.get_regions()
-	# 复用 .tscn 里的 Background 节点作第一块，其余程序生成
-	var existing: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
-	for i in regions.size():
-		var r: Dictionary = regions[i]
-		var rid := String(r.get("id", ""))
-		var o = r.get("origin", [0, 0])
-		var s = r.get("size", [1280, 720])
-		var center := Vector2(float(o[0]) + float(s[0]) * 0.5, float(o[1]) + float(s[1]) * 0.5)
-		var tile: Sprite2D
-		if i == 0 and existing != null:
-			tile = existing
-		else:
-			tile = Sprite2D.new()
-			tile.z_index = -10
-			map_world.add_child(tile)
-		tile.name = "RegionTile_" + rid
-		tile.centered = true
-		tile.position = center
-		tile.texture = _region_texture(rid, Vector2(float(s[0]), float(s[1])))
-	# 注入相机边界（区域并集）→ 动态最小缩放 + 钳制
-	var b: Dictionary = gm.day_map.get_map_bounds()
-	_camera.set_bounds(b["min"], b["max"])
+	var bounds: Dictionary = gm.day_map.get_map_bounds()
+	# The art is one full-map texture; logical region data only defines bounds/anchors.
+	for child in map_world.get_children():
+		if String(child.name).begins_with("RegionTile_"):
+			child.queue_free()
+	var background: Sprite2D = get_node_or_null("MapWorld/Background") as Sprite2D
+	if background == null:
+		background = Sprite2D.new()
+		background.name = "Background"
+		map_world.add_child(background)
+		map_world.move_child(background, 0)
+	background.z_index = -10
+	background.centered = true
+	background.position = (bounds["min"] + bounds["max"]) * 0.5
+	background.texture = DAYMAP_BACKGROUND
+	_camera.set_bounds(bounds["min"], bounds["max"])
 
 
-## 区域背景纹理：优先 runtime PNG；缺席（Codex 美术未到）回退到按 id tint 的纯色占位。
-func _region_texture(rid: String, size: Vector2) -> Texture2D:
-	var path := "res://assets/textures/daymap/regions/%s.png" % rid
-	if ResourceLoader.exists(path):
-		var tex = load(path)
-		if tex != null:
-			return tex
-	var tints := {
-		"market": Color(0.32, 0.27, 0.20),
-		"wilds": Color(0.20, 0.30, 0.22),
-		"north_road": Color(0.26, 0.24, 0.28),
-		"fog": Color(0.16, 0.17, 0.19),
-	}
-	var img := Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
-	img.fill(tints.get(rid, Color(0.2, 0.2, 0.2)))
-	return ImageTexture.create_from_image(img)
+func _setup_topbar_material() -> void:
+	var topbar := $UILayer/TopBar
+	var strip := topbar.get_node_or_null("TopStrip") as TextureRect
+	if strip == null:
+		strip = TextureRect.new()
+		strip.name = "TopStrip"
+		topbar.add_child(strip)
+		topbar.move_child(strip, 0)
+	strip.texture = load(DAYMAP_TOPBAR_STRIP) as Texture2D
+	strip.position = Vector2.ZERO
+	strip.size = Vector2(1280, 60)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.stretch_mode = TextureRect.STRETCH_SCALE
+
+
+func _apply_topbar_layout(documents_btn: Button) -> void:
+	_day_label.position = DAYMAP_TOPBAR_DAY_POS
+	_day_label.size = DAYMAP_TOPBAR_DAY_SIZE
+	_stamina_label.position = DAYMAP_TOPBAR_STAMINA_POS
+	_stamina_label.size = DAYMAP_TOPBAR_STAMINA_SIZE
+	_gold_label.position = DAYMAP_TOPBAR_GOLD_POS
+	_gold_label.size = DAYMAP_TOPBAR_GOLD_SIZE
+	documents_btn.position = DAYMAP_LEDGER_BUTTON_POS
+	documents_btn.size = DAYMAP_LEDGER_BUTTON_SIZE
 
 
 func _setup_detail_panel() -> void:
-	_detail_panel.add_theme_stylebox_override("panel", ThemeColors.parchment_panel())
+	_detail_panel.size = Vector2(320, 480)
+	_detail_panel.add_theme_stylebox_override("panel", _daymap_panel_style(DAYMAP_PANEL_DETAIL))
+	var content_width := _detail_panel.size.x - DAYMAP_DETAIL_INSET.x * 2.0
 	var name_label: Label = _detail_panel.get_node("Name")
-	ThemeColors.style_header(name_label, 22)
-	for n in ["Desc", "Cost", "Yield"]:
-		var lbl: Label = _detail_panel.get_node(n)
-		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		lbl.add_theme_font_size_override("font_size", 16)
+	name_label.position = DAYMAP_DETAIL_INSET
+	name_label.size = Vector2(content_width, 36)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ThemeColors.style_header(name_label, DAYMAP_HEADER_FONT_SIZE)
+	_apply_daymap_label_font(name_label)
+	var desc_label: Label = _detail_panel.get_node("Desc")
+	desc_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 88)
+	desc_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 140)
+	var cost_label: Label = _detail_panel.get_node("Cost")
+	cost_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 256)
+	cost_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 36)
+	var yield_label: Label = _detail_panel.get_node("Yield")
+	yield_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 306)
+	yield_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 62)
+	for lbl in [desc_label, cost_label, yield_label]:
+		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+		lbl.add_theme_font_size_override("font_size", DAYMAP_BODY_FONT_SIZE)
+		lbl.add_theme_constant_override("outline_size", 1)
+		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
+		_apply_daymap_label_font(lbl)
 	var go_here: Button = _detail_panel.get_node("GoHereBtn")
-	ThemeColors.style_button(go_here, 18)
+	_style_daymap_primary_button(go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	go_here.position = Vector2(20, 388)
+	go_here.size = DAYMAP_PRIMARY_BUTTON_SIZE
 	go_here.pressed.connect(_on_go_here_pressed)
 	_detail_panel.visible = false
+
+
+func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
+	button.custom_minimum_size = DAYMAP_PRIMARY_BUTTON_SIZE
+	button.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	button.add_theme_font_override("font", DAYMAP_FONT)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
+	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.add_theme_stylebox_override("normal", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_NORMAL))
+	button.add_theme_stylebox_override("hover", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_HOVER))
+	button.add_theme_stylebox_override("pressed", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_PRESSED))
+	button.add_theme_stylebox_override("disabled", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_NORMAL))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _apply_daymap_label_font(label: Label) -> void:
+	label.add_theme_font_override("font", DAYMAP_FONT)
+
+
+func _daymap_texture_style(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		return StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, DAYMAP_BUTTON_TEXT_MARGIN_X)
+	style.set_content_margin(SIDE_RIGHT, DAYMAP_BUTTON_TEXT_MARGIN_X)
+	style.set_content_margin(SIDE_TOP, DAYMAP_BUTTON_TEXT_MARGIN_Y)
+	style.set_content_margin(SIDE_BOTTOM, DAYMAP_BUTTON_TEXT_MARGIN_Y + 1.0)
+	return style
+
+
+func _style_daymap_ledger_button(button: Button, font_size: int = DAYMAP_LEDGER_BUTTON_FONT_SIZE) -> void:
+	button.custom_minimum_size = DAYMAP_LEDGER_BUTTON_SIZE
+	button.size = DAYMAP_LEDGER_BUTTON_SIZE
+	button.add_theme_font_override("font", DAYMAP_FONT)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
+	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.add_theme_stylebox_override("normal", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_NORMAL))
+	button.add_theme_stylebox_override("hover", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_HOVER))
+	button.add_theme_stylebox_override("pressed", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_PRESSED))
+	button.add_theme_stylebox_override("disabled", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_NORMAL))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _daymap_ledger_texture_style(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		return StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, 16.0)
+	style.set_content_margin(SIDE_RIGHT, 16.0)
+	style.set_content_margin(SIDE_TOP, 5.0)
+	style.set_content_margin(SIDE_BOTTOM, 6.0)
+	return style
+
+
+func _daymap_panel_style(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		return StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, 34.0)
+	style.set_content_margin(SIDE_RIGHT, 34.0)
+	style.set_content_margin(SIDE_TOP, 32.0)
+	style.set_content_margin(SIDE_BOTTOM, 32.0)
+	return style
 
 
 func show_day(day: int, total_days: int) -> void:
@@ -192,15 +289,14 @@ func show_day(day: int, total_days: int) -> void:
 	_update_stamina_display()
 	_result_panel.visible = false
 	_continue_btn.visible = true
-	_is_shop_tab = false
-	if _gather_tab_btn != null:
-		_update_tab_appearance()
-	if _shop_panel != null:
-		_shop_panel.visible = false
+	_shop_open = false
+	if _shop_overlay != null:
+		_shop_overlay.visible = false
+	$MapWorld.visible = true
 	_camera.set_active(true)
 	_detail_panel.visible = false
-	_selected_id = ""
-	_update_status_bar()
+	_clear_selection()
+	_update_gold_display()
 	_ensure_home_marker()
 	if gm.consume_intro_handoff():
 		_play_intro_handoff()
@@ -358,10 +454,18 @@ func _on_marker_clicked(location_id: String) -> void:
 
 
 func _select_marker(location_id: String) -> void:
-	_set_marker_selected(_selected_id, false)
+	_clear_selection()
 	_selected_id = location_id
 	_set_marker_selected(location_id, true)
 	_show_detail(location_id)
+
+
+## 撤掉当前选中 marker 的金圈并清空 _selected_id。
+## 所有清空选中的入口都必须走这里，否则常驻 marker（home/已访问/商店）会残留金圈，
+## 下一次选中再叠一个 → 地图上出现两个金色选中圈。
+func _clear_selection() -> void:
+	_set_marker_selected(_selected_id, false)
+	_selected_id = ""
 
 
 func _set_marker_selected(id: String, value: bool) -> void:
@@ -393,9 +497,14 @@ func _show_detail(location_id: String) -> void:
 		return
 	_detail_panel.get_node("Name").text = String(loc.get("name", ""))
 	_detail_panel.get_node("Desc").text = String(loc.get("description", ""))
-	_detail_panel.get_node("Cost").text = "体力消耗：%d" % int(loc.get("cost", 1))
-	_detail_panel.get_node("Yield").text = _yield_text(loc)
-	go_here.text = "前往"
+	if bool(loc.get("opensShop", false)):
+		_detail_panel.get_node("Cost").text = ""
+		_detail_panel.get_node("Yield").text = ""
+		go_here.text = "进入"
+	else:
+		_detail_panel.get_node("Cost").text = "体力消耗：%d" % int(loc.get("cost", 1))
+		_detail_panel.get_node("Yield").text = _yield_text(loc)
+		go_here.text = "前往"
 	_detail_panel.visible = true
 
 
@@ -422,70 +531,79 @@ func _on_go_here_pressed() -> void:
 			return  # 亮相动画中防误触结束白天
 		get_node("/root/GameManager").enter_night_from_day_map()
 		return
+	if _is_shop_location(_selected_id):
+		_open_shop()
+		return
 	_visit_location(_selected_id)
+
+
+func _is_shop_location(location_id: String) -> bool:
+	var gm = get_node("/root/GameManager")
+	for l in gm.day_map.get_locations():
+		if String(l.get("id", "")) == location_id:
+			return bool(l.get("opensShop", false))
+	return false
 
 
 func _visit_location(location_id: String) -> void:
 	var gm = get_node("/root/GameManager")
 	var result: Dictionary = gm.visit_day_location(location_id)
-	if location_id == "abandoned_mine" and bool(result.get("success", false)):
+	if INVESTIGATION_SCENES.has(location_id) and bool(result.get("success", false)):
 		_stamina_left = gm.day_map.stamina
 		_update_stamina_display()
-		_enter_mine_investigation()
+		_enter_investigation(INVESTIGATION_SCENES[location_id])
 		return
-	var message := String(result.get("message", "访问完成。"))
-	var reward_counts: Dictionary = result.get("reward_counts", {})
-	if bool(result.get("success", false)):
-		_gathering_toast.show_rewards(reward_counts, message)
-	else:
-		_gathering_toast.show_rewards({}, message)
+	_result_label.text = String(result.get("message", "访问完成。"))
+	_result_panel.visible = true
+	_continue_btn.text = "知道了"
 	_stamina_left = gm.day_map.stamina
 	_update_stamina_display()
 	_detail_panel.visible = false
-	_selected_id = ""
+	_clear_selection()
 	_refresh_map()
 
 
-func _enter_mine_investigation() -> void:
-	if _mine_scene != null:
+func _enter_investigation(scene: PackedScene) -> void:
+	if _investigation_scene != null:
 		return
-	_mine_scene = MINE_SCENE.instantiate()
-	add_child(_mine_scene)
-	# 让出地图相机：矿道场景按 world==screen 的恒等坐标编写（物品在世界坐标拾取/命中），
+	_investigation_scene = scene.instantiate()
+	add_child(_investigation_scene)
+	# 让出地图相机：调查场景按 world==screen 的恒等坐标编写（物品在世界坐标拾取/命中），
 	# 而 DayMapCamera 此刻是缩放/平移过的当前相机。禁用它使视口回到恒等变换，否则
 	# 物品渲染错位、event.global_position 命中测试全落空（表现为"什么都点不到"）。
 	_camera.set_active(false)
 	_camera.enabled = false
-	# DocumentOverlay 提到高层 CanvasLayer，确保挖出委托书时压在矿道场景(含其 UI CanvasLayer)之上
+	# DocumentOverlay 提到高层 CanvasLayer，确保挖出/拼出委托书时压在调查场景(含其 UI CanvasLayer)之上
 	_overlay_layer = CanvasLayer.new()
 	_overlay_layer.layer = 10
 	add_child(_overlay_layer)
 	_document_overlay.reparent(_overlay_layer, false)
-	# 整层隐藏 DayMap UI（含运行时建的采集/商店标签与商店面板），避免与矿道 UI 并存、截获输入。
+	# 整层隐藏 DayMap UI（含运行时建的商店面板与离开按钮），避免与调查 UI 并存、截获输入。
 	# DocumentOverlay 已先移出 $UILayer 到 _overlay_layer，故不受此隐藏影响。
-	_hidden_for_mine = [$MapWorld, $UILayer]
-	for n in _hidden_for_mine:
+	_hidden_for_investigation = [$MapWorld, $UILayer]
+	for n in _hidden_for_investigation:
 		if n != null:
 			n.visible = false
-	_mine_scene.finished.connect(_on_mine_finished)
+	_investigation_scene.finished.connect(_on_investigation_finished)
 
 
-func _on_mine_finished() -> void:
-	if _mine_scene != null:
-		_mine_scene.queue_free()
-		_mine_scene = null
+func _on_investigation_finished() -> void:
+	if _investigation_scene != null:
+		_investigation_scene.queue_free()
+		_investigation_scene = null
 	if _overlay_layer != null:
 		# 归位到 $UILayer（其本就声明于此 CanvasLayer，屏幕空间），避免相机恢复后在世界空间错位。
 		_document_overlay.reparent($UILayer, false)
 		_overlay_layer.queue_free()
 		_overlay_layer = null
-	for n in _hidden_for_mine:
+	for n in _hidden_for_investigation:
 		if n != null and is_instance_valid(n):
 			n.visible = true
-	_hidden_for_mine.clear()
+	_hidden_for_investigation.clear()
+	# 恢复 DayMap 相机：_enter_investigation 让出了相机（enabled/active=false），离开时必须复位，
+	# 否则退出调查后地图无法平移/缩放（test_mine_enter_exit 守此）。
 	_camera.enabled = true
 	_camera.set_active(true)
-	_refresh_map()
 
 
 func _update_stamina_display() -> void:
@@ -495,417 +613,13 @@ func _on_continue() -> void:
 	_result_panel.visible = false
 
 
-func open_ledger() -> void:
+func _open_latest_document() -> void:
+	# 简化：点击按钮直接打开账本（证据文档从背包双击阅读）
 	get_node("/root/GameManager").request_open_document("ledger")
 
 
 func open_document(document: Dictionary) -> void:
 	_document_overlay.open_document(document)
-
-
-func _toggle_menu() -> void:
-	_inventory_overlay.close()
-	_document_overlay.close()
-	_overlay_menu.visible = not _overlay_menu.visible
-	if _overlay_menu.visible:
-		_build_recipe_list_overlay()
-		_build_backpack_list_overlay()
-		_build_encyclopedia_content()
-		_recipe_panel.visible = true
-		_backpack_panel.visible = false
-		_encyclopedia_panel.visible = false
-		_select_overlay_tab(_overlay_menu.get_node("TabBtns/BtnRecipes") as Button)
-
-
-func _build_overlay_menu() -> void:
-	_overlay_menu = Panel.new()
-	_overlay_menu.name = "OverlayMenu"
-	_overlay_menu.visible = false
-	_overlay_menu.z_index = 200
-	_overlay_menu.offset_left = 300.0
-	_overlay_menu.offset_top = 64.0
-	_overlay_menu.offset_right = 980.0
-	_overlay_menu.offset_bottom = 440.0
-	$UILayer.add_child(_overlay_menu)
-	ThemeColors.style_brush_panel(_overlay_menu)
-
-	# 选项卡按钮行
-	var tab_btns := HBoxContainer.new()
-	tab_btns.name = "TabBtns"
-	tab_btns.add_theme_constant_override("separation", 2)
-	tab_btns.offset_left = 14.0
-	tab_btns.offset_top = 10.0
-	tab_btns.offset_right = 666.0
-	tab_btns.offset_bottom = 42.0
-	_overlay_menu.add_child(tab_btns)
-
-	var tab_configs: Array = [
-		["BtnRecipes", "配方"], ["BtnBackpack", "背包"],
-		["BtnEncyclopedia", "图鉴"], ["BtnTutorial", "教程"],
-	]
-	for pair in tab_configs:
-		var id: String = pair[0]
-		var label: String = pair[1]
-		var btn := Button.new()
-		btn.name = id
-		btn.text = label
-		btn.custom_minimum_size = Vector2(60, 30)
-		ThemeColors.style_brush_tab_button(btn)
-		tab_btns.add_child(btn)
-
-	# 配方面板
-	_recipe_panel = Control.new()
-	_recipe_panel.name = "RecipePanel"
-	_recipe_panel.visible = true
-	_recipe_panel.offset_left = 10.0
-	_recipe_panel.offset_top = 50.0
-	_recipe_panel.offset_right = 670.0
-	_recipe_panel.offset_bottom = 370.0
-	_overlay_menu.add_child(_recipe_panel)
-
-	var recipe_scroll := ScrollContainer.new()
-	recipe_scroll.name = "RecipeScroll"
-	recipe_scroll.offset_right = 660.0
-	recipe_scroll.offset_bottom = 320.0
-	_recipe_panel.add_child(recipe_scroll)
-
-	var recipe_list := VBoxContainer.new()
-	recipe_list.name = "RecipeList"
-	recipe_scroll.add_child(recipe_list)
-
-	# 背包面板
-	_backpack_panel = Control.new()
-	_backpack_panel.name = "BackpackPanel"
-	_backpack_panel.visible = false
-	_backpack_panel.offset_left = 10.0
-	_backpack_panel.offset_top = 50.0
-	_backpack_panel.offset_right = 670.0
-	_backpack_panel.offset_bottom = 370.0
-	_overlay_menu.add_child(_backpack_panel)
-
-	var backpack_scroll := ScrollContainer.new()
-	backpack_scroll.name = "BackpackScroll"
-	backpack_scroll.offset_right = 660.0
-	backpack_scroll.offset_bottom = 320.0
-	_backpack_panel.add_child(backpack_scroll)
-
-	var backpack_list := VBoxContainer.new()
-	backpack_list.name = "BackpackList"
-	backpack_scroll.add_child(backpack_list)
-
-	# 图鉴面板
-	_encyclopedia_panel = Control.new()
-	_encyclopedia_panel.name = "EncyclopediaPanel"
-	_encyclopedia_panel.visible = false
-	_encyclopedia_panel.offset_left = 10.0
-	_encyclopedia_panel.offset_top = 50.0
-	_encyclopedia_panel.offset_right = 670.0
-	_encyclopedia_panel.offset_bottom = 370.0
-	_overlay_menu.add_child(_encyclopedia_panel)
-
-	var encyc_scroll := ScrollContainer.new()
-	encyc_scroll.name = "EncycScroll"
-	encyc_scroll.offset_right = 660.0
-	encyc_scroll.offset_bottom = 320.0
-	_encyclopedia_panel.add_child(encyc_scroll)
-
-	var encyc_content := VBoxContainer.new()
-	encyc_content.name = "EncycContent"
-	encyc_scroll.add_child(encyc_content)
-
-	# 关闭按钮
-	var close_btn := Button.new()
-	close_btn.name = "CloseBtn"
-	close_btn.text = "关闭"
-	close_btn.custom_minimum_size = Vector2(80, 34)
-	close_btn.offset_left = 300.0
-	close_btn.offset_top = 378.0
-	close_btn.offset_right = 380.0
-	close_btn.offset_bottom = 414.0
-	close_btn.pressed.connect(_toggle_menu)
-	_overlay_menu.add_child(close_btn)
-	ThemeColors.style_brush_button(close_btn, 14)
-
-	# 整理按钮
-	var tidy_btn := Button.new()
-	tidy_btn.name = "BtnTidy"
-	tidy_btn.text = "整理桌面"
-	tidy_btn.custom_minimum_size = Vector2(80, 34)
-	tidy_btn.offset_left = 385.0
-	tidy_btn.offset_top = 378.0
-	tidy_btn.offset_right = 465.0
-	tidy_btn.offset_bottom = 414.0
-	_overlay_menu.add_child(tidy_btn)
-	ThemeColors.style_brush_button(tidy_btn, 14)
-
-	# 选项卡信号
-	tab_btns.get_node("BtnRecipes").pressed.connect(func():
-		_recipe_panel.visible = true
-		_backpack_panel.visible = false
-		_encyclopedia_panel.visible = false
-		_select_overlay_tab(tab_btns.get_node("BtnRecipes") as Button)
-	)
-	tab_btns.get_node("BtnBackpack").pressed.connect(func():
-		_recipe_panel.visible = false
-		_inventory_overlay.close()
-		_inventory_overlay.open()
-		_overlay_menu.visible = false
-	)
-	tab_btns.get_node("BtnEncyclopedia").pressed.connect(func():
-		_recipe_panel.visible = false
-		_backpack_panel.visible = false
-		_encyclopedia_panel.visible = true
-		_select_overlay_tab(tab_btns.get_node("BtnEncyclopedia") as Button)
-	)
-	tab_btns.get_node("BtnTutorial").pressed.connect(func():
-		var tm = get_node_or_null("/root/TutorialManager")
-		if tm != null:
-			tm.replay_all()
-			# 显示简单提示
-		_select_overlay_tab(tab_btns.get_node("BtnTutorial") as Button)
-	)
-
-
-func _select_overlay_tab(selected: Button) -> void:
-	var tab_btns = selected.get_parent()
-	for child in tab_btns.get_children():
-		if child is Button:
-			ThemeColors.set_brush_selected(child, child == selected)
-
-
-func _build_recipe_list_overlay() -> void:
-	var gm = get_node("/root/GameManager")
-	var recipe_list = _overlay_menu.get_node("RecipePanel/RecipeScroll/RecipeList")
-	for child in recipe_list.get_children():
-		child.queue_free()
-
-	var keys: Array = gm.craft.recipes.keys()
-	keys.sort()
-	for product_key in keys:
-		var recipe: Dictionary = gm.craft.recipes[product_key]
-		var container: String = recipe.get("container", "")
-		var ingredients: Array = recipe.get("ingredients", [])
-		if container == "" or ingredients.is_empty():
-			continue
-
-		var product_data: Dictionary = gm.craft.get_item(product_key)
-		var locked: bool = bool(recipe.get("requires_purchase", false)) and not gm.craft.is_recipe_unlocked(product_key)
-
-		var row_panel := PanelContainer.new()
-		row_panel.custom_minimum_size = Vector2(0.0, 34.0)
-		ThemeColors.style_brush_content_panel(row_panel)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row_panel.add_child(row)
-
-		var icon_tex = gm.try_load_material_icon(product_key)
-		if icon_tex != null:
-			var tex_rect = TextureRect.new()
-			tex_rect.texture = icon_tex
-			tex_rect.custom_minimum_size = Vector2(28, 28)
-			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(tex_rect)
-
-		var ingr_names := PackedStringArray()
-		for ing in ingredients:
-			ingr_names.append(String(gm.craft.get_item(ing).get("name", ing)))
-		var product_name: String = product_data.get("name", product_key)
-		var price: int = int(product_data.get("price", 0))
-
-		var text: String = "%s  %d金   ← %s" % [product_name, price, "＋".join(ingr_names)]
-		if locked:
-			text += "  （需解锁）"
-
-		var name_label = Label.new()
-		name_label.text = " " + text
-		ThemeColors.style_brush_label(name_label, 13, Color(0.55, 0.5, 0.45) if locked else ThemeColors.TEXT_LIGHT)
-		row.add_child(name_label)
-
-		recipe_list.add_child(row_panel)
-
-
-func _build_backpack_list_overlay() -> void:
-	var gm = get_node("/root/GameManager")
-	var inventory: Dictionary = gm.inventory
-	var backpack_list = _overlay_menu.get_node("BackpackPanel/BackpackScroll/BackpackList")
-	for child in backpack_list.get_children():
-		child.queue_free()
-
-	for mat in inventory:
-		var count: int = inventory[mat]
-		if count <= 0:
-			continue
-
-		var row_panel := PanelContainer.new()
-		row_panel.custom_minimum_size = Vector2(0.0, 30.0)
-		ThemeColors.style_brush_content_panel(row_panel)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row_panel.add_child(row)
-
-		var icon_tex = gm.try_load_material_icon(mat)
-		if icon_tex != null:
-			var tex_rect = TextureRect.new()
-			tex_rect.texture = icon_tex
-			tex_rect.custom_minimum_size = Vector2(24, 24)
-			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(tex_rect)
-
-		var mat_item: Dictionary = gm.craft.get_item(mat)
-		var display_name = mat_item.get("name", mat)
-		var label = Label.new()
-		label.text = display_name + "  x" + str(count)
-		label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		label.add_theme_font_size_override("font_size", 13)
-		row.add_child(label)
-
-		backpack_list.add_child(row_panel)
-
-
-const ATTRIBUTE_NAMES: Dictionary = {
-	"might": "蛮勇之力",
-	"alacrity": "疾风之敏",
-	"fortune": "命运眷顾",
-	"arcana": "奥术灵韵",
-	"vitality": "磐石之躯",
-	"charm": "魅惑之息",
-}
-
-
-func _build_encyclopedia_content() -> void:
-	var gm = get_node("/root/GameManager")
-	var content: VBoxContainer = _encyclopedia_panel.get_node("EncycScroll/EncycContent")
-	for child in content.get_children():
-		child.queue_free()
-
-	# 食品图鉴
-	var food_header := Label.new()
-	food_header.text = "— 食品图鉴 —"
-	food_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	food_header.add_theme_font_size_override("font_size", 16)
-	content.add_child(food_header)
-	content.add_child(_make_spacer(4))
-
-	var attr_data: Dictionary = _load_food_attributes()
-
-	var product_keys: Array = []
-	for key in gm.craft.items:
-		var item: Dictionary = gm.craft.items[key]
-		if item.get("type", "") == "product":
-			product_keys.append(key)
-	product_keys.sort()
-
-	for product_key in product_keys:
-		var item: Dictionary = gm.craft.get_item(product_key)
-		var attrs: Dictionary = attr_data.get(product_key, {})
-		var row_panel := PanelContainer.new()
-		row_panel.custom_minimum_size = Vector2(0, 28)
-		ThemeColors.style_brush_content_panel(row_panel)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
-		row_panel.add_child(row)
-
-		var icon_tex = gm.try_load_material_icon(product_key)
-		if icon_tex != null:
-			var tex_rect = TextureRect.new()
-			tex_rect.texture = icon_tex
-			tex_rect.custom_minimum_size = Vector2(20, 20)
-			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(tex_rect)
-
-		var name_label := Label.new()
-		name_label.text = " %s  %d金" % [item.get("name", product_key), int(item.get("price", 0))]
-		name_label.custom_minimum_size = Vector2(170, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 12)
-		row.add_child(name_label)
-
-		if attrs.is_empty():
-			var none_l := Label.new()
-			none_l.text = "（无特殊属性）"
-			none_l.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			none_l.add_theme_font_size_override("font_size", 11)
-			row.add_child(none_l)
-		else:
-			for attr_key in attrs:
-				var val: int = int(attrs[attr_key])
-				var attr_name: String = ATTRIBUTE_NAMES.get(attr_key, attr_key)
-				var sign := "+" if val >= 0 else ""
-				var al := Label.new()
-				al.text = "%s%s%d" % [attr_name, sign, val]
-				al.add_theme_color_override("font_color", _attribute_color(attr_key))
-				al.add_theme_font_size_override("font_size", 11)
-				row.add_child(al)
-
-		content.add_child(row_panel)
-
-	# 剧情道具
-	content.add_child(_make_spacer(6))
-	var story_header := Label.new()
-	story_header.text = "— 剧情道具 —"
-	story_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	story_header.add_theme_font_size_override("font_size", 16)
-	content.add_child(story_header)
-	content.add_child(_make_spacer(4))
-
-	var doc_sys = gm.documents if gm != null else null
-	if doc_sys != null and doc_sys.has_method("get_owned_documents"):
-		for doc_id in doc_sys.get_owned_documents():
-			if doc_id == "ledger":
-				continue
-			var doc: Dictionary = doc_sys.get_document(doc_id)
-			if doc.is_empty():
-				continue
-			var dp := PanelContainer.new()
-			dp.custom_minimum_size = Vector2(0, 28)
-			ThemeColors.style_brush_content_panel(dp)
-			var dh := HBoxContainer.new()
-			dp.add_child(dh)
-			var dn := Label.new()
-			dn.text = " %s" % doc.get("title", doc_id)
-			dn.custom_minimum_size = Vector2(180, 0)
-			dn.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-			dn.add_theme_font_size_override("font_size", 13)
-			dh.add_child(dn)
-			var dd := Label.new()
-			dd.text = doc.get("description", "")
-			dd.custom_minimum_size = Vector2(420, 0)
-			dd.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			dd.add_theme_font_size_override("font_size", 11)
-			dh.add_child(dd)
-			content.add_child(dp)
-
-
-func _make_spacer(height: int) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(0, height)
-	return c
-
-
-func _attribute_color(attr_key: String) -> Color:
-	match attr_key:
-		"might": return Color(0.95, 0.3, 0.2)
-		"alacrity": return Color(0.2, 0.7, 0.4)
-		"fortune": return Color(0.95, 0.85, 0.1)
-		"arcana": return Color(0.5, 0.3, 0.9)
-		"vitality": return Color(0.3, 0.5, 0.8)
-		"charm": return Color(0.95, 0.45, 0.65)
-		_: return ThemeColors.TEXT_SUBTITLE
-
-
-func _load_food_attributes() -> Dictionary:
-	var file = FileAccess.open("res://data/food_attributes.json", FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var data = JSON.parse_string(text)
-	if data == null or not data is Dictionary:
-		return {}
-	return data
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -916,8 +630,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _inventory_overlay.visible:
 			_inventory_overlay.close()
 			get_viewport().set_input_as_handled()
-		elif _overlay_menu != null and _overlay_menu.visible:
-			_overlay_menu.visible = false
+		elif _shop_open:
+			_close_shop()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("inventory_toggle"):
 		if _inventory_overlay.visible:
@@ -931,304 +645,44 @@ func _on_inventory_item_dropped(item_key: String, _global_position: Vector2) -> 
 	# DayMap 场景无法拖出物品使用，意外拖出时放回背包
 	get_node("/root/GameManager").add_to_inventory(item_key, 1)
 
-func _update_status_bar() -> void:
+func _update_gold_display() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm != null:
-		_status_label.text = "金币：%d | 声望：%d" % [gm.economy.gold, gm.economy.reputation]
+		_gold_label.text = "金币：" + str(gm.economy.gold)
 
-func _build_tab_buttons() -> void:
-	# 居中分段标签页，挂在 UILayer 顶部（不放进 MapArea，避免随商店容器移动）
-	var tab_row = HBoxContainer.new()
-	tab_row.add_theme_constant_override("separation", 0)
-	tab_row.position = Vector2(530, 66)
+func _ensure_shop_overlay() -> void:
+	if _shop_overlay != null:
+		return
+	_shop_overlay = SHOP_OVERLAY_SCENE.instantiate() as ShopOverlay
+	_shop_overlay.name = "ShopOverlay"
+	_shop_overlay.visible = false
+	_shop_overlay.configure(get_node("/root/GameManager"))
+	_shop_overlay.closed.connect(_close_shop)
+	$UILayer.add_child(_shop_overlay)
 
-	_gather_tab_btn = Button.new()
-	_gather_tab_btn.text = "采集"
-	_gather_tab_btn.custom_minimum_size = Vector2(110, 38)
-	ThemeColors.style_button(_gather_tab_btn, 16)
-	_gather_tab_btn.pressed.connect(_switch_tab.bind(false))
-	tab_row.add_child(_gather_tab_btn)
-
-	_shop_tab_btn = Button.new()
-	_shop_tab_btn.text = "商店"
-	_shop_tab_btn.custom_minimum_size = Vector2(110, 38)
-	ThemeColors.style_button(_shop_tab_btn, 16)
-	_shop_tab_btn.pressed.connect(_switch_tab.bind(true))
-	tab_row.add_child(_shop_tab_btn)
-
-	$UILayer.add_child(tab_row)
-
-	_update_tab_appearance()
-
-func _switch_tab(shop: bool) -> void:
-	_is_shop_tab = shop
-	_update_tab_appearance()
-	$MapWorld.visible = not shop
+func _open_shop() -> void:
+	_shop_open = true
+	_ensure_shop_overlay()
+	$MapWorld.visible = false
 	_detail_panel.visible = false
-	_camera.set_active(not shop)
-	_shop_panel.visible = shop
-	if shop:
-		_refresh_shop_ui()
-		var tm = get_node_or_null("/root/TutorialManager")
-		if tm != null and not tm.shop_first_visited:
-			tm.shop_first_visited = true
-			tm._save_state()
-			call_deferred("_trigger_shop_tutorial")
+	_clear_selection()
+	_camera.set_active(false)
+	_shop_overlay.open()
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and not tm.shop_first_visited:
+		tm.shop_first_visited = true
+		tm._save_state()
+		call_deferred("_trigger_shop_tutorial")
 
-func _update_tab_appearance() -> void:
-	if _gather_tab_btn == null or _shop_tab_btn == null:
+func _close_shop() -> void:
+	if not _shop_open:
 		return
-	_gather_tab_btn.modulate = Color.DIM_GRAY if _is_shop_tab else Color.WHITE
-	_shop_tab_btn.modulate = Color.WHITE if _is_shop_tab else Color.DIM_GRAY
-
-func _build_shop_ui() -> void:
-	_shop_panel = ScrollContainer.new()
-	_shop_panel.anchor_left = 0.0; _shop_panel.anchor_right = 1.0
-	_shop_panel.offset_left = 0; _shop_panel.offset_top = 95
-	_shop_panel.offset_right = 0; _shop_panel.offset_bottom = 420
-	_shop_panel.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_shop_panel.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-	_shop_panel.visible = false
-	$UILayer/MapArea.add_child(_shop_panel)
-
-	var shop_content = VBoxContainer.new()
-	shop_content.add_theme_constant_override("separation", 8)
-	_shop_panel.add_child(shop_content)
-
-	_shop_title = Label.new()
-	_shop_title.custom_minimum_size = Vector2(0, 36)
-	ThemeColors.style_header(_shop_title, 22)
-	shop_content.add_child(_shop_title)
-
-	var mat_title = Label.new()
-	mat_title.text = "—— 购买材料 ——"
-	mat_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	mat_title.add_theme_font_size_override("font_size", 16)
-	mat_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(mat_title)
-
-	_material_list = VBoxContainer.new()
-	_material_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_material_list)
-
-	var recipe_title = Label.new()
-	recipe_title.text = "—— 解锁配方 ——"
-	recipe_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	recipe_title.add_theme_font_size_override("font_size", 16)
-	recipe_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(recipe_title)
-
-	_recipe_list = VBoxContainer.new()
-	_recipe_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_recipe_list)
-
-	var ability_title = Label.new()
-	ability_title.text = "—— 技法 ——"
-	ability_title.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	ability_title.add_theme_font_size_override("font_size", 16)
-	ability_title.custom_minimum_size = Vector2(0, 30)
-	shop_content.add_child(ability_title)
-
-	_ability_list = VBoxContainer.new()
-	_ability_list.add_theme_constant_override("separation", 4)
-	shop_content.add_child(_ability_list)
-
-func _refresh_shop_ui() -> void:
-	var gm = get_node("/root/GameManager")
-	if gm == null:
-		return
-
-	_is_mira_shop = gm.is_mira_in_shop_today()
-	_shop_title.text = "米拉的旅行商店" if _is_mira_shop else "商店"
-
-	_build_material_rows(gm)
-	_build_recipe_rows(gm)
-	_build_ability_rows(gm)
-	_update_status_bar()
-
-func _build_material_rows(gm) -> void:
-	for child in _material_list.get_children():
-		child.queue_free()
-
-	var materials = [
-		["ale", "麦芽"], ["grape", "葡萄"], ["flour", "面粉"],
-		["meat_raw", "生肉"], ["herb", "草药"]
-	]
-
-	for pair in materials:
-		var key: String = pair[0]
-		var mat_name: String = pair[1]
-
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = mat_name
-		name_label.custom_minimum_size = Vector2(70, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 16)
-		row.add_child(name_label)
-
-		var discount: float = 0.8 if _is_mira_shop else 1.0
-		var price: int = gm.shop.get_material_price(key, discount)
-		var price_label = Label.new()
-		if _is_mira_shop:
-			price_label.text = str(gm.shop.get_material_price(key)) + "→" + str(price) + "金"
-		else:
-			price_label.text = str(price) + "金"
-		price_label.custom_minimum_size = Vector2(70, 0)
-		price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		price_label.add_theme_font_size_override("font_size", 14)
-		row.add_child(price_label)
-
-		var sub_btn = Button.new()
-		sub_btn.text = "-"
-		sub_btn.custom_minimum_size = Vector2(36, 30)
-		ThemeColors.style_button(sub_btn, 14)
-		var qty_label = Label.new()
-		qty_label.text = "0"
-		qty_label.custom_minimum_size = Vector2(30, 0)
-		qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		qty_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-		qty_label.add_theme_font_size_override("font_size", 18)
-		var add_btn = Button.new()
-		add_btn.text = "+"
-		add_btn.custom_minimum_size = Vector2(36, 30)
-		ThemeColors.style_button(add_btn, 14)
-
-		sub_btn.pressed.connect(func():
-			var cur = int(qty_label.text)
-			if cur > 0:
-				cur -= 1
-				qty_label.text = str(cur)
-		)
-		add_btn.pressed.connect(func():
-			var cur = int(qty_label.text)
-			cur += 1
-			qty_label.text = str(cur)
-		)
-
-		var buy_btn = Button.new()
-		buy_btn.text = "购买"
-		buy_btn.custom_minimum_size = Vector2(56, 30)
-		ThemeColors.style_button(buy_btn, 14)
-		buy_btn.pressed.connect(func():
-			var qty = int(qty_label.text)
-			if qty < 1:
-				return
-			if gm.buy_material(key, qty, 0.8 if _is_mira_shop else 1.0):
-				qty_label.text = "0"
-				_update_status_bar()
-		)
-
-		row.add_child(sub_btn)
-		row.add_child(qty_label)
-		row.add_child(add_btn)
-		row.add_child(buy_btn)
-		_material_list.add_child(row)
-
-func _build_recipe_rows(gm) -> void:
-	for child in _recipe_list.get_children():
-		child.queue_free()
-
-	var unlocks = [
-		["herbal_ale", "草药麦酒"], ["spiced_wine", "香料红酒"],
-		["meat_sand", "肉夹面包"], ["meat_stew", "肉汤"]
-	]
-
-	for pair in unlocks:
-		var key: String = pair[0]
-		var mat_name: String = pair[1]
-
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = mat_name
-		name_label.custom_minimum_size = Vector2(100, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 16)
-		row.add_child(name_label)
-
-		if gm.craft.is_recipe_unlocked(key):
-			var owned = Label.new()
-			owned.text = "已拥有"
-			owned.custom_minimum_size = Vector2(80, 0)
-			owned.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
-			owned.add_theme_font_size_override("font_size", 14)
-			row.add_child(owned)
-		else:
-			var price: int = gm.shop.get_recipe_unlock_price(key)
-			if price < 0:
-				_recipe_list.add_child(row)
-				continue
-			var price_label = Label.new()
-			price_label.text = str(price) + "金"
-			price_label.custom_minimum_size = Vector2(60, 0)
-			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			price_label.add_theme_font_size_override("font_size", 14)
-			row.add_child(price_label)
-
-			var unlock_btn = Button.new()
-			unlock_btn.text = "解锁"
-			unlock_btn.custom_minimum_size = Vector2(56, 30)
-			ThemeColors.style_button(unlock_btn, 14)
-			unlock_btn.pressed.connect(func():
-				if gm.buy_recipe_unlock(key):
-					_update_status_bar()
-					_build_recipe_rows(gm)
-			)
-			row.add_child(unlock_btn)
-
-		_recipe_list.add_child(row)
-
-func _build_ability_rows(gm) -> void:
-	for child in _ability_list.get_children():
-		child.queue_free()
-
-	for key in gm.shop.get_ability_keys():
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size = Vector2(0, 40)
-
-		var name_label = Label.new()
-		name_label.text = gm.shop.get_ability_name(key)
-		name_label.custom_minimum_size = Vector2(150, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 16)
-		row.add_child(name_label)
-
-		var owned: bool = gm.is_ability_owned(key)
-		if owned:
-			var owned_label = Label.new()
-			owned_label.text = "已掌握"
-			owned_label.custom_minimum_size = Vector2(80, 0)
-			owned_label.add_theme_color_override("font_color", ThemeColors.TEXT_DIM)
-			owned_label.add_theme_font_size_override("font_size", 14)
-			row.add_child(owned_label)
-		else:
-			var price_label = Label.new()
-			price_label.text = str(gm.shop.get_ability_price(key)) + "金"
-			price_label.custom_minimum_size = Vector2(60, 0)
-			price_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			price_label.add_theme_font_size_override("font_size", 14)
-			row.add_child(price_label)
-
-			var buy_btn = Button.new()
-			buy_btn.text = "购买"
-			buy_btn.custom_minimum_size = Vector2(56, 30)
-			ThemeColors.style_button(buy_btn, 14)
-			buy_btn.pressed.connect(func():
-				if gm.buy_ability(key):
-					_update_status_bar()
-					_build_ability_rows(gm)
-			)
-			row.add_child(buy_btn)
-
-		_ability_list.add_child(row)
-
+	_shop_open = false
+	if _shop_overlay != null:
+		_shop_overlay.visible = false
+	$MapWorld.visible = true
+	_camera.set_active(true)
+	_refresh_map()
 
 # 教程触发方法
 func _trigger_gather_tutorial() -> void:
@@ -1252,16 +706,3 @@ func _trigger_shop_tutorial() -> void:
 		"MapArea": [140, 80, 1000, 420],
 	}
 	tm.start_tutorial("shop", rects)
-
-
-func _on_inventory_changed() -> void:
-	if not is_instance_valid(self):
-		return
-	if _overlay_menu != null and _overlay_menu.visible:
-		_build_backpack_list_overlay()
-
-
-func _exit_tree() -> void:
-	var gm = get_node("/root/GameManager")
-	if gm != null and gm.inventory_changed.is_connected(_on_inventory_changed):
-		gm.inventory_changed.disconnect(_on_inventory_changed)

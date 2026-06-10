@@ -3,7 +3,7 @@ extends Node
 ## 废弃矿道物理调查的 headless 逻辑回归。
 ## 只覆盖 test_day_map_system 未覆盖的两点：
 ##   1. locations.json 数据契约——矿道不再自动授予文档、仍由 mine_clue 门控；
-##   2. GameManager.grant_mine_document 的幂等与授予。
+##   2. GameManager.grant_investigation_document 的幂等与授予。
 ## 「挖到才开公会柜台」的连锁已由 test_day_map_system 覆盖，这里不重复。
 
 var _checks := 0
@@ -54,7 +54,7 @@ func _test_grant_idempotent_and_owned() -> void:
 	# 经 GameManager 中介授予；首次授予返回 true、再次幂等返回 false。
 	var gm = get_node("/root/GameManager")
 	_ok(not gm.documents.owns_document("bloodied_contract"), "contract not owned at start")
-	var newly: bool = gm.grant_mine_document("bloodied_contract")
-	_ok(newly, "first grant_mine_document returns newly-granted")
+	var newly: bool = gm.grant_investigation_document("bloodied_contract")
+	_ok(newly, "first grant_investigation_document returns newly-granted")
 	_ok(gm.documents.owns_document("bloodied_contract"), "contract owned after grant")
-	_ok(not gm.grant_mine_document("bloodied_contract"), "second grant is idempotent (not newly)")
+	_ok(not gm.grant_investigation_document("bloodied_contract"), "second grant is idempotent (not newly)")

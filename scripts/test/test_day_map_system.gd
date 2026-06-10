@@ -70,7 +70,7 @@ func _test_game_manager_routes_visits() -> void:
 	gm.visit_day_location("mercenary_board")
 	gm.visit_day_location("abandoned_mine")
 	_ok(not gm.documents.owns_document("bloodied_contract"), "visiting mine alone does not grant evidence")
-	gm.grant_mine_document("bloodied_contract")
+	gm.grant_investigation_document("bloodied_contract")
 	_ok(gm.documents.owns_document("bloodied_contract"), "digging out contract grants it via GameManager")
 	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "granting evidence adds it to the story bag")
 	gm.request_open_document("bloodied_contract")

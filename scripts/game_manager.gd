@@ -228,7 +228,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
-		grant_mine_document(String(document_id))
+		grant_investigation_document(String(document_id))
 	# 账本：探索获得物品
 	var reward_counts: Dictionary = {}
 	for key in result.get("rewards", []):
@@ -258,8 +258,8 @@ func visit_day_location(location_id: String) -> Dictionary:
 	return result
 
 
-func grant_mine_document(document_id: String) -> bool:
-	# 矿道场景捡起委托书时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
+func grant_investigation_document(document_id: String) -> bool:
+	# 物理调查场景捡起/拼合出线索时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
 	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
 	var id := String(document_id)
 	var already_owned := documents.owns_document(id)
@@ -270,7 +270,7 @@ func grant_mine_document(document_id: String) -> bool:
 		if inventory_sys.is_story_item(id):
 			add_to_inventory(id, 1)
 			_ledger_item(id, 1, "剧情获得")
-		# 同步到大世界：拥有文档即视为已获取线索（无需先阅读），公会柜台等依赖 requiresRead 的地点可解锁
+		# 同步到大世界：拥有文档即视为已获取线索，公会柜台等依赖 requiresRead 的地点可解锁
 		day_map.set_document_owned(id, true)
 	return newly
 

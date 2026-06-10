@@ -24,7 +24,24 @@ func _ready() -> void:
 			cam.position = corner
 			cam._clamp_position()
 			_assert_view_in_bounds(cam, vp, z)
+
+	_test_mouse_wheel_zoom_controls(cam)
 	_finish()
+
+func _test_mouse_wheel_zoom_controls(cam: DayMapCamera) -> void:
+	cam.active = true
+	cam.zoom = Vector2(1.0, 1.0)
+	var wheel_up := InputEventMouseButton.new()
+	wheel_up.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel_up.pressed = true
+	cam._unhandled_input(wheel_up)
+	_ok(cam.zoom.x > 1.0, "mouse wheel zooms in so markers can be inspected")
+
+	var wheel_down := InputEventMouseButton.new()
+	wheel_down.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel_down.pressed = true
+	cam._unhandled_input(wheel_down)
+	_ok(absf(cam.zoom.x - 1.0) < 0.001, "mouse wheel zooms back out one step")
 
 func _assert_view_in_bounds(cam: DayMapCamera, vp: Vector2, z: float) -> void:
 	var half := vp * 0.5 / z
