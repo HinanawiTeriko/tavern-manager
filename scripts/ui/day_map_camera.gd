@@ -12,10 +12,6 @@ const USER_ZOOM_ENABLED := true
 ## 这是"可视矩形恰好不超出地图"的临界缩放——任何缩放都不露灰，且能缩到看全整图。
 var min_zoom: float = 0.5
 
-## 动态最小缩放：=max(viewport.x/map_w, viewport.y/map_h)，由 set_bounds 算出。
-## 这是"可视矩形恰好不超出地图"的临界缩放——任何缩放都不露灰，且能缩到看全整图。
-var min_zoom: float = 0.5
-
 # 地图逻辑范围（与 locations.json pos 同坐标系）
 var map_min := Vector2(0, 0)
 var map_max := Vector2(1280, 720)
