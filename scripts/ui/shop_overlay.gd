@@ -314,7 +314,7 @@ func _build() -> void:
 	_coin_tray.size = Vector2(1040, 128)
 	add_child(_coin_tray)
 	_add_texture(_coin_tray, "StripArt", SHOP_SCENE_V2_CHECKOUT, Vector2.ZERO, Vector2(1040, 128))
-	_add_texture(_coin_tray, "GoldAreaArt", SHOP_SCENE_V2_GOLD_AREA, Vector2(24, 36), Vector2(144, 56))
+	_add_texture(_coin_tray, "GoldAreaArt", SHOP_SCENE_V2_GOLD_AREA, Vector2(24, 32), Vector2(144, 56))
 	_gold_label = _add_label(_coin_tray, "GoldLabel", Vector2(176, 20), Vector2(250, 30), 16, ThemeColors.TEXT_LIGHT)
 	_total_label = _add_label(_coin_tray, "TotalLabel", Vector2(176, 64), Vector2(250, 30), 16, ThemeColors.AMBER_PRIMARY)
 

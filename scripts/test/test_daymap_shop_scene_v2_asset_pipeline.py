@@ -136,6 +136,14 @@ class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
                     spec.get("source_box") or spec.get("derived_from"),
                     f"{name}: manifest must document a fixed source crop or derivation",
                 )
+                safe_area = spec.get("safe_area")
+                if safe_area is not None:
+                    left, top, right, bottom = safe_area
+                    width, height = native_size
+                    self.assertGreaterEqual(left, 0, f"{name}: safe area starts outside asset")
+                    self.assertGreaterEqual(top, 0, f"{name}: safe area starts outside asset")
+                    self.assertLessEqual(right, width, f"{name}: safe area exceeds asset width")
+                    self.assertLessEqual(bottom, height, f"{name}: safe area exceeds asset height")
 
     def test_reference_art_and_manifest_are_retained(self) -> None:
         required = [

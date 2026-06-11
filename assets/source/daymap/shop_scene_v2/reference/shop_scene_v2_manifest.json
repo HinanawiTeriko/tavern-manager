@@ -58,7 +58,7 @@
       "native_size": [190, 99],
       "runtime_size": [760, 396],
       "transparent": false,
-      "safe_area": [24, 36, 187, 120],
+      "safe_area": [10, 8, 173, 92],
       "godot_use": "ShopOverlay/MainBrushPanel/ListPanel"
     },
     "shop_scene_detail_panel": {
@@ -69,7 +69,7 @@
       "native_size": [90, 99],
       "runtime_size": [360, 396],
       "transparent": false,
-      "safe_area": [226, 38, 296, 118],
+      "safe_area": [10, 10, 80, 90],
       "godot_use": "ShopOverlay/MainBrushPanel/DetailPanelArt"
     },
     "shop_scene_checkout": {
@@ -80,7 +80,7 @@
       "native_size": [260, 32],
       "runtime_size": [1040, 128],
       "transparent": false,
-      "safe_area": [43, 149, 278, 167],
+      "safe_area": [13, 7, 248, 25],
       "godot_use": "ShopOverlay/CheckoutBar/StripArt"
     },
     "shop_scene_gold_area": {
@@ -164,7 +164,7 @@
       "native_size": [145, 16],
       "runtime_size": [580, 64],
       "transparent": true,
-      "safe_area": [37, 43, 137, 52],
+      "safe_area": [8, 4, 108, 13],
       "godot_use": "ShopOverlay/ItemList/*/RowArt normal"
     },
     "shop_scene_row_hover": {

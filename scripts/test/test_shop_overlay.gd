@@ -86,6 +86,7 @@ func _test_v2_layout_sizes(overlay) -> void:
 	var list_panel := overlay.get_node_or_null("MainBrushPanel/ListPanel") as TextureRect
 	var detail_panel := overlay.get_node_or_null("MainBrushPanel/DetailPanelArt") as TextureRect
 	var checkout := overlay.get_node_or_null("CheckoutBar") as Control
+	var gold_area := overlay.get_node_or_null("CheckoutBar/GoldAreaArt") as TextureRect
 	var item_list := overlay.get_node_or_null("ItemList") as Control
 	var quantity := overlay.get_node_or_null("CheckoutBar/QuantityControl") as Control
 	var purchase := overlay.get_node_or_null("CheckoutBar/PurchaseButton") as Control
@@ -99,6 +100,9 @@ func _test_v2_layout_sizes(overlay) -> void:
 	if checkout != null:
 		_ok(checkout.position == Vector2(120, 568), "checkout bar uses v2 runtime position")
 		_ok(checkout.size == Vector2(1040, 128), "checkout bar uses v2 runtime size")
+	if gold_area != null:
+		_ok(gold_area.position == Vector2(24, 32), "gold area aligns to manifest crop")
+		_ok(gold_area.size == Vector2(144, 56), "gold area uses manifest runtime size")
 	if item_list != null:
 		var first_row := item_list.get_node_or_null("Item_ale") as Control
 		if first_row != null:
