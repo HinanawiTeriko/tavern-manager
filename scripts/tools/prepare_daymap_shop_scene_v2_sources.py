@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,10 +34,14 @@ def load_master_native() -> Image.Image:
     return lift_dark_teal_floor(native)
 
 
+def rgba_pixels(image: Image.Image) -> tuple[tuple[int, int, int, int], ...]:
+    return image.convert("RGBA").get_flattened_data()
+
+
 def lift_dark_teal_floor(image: Image.Image) -> Image.Image:
     rgba = image.convert("RGBA")
     pixels = []
-    for red, green, blue, alpha in rgba.getdata():
+    for red, green, blue, alpha in rgba_pixels(rgba):
         if alpha > 0 and red <= 95:
             green = max(green, 26)
             blue = max(blue, 30)
@@ -118,15 +122,16 @@ def save_native(name: str, image: Image.Image) -> None:
 
 
 def validate_safe_areas(native: Image.Image, manifest: dict) -> None:
-    forbidden_boxes = [
-        (24, 36, 187, 120),
-        (226, 38, 296, 118),
-        (43, 149, 278, 167),
+    full_canvas = (0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1])
+    text_safe_areas = [
+        tuple(spec["safe_area"])
+        for spec in manifest["full_layers"].values()
+        if "safe_area" in spec and tuple(spec["safe_area"]) != full_canvas
     ]
-    for box in forbidden_boxes:
+    for box in text_safe_areas:
         crop = native.crop(box).convert("RGBA")
         bright_pixels = 0
-        for red, green, blue, alpha in crop.getdata():
+        for red, green, blue, alpha in rgba_pixels(crop):
             if alpha >= 220 and max(red, green, blue) >= 185:
                 bright_pixels += 1
         if bright_pixels > crop.width * crop.height * 0.18:
