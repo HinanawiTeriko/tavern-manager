@@ -1,0 +1,37 @@
+{
+  "native_size": [320, 180],
+  "runtime_scale": 4,
+  "full_layers": {
+    "shop_scene_bg": {
+      "box": [0, 0, 320, 180],
+      "safe_area": [0, 0, 320, 180],
+      "transparent": false
+    },
+    "shop_scene_list_panel": {
+      "box": [14, 28, 204, 127],
+      "safe_area": [24, 36, 187, 120],
+      "transparent": false
+    },
+    "shop_scene_detail_panel": {
+      "box": [216, 28, 306, 127],
+      "safe_area": [226, 38, 296, 118],
+      "transparent": false
+    },
+    "shop_scene_checkout": {
+      "box": [30, 142, 290, 174],
+      "safe_area": [43, 149, 278, 167],
+      "transparent": false
+    }
+  },
+  "component_layers": {
+    "shop_scene_tab_materials_normal": {"box": [35, 14, 83, 30], "transparent": true},
+    "shop_scene_tab_recipes_normal": {"box": [88, 14, 136, 30], "transparent": true},
+    "shop_scene_tab_abilities_normal": {"box": [141, 14, 189, 30], "transparent": true},
+    "shop_scene_row_normal": {"box": [29, 39, 174, 55], "transparent": true},
+    "shop_scene_button_normal": {"box": [184, 149, 248, 167], "transparent": true},
+    "shop_scene_quantity_minus": {"box": [104, 149, 122, 167], "transparent": true},
+    "shop_scene_quantity_body": {"box": [122, 149, 166, 167], "transparent": true},
+    "shop_scene_quantity_plus": {"box": [166, 149, 184, 167], "transparent": true},
+    "shop_scene_close_normal": {"box": [254, 149, 272, 167], "transparent": true}
+  }
+}
