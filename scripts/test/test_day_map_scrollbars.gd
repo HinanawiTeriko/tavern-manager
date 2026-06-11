@@ -121,9 +121,10 @@ func _test_shop_overlay_integration(view) -> void:
 		return
 	_ok(overlay.visible, "ShopOverlay is visible while shop is open")
 	_ok(not view.get_node("MapWorld").visible, "map world hides while shop overlay is open")
-	_ok(overlay.get_node_or_null("ItemRows") is Control, "ShopOverlay exposes ledger item rows")
-	_ok(overlay.get_node_or_null("DetailPage/Title") is Label, "ShopOverlay exposes selected item detail on ledger page")
-	_ok(overlay.get_node_or_null("PurchaseSeal/PurchaseZone") is Button, "ShopOverlay exposes purchase seal input zone")
+	_ok(overlay.get_node_or_null("ItemList") is Control, "ShopOverlay exposes item list")
+	_ok(overlay.get_node_or_null("DetailPanel/Title") is Label, "ShopOverlay exposes selected item detail")
+	_ok(overlay.get_node_or_null("CheckoutBar/PurchaseButton/PurchaseZone") is Button, "ShopOverlay exposes purchase input zone")
+	_ok(overlay.get_node_or_null("CategoryTabs/MaterialsZone") is Button, "ShopOverlay exposes materials tab input zone")
 
 
 func _test_topbar_button_layout(view) -> void:
