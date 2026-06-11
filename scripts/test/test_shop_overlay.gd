@@ -126,13 +126,36 @@ func _test_nearest_filtering(overlay) -> void:
 			_ok(rect.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, path + " uses nearest texture filtering")
 
 
+func _ok_shop_scene_v2_texture(overlay, path: String) -> void:
+	var node: Node = overlay.get_node_or_null(path)
+	_ok(node is TextureRect, path + " is TextureRect")
+	var rect := node as TextureRect
+	if rect == null:
+		return
+	_ok(rect.texture != null, path + " has texture")
+	if rect.texture != null:
+		_ok(rect.texture.resource_path.contains("/shop_scene_v2/"), path + " uses shop_scene_v2 texture")
+
+
 func _test_shop_scene_v2_texture_paths(overlay) -> void:
-	for path in ["ShopBackdrop", "MainShopPanel/ListPanel", "MainShopPanel/DetailPanelArt", "CheckoutBar/CheckoutArt"]:
-		var rect := overlay.get_node_or_null(path) as TextureRect
-		if rect != null:
-			_ok(rect.texture != null, path + " has texture")
-			if rect.texture != null:
-				_ok(rect.texture.resource_path.contains("/shop_scene_v2/"), path + " uses shop_scene_v2 texture")
+	for path in [
+		"ShopBackdrop",
+		"MainShopPanel/ListPanel",
+		"MainShopPanel/DetailPanelArt",
+		"CheckoutBar/CheckoutArt",
+		"CategoryTabs/MaterialsArt",
+		"CategoryTabs/RecipesArt",
+		"CategoryTabs/AbilitiesArt",
+		"ItemList/Item_ale/RowArt",
+		"CheckoutBar/QuantityControl/MinusArt",
+		"CheckoutBar/QuantityControl/BodyArt",
+		"CheckoutBar/QuantityControl/PlusArt",
+		"CheckoutBar/PurchaseButton/ButtonArt",
+		"CheckoutBar/CloseButton/ButtonArt",
+		"DetailPanel/OwnedMark",
+		"DetailPanel/DiscountMark",
+	]:
+		_ok_shop_scene_v2_texture(overlay, path)
 
 
 func _test_shop_scene_v2_text_safe_layout(overlay) -> void:
@@ -142,12 +165,17 @@ func _test_shop_scene_v2_text_safe_layout(overlay) -> void:
 	var state := overlay.get_node_or_null("DetailPanel/State") as Label
 	var gold := overlay.get_node_or_null("CheckoutBar/GoldLabel") as Label
 	var total := overlay.get_node_or_null("CheckoutBar/TotalLabel") as Label
+	var first_row := overlay.get_node_or_null("ItemList/Item_ale") as Control
+	var first_row_name := overlay.get_node_or_null("ItemList/Item_ale/Name") as Label
+	var first_row_price := overlay.get_node_or_null("ItemList/Item_ale/Price") as Label
 	_ok(title != null and Rect2(Vector2(0, 8), Vector2(288, 42)).encloses(Rect2(title.position, title.size)), "detail title stays inside v2 detail safe area")
 	_ok(description != null and description.position.x >= 0.0 and description.position.x + description.size.x <= 288.0, "description stays inside v2 detail width")
 	_ok(uses != null and uses.position.x >= 0.0 and uses.position.x + uses.size.x <= 288.0, "uses stays inside v2 detail width")
 	_ok(state != null and state.position.y >= 260.0 and state.position.y + state.size.y <= 352.0, "state stays inside v2 detail lower area")
 	_ok(gold != null and gold.position.x >= 176.0 and gold.position.x + gold.size.x <= 426.0, "gold label stays in checkout safe area")
 	_ok(total != null and total.position.x >= 176.0 and total.position.x + total.size.x <= 426.0, "total label stays in checkout safe area")
+	_ok(first_row_name != null and first_row != null and first_row_name.position.x >= 0.0 and first_row_name.position.y >= 0.0 and first_row_name.position.x + first_row_name.size.x <= min(first_row.size.x, 390.0) and first_row_name.position.y + first_row_name.size.y <= first_row.size.y, "first item row name stays inside text safe area")
+	_ok(first_row_price != null and first_row != null and first_row_price.position.x >= 390.0 and first_row_price.position.y >= 0.0 and first_row_price.position.x + first_row_price.size.x <= min(first_row.size.x, 580.0) and first_row_price.position.y + first_row_price.size.y <= first_row.size.y, "first item row price stays inside price safe area")
 
 
 func _test_default_selection(overlay) -> void:
