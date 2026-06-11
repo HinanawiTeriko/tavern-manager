@@ -27,6 +27,7 @@ const SHOP_BRUSH_QUANTITY_BODY := "res://assets/textures/daymap/shop_brush/shop_
 const SHOP_BRUSH_QUANTITY_PLUS := "res://assets/textures/daymap/shop_brush/shop_brush_quantity_plus.png"
 const SHOP_BRUSH_STATUS_OWNED := "res://assets/textures/daymap/shop_brush/shop_brush_status_owned.png"
 const SHOP_BRUSH_STATUS_DISCOUNT := "res://assets/textures/daymap/shop_brush/shop_brush_status_discount.png"
+const SHOP_SCENE_V2_TEXTURE_DIR := "res://assets/textures/daymap/shop_scene_v2/"
 const SHOP_SCENE_V2_BACKDROP := "res://assets/textures/daymap/shop_scene_v2/shop_scene_bg.png"
 const SHOP_SCENE_V2_LIST_PANEL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_list_panel.png"
 const SHOP_SCENE_V2_DETAIL_PANEL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_detail_panel.png"
@@ -283,6 +284,7 @@ func _build() -> void:
 	var legacy_brush_panel := Control.new()
 	legacy_brush_panel.name = "MainBrushPanel"
 	legacy_brush_panel.size = Vector2(1280, 720)
+	legacy_brush_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(legacy_brush_panel)
 
 	_bookmarks = Control.new()
@@ -389,8 +391,10 @@ func _load_texture(path: String) -> Texture2D:
 	var imported := TextureManager.try_load(path)
 	if imported != null:
 		return imported
+	if not path.begins_with(SHOP_SCENE_V2_TEXTURE_DIR):
+		return null
 	if _runtime_texture_cache.has(path):
-		return _runtime_texture_cache[path]
+		return _runtime_texture_cache[path] as Texture2D
 	if not FileAccess.file_exists(path):
 		return null
 	var image := Image.new()
