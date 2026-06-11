@@ -32,6 +32,7 @@ const SHOP_SCENE_V2_BACKDROP := "res://assets/textures/daymap/shop_scene_v2/shop
 const SHOP_SCENE_V2_LIST_PANEL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_list_panel.png"
 const SHOP_SCENE_V2_DETAIL_PANEL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_detail_panel.png"
 const SHOP_SCENE_V2_CHECKOUT := "res://assets/textures/daymap/shop_scene_v2/shop_scene_checkout.png"
+const SHOP_SCENE_V2_GOLD_AREA := "res://assets/textures/daymap/shop_scene_v2/shop_scene_gold_area.png"
 const SHOP_SCENE_V2_TAB_MATERIALS_NORMAL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_tab_materials_normal.png"
 const SHOP_SCENE_V2_TAB_MATERIALS_SELECTED := "res://assets/textures/daymap/shop_scene_v2/shop_scene_tab_materials_selected.png"
 const SHOP_SCENE_V2_TAB_RECIPES_NORMAL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_tab_recipes_normal.png"
@@ -275,17 +276,11 @@ func _build() -> void:
 	_backdrop = _add_texture(self, "ShopBackdrop", SHOP_SCENE_V2_BACKDROP, Vector2.ZERO, Vector2(1280, 720))
 
 	_main_panel = Control.new()
-	_main_panel.name = "MainShopPanel"
+	_main_panel.name = "MainBrushPanel"
 	_main_panel.size = Vector2(1280, 720)
 	add_child(_main_panel)
 	_add_texture(_main_panel, "ListPanel", SHOP_SCENE_V2_LIST_PANEL, Vector2(56, 112), Vector2(760, 396))
 	_add_texture(_main_panel, "DetailPanelArt", SHOP_SCENE_V2_DETAIL_PANEL, Vector2(864, 112), Vector2(360, 396))
-
-	var legacy_brush_panel := Control.new()
-	legacy_brush_panel.name = "MainBrushPanel"
-	legacy_brush_panel.size = Vector2(1280, 720)
-	legacy_brush_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(legacy_brush_panel)
 
 	_bookmarks = Control.new()
 	_bookmarks.name = "CategoryTabs"
@@ -318,13 +313,14 @@ func _build() -> void:
 	_coin_tray.position = Vector2(120, 568)
 	_coin_tray.size = Vector2(1040, 128)
 	add_child(_coin_tray)
-	_add_texture(_coin_tray, "CheckoutArt", SHOP_SCENE_V2_CHECKOUT, Vector2.ZERO, Vector2(1040, 128))
+	_add_texture(_coin_tray, "StripArt", SHOP_SCENE_V2_CHECKOUT, Vector2.ZERO, Vector2(1040, 128))
+	_add_texture(_coin_tray, "GoldAreaArt", SHOP_SCENE_V2_GOLD_AREA, Vector2(24, 36), Vector2(144, 56))
 	_gold_label = _add_label(_coin_tray, "GoldLabel", Vector2(176, 20), Vector2(250, 30), 16, ThemeColors.TEXT_LIGHT)
 	_total_label = _add_label(_coin_tray, "TotalLabel", Vector2(176, 64), Vector2(250, 30), 16, ThemeColors.AMBER_PRIMARY)
 
 	_quantity_control = Control.new()
 	_quantity_control.name = "QuantityControl"
-	_quantity_control.position = Vector2(410, 28)
+	_quantity_control.position = Vector2(296, 28)
 	_quantity_control.size = Vector2(320, 72)
 	_coin_tray.add_child(_quantity_control)
 	_add_texture(_quantity_control, "MinusArt", SHOP_SCENE_V2_QUANTITY_MINUS, Vector2.ZERO, Vector2(72, 72))
@@ -342,7 +338,7 @@ func _build() -> void:
 
 	_purchase_seal = Control.new()
 	_purchase_seal.name = "PurchaseButton"
-	_purchase_seal.position = Vector2(720, 28)
+	_purchase_seal.position = Vector2(744, 4)
 	_purchase_seal.size = Vector2(256, 72)
 	_coin_tray.add_child(_purchase_seal)
 	_seal_art = _add_texture(_purchase_seal, "ButtonArt", SHOP_SCENE_V2_BUTTON_NORMAL, Vector2.ZERO, Vector2(256, 72))
@@ -362,7 +358,7 @@ func _build() -> void:
 
 	_close_tag = Control.new()
 	_close_tag.name = "CloseButton"
-	_close_tag.position = Vector2(992, 28)
+	_close_tag.position = Vector2(992, 4)
 	_close_tag.size = Vector2(72, 72)
 	_coin_tray.add_child(_close_tag)
 	_close_tag_art = _add_texture(_close_tag, "ButtonArt", SHOP_SCENE_V2_CLOSE_NORMAL, Vector2.ZERO, Vector2(72, 72))

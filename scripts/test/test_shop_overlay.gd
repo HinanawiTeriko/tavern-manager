@@ -50,20 +50,17 @@ func _test_core_layout(overlay) -> void:
 	_ok(overlay.visible, "overlay is visible after open")
 	_ok(overlay.get_node_or_null("ShopBackdrop") is TextureRect, "overlay has shop scene v2 backdrop")
 	_ok(overlay.get_node_or_null("ShopStage") == null, "old dark shop stage is removed")
-	_ok(overlay.get_node_or_null("MainShopPanel") is Control, "overlay has main shop panel root")
-	_ok(overlay.get_node_or_null("MainShopPanel/ListPanel") is TextureRect, "overlay has v2 list panel art")
-	_ok(overlay.get_node_or_null("MainShopPanel/DetailPanelArt") is TextureRect, "overlay has v2 detail panel art")
-	_ok(overlay.get_node_or_null("MainBrushPanel") is Control, "legacy MainBrushPanel compatibility root remains")
-	_ok(overlay.get_node_or_null("MainBrushPanel/ListPanel") == null, "legacy brush list panel art is removed")
-	_ok(overlay.get_node_or_null("MainBrushPanel/DetailPanelArt") == null, "legacy brush detail panel art is removed")
+	_ok(overlay.get_node_or_null("MainBrushPanel") is Control, "legacy MainBrushPanel contract root remains")
+	_ok(overlay.get_node_or_null("MainBrushPanel/ListPanel") is TextureRect, "legacy list panel path remains")
+	_ok(overlay.get_node_or_null("MainBrushPanel/DetailPanelArt") is TextureRect, "legacy detail panel path remains")
 	_ok(overlay.get_node_or_null("CategoryTabs/MaterialsZone") is Button, "materials category zone exists")
 	_ok(overlay.get_node_or_null("CategoryTabs/RecipesZone") is Button, "recipes category zone exists")
 	_ok(overlay.get_node_or_null("CategoryTabs/AbilitiesZone") is Button, "abilities category zone exists")
 	_ok(overlay.get_node_or_null("ItemList") is Control, "item list exists")
 	_ok(overlay.get_node_or_null("DetailPanel/Title") is Label, "detail title exists")
-	_ok(overlay.get_node_or_null("CheckoutBar/CheckoutArt") is TextureRect, "checkout v2 art exists")
-	_ok(overlay.get_node_or_null("CheckoutBar/StripArt") == null, "legacy checkout strip art is removed")
-	_ok(overlay.get_node_or_null("CheckoutBar/GoldAreaArt") == null, "legacy checkout gold area art is removed")
+	_ok(overlay.get_node_or_null("CheckoutBar/StripArt") is TextureRect, "legacy checkout strip path remains")
+	_ok(overlay.get_node_or_null("CheckoutBar/GoldAreaArt") is TextureRect, "legacy checkout gold area path remains")
+	_ok(overlay.get_node_or_null("CheckoutBar/CheckoutArt") == null, "checkout does not add a second strip art path")
 	_ok(overlay.get_node_or_null("CheckoutBar/GoldLabel") is Label, "checkout gold label exists")
 	_ok(overlay.get_node_or_null("CheckoutBar/TotalLabel") is Label, "checkout total label exists")
 	_ok(overlay.get_node_or_null("CheckoutBar/QuantityControl/MinusArt") is TextureRect, "quantity minus art exists")
@@ -86,11 +83,13 @@ func _test_core_layout(overlay) -> void:
 
 
 func _test_v2_layout_sizes(overlay) -> void:
-	var list_panel := overlay.get_node_or_null("MainShopPanel/ListPanel") as TextureRect
-	var detail_panel := overlay.get_node_or_null("MainShopPanel/DetailPanelArt") as TextureRect
+	var list_panel := overlay.get_node_or_null("MainBrushPanel/ListPanel") as TextureRect
+	var detail_panel := overlay.get_node_or_null("MainBrushPanel/DetailPanelArt") as TextureRect
 	var checkout := overlay.get_node_or_null("CheckoutBar") as Control
 	var item_list := overlay.get_node_or_null("ItemList") as Control
 	var quantity := overlay.get_node_or_null("CheckoutBar/QuantityControl") as Control
+	var purchase := overlay.get_node_or_null("CheckoutBar/PurchaseButton") as Control
+	var close := overlay.get_node_or_null("CheckoutBar/CloseButton") as Control
 	if list_panel != null:
 		_ok(list_panel.position == Vector2(56, 112), "list panel uses v2 runtime position")
 		_ok(list_panel.size == Vector2(760, 396), "list panel uses v2 runtime size")
@@ -110,7 +109,14 @@ func _test_v2_layout_sizes(overlay) -> void:
 			var second := rows[1] as Control
 			_ok(second.position.y - first.position.y >= first.size.y + 12, "item rows have breathing room")
 	if quantity != null:
+		_ok(quantity.position == Vector2(296, 28), "quantity control aligns to manifest crop")
 		_ok(quantity.size == Vector2(320, 72), "quantity control uses three-piece runtime size")
+	if purchase != null:
+		_ok(purchase.position == Vector2(744, 4), "purchase control aligns to manifest crop")
+		_ok(purchase.size == Vector2(256, 72), "purchase control uses manifest runtime size")
+	if close != null:
+		_ok(close.position == Vector2(992, 4), "close control aligns to manifest crop")
+		_ok(close.size == Vector2(72, 72), "close control uses manifest runtime size")
 
 
 func _rect_contains(parent: Control, child: Control) -> bool:
@@ -120,7 +126,7 @@ func _rect_contains(parent: Control, child: Control) -> bool:
 
 
 func _test_nearest_filtering(overlay) -> void:
-	for path in ["ShopBackdrop", "MainShopPanel/ListPanel", "MainShopPanel/DetailPanelArt", "CheckoutBar/CheckoutArt"]:
+	for path in ["ShopBackdrop", "MainBrushPanel/ListPanel", "MainBrushPanel/DetailPanelArt", "CheckoutBar/StripArt", "CheckoutBar/GoldAreaArt"]:
 		var rect := overlay.get_node_or_null(path) as TextureRect
 		if rect != null:
 			_ok(rect.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, path + " uses nearest texture filtering")
@@ -140,9 +146,10 @@ func _ok_shop_scene_v2_texture(overlay, path: String) -> void:
 func _test_shop_scene_v2_texture_paths(overlay) -> void:
 	for path in [
 		"ShopBackdrop",
-		"MainShopPanel/ListPanel",
-		"MainShopPanel/DetailPanelArt",
-		"CheckoutBar/CheckoutArt",
+		"MainBrushPanel/ListPanel",
+		"MainBrushPanel/DetailPanelArt",
+		"CheckoutBar/StripArt",
+		"CheckoutBar/GoldAreaArt",
 		"CategoryTabs/MaterialsArt",
 		"CategoryTabs/RecipesArt",
 		"CategoryTabs/AbilitiesArt",

@@ -1,6 +1,7 @@
 {
   "native_size": [320, 180],
   "runtime_scale": 4,
+  "source_file": "assets/source/daymap/shop_scene_v2/reference/shop_scene_v2_master_reference.png",
   "full_layers": {
     "shop_scene_bg": {
       "box": [0, 0, 320, 180],
@@ -24,6 +25,7 @@
     }
   },
   "component_layers": {
+    "shop_scene_gold_area": {"box": [36, 150, 72, 164], "transparent": true},
     "shop_scene_tab_materials_normal": {"box": [35, 14, 83, 30], "transparent": true},
     "shop_scene_tab_recipes_normal": {"box": [88, 14, 136, 30], "transparent": true},
     "shop_scene_tab_abilities_normal": {"box": [141, 14, 189, 30], "transparent": true},
@@ -32,6 +34,296 @@
     "shop_scene_quantity_minus": {"box": [104, 149, 122, 167], "transparent": true},
     "shop_scene_quantity_body": {"box": [122, 149, 166, 167], "transparent": true},
     "shop_scene_quantity_plus": {"box": [166, 149, 184, 167], "transparent": true},
-    "shop_scene_close_normal": {"box": [278, 143, 296, 161], "transparent": true}
+    "shop_scene_close_normal": {"box": [278, 143, 296, 161], "transparent": true},
+    "shop_scene_status_owned": {"box": [283, 151, 297, 163], "transparent": true},
+    "shop_scene_status_discount": {"box": [42, 153, 56, 166], "transparent": true}
+  },
+  "assets": {
+    "shop_scene_bg": {
+      "id": "shop_scene_bg",
+      "source_box": [0, 0, 320, 180],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_bg_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_bg.png",
+      "native_size": [320, 180],
+      "runtime_size": [1280, 720],
+      "transparent": false,
+      "safe_area": [0, 0, 320, 180],
+      "godot_use": "ShopOverlay/ShopBackdrop"
+    },
+    "shop_scene_list_panel": {
+      "id": "shop_scene_list_panel",
+      "source_box": [14, 28, 204, 127],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_list_panel_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_list_panel.png",
+      "native_size": [190, 99],
+      "runtime_size": [760, 396],
+      "transparent": false,
+      "safe_area": [24, 36, 187, 120],
+      "godot_use": "ShopOverlay/MainBrushPanel/ListPanel"
+    },
+    "shop_scene_detail_panel": {
+      "id": "shop_scene_detail_panel",
+      "source_box": [216, 28, 306, 127],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_detail_panel_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_detail_panel.png",
+      "native_size": [90, 99],
+      "runtime_size": [360, 396],
+      "transparent": false,
+      "safe_area": [226, 38, 296, 118],
+      "godot_use": "ShopOverlay/MainBrushPanel/DetailPanelArt"
+    },
+    "shop_scene_checkout": {
+      "id": "shop_scene_checkout",
+      "source_box": [30, 142, 290, 174],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_checkout_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_checkout.png",
+      "native_size": [260, 32],
+      "runtime_size": [1040, 128],
+      "transparent": false,
+      "safe_area": [43, 149, 278, 167],
+      "godot_use": "ShopOverlay/CheckoutBar/StripArt"
+    },
+    "shop_scene_gold_area": {
+      "id": "shop_scene_gold_area",
+      "source_box": [36, 150, 72, 164],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_gold_area_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_gold_area.png",
+      "native_size": [36, 14],
+      "runtime_size": [144, 56],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/GoldAreaArt"
+    },
+    "shop_scene_tab_materials_normal": {
+      "id": "shop_scene_tab_materials_normal",
+      "source_box": [35, 14, 83, 30],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_materials_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_materials_normal.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/MaterialsArt normal"
+    },
+    "shop_scene_tab_materials_selected": {
+      "id": "shop_scene_tab_materials_selected",
+      "derived_from": "shop_scene_tab_materials_normal",
+      "operation": "selected_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_materials_selected_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_materials_selected.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/MaterialsArt selected"
+    },
+    "shop_scene_tab_recipes_normal": {
+      "id": "shop_scene_tab_recipes_normal",
+      "source_box": [88, 14, 136, 30],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_recipes_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_recipes_normal.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/RecipesArt normal"
+    },
+    "shop_scene_tab_recipes_selected": {
+      "id": "shop_scene_tab_recipes_selected",
+      "derived_from": "shop_scene_tab_recipes_normal",
+      "operation": "selected_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_recipes_selected_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_recipes_selected.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/RecipesArt selected"
+    },
+    "shop_scene_tab_abilities_normal": {
+      "id": "shop_scene_tab_abilities_normal",
+      "source_box": [141, 14, 189, 30],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_abilities_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_abilities_normal.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/AbilitiesArt normal"
+    },
+    "shop_scene_tab_abilities_selected": {
+      "id": "shop_scene_tab_abilities_selected",
+      "derived_from": "shop_scene_tab_abilities_normal",
+      "operation": "selected_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_tab_abilities_selected_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_tab_abilities_selected.png",
+      "native_size": [48, 16],
+      "runtime_size": [192, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CategoryTabs/AbilitiesArt selected"
+    },
+    "shop_scene_row_normal": {
+      "id": "shop_scene_row_normal",
+      "source_box": [29, 39, 174, 55],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_row_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_row_normal.png",
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "safe_area": [37, 43, 137, 52],
+      "godot_use": "ShopOverlay/ItemList/*/RowArt normal"
+    },
+    "shop_scene_row_hover": {
+      "id": "shop_scene_row_hover",
+      "derived_from": "shop_scene_row_normal",
+      "operation": "hover_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_row_hover_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_row_hover.png",
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/ItemList/*/RowArt hover"
+    },
+    "shop_scene_row_selected": {
+      "id": "shop_scene_row_selected",
+      "derived_from": "shop_scene_row_normal",
+      "operation": "selected_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_row_selected_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_row_selected.png",
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/ItemList/*/RowArt selected"
+    },
+    "shop_scene_row_disabled": {
+      "id": "shop_scene_row_disabled",
+      "derived_from": "shop_scene_row_normal",
+      "operation": "disabled_darken",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_row_disabled_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_row_disabled.png",
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "godot_use": "ShopOverlay/ItemList/*/RowArt disabled"
+    },
+    "shop_scene_button_normal": {
+      "id": "shop_scene_button_normal",
+      "source_box": [216, 143, 280, 161],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_button_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_button_normal.png",
+      "native_size": [64, 18],
+      "runtime_size": [256, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/PurchaseButton/ButtonArt normal"
+    },
+    "shop_scene_button_hover": {
+      "id": "shop_scene_button_hover",
+      "derived_from": "shop_scene_button_normal",
+      "operation": "hover_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_button_hover_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_button_hover.png",
+      "native_size": [64, 18],
+      "runtime_size": [256, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/PurchaseButton/ButtonArt hover"
+    },
+    "shop_scene_button_pressed": {
+      "id": "shop_scene_button_pressed",
+      "derived_from": "shop_scene_button_normal",
+      "operation": "pressed_darken",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_button_pressed_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_button_pressed.png",
+      "native_size": [64, 18],
+      "runtime_size": [256, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/PurchaseButton/ButtonArt pressed"
+    },
+    "shop_scene_button_disabled": {
+      "id": "shop_scene_button_disabled",
+      "derived_from": "shop_scene_button_normal",
+      "operation": "disabled_darken",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_button_disabled_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_button_disabled.png",
+      "native_size": [64, 18],
+      "runtime_size": [256, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/PurchaseButton/ButtonArt disabled"
+    },
+    "shop_scene_quantity_minus": {
+      "id": "shop_scene_quantity_minus",
+      "source_box": [104, 149, 122, 167],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_quantity_minus_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_quantity_minus.png",
+      "native_size": [18, 18],
+      "runtime_size": [72, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/QuantityControl/MinusArt"
+    },
+    "shop_scene_quantity_body": {
+      "id": "shop_scene_quantity_body",
+      "source_box": [122, 149, 166, 167],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_quantity_body_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_quantity_body.png",
+      "native_size": [44, 18],
+      "runtime_size": [176, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/QuantityControl/BodyArt"
+    },
+    "shop_scene_quantity_plus": {
+      "id": "shop_scene_quantity_plus",
+      "source_box": [166, 149, 184, 167],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_quantity_plus_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_quantity_plus.png",
+      "native_size": [18, 18],
+      "runtime_size": [72, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/QuantityControl/PlusArt"
+    },
+    "shop_scene_close_normal": {
+      "id": "shop_scene_close_normal",
+      "source_box": [278, 143, 296, 161],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_close_normal_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_close_normal.png",
+      "native_size": [18, 18],
+      "runtime_size": [72, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/CloseButton/ButtonArt normal"
+    },
+    "shop_scene_close_hover": {
+      "id": "shop_scene_close_hover",
+      "derived_from": "shop_scene_close_normal",
+      "operation": "hover_tint",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_close_hover_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_close_hover.png",
+      "native_size": [18, 18],
+      "runtime_size": [72, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/CloseButton/ButtonArt hover"
+    },
+    "shop_scene_close_pressed": {
+      "id": "shop_scene_close_pressed",
+      "derived_from": "shop_scene_close_normal",
+      "operation": "pressed_darken",
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_close_pressed_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_close_pressed.png",
+      "native_size": [18, 18],
+      "runtime_size": [72, 72],
+      "transparent": true,
+      "godot_use": "ShopOverlay/CheckoutBar/CloseButton/ButtonArt pressed"
+    },
+    "shop_scene_status_owned": {
+      "id": "shop_scene_status_owned",
+      "source_box": [283, 151, 297, 163],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_status_owned_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_status_owned.png",
+      "native_size": [14, 12],
+      "runtime_size": [56, 48],
+      "transparent": true,
+      "godot_use": "ShopOverlay/DetailPanel/OwnedMark"
+    },
+    "shop_scene_status_discount": {
+      "id": "shop_scene_status_discount",
+      "source_box": [42, 153, 56, 166],
+      "native_output": "assets/source/daymap/shop_scene_v2/shop_scene_status_discount_native.png",
+      "runtime_output": "assets/textures/daymap/shop_scene_v2/shop_scene_status_discount.png",
+      "native_size": [14, 13],
+      "runtime_size": [56, 52],
+      "transparent": true,
+      "godot_use": "ShopOverlay/DetailPanel/DiscountMark"
+    }
   }
 }

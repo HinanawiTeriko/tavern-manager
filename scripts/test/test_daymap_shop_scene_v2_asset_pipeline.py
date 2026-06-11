@@ -1,4 +1,7 @@
 from pathlib import Path
+import json
+import subprocess
+import sys
 import unittest
 
 from PIL import Image
@@ -17,6 +20,7 @@ EXPECTED_ASSETS = {
     "shop_scene_list_panel": ((190, 99), (760, 396), False),
     "shop_scene_detail_panel": ((90, 99), (360, 396), False),
     "shop_scene_checkout": ((260, 32), (1040, 128), False),
+    "shop_scene_gold_area": ((36, 14), (144, 56), True),
     "shop_scene_tab_materials_normal": ((48, 16), (192, 64), True),
     "shop_scene_tab_materials_selected": ((48, 16), (192, 64), True),
     "shop_scene_tab_recipes_normal": ((48, 16), (192, 64), True),
@@ -114,6 +118,25 @@ def magenta_fringe_ratio(image: Image.Image) -> float:
 
 
 class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
+    def test_manifest_covers_every_generated_asset(self) -> None:
+        manifest = json.loads((REFERENCE / "shop_scene_v2_manifest.json").read_text(encoding="utf-8"))
+        assets: dict = manifest.get("assets", {})
+        self.assertEqual(set(EXPECTED_ASSETS.keys()), set(assets.keys()), "manifest asset ids must match generated assets")
+        for name, (native_size, runtime_size, transparent) in EXPECTED_ASSETS.items():
+            with self.subTest(name=name):
+                spec: dict = assets[name]
+                self.assertEqual(spec.get("id"), name, f"{name}: manifest id mismatch")
+                self.assertEqual(tuple(spec.get("native_size", [])), native_size, f"{name}: native size missing from manifest")
+                self.assertEqual(tuple(spec.get("runtime_size", [])), runtime_size, f"{name}: runtime size missing from manifest")
+                self.assertEqual(bool(spec.get("transparent")), transparent, f"{name}: transparency mismatch")
+                self.assertEqual(spec.get("native_output"), f"assets/source/daymap/shop_scene_v2/{name}_native.png")
+                self.assertEqual(spec.get("runtime_output"), f"assets/textures/daymap/shop_scene_v2/{name}.png")
+                self.assertTrue(spec.get("godot_use", ""), f"{name}: intended Godot use is required")
+                self.assertTrue(
+                    spec.get("source_box") or spec.get("derived_from"),
+                    f"{name}: manifest must document a fixed source crop or derivation",
+                )
+
     def test_reference_art_and_manifest_are_retained(self) -> None:
         required = [
             "shop_scene_v2_master_reference.png",
@@ -134,10 +157,41 @@ class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
             self.assertNotIn("abacus", text.lower(), f"{script.name}: abacus language must not return")
             self.assertNotIn("quantity_abacus", text, f"{script.name}: old quantity_abacus naming must not return")
 
+    def test_prepare_script_does_not_draw_final_status_or_state_ornaments(self) -> None:
+        text = PREPARE_SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("make_status", text, "status marks must come from explicit source crops")
+        self.assertNotIn("add_amber_pixels", text, "state ornaments must not be procedurally drawn")
+        self.assertNotIn("draw.line", text, "final UI ornaments must not be line-drawn in code")
+        self.assertNotIn("draw.polygon", text, "final UI ornaments must not be polygon-drawn in code")
+
     def test_assets_are_exact_native_exports(self) -> None:
         for name, (native_size, runtime_size, _transparent) in EXPECTED_ASSETS.items():
             with self.subTest(name=name):
                 exact_runtime_export(self, name, native_size, runtime_size)
+
+    def test_pipeline_scripts_reproduce_checked_in_assets(self) -> None:
+        tracked_outputs = {}
+        for name in EXPECTED_ASSETS:
+            native_path = SOURCE / f"{name}_native.png"
+            runtime_path = RUNTIME / f"{name}.png"
+            self.assertTrue(native_path.exists(), f"{native_path}: missing native source before reproduction")
+            self.assertTrue(runtime_path.exists(), f"{runtime_path}: missing runtime texture before reproduction")
+            tracked_outputs[native_path] = native_path.read_bytes()
+            tracked_outputs[runtime_path] = runtime_path.read_bytes()
+
+        for script in [PREPARE_SCRIPT, EXPORT_SCRIPT]:
+            result = subprocess.run(
+                [sys.executable, str(script)],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, f"{script.name} failed:\n{result.stdout}\n{result.stderr}")
+
+        for path, before_bytes in tracked_outputs.items():
+            with self.subTest(path=path.name):
+                self.assertEqual(path.read_bytes(), before_bytes, f"{path}: pipeline script is not deterministic")
 
     def test_transparent_assets_have_alpha_and_visible_pixels(self) -> None:
         for name, (native_size, runtime_size, transparent) in EXPECTED_ASSETS.items():
@@ -207,6 +261,7 @@ class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
             "shop_scene_quantity_plus",
             "shop_scene_status_owned",
             "shop_scene_status_discount",
+            "shop_scene_gold_area",
         }
         for name in EXPECTED_ASSETS:
             if name in exempt:

@@ -83,34 +83,34 @@ def darken_visible(image: Image.Image, factor: float) -> Image.Image:
     return rgb
 
 
-def add_amber_pixels(image: Image.Image, mode: str) -> Image.Image:
-    rgba = image.convert("RGBA")
-    draw = ImageDraw.Draw(rgba)
-    width, height = rgba.size
-    if mode == "hover":
-        draw.line((3, height - 3, width - 4, height - 3), fill=(209, 132, 35, 220), width=1)
-    elif mode == "selected":
-        draw.rectangle((2, 2, width - 3, height - 3), outline=(218, 142, 36, 235), width=1)
-    elif mode == "pressed":
-        draw.rectangle((2, 2, width - 3, height - 3), outline=(162, 85, 28, 240), width=1)
-    elif mode == "status":
-        draw.rectangle((2, 2, width - 3, height - 3), outline=(232, 153, 43, 235), width=1)
-    return rgba
+def derive_asset(image: Image.Image, operation: str) -> Image.Image:
+    if operation == "hover_tint":
+        return tint_visible(image, (48, 92, 90), 0.22)
+    if operation == "selected_tint":
+        return tint_visible(image, (70, 92, 70), 0.26)
+    if operation == "pressed_darken":
+        return darken_visible(image, 0.70)
+    if operation == "disabled_darken":
+        return darken_visible(image, 0.55)
+    raise ValueError(f"Unknown shop scene v2 derivation operation: {operation}")
 
 
-def make_status(size: tuple[int, int], kind: str) -> Image.Image:
-    image = Image.new("RGBA", size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    if kind == "owned":
-        draw.rectangle((1, 2, size[0] - 2, size[1] - 3), fill=(20, 55, 58, 210), outline=(218, 142, 36, 235))
-        draw.line((3, size[1] // 2, size[0] - 4, size[1] // 2), fill=(236, 170, 62, 240), width=1)
+def build_asset(name: str, native: Image.Image, manifest: dict, cache: dict[str, Image.Image]) -> Image.Image:
+    if name in cache:
+        return cache[name]
+    assets: dict = manifest["assets"]
+    spec: dict = assets[name]
+    if "source_box" in spec:
+        image = crop_layer(native, spec["source_box"], bool(spec["transparent"]))
+    elif "derived_from" in spec:
+        source = build_asset(str(spec["derived_from"]), native, manifest, cache)
+        image = derive_asset(source, str(spec["operation"]))
     else:
-        draw.polygon(
-            [(1, size[1] - 3), (size[0] // 2, 1), (size[0] - 2, size[1] - 3)],
-            fill=(31, 72, 71, 220),
-            outline=(218, 142, 36, 235),
-        )
-        draw.line((4, size[1] - 4, size[0] - 5, size[1] - 4), fill=(236, 170, 62, 240), width=1)
+        raise ValueError(f"{name}: manifest entry needs source_box or derived_from")
+    expected_size = tuple(spec["native_size"])
+    if image.size != expected_size:
+        raise ValueError(f"{name}: expected native size {expected_size}, got {image.size}")
+    cache[name] = image
     return image
 
 
@@ -143,35 +143,9 @@ def main() -> None:
     native = load_master_native()
     validate_safe_areas(native, manifest)
 
-    for name, spec in manifest["full_layers"].items():
-        save_native(name, crop_layer(native, spec["box"], bool(spec["transparent"])))
-
-    components: dict[str, Image.Image] = {}
-    for name, spec in manifest["component_layers"].items():
-        components[name] = crop_layer(native, spec["box"], bool(spec["transparent"]))
-        save_native(name, components[name])
-
-    for base in ["materials", "recipes", "abilities"]:
-        normal_name = f"shop_scene_tab_{base}_normal"
-        selected_name = f"shop_scene_tab_{base}_selected"
-        save_native(selected_name, add_amber_pixels(tint_visible(components[normal_name], (38, 84, 82), 0.18), "selected"))
-
-    row = components["shop_scene_row_normal"]
-    save_native("shop_scene_row_hover", add_amber_pixels(tint_visible(row, (48, 92, 90), 0.18), "hover"))
-    save_native("shop_scene_row_selected", add_amber_pixels(tint_visible(row, (70, 92, 70), 0.26), "selected"))
-    save_native("shop_scene_row_disabled", darken_visible(row, 0.55))
-
-    button = components["shop_scene_button_normal"]
-    save_native("shop_scene_button_hover", add_amber_pixels(tint_visible(button, (65, 90, 72), 0.18), "hover"))
-    save_native("shop_scene_button_pressed", add_amber_pixels(darken_visible(button, 0.70), "pressed"))
-    save_native("shop_scene_button_disabled", darken_visible(button, 0.48))
-
-    close = components["shop_scene_close_normal"]
-    save_native("shop_scene_close_hover", add_amber_pixels(tint_visible(close, (65, 90, 72), 0.18), "hover"))
-    save_native("shop_scene_close_pressed", add_amber_pixels(darken_visible(close, 0.70), "pressed"))
-
-    save_native("shop_scene_status_owned", make_status((14, 12), "owned"))
-    save_native("shop_scene_status_discount", make_status((14, 13), "discount"))
+    cache: dict[str, Image.Image] = {}
+    for name in manifest["assets"]:
+        save_native(name, build_asset(name, native, manifest, cache))
 
 
 if __name__ == "__main__":
