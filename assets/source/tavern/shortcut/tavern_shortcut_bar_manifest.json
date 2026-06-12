@@ -1,0 +1,108 @@
+{
+  "id": "tavern_shortcut_bar",
+  "source": "art_sources/generated_raw/tavern_shortcut_bar/tavern_shortcut_bar_ui_sheet_v1.png",
+  "prompt": "art_sources/generated_raw/tavern_shortcut_bar/tavern_shortcut_bar_ui_sheet_v1_prompt.txt",
+  "scale": 4,
+  "assets": {
+    "bar_shortcut_bg": {
+      "crop_rect": [
+        50,
+        188,
+        1622,
+        372
+      ],
+      "native": "assets/source/tavern/shortcut/bar_shortcut_bg_native.png",
+      "runtime": "assets/textures/ui/bar_shortcut_bg.png",
+      "native_size": [
+        250,
+        10
+      ],
+      "runtime_size": [
+        1000,
+        40
+      ],
+      "safe_area": [
+        10,
+        1,
+        240,
+        9
+      ],
+      "intended_godot_use": "Tavern ShortcutBarBg bottom tray StyleBoxTexture"
+    },
+    "shortcut_slot_empty": {
+      "crop_rect": [
+        134,
+        538,
+        536,
+        756
+      ],
+      "native": "assets/source/tavern/shortcut/shortcut_slot_empty_native.png",
+      "runtime": "assets/textures/ui/shortcut_slot_empty.png",
+      "native_size": [
+        24,
+        10
+      ],
+      "runtime_size": [
+        96,
+        40
+      ],
+      "safe_area": [
+        3,
+        2,
+        21,
+        8
+      ],
+      "intended_godot_use": "Tavern ShortcutBar empty slot TextureRect"
+    },
+    "shortcut_slot_filled": {
+      "crop_rect": [
+        624,
+        536,
+        1032,
+        756
+      ],
+      "native": "assets/source/tavern/shortcut/shortcut_slot_filled_native.png",
+      "runtime": "assets/textures/ui/shortcut_slot_filled.png",
+      "native_size": [
+        24,
+        10
+      ],
+      "runtime_size": [
+        96,
+        40
+      ],
+      "safe_area": [
+        3,
+        2,
+        21,
+        8
+      ],
+      "intended_godot_use": "Tavern ShortcutBar filled slot TextureRect"
+    },
+    "shortcut_slot_hover": {
+      "crop_rect": [
+        1114,
+        536,
+        1528,
+        756
+      ],
+      "native": "assets/source/tavern/shortcut/shortcut_slot_hover_native.png",
+      "runtime": "assets/textures/ui/shortcut_slot_hover.png",
+      "native_size": [
+        24,
+        10
+      ],
+      "runtime_size": [
+        96,
+        40
+      ],
+      "safe_area": [
+        3,
+        2,
+        21,
+        8
+      ],
+      "intended_godot_use": "Tavern ShortcutBar hover slot TextureRect"
+    }
+  }
+}

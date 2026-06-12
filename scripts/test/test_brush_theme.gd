@@ -54,10 +54,15 @@ func _ready() -> void:
 	var slot := ColorRect.new()
 	ThemeColors.style_shortcut_slot(slot)
 	assert(slot.get_node_or_null("BrushBackground") != null)
+	assert(_texture_path(slot.get_node("BrushBackground").texture) == ThemeColors.SHORTCUT_SLOT_EMPTY)
+	ThemeColors.set_shortcut_slot_filled(slot, true)
+	assert(_texture_path(slot.get_node("BrushBackground").texture) == ThemeColors.SHORTCUT_SLOT_FILLED)
 	ThemeColors.set_shortcut_slot_hover(slot, true)
-	assert(slot.get_node("BrushBackground").modulate == ThemeColors.AMBER_PRIMARY)
+	assert(_texture_path(slot.get_node("BrushBackground").texture) == ThemeColors.SHORTCUT_SLOT_HOVER)
 	ThemeColors.set_shortcut_slot_hover(slot, false)
-	assert(slot.get_node("BrushBackground").modulate == Color.WHITE)
+	assert(_texture_path(slot.get_node("BrushBackground").texture) == ThemeColors.SHORTCUT_SLOT_FILLED)
+	ThemeColors.set_shortcut_slot_filled(slot, false)
+	assert(_texture_path(slot.get_node("BrushBackground").texture) == ThemeColors.SHORTCUT_SLOT_EMPTY)
 
 	assert(ResourceLoader.exists(ThemeColors.MENU_BRUSH_SLIDER_TRACK))
 	assert(ResourceLoader.exists(ThemeColors.MENU_BRUSH_SLIDER_GRABBER))
@@ -87,6 +92,12 @@ func _count_nontransparent_colors(path: String) -> int:
 			if color.a > 0.01:
 				colors[color.to_html(true)] = true
 	return colors.size()
+
+
+func _texture_path(texture: Texture2D) -> String:
+	if texture == null:
+		return ""
+	return String(texture.resource_path)
 
 
 func _assert_brush_popup_icons(popup: PopupMenu) -> void:

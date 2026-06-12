@@ -25,6 +25,19 @@ func _ok(cond: bool, msg: String) -> void:
 		push_error("[TEST-WORKSPACE-SCENE] FAIL: " + msg)
 
 
+func _texture_path(texture: Texture2D) -> String:
+	if texture == null:
+		return ""
+	return String(texture.resource_path)
+
+
+func _stylebox_texture_path(control: Control, style_name: String) -> String:
+	var stylebox := control.get_theme_stylebox(style_name) as StyleBoxTexture
+	if stylebox == null:
+		return ""
+	return _texture_path(stylebox.texture)
+
+
 func _finish() -> void:
 	if _failures == 0:
 		print("[TEST-WORKSPACE-SCENE] ALL PASS (", _checks, " checks)")
@@ -100,6 +113,15 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 	_ok(slot0.get_node_or_null("BrushBackground") != null, "shortcut slot uses brush background")
 	_ok(slot0.get_node_or_null("Icon") != null, "shortcut slot renders an icon node")
 	_ok(slot0.get_node_or_null("Count") != null, "shortcut slot renders a count node")
+	var shortcut_slot_frame := slot0.get_node_or_null("BrushBackground") as TextureRect
+	_ok(shortcut_slot_frame != null and _texture_path(shortcut_slot_frame.texture) == "res://assets/textures/ui/shortcut_slot_filled.png",
+		"filled shortcut slot uses the dedicated Tavern shortcut art")
+	ThemeColors.set_shortcut_slot_hover(slot0, true)
+	_ok(shortcut_slot_frame != null and _texture_path(shortcut_slot_frame.texture) == "res://assets/textures/ui/shortcut_slot_hover.png",
+		"shortcut slot hover uses dedicated hover art")
+	ThemeColors.set_shortcut_slot_hover(slot0, false)
+	_ok(shortcut_slot_frame != null and _texture_path(shortcut_slot_frame.texture) == "res://assets/textures/ui/shortcut_slot_filled.png",
+		"shortcut slot returns to filled art after hover")
 	gm.add_to_inventory("sleep_powder", 1)
 	tavern.toggle_inventory_overlay()
 
@@ -220,7 +242,8 @@ func _test_settings_menu_entry() -> void:
 	tavern.toggle_menu()
 	_ok(tavern.get_node("OverlayMenu").visible, "overlay menu opens before settings")
 	var shortcut_bg := tavern.get_node("ShortcutBarBg") as Panel
-	_ok(shortcut_bg.has_theme_stylebox_override("panel"), "shortcut bar background uses brush art")
+	_ok(_stylebox_texture_path(shortcut_bg, "panel") == "res://assets/textures/ui/bar_shortcut_bg.png",
+		"shortcut bar background uses dedicated Tavern shortcut tray art")
 	tavern._open_settings()
 	await get_tree().process_frame
 	_ok(settings_panel.visible, "tavern settings entry opens the panel")

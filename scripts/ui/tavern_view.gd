@@ -149,7 +149,11 @@ func _apply_theme() -> void:
 
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
-		ThemeColors.style_brush_panel(shortcut_bg)
+		var shortcut_style := ThemeColors.instance().bar_shortcut_bg()
+		if shortcut_style != null:
+			shortcut_bg.add_theme_stylebox_override("panel", shortcut_style)
+		else:
+			ThemeColors.style_brush_panel(shortcut_bg)
 
 	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_stage_caption.add_theme_font_size_override("font_size", 15)

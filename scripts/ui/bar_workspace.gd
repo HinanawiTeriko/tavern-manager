@@ -140,6 +140,7 @@ func _init_material_slots() -> void:
 		var count := slot.get_node_or_null("Count") as Label
 		if key == "":
 			slot.color = Color(ThemeColors.SURFACE_LOW, 0.86)
+			ThemeColors.set_shortcut_slot_filled(slot, false)
 			if label != null:
 				label.text = ""
 			if icon != null:
@@ -148,6 +149,7 @@ func _init_material_slots() -> void:
 				count.text = ""
 			continue
 		var item_data: Dictionary = _gm.craft.get_item(key)
+		ThemeColors.set_shortcut_slot_filled(slot, true)
 		var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
 		slot.color = Color(rgb[0], rgb[1], rgb[2], 0.22)
 		if label != null:

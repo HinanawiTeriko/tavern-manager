@@ -28,6 +28,9 @@ const MENU_BRUSH_SLIDER_GRABBER := "res://assets/textures/ui/menu_brush_slider_g
 const MENU_BRUSH_MARKER := "res://assets/textures/ui/menu_brush_hover_marker.png"
 const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
 const TOPBAR_BUTTON_SIZE := Vector2(96, 48)
+const SHORTCUT_SLOT_EMPTY := "res://assets/textures/ui/shortcut_slot_empty.png"
+const SHORTCUT_SLOT_FILLED := "res://assets/textures/ui/shortcut_slot_filled.png"
+const SHORTCUT_SLOT_HOVER := "res://assets/textures/ui/shortcut_slot_hover.png"
 
 static var _menu_font: Font = null
 
@@ -236,18 +239,35 @@ static func style_shortcut_slot(slot: ColorRect) -> void:
 		background = TextureRect.new()
 		background.name = "BrushBackground"
 		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		background.texture = TextureManager.try_load(MENU_BRUSH_TAB)
 		background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		background.stretch_mode = TextureRect.STRETCH_SCALE
+		background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		slot.add_child(background)
 		slot.move_child(background, 0)
+	background.texture = TextureManager.try_load(SHORTCUT_SLOT_EMPTY)
+	background.modulate = Color.WHITE
+	slot.set_meta("shortcut_filled", false)
 
 
 static func set_shortcut_slot_hover(slot: ColorRect, hovered: bool) -> void:
 	var background := slot.get_node_or_null("BrushBackground") as TextureRect
 	if background != null:
-		background.modulate = AMBER_PRIMARY if hovered else Color.WHITE
+		if hovered:
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_HOVER)
+		elif bool(slot.get_meta("shortcut_filled", false)):
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_FILLED)
+		else:
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_EMPTY)
+		background.modulate = Color.WHITE
+
+
+static func set_shortcut_slot_filled(slot: ColorRect, filled: bool) -> void:
+	slot.set_meta("shortcut_filled", filled)
+	var background := slot.get_node_or_null("BrushBackground") as TextureRect
+	if background != null:
+		background.texture = TextureManager.try_load(SHORTCUT_SLOT_FILLED if filled else SHORTCUT_SLOT_EMPTY)
+		background.modulate = Color.WHITE
 
 
 static func _brush_texture_style(texture_path: String) -> StyleBox:
