@@ -41,7 +41,20 @@ def normalize_background(reference: Image.Image, native_size: tuple[int, int]) -
     color = ImageEnhance.Color(contrast).enhance(0.86)
     balanced = ImageEnhance.Brightness(color).enhance(0.82)
     native = quantize_rgba(balanced, 72)
+    source_pixels = fitted.load()
     pixels = native.load()
+
+    def has_blood_hint(px: int, py: int) -> bool:
+        if not (180 <= px <= 236 and 116 <= py <= 138):
+            return False
+        source_red, source_green, source_blue = source_pixels[px, py]
+        return (
+            source_red >= 25
+            and source_red >= max(source_green, source_blue) + 3
+            and source_red >= source_green * 1.08
+            and source_red >= source_blue * 1.04
+        )
+
     for y in range(native.height):
         for x in range(native.width):
             red, green, blue, alpha = pixels[x, y]
@@ -63,12 +76,34 @@ def normalize_background(reference: Image.Image, native_size: tuple[int, int]) -
                 red = min(red, 112)
                 green = min(green, 118)
                 blue = min(blue, 128)
-            if 58 <= x <= 244 and 132 <= y <= 156 and red >= 35 and red >= green * 0.92 and red >= blue * 1.04:
+            is_blood_source = any(
+                has_blood_hint(nx, ny)
+                for ny in range(max(0, y - 1), min(native.height, y + 2))
+                for nx in range(max(0, x - 1), min(native.width, x + 2))
+            )
+            if is_blood_source:
                 red = max(red, 68)
                 green = min(green, 34)
                 blue = min(blue, 30)
+            elif 58 <= x <= 244 and 132 <= y <= 156 and red >= green * 1.08 and red >= blue * 1.08:
+                red = min(red, max(28, int((green + blue) * 0.55)))
             pixels[x, y] = (max(5, red), max(6, green), max(8, blue), alpha)
     return native
+
+
+def item_preview_size(
+    item: Image.Image,
+    item_id: str,
+    collision_sizes: dict[str, list[int]],
+    visual_scales: dict[str, float],
+) -> tuple[int, int]:
+    collision_size = collision_sizes.get(item_id)
+    if collision_size is None:
+        return (max(12, item.width // 2), max(12, item.height // 2))
+    visual_scale = float(visual_scales.get(item_id, 0.84))
+    width = max(8, int(round(collision_size[0] * visual_scale * 0.5)))
+    height = max(8, int(round(collision_size[1] * visual_scale * 0.5)))
+    return (width, height)
 
 
 def is_chroma_key(red: int, green: int, blue: int) -> bool:
@@ -129,7 +164,15 @@ def save_nearest(native: Image.Image, native_path: Path, runtime_path: Path, run
     return runtime
 
 
-def paste_item_overlay(sheet: Image.Image, background_preview: Image.Image, shadow_runtime: Image.Image, positions: dict[str, list[int]], origin: tuple[int, int]) -> None:
+def paste_item_overlay(
+    sheet: Image.Image,
+    background_preview: Image.Image,
+    shadow_runtime: Image.Image,
+    positions: dict[str, list[int]],
+    collision_sizes: dict[str, list[int]],
+    visual_scales: dict[str, float],
+    origin: tuple[int, int],
+) -> None:
     preview = background_preview.copy()
     for item_id, position in positions.items():
         item_path = ITEM_RUNTIME / f"{item_id}.png"
@@ -140,7 +183,7 @@ def paste_item_overlay(sheet: Image.Image, background_preview: Image.Image, shad
         y = int(position[1] * 0.5)
         shadow_preview = shadow_runtime.resize((80, 28), Image.Resampling.NEAREST)
         preview.alpha_composite(shadow_preview, (x - shadow_preview.width // 2, y - 4))
-        item_preview = ImageOps.contain(item, (max(12, item.width // 2), max(12, item.height // 2)), Image.Resampling.NEAREST)
+        item_preview = ImageOps.contain(item, item_preview_size(item, item_id, collision_sizes, visual_scales), Image.Resampling.NEAREST)
         preview.alpha_composite(item_preview, (x - item_preview.width // 2, y - item_preview.height // 2))
     sheet.alpha_composite(preview, origin)
 
@@ -159,7 +202,15 @@ def make_contact_sheet(reference: Image.Image, background_native: Image.Image, b
     sheet.alpha_composite(native_preview, (510, 72))
     draw.text((20, 348), "runtime item overlay preview", fill=(226, 210, 178, 255))
     overlay_bg = ImageOps.contain(background_runtime.convert("RGBA"), (640, 360), Image.Resampling.NEAREST)
-    paste_item_overlay(sheet, overlay_bg, shadow_runtime, manifest["review"]["item_overlay_positions_runtime"], (20, 374))
+    paste_item_overlay(
+        sheet,
+        overlay_bg,
+        shadow_runtime,
+        manifest["review"]["item_overlay_positions_runtime"],
+        manifest["review"].get("item_collision_sizes_runtime", {}),
+        manifest["review"].get("item_visual_scales", {}),
+        (20, 374),
+    )
     draw.text((700, 348), "shadow native 4x", fill=(226, 210, 178, 255))
     shadow_preview = shadow_native.resize((shadow_native.width * 4, shadow_native.height * 4), Image.Resampling.NEAREST)
     sheet.alpha_composite(shadow_preview, (700, 384))

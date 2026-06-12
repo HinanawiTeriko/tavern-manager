@@ -9,12 +9,12 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = ROOT / "art_sources" / "generated_raw" / "mine_investigation_background"
-RAW_BACKGROUND = RAW_DIR / "mine_background_reference_v1.png"
-RAW_BACKGROUND_PROMPT = RAW_DIR / "mine_background_prompt_v1.txt"
+RAW_BACKGROUND = RAW_DIR / "mine_background_reference_v2.png"
+RAW_BACKGROUND_PROMPT = RAW_DIR / "mine_background_prompt_v2.txt"
 RAW_SHADOW = RAW_DIR / "mine_item_shadow_source_v1.png"
 RAW_SHADOW_PROMPT = RAW_DIR / "mine_item_shadow_prompt_v1.txt"
 SOURCE = ROOT / "assets" / "source" / "investigation" / "mine_background"
-REFERENCE_BACKGROUND = SOURCE / "reference" / "mine_background_reference_v1.png"
+REFERENCE_BACKGROUND = SOURCE / "reference" / "mine_background_reference_v2.png"
 REFERENCE_SHADOW = SOURCE / "reference" / "mine_item_shadow_source_v1.png"
 MANIFEST = SOURCE / "mine_background_manifest.json"
 BACKGROUND_NATIVE = SOURCE / "mine_background_native.png"
@@ -69,7 +69,7 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         self.assertGreater(RAW_BACKGROUND.stat().st_size, 100_000, "AI background source is unexpectedly small")
         self.assertGreater(RAW_SHADOW.stat().st_size, 10_000, "AI shadow source is unexpectedly small")
         for prompt_path, phrases in {
-            RAW_BACKGROUND_PROMPT: ("abandoned mine", "landing zones", "no text", "no labels", "without drawing complete interactive props"),
+            RAW_BACKGROUND_PROMPT: ("abandoned mine", "clear central and lower floor area", "no text", "no labels", "do not draw a foreground rubble pile"),
             RAW_SHADOW_PROMPT: ("contact shadow", "pure magenta", "no text", "no object"),
         }.items():
             self.assertTrue(prompt_path.exists(), f"{prompt_path}: missing prompt record")
@@ -84,8 +84,8 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         background = manifest["background"]
         shadow = manifest["shadow"]
         self.assertEqual(background["id"], "mine_investigation_background")
-        self.assertEqual(background["source"], "art_sources/generated_raw/mine_investigation_background/mine_background_reference_v1.png")
-        self.assertEqual(background["reference"], "assets/source/investigation/mine_background/reference/mine_background_reference_v1.png")
+        self.assertEqual(background["source"], "art_sources/generated_raw/mine_investigation_background/mine_background_reference_v2.png")
+        self.assertEqual(background["reference"], "assets/source/investigation/mine_background/reference/mine_background_reference_v2.png")
         self.assertEqual(background["native"], "assets/source/investigation/mine_background/mine_background_native.png")
         self.assertEqual(background["runtime"], "assets/ui/generated/investigation/mine_background/mine_background.png")
         self.assertEqual(background["native_size"], list(BACKGROUND_NATIVE_SIZE))
@@ -100,6 +100,8 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         self.assertEqual(shadow["runtime_size"], list(SHADOW_RUNTIME_SIZE))
         self.assertEqual(shadow["source_rect"], [0, 0, 512, 256])
         self.assertEqual(shadow["safe_area"], [2, 2, 38, 12])
+        self.assertEqual(manifest["review"]["item_visual_scales"]["rubble"], 0.72)
+        self.assertEqual(manifest["review"]["item_collision_sizes_runtime"]["rubble"], [120, 90])
 
     def test_references_native_runtime_and_contact_sheet_exist(self) -> None:
         for path in (REFERENCE_BACKGROUND, REFERENCE_SHADOW, BACKGROUND_NATIVE, SHADOW_NATIVE, BACKGROUND_RUNTIME, SHADOW_RUNTIME, CONTACT_SHEET):
@@ -159,7 +161,7 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         forbidden = [
             "art_sources/generated_raw/mine_investigation_background",
             "assets/source/investigation/mine_background/reference",
-            "mine_background_reference_v1.png",
+            "mine_background_reference_v2.png",
             "mine_item_shadow_source_v1.png",
         ]
         for root in (ROOT / "scripts" / "ui", ROOT / "scenes" / "ui"):

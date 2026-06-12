@@ -8,11 +8,11 @@ from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = ROOT / "art_sources" / "generated_raw" / "mine_investigation_background"
-RAW_BACKGROUND = RAW_DIR / "mine_background_reference_v1.png"
+RAW_BACKGROUND = RAW_DIR / "mine_background_reference_v2.png"
 RAW_SHADOW = RAW_DIR / "mine_item_shadow_source_v1.png"
 SOURCE = ROOT / "assets" / "source" / "investigation" / "mine_background"
 REFERENCE_DIR = SOURCE / "reference"
-REFERENCE_BACKGROUND = REFERENCE_DIR / "mine_background_reference_v1.png"
+REFERENCE_BACKGROUND = REFERENCE_DIR / "mine_background_reference_v2.png"
 REFERENCE_SHADOW = REFERENCE_DIR / "mine_item_shadow_source_v1.png"
 MANIFEST = SOURCE / "mine_background_manifest.json"
 BACKGROUND_REFERENCE_SIZE = (1280, 720)
@@ -64,6 +64,26 @@ def write_manifest() -> None:
         },
         "review": {
             "contact_sheet": "docs/art/mine_investigation_background_contact_sheet.png",
+            "item_collision_sizes_runtime": {
+                "broken_arrow": [48, 16],
+                "dented_shield": [64, 64],
+                "lost_boot": [56, 36],
+                "rubble": [120, 90],
+                "torn_backpack": [72, 56],
+                "coins": [20, 20],
+                "warhammer_token": [28, 28],
+                "bloodied_paper": [40, 52],
+            },
+            "item_visual_scales": {
+                "broken_arrow": 0.88,
+                "dented_shield": 0.78,
+                "lost_boot": 0.86,
+                "rubble": 0.72,
+                "torn_backpack": 0.82,
+                "coins": 0.95,
+                "warhammer_token": 0.92,
+                "bloodied_paper": 0.90,
+            },
             "item_overlay_positions_runtime": {
                 "broken_arrow": [260, 470],
                 "dented_shield": [380, 460],

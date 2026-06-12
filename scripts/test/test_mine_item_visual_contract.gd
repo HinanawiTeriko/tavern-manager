@@ -9,6 +9,7 @@ var _failures := 0
 
 func _ready() -> void:
 	await _test_production_item_hides_debug_visuals_and_shows_shadow()
+	_test_rubble_item_uses_reduced_visual_scale()
 	_test_unknown_item_keeps_legacy_visuals_without_shadow()
 	_finish()
 
@@ -52,6 +53,9 @@ func _test_production_item_hides_debug_visuals_and_shows_shadow() -> void:
 		_ok(sprite.visible, "production sprite is visible")
 		_ok(sprite.texture != null, "production sprite has texture")
 		_ok(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "production sprite uses nearest texture filtering")
+		if sprite.texture != null:
+			var rendered_size := sprite.texture.get_size() * sprite.scale
+			_ok(rendered_size.x <= 43.0 and rendered_size.y <= 15.0, "production sprite leaves collision padding for visual integration")
 	var shadow := item.get_node_or_null("ShadowVisual") as Sprite2D
 	if shadow != null:
 		_ok(shadow.visible, "production shadow is visible")
@@ -65,6 +69,20 @@ func _test_production_item_hides_debug_visuals_and_shows_shadow() -> void:
 			_ok(shadow.z_index < sprite.z_index, "production shadow renders below item texture")
 	_ok(item.item_tag == "broken_arrow", "item_tag contract remains set by setup")
 	_ok(item.kind == "observation", "kind contract remains set by setup")
+	item.queue_free()
+
+
+func _test_rubble_item_uses_reduced_visual_scale() -> void:
+	var item := _spawn_item()
+	item.setup("rubble", "rubble", Vector2(120, 90), Color.DARK_GRAY, "debug rubble", "")
+	var sprite := item.get_node_or_null("TextureVisual") as Sprite2D
+	_ok(sprite != null, "rubble production item creates TextureVisual")
+	if sprite != null and sprite.texture != null:
+		var rendered_size := sprite.texture.get_size() * sprite.scale
+		_ok(rendered_size.x <= 88.0 and rendered_size.y <= 66.0, "rubble visual is smaller than its collision box")
+	var shape := item.get_node_or_null("Shape") as CollisionShape2D
+	if shape != null and shape.shape is RectangleShape2D:
+		_ok((shape.shape as RectangleShape2D).size == Vector2(120, 90), "rubble collision box remains available for dragging")
 	item.queue_free()
 
 
