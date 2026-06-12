@@ -24,6 +24,12 @@ def load_manifest(test_case: unittest.TestCase) -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
+def image_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
+    if hasattr(image, "get_flattened_data"):
+        return list(image.get_flattened_data())
+    return list(image.getdata())
+
+
 class TavernTableAssetPipelineTest(unittest.TestCase):
     def test_manifest_records_fixed_tabletop_contract(self) -> None:
         manifest = load_manifest(self)
@@ -60,7 +66,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         native = load_rgba(ROOT / manifest["native"])
         alpha_min, alpha_max = native.getchannel("A").getextrema()
         self.assertEqual((alpha_min, alpha_max), (255, 255), "tabletop is a rectangular opaque surface")
-        pixels = list(native.getdata())
+        pixels = image_pixels(native)
         dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 20 <= r <= 95 and 14 <= g <= 70 and 8 <= b <= 60)
         teal_shadow = sum(1 for r, g, b, a in pixels if a == 255 and b >= 18 and g >= 16 and b >= r * 0.55)
         amber = sum(1 for r, g, b, a in pixels if a == 255 and r >= 90 and g >= 45 and b <= 45 and r >= b * 2.0)
