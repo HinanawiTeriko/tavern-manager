@@ -17,14 +17,14 @@ const ITEM_TEXTURES := {
 	"bloodied_paper": "res://assets/ui/generated/investigation/mine_items/bloodied_paper.png",
 }
 const ITEM_COLLISION_PROFILES := {
-	"broken_arrow": {"size": Vector2(88, 32), "offset": Vector2.ZERO},
-	"dented_shield": {"size": Vector2(88, 76), "offset": Vector2.ZERO},
-	"lost_boot": {"size": Vector2(76, 48), "offset": Vector2(-2, 4)},
-	"rubble": {"size": Vector2(304, 148), "offset": Vector2.ZERO},
-	"torn_backpack": {"size": Vector2(104, 88), "offset": Vector2(0, 10)},
-	"coins": {"size": Vector2(52, 28), "offset": Vector2(8, 0)},
-	"warhammer_token": {"size": Vector2(48, 48), "offset": Vector2.ZERO},
-	"bloodied_paper": {"size": Vector2(56, 80), "offset": Vector2.ZERO},
+	"broken_arrow": {"size": Vector2(108, 24), "offset": Vector2(0, 2)},
+	"dented_shield": {"size": Vector2(88, 60), "offset": Vector2(0, 2)},
+	"lost_boot": {"size": Vector2(78, 42), "offset": Vector2(0, 5)},
+	"rubble": {"size": Vector2(306, 112), "offset": Vector2(0, 20)},
+	"torn_backpack": {"size": Vector2(104, 72), "offset": Vector2(0, 8)},
+	"coins": {"size": Vector2(58, 22), "offset": Vector2(0, 2)},
+	"warhammer_token": {"size": Vector2(50, 30), "offset": Vector2(0, 2)},
+	"bloodied_paper": {"size": Vector2(58, 44), "offset": Vector2(0, 0)},
 }
 
 @onready var _shape: CollisionShape2D = $Shape

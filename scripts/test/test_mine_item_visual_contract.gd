@@ -2,24 +2,24 @@ extends Node
 
 const MINE_ITEM_SCENE := preload("res://scenes/ui/components/MineItem.tscn")
 const EXPECTED_RUNTIME_SIZES := {
-	"broken_arrow": Vector2(120, 36),
-	"dented_shield": Vector2(96, 96),
-	"lost_boot": Vector2(84, 56),
-	"rubble": Vector2(320, 216),
-	"torn_backpack": Vector2(128, 112),
-	"coins": Vector2(64, 48),
-	"warhammer_token": Vector2(56, 56),
-	"bloodied_paper": Vector2(72, 88),
+	"broken_arrow": Vector2(128, 40),
+	"dented_shield": Vector2(104, 72),
+	"lost_boot": Vector2(96, 56),
+	"rubble": Vector2(328, 168),
+	"torn_backpack": Vector2(136, 96),
+	"coins": Vector2(72, 36),
+	"warhammer_token": Vector2(64, 40),
+	"bloodied_paper": Vector2(80, 64),
 }
 const EXPECTED_COLLISION_PROFILES := {
-	"broken_arrow": {"size": Vector2(88, 32), "offset": Vector2.ZERO},
-	"dented_shield": {"size": Vector2(88, 76), "offset": Vector2.ZERO},
-	"lost_boot": {"size": Vector2(76, 48), "offset": Vector2(-2, 4)},
-	"rubble": {"size": Vector2(304, 148), "offset": Vector2.ZERO},
-	"torn_backpack": {"size": Vector2(104, 88), "offset": Vector2(0, 10)},
-	"coins": {"size": Vector2(52, 28), "offset": Vector2(8, 0)},
-	"warhammer_token": {"size": Vector2(48, 48), "offset": Vector2.ZERO},
-	"bloodied_paper": {"size": Vector2(56, 80), "offset": Vector2.ZERO},
+	"broken_arrow": {"size": Vector2(108, 24), "offset": Vector2(0, 2)},
+	"dented_shield": {"size": Vector2(88, 60), "offset": Vector2(0, 2)},
+	"lost_boot": {"size": Vector2(78, 42), "offset": Vector2(0, 5)},
+	"rubble": {"size": Vector2(306, 112), "offset": Vector2(0, 20)},
+	"torn_backpack": {"size": Vector2(104, 72), "offset": Vector2(0, 8)},
+	"coins": {"size": Vector2(58, 22), "offset": Vector2(0, 2)},
+	"warhammer_token": {"size": Vector2(50, 30), "offset": Vector2(0, 2)},
+	"bloodied_paper": {"size": Vector2(58, 44), "offset": Vector2(0, 0)},
 }
 
 var _checks := 0

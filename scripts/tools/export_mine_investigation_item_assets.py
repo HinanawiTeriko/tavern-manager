@@ -4,13 +4,25 @@ import json
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "investigation" / "mine_items"
 MANIFEST = SOURCE / "mine_item_art_manifest.json"
 CONTACT_SHEET = ROOT / "docs" / "art" / "mine_investigation_item_art_contact_sheet.png"
+SCENE_PREVIEW = ROOT / "docs" / "art" / "mine_investigation_item_scene_preview.png"
+BACKGROUND_RUNTIME = ROOT / "assets" / "ui" / "generated" / "investigation" / "mine_background" / "mine_background.png"
+SCENE_POSITIONS = {
+    "broken_arrow": (260, 470),
+    "dented_shield": (380, 460),
+    "lost_boot": (500, 475),
+    "rubble": (980, 455),
+    "torn_backpack": (980, 470),
+    "coins": (950, 495),
+    "warhammer_token": (990, 495),
+    "bloodied_paper": (1030, 480),
+}
 
 
 def is_chroma_key_pixel(red: int, green: int, blue: int, background_rgb: tuple[int, int, int], tolerance: int) -> bool:
@@ -56,6 +68,37 @@ def quantize_visible(image: Image.Image, colors: int = 18) -> Image.Image:
     return quantized
 
 
+def apply_mine_scene_grade(image: Image.Image) -> Image.Image:
+    graded = ImageEnhance.Contrast(image.convert("RGBA")).enhance(0.88)
+    pixels = graded.load()
+    for y in range(graded.height):
+        for x in range(graded.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                pixels[x, y] = (0, 0, 0, 0)
+                continue
+            # Pull props toward the cold mine palette, then keep a small warm left-side lantern bias.
+            red = int(red * 0.58 + 10)
+            green = int(green * 0.62 + 16)
+            blue = int(blue * 0.70 + 24)
+            if x < graded.width * 0.42:
+                red += 16
+                green += 7
+                blue -= 4
+            if y > graded.height * 0.70:
+                red = int(red * 0.82)
+                green = int(green * 0.86)
+                blue = int(blue * 0.90)
+            maximum = max(red, green, blue)
+            if maximum > 178:
+                scale = 178.0 / maximum
+                red = int(red * scale)
+                green = int(green * scale)
+                blue = int(blue * scale)
+            pixels[x, y] = (max(0, red), max(0, green), max(0, blue), alpha)
+    return graded
+
+
 def fit_to_native(crop: Image.Image, native_size: tuple[int, int], background_rgb: tuple[int, int, int], tolerance: int) -> Image.Image:
     clean = remove_chroma_background(crop, background_rgb, tolerance)
     alpha_box = clean.getchannel("A").getbbox()
@@ -67,7 +110,8 @@ def fit_to_native(crop: Image.Image, native_size: tuple[int, int], background_rg
     x = (native.width - fitted.width) // 2
     y = (native.height - fitted.height) // 2
     native.alpha_composite(fitted, (x, y))
-    return quantize_visible(native)
+    native = apply_mine_scene_grade(native)
+    return quantize_visible(native, 14)
 
 
 def validate_native(item_id: str, native: Image.Image, native_size: tuple[int, int]) -> None:
@@ -84,11 +128,10 @@ def validate_native(item_id: str, native: Image.Image, native_size: tuple[int, i
 def export_item(reference: Image.Image, item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int, scale: int) -> tuple[Image.Image, Image.Image]:
     source = reference
     item_source = item.get("source")
-    if item_source and item_source != "art_sources/generated_raw/mine_investigation/mine_item_sheet_v2.png":
+    if item_source:
         source_path = ROOT / item_source
         if not source_path.exists():
             raise FileNotFoundError(f"missing source image for {item['id']}: {source_path}")
-        source = Image.open(source_path).convert("RGBA")
     x, y, width, height = item["source_rect"]
     crop = source.crop((x, y, x + width, y + height))
     native_size = tuple(item["native_size"])
@@ -126,6 +169,20 @@ def make_contact_sheet(reference: Image.Image, outputs: list[tuple[dict[str, Any
     sheet.convert("RGB").save(CONTACT_SHEET)
 
 
+def make_scene_preview(outputs: list[tuple[dict[str, Any], Image.Image, Image.Image]]) -> None:
+    if not BACKGROUND_RUNTIME.exists():
+        return
+    preview = Image.open(BACKGROUND_RUNTIME).convert("RGBA")
+    for item, _native, runtime in outputs:
+        item_id = item["id"]
+        if item_id not in SCENE_POSITIONS:
+            continue
+        x, y = SCENE_POSITIONS[item_id]
+        preview.alpha_composite(runtime, (int(x - runtime.width * 0.5), int(y - runtime.height * 0.5)))
+    SCENE_PREVIEW.parent.mkdir(parents=True, exist_ok=True)
+    preview.save(SCENE_PREVIEW)
+
+
 def main() -> None:
     manifest = load_manifest()
     scale = int(manifest["scale"])
@@ -148,6 +205,7 @@ def main() -> None:
         outputs.append((item, native, runtime))
         print(f"{item['id']}: {native.size} -> {runtime.size}")
     make_contact_sheet(reference, outputs)
+    make_scene_preview(outputs)
     print(f"contact sheet: {CONTACT_SHEET.relative_to(ROOT)}")
 
 

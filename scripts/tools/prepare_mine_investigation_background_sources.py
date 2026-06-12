@@ -65,14 +65,14 @@ def write_manifest() -> None:
         "review": {
             "contact_sheet": "docs/art/mine_investigation_background_contact_sheet.png",
             "item_collision_sizes_runtime": {
-                "broken_arrow": [120, 36],
-                "dented_shield": [96, 96],
-                "lost_boot": [84, 56],
-                "rubble": [320, 216],
-                "torn_backpack": [128, 112],
-                "coins": [64, 48],
-                "warhammer_token": [56, 56],
-                "bloodied_paper": [72, 88],
+                "broken_arrow": [128, 40],
+                "dented_shield": [104, 72],
+                "lost_boot": [96, 56],
+                "rubble": [328, 168],
+                "torn_backpack": [136, 96],
+                "coins": [72, 36],
+                "warhammer_token": [64, 40],
+                "bloodied_paper": [80, 64],
             },
             "item_visual_scales": {
                 "broken_arrow": 1.0,

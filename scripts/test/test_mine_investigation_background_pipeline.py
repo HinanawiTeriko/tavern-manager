@@ -101,7 +101,8 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         self.assertEqual(shadow["source_rect"], [0, 0, 512, 256])
         self.assertEqual(shadow["safe_area"], [2, 2, 38, 12])
         self.assertEqual(manifest["review"]["item_visual_scales"]["rubble"], 1.0)
-        self.assertEqual(manifest["review"]["item_collision_sizes_runtime"]["rubble"], [320, 216])
+        self.assertEqual(manifest["review"]["item_collision_sizes_runtime"]["rubble"], [328, 168])
+        self.assertEqual(manifest["review"]["item_collision_sizes_runtime"]["torn_backpack"], [136, 96])
 
     def test_references_native_runtime_and_contact_sheet_exist(self) -> None:
         for path in (REFERENCE_BACKGROUND, REFERENCE_SHADOW, BACKGROUND_NATIVE, SHADOW_NATIVE, BACKGROUND_RUNTIME, SHADOW_RUNTIME, CONTACT_SHEET):

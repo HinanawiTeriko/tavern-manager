@@ -4,8 +4,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "mine_item_sheet_v2.png"
-REFERENCE = ROOT / "assets" / "source" / "investigation" / "mine_items" / "reference" / "mine_item_sheet_v2_reference.png"
+RAW = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "mine_item_sheet_v3_scene_grounded.png"
+REFERENCE = ROOT / "assets" / "source" / "investigation" / "mine_items" / "reference" / "mine_item_sheet_v3_scene_grounded_reference.png"
 REFERENCE_SIZE = (2048, 1024)
 
 
