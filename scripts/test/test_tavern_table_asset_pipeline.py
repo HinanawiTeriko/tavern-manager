@@ -16,7 +16,7 @@ SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
-CUTOUT_POLYGON_NATIVE = [[10, 14], [310, 14], [320, 64], [320, 73], [0, 73], [0, 64]]
+CUTOUT_POLYGON_NATIVE = [[10, 10], [310, 10], [320, 64], [320, 73], [0, 73], [0, 64]]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -44,7 +44,10 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
     def test_manifest_records_fixed_physics_aligned_work_surface_contract(self) -> None:
         manifest = load_manifest(self)
         self.assertEqual(manifest["id"], "tavern_bar_work_surface")
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/tavern_table/tabletop_reference_v2.png")
+        self.assertEqual(
+            manifest["source"],
+            "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
+        )
         self.assertEqual(manifest["native"], "assets/source/tavern/table/tabletop_native.png")
         self.assertEqual(manifest["runtime"], "assets/textures/tavern/table/tabletop.png")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))

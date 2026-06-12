@@ -44,6 +44,15 @@ func _test_physics_aligned_tabletop_art_layer() -> void:
 	_test_initial_workspace_positions(tavern)
 	await get_tree().process_frame
 
+	var background := tavern.get_node_or_null("Background") as Sprite2D
+	_ok(background != null, "Tavern keeps the public Background node")
+	if background != null:
+		_ok(_texture_path(background.texture) == "res://assets/textures/tavern/background/tavern_bg.png",
+			"Background uses Tavern no-people runtime background art")
+		_ok(background.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+			"Background uses nearest texture filter")
+		_ok(background.z_index < -90, "Background draws below the foreground counter")
+
 	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
 	_ok(tabletop != null, "Tavern keeps the visual-only TabletopArt node")
 	if tabletop != null:

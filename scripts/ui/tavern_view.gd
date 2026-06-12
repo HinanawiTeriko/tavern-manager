@@ -63,7 +63,9 @@ func _ready() -> void:
 	_gm.register_view(self)
 
 func _apply_theme() -> void:
-	var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
+	var bg_tex = TextureManager.try_load("res://assets/textures/tavern/background/tavern_bg.png")
+	if bg_tex == null:
+		bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
 	if bg_tex != null:
 		_bg_sprite.texture = bg_tex
 	else:
