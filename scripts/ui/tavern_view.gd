@@ -77,10 +77,8 @@ func _apply_theme() -> void:
 		grad.gradient = g
 		_bg_sprite.texture = grad
 
-	_customer_name.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_customer_name.add_theme_font_size_override("font_size", 18)
-	_order_bubble.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	_order_bubble.add_theme_font_size_override("font_size", 15)
+	ThemeColors.style_brush_label(_customer_name, 18, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_order_bubble, 15, ThemeColors.TEXT_SUBTITLE)
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
