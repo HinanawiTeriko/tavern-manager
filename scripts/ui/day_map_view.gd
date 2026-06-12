@@ -52,7 +52,7 @@ const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
 const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
-const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 56.0
+const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 20.0
 const DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
@@ -64,7 +64,7 @@ const PINNED_NOTE_COST_POS := Vector2(120, 224)
 const PINNED_NOTE_COST_SIZE := Vector2(212, 26)
 const PINNED_NOTE_YIELD_POS := Vector2(120, 254)
 const PINNED_NOTE_YIELD_SIZE := Vector2(212, 42)
-const PINNED_NOTE_BUTTON_POS := Vector2(114, 316)
+const PINNED_NOTE_BUTTON_POS := Vector2(104, 308)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -317,6 +317,7 @@ func _style_daymap_note_action_button(button: Button, font_size: int = DAYMAP_PR
 	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
 	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
 	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_stylebox_override("normal", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_NORMAL))
 	button.add_theme_stylebox_override("hover", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_HOVER))
 	button.add_theme_stylebox_override("pressed", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_PRESSED))
@@ -360,7 +361,7 @@ func _daymap_note_action_texture_style(path: String) -> StyleBoxTexture:
 	style.region_rect = Rect2(Vector2.ZERO, Vector2(texture.get_width(), texture.get_height()))
 	style.set_content_margin(SIDE_LEFT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT)
 	style.set_content_margin(SIDE_RIGHT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT)
-	style.set_content_margin(SIDE_TOP, 7.0)
+	style.set_content_margin(SIDE_TOP, 8.0)
 	style.set_content_margin(SIDE_BOTTOM, 8.0)
 	return style
 

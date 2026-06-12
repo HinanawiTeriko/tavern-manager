@@ -164,8 +164,10 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(action != null and action.size == Vector2(224, 56),
 		"pinned note action button uses smaller note action size")
 	if action != null:
-		_ok(action.position == Vector2(114, 316),
-			"pinned note action button sits at the bottom center of the readable note area")
+		_ok(action.position == Vector2(104, 308),
+			"pinned note action button sits slightly up and left on the note bottom")
+		_ok(action.alignment == HORIZONTAL_ALIGNMENT_CENTER,
+			"pinned note action button centers its text horizontally")
 		var normal := action.get_theme_stylebox("normal") as StyleBoxTexture
 		var hover := action.get_theme_stylebox("hover") as StyleBoxTexture
 		var pressed := action.get_theme_stylebox("pressed") as StyleBoxTexture
@@ -173,13 +175,17 @@ func _test_pinned_note_contract(view) -> void:
 			"pinned note action button uses texture style")
 		if normal != null and normal.texture != null:
 			_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_normal.png"),
-				"pinned note action button uses wax-seal normal art")
+				"pinned note action button uses paper-tag normal art")
+			_ok(is_equal_approx(normal.get_content_margin(SIDE_LEFT), normal.get_content_margin(SIDE_RIGHT)),
+				"pinned note action button keeps text centered with symmetric horizontal margins")
+			_ok(is_equal_approx(normal.get_content_margin(SIDE_TOP), normal.get_content_margin(SIDE_BOTTOM)),
+				"pinned note action button keeps text vertically centered with symmetric vertical margins")
 		if hover != null and hover.texture != null:
 			_ok(String(hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_hover.png"),
-				"pinned note action button uses wax-seal hover art")
+				"pinned note action button uses paper-tag hover art")
 		if pressed != null and pressed.texture != null:
 			_ok(String(pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_pressed.png"),
-				"pinned note action button uses wax-seal pressed art")
+				"pinned note action button uses paper-tag pressed art")
 		_ok(action.pressed.is_connected(Callable(view, "_on_go_here_pressed")),
 			"pinned note action routes through the existing DayMap action handler")
 
