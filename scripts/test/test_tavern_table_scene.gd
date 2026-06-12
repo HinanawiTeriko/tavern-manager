@@ -51,7 +51,7 @@ func _test_physics_aligned_tabletop_art_layer() -> void:
 		_ok(tabletop.z_index > tavern.get_node("Background").z_index, "TabletopArt draws over full-screen background")
 		_ok(tabletop.z_index < 0, "TabletopArt stays behind gameplay props")
 		_ok(tabletop.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "TabletopArt uses nearest texture filter")
-		_ok(tabletop.position == Vector2(640, 560), "TabletopArt stays aligned to the current physics workspace")
+		_ok(tabletop.position == Vector2(640, 600), "TabletopArt shifts down so the current ground line lands on the playable work surface")
 
 	var ground := tavern.get_node("BarWorkspace/World/Walls/Ground") as CollisionShape2D
 	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D

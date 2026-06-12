@@ -47,7 +47,7 @@
   "physics_alignment": {
     "sprite_position_runtime": [
       640,
-      560
+      600
     ],
     "surface_top_y_runtime": 455,
     "front_lip_y_runtime": 655,

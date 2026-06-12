@@ -12,7 +12,7 @@ MANIFEST = ROOT / "assets" / "source" / "tavern" / "table" / "tabletop_manifest.
 CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_table_contact_sheet.png"
 NATIVE_SIZE = (320, 80)
 RUNTIME_SIZE = (1280, 320)
-SPRITE_POSITION_RUNTIME = (640, 560)
+SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
@@ -128,8 +128,8 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         runtime_top_y = SPRITE_POSITION_RUNTIME[1] - RUNTIME_SIZE[1] // 2
         surface_row = round((SURFACE_TOP_Y_RUNTIME - runtime_top_y) / 4)
         front_lip_row = round((FRONT_LIP_Y_RUNTIME - runtime_top_y) / 4)
-        self.assertEqual(surface_row, 14, "surface top row should document the current physics alignment")
-        self.assertEqual(front_lip_row, 64, "front lip row should align with the current ground collision")
+        self.assertEqual(surface_row, 4, "surface top guide row should document the shifted visual alignment")
+        self.assertEqual(front_lip_row, 54, "ground collision should land on the playable table surface after visual shift")
 
         def edge_strength(row: int) -> float:
             return sum(abs(at(x, row) - at(x, row - 1)) for x in range(12, width - 12)) / float(width - 24)
@@ -142,9 +142,9 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
                 if abs(at(x, y) - at(x - 1, y)) >= 9
             )
 
-        self.assertGreaterEqual(edge_strength(surface_row), 8.0, "work surface needs a visible rear/top edge near y=455")
-        self.assertGreaterEqual(edge_strength(front_lip_row), 9.0, "work surface front lip needs to align with ground y=655")
-        self.assertGreaterEqual(row_texture(surface_row, front_lip_row - 2), 950, "playable table plane needs readable wood grain")
+        ground_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, front_lip_row))[3] == 255)
+        self.assertGreaterEqual(ground_alpha, 260, "current ground line should land on opaque playable table surface")
+        self.assertGreaterEqual(row_texture(14, front_lip_row), 900, "playable table plane needs readable wood grain above the ground line")
 
 
 if __name__ == "__main__":

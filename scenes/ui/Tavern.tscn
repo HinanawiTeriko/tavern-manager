@@ -103,7 +103,7 @@ z_index = -100
 centered = true
 
 [node name="TabletopArt" type="Sprite2D" parent="."]
-position = Vector2(640, 560)
+position = Vector2(640, 600)
 z_index = -90
 texture_filter = 1
 texture = ExtResource("tavern_tabletop")
