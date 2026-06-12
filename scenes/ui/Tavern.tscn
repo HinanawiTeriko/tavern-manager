@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3]
+[gd_scene load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="settingspanel"]
@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/grill.png" id="workspace_grill"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/pot.png" id="workspace_pot"]
 [ext_resource type="Texture2D" path="res://assets/textures/workspace/spoon.png" id="workspace_spoon"]
+[ext_resource type="Texture2D" path="res://assets/textures/tavern/table/tabletop.png" id="tavern_tabletop"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
 a = Vector2(150, 655)
@@ -99,6 +100,13 @@ script = ExtResource("1")
 [node name="Background" type="Sprite2D" parent="."]
 position = Vector2(640, 360)
 z_index = -100
+centered = true
+
+[node name="TabletopArt" type="Sprite2D" parent="."]
+position = Vector2(640, 560)
+z_index = -90
+texture_filter = 1
+texture = ExtResource("tavern_tabletop")
 centered = true
 
 [node name="CustomerArea" type="Control" parent="."]
