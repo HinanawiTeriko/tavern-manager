@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: native-pixel character portrait source for Godot, must normalize to 70x90 and sit beside an existing rough Ryan neutral tavern portrait.
+Primary request: Create a deliberately rough low-resolution pixel bust portrait of Mira, a female traveling merchant, matching the same crude low-detail world as an existing 70x90 tavern customer portrait of Ryan. The portrait must look hand-pixeled and slightly awkward, not beautiful concept art, not a high-resolution illustration.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background, one uniform color, no shadows, no gradients, no texture.
+Subject: adult traveling merchant woman, guarded professional half-smile, dark brown high ponytail, cream shirt, dark leather vest, short muted teal cloak, one big shoulder bag, one belt pouch, one scroll tube, one small brass scale charm. Keep the face simple: blocky head shape, two dark eye clusters with small amber pixels, simple nose mark, short mouth line. No eyelashes, no glossy eyes, no soft lips, no elegant anime face.
+Style/medium: native 70x90 pixel art made for a tiny sprite, enlarged for viewing. Crude chunky pixel clusters, hard black/dark-brown outlines, flat color regions, jagged silhouette, low-density details, 1-2 pixel features, no smooth blend, no painterly shading, no filtered illustration, no high-resolution rendering.
+Composition/framing: centered waist-up tavern customer bust, full head and upper torso visible, scale similar to a 280x360 runtime portrait after 4x export, no legs, no other characters.
+Palette: under 24 visible colors after cleanup, dark browns, muted teal, cream, tiny amber accents.
+Constraints: no readable text, no letters, no numbers, no logo, no watermark, no cast shadow, no contact shadow, no #00ff00 inside the subject.
+Avoid: polished anime, fine hair strands, detailed eyelashes, realistic skin gradients, glossy lighting, dense accessory clutter, small ornate jewelry, high-definition portrait art, smooth digital painting.
