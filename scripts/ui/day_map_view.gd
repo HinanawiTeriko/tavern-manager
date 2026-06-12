@@ -615,6 +615,8 @@ func _set_detail_text(name_text: String, desc_text: String, cost_text: String, y
 func _show_pinned_note() -> void:
 	if _pinned_note_panel == null:
 		return
+	if _pinned_note_panel.visible:
+		return
 	_pinned_note_panel.visible = true
 	_update_pinned_note_position()
 

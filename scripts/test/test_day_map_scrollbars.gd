@@ -177,6 +177,10 @@ func _test_pinned_note_stays_put_after_camera_moves(view) -> void:
 	_ok(note.size == initial_size, "pinned note size does not change with camera zoom")
 	_ok(note.position == initial_position,
 		"pinned note screen position does not change after map camera movement")
+	view._show_detail("__home__")
+	await get_tree().process_frame
+	_ok(note.position == initial_position,
+		"refreshing selected marker detail does not move the already pinned note")
 	var viewport_size: Vector2 = view.get_viewport_rect().size
 	_ok(note.position.x >= 0.0
 			and note.position.y >= 0.0
