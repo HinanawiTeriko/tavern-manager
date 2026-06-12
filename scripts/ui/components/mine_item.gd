@@ -16,6 +16,16 @@ const ITEM_TEXTURES := {
 	"warhammer_token": "res://assets/ui/generated/investigation/mine_items/warhammer_token.png",
 	"bloodied_paper": "res://assets/ui/generated/investigation/mine_items/bloodied_paper.png",
 }
+const ITEM_COLLISION_PROFILES := {
+	"broken_arrow": {"size": Vector2(88, 32), "offset": Vector2.ZERO},
+	"dented_shield": {"size": Vector2(88, 76), "offset": Vector2.ZERO},
+	"lost_boot": {"size": Vector2(76, 48), "offset": Vector2(-2, 4)},
+	"rubble": {"size": Vector2(304, 148), "offset": Vector2.ZERO},
+	"torn_backpack": {"size": Vector2(104, 88), "offset": Vector2(0, 10)},
+	"coins": {"size": Vector2(52, 28), "offset": Vector2(8, 0)},
+	"warhammer_token": {"size": Vector2(48, 48), "offset": Vector2.ZERO},
+	"bloodied_paper": {"size": Vector2(56, 80), "offset": Vector2.ZERO},
+}
 
 @onready var _shape: CollisionShape2D = $Shape
 @onready var _visual: Polygon2D = $Visual
@@ -32,17 +42,25 @@ func setup(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color, p_lab
 	item_tag = p_tag
 	kind = p_kind
 	observation = p_observation
-	var hx := p_size.x * 0.5
-	var hy := p_size.y * 0.5
+	var collision_size := p_size
+	var collision_offset := Vector2.ZERO
+	var profile: Dictionary = ITEM_COLLISION_PROFILES.get(p_tag, {})
+	if not profile.is_empty():
+		collision_size = profile.get("size", p_size)
+		collision_offset = profile.get("offset", Vector2.ZERO)
+	var hx := collision_size.x * 0.5
+	var hy := collision_size.y * 0.5
 	# 每个实例独立的碰撞形状；.tscn 里的 sub_resource 在多实例间默认共享，
 	# 原地改 size 会牵连其他 MineItem，这里换成全新 RectangleShape2D 隔离。
 	var rect := RectangleShape2D.new()
-	rect.size = p_size
+	rect.size = collision_size
 	_shape.shape = rect
+	_shape.position = collision_offset
+	_visual.position = collision_offset
 	_visual.polygon = PackedVector2Array([Vector2(-hx, -hy), Vector2(hx, -hy), Vector2(hx, hy), Vector2(-hx, hy)])
 	_visual.color = p_color
 	_label.text = p_label
-	_label.position = Vector2(-hx, -hy - 18.0)
+	_label.position = collision_offset + Vector2(-hx, -hy - 18.0)
 	_apply_texture_visual(p_tag, p_size)
 
 

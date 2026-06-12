@@ -11,6 +11,16 @@ const EXPECTED_RUNTIME_SIZES := {
 	"warhammer_token": Vector2(56, 56),
 	"bloodied_paper": Vector2(72, 88),
 }
+const EXPECTED_COLLISION_PROFILES := {
+	"broken_arrow": {"size": Vector2(88, 32), "offset": Vector2.ZERO},
+	"dented_shield": {"size": Vector2(88, 76), "offset": Vector2.ZERO},
+	"lost_boot": {"size": Vector2(76, 48), "offset": Vector2(-2, 4)},
+	"rubble": {"size": Vector2(304, 148), "offset": Vector2.ZERO},
+	"torn_backpack": {"size": Vector2(104, 88), "offset": Vector2(0, 10)},
+	"coins": {"size": Vector2(52, 28), "offset": Vector2(8, 0)},
+	"warhammer_token": {"size": Vector2(48, 48), "offset": Vector2.ZERO},
+	"bloodied_paper": {"size": Vector2(56, 80), "offset": Vector2.ZERO},
+}
 
 var _checks := 0
 var _failures := 0
@@ -20,6 +30,7 @@ func _ready() -> void:
 	await _test_production_item_hides_debug_visuals_without_shadow()
 	_test_rubble_item_uses_reduced_visual_scale()
 	_test_open_backpack_uses_taller_collision_volume()
+	_test_all_production_items_use_fixed_collision_profiles()
 	_test_unknown_item_keeps_legacy_visuals_without_shadow()
 	_finish()
 
@@ -46,6 +57,18 @@ func _spawn_item() -> MineItem:
 	return item
 
 
+func _assert_rect_collision(item: MineItem, expected_size: Vector2, expected_offset: Vector2, msg_prefix: String) -> void:
+	var shape := item.get_node_or_null("Shape") as CollisionShape2D
+	_ok(shape != null, msg_prefix + " keeps Shape collision node")
+	if shape == null:
+		return
+	var rect := shape.shape as RectangleShape2D
+	_ok(rect != null, msg_prefix + " uses rectangle collision shape")
+	if rect != null:
+		_ok(rect.size == expected_size, msg_prefix + " collision size matches authored profile")
+	_ok(shape.position == expected_offset, msg_prefix + " collision offset matches authored profile")
+
+
 func _test_production_item_hides_debug_visuals_without_shadow() -> void:
 	var item := _spawn_item()
 	item.setup("broken_arrow", "observation", Vector2(120, 36), Color.RED, "debug label", "observation")
@@ -70,9 +93,12 @@ func _test_production_item_hides_debug_visuals_without_shadow() -> void:
 			_ok(rendered_size == EXPECTED_RUNTIME_SIZES["broken_arrow"], "production sprite renders at final scene size")
 	_ok(item.item_tag == "broken_arrow", "item_tag contract remains set by setup")
 	_ok(item.kind == "observation", "kind contract remains set by setup")
-	var shape := item.get_node_or_null("Shape") as CollisionShape2D
-	if shape != null and shape.shape is RectangleShape2D:
-		_ok((shape.shape as RectangleShape2D).size == EXPECTED_RUNTIME_SIZES["broken_arrow"], "broken arrow collision matches final visual size")
+	_assert_rect_collision(
+		item,
+		EXPECTED_COLLISION_PROFILES["broken_arrow"]["size"],
+		EXPECTED_COLLISION_PROFILES["broken_arrow"]["offset"],
+		"broken arrow"
+	)
 	item.queue_free()
 
 
@@ -84,9 +110,12 @@ func _test_open_backpack_uses_taller_collision_volume() -> void:
 	if sprite != null and sprite.texture != null:
 		_ok(sprite.texture.get_size() == EXPECTED_RUNTIME_SIZES["torn_backpack"], "open backpack texture is taller final scene size")
 		_ok(sprite.scale == Vector2.ONE, "open backpack uses 1:1 runtime scale")
-	var shape := item.get_node_or_null("Shape") as CollisionShape2D
-	if shape != null and shape.shape is RectangleShape2D:
-		_ok((shape.shape as RectangleShape2D).size == EXPECTED_RUNTIME_SIZES["torn_backpack"], "open backpack collision matches taller visual volume")
+	_assert_rect_collision(
+		item,
+		EXPECTED_COLLISION_PROFILES["torn_backpack"]["size"],
+		EXPECTED_COLLISION_PROFILES["torn_backpack"]["offset"],
+		"open backpack"
+	)
 	item.queue_free()
 
 
@@ -100,10 +129,26 @@ func _test_rubble_item_uses_reduced_visual_scale() -> void:
 		_ok(sprite.texture.get_size() == EXPECTED_RUNTIME_SIZES["rubble"], "rubble texture is final scene size")
 		_ok(sprite.scale == Vector2.ONE, "rubble uses 1:1 runtime scale")
 		_ok(rendered_size == EXPECTED_RUNTIME_SIZES["rubble"], "rubble visual uses authored final size")
-	var shape := item.get_node_or_null("Shape") as CollisionShape2D
-	if shape != null and shape.shape is RectangleShape2D:
-		_ok((shape.shape as RectangleShape2D).size == EXPECTED_RUNTIME_SIZES["rubble"], "rubble collision matches larger collapsed-stone visual")
+	_assert_rect_collision(
+		item,
+		EXPECTED_COLLISION_PROFILES["rubble"]["size"],
+		EXPECTED_COLLISION_PROFILES["rubble"]["offset"],
+		"rubble"
+	)
 	item.queue_free()
+
+
+func _test_all_production_items_use_fixed_collision_profiles() -> void:
+	for key in EXPECTED_COLLISION_PROFILES.keys():
+		var item := _spawn_item()
+		item.setup(key, "plain", EXPECTED_RUNTIME_SIZES[key], Color.WHITE, "debug " + key, "")
+		_assert_rect_collision(
+			item,
+			EXPECTED_COLLISION_PROFILES[key]["size"],
+			EXPECTED_COLLISION_PROFILES[key]["offset"],
+			key
+		)
+		item.queue_free()
 
 
 func _test_unknown_item_keeps_legacy_visuals_without_shadow() -> void:
@@ -113,4 +158,5 @@ func _test_unknown_item_keeps_legacy_visuals_without_shadow() -> void:
 	_ok(item.get_node("Label").visible, "unmapped item keeps debug label")
 	_ok(item.get_node_or_null("TextureVisual") == null or not item.get_node("TextureVisual").visible, "unmapped item does not show production sprite")
 	_ok(item.get_node_or_null("ShadowVisual") == null or not item.get_node("ShadowVisual").visible, "unmapped item does not force a production shadow")
+	_assert_rect_collision(item, Vector2(32, 32), Vector2.ZERO, "unmapped debug item")
 	item.queue_free()
