@@ -10,6 +10,8 @@ RAW = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "mine_item
 RAW_PROMPT = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "mine_item_sheet_prompt_v2.txt"
 RUBBLE_RAW = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "rubble_source_v1.png"
 RUBBLE_PROMPT = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "rubble_prompt_v1.txt"
+BACKPACK_RAW = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "torn_backpack_open_source_v1.png"
+BACKPACK_PROMPT = ROOT / "art_sources" / "generated_raw" / "mine_investigation" / "torn_backpack_open_prompt_v1.txt"
 REFERENCE = ROOT / "assets" / "source" / "investigation" / "mine_items" / "reference" / "mine_item_sheet_v2_reference.png"
 SOURCE = ROOT / "assets" / "source" / "investigation" / "mine_items"
 RUNTIME = ROOT / "assets" / "ui" / "generated" / "investigation" / "mine_items"
@@ -22,7 +24,7 @@ EXPECTED_ITEMS = {
     "dented_shield": (24, 24),
     "lost_boot": (21, 14),
     "rubble": (80, 54),
-    "torn_backpack": (28, 21),
+    "torn_backpack": (32, 28),
     "coins": (16, 12),
     "warhammer_token": (14, 14),
     "bloodied_paper": (18, 22),
@@ -83,21 +85,27 @@ class MineInvestigationItemArtPipelineTest(unittest.TestCase):
             self.assertEqual(len(entry.get("source_rect", [])), 4, f"{item_id}: source_rect must be explicit")
             self.assertEqual(len(entry.get("safe_area", [])), 4, f"{item_id}: safe_area must be explicit")
             self.assertIn("intended_godot_use", entry, f"{item_id}: missing intended Godot use")
-            expected_source = RUBBLE_RAW if item_id == "rubble" else RAW
+            expected_source = RUBBLE_RAW if item_id == "rubble" else BACKPACK_RAW if item_id == "torn_backpack" else RAW
             self.assertEqual(entry.get("source"), str(expected_source.relative_to(ROOT)).replace("\\", "/"), f"{item_id}: wrong AI source")
         self.assertEqual(by_id["rubble"].get("source_rect"), [0, 0, 1519, 1035], "rubble must use its full individual AI source rect")
+        self.assertEqual(by_id["torn_backpack"].get("source_rect"), [0, 0, 1197, 1314], "open backpack must use its full individual AI source rect")
 
     def test_reference_and_contact_sheet_exist(self) -> None:
         self.assertTrue(RAW.exists(), "raw AI source sheet is missing")
         self.assertTrue(RAW_PROMPT.exists(), "raw AI prompt record is missing")
         self.assertTrue(RUBBLE_RAW.exists(), "raw AI rubble source is missing")
         self.assertTrue(RUBBLE_PROMPT.exists(), "raw AI rubble prompt record is missing")
+        self.assertTrue(BACKPACK_RAW.exists(), "raw AI open backpack source is missing")
+        self.assertTrue(BACKPACK_PROMPT.exists(), "raw AI open backpack prompt record is missing")
         prompt = RAW_PROMPT.read_text(encoding="utf-8").lower()
         for phrase in ("4 columns x 2 rows", "perfectly flat solid #ff00ff", "no labels", "rubble larger than backpack"):
             self.assertIn(phrase, prompt)
         rubble_prompt = RUBBLE_PROMPT.read_text(encoding="utf-8").lower()
         for phrase in ("one large collapsed mine rubble pile", "broad and heavy", "perfectly flat solid #ff00ff"):
             self.assertIn(phrase, rubble_prompt)
+        backpack_prompt = BACKPACK_PROMPT.read_text(encoding="utf-8").lower()
+        for phrase in ("torn open backpack", "mouth opening upward", "perfectly flat solid #ff00ff"):
+            self.assertIn(phrase, backpack_prompt)
         self.assertTrue(REFERENCE.exists(), "stable reference sheet is missing")
         reference = load_image(REFERENCE)
         self.assertEqual(reference.size, (2048, 1024), "stable reference sheet must be 2048x1024 for fixed 4x2 crops")

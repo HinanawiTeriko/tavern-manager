@@ -181,8 +181,6 @@ def paste_item_overlay(
         item = Image.open(item_path).convert("RGBA")
         x = int(position[0] * 0.5)
         y = int(position[1] * 0.5)
-        shadow_preview = shadow_runtime.resize((80, 28), Image.Resampling.NEAREST)
-        preview.alpha_composite(shadow_preview, (x - shadow_preview.width // 2, y - 4))
         item_preview = ImageOps.contain(item, item_preview_size(item, item_id, collision_sizes, visual_scales), Image.Resampling.NEAREST)
         preview.alpha_composite(item_preview, (x - item_preview.width // 2, y - item_preview.height // 2))
     sheet.alpha_composite(preview, origin)
@@ -211,11 +209,7 @@ def make_contact_sheet(reference: Image.Image, background_native: Image.Image, b
         manifest["review"].get("item_visual_scales", {}),
         (20, 374),
     )
-    draw.text((700, 348), "shadow native 4x", fill=(226, 210, 178, 255))
-    shadow_preview = shadow_native.resize((shadow_native.width * 4, shadow_native.height * 4), Image.Resampling.NEAREST)
-    sheet.alpha_composite(shadow_preview, (700, 384))
-    draw.text((700, 470), "shadow runtime", fill=(226, 210, 178, 255))
-    sheet.alpha_composite(shadow_runtime, (700, 506))
+    draw.text((700, 348), "contact shadow disabled", fill=(169, 151, 124, 255))
     sheet.convert("RGB").save(CONTACT_SHEET)
 
 

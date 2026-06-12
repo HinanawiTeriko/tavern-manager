@@ -33,7 +33,7 @@ func _spawn_shallow_items() -> void:
 func _spawn_deep_layer() -> void:
 	# 深层：血迹尽头的塌方碎石，底下压着撕裂的背包。
 	# 背包先生成、冻结、隐藏；碎石盖在其上，扒开碎石才解封背包。
-	_backpack = _spawn_item("torn_backpack", "backpack", Vector2(112, 84), Color(0.3, 0.22, 0.16),
+	_backpack = _spawn_item("torn_backpack", "backpack", Vector2(128, 112), Color(0.3, 0.22, 0.16),
 		"撕裂的背包", "", Vector2(980, 470))
 	_backpack.visible = false
 	_backpack.freeze = true

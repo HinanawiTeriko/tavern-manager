@@ -69,7 +69,7 @@ def write_manifest() -> None:
                 "dented_shield": [96, 96],
                 "lost_boot": [84, 56],
                 "rubble": [320, 216],
-                "torn_backpack": [112, 84],
+                "torn_backpack": [128, 112],
                 "coins": [64, 48],
                 "warhammer_token": [56, 56],
                 "bloodied_paper": [72, 88],
