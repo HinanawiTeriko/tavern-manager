@@ -136,6 +136,18 @@ func _test_pinned_note_contract(view) -> void:
 	for child_name in ["KnifeArt", "NoteArt", "Name", "Desc", "Cost", "Yield", "GoHereBtn"]:
 		_ok(note.get_node_or_null(child_name) != null,
 			"pinned note keeps %s" % child_name)
+	var name_label := note.get_node_or_null("Name") as Label
+	var desc_label := note.get_node_or_null("Desc") as Label
+	var cost_label := note.get_node_or_null("Cost") as Label
+	var yield_label := note.get_node_or_null("Yield") as Label
+	_ok(name_label != null and name_label.position == Vector2(148, 96) and name_label.size == Vector2(172, 34),
+		"pinned note title avoids the knife art")
+	_ok(desc_label != null and desc_label.position == Vector2(128, 142) and desc_label.size == Vector2(196, 76),
+		"pinned note description starts on the clear paper area")
+	_ok(cost_label != null and cost_label.position == Vector2(120, 224) and cost_label.size == Vector2(212, 26),
+		"pinned note cost row stays clear of the knife")
+	_ok(yield_label != null and yield_label.position == Vector2(120, 254) and yield_label.size == Vector2(212, 42),
+		"pinned note yield row stays clear of the knife")
 	var note_art := note.get_node_or_null("NoteArt") as TextureRect
 	_ok(note_art != null and note_art.texture != null,
 		"pinned note has paper art")
