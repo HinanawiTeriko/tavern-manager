@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import unittest
 
 from PIL import Image
@@ -36,6 +37,12 @@ SCROLL_GRABBER_NATIVE_SIZE = (4, 16)
 SCROLL_GRABBER_RUNTIME_SIZE = (16, 64)
 TOPBAR_NATIVE_SIZE = (320, 15)
 TOPBAR_RUNTIME_SIZE = (1280, 60)
+PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 72)
+PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 288)
+PINNED_NOTE_KNIFE_NATIVE_SIZE = (18, 18)
+PINNED_NOTE_KNIFE_RUNTIME_SIZE = (72, 72)
+PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
+DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 STATES = ["normal", "hover", "pressed"]
 TAB_STATES = ["normal", "selected"]
 SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.png"
@@ -710,6 +717,100 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             0,
             "detail panel body should be opaque; do not use alpha as carved wear",
         )
+
+    def test_pinned_note_assets_are_exact_native_exports(self) -> None:
+        cases = [
+            (
+                "pinned_note_panel",
+                PINNED_NOTE_PANEL_NATIVE_SIZE,
+                PINNED_NOTE_PANEL_RUNTIME_SIZE,
+            ),
+            (
+                "pinned_note_knife",
+                PINNED_NOTE_KNIFE_NATIVE_SIZE,
+                PINNED_NOTE_KNIFE_RUNTIME_SIZE,
+            ),
+        ]
+        for name, native_size, runtime_size in cases:
+            with self.subTest(name=name):
+                assert_exact_native_export(
+                    self,
+                    SOURCE / f"{name}_native.png",
+                    RUNTIME / f"{name}.png",
+                    native_size,
+                    runtime_size,
+                )
+
+    def test_pinned_note_panel_reads_as_map_parchment(self) -> None:
+        native = load_rgba(SOURCE / "pinned_note_panel_native.png")
+        pixels = list(native.get_flattened_data())
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 200 and 100 <= r <= 220 and 65 <= g <= 170 and 35 <= b <= 120
+        )
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 55 and 15 <= g <= 90 and 15 <= b <= 95
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 160 and r >= 150 and 55 <= g <= 170 and b <= 90
+        )
+        self.assertGreaterEqual(parchment_pixels, 4200, "pinned note needs a writable parchment body")
+        self.assertGreaterEqual(dark_pixels, 650, "pinned note needs a dark DayMap edge/shadow")
+        self.assertGreaterEqual(amber_pixels, 24, "pinned note needs sparse amber wax or pin accents")
+        self.assertGreaterEqual(len(set(pixels)), 10, "pinned note needs native-pixel tonal variation")
+
+    def test_pinned_note_knife_reads_as_small_dagger_pin(self) -> None:
+        native = load_rgba(SOURCE / "pinned_note_knife_native.png")
+        pixels = list(native.get_flattened_data())
+        blade_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 115 <= r <= 220 and 120 <= g <= 225 and 110 <= b <= 215
+        )
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 60 and 15 <= g <= 85 and 15 <= b <= 90
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 160 and r >= 145 and 55 <= g <= 165 and b <= 90
+        )
+        visible_pixels = visible_pixel_count(native)
+        self.assertGreaterEqual(visible_pixels, 95, "knife pin must have a readable silhouette")
+        self.assertGreaterEqual(blade_pixels, 18, "knife pin needs blade pixels")
+        self.assertGreaterEqual(dark_pixels, 28, "knife pin needs dark handle or outline pixels")
+        self.assertGreaterEqual(amber_pixels, 4, "knife pin needs small warm hilt or rivet pixels")
+
+    def test_pinned_note_contact_sheet_exists(self) -> None:
+        self.assertTrue(PINNED_NOTE_CONTACT_SHEET.exists(), f"{PINNED_NOTE_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(PINNED_NOTE_CONTACT_SHEET.stat().st_size, 0, "pinned note contact sheet is empty")
+
+    def test_pinned_note_assets_have_manifest_entries(self) -> None:
+        self.assertTrue(DAYMAP_UI_MANIFEST.exists(), f"{DAYMAP_UI_MANIFEST}: missing manifest")
+        manifest = json.loads(DAYMAP_UI_MANIFEST.read_text(encoding="utf-8"))
+        assets = manifest.get("assets", {})
+        expected = {
+            "pinned_note_panel": {
+                "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+                "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
+                "size": [368, 288],
+                "safe_area": [34, 24, 300, 204],
+                "intended_godot_use": "DayMap PinnedNotePanel/NoteArt",
+            },
+            "pinned_note_knife": {
+                "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+                "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
+                "size": [72, 72],
+                "safe_area": [12, 0, 48, 72],
+                "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt",
+            },
+        }
+        for asset_id, expected_entry in expected.items():
+            with self.subTest(asset_id=asset_id):
+                self.assertIn(asset_id, assets, f"{asset_id}: missing manifest entry")
+                for key, value in expected_entry.items():
+                    self.assertEqual(assets[asset_id].get(key), value, f"{asset_id}: wrong manifest {key}")
 
     def test_tab_button_states_are_exact_native_exports(self) -> None:
         for state in TAB_STATES:

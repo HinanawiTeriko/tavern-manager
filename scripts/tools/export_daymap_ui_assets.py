@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageOps
@@ -37,6 +38,12 @@ SCROLL_GRABBER_NATIVE_SIZE = (4, 16)
 SCROLL_GRABBER_RUNTIME_SIZE = (16, 64)
 TOPBAR_NATIVE_SIZE = (320, 15)
 TOPBAR_RUNTIME_SIZE = (1280, 60)
+PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 72)
+PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 288)
+PINNED_NOTE_KNIFE_NATIVE_SIZE = (18, 18)
+PINNED_NOTE_KNIFE_RUNTIME_SIZE = (72, 72)
+PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
+DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 
 PRIMARY_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_primary_buttons_reference_v2_generated.png"
 LEDGER_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_ledger_buttons_reference_v2_generated.png"
@@ -345,6 +352,65 @@ def make_document_panel_native() -> Image.Image:
     return image
 
 
+def make_pinned_note_panel_native() -> Image.Image:
+    image = Image.new("RGBA", PINNED_NOTE_PANEL_NATIVE_SIZE, (0, 0, 0, 0))
+    width, height = image.size
+    fill_rect(image, (2, 1, width - 2, height - 1), DARK_EDGE)
+    fill_rect(image, (0, 4, width, height - 4), DARK_EDGE)
+    fill_rect(image, (4, 3, width - 4, height - 3), PARCHMENT_BODY)
+    fill_rect(image, (6, 5, width - 6, height - 5), PARCHMENT_LIGHT)
+    fill_rect(image, (9, 8, width - 9, height - 8), (140, 96, 54, 255))
+
+    for x in range(12, width - 12, 9):
+        set_pixel(image, x, 6, (216, 169, 101, 255))
+        set_pixel(image, x + 2, height - 7, (112, 78, 48, 255))
+    for y in range(10, height - 10, 8):
+        set_pixel(image, 7, y, (112, 78, 48, 255))
+        set_pixel(image, width - 8, y + 3, (196, 147, 86, 255))
+
+    fill_rect(image, (4, 3, 18, 6), DARK_LIFT)
+    fill_rect(image, (width - 20, height - 7, width - 6, height - 4), DARK_LIFT)
+    fill_rect(image, (8, 9, 11, 12), AMBER_NORMAL)
+    fill_rect(image, (9, 10, 10, 11), AMBER_HOVER)
+    fill_rect(image, (13, 13, 15, 15), AMBER_PRESSED)
+    for x, y in [(18, 10), (25, 15), (62, 12), (73, 18), (49, 55), (70, 48)]:
+        set_pixel(image, x, y, (112, 78, 48, 255))
+
+    for x, y in [(0, 0), (1, 1), (width - 1, 0), (width - 2, 1), (0, height - 1), (width - 1, height - 1)]:
+        set_pixel(image, x, y, (0, 0, 0, 0))
+    return image
+
+
+def make_pinned_note_knife_native() -> Image.Image:
+    image = Image.new("RGBA", PINNED_NOTE_KNIFE_NATIVE_SIZE, (0, 0, 0, 0))
+    outline = (5, 17, 20, 255)
+    blade_dark = (115, 126, 123, 255)
+    blade_light = (184, 202, 190, 255)
+    blade_mid = (145, 163, 153, 255)
+    handle = (45, 30, 24, 255)
+    handle_lift = (93, 59, 34, 255)
+
+    for y in range(1, 10):
+        x = 10 - y // 2
+        set_pixel(image, x, y, outline)
+        set_pixel(image, x + 1, y, blade_mid)
+        if y <= 7:
+            set_pixel(image, x + 2, y, blade_light)
+        if y >= 3:
+            set_pixel(image, x - 1, y, blade_dark)
+    for x, y in [(9, 0), (10, 0), (8, 1), (11, 1), (6, 6), (7, 8), (8, 9)]:
+        set_pixel(image, x, y, outline)
+    fill_rect(image, (5, 9, 13, 11), AMBER_NORMAL)
+    fill_rect(image, (6, 10, 12, 12), AMBER_PRESSED)
+    fill_rect(image, (6, 12, 12, 17), handle)
+    fill_rect(image, (7, 12, 11, 17), handle_lift)
+    set_pixel(image, 8, 13, AMBER_HOVER)
+    set_pixel(image, 9, 15, AMBER_NORMAL)
+    for x, y in [(5, 11), (12, 11), (5, 12), (12, 12), (5, 16), (12, 16), (6, 17), (7, 17), (10, 17), (11, 17), (6, 8), (12, 8)]:
+        set_pixel(image, x, y, outline)
+    return image
+
+
 def palette_pick(palette: list[tuple[int, int, int]], luma: float) -> tuple[int, int, int]:
     index = min(len(palette) - 1, max(0, int((luma / 256.0) * len(palette))))
     return palette[index]
@@ -551,6 +617,50 @@ def export_single(name: str, native: Image.Image, runtime_size: tuple[int, int])
     print(f"{name}: {native.size} -> {runtime.size}")
 
 
+def export_pinned_note_contact_sheet(panel: Image.Image, knife: Image.Image) -> None:
+    PINNED_NOTE_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    panel_runtime = panel.resize(PINNED_NOTE_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    knife_runtime = knife.resize(PINNED_NOTE_KNIFE_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (520, 340), (8, 25, 29, 255))
+    sheet.alpha_composite(panel_runtime, (112, 28))
+    sheet.alpha_composite(knife_runtime, (60, 72))
+    native_preview = panel.resize((184, 144), Image.Resampling.NEAREST)
+    knife_preview = knife.resize((72, 72), Image.Resampling.NEAREST)
+    sheet.alpha_composite(native_preview, (20, 188))
+    sheet.alpha_composite(knife_preview, (220, 224))
+    sheet.save(PINNED_NOTE_CONTACT_SHEET)
+    print(f"pinned_note_contact_sheet: {sheet.size}")
+
+
+def write_pinned_note_manifest() -> None:
+    if DAYMAP_UI_MANIFEST.exists():
+        manifest = json.loads(DAYMAP_UI_MANIFEST.read_text(encoding="utf-8"))
+    else:
+        manifest = {"assets": {}}
+    assets = manifest.setdefault("assets", {})
+    assets["pinned_note_panel"] = {
+        "id": "pinned_note_panel",
+        "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+        "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
+        "size": [368, 288],
+        "safe_area": [34, 24, 300, 204],
+        "intended_godot_use": "DayMap PinnedNotePanel/NoteArt",
+    }
+    assets["pinned_note_knife"] = {
+        "id": "pinned_note_knife",
+        "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+        "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
+        "size": [72, 72],
+        "safe_area": [12, 0, 48, 72],
+        "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt",
+    }
+    DAYMAP_UI_MANIFEST.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(f"daymap_ui_manifest: {DAYMAP_UI_MANIFEST}")
+
+
 def main() -> None:
     SOURCE.mkdir(parents=True, exist_ok=True)
     RUNTIME.mkdir(parents=True, exist_ok=True)
@@ -615,6 +725,12 @@ def main() -> None:
     export_single("scroll_track", fit_shop_scroll_track_source(panel_result), SCROLL_TRACK_RUNTIME_SIZE)
     export_single("scroll_grabber", fit_shop_scroll_grabber_source(panel_result), SCROLL_GRABBER_RUNTIME_SIZE)
     export_single("topbar_strip", fit_topbar_source(topbar), TOPBAR_RUNTIME_SIZE)
+    pinned_note_panel = make_pinned_note_panel_native()
+    pinned_note_knife = make_pinned_note_knife_native()
+    export_single("pinned_note_panel", pinned_note_panel, PINNED_NOTE_PANEL_RUNTIME_SIZE)
+    export_single("pinned_note_knife", pinned_note_knife, PINNED_NOTE_KNIFE_RUNTIME_SIZE)
+    export_pinned_note_contact_sheet(pinned_note_panel, pinned_note_knife)
+    write_pinned_note_manifest()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,36 @@
+{
+  "assets": {
+    "pinned_note_panel": {
+      "id": "pinned_note_panel",
+      "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+      "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
+      "size": [
+        368,
+        288
+      ],
+      "safe_area": [
+        34,
+        24,
+        300,
+        204
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/NoteArt"
+    },
+    "pinned_note_knife": {
+      "id": "pinned_note_knife",
+      "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+      "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
+      "size": [
+        72,
+        72
+      ],
+      "safe_area": [
+        12,
+        0,
+        48,
+        72
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt"
+    }
+  }
+}
