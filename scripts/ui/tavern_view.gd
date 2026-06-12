@@ -89,8 +89,8 @@ func _apply_theme() -> void:
 	ThemeColors.style_brush_label(_rep_label, 16, ThemeColors.TEXT_LIGHT)
 	ThemeColors.style_brush_label(_day_label, 15, ThemeColors.TEXT_SUBTITLE)
 
-	ThemeColors.style_brush_button($TopPanel/MenuButton, 14)
-	ThemeColors.style_brush_button(_end_night_btn, 14)
+	ThemeColors.style_topbar_button($TopPanel/MenuButton, "menu", 14)
+	ThemeColors.style_topbar_button(_end_night_btn, "end_night", 14)
 
 	# 添加教程按钮到菜单
 	_add_tutorial_button_to_menu()

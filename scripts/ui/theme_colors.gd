@@ -27,6 +27,7 @@ const MENU_BRUSH_SLIDER_TRACK := "res://assets/textures/ui/menu_brush_slider_tra
 const MENU_BRUSH_SLIDER_GRABBER := "res://assets/textures/ui/menu_brush_slider_grabber.png"
 const MENU_BRUSH_MARKER := "res://assets/textures/ui/menu_brush_hover_marker.png"
 const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
+const TOPBAR_BUTTON_SIZE := Vector2(96, 48)
 
 static var _menu_font: Font = null
 
@@ -146,6 +147,29 @@ static func style_brush_button(button: Button, font_size: int = 16) -> void:
 
 static func style_brush_tab_button(button: Button, font_size: int = 14) -> void:
 	_apply_brush_button_style(button, MENU_BRUSH_TAB, font_size)
+
+
+static func style_topbar_button(button: Button, button_key: String, font_size: int = 14) -> void:
+	button.custom_minimum_size = TOPBAR_BUTTON_SIZE
+	var normal := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_normal.png" % button_key)
+	var hover := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_hover.png" % button_key)
+	var pressed := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_pressed.png" % button_key)
+	if normal != null:
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("disabled", normal)
+	if hover != null:
+		button.add_theme_stylebox_override("hover", hover)
+	if pressed != null:
+		button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var font := menu_font()
+	if font != null:
+		button.add_theme_font_override("font", font)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", AMBER_BRIGHT)
+	button.add_theme_color_override("font_disabled_color", TEXT_DIM)
 
 
 static func style_brush_popup(popup: PopupMenu) -> void:

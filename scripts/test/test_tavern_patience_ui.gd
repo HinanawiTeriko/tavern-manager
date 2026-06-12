@@ -55,6 +55,13 @@ func _stylebox_texture(control: Control, style_name: String) -> Texture2D:
 	return stylebox.texture
 
 
+func _button_stylebox_texture_path(button: Button, style_name: String) -> String:
+	var stylebox := button.get_theme_stylebox(style_name) as StyleBoxTexture
+	if stylebox == null:
+		return ""
+	return _texture_path(stylebox.texture)
+
+
 func _test_tavern_patience_ui_contract() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
@@ -120,6 +127,24 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(control != null, "TopPanel/%s remains available" % path)
 			if control != null:
 				_ok(_control_uses_pixel_font(control), "TopPanel/%s uses the shared pixel UI font" % path)
+		var menu_button := top_panel.get_node_or_null("MenuButton") as Button
+		if menu_button != null:
+			_ok(menu_button.custom_minimum_size == Vector2(96, 48), "TopPanel/MenuButton uses the dedicated topbar button size")
+			_ok(_button_stylebox_texture_path(menu_button, "normal") == "res://assets/textures/ui/topbar_menu_button_normal.png",
+				"TopPanel/MenuButton normal art is dedicated topbar art")
+			_ok(_button_stylebox_texture_path(menu_button, "hover") == "res://assets/textures/ui/topbar_menu_button_hover.png",
+				"TopPanel/MenuButton hover art is dedicated topbar art")
+			_ok(_button_stylebox_texture_path(menu_button, "pressed") == "res://assets/textures/ui/topbar_menu_button_pressed.png",
+				"TopPanel/MenuButton pressed art is dedicated topbar art")
+		var end_night_button := top_panel.get_node_or_null("EndNightBtn") as Button
+		if end_night_button != null:
+			_ok(end_night_button.custom_minimum_size == Vector2(96, 48), "TopPanel/EndNightBtn uses the dedicated topbar button size")
+			_ok(_button_stylebox_texture_path(end_night_button, "normal") == "res://assets/textures/ui/topbar_end_night_button_normal.png",
+				"TopPanel/EndNightBtn normal art is dedicated topbar art")
+			_ok(_button_stylebox_texture_path(end_night_button, "hover") == "res://assets/textures/ui/topbar_end_night_button_hover.png",
+				"TopPanel/EndNightBtn hover art is dedicated topbar art")
+			_ok(_button_stylebox_texture_path(end_night_button, "pressed") == "res://assets/textures/ui/topbar_end_night_button_pressed.png",
+				"TopPanel/EndNightBtn pressed art is dedicated topbar art")
 
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
