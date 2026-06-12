@@ -49,7 +49,6 @@ const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
-const PINNED_NOTE_EDGE_MARGIN := Vector2(16, 70)
 const PINNED_NOTE_NAME_POS := Vector2(84, 88)
 const PINNED_NOTE_NAME_SIZE := Vector2(248, 36)
 const PINNED_NOTE_DESC_POS := Vector2(84, 128)
@@ -236,7 +235,7 @@ func _setup_detail_panel() -> void:
 
 
 func _setup_pinned_note_panel() -> void:
-	_pinned_note_panel = $UILayer/PinnedNotePanel
+	_pinned_note_panel = $MapWorld/PinnedNotePanel
 	_pinned_note_note_art = _pinned_note_panel.get_node("NoteArt") as TextureRect
 	_pinned_note_knife_art = _pinned_note_panel.get_node("KnifeArt") as TextureRect
 	_pinned_note_name = _pinned_note_panel.get_node("Name") as Label
@@ -576,26 +575,19 @@ func _selected_marker_node() -> Node2D:
 	return null
 
 
-func _world_to_daymap_screen(world_pos: Vector2) -> Vector2:
-	return (world_pos - _camera.position) * _camera.zoom + get_viewport_rect().size * 0.5
-
-
 func _update_pinned_note_position() -> void:
-	if _pinned_note_panel == null or _camera == null:
+	if _pinned_note_panel == null:
 		return
 	var marker := _selected_marker_node()
 	if marker == null:
 		_hide_pinned_note()
 		return
 
-	var viewport_size: Vector2 = get_viewport_rect().size
-	var anchor: Vector2 = _world_to_daymap_screen(marker.global_position)
-	var pos: Vector2 = anchor + PINNED_NOTE_RIGHT_OFFSET
-	if pos.x + PINNED_NOTE_SIZE.x > viewport_size.x - PINNED_NOTE_EDGE_MARGIN.x:
-		pos.x = anchor.x - PINNED_NOTE_SIZE.x - PINNED_NOTE_RIGHT_OFFSET.x
-	pos.x = clampf(pos.x, PINNED_NOTE_EDGE_MARGIN.x, viewport_size.x - PINNED_NOTE_SIZE.x - PINNED_NOTE_EDGE_MARGIN.x)
-	pos.y = clampf(pos.y, PINNED_NOTE_EDGE_MARGIN.y, viewport_size.y - PINNED_NOTE_SIZE.y - PINNED_NOTE_EDGE_MARGIN.y)
-	_pinned_note_panel.position = pos.round()
+	var map_world := _pinned_note_panel.get_parent() as Node2D
+	if map_world == null:
+		return
+	var anchor: Vector2 = map_world.to_local(marker.global_position)
+	_pinned_note_panel.position = (anchor + PINNED_NOTE_RIGHT_OFFSET).round()
 
 
 func _set_detail_text(name_text: String, desc_text: String, cost_text: String, yield_text: String, action_text: String) -> void:

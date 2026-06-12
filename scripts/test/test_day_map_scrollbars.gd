@@ -18,7 +18,7 @@ func _ready() -> void:
 	_test_topbar_button_layout(view)
 	_test_static_text_uses_pixel_font(view)
 	_test_pinned_note_contract(view)
-	await _test_pinned_note_stays_put_after_camera_moves(view)
+	await _test_pinned_note_stays_on_map_after_camera_moves(view)
 	await _test_pinned_note_visibility_paths(view)
 	_test_tavern_node(view)
 	_test_daymap_primary_button_style(view)
@@ -125,14 +125,14 @@ func _test_pinned_note_contract(view) -> void:
 			_ok(legacy.get_node_or_null(child_name) != null,
 				"legacy detail panel keeps %s" % child_name)
 
-	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	var note := view.get_node_or_null("MapWorld/PinnedNotePanel") as Control
 	_ok(note != null, "pinned note panel exists")
 	if note == null:
 		return
-	_ok(note.get_parent() == view.get_node("UILayer"), "pinned note lives in UILayer")
-	_ok(view.get_node_or_null("MapWorld/PinnedNotePanel") == null,
-		"pinned note is not part of the zooming map world")
-	_ok(note.size == Vector2(368, 384), "pinned note keeps its fixed runtime size")
+	_ok(note.get_parent() == view.get_node("MapWorld"), "pinned note is placed on the map world")
+	_ok(view.get_node_or_null("UILayer/PinnedNotePanel") == null,
+		"pinned note is not a fixed screen-space UI layer")
+	_ok(note.size == Vector2(368, 384), "pinned note keeps its fixed map-world size")
 	for child_name in ["KnifeArt", "NoteArt", "Name", "Desc", "Cost", "Yield", "GoHereBtn"]:
 		_ok(note.get_node_or_null(child_name) != null,
 			"pinned note keeps %s" % child_name)
@@ -156,37 +156,40 @@ func _test_pinned_note_contract(view) -> void:
 			"pinned note action routes through the existing DayMap action handler")
 
 
-func _test_pinned_note_stays_put_after_camera_moves(view) -> void:
+func _test_pinned_note_stays_on_map_after_camera_moves(view) -> void:
 	view._ensure_home_marker()
 	view._select_marker("__home__")
 	await get_tree().process_frame
-	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	var note := view.get_node_or_null("MapWorld/PinnedNotePanel") as Control
 	_ok(note != null, "pinned note exists before tracking test")
 	if note == null:
 		return
 	_ok(note.visible, "selecting a marker shows the pinned note")
 	var initial_size := note.size
 	var initial_position := note.position
+	var initial_screen_position: Vector2 = note.get_global_transform_with_canvas().origin
+	var initial_screen_scale: Vector2 = note.get_global_transform_with_canvas().get_scale()
 	var original_camera_position: Vector2 = view._camera.position
 	var original_camera_zoom: Vector2 = view._camera.zoom
+	var expected_position: Vector2 = view._home_marker.position + Vector2(44, -132)
+	_ok(note.position == expected_position,
+		"pinned note is pasted beside the marker in map coordinates")
 
 	view._camera.zoom = Vector2(1.35, 1.35)
 	view._camera.position = view._home_marker.global_position + Vector2(140, 0)
 	await get_tree().process_frame
 
-	_ok(note.size == initial_size, "pinned note size does not change with camera zoom")
+	_ok(note.size == initial_size, "pinned note map-world size does not change with camera zoom")
 	_ok(note.position == initial_position,
-		"pinned note screen position does not change after map camera movement")
+		"pinned note map-world position does not change after camera movement")
+	_ok(note.get_global_transform_with_canvas().origin != initial_screen_position,
+		"pinned note screen position changes with the map camera")
+	_ok(note.get_global_transform_with_canvas().get_scale() != initial_screen_scale,
+		"pinned note scales on screen with the map camera")
 	view._show_detail("__home__")
 	await get_tree().process_frame
 	_ok(note.position == initial_position,
-		"refreshing selected marker detail does not move the already pinned note")
-	var viewport_size: Vector2 = view.get_viewport_rect().size
-	_ok(note.position.x >= 0.0
-			and note.position.y >= 0.0
-			and note.position.x + note.size.x <= viewport_size.x
-			and note.position.y + note.size.y <= viewport_size.y,
-		"pinned note stays inside the viewport after camera movement")
+		"refreshing selected marker detail does not move the map-pasted note")
 	view._camera.position = original_camera_position
 	view._camera.zoom = original_camera_zoom
 
@@ -195,7 +198,7 @@ func _test_pinned_note_visibility_paths(view) -> void:
 	view._ensure_home_marker()
 	view._select_marker("__home__")
 	await get_tree().process_frame
-	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	var note := view.get_node_or_null("MapWorld/PinnedNotePanel") as Control
 	_ok(note != null and note.visible, "pinned note is visible after selecting home")
 	if note == null:
 		return
@@ -290,10 +293,10 @@ func _test_static_text_uses_pixel_font(view) -> void:
 		"UILayer/DetailPanel/Desc",
 		"UILayer/DetailPanel/Cost",
 		"UILayer/DetailPanel/Yield",
-		"UILayer/PinnedNotePanel/Name",
-		"UILayer/PinnedNotePanel/Desc",
-		"UILayer/PinnedNotePanel/Cost",
-		"UILayer/PinnedNotePanel/Yield",
+		"MapWorld/PinnedNotePanel/Name",
+		"MapWorld/PinnedNotePanel/Desc",
+		"MapWorld/PinnedNotePanel/Cost",
+		"MapWorld/PinnedNotePanel/Yield",
 		"UILayer/ResultPanel/ResultLabel",
 	]
 	for path in paths:
@@ -314,7 +317,7 @@ func _test_tavern_node(view) -> void:
 	_ok(view.get_node_or_null("UILayer/GoButton") == null,
 		"GoButton removed in favor of tavern node")
 	view._select_marker("__home__")
-	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	var note := view.get_node_or_null("MapWorld/PinnedNotePanel") as Control
 	_ok(note != null and note.visible,
 		"selecting tavern shows the pinned note")
 	_ok(view._detail_panel != null and not view._detail_panel.visible,
