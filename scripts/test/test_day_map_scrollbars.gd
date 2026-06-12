@@ -40,6 +40,15 @@ func _ok(cond: bool, msg: String) -> void:
 		push_error("[TEST-DAYMAP-SCROLLBARS] FAIL: " + msg)
 
 
+func _color_close(actual: Color, expected: Color, epsilon: float = 0.002) -> bool:
+	return (
+		absf(actual.r - expected.r) <= epsilon
+		and absf(actual.g - expected.g) <= epsilon
+		and absf(actual.b - expected.b) <= epsilon
+		and absf(actual.a - expected.a) <= epsilon
+	)
+
+
 func _finish() -> void:
 	if _failures == 0:
 		print("[TEST-DAYMAP-SCROLLBARS] ALL PASS (", _checks, " checks)")
@@ -148,6 +157,23 @@ func _test_pinned_note_contract(view) -> void:
 		"pinned note cost row stays clear of the knife")
 	_ok(yield_label != null and yield_label.position == Vector2(120, 254) and yield_label.size == Vector2(212, 42),
 		"pinned note yield row stays clear of the knife")
+	if name_label != null:
+		_ok(_color_close(name_label.get_theme_color("font_color"), Color(0.36, 0.20, 0.10)),
+			"pinned note title uses dark paper-ink color instead of bright UI amber")
+		_ok(name_label.get_theme_font_size("font_size") == 18,
+			"pinned note title uses a quieter handwritten-paper size")
+		_ok(name_label.get_theme_constant("outline_size") == 1,
+			"pinned note title keeps only a weak ink edge")
+		_ok(_color_close(name_label.get_theme_color("font_outline_color"), Color(0.05, 0.03, 0.02, 0.16)),
+			"pinned note title outline is a faint ink bleed, not black UI stroke")
+	for body_label in [desc_label, cost_label, yield_label]:
+		if body_label != null:
+			_ok(_color_close(body_label.get_theme_color("font_color"), Color(0.27, 0.19, 0.12)),
+				"pinned note body text uses paper-ink color")
+			_ok(body_label.get_theme_font_size("font_size") == 14,
+				"pinned note body text is slightly smaller than panel UI text")
+			_ok(body_label.get_theme_constant("outline_size") == 0,
+				"pinned note body text does not use black UI outline")
 	var note_art := note.get_node_or_null("NoteArt") as TextureRect
 	_ok(note_art != null and note_art.texture != null,
 		"pinned note has paper art")

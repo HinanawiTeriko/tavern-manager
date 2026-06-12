@@ -37,6 +37,11 @@ const DAYMAP_RESULT_FONT_SIZE := 16
 const DAYMAP_PRIMARY_BUTTON_FONT_SIZE := 18
 const DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE := 16
 const DAYMAP_LEDGER_BUTTON_FONT_SIZE := 15
+const PINNED_NOTE_TITLE_FONT_SIZE := 18
+const PINNED_NOTE_BODY_FONT_SIZE := 14
+const PINNED_NOTE_TITLE_INK := Color(0.36, 0.20, 0.10)
+const PINNED_NOTE_BODY_INK := Color(0.27, 0.19, 0.12)
+const PINNED_NOTE_INK_SHADOW := Color(0.05, 0.03, 0.02, 0.16)
 const DAYMAP_TOPBAR_DAY_POS := Vector2(72, 10)
 const DAYMAP_TOPBAR_DAY_SIZE := Vector2(300, 40)
 const DAYMAP_TOPBAR_STAMINA_POS := Vector2(420, 10)
@@ -265,8 +270,7 @@ func _setup_pinned_note_panel() -> void:
 	_pinned_note_name.position = PINNED_NOTE_NAME_POS
 	_pinned_note_name.size = PINNED_NOTE_NAME_SIZE
 	_pinned_note_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ThemeColors.style_header(_pinned_note_name, DAYMAP_HEADER_FONT_SIZE)
-	_apply_daymap_label_font(_pinned_note_name)
+	_style_pinned_note_title(_pinned_note_name)
 
 	_pinned_note_desc.position = PINNED_NOTE_DESC_POS
 	_pinned_note_desc.size = PINNED_NOTE_DESC_SIZE
@@ -277,11 +281,7 @@ func _setup_pinned_note_panel() -> void:
 	_pinned_note_yield.size = PINNED_NOTE_YIELD_SIZE
 	_pinned_note_yield.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for lbl in [_pinned_note_desc, _pinned_note_cost, _pinned_note_yield]:
-		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-		lbl.add_theme_font_size_override("font_size", DAYMAP_BODY_FONT_SIZE)
-		lbl.add_theme_constant_override("outline_size", 1)
-		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
-		_apply_daymap_label_font(lbl)
+		_style_pinned_note_body(lbl)
 
 	_style_daymap_note_action_button(_pinned_note_go_here, DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE)
 	_pinned_note_go_here.position = PINNED_NOTE_BUTTON_POS
@@ -327,6 +327,22 @@ func _style_daymap_note_action_button(button: Button, font_size: int = DAYMAP_PR
 
 func _apply_daymap_label_font(label: Label) -> void:
 	label.add_theme_font_override("font", DAYMAP_FONT)
+
+
+func _style_pinned_note_title(label: Label) -> void:
+	label.add_theme_font_override("font", DAYMAP_FONT)
+	label.add_theme_font_size_override("font_size", PINNED_NOTE_TITLE_FONT_SIZE)
+	label.add_theme_color_override("font_color", PINNED_NOTE_TITLE_INK)
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_color_override("font_outline_color", PINNED_NOTE_INK_SHADOW)
+
+
+func _style_pinned_note_body(label: Label) -> void:
+	label.add_theme_font_override("font", DAYMAP_FONT)
+	label.add_theme_font_size_override("font_size", PINNED_NOTE_BODY_FONT_SIZE)
+	label.add_theme_color_override("font_color", PINNED_NOTE_BODY_INK)
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 
 
 func _load_daymap_texture(path: String) -> Texture2D:
