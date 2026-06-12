@@ -2,35 +2,49 @@
   "assets": {
     "pinned_note_panel": {
       "id": "pinned_note_panel",
-      "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+      "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+      "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
       "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
       "size": [
         368,
-        288
+        384
+      ],
+      "source_crop": [
+        80,
+        60,
+        1120,
+        1148
       ],
       "safe_area": [
-        34,
-        24,
-        300,
-        204
+        84,
+        88,
+        248,
+        228
       ],
       "intended_godot_use": "DayMap PinnedNotePanel/NoteArt"
     },
     "pinned_note_knife": {
       "id": "pinned_note_knife",
-      "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+      "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+      "native_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
       "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
       "size": [
-        72,
-        72
+        112,
+        112
+      ],
+      "source_crop": [
+        80,
+        60,
+        520,
+        540
       ],
       "safe_area": [
-        12,
+        18,
         0,
-        48,
-        72
+        74,
+        112
       ],
-      "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt"
+      "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer"
     }
   }
 }

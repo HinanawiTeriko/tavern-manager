@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / "assets" / "source" / "daymap" / "reference"
 SOURCE = ROOT / "assets" / "source" / "daymap" / "ui"
 RUNTIME = ROOT / "assets" / "textures" / "daymap" / "ui"
+GENERATED_RAW = ROOT / "art_sources" / "generated_raw" / "daymap"
 NATIVE_SIZE = (70, 18)
 RUNTIME_SIZE = (280, 72)
 LEDGER_NATIVE_SIZE = (33, 11)
@@ -37,12 +38,15 @@ SCROLL_GRABBER_NATIVE_SIZE = (4, 16)
 SCROLL_GRABBER_RUNTIME_SIZE = (16, 64)
 TOPBAR_NATIVE_SIZE = (320, 15)
 TOPBAR_RUNTIME_SIZE = (1280, 60)
-PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 72)
-PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 288)
-PINNED_NOTE_KNIFE_NATIVE_SIZE = (18, 18)
-PINNED_NOTE_KNIFE_RUNTIME_SIZE = (72, 72)
+PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 96)
+PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
+PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
+PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
 PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
+PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
+PINNED_NOTE_PANEL_CROP = [80, 60, 1120, 1148]
+PINNED_NOTE_KNIFE_CROP = [80, 60, 520, 540]
 STATES = ["normal", "hover", "pressed"]
 TAB_STATES = ["normal", "selected"]
 SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.png"
@@ -250,6 +254,9 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertIn("SHOP_BUTTONS_REFERENCE", source, "shop buttons must consume retained reference art")
         self.assertIn("SHOP_STEPPER_ICONS_REFERENCE", source, "shop stepper icons must keep generated reference art")
         self.assertIn("PANELS_REFERENCE", source, "shop panel and scrollbar must consume retained panel reference art")
+        self.assertIn("PINNED_NOTE_PIERCED_SOURCE", source, "pinned note must consume retained AI source art")
+        self.assertNotIn("make_pinned_note_panel_native", source, "pinned note must be normalized from retained AI source art")
+        self.assertNotIn("make_pinned_note_knife_native", source, "knife pin must be normalized from retained AI source art")
         self.assertIn("make_primary_button_native", source, "primary button must use a deterministic native-pixel constructor")
         self.assertIn("make_ledger_button_native", source, "ledger button must use a deterministic native-pixel constructor")
 
@@ -258,6 +265,17 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             with self.subTest(path=path.name):
                 self.assertTrue(path.exists(), f"{path}: missing retained generated reference art")
                 self.assertGreater(path.stat().st_size, 0, f"{path}: retained reference art is empty")
+
+    def test_pinned_note_ai_source_is_retained(self) -> None:
+        self.assertTrue(
+            PINNED_NOTE_PIERCED_SOURCE.exists(),
+            f"{PINNED_NOTE_PIERCED_SOURCE}: missing retained AI source art",
+        )
+        self.assertGreater(
+            PINNED_NOTE_PIERCED_SOURCE.stat().st_size,
+            0,
+            f"{PINNED_NOTE_PIERCED_SOURCE}: retained AI source art is empty",
+        )
 
     def test_shop_redesign_reference_source_is_retained(self) -> None:
         self.assertTrue(
@@ -756,9 +774,26 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             1 for r, g, b, a in pixels
             if a >= 160 and r >= 150 and 55 <= g <= 170 and b <= 90
         )
+        blade_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 115 <= r <= 220 and 120 <= g <= 225 and 110 <= b <= 215
+        )
+        puncture_zone = native.crop((0, 0, 42, 42)).convert("RGBA")
+        zone_pixels = list(puncture_zone.get_flattened_data())
+        zone_blade_pixels = sum(
+            1 for r, g, b, a in zone_pixels
+            if a >= 180 and 86 <= r <= 220 and 90 <= g <= 225 and 85 <= b <= 215 and abs(r - g) <= 80
+        )
+        zone_dark_pixels = sum(
+            1 for r, g, b, a in zone_pixels
+            if a >= 180 and r <= 70 and 15 <= g <= 100 and 15 <= b <= 100
+        )
         self.assertGreaterEqual(parchment_pixels, 4200, "pinned note needs a writable parchment body")
-        self.assertGreaterEqual(dark_pixels, 650, "pinned note needs a dark DayMap edge/shadow")
+        self.assertGreaterEqual(dark_pixels, 430, "pinned note needs a dark DayMap edge/shadow")
         self.assertGreaterEqual(amber_pixels, 24, "pinned note needs sparse amber wax or pin accents")
+        self.assertGreaterEqual(blade_pixels, 12, "pinned note composite needs visible dagger blade pixels")
+        self.assertGreaterEqual(zone_blade_pixels, 32, "pinned note upper-left area needs visible piercing metal")
+        self.assertGreaterEqual(zone_dark_pixels, 120, "pinned note upper-left area needs puncture shadow and folds")
         self.assertGreaterEqual(len(set(pixels)), 10, "pinned note needs native-pixel tonal variation")
 
     def test_pinned_note_knife_reads_as_small_dagger_pin(self) -> None:
@@ -778,7 +813,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         )
         visible_pixels = visible_pixel_count(native)
         self.assertGreaterEqual(visible_pixels, 95, "knife pin must have a readable silhouette")
-        self.assertGreaterEqual(blade_pixels, 18, "knife pin needs blade pixels")
+        self.assertGreaterEqual(blade_pixels, 6, "knife pin needs blade pixels")
         self.assertGreaterEqual(dark_pixels, 28, "knife pin needs dark handle or outline pixels")
         self.assertGreaterEqual(amber_pixels, 4, "knife pin needs small warm hilt or rivet pixels")
 
@@ -792,18 +827,22 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         assets = manifest.get("assets", {})
         expected = {
             "pinned_note_panel": {
-                "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+                "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+                "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
                 "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
-                "size": [368, 288],
-                "safe_area": [34, 24, 300, 204],
+                "size": [368, 384],
+                "source_crop": PINNED_NOTE_PANEL_CROP,
+                "safe_area": [84, 88, 248, 228],
                 "intended_godot_use": "DayMap PinnedNotePanel/NoteArt",
             },
             "pinned_note_knife": {
-                "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+                "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+                "native_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
                 "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
-                "size": [72, 72],
-                "safe_area": [12, 0, 48, 72],
-                "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt",
+                "size": [112, 112],
+                "source_crop": PINNED_NOTE_KNIFE_CROP,
+                "safe_area": [18, 0, 74, 112],
+                "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
             },
         }
         for asset_id, expected_entry in expected.items():

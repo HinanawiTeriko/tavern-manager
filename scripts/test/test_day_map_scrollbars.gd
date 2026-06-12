@@ -17,6 +17,9 @@ func _ready() -> void:
 	_test_marker_labels_use_pixel_font(view)
 	_test_topbar_button_layout(view)
 	_test_static_text_uses_pixel_font(view)
+	_test_pinned_note_contract(view)
+	await _test_pinned_note_tracks_marker_without_scaling(view)
+	await _test_pinned_note_visibility_paths(view)
 	_test_tavern_node(view)
 	_test_daymap_primary_button_style(view)
 	_test_panel_styles(view)
@@ -114,6 +117,101 @@ func _test_panel_styles(view) -> void:
 			_ok(result_label.size == Vector2(520, 210), "result body text uses a narrower reading width")
 
 
+func _test_pinned_note_contract(view) -> void:
+	var legacy := view.get_node_or_null("UILayer/DetailPanel") as Panel
+	_ok(legacy != null, "legacy detail panel remains available")
+	if legacy != null:
+		for child_name in ["Name", "Desc", "Cost", "Yield", "GoHereBtn"]:
+			_ok(legacy.get_node_or_null(child_name) != null,
+				"legacy detail panel keeps %s" % child_name)
+
+	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	_ok(note != null, "pinned note panel exists")
+	if note == null:
+		return
+	_ok(note.get_parent() == view.get_node("UILayer"), "pinned note lives in UILayer")
+	_ok(view.get_node_or_null("MapWorld/PinnedNotePanel") == null,
+		"pinned note is not part of the zooming map world")
+	_ok(note.size == Vector2(368, 384), "pinned note keeps its fixed runtime size")
+	for child_name in ["KnifeArt", "NoteArt", "Name", "Desc", "Cost", "Yield", "GoHereBtn"]:
+		_ok(note.get_node_or_null(child_name) != null,
+			"pinned note keeps %s" % child_name)
+	var note_art := note.get_node_or_null("NoteArt") as TextureRect
+	_ok(note_art != null and note_art.texture != null,
+		"pinned note has paper art")
+	if note_art != null and note_art.texture != null:
+		_ok(String(note_art.texture.resource_path).ends_with("assets/textures/daymap/ui/pinned_note_panel.png"),
+			"pinned note uses DayMap note paper art")
+	var knife_art := note.get_node_or_null("KnifeArt") as TextureRect
+	_ok(knife_art != null and knife_art.texture != null,
+		"pinned note has knife art")
+	if knife_art != null and knife_art.texture != null:
+		_ok(String(knife_art.texture.resource_path).ends_with("assets/textures/daymap/ui/pinned_note_knife.png"),
+			"pinned note uses DayMap knife art")
+	var action := note.get_node_or_null("GoHereBtn") as Button
+	_ok(action != null and action.size == Vector2(280, 72),
+		"pinned note action button uses DayMap primary button size")
+	if action != null:
+		_ok(action.pressed.is_connected(Callable(view, "_on_go_here_pressed")),
+			"pinned note action routes through the existing DayMap action handler")
+
+
+func _test_pinned_note_tracks_marker_without_scaling(view) -> void:
+	view._ensure_home_marker()
+	view._select_marker("__home__")
+	await get_tree().process_frame
+	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	_ok(note != null, "pinned note exists before tracking test")
+	if note == null:
+		return
+	_ok(note.visible, "selecting a marker shows the pinned note")
+	var initial_size := note.size
+	var initial_position := note.position
+	var original_camera_position: Vector2 = view._camera.position
+	var original_camera_zoom: Vector2 = view._camera.zoom
+
+	view._camera.zoom = Vector2(1.35, 1.35)
+	view._camera.position = view._home_marker.global_position + Vector2(140, 0)
+	await get_tree().process_frame
+
+	_ok(note.size == initial_size, "pinned note size does not change with camera zoom")
+	_ok(note.position != initial_position,
+		"pinned note screen position changes when the selected marker moves on screen")
+	var viewport_size: Vector2 = view.get_viewport_rect().size
+	var marker_screen: Vector2 = (view._home_marker.global_position - view._camera.position) * view._camera.zoom + viewport_size * 0.5
+	_ok(absf((note.position.x - marker_screen.x) - 44.0) <= 1.0,
+		"pinned note remains anchored to the selected marker's right side")
+	_ok(note.position.x >= 0.0
+			and note.position.y >= 0.0
+			and note.position.x + note.size.x <= viewport_size.x
+			and note.position.y + note.size.y <= viewport_size.y,
+		"pinned note stays inside the viewport after camera movement")
+	view._camera.position = original_camera_position
+	view._camera.zoom = original_camera_zoom
+
+
+func _test_pinned_note_visibility_paths(view) -> void:
+	view._ensure_home_marker()
+	view._select_marker("__home__")
+	await get_tree().process_frame
+	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	_ok(note != null and note.visible, "pinned note is visible after selecting home")
+	if note == null:
+		return
+
+	view._clear_selection()
+	await get_tree().process_frame
+	_ok(not note.visible, "clearing selection hides the pinned note")
+
+	view._select_marker("__home__")
+	await get_tree().process_frame
+	view._open_shop()
+	await get_tree().process_frame
+	_ok(not note.visible, "opening shop hides the pinned note")
+	view._close_shop()
+	await get_tree().process_frame
+
+
 func _test_shop_overlay_integration(view) -> void:
 	var overlay := view.get_node_or_null("UILayer/ShopOverlay") as ShopOverlay
 	_ok(overlay != null, "DayMap uses ShopOverlay scene")
@@ -191,6 +289,10 @@ func _test_static_text_uses_pixel_font(view) -> void:
 		"UILayer/DetailPanel/Desc",
 		"UILayer/DetailPanel/Cost",
 		"UILayer/DetailPanel/Yield",
+		"UILayer/PinnedNotePanel/Name",
+		"UILayer/PinnedNotePanel/Desc",
+		"UILayer/PinnedNotePanel/Cost",
+		"UILayer/PinnedNotePanel/Yield",
 		"UILayer/ResultPanel/ResultLabel",
 	]
 	for path in paths:
@@ -211,10 +313,16 @@ func _test_tavern_node(view) -> void:
 	_ok(view.get_node_or_null("UILayer/GoButton") == null,
 		"GoButton removed in favor of tavern node")
 	view._select_marker("__home__")
-	_ok(view._detail_panel.visible,
-		"selecting tavern shows the detail panel")
-	_ok(view._detail_panel.get_node("GoHereBtn").text != "",
-		"selecting tavern gives the detail panel an action")
+	var note := view.get_node_or_null("UILayer/PinnedNotePanel") as Control
+	_ok(note != null and note.visible,
+		"selecting tavern shows the pinned note")
+	_ok(view._detail_panel != null and not view._detail_panel.visible,
+		"legacy detail panel stays hidden while pinned note is the visible detail UI")
+	if note != null:
+		var action := note.get_node_or_null("GoHereBtn") as Button
+		_ok(action != null, "pinned note keeps tavern action button")
+		if action != null:
+			_ok(action.text != "", "selecting tavern gives the pinned note an action")
 
 
 func _test_daymap_art_assets(view) -> void:

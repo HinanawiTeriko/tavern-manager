@@ -24,6 +24,8 @@ const DAYMAP_LEDGER_BUTTON_SIZE := Vector2(132, 44)
 const DAYMAP_PANEL_DETAIL := "res://assets/textures/daymap/ui/panel_detail.png"
 const DAYMAP_PANEL_RESULT := "res://assets/textures/daymap/ui/panel_result.png"
 const DAYMAP_TOPBAR_STRIP := "res://assets/textures/daymap/ui/topbar_strip.png"
+const DAYMAP_PINNED_NOTE_PANEL := "res://assets/textures/daymap/ui/pinned_note_panel.png"
+const DAYMAP_PINNED_NOTE_KNIFE := "res://assets/textures/daymap/ui/pinned_note_knife.png"
 const DAYMAP_STATUS_FONT_SIZE := 18
 const DAYMAP_HEADER_FONT_SIZE := 20
 const DAYMAP_BODY_FONT_SIZE := 15
@@ -45,6 +47,18 @@ const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
 const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
+const PINNED_NOTE_SIZE := Vector2(368, 384)
+const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
+const PINNED_NOTE_EDGE_MARGIN := Vector2(16, 70)
+const PINNED_NOTE_NAME_POS := Vector2(84, 88)
+const PINNED_NOTE_NAME_SIZE := Vector2(248, 36)
+const PINNED_NOTE_DESC_POS := Vector2(84, 128)
+const PINNED_NOTE_DESC_SIZE := Vector2(248, 84)
+const PINNED_NOTE_COST_POS := Vector2(84, 218)
+const PINNED_NOTE_COST_SIZE := Vector2(248, 28)
+const PINNED_NOTE_YIELD_POS := Vector2(84, 248)
+const PINNED_NOTE_YIELD_SIZE := Vector2(248, 40)
+const PINNED_NOTE_BUTTON_POS := Vector2(44, 292)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -54,6 +68,14 @@ const INTRO_HANDOFF_DURATION := 1.8
 var _camera: DayMapCamera
 var _points_root: Node2D
 var _detail_panel: Panel
+var _pinned_note_panel: Control
+var _pinned_note_note_art: TextureRect
+var _pinned_note_knife_art: TextureRect
+var _pinned_note_name: Label
+var _pinned_note_desc: Label
+var _pinned_note_cost: Label
+var _pinned_note_yield: Label
+var _pinned_note_go_here: Button
 var _markers: Dictionary = {}      # location_id -> MapPointMarker
 var _home_marker: MapPointMarker
 var _selected_id: String = ""
@@ -123,6 +145,7 @@ func _ready() -> void:
 	_apply_topbar_layout(documents_btn)
 
 	_setup_detail_panel()
+	_setup_pinned_note_panel()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
@@ -130,6 +153,11 @@ func _ready() -> void:
 
 	_ensure_shop_overlay()
 	_setup_background()
+
+
+func _process(_delta: float) -> void:
+	if _pinned_note_panel != null and _pinned_note_panel.visible:
+		_update_pinned_note_position()
 
 
 func _setup_background() -> void:
@@ -212,6 +240,57 @@ func _setup_detail_panel() -> void:
 	_detail_panel.visible = false
 
 
+func _setup_pinned_note_panel() -> void:
+	_pinned_note_panel = $UILayer/PinnedNotePanel
+	_pinned_note_note_art = _pinned_note_panel.get_node("NoteArt") as TextureRect
+	_pinned_note_knife_art = _pinned_note_panel.get_node("KnifeArt") as TextureRect
+	_pinned_note_name = _pinned_note_panel.get_node("Name") as Label
+	_pinned_note_desc = _pinned_note_panel.get_node("Desc") as Label
+	_pinned_note_cost = _pinned_note_panel.get_node("Cost") as Label
+	_pinned_note_yield = _pinned_note_panel.get_node("Yield") as Label
+	_pinned_note_go_here = _pinned_note_panel.get_node("GoHereBtn") as Button
+
+	_pinned_note_panel.size = PINNED_NOTE_SIZE
+	_pinned_note_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	_pinned_note_note_art.texture = _load_daymap_texture(DAYMAP_PINNED_NOTE_PANEL)
+	_pinned_note_note_art.position = Vector2.ZERO
+	_pinned_note_note_art.size = PINNED_NOTE_SIZE
+	_pinned_note_note_art.stretch_mode = TextureRect.STRETCH_SCALE
+	_pinned_note_note_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pinned_note_knife_art.texture = _load_daymap_texture(DAYMAP_PINNED_NOTE_KNIFE)
+	_pinned_note_knife_art.visible = false
+	_pinned_note_knife_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_pinned_note_name.position = PINNED_NOTE_NAME_POS
+	_pinned_note_name.size = PINNED_NOTE_NAME_SIZE
+	_pinned_note_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ThemeColors.style_header(_pinned_note_name, DAYMAP_HEADER_FONT_SIZE)
+	_apply_daymap_label_font(_pinned_note_name)
+
+	_pinned_note_desc.position = PINNED_NOTE_DESC_POS
+	_pinned_note_desc.size = PINNED_NOTE_DESC_SIZE
+	_pinned_note_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_pinned_note_cost.position = PINNED_NOTE_COST_POS
+	_pinned_note_cost.size = PINNED_NOTE_COST_SIZE
+	_pinned_note_yield.position = PINNED_NOTE_YIELD_POS
+	_pinned_note_yield.size = PINNED_NOTE_YIELD_SIZE
+	_pinned_note_yield.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	for lbl in [_pinned_note_desc, _pinned_note_cost, _pinned_note_yield]:
+		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+		lbl.add_theme_font_size_override("font_size", DAYMAP_BODY_FONT_SIZE)
+		lbl.add_theme_constant_override("outline_size", 1)
+		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
+		_apply_daymap_label_font(lbl)
+
+	_style_daymap_primary_button(_pinned_note_go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	_pinned_note_go_here.position = PINNED_NOTE_BUTTON_POS
+	_pinned_note_go_here.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	var action := Callable(self, "_on_go_here_pressed")
+	if not _pinned_note_go_here.pressed.is_connected(action):
+		_pinned_note_go_here.pressed.connect(action)
+	_pinned_note_panel.visible = false
+
+
 func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
 	button.custom_minimum_size = DAYMAP_PRIMARY_BUTTON_SIZE
 	button.size = DAYMAP_PRIMARY_BUTTON_SIZE
@@ -230,6 +309,18 @@ func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMAR
 
 func _apply_daymap_label_font(label: Label) -> void:
 	label.add_theme_font_override("font", DAYMAP_FONT)
+
+
+func _load_daymap_texture(path: String) -> Texture2D:
+	var texture := TextureManager.try_load(path)
+	if texture != null:
+		return texture
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	if image.is_empty():
+		return null
+	var image_texture := ImageTexture.create_from_image(image)
+	image_texture.resource_path = path
+	return image_texture
 
 
 func _daymap_texture_style(path: String) -> StyleBoxTexture:
@@ -342,6 +433,7 @@ func _refresh_map() -> void:
 			if _selected_id == id:
 				_selected_id = ""
 				_detail_panel.visible = false
+				_hide_pinned_note()
 
 	for id in current_ids:
 		if not _markers.has(id) and gm.day_map.is_revealed(id):
@@ -437,7 +529,7 @@ func _play_update_sequence(updated: Array) -> void:
 	_revealing = false
 	# 若当前选中的是被更新的地点，刷新其详情描述
 	if _selected_id != "":
-		_show_detail(_selected_id)
+		_show_pinned_detail(_selected_id)
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:
@@ -457,7 +549,7 @@ func _select_marker(location_id: String) -> void:
 	_clear_selection()
 	_selected_id = location_id
 	_set_marker_selected(location_id, true)
-	_show_detail(location_id)
+	_show_pinned_detail(location_id)
 
 
 ## 撤掉当前选中 marker 的金圈并清空 _selected_id。
@@ -466,6 +558,7 @@ func _select_marker(location_id: String) -> void:
 func _clear_selection() -> void:
 	_set_marker_selected(_selected_id, false)
 	_selected_id = ""
+	_hide_pinned_note()
 
 
 func _set_marker_selected(id: String, value: bool) -> void:
@@ -476,7 +569,107 @@ func _set_marker_selected(id: String, value: bool) -> void:
 		_markers[id].set_selected(value)
 
 
+func _selected_marker_node() -> Node2D:
+	if _selected_id == HOME_ID:
+		if _home_marker != null and is_instance_valid(_home_marker):
+			return _home_marker
+		return null
+	if _markers.has(_selected_id):
+		var marker := _markers[_selected_id] as Node2D
+		if marker != null and is_instance_valid(marker):
+			return marker
+	return null
+
+
+func _world_to_daymap_screen(world_pos: Vector2) -> Vector2:
+	return (world_pos - _camera.position) * _camera.zoom + get_viewport_rect().size * 0.5
+
+
+func _update_pinned_note_position() -> void:
+	if _pinned_note_panel == null or _camera == null:
+		return
+	var marker := _selected_marker_node()
+	if marker == null:
+		_hide_pinned_note()
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var anchor: Vector2 = _world_to_daymap_screen(marker.global_position)
+	var pos: Vector2 = anchor + PINNED_NOTE_RIGHT_OFFSET
+	if pos.x + PINNED_NOTE_SIZE.x > viewport_size.x - PINNED_NOTE_EDGE_MARGIN.x:
+		pos.x = anchor.x - PINNED_NOTE_SIZE.x - PINNED_NOTE_RIGHT_OFFSET.x
+	pos.x = clampf(pos.x, PINNED_NOTE_EDGE_MARGIN.x, viewport_size.x - PINNED_NOTE_SIZE.x - PINNED_NOTE_EDGE_MARGIN.x)
+	pos.y = clampf(pos.y, PINNED_NOTE_EDGE_MARGIN.y, viewport_size.y - PINNED_NOTE_SIZE.y - PINNED_NOTE_EDGE_MARGIN.y)
+	_pinned_note_panel.position = pos.round()
+
+
+func _set_detail_text(name_text: String, desc_text: String, cost_text: String, yield_text: String, action_text: String) -> void:
+	_detail_panel.get_node("Name").text = name_text
+	_detail_panel.get_node("Desc").text = desc_text
+	_detail_panel.get_node("Cost").text = cost_text
+	_detail_panel.get_node("Yield").text = yield_text
+	(_detail_panel.get_node("GoHereBtn") as Button).text = action_text
+
+	_pinned_note_name.text = name_text
+	_pinned_note_desc.text = desc_text
+	_pinned_note_cost.text = cost_text
+	_pinned_note_yield.text = yield_text
+	_pinned_note_go_here.text = action_text
+
+
+func _show_pinned_note() -> void:
+	if _pinned_note_panel == null:
+		return
+	_pinned_note_panel.visible = true
+	_update_pinned_note_position()
+
+
+func _hide_pinned_note() -> void:
+	if _pinned_note_panel != null:
+		_pinned_note_panel.visible = false
+
+
+func _show_pinned_detail(location_id: String) -> void:
+	if location_id == HOME_ID:
+		var cost_text := ("还有 %d 点体力未用" % _stamina_left) if _stamina_left > 0 else ""
+		_set_detail_text("你的酒馆", "今晚开门营业，结束今天的白天。", cost_text, "", "开门营业")
+		_detail_panel.visible = false
+		_show_pinned_note()
+		return
+
+	var gm = get_node("/root/GameManager")
+	var loc: Dictionary = {}
+	for l in gm.day_map.get_locations():
+		if String(l.get("id", "")) == location_id:
+			loc = l
+			break
+	if loc.is_empty():
+		_detail_panel.visible = false
+		_hide_pinned_note()
+		return
+
+	var cost_text := ""
+	var yield_text := ""
+	var action_text := "前往"
+	if bool(loc.get("opensShop", false)):
+		action_text = "进入"
+	else:
+		cost_text = "体力消耗：%d" % int(loc.get("cost", 1))
+		yield_text = _yield_text(loc)
+	_set_detail_text(
+		String(loc.get("name", "")),
+		String(loc.get("description", "")),
+		cost_text,
+		yield_text,
+		action_text
+	)
+	_detail_panel.visible = false
+	_show_pinned_note()
+
+
 func _show_detail(location_id: String) -> void:
+	_show_pinned_detail(location_id)
+	return
 	var go_here: Button = _detail_panel.get_node("GoHereBtn")
 	if location_id == HOME_ID:
 		_detail_panel.get_node("Name").text = "你的酒馆"
@@ -551,6 +744,8 @@ func _visit_location(location_id: String) -> void:
 	if INVESTIGATION_SCENES.has(location_id) and bool(result.get("success", false)):
 		_stamina_left = gm.day_map.stamina
 		_update_stamina_display()
+		_detail_panel.visible = false
+		_hide_pinned_note()
 		_enter_investigation(INVESTIGATION_SCENES[location_id])
 		return
 	_result_label.text = String(result.get("message", "访问完成。"))

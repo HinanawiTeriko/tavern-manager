@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / "assets" / "source" / "daymap" / "reference"
 SOURCE = ROOT / "assets" / "source" / "daymap" / "ui"
 RUNTIME = ROOT / "assets" / "textures" / "daymap" / "ui"
+GENERATED_RAW = ROOT / "art_sources" / "generated_raw" / "daymap"
 NATIVE_SIZE = (70, 18)
 RUNTIME_SIZE = (280, 72)
 LEDGER_NATIVE_SIZE = (33, 11)
@@ -38,10 +39,10 @@ SCROLL_GRABBER_NATIVE_SIZE = (4, 16)
 SCROLL_GRABBER_RUNTIME_SIZE = (16, 64)
 TOPBAR_NATIVE_SIZE = (320, 15)
 TOPBAR_RUNTIME_SIZE = (1280, 60)
-PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 72)
-PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 288)
-PINNED_NOTE_KNIFE_NATIVE_SIZE = (18, 18)
-PINNED_NOTE_KNIFE_RUNTIME_SIZE = (72, 72)
+PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 96)
+PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
+PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
+PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
 PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 
@@ -53,6 +54,9 @@ SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.
 SHOP_STEPPER_ICONS_REFERENCE = REFERENCE / "daymap_ui_shop_stepper_icons_reference_v1_generated.png"
 PANELS_REFERENCE = REFERENCE / "daymap_ui_panels_reference_v2_generated.png"
 TOPBAR_REFERENCE = REFERENCE / "daymap_ui_topbar_reference_v2_generated.png"
+PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
+PINNED_NOTE_PANEL_CROP = (80, 60, 1120, 1148)
+PINNED_NOTE_KNIFE_CROP = (80, 60, 520, 540)
 PARCHMENT_PALETTE = [
     (112, 78, 48),
     (124, 88, 52),
@@ -77,6 +81,13 @@ AMBER_PALETTE = [
     (207, 117, 18),
     (224, 136, 25),
     (245, 165, 32),
+]
+BLADE_PALETTE = [
+    (58, 65, 65),
+    (86, 96, 94),
+    (118, 133, 127),
+    (156, 174, 164),
+    (190, 208, 194),
 ]
 DARK_INK = (6, 20, 22, 255)
 DARK_BODY = (8, 25, 29, 255)
@@ -352,65 +363,6 @@ def make_document_panel_native() -> Image.Image:
     return image
 
 
-def make_pinned_note_panel_native() -> Image.Image:
-    image = Image.new("RGBA", PINNED_NOTE_PANEL_NATIVE_SIZE, (0, 0, 0, 0))
-    width, height = image.size
-    fill_rect(image, (2, 1, width - 2, height - 1), DARK_EDGE)
-    fill_rect(image, (0, 4, width, height - 4), DARK_EDGE)
-    fill_rect(image, (4, 3, width - 4, height - 3), PARCHMENT_BODY)
-    fill_rect(image, (6, 5, width - 6, height - 5), PARCHMENT_LIGHT)
-    fill_rect(image, (9, 8, width - 9, height - 8), (140, 96, 54, 255))
-
-    for x in range(12, width - 12, 9):
-        set_pixel(image, x, 6, (216, 169, 101, 255))
-        set_pixel(image, x + 2, height - 7, (112, 78, 48, 255))
-    for y in range(10, height - 10, 8):
-        set_pixel(image, 7, y, (112, 78, 48, 255))
-        set_pixel(image, width - 8, y + 3, (196, 147, 86, 255))
-
-    fill_rect(image, (4, 3, 18, 6), DARK_LIFT)
-    fill_rect(image, (width - 20, height - 7, width - 6, height - 4), DARK_LIFT)
-    fill_rect(image, (8, 9, 11, 12), AMBER_NORMAL)
-    fill_rect(image, (9, 10, 10, 11), AMBER_HOVER)
-    fill_rect(image, (13, 13, 15, 15), AMBER_PRESSED)
-    for x, y in [(18, 10), (25, 15), (62, 12), (73, 18), (49, 55), (70, 48)]:
-        set_pixel(image, x, y, (112, 78, 48, 255))
-
-    for x, y in [(0, 0), (1, 1), (width - 1, 0), (width - 2, 1), (0, height - 1), (width - 1, height - 1)]:
-        set_pixel(image, x, y, (0, 0, 0, 0))
-    return image
-
-
-def make_pinned_note_knife_native() -> Image.Image:
-    image = Image.new("RGBA", PINNED_NOTE_KNIFE_NATIVE_SIZE, (0, 0, 0, 0))
-    outline = (5, 17, 20, 255)
-    blade_dark = (115, 126, 123, 255)
-    blade_light = (184, 202, 190, 255)
-    blade_mid = (145, 163, 153, 255)
-    handle = (45, 30, 24, 255)
-    handle_lift = (93, 59, 34, 255)
-
-    for y in range(1, 10):
-        x = 10 - y // 2
-        set_pixel(image, x, y, outline)
-        set_pixel(image, x + 1, y, blade_mid)
-        if y <= 7:
-            set_pixel(image, x + 2, y, blade_light)
-        if y >= 3:
-            set_pixel(image, x - 1, y, blade_dark)
-    for x, y in [(9, 0), (10, 0), (8, 1), (11, 1), (6, 6), (7, 8), (8, 9)]:
-        set_pixel(image, x, y, outline)
-    fill_rect(image, (5, 9, 13, 11), AMBER_NORMAL)
-    fill_rect(image, (6, 10, 12, 12), AMBER_PRESSED)
-    fill_rect(image, (6, 12, 12, 17), handle)
-    fill_rect(image, (7, 12, 11, 17), handle_lift)
-    set_pixel(image, 8, 13, AMBER_HOVER)
-    set_pixel(image, 9, 15, AMBER_NORMAL)
-    for x, y in [(5, 11), (12, 11), (5, 12), (12, 12), (5, 16), (12, 16), (6, 17), (7, 17), (10, 17), (11, 17), (6, 8), (12, 8)]:
-        set_pixel(image, x, y, outline)
-    return image
-
-
 def palette_pick(palette: list[tuple[int, int, int]], luma: float) -> tuple[int, int, int]:
     index = min(len(palette) - 1, max(0, int((luma / 256.0) * len(palette))))
     return palette[index]
@@ -475,6 +427,89 @@ def harmonize_ui_palette(image: Image.Image, profile: str = "default") -> Image.
             else:
                 pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
     return clear_transparent_pixels(out)
+
+
+def crop_explicit_source(
+    image: Image.Image,
+    box: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    left, top, right, bottom = box
+    if left < 0 or top < 0 or right > image.width or bottom > image.height or left >= right or top >= bottom:
+        raise ValueError(f"{label}: crop {box} is outside source size {image.size}")
+    return image.crop(box).convert("RGBA")
+
+
+def harmonize_pinned_note_palette(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            luma = red * 0.32 + green * 0.42 + blue * 0.26
+            amberish = (
+                red >= 178
+                and 55 <= green <= 150
+                and blue <= 84
+                and red >= green * 1.42
+                and red > blue * 2.0
+            )
+            metal = (
+                abs(red - green) <= 44
+                and abs(green - blue) <= 54
+                and blue >= red * 0.70
+                and luma >= 42.0
+                and not amberish
+            )
+            wood = (
+                58 <= red <= 150
+                and 28 <= green <= 105
+                and blue <= 82
+                and red >= green * 1.05
+                and green >= blue * 1.05
+            )
+            if metal:
+                pixels[x, y] = (*palette_pick(BLADE_PALETTE, min(255.0, luma * 1.08)), alpha)
+            elif amberish or wood:
+                pixels[x, y] = (*palette_pick(AMBER_PALETTE if luma >= 96.0 else PARCHMENT_PALETTE, luma), alpha)
+            elif luma >= 74.0:
+                pixels[x, y] = (*palette_pick(PARCHMENT_PALETTE, luma), alpha)
+            else:
+                pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
+    return clear_transparent_pixels(out)
+
+
+def fit_pinned_note_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    native_size: tuple[int, int],
+    label: str,
+    fill: bool = True,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    if fill:
+        fitted = ImageOps.fit(
+            keyed,
+            native_size,
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        ).convert("RGBA")
+    else:
+        fitted = ImageOps.contain(
+            keyed,
+            native_size,
+            method=Image.Resampling.LANCZOS,
+        ).convert("RGBA")
+        canvas = Image.new("RGBA", native_size, (0, 0, 0, 0))
+        canvas.alpha_composite(fitted, ((native_size[0] - fitted.width) // 2, (native_size[1] - fitted.height) // 2))
+        fitted = canvas
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.08)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    fitted.putalpha(alpha)
+    return harmonize_pinned_note_palette(clear_transparent_pixels(fitted))
 
 
 def fit_ui_source(
@@ -621,13 +656,13 @@ def export_pinned_note_contact_sheet(panel: Image.Image, knife: Image.Image) -> 
     PINNED_NOTE_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
     panel_runtime = panel.resize(PINNED_NOTE_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
     knife_runtime = knife.resize(PINNED_NOTE_KNIFE_RUNTIME_SIZE, Image.Resampling.NEAREST)
-    sheet = Image.new("RGBA", (520, 340), (8, 25, 29, 255))
-    sheet.alpha_composite(panel_runtime, (112, 28))
-    sheet.alpha_composite(knife_runtime, (60, 72))
-    native_preview = panel.resize((184, 144), Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (640, 520), (8, 25, 29, 255))
+    sheet.alpha_composite(panel_runtime, (136, 32))
+    sheet.alpha_composite(knife_runtime, (44, 76))
+    native_preview = panel.resize((184, 192), Image.Resampling.NEAREST)
     knife_preview = knife.resize((72, 72), Image.Resampling.NEAREST)
-    sheet.alpha_composite(native_preview, (20, 188))
-    sheet.alpha_composite(knife_preview, (220, 224))
+    sheet.alpha_composite(native_preview, (20, 300))
+    sheet.alpha_composite(knife_preview, (236, 360))
     sheet.save(PINNED_NOTE_CONTACT_SHEET)
     print(f"pinned_note_contact_sheet: {sheet.size}")
 
@@ -640,19 +675,23 @@ def write_pinned_note_manifest() -> None:
     assets = manifest.setdefault("assets", {})
     assets["pinned_note_panel"] = {
         "id": "pinned_note_panel",
-        "source_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+        "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+        "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
         "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
-        "size": [368, 288],
-        "safe_area": [34, 24, 300, 204],
+        "size": [368, 384],
+        "source_crop": list(PINNED_NOTE_PANEL_CROP),
+        "safe_area": [84, 88, 248, 228],
         "intended_godot_use": "DayMap PinnedNotePanel/NoteArt",
     }
     assets["pinned_note_knife"] = {
         "id": "pinned_note_knife",
-        "source_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+        "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+        "native_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
         "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
-        "size": [72, 72],
-        "safe_area": [12, 0, 48, 72],
-        "intended_godot_use": "DayMap PinnedNotePanel/KnifeArt",
+        "size": [112, 112],
+        "source_crop": list(PINNED_NOTE_KNIFE_CROP),
+        "safe_area": [18, 0, 74, 112],
+        "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
     }
     DAYMAP_UI_MANIFEST.write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
@@ -725,8 +764,20 @@ def main() -> None:
     export_single("scroll_track", fit_shop_scroll_track_source(panel_result), SCROLL_TRACK_RUNTIME_SIZE)
     export_single("scroll_grabber", fit_shop_scroll_grabber_source(panel_result), SCROLL_GRABBER_RUNTIME_SIZE)
     export_single("topbar_strip", fit_topbar_source(topbar), TOPBAR_RUNTIME_SIZE)
-    pinned_note_panel = make_pinned_note_panel_native()
-    pinned_note_knife = make_pinned_note_knife_native()
+    pinned_note_source = load_reference(PINNED_NOTE_PIERCED_SOURCE)
+    pinned_note_panel = fit_pinned_note_source(
+        pinned_note_source,
+        PINNED_NOTE_PANEL_CROP,
+        PINNED_NOTE_PANEL_NATIVE_SIZE,
+        "pinned_note_panel",
+    )
+    pinned_note_knife = fit_pinned_note_source(
+        pinned_note_source,
+        PINNED_NOTE_KNIFE_CROP,
+        PINNED_NOTE_KNIFE_NATIVE_SIZE,
+        "pinned_note_knife",
+        fill=False,
+    )
     export_single("pinned_note_panel", pinned_note_panel, PINNED_NOTE_PANEL_RUNTIME_SIZE)
     export_single("pinned_note_knife", pinned_note_knife, PINNED_NOTE_KNIFE_RUNTIME_SIZE)
     export_pinned_note_contact_sheet(pinned_note_panel, pinned_note_knife)
