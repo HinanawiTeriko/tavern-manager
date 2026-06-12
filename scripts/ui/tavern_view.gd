@@ -85,15 +85,12 @@ func _apply_theme() -> void:
 		patience_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		patience_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_gold_label.add_theme_font_size_override("font_size", 16)
-	_rep_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_rep_label.add_theme_font_size_override("font_size", 16)
-	_day_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	_day_label.add_theme_font_size_override("font_size", 15)
+	ThemeColors.style_brush_label(_gold_label, 16, ThemeColors.AMBER_PRIMARY)
+	ThemeColors.style_brush_label(_rep_label, 16, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_day_label, 15, ThemeColors.TEXT_SUBTITLE)
 
-	ThemeColors.style_button($TopPanel/MenuButton, 14)
-	ThemeColors.style_button(_end_night_btn, 14)
+	ThemeColors.style_brush_button($TopPanel/MenuButton, 14)
+	ThemeColors.style_brush_button(_end_night_btn, 14)
 
 	# 添加教程按钮到菜单
 	_add_tutorial_button_to_menu()

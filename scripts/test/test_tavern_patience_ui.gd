@@ -41,11 +41,18 @@ func _stylebox_texture_path(control: Control, style_name: String) -> String:
 	return _texture_path(stylebox.texture)
 
 
-func _label_uses_pixel_font(label: Label) -> bool:
-	if not label.has_theme_font_override("font"):
+func _control_uses_pixel_font(control: Control) -> bool:
+	if not control.has_theme_font_override("font"):
 		return false
-	var font := label.get_theme_font("font")
+	var font := control.get_theme_font("font")
 	return font != null and font.resource_path == PIXEL_FONT_PATH
+
+
+func _stylebox_texture(control: Control, style_name: String) -> Texture2D:
+	var stylebox := control.get_theme_stylebox(style_name) as StyleBoxTexture
+	if stylebox == null:
+		return null
+	return stylebox.texture
 
 
 func _test_tavern_patience_ui_contract() -> void:
@@ -90,10 +97,29 @@ func _test_tavern_patience_ui_contract() -> void:
 	var order_bubble := tavern.get_node_or_null("CustomerArea/OrderBubble") as Label
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
-		_ok(_label_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
+		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
 	_ok(order_bubble != null, "OrderBubble remains the public Tavern customer request label path")
 	if order_bubble != null:
-		_ok(_label_uses_pixel_font(order_bubble), "OrderBubble uses the shared pixel UI font")
+		_ok(_control_uses_pixel_font(order_bubble), "OrderBubble uses the shared pixel UI font")
+
+	var top_panel_bg := tavern.get_node_or_null("TopPanelBg") as Panel
+	var top_panel := tavern.get_node_or_null("TopPanel") as HBoxContainer
+	_ok(top_panel_bg != null, "TopPanelBg remains the public Tavern top-strip background path")
+	if top_panel_bg != null:
+		_ok(top_panel_bg.size == Vector2(1280, 48), "TopPanelBg uses the production 1280x48 top strip layout")
+		_ok(_stylebox_texture_path(top_panel_bg, "panel") == "res://assets/textures/ui/bar_top_panel.png",
+			"TopPanelBg uses the runtime topbar pixel art")
+		var topbar_texture := _stylebox_texture(top_panel_bg, "panel")
+		_ok(topbar_texture != null and topbar_texture.get_size() == Vector2(1280, 48),
+			"TopPanelBg topbar texture is the 1280x48 runtime export")
+	_ok(top_panel != null, "TopPanel remains the public Tavern top-strip container path")
+	if top_panel != null:
+		_ok(top_panel.size == Vector2(1280, 48), "TopPanel uses the production 1280x48 top strip layout")
+		for path in ["GoldLabel", "ReputationLabel", "DayLabel", "MenuButton", "EndNightBtn"]:
+			var control := top_panel.get_node_or_null(path) as Control
+			_ok(control != null, "TopPanel/%s remains available" % path)
+			if control != null:
+				_ok(_control_uses_pixel_font(control), "TopPanel/%s uses the shared pixel UI font" % path)
 
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
