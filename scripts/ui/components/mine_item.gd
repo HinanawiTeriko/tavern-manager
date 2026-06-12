@@ -16,6 +16,7 @@ const ITEM_TEXTURES := {
 	"warhammer_token": "res://assets/ui/generated/investigation/mine_items/warhammer_token.png",
 	"bloodied_paper": "res://assets/ui/generated/investigation/mine_items/bloodied_paper.png",
 }
+const SHADOW_TEXTURE := "res://assets/ui/generated/investigation/mine_background/mine_item_shadow.png"
 
 @onready var _shape: CollisionShape2D = $Shape
 @onready var _visual: Polygon2D = $Visual
@@ -25,6 +26,9 @@ var item_tag: String = ""
 var kind: String = "plain"
 var observation: String = ""
 var _texture_visual: Sprite2D = null
+var _shadow_visual: Sprite2D = null
+var _shadow_offset_y: float = 0.0
+var _uses_production_texture: bool = false
 
 
 func setup(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color, p_label: String, p_observation: String = "") -> void:
@@ -58,7 +62,7 @@ func _apply_texture_visual(p_tag: String, p_size: Vector2) -> void:
 	_ensure_texture_visual()
 	_texture_visual.texture = texture
 	_texture_visual.visible = true
-	_texture_visual.z_index = _visual.z_index + 1
+	_texture_visual.z_index = _visual.z_index + 2
 	var texture_size: Vector2 = texture.get_size()
 	if texture_size.x > 0.0 and texture_size.y > 0.0:
 		_texture_visual.scale = Vector2(p_size.x / texture_size.x, p_size.y / texture_size.y)
@@ -66,6 +70,8 @@ func _apply_texture_visual(p_tag: String, p_size: Vector2) -> void:
 		_texture_visual.scale = Vector2.ONE
 	_visual.visible = false
 	_label.visible = false
+	_uses_production_texture = true
+	_apply_shadow_visual(p_size)
 
 
 func _ensure_texture_visual() -> void:
@@ -78,8 +84,58 @@ func _ensure_texture_visual() -> void:
 	add_child(_texture_visual)
 
 
+func _physics_process(_delta: float) -> void:
+	_update_shadow_visual()
+
+
+func _apply_shadow_visual(p_size: Vector2) -> void:
+	var texture := load(SHADOW_TEXTURE) as Texture2D
+	if texture == null:
+		push_warning("MineItem shadow texture missing or invalid: %s" % SHADOW_TEXTURE)
+		if _shadow_visual != null:
+			_shadow_visual.visible = false
+		return
+	_ensure_shadow_visual()
+	_shadow_visual.texture = texture
+	_shadow_visual.visible = true
+	_shadow_visual.z_index = _visual.z_index + 1
+	_shadow_offset_y = p_size.y * 0.38
+	var texture_size := texture.get_size()
+	if texture_size.x > 0.0 and texture_size.y > 0.0:
+		var target_width := maxf(24.0, p_size.x * 1.05)
+		var target_height := clampf(p_size.y * 0.18, 8.0, 18.0)
+		_shadow_visual.scale = Vector2(target_width / texture_size.x, target_height / texture_size.y)
+	else:
+		_shadow_visual.scale = Vector2.ONE
+	_update_shadow_visual()
+
+
+func _ensure_shadow_visual() -> void:
+	if _shadow_visual != null:
+		return
+	_shadow_visual = Sprite2D.new()
+	_shadow_visual.name = "ShadowVisual"
+	_shadow_visual.centered = true
+	_shadow_visual.top_level = true
+	_shadow_visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_child(_shadow_visual)
+
+
+func _update_shadow_visual() -> void:
+	if _shadow_visual == null:
+		return
+	_shadow_visual.visible = visible and _uses_production_texture
+	if not _shadow_visual.visible:
+		return
+	_shadow_visual.global_position = global_position + Vector2(0.0, _shadow_offset_y)
+	_shadow_visual.global_rotation = 0.0
+
+
 func _show_legacy_visual() -> void:
+	_uses_production_texture = false
 	_visual.visible = true
 	_label.visible = true
 	if _texture_visual != null:
 		_texture_visual.visible = false
+	if _shadow_visual != null:
+		_shadow_visual.visible = false
