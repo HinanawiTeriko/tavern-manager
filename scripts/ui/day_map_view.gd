@@ -16,6 +16,9 @@ const DAYMAP_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-
 const DAYMAP_BUTTON_PRIMARY_NORMAL := "res://assets/textures/daymap/ui/button_primary_normal.png"
 const DAYMAP_BUTTON_PRIMARY_HOVER := "res://assets/textures/daymap/ui/button_primary_hover.png"
 const DAYMAP_BUTTON_PRIMARY_PRESSED := "res://assets/textures/daymap/ui/button_primary_pressed.png"
+const DAYMAP_BUTTON_NOTE_ACTION_NORMAL := "res://assets/textures/daymap/ui/button_note_action_normal.png"
+const DAYMAP_BUTTON_NOTE_ACTION_HOVER := "res://assets/textures/daymap/ui/button_note_action_hover.png"
+const DAYMAP_BUTTON_NOTE_ACTION_PRESSED := "res://assets/textures/daymap/ui/button_note_action_pressed.png"
 const DAYMAP_PRIMARY_BUTTON_SIZE := Vector2(280, 72)
 const DAYMAP_BUTTON_LEDGER_NORMAL := "res://assets/textures/daymap/ui/button_ledger_normal.png"
 const DAYMAP_BUTTON_LEDGER_HOVER := "res://assets/textures/daymap/ui/button_ledger_hover.png"
@@ -47,6 +50,8 @@ const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
 const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
+const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 72.0
+const DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT := 24.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
 const PINNED_NOTE_NAME_POS := Vector2(84, 88)
@@ -276,7 +281,7 @@ func _setup_pinned_note_panel() -> void:
 		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
 		_apply_daymap_label_font(lbl)
 
-	_style_daymap_primary_button(_pinned_note_go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	_style_daymap_note_action_button(_pinned_note_go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
 	_pinned_note_go_here.position = PINNED_NOTE_BUTTON_POS
 	_pinned_note_go_here.size = DAYMAP_PRIMARY_BUTTON_SIZE
 	var action := Callable(self, "_on_go_here_pressed")
@@ -298,6 +303,22 @@ func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMAR
 	button.add_theme_stylebox_override("hover", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_HOVER))
 	button.add_theme_stylebox_override("pressed", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_PRESSED))
 	button.add_theme_stylebox_override("disabled", _daymap_texture_style(DAYMAP_BUTTON_PRIMARY_NORMAL))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _style_daymap_note_action_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
+	button.custom_minimum_size = DAYMAP_PRIMARY_BUTTON_SIZE
+	button.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	button.add_theme_font_override("font", DAYMAP_FONT)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
+	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.add_theme_stylebox_override("normal", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_NORMAL))
+	button.add_theme_stylebox_override("hover", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_HOVER))
+	button.add_theme_stylebox_override("pressed", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_PRESSED))
+	button.add_theme_stylebox_override("disabled", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_NORMAL))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
@@ -323,6 +344,20 @@ func _daymap_texture_style(path: String) -> StyleBoxTexture:
 		return StyleBoxTexture.new()
 	style.set_content_margin(SIDE_LEFT, DAYMAP_BUTTON_TEXT_MARGIN_X)
 	style.set_content_margin(SIDE_RIGHT, DAYMAP_BUTTON_TEXT_MARGIN_X)
+	style.set_content_margin(SIDE_TOP, DAYMAP_BUTTON_TEXT_MARGIN_Y)
+	style.set_content_margin(SIDE_BOTTOM, DAYMAP_BUTTON_TEXT_MARGIN_Y + 1.0)
+	return style
+
+
+func _daymap_note_action_texture_style(path: String) -> StyleBoxTexture:
+	var texture := _load_daymap_texture(path)
+	var style := StyleBoxTexture.new()
+	if texture == null:
+		return style
+	style.texture = texture
+	style.region_rect = Rect2(Vector2.ZERO, Vector2(texture.get_width(), texture.get_height()))
+	style.set_content_margin(SIDE_LEFT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT)
+	style.set_content_margin(SIDE_RIGHT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT)
 	style.set_content_margin(SIDE_TOP, DAYMAP_BUTTON_TEXT_MARGIN_Y)
 	style.set_content_margin(SIDE_BOTTOM, DAYMAP_BUTTON_TEXT_MARGIN_Y + 1.0)
 	return style

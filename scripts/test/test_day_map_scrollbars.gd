@@ -152,6 +152,20 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(action != null and action.size == Vector2(280, 72),
 		"pinned note action button uses DayMap primary button size")
 	if action != null:
+		var normal := action.get_theme_stylebox("normal") as StyleBoxTexture
+		var hover := action.get_theme_stylebox("hover") as StyleBoxTexture
+		var pressed := action.get_theme_stylebox("pressed") as StyleBoxTexture
+		_ok(normal != null and normal.texture != null,
+			"pinned note action button uses texture style")
+		if normal != null and normal.texture != null:
+			_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_normal.png"),
+				"pinned note action button uses wax-seal normal art")
+		if hover != null and hover.texture != null:
+			_ok(String(hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_hover.png"),
+				"pinned note action button uses wax-seal hover art")
+		if pressed != null and pressed.texture != null:
+			_ok(String(pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_pressed.png"),
+				"pinned note action button uses wax-seal pressed art")
 		_ok(action.pressed.is_connected(Callable(view, "_on_go_here_pressed")),
 			"pinned note action routes through the existing DayMap action handler")
 

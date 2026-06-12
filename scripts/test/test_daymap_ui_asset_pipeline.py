@@ -43,10 +43,19 @@ PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
 PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
 PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
 PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
+NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_action_button_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = [80, 60, 1120, 1148]
 PINNED_NOTE_KNIFE_CROP = [80, 60, 520, 540]
+NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
+NOTE_ACTION_NATIVE_SIZE = NATIVE_SIZE
+NOTE_ACTION_RUNTIME_SIZE = RUNTIME_SIZE
+NOTE_ACTION_CROPS = {
+    "normal": [96, 110, 1160, 406],
+    "hover": [96, 478, 1160, 776],
+    "pressed": [88, 872, 1168, 1118],
+}
 STATES = ["normal", "hover", "pressed"]
 TAB_STATES = ["normal", "selected"]
 SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.png"
@@ -255,6 +264,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertIn("SHOP_STEPPER_ICONS_REFERENCE", source, "shop stepper icons must keep generated reference art")
         self.assertIn("PANELS_REFERENCE", source, "shop panel and scrollbar must consume retained panel reference art")
         self.assertIn("PINNED_NOTE_PIERCED_SOURCE", source, "pinned note must consume retained AI source art")
+        self.assertIn("NOTE_ACTION_SEAL_SOURCE", source, "note action button must consume retained AI source art")
         self.assertNotIn("make_pinned_note_panel_native", source, "pinned note must be normalized from retained AI source art")
         self.assertNotIn("make_pinned_note_knife_native", source, "knife pin must be normalized from retained AI source art")
         self.assertIn("make_primary_button_native", source, "primary button must use a deterministic native-pixel constructor")
@@ -275,6 +285,17 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             PINNED_NOTE_PIERCED_SOURCE.stat().st_size,
             0,
             f"{PINNED_NOTE_PIERCED_SOURCE}: retained AI source art is empty",
+        )
+
+    def test_note_action_seal_ai_source_is_retained(self) -> None:
+        self.assertTrue(
+            NOTE_ACTION_SEAL_SOURCE.exists(),
+            f"{NOTE_ACTION_SEAL_SOURCE}: missing retained AI source art",
+        )
+        self.assertGreater(
+            NOTE_ACTION_SEAL_SOURCE.stat().st_size,
+            0,
+            f"{NOTE_ACTION_SEAL_SOURCE}: retained AI source art is empty",
         )
 
     def test_shop_redesign_reference_source_is_retained(self) -> None:
@@ -533,9 +554,56 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertGreaterEqual(amber_pixels, 50, "primary action needs readable amber trim")
         self.assertLessEqual(amber_pixels, 260, "primary action hover/normal states should not flood amber")
 
+    def test_note_action_button_states_are_exact_native_exports(self) -> None:
+        previous_bytes: bytes | None = None
+        for state in STATES:
+            with self.subTest(state=state):
+                native = assert_exact_native_export(
+                    self,
+                    SOURCE / f"button_note_action_{state}_native.png",
+                    RUNTIME / f"button_note_action_{state}.png",
+                    NOTE_ACTION_NATIVE_SIZE,
+                    NOTE_ACTION_RUNTIME_SIZE,
+                )
+                self.assertGreaterEqual(visible_pixel_count(native), 500, f"{state}: note action seal too sparse")
+                current_bytes = native.tobytes()
+                if previous_bytes is not None:
+                    self.assertNotEqual(current_bytes, previous_bytes, f"{state}: state art matches previous state")
+                previous_bytes = current_bytes
+
+    def test_note_action_button_reads_as_wax_stamp_on_paper(self) -> None:
+        native = load_rgba(SOURCE / "button_note_action_normal_native.png")
+        pixels = list(native.get_flattened_data())
+        wax_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 95 <= r <= 210 and 25 <= g <= 115 and b <= 85 and r > g * 1.35
+        )
+        paper_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 110 <= r <= 220 and 70 <= g <= 170 and 35 <= b <= 125
+        )
+        dark_ink_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 60 and 15 <= g <= 95 and 15 <= b <= 95
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 160 and r >= 170 and 60 <= g <= 170 and b <= 85
+        )
+        self.assertGreaterEqual(wax_pixels, 260, "note action needs a readable red-brown wax body")
+        self.assertGreaterEqual(paper_pixels, 300, "note action needs a paper label zone behind the text")
+        self.assertGreaterEqual(dark_ink_pixels, 80, "note action needs rough dark ink edging")
+        self.assertGreaterEqual(amber_pixels, 32, "note action needs candlelit wax highlights")
+        self.assertGreaterEqual(len(set(pixels)), 12, "note action button needs native-pixel tonal variation")
+
+    def test_note_action_contact_sheet_exists(self) -> None:
+        self.assertTrue(NOTE_ACTION_CONTACT_SHEET.exists(), f"{NOTE_ACTION_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(NOTE_ACTION_CONTACT_SHEET.stat().st_size, 0, "note action contact sheet is empty")
+
     def test_button_silhouettes_fill_their_native_shapes(self) -> None:
         cases = [
             ("button_primary_normal", 0.86),
+            ("button_note_action_normal", 0.86),
             ("button_ledger_normal", 0.82),
             ("button_tab_normal", 0.82),
             ("button_shop_wide_normal", 0.82),
@@ -845,6 +913,16 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
             },
         }
+        for state in STATES:
+            expected[f"button_note_action_{state}"] = {
+                "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+                "native_file": f"assets/source/daymap/ui/button_note_action_{state}_native.png",
+                "output_file": f"assets/textures/daymap/ui/button_note_action_{state}.png",
+                "size": [280, 72],
+                "source_crop": NOTE_ACTION_CROPS[state],
+                "safe_area": [72, 16, 184, 40],
+                "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
+            }
         for asset_id, expected_entry in expected.items():
             with self.subTest(asset_id=asset_id):
                 self.assertIn(asset_id, assets, f"{asset_id}: missing manifest entry")

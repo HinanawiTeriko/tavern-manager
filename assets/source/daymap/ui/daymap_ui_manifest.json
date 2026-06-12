@@ -45,6 +45,75 @@
         112
       ],
       "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer"
+    },
+    "button_note_action_normal": {
+      "id": "button_note_action_normal",
+      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_normal.png",
+      "size": [
+        280,
+        72
+      ],
+      "source_crop": [
+        96,
+        110,
+        1160,
+        406
+      ],
+      "safe_area": [
+        72,
+        16,
+        184,
+        40
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
+    },
+    "button_note_action_hover": {
+      "id": "button_note_action_hover",
+      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_hover.png",
+      "size": [
+        280,
+        72
+      ],
+      "source_crop": [
+        96,
+        478,
+        1160,
+        776
+      ],
+      "safe_area": [
+        72,
+        16,
+        184,
+        40
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
+    },
+    "button_note_action_pressed": {
+      "id": "button_note_action_pressed",
+      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_pressed.png",
+      "size": [
+        280,
+        72
+      ],
+      "source_crop": [
+        88,
+        872,
+        1168,
+        1118
+      ],
+      "safe_area": [
+        72,
+        16,
+        184,
+        40
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
     }
   }
 }

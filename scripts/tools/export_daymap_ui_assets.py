@@ -44,6 +44,7 @@ PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
 PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
 PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
 PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
+NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_action_button_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 
 PRIMARY_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_primary_buttons_reference_v2_generated.png"
@@ -57,6 +58,12 @@ TOPBAR_REFERENCE = REFERENCE / "daymap_ui_topbar_reference_v2_generated.png"
 PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = (80, 60, 1120, 1148)
 PINNED_NOTE_KNIFE_CROP = (80, 60, 520, 540)
+NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
+NOTE_ACTION_CROPS = {
+    "normal": (96, 110, 1160, 406),
+    "hover": (96, 478, 1160, 776),
+    "pressed": (88, 872, 1168, 1118),
+}
 PARCHMENT_PALETTE = [
     (112, 78, 48),
     (124, 88, 52),
@@ -88,6 +95,16 @@ BLADE_PALETTE = [
     (118, 133, 127),
     (156, 174, 164),
     (190, 208, 194),
+]
+WAX_PALETTE = [
+    (104, 28, 20),
+    (116, 31, 21),
+    (128, 36, 22),
+    (142, 41, 24),
+    (158, 49, 26),
+    (178, 62, 29),
+    (198, 82, 30),
+    (235, 128, 38),
 ]
 DARK_INK = (6, 20, 22, 255)
 DARK_BODY = (8, 25, 29, 255)
@@ -512,6 +529,60 @@ def fit_pinned_note_source(
     return harmonize_pinned_note_palette(clear_transparent_pixels(fitted))
 
 
+def harmonize_note_action_palette(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            luma = red * 0.32 + green * 0.42 + blue * 0.26
+            paper = (
+                red >= 130
+                and green >= 82
+                and blue >= 42
+                and green > blue * 1.18
+                and red - green <= 88
+            )
+            wax = (
+                red >= 75
+                and red > green * 1.28
+                and green <= 130
+                and blue <= 96
+            )
+            highlight = wax and luma >= 104.0
+            if highlight:
+                pixels[x, y] = (*palette_pick(AMBER_PALETTE, min(255.0, luma * 1.18)), alpha)
+            elif wax:
+                pixels[x, y] = (*palette_pick(WAX_PALETTE, min(255.0, luma * 1.25)), alpha)
+            elif paper:
+                pixels[x, y] = (*palette_pick(PARCHMENT_PALETTE, luma), alpha)
+            else:
+                pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
+    return clear_transparent_pixels(out)
+
+
+def fit_note_action_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    fitted = ImageOps.contain(
+        keyed,
+        NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    ).convert("RGBA")
+    canvas = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
+    canvas.alpha_composite(fitted, ((NATIVE_SIZE[0] - fitted.width) // 2, (NATIVE_SIZE[1] - fitted.height) // 2))
+    canvas = ImageEnhance.Contrast(canvas).enhance(1.08)
+    alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    canvas.putalpha(alpha)
+    return harmonize_note_action_palette(clear_transparent_pixels(canvas))
+
+
 def fit_ui_source(
     image: Image.Image,
     native_size: tuple[int, int],
@@ -667,6 +738,18 @@ def export_pinned_note_contact_sheet(panel: Image.Image, knife: Image.Image) -> 
     print(f"pinned_note_contact_sheet: {sheet.size}")
 
 
+def export_note_action_contact_sheet(states: dict[str, Image.Image]) -> None:
+    NOTE_ACTION_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    sheet = Image.new("RGBA", (360, 300), (8, 25, 29, 255))
+    y = 24
+    for state in ["normal", "hover", "pressed"]:
+        runtime = states[state].resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (40, y))
+        y += 88
+    sheet.save(NOTE_ACTION_CONTACT_SHEET)
+    print(f"note_action_contact_sheet: {sheet.size}")
+
+
 def write_pinned_note_manifest() -> None:
     if DAYMAP_UI_MANIFEST.exists():
         manifest = json.loads(DAYMAP_UI_MANIFEST.read_text(encoding="utf-8"))
@@ -693,6 +776,18 @@ def write_pinned_note_manifest() -> None:
         "safe_area": [18, 0, 74, 112],
         "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
     }
+    for state, crop in NOTE_ACTION_CROPS.items():
+        asset_id = f"button_note_action_{state}"
+        assets[asset_id] = {
+            "id": asset_id,
+            "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+            "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
+            "size": [280, 72],
+            "source_crop": list(crop),
+            "safe_area": [72, 16, 184, 40],
+            "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
+        }
     DAYMAP_UI_MANIFEST.write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -781,6 +876,13 @@ def main() -> None:
     export_single("pinned_note_panel", pinned_note_panel, PINNED_NOTE_PANEL_RUNTIME_SIZE)
     export_single("pinned_note_knife", pinned_note_knife, PINNED_NOTE_KNIFE_RUNTIME_SIZE)
     export_pinned_note_contact_sheet(pinned_note_panel, pinned_note_knife)
+    note_action_source = load_reference(NOTE_ACTION_SEAL_SOURCE)
+    note_action_states: dict[str, Image.Image] = {}
+    for state, crop in NOTE_ACTION_CROPS.items():
+        native = fit_note_action_source(note_action_source, crop, f"button_note_action_{state}")
+        note_action_states[state] = native
+        export_single(f"button_note_action_{state}", native, RUNTIME_SIZE)
+    export_note_action_contact_sheet(note_action_states)
     write_pinned_note_manifest()
 
 
