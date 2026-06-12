@@ -100,6 +100,28 @@ def writable_parchment_pixel_count(image: Image.Image) -> int:
     )
 
 
+def overheated_orange_pixel_count(image: Image.Image) -> int:
+    return sum(
+        1 for red, green, blue, alpha in image.get_flattened_data()
+        if alpha >= 180 and red >= 150 and 55 <= green <= 150 and blue <= 90 and red > green * 1.25
+    )
+
+
+def muted_map_parchment_pixel_count(image: Image.Image) -> int:
+    return sum(
+        1 for red, green, blue, alpha in image.get_flattened_data()
+        if (
+            alpha >= 180
+            and 85 <= red <= 180
+            and 60 <= green <= 140
+            and 35 <= blue <= 105
+            and red >= green
+            and red - green <= 55
+            and green - blue <= 55
+        )
+    )
+
+
 def unsupported_alpha_pixel_count(image: Image.Image) -> int:
     alpha = image.getchannel("A")
     pixels = alpha.load()
@@ -574,27 +596,26 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
     def test_note_action_button_reads_as_wax_stamp_on_paper(self) -> None:
         native = load_rgba(SOURCE / "button_note_action_normal_native.png")
         pixels = list(native.get_flattened_data())
-        wax_pixels = sum(
+        muted_wax_pixels = sum(
             1 for r, g, b, a in pixels
-            if a >= 180 and 95 <= r <= 210 and 25 <= g <= 115 and b <= 85 and r > g * 1.35
-        )
-        paper_pixels = sum(
-            1 for r, g, b, a in pixels
-            if a >= 180 and 110 <= r <= 220 and 70 <= g <= 170 and 35 <= b <= 125
+            if a >= 180 and 58 <= r <= 150 and 20 <= g <= 90 and 18 <= b <= 70 and r > g * 1.25
         )
         dark_ink_pixels = sum(
             1 for r, g, b, a in pixels
             if a >= 180 and r <= 60 and 15 <= g <= 95 and 15 <= b <= 95
         )
-        amber_pixels = sum(
+        warm_highlight_pixels = sum(
             1 for r, g, b, a in pixels
-            if a >= 160 and r >= 170 and 60 <= g <= 170 and b <= 85
+            if a >= 160 and 135 <= r <= 205 and 80 <= g <= 155 and 35 <= b <= 95 and r - g <= 70
         )
-        self.assertGreaterEqual(wax_pixels, 240, "note action needs a readable red-brown wax body")
-        self.assertGreaterEqual(paper_pixels, 170, "note action needs a paper label zone behind the text")
+        overheated_pixels = overheated_orange_pixel_count(native)
+        muted_paper_pixels = muted_map_parchment_pixel_count(native)
+        self.assertGreaterEqual(muted_wax_pixels, 240, "note action needs a readable muted red-brown wax body")
         self.assertGreaterEqual(dark_ink_pixels, 50, "note action needs rough dark ink edging")
-        self.assertGreaterEqual(amber_pixels, 18, "note action needs candlelit wax highlights")
-        self.assertGreaterEqual(len(set(pixels)), 12, "note action button needs native-pixel tonal variation")
+        self.assertGreaterEqual(warm_highlight_pixels, 18, "note action needs restrained warm highlights")
+        self.assertLessEqual(overheated_pixels, 120, "note action should not be dominated by saturated orange/red")
+        self.assertGreaterEqual(muted_paper_pixels, 150, "note action paper must match the muted DayMap parchment")
+        self.assertGreaterEqual(len(set(pixels)), 9, "note action button needs native-pixel tonal variation")
 
     def test_note_action_contact_sheet_exists(self) -> None:
         self.assertTrue(NOTE_ACTION_CONTACT_SHEET.exists(), f"{NOTE_ACTION_CONTACT_SHEET}: missing contact sheet")
@@ -859,6 +880,8 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertGreaterEqual(parchment_pixels, 4200, "pinned note needs a writable parchment body")
         self.assertGreaterEqual(dark_pixels, 430, "pinned note needs a dark DayMap edge/shadow")
         self.assertGreaterEqual(amber_pixels, 24, "pinned note needs sparse amber wax or pin accents")
+        self.assertLessEqual(overheated_orange_pixel_count(native), 1200, "pinned note should not read as saturated orange UI")
+        self.assertGreaterEqual(muted_map_parchment_pixel_count(native), 3600, "pinned note should match the map parchment palette")
         self.assertGreaterEqual(blade_pixels, 12, "pinned note composite needs visible dagger blade pixels")
         self.assertGreaterEqual(zone_blade_pixels, 32, "pinned note upper-left area needs visible piercing metal")
         self.assertGreaterEqual(zone_dark_pixels, 120, "pinned note upper-left area needs puncture shadow and folds")

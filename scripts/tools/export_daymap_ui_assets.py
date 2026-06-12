@@ -108,6 +108,31 @@ WAX_PALETTE = [
     (198, 82, 30),
     (235, 128, 38),
 ]
+MAP_PARCHMENT_PALETTE = [
+    (82, 64, 42),
+    (94, 72, 44),
+    (104, 82, 52),
+    (118, 93, 58),
+    (132, 106, 68),
+    (148, 121, 80),
+    (166, 140, 96),
+    (184, 158, 112),
+]
+MAP_WAX_PALETTE = [
+    (62, 24, 22),
+    (76, 31, 25),
+    (92, 40, 30),
+    (108, 50, 35),
+    (126, 64, 43),
+    (146, 82, 54),
+]
+MAP_AMBER_PALETTE = [
+    (96, 58, 26),
+    (124, 79, 34),
+    (150, 101, 45),
+    (176, 126, 62),
+    (198, 148, 78),
+]
 DARK_INK = (6, 20, 22, 255)
 DARK_BODY = (8, 25, 29, 255)
 DARK_LIFT = (17, 45, 49, 255)
@@ -492,9 +517,9 @@ def harmonize_pinned_note_palette(image: Image.Image) -> Image.Image:
             if metal:
                 pixels[x, y] = (*palette_pick(BLADE_PALETTE, min(255.0, luma * 1.08)), alpha)
             elif amberish or wood:
-                pixels[x, y] = (*palette_pick(AMBER_PALETTE if luma >= 96.0 else PARCHMENT_PALETTE, luma), alpha)
+                pixels[x, y] = (*palette_pick(MAP_AMBER_PALETTE if luma >= 112.0 else MAP_PARCHMENT_PALETTE, luma), alpha)
             elif luma >= 74.0:
-                pixels[x, y] = (*palette_pick(PARCHMENT_PALETTE, luma), alpha)
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, luma), alpha)
             else:
                 pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
     return clear_transparent_pixels(out)
@@ -555,11 +580,11 @@ def harmonize_note_action_palette(image: Image.Image) -> Image.Image:
             )
             highlight = wax and luma >= 104.0
             if highlight:
-                pixels[x, y] = (*palette_pick(AMBER_PALETTE, min(255.0, luma * 1.18)), alpha)
+                pixels[x, y] = (*palette_pick(MAP_AMBER_PALETTE, min(255.0, luma * 1.16)), alpha)
             elif wax:
-                pixels[x, y] = (*palette_pick(WAX_PALETTE, min(255.0, luma * 1.4)), alpha)
+                pixels[x, y] = (*palette_pick(MAP_WAX_PALETTE, min(255.0, luma * 1.32)), alpha)
             elif paper:
-                pixels[x, y] = (*palette_pick(PARCHMENT_PALETTE, luma), alpha)
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, luma), alpha)
             else:
                 pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
     return clear_transparent_pixels(out)
