@@ -15,7 +15,7 @@ RUNTIME_SIZE = (1280, 320)
 SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
-GROUND_Y_RUNTIME = 655
+GROUND_Y_RUNTIME = 556
 CUTOUT_POLYGON_NATIVE = [[10, 4], [310, 4], [320, 64], [320, 73], [0, 73], [0, 64]]
 
 
@@ -130,9 +130,14 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
 
         runtime_top_y = SPRITE_POSITION_RUNTIME[1] - RUNTIME_SIZE[1] // 2
         surface_row = round((SURFACE_TOP_Y_RUNTIME - runtime_top_y) / 4)
+        ground_row = round((GROUND_Y_RUNTIME - runtime_top_y) / 4)
         front_lip_row = round((FRONT_LIP_Y_RUNTIME - runtime_top_y) / 4)
         self.assertEqual(surface_row, 4, "surface top guide row should document the shifted visual alignment")
-        self.assertEqual(front_lip_row, 54, "ground collision should land on the playable table surface after visual shift")
+        self.assertEqual(ground_row, 29, "ground collision should land near the middle of the playable table surface")
+        self.assertEqual(front_lip_row, 54, "front lip guide should stay on the visible counter edge")
+        self.assertGreater(ground_row, surface_row, "physics baseline must sit inside the wooden table plane")
+        self.assertLess(ground_row, front_lip_row, "physics baseline should stay above the front lip")
+        self.assertLessEqual(abs(GROUND_Y_RUNTIME - ((SURFACE_TOP_Y_RUNTIME + FRONT_LIP_Y_RUNTIME) / 2.0)), 5)
 
         def edge_strength(row: int) -> float:
             return sum(abs(at(x, row) - at(x, row - 1)) for x in range(12, width - 12)) / float(width - 24)
@@ -146,10 +151,12 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
             )
 
         surface_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, surface_row))[3] == 255)
-        ground_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, front_lip_row))[3] == 255)
+        ground_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, ground_row))[3] == 255)
+        front_lip_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, front_lip_row))[3] == 255)
         self.assertGreaterEqual(surface_alpha, 250, "documented surface top should land on opaque counter pixels")
-        self.assertGreaterEqual(ground_alpha, 260, "current ground line should land on opaque playable table surface")
-        self.assertGreaterEqual(row_texture(14, front_lip_row), 900, "playable table plane needs readable wood grain above the ground line")
+        self.assertGreaterEqual(ground_alpha, 260, "physics baseline should land on opaque playable tabletop pixels")
+        self.assertGreaterEqual(front_lip_alpha, 260, "front lip guide should land on opaque counter-front pixels")
+        self.assertGreaterEqual(row_texture(14, ground_row), 900, "playable table plane needs readable wood grain above the physics baseline")
 
 
 if __name__ == "__main__":

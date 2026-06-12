@@ -19,16 +19,16 @@
 [ext_resource type="Texture2D" path="res://assets/textures/tavern/table/tabletop.png" id="tavern_tabletop"]
 
 [sub_resource type="SegmentShape2D" id="tv_ground"]
-a = Vector2(150, 655)
-b = Vector2(1130, 655)
+a = Vector2(150, 556)
+b = Vector2(1130, 556)
 
 [sub_resource type="SegmentShape2D" id="tv_left"]
 a = Vector2(150, 410)
-b = Vector2(150, 655)
+b = Vector2(150, 556)
 
 [sub_resource type="SegmentShape2D" id="tv_right"]
 a = Vector2(1130, 410)
-b = Vector2(1130, 655)
+b = Vector2(1130, 556)
 
 [sub_resource type="SegmentShape2D" id="tv_wall_left"]
 a = Vector2(-50, 40)
@@ -450,7 +450,7 @@ script = ExtResource("bw")
 [node name="World" type="Node2D" parent="BarWorkspace"]
 
 [node name="SeasoningShaker" parent="BarWorkspace/World" instance=ExtResource("ss")]
-position = Vector2(720, 470)
+position = Vector2(720, 516)
 
 [node name="Walls" type="StaticBody2D" parent="BarWorkspace/World"]
 
@@ -468,14 +468,14 @@ shape = SubResource("tv_right")
 
 [node name="Ledger" parent="BarWorkspace/World" instance=ExtResource("readable_item")]
 visible = false
-position = Vector2(230, 580)
+position = Vector2(230, 481)
 input_pickable = false
 
 [node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
 position = Vector2(640, 470)
 
 [node name="Brewery" type="RigidBody2D" parent="BarWorkspace/World"]
-position = Vector2(960, 600)
+position = Vector2(960, 501)
 script = ExtResource("brw")
 
 [node name="WallLeft" type="CollisionShape2D" parent="BarWorkspace/World/Brewery"]
@@ -523,7 +523,7 @@ shape = SubResource("tv_mouth")
 position = Vector2(0, -70)
 
 [node name="Grill" type="RigidBody2D" parent="BarWorkspace/World"]
-position = Vector2(330, 620)
+position = Vector2(330, 521)
 script = ExtResource("kc")
 container_key = "grill"
 cook_time = 2.5
@@ -565,7 +565,7 @@ position = Vector2(0, -16)
 shape = SubResource("tv_grill_sear")
 
 [node name="Pot" type="RigidBody2D" parent="BarWorkspace/World"]
-position = Vector2(520, 600)
+position = Vector2(520, 501)
 script = ExtResource("kc")
 container_key = "pot"
 required_stir = 650.0
@@ -621,7 +621,7 @@ shape = SubResource("tv_pot_intake")
 position = Vector2(0, -72)
 
 [node name="Spoon" type="RigidBody2D" parent="BarWorkspace/World"]
-position = Vector2(700, 590)
+position = Vector2(700, 491)
 z_index = 10
 script = ExtResource("spoon")
 

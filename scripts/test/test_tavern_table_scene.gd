@@ -60,14 +60,14 @@ func _test_physics_aligned_tabletop_art_layer() -> void:
 		_ok(tabletop.z_index > tavern.get_node("Background").z_index, "TabletopArt draws over full-screen background")
 		_ok(tabletop.z_index < 0, "TabletopArt stays behind gameplay props")
 		_ok(tabletop.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "TabletopArt uses nearest texture filter")
-		_ok(tabletop.position == Vector2(640, 600), "TabletopArt shifts down so the current ground line lands on the playable work surface")
+		_ok(tabletop.position == Vector2(640, 600), "TabletopArt stays aligned so y=556 lands near the table plane center")
 
 	var ground := tavern.get_node("BarWorkspace/World/Walls/Ground") as CollisionShape2D
 	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D
 	var right_wall := tavern.get_node("BarWorkspace/World/Walls/RightWall") as CollisionShape2D
-	_ok(_segment_points(ground.shape) == [Vector2(150, 655), Vector2(1130, 655)], "ground segment contract is unchanged")
-	_ok(_segment_points(left_wall.shape) == [Vector2(150, 410), Vector2(150, 655)], "left wall segment contract is unchanged")
-	_ok(_segment_points(right_wall.shape) == [Vector2(1130, 410), Vector2(1130, 655)], "right wall segment contract is unchanged")
+	_ok(_segment_points(ground.shape) == [Vector2(150, 556), Vector2(1130, 556)], "ground segment sits at the comfortable tabletop midline")
+	_ok(_segment_points(left_wall.shape) == [Vector2(150, 410), Vector2(150, 556)], "left wall ends at the tabletop midline ground segment")
+	_ok(_segment_points(right_wall.shape) == [Vector2(1130, 410), Vector2(1130, 556)], "right wall ends at the tabletop midline ground segment")
 
 	var customer_drop := tavern.get_node_or_null("BarWorkspace/CustomerDropArea/Shape") as CollisionShape2D
 	_ok(customer_drop != null and customer_drop.shape is RectangleShape2D, "customer drop area shape remains present")
@@ -76,10 +76,10 @@ func _test_physics_aligned_tabletop_art_layer() -> void:
 
 
 func _test_initial_workspace_positions(tavern: Node) -> void:
-	_ok(tavern.get_node("BarWorkspace/World/SeasoningShaker").position == Vector2(720, 470), "seasoning shaker starts aligned with work surface")
+	_ok(tavern.get_node("BarWorkspace/World/SeasoningShaker").position == Vector2(720, 516), "seasoning shaker starts with its base on the tabletop midline")
 	_ok(tavern.get_node("BarWorkspace/World/RecycleAnchor").position == Vector2(640, 470), "recycle anchor starts aligned with rear work surface")
-	_ok(tavern.get_node("BarWorkspace/World/Ledger").position == Vector2(230, 580), "ledger starts on the work surface")
-	_ok(tavern.get_node("BarWorkspace/World/Brewery").position == Vector2(960, 600), "brewery starts on the work surface")
-	_ok(tavern.get_node("BarWorkspace/World/Grill").position == Vector2(330, 620), "grill starts on the work surface")
-	_ok(tavern.get_node("BarWorkspace/World/Pot").position == Vector2(520, 600), "pot starts on the work surface")
-	_ok(tavern.get_node("BarWorkspace/World/Spoon").position == Vector2(700, 590), "spoon starts on the work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Ledger").position == Vector2(230, 481), "ledger starts on the shifted work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Brewery").position == Vector2(960, 501), "brewery starts on the shifted work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Grill").position == Vector2(330, 521), "grill starts on the shifted work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Pot").position == Vector2(520, 501), "pot starts on the shifted work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Spoon").position == Vector2(700, 491), "spoon starts on the shifted work surface")

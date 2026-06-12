@@ -57,7 +57,7 @@
     ],
     "surface_top_y_runtime": 455,
     "front_lip_y_runtime": 655,
-    "ground_y_runtime": 655,
+    "ground_y_runtime": 556,
     "playable_x_range_runtime": [
       150,
       1130

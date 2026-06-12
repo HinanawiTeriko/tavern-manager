@@ -24,7 +24,7 @@ TABLE_RUNTIME_SIZE = (1280, 320)
 SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
-GROUND_Y_RUNTIME = 655
+GROUND_Y_RUNTIME = 556
 PLAYABLE_X_RANGE_RUNTIME = [150, 1130]
 TABLE_SOURCE_BOX = (0, 602, 1672, 941)
 CUTOUT_POLYGON_NATIVE = [(10, 4), (310, 4), (320, 64), (320, 73), (0, 73), (0, 64)]
@@ -181,9 +181,11 @@ def make_background_contact_sheet(reference: Image.Image, background: Image.Imag
     sheet.alpha_composite(table_preview, (40, overlay_y))
     runtime_top_y = SPRITE_POSITION_RUNTIME[1] - TABLE_RUNTIME_SIZE[1] // 2
     surface_y = overlay_y + int((SURFACE_TOP_Y_RUNTIME - runtime_top_y) * 0.5)
+    ground_y = overlay_y + int((GROUND_Y_RUNTIME - runtime_top_y) * 0.5)
     lip_y = overlay_y + int((FRONT_LIP_Y_RUNTIME - runtime_top_y) * 0.5)
     draw.line((40, surface_y, 680, surface_y), fill=(229, 163, 70, 255), width=1)
-    draw.line((40, lip_y, 680, lip_y), fill=(96, 169, 157, 255), width=1)
+    draw.line((40, ground_y, 680, ground_y), fill=(96, 169, 157, 255), width=1)
+    draw.line((40, lip_y, 680, lip_y), fill=(112, 124, 106, 255), width=1)
     sheet.convert("RGB").save(BACKGROUND_CONTACT_SHEET)
 
 
@@ -194,7 +196,7 @@ def make_table_contact_sheet(reference: Image.Image, native: Image.Image, runtim
     draw.text((20, 16), "Tavern counter pipeline from no-people background", fill=(220, 204, 176, 255))
     draw.text((20, 52), "reference crop", fill=(220, 204, 176, 255))
     draw.text((20, 178), "native 4x preview", fill=(220, 204, 176, 255))
-    draw.text((20, 354), "runtime preview with y=455/y=655 guide rows", fill=(220, 204, 176, 255))
+    draw.text((20, 354), "runtime preview with y=455/y=556/y=655 guide rows", fill=(220, 204, 176, 255))
     ref_crop = reference.crop(TABLE_SOURCE_BOX).convert("RGBA")
     ref_preview = ImageOps.contain(ref_crop, (640, 96), Image.Resampling.LANCZOS)
     native_preview = native.resize((native.width * 4, native.height * 4), Image.Resampling.NEAREST)
@@ -206,9 +208,11 @@ def make_table_contact_sheet(reference: Image.Image, native: Image.Image, runtim
     runtime_top_y = SPRITE_POSITION_RUNTIME[1] - TABLE_RUNTIME_SIZE[1] // 2
     guide_scale = runtime_preview.height / TABLE_RUNTIME_SIZE[1]
     surface_guide_y = int(378 + (SURFACE_TOP_Y_RUNTIME - runtime_top_y) * guide_scale)
+    ground_guide_y = int(378 + (GROUND_Y_RUNTIME - runtime_top_y) * guide_scale)
     lip_guide_y = int(378 + (FRONT_LIP_Y_RUNTIME - runtime_top_y) * guide_scale)
     draw.line((60, surface_guide_y, 700, surface_guide_y), fill=(229, 163, 70, 255), width=1)
-    draw.line((60, lip_guide_y, 700, lip_guide_y), fill=(96, 169, 157, 255), width=1)
+    draw.line((60, ground_guide_y, 700, ground_guide_y), fill=(96, 169, 157, 255), width=1)
+    draw.line((60, lip_guide_y, 700, lip_guide_y), fill=(112, 124, 106, 255), width=1)
     sheet.convert("RGB").save(TABLE_CONTACT_SHEET)
 
 
