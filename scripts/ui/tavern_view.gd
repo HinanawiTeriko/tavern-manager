@@ -25,6 +25,9 @@ const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
 	"mira": "mira_neutral",
 }
+const TOPBAR_LEFT_INSET := Vector2(28, 48)
+const TOPBAR_RIGHT_INSET := Vector2(28, 48)
+const TOPBAR_LABEL_HEIGHT := 48.0
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
@@ -63,6 +66,9 @@ func _ready() -> void:
 	_gm.register_view(self)
 
 func _apply_theme() -> void:
+	_configure_customer_input_passthrough()
+	_configure_topbar_layout()
+
 	var bg_tex = TextureManager.try_load("res://assets/textures/tavern/background/tavern_bg.png")
 	if bg_tex == null:
 		bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
@@ -147,6 +153,60 @@ func _apply_theme() -> void:
 
 	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_stage_caption.add_theme_font_size_override("font_size", 15)
+
+
+func _configure_customer_input_passthrough() -> void:
+	for path in [
+		"CustomerArea",
+		"CustomerArea/CustomerSprite",
+		"CustomerArea/CustomerName",
+		"CustomerArea/OrderBubble",
+		"CustomerArea/PatienceIcon",
+		"CustomerArea/TimerBar",
+	]:
+		var control := get_node_or_null(path) as Control
+		if control != null:
+			control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_topbar_layout() -> void:
+	var top_panel := $TopPanel as HBoxContainer
+	top_panel.add_theme_constant_override("separation", 8)
+	var left_inset := _configure_topbar_spacer(top_panel, "TopbarLeftInset", TOPBAR_LEFT_INSET, false)
+	var action_spacer := _configure_topbar_spacer(top_panel, "TopbarActionSpacer", Vector2(0, TOPBAR_LABEL_HEIGHT), true)
+	var right_inset := _configure_topbar_spacer(top_panel, "TopbarRightInset", TOPBAR_RIGHT_INSET, false)
+	top_panel.move_child(left_inset, 0)
+	top_panel.move_child(_gold_label, 1)
+	top_panel.move_child(_rep_label, 2)
+	top_panel.move_child(_day_label, 3)
+	top_panel.move_child(action_spacer, 4)
+	top_panel.move_child($TopPanel/MenuButton, 5)
+	top_panel.move_child(_end_night_btn, 6)
+	top_panel.move_child(right_inset, 7)
+	_configure_topbar_label(_gold_label, Vector2(220, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_label(_rep_label, Vector2(210, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_label(_day_label, Vector2(170, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _configure_topbar_spacer(top_panel: HBoxContainer, spacer_name: String, minimum_size: Vector2, expand: bool) -> Control:
+	var spacer := top_panel.get_node_or_null(spacer_name) as Control
+	if spacer == null:
+		spacer = Control.new()
+		spacer.name = spacer_name
+		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		top_panel.add_child(spacer)
+	spacer.custom_minimum_size = minimum_size
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL if expand else Control.SIZE_FILL
+	spacer.size_flags_vertical = Control.SIZE_FILL
+	return spacer
+
+
+func _configure_topbar_label(label: Label, minimum_size: Vector2, alignment: HorizontalAlignment) -> void:
+	label.custom_minimum_size = minimum_size
+	label.size_flags_vertical = Control.SIZE_FILL
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)

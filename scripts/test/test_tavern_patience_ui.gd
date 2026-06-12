@@ -72,6 +72,8 @@ func _test_tavern_patience_ui_contract() -> void:
 	_ok(timer != null, "TimerBar remains the public Tavern patience ProgressBar path")
 	if timer != null:
 		_ok(timer.size == Vector2(300, 28), "TimerBar uses the production 300x28 patience bar layout")
+		_ok(timer.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"TimerBar does not block table item clicks through the customer area")
 		_ok(_stylebox_texture_path(timer, "background") == "res://assets/textures/ui/bar_patience_bg.png",
 			"TimerBar uses patience background art")
 		_ok(_stylebox_texture_path(timer, "fill") == "res://assets/textures/ui/bar_patience_fill.png",
@@ -89,10 +91,18 @@ func _test_tavern_patience_ui_contract() -> void:
 			"PatienceIcon loaded texture is the current 32x32 runtime export")
 		_ok(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "PatienceIcon uses nearest texture filtering")
 
+	var customer_area := tavern.get_node_or_null("CustomerArea") as Control
+	_ok(customer_area != null, "CustomerArea remains the public customer visual container path")
+	if customer_area != null:
+		_ok(customer_area.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"CustomerArea lets center-table clicks reach BarWorkspace")
+
 	var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as TextureRect
 	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
 	_ok(customer_sprite != null, "CustomerSprite remains the public Tavern customer portrait path")
 	if customer_sprite != null and tabletop != null:
+		_ok(customer_sprite.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"CustomerSprite does not block table item clicks")
 		_ok(customer_sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
 			"CustomerSprite renders pixel portraits with nearest filtering")
 		_ok(customer_sprite.z_index < tabletop.z_index,
@@ -105,9 +115,18 @@ func _test_tavern_patience_ui_contract() -> void:
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
+		_ok(customer_name.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"CustomerName does not block table item clicks")
 	_ok(order_bubble != null, "OrderBubble remains the public Tavern customer request label path")
 	if order_bubble != null:
 		_ok(_control_uses_pixel_font(order_bubble), "OrderBubble uses the shared pixel UI font")
+		_ok(order_bubble.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"OrderBubble does not block table item clicks")
+	var stage_caption := tavern.get_node_or_null("StageCaption") as Label
+	_ok(stage_caption != null, "StageCaption remains the public tavern feedback caption path")
+	if stage_caption != null:
+		_ok(stage_caption.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"StageCaption does not block center-table item clicks while faded out")
 
 	var top_panel_bg := tavern.get_node_or_null("TopPanelBg") as Panel
 	var top_panel := tavern.get_node_or_null("TopPanel") as HBoxContainer
@@ -122,14 +141,31 @@ func _test_tavern_patience_ui_contract() -> void:
 	_ok(top_panel != null, "TopPanel remains the public Tavern top-strip container path")
 	if top_panel != null:
 		_ok(top_panel.size == Vector2(1280, 48), "TopPanel uses the production 1280x48 top strip layout")
+		_ok(top_panel.get_theme_constant("separation") == 8, "TopPanel uses compact 8px spacing")
+		var left_inset := top_panel.get_node_or_null("TopbarLeftInset") as Control
+		var action_spacer := top_panel.get_node_or_null("TopbarActionSpacer") as Control
+		var right_inset := top_panel.get_node_or_null("TopbarRightInset") as Control
+		_ok(left_inset != null and left_inset.custom_minimum_size == Vector2(28, 48),
+			"TopPanel keeps text clear of the left metal cap")
+		_ok(action_spacer != null and action_spacer.size_flags_horizontal == Control.SIZE_EXPAND_FILL,
+			"TopPanel pushes action buttons to the right side of the strip")
+		_ok(right_inset != null and right_inset.custom_minimum_size == Vector2(28, 48),
+			"TopPanel keeps buttons clear of the right metal cap")
 		for path in ["GoldLabel", "ReputationLabel", "DayLabel", "MenuButton", "EndNightBtn"]:
 			var control := top_panel.get_node_or_null(path) as Control
 			_ok(control != null, "TopPanel/%s remains available" % path)
 			if control != null:
 				_ok(_control_uses_pixel_font(control), "TopPanel/%s uses the shared pixel UI font" % path)
+		for path in ["GoldLabel", "ReputationLabel", "DayLabel"]:
+			var label := top_panel.get_node_or_null(path) as Label
+			if label != null:
+				_ok(label.custom_minimum_size.y == 48.0, "TopPanel/%s fills the 48px strip height" % path)
+				_ok(label.vertical_alignment == VERTICAL_ALIGNMENT_CENTER,
+					"TopPanel/%s text is vertically centered" % path)
 		var menu_button := top_panel.get_node_or_null("MenuButton") as Button
 		if menu_button != null:
 			_ok(menu_button.custom_minimum_size == Vector2(96, 48), "TopPanel/MenuButton uses the dedicated topbar button size")
+			_ok(menu_button.global_position.x >= 1040.0, "TopPanel/MenuButton sits in the right action group")
 			_ok(_button_stylebox_texture_path(menu_button, "normal") == "res://assets/textures/ui/topbar_menu_button_normal.png",
 				"TopPanel/MenuButton normal art is dedicated topbar art")
 			_ok(_button_stylebox_texture_path(menu_button, "hover") == "res://assets/textures/ui/topbar_menu_button_hover.png",
@@ -139,6 +175,8 @@ func _test_tavern_patience_ui_contract() -> void:
 		var end_night_button := top_panel.get_node_or_null("EndNightBtn") as Button
 		if end_night_button != null:
 			_ok(end_night_button.custom_minimum_size == Vector2(96, 48), "TopPanel/EndNightBtn uses the dedicated topbar button size")
+			_ok(end_night_button.global_position.x + end_night_button.size.x <= 1252.0,
+				"TopPanel/EndNightBtn leaves room for the right metal cap")
 			_ok(_button_stylebox_texture_path(end_night_button, "normal") == "res://assets/textures/ui/topbar_end_night_button_normal.png",
 				"TopPanel/EndNightBtn normal art is dedicated topbar art")
 			_ok(_button_stylebox_texture_path(end_night_button, "hover") == "res://assets/textures/ui/topbar_end_night_button_hover.png",

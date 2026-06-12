@@ -155,11 +155,14 @@ static func style_topbar_button(button: Button, button_key: String, font_size: i
 	var hover := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_hover.png" % button_key)
 	var pressed := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_pressed.png" % button_key)
 	if normal != null:
+		_apply_topbar_button_content_margins(normal)
 		button.add_theme_stylebox_override("normal", normal)
 		button.add_theme_stylebox_override("disabled", normal)
 	if hover != null:
+		_apply_topbar_button_content_margins(hover)
 		button.add_theme_stylebox_override("hover", hover)
 	if pressed != null:
+		_apply_topbar_button_content_margins(pressed)
 		button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	var font := menu_font()
@@ -170,6 +173,13 @@ static func style_topbar_button(button: Button, button_key: String, font_size: i
 	button.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
 	button.add_theme_color_override("font_pressed_color", AMBER_BRIGHT)
 	button.add_theme_color_override("font_disabled_color", TEXT_DIM)
+
+
+static func _apply_topbar_button_content_margins(style: StyleBoxTexture) -> void:
+	style.set_content_margin(SIDE_LEFT, 10.0)
+	style.set_content_margin(SIDE_RIGHT, 10.0)
+	style.set_content_margin(SIDE_TOP, 5.0)
+	style.set_content_margin(SIDE_BOTTOM, 5.0)
 
 
 static func style_brush_popup(popup: PopupMenu) -> void:
