@@ -1,0 +1,179 @@
+{
+  "_description": "动态普通客人模板池。每次生成随机抽取模板，并分配随机变体名称。",
+  "templates": [
+    {
+      "id": "dwarf_warrior",
+      "name_prefixes": ["铁锤", "钢斧", "铜盾", "岩石", "山丘", "熔炉"],
+      "name_suffixes": ["格鲁姆", "巴尔", "索林", "杜克", "奥格", "弗拉"],
+      "attributes": { "might": 5, "vitality": 4, "alacrity": -1 },
+      "greetings": [
+        "「来杯够劲的！」",
+        "「今天有什么好菜？」",
+        "「刚干完一天的活，饿坏了。」",
+        "「闻到香味就进来了。」"
+      ],
+      "farewells": [
+        "「不错，下次还来。」",
+        "「够味儿，老板！」",
+        "「嗝……饱了饱了。」"
+      ],
+      "reactions": {
+        "success": "「哈哈，就是这个味儿！」",
+        "fail_wrong": "「这不是我要的啊……」",
+        "fail_weird": "「这是什么玩意儿？」",
+        "impatient": "「喂，还没好吗？」"
+      }
+    },
+    {
+      "id": "elf_ranger",
+      "name_prefixes": ["银风", "月影", "翠叶", "星辉", "流云", "霜羽"],
+      "name_suffixes": ["莱拉", "温蒂", "瑟兰", "艾露", "菲娜", "莉亚"],
+      "attributes": { "alacrity": 5, "arcana": 3, "vitality": -1 },
+      "greetings": [
+        "「请给我来一份清淡的。」",
+        "「这家店的草药茶怎么样？」",
+        "「森林里的风带来了香味。」",
+        "「安静的小店，我喜欢。」"
+      ],
+      "farewells": [
+        "「多谢款待。」",
+        "「很精致的手艺。」",
+        "「我会推荐给同伴的。」"
+      ],
+      "reactions": {
+        "success": "「味道很纯净呢。」",
+        "fail_wrong": "「这不是我想要的……」",
+        "fail_weird": "「……这也太难吃了。」",
+        "impatient": "「还没有好吗？」"
+      }
+    },
+    {
+      "id": "human_merchant",
+      "name_prefixes": ["金袋", "银秤", "商旅", "远行", "利眼", "精明"],
+      "name_suffixes": ["凯尔", "马库斯", "瓦伦", "休伯特", "罗兰", "埃德温"],
+      "attributes": { "fortune": 5, "charm": 3, "might": -1 },
+      "greetings": [
+        "「跑了一天的商，歇歇脚。」",
+        "「这家店生意不错嘛。」",
+        "「有什么招牌菜推荐？」",
+        "「来个实惠的，别太贵。」"
+      ],
+      "farewells": [
+        "「物有所值，老板！」",
+        "「下次把商队带过来。」",
+        "「记账上——开玩笑的。」"
+      ],
+      "reactions": {
+        "success": "「这手艺，值这个价！」",
+        "fail_wrong": "「点错了？算了算了……」",
+        "fail_weird": "「你确定这能吃？」",
+        "impatient": "「做生意最怕等！」"
+      }
+    },
+    {
+      "id": "rogue_shadow",
+      "name_prefixes": ["暗影", "疾风", "毒刃", "夜刃", "影步", "黑羽"],
+      "name_suffixes": ["德恩", "尼克斯", "维克斯", "索恩", "鲁克", "扎拉"],
+      "attributes": { "alacrity": 4, "fortune": 3, "might": 2 },
+      "greetings": [
+        "「嘘……别声张，我就吃个饭。」",
+        "「角落的位置最好。」",
+        "「有什么能让人'放松'的菜吗？」"
+      ],
+      "farewells": [
+        "「神不知鬼不觉……嗝。」",
+        "「下次从后门进来。」"
+      ],
+      "reactions": {
+        "success": "「暗地里给你竖个拇指。」",
+        "fail_wrong": "「啧，走眼了。」",
+        "fail_weird": "「你在我盘子里放了什么？」",
+        "impatient": "「太慢了……」"
+      }
+    },
+    {
+      "id": "mage_scholar",
+      "name_prefixes": ["奥术", "星图", "灵言", "法印", "解惑", "秘典"],
+      "name_suffixes": ["艾萨克", "阿斯特", "路米斯", "奥利安", "赛勒斯", "尤里"],
+      "attributes": { "arcana": 6, "vitality": 2, "fortune": 2 },
+      "greetings": [
+        "「研究了一整天古卷，需要补充能量。」",
+        "「这家店有奥术灵韵吗？」",
+        "「给我来点提神醒脑的。」"
+      ],
+      "farewells": [
+        "「回去继续研究。」",
+        "「你的菜里……有魔法。」"
+      ],
+      "reactions": {
+        "success": "「魔力充沛了！」",
+        "fail_wrong": "「灵气不对……」",
+        "fail_weird": "「这是什么炼金失败品？」",
+        "impatient": "「我的时间很宝贵。」"
+      }
+    },
+    {
+      "id": "knight_errant",
+      "name_prefixes": ["圣光", "铁壁", "正义", "守护", "黎明", "荣光"],
+      "name_suffixes": ["雷奥", "加雷斯", "佩里", "埃德蒙", "贝恩", "罗兰德"],
+      "attributes": { "might": 5, "vitality": 5, "arcana": -2 },
+      "greetings": [
+        "「骑士的肚子不会撒谎。」",
+        "「来一份能补充力气的。」",
+        "「听说这家店很受好评。」"
+      ],
+      "farewells": [
+        "「荣誉属于你的厨房！」",
+        "「我会守护这家店的。」"
+      ],
+      "reactions": {
+        "success": "「以骑士之名，赞美这盘菜！」",
+        "fail_wrong": "「骑士的耐心是有限的。」",
+        "fail_weird": "「这……是对骑士的侮辱吗？」",
+        "impatient": "「一个骑士的胃在怒吼！」"
+      }
+    },
+    {
+      "id": "bard_wanderer",
+      "name_prefixes": ["银弦", "妙音", "叙事", "风吟", "琴歌", "谣曲"],
+      "name_suffixes": ["艾莉亚", "莉拉", "塞壬", "卡洛", "斐恩", "诺娃"],
+      "attributes": { "charm": 5, "fortune": 3, "alacrity": 2 },
+      "greetings": [
+        "「一边吃饭一边想新歌的歌词。」",
+        "「这家店的灵感……我感受到了。」",
+        "「给我来点有故事的味道。」"
+      ],
+      "farewells": [
+        "「一首歌换一顿饭，下次！」",
+        "「新歌的灵感就来自于这。」"
+      ],
+      "reactions": {
+        "success": "「这味道本身就是一首诗！」",
+        "fail_wrong": "「调子不对……」",
+        "fail_weird": "「这是哪个调式的混沌？」",
+        "impatient": "「灵感快要飞走了！」"
+      }
+    },
+    {
+      "id": "monk_ascetic",
+      "name_prefixes": ["磐石", "理心", "禅悟", "静修", "苦行", "无垢"],
+      "name_suffixes": ["芬恩", "伯林", "柯恩", "达摩", "迦南", "诺伦"],
+      "attributes": { "vitality": 5, "alacrity": 3, "charm": -1 },
+      "greetings": [
+        "「修行一天，一餐足矣。」",
+        "「简单的食物也能带来力量。」",
+        "「不挑剔，有什么上什么。」"
+      ],
+      "farewells": [
+        "「修行继续。」",
+        "「这顿饭让心灵安定了。」"
+      ],
+      "reactions": {
+        "success": "「很朴素，但很有力量。」",
+        "fail_wrong": "「随缘吧……」",
+        "fail_weird": "「……世间苦难。」",
+        "impatient": "「等待也是修行。」"
+      }
+    }
+  ]
+}

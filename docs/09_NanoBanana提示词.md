@@ -1,26 +1,20 @@
-# 地下城酒馆 — Nano Banana 生图提示词
+# 地下城酒馆 — AI 生图提示词
 
-> 基于 `docs/07_美术需求文档.md` v3.0 | 2026-05-27
+> 基于 `docs/07_美术需求文档.md` v4.0 简陋像素涂鸦风格 | 2026-06-08 更新
 >
-> **重要**：v3.0 美术风格已从像素风切换为暗黑卡通手绘。以下提示词仍为旧版像素风格式，使用时请将风格描述替换为：
-> 
-> - `像素风` / `pixel art` → `手绘暗黑卡通` / `hand-drawn dark cartoon`
-> - 像素边缘 → 手绘线条（粗细变化、有机轮廓）
-> - `nearest-neighbor 放大` → 直接目标尺寸绘制，标准缩放
-> - 阴影色从偏紫 → 统一暖褐 `#2d2018`
-> - 参考方向：Don't Starve（饥荒）暗黑格调 + cel-shaded 干净填色
+> **角色已改为半身像规格**：200×250 px 画布，半身构图（胸部以上），1x 直接显示于吧台后方。包含莱恩 (Ryan) 4 表情 + 米拉 (Mira) 4 表情。
 >
-> 提示词已适配 Nano Banana。先跑 P0 第一批看效果，确认风格后再批量。
+> 提示词已适配 Nano Banana 兼容格式。先跑 P0 第一批看效果，确认风格后再批量。
 
 ---
 
 ## 通用说明
 
-- 每个提示词给出**中英双语**，Nano Banana 建议用中文，英文可做备选
-- 如果 Nano Banana 支持 reference image，角色表情变体优先用"参考上一张+改表情描述"方式出
-- 所有资产**直接目标尺寸绘制**，无需像素放大（v3.0 已取消 nearest-neighbor 2x 缩放）
-- 跑完一批后统一校色（对照 `docs/07_美术需求文档.md` v3.0 色板）
-- 风格关键词：`手绘暗黑卡通` `赛璐珞填色` `饥荒风` `暖黄光影` `深褐阴影`
+- 每个提示词给出**中英双语**，建议用中文，英文可做备选
+- 如果支持 reference image，角色表情变体优先用"参考上一张+改表情描述"方式出
+- 所有角色资产为**200×250 px 半身像**，Godot 中 1x 直接显示
+- 跑完一批后统一校色（对照 `docs/07_美术需求文档.md` v4.0 24 色板）
+- 风格关键词：`简陋像素涂鸦` `纯色块` `1px黑轮廓` `半身像`
 
 ---
 
@@ -103,23 +97,23 @@ No people, no text. Low saturation, high contrast light/shadow. Pixel art game b
 
 **中文**：
 ```
-像素风游戏角色立绘，200×250像素画布（后续2倍放大到400×500），全身站立，正面略偏3/4角度。
+像素风游戏角色半身像，200×250像素画布（直接使用无需放大），半身像，正面略偏3/4角度。
 
 年轻男性见习骑士，18-20岁，偏瘦体型。一头凌乱的棕色短发，额头有几缕碎发。明亮的蓝灰色大眼睛，眼神清澈，嘴角微微上扬，自信从容。
 
 穿着银色轻甲——是皮革底+金属肩甲和胸甲片的轻便装备，不是全身重甲。甲胄下面是深蓝色布衣。一柄未出鞘的长剑随意地扛在右肩上。
 
-浅肤色，年轻感。站姿挺拔放松，肩膀后展。顶光暖色调照明，头顶和肩膀上方有高光。外轮廓用2像素深色描边。透明背景。
+浅肤色，年轻感。胸部以上构图，只展示上半身。顶光暖色调照明，头顶和肩膀上方有高光。外轮廓用2像素深色描边。透明背景。
 
-像素风，暗黑地牢角色风格。不要3D渲染，不要动漫风，不要模糊抗锯齿。
+像素风，暗黑地牢角色风格。不要3D渲染，不要动漫风，不要模糊抗锯齿。不要画出腿部和下半身。
 ```
 
 **English (backup)**：
 ```
-Pixel art character sprite, 200x250 canvas, full body standing pose, slight 3/4 front view.
+Pixel art half-body character portrait, 200x250 canvas, chest-up composition, slight 3/4 front view.
 Young male knight, 18-20, lean build. Short messy brown hair, bright blue-grey eyes, slight confident smile.
 Silver light armor on leather base. Dark blue cloth underneath. Long sword resting on right shoulder, not drawn.
-Light skin tone, youthful. Upright relaxed posture. Top-down warm lighting. 2px dark outer outline. Transparent background.
+Light skin tone, youthful. Chest-up, no legs visible. Top-down warm lighting. 2px dark outer outline. Transparent background.
 Darkest Dungeon character style. No 3D, no anime, no blur, no anti-aliasing.
 ```
 
@@ -176,23 +170,23 @@ Darkest Dungeon character style. No 3D, no anime, no blur, no anti-aliasing.
 
 **中文**：
 ```
-像素风游戏角色立绘，200×250像素画布（后续2倍放大到400×500），全身站立，正面略偏3/4角度。
+像素风游戏角色半身像，200×250像素画布（直接使用无需放大），半身像，正面略偏3/4角度。
 
 女性旅行商人，25-28岁，体型中等干练。深棕色长发扎成利落的高马尾，耳边有几缕碎发。琥珀色的锐利眼睛，眼型偏细长，直视玩家。嘴角微扬但不露齿，是那种"职业微笑"——礼貌但有所保留。
 
 一手叉腰。身穿深棕色皮质背心，内搭米色亚麻衬衫。腰间斜挎多口袋棕色腰带，挂着各种小袋子和卷轴。右肩挎着一个大型皮质旅行包。
 
-浅麦色肤色。顶光暖色调照明，马尾顶部和肩膀有高光。外轮廓2像素深色描边。透明背景。
+浅麦色肤色。胸部以上构图，只展示上半身。顶光暖色调照明，马尾顶部和肩膀有高光。外轮廓2像素深色描边。透明背景。
 
-像素风，暗黑地牢角色风格。不要3D，不要动漫风，不要模糊，不要性感化或夸张身材。
+像素风，暗黑地牢角色风格。不要3D，不要动漫风，不要模糊，不要性感化或夸张身材。不要画出腿部和下半身。
 ```
 
 **English (backup)**：
 ```
-Pixel art character sprite, 200x250 canvas, full body standing pose.
+Pixel art half-body character portrait, 200x250 canvas, chest-up composition.
 Female traveling merchant, 25-28, capable lean build. Dark brown hair in high ponytail. Sharp amber eyes, narrow gaze. Professional slight smile — polite but reserved.
 One hand on hip. Dark brown leather vest over cream linen shirt. Multi-pocket diagonal belt with pouches and scrolls. Large leather shoulder bag on right side.
-Light wheat skin tone. Top-down warm lighting. 2px dark outline. Transparent background.
+Light wheat skin tone. Chest-up, no legs visible. Top-down warm lighting. 2px dark outline. Transparent background.
 Darkest Dungeon style. No 3D, no anime, no blur, no exaggerated proportions.
 ```
 
