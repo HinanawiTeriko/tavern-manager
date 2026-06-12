@@ -149,14 +149,17 @@ func _test_pinned_note_contract(view) -> void:
 	var desc_label := note.get_node_or_null("Desc") as Label
 	var cost_label := note.get_node_or_null("Cost") as Label
 	var yield_label := note.get_node_or_null("Yield") as Label
-	_ok(name_label != null and name_label.position == Vector2(148, 96) and name_label.size == Vector2(172, 34),
-		"pinned note title avoids the knife art")
-	_ok(desc_label != null and desc_label.position == Vector2(128, 142) and desc_label.size == Vector2(196, 76),
-		"pinned note description starts on the clear paper area")
-	_ok(cost_label != null and cost_label.position == Vector2(120, 224) and cost_label.size == Vector2(212, 26),
-		"pinned note cost row stays clear of the knife")
-	_ok(yield_label != null and yield_label.position == Vector2(120, 254) and yield_label.size == Vector2(212, 42),
-		"pinned note yield row stays clear of the knife")
+	_ok(name_label != null and name_label.position == Vector2(84, 78) and name_label.size == Vector2(200, 34),
+		"pinned note title sits centered near the top of the paper")
+	_ok(desc_label != null and desc_label.position == Vector2(144, 142) and desc_label.size == Vector2(168, 76),
+		"pinned note description is inset into a narrower paper column")
+	_ok(cost_label != null and cost_label.position == Vector2(144, 224) and cost_label.size == Vector2(168, 26),
+		"pinned note cost row is inset with the description column")
+	_ok(yield_label != null and yield_label.position == Vector2(144, 254) and yield_label.size == Vector2(168, 42),
+		"pinned note yield row is inset with the description column")
+	if name_label != null:
+		_ok(is_equal_approx(name_label.position.x + name_label.size.x * 0.5, 184.0),
+			"pinned note title center aligns with the note centerline")
 	if name_label != null:
 		_ok(_color_close(name_label.get_theme_color("font_color"), Color(0.36, 0.20, 0.10)),
 			"pinned note title uses dark paper-ink color instead of bright UI amber")
