@@ -184,6 +184,36 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(_button_stylebox_texture_path(end_night_button, "pressed") == "res://assets/textures/ui/topbar_end_night_button_pressed.png",
 				"TopPanel/EndNightBtn pressed art is dedicated topbar art")
 
+	var shortcut_bg := tavern.get_node_or_null("ShortcutBarBg") as Panel
+	var shortcut_bar := tavern.get_node_or_null("ShortcutBar") as HBoxContainer
+	_ok(shortcut_bg != null, "ShortcutBarBg remains the public Tavern shortcut tray path")
+	if shortcut_bg != null:
+		_ok(shortcut_bg.size == Vector2(1000, 40), "ShortcutBarBg uses the production 1000x40 shortcut tray layout")
+		_ok(_stylebox_texture_path(shortcut_bg, "panel") == "res://assets/textures/ui/bar_shortcut_bg.png",
+			"ShortcutBarBg uses the dedicated shortcut tray art")
+		var shortcut_bg_texture := _stylebox_texture(shortcut_bg, "panel")
+		_ok(shortcut_bg_texture != null and shortcut_bg_texture.get_size() == Vector2(1000, 40),
+			"ShortcutBarBg texture is the 1000x40 runtime export")
+	_ok(shortcut_bar != null, "ShortcutBar remains the public Tavern material slot container path")
+	if shortcut_bar != null:
+		_ok(shortcut_bar.size == Vector2(1000, 40), "ShortcutBar uses the production 1000x40 shortcut layout")
+		_ok(shortcut_bar.get_theme_constant("separation") == 4,
+			"ShortcutBar uses 4px spacing so ten 96px slots fit the tray")
+		for slot_index in range(10):
+			var slot := shortcut_bar.get_node_or_null("Slot%d" % slot_index) as ColorRect
+			_ok(slot != null, "ShortcutBar/Slot%d remains available" % slot_index)
+			if slot != null:
+				_ok(slot.custom_minimum_size == Vector2(96, 40),
+					"ShortcutBar/Slot%d uses the native 96x40 shortcut slot size" % slot_index)
+				_ok(slot.size == Vector2(96, 40),
+					"ShortcutBar/Slot%d does not stretch or squash shortcut slot art" % slot_index)
+		if shortcut_bg != null:
+			var slot9 := shortcut_bar.get_node_or_null("Slot9") as ColorRect
+			if slot9 != null:
+				var right_gap := shortcut_bg.global_position.x + shortcut_bg.size.x - (slot9.global_position.x + slot9.size.x)
+				_ok(right_gap >= 2.0 and right_gap <= 6.0,
+					"ShortcutBar/Slot9 ends at the tray right cap instead of leaving a visible right-side void: gap %.2f" % right_gap)
+
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
 	if ledger != null:

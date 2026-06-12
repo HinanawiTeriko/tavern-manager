@@ -28,6 +28,8 @@ const NPC_TEXTURE_KEYS: Dictionary = {
 const TOPBAR_LEFT_INSET := Vector2(28, 48)
 const TOPBAR_RIGHT_INSET := Vector2(28, 48)
 const TOPBAR_LABEL_HEIGHT := 48.0
+const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
+const SHORTCUT_SEPARATION := 4
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
@@ -68,6 +70,7 @@ func _ready() -> void:
 func _apply_theme() -> void:
 	_configure_customer_input_passthrough()
 	_configure_topbar_layout()
+	_configure_shortcut_bar_layout()
 
 	var bg_tex = TextureManager.try_load("res://assets/textures/tavern/background/tavern_bg.png")
 	if bg_tex == null:
@@ -211,6 +214,20 @@ func _configure_topbar_label(label: Label, minimum_size: Vector2, alignment: Hor
 	label.horizontal_alignment = alignment
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_shortcut_bar_layout() -> void:
+	var shortcut_bar := get_node_or_null("ShortcutBar") as HBoxContainer
+	if shortcut_bar == null:
+		return
+	shortcut_bar.add_theme_constant_override("separation", SHORTCUT_SEPARATION)
+	for slot_index in range(10):
+		var slot := shortcut_bar.get_node_or_null("Slot%d" % slot_index) as Control
+		if slot == null:
+			continue
+		slot.custom_minimum_size = SHORTCUT_SLOT_SIZE
+		slot.size_flags_horizontal = Control.SIZE_FILL
+		slot.size_flags_vertical = Control.SIZE_FILL
 
 func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
 	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
