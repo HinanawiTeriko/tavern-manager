@@ -16,16 +16,6 @@ const ITEM_TEXTURES := {
 	"warhammer_token": "res://assets/ui/generated/investigation/mine_items/warhammer_token.png",
 	"bloodied_paper": "res://assets/ui/generated/investigation/mine_items/bloodied_paper.png",
 }
-const ITEM_VISUAL_SCALES := {
-	"broken_arrow": 0.88,
-	"dented_shield": 0.78,
-	"lost_boot": 0.86,
-	"rubble": 0.72,
-	"torn_backpack": 0.82,
-	"coins": 0.95,
-	"warhammer_token": 0.92,
-	"bloodied_paper": 0.90,
-}
 const SHADOW_TEXTURE := "res://assets/ui/generated/investigation/mine_background/mine_item_shadow.png"
 
 @onready var _shape: CollisionShape2D = $Shape
@@ -73,12 +63,8 @@ func _apply_texture_visual(p_tag: String, p_size: Vector2) -> void:
 	_texture_visual.texture = texture
 	_texture_visual.visible = true
 	_texture_visual.z_index = _visual.z_index + 2
-	var visual_size := p_size * float(ITEM_VISUAL_SCALES.get(p_tag, 0.84))
-	var texture_size: Vector2 = texture.get_size()
-	if texture_size.x > 0.0 and texture_size.y > 0.0:
-		_texture_visual.scale = Vector2(visual_size.x / texture_size.x, visual_size.y / texture_size.y)
-	else:
-		_texture_visual.scale = Vector2.ONE
+	var visual_size: Vector2 = texture.get_size()
+	_texture_visual.scale = Vector2.ONE
 	_visual.visible = false
 	_label.visible = false
 	_uses_production_texture = true

@@ -82,8 +82,15 @@ def validate_native(item_id: str, native: Image.Image, native_size: tuple[int, i
 
 
 def export_item(reference: Image.Image, item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int, scale: int) -> tuple[Image.Image, Image.Image]:
+    source = reference
+    item_source = item.get("source")
+    if item_source and item_source != "art_sources/generated_raw/mine_investigation/mine_item_sheet_v2.png":
+        source_path = ROOT / item_source
+        if not source_path.exists():
+            raise FileNotFoundError(f"missing source image for {item['id']}: {source_path}")
+        source = Image.open(source_path).convert("RGBA")
     x, y, width, height = item["source_rect"]
-    crop = reference.crop((x, y, x + width, y + height))
+    crop = source.crop((x, y, x + width, y + height))
     native_size = tuple(item["native_size"])
     runtime_size = tuple(item["runtime_size"])
     native = fit_to_native(crop, native_size, background_rgb, tolerance)

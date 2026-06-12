@@ -2,6 +2,16 @@ extends Node
 
 const MINE_ITEM_SCENE := preload("res://scenes/ui/components/MineItem.tscn")
 const SHADOW_PATH := "res://assets/ui/generated/investigation/mine_background/mine_item_shadow.png"
+const EXPECTED_RUNTIME_SIZES := {
+	"broken_arrow": Vector2(120, 36),
+	"dented_shield": Vector2(96, 96),
+	"lost_boot": Vector2(84, 56),
+	"rubble": Vector2(320, 216),
+	"torn_backpack": Vector2(112, 84),
+	"coins": Vector2(64, 48),
+	"warhammer_token": Vector2(56, 56),
+	"bloodied_paper": Vector2(72, 88),
+}
 
 var _checks := 0
 var _failures := 0
@@ -38,7 +48,7 @@ func _spawn_item() -> MineItem:
 
 func _test_production_item_hides_debug_visuals_and_shows_shadow() -> void:
 	var item := _spawn_item()
-	item.setup("broken_arrow", "observation", Vector2(48, 16), Color.RED, "debug label", "observation")
+	item.setup("broken_arrow", "observation", Vector2(120, 36), Color.RED, "debug label", "observation")
 	item.rotation = 1.35
 	await get_tree().physics_frame
 	_ok(item.get_node_or_null("Shape") is CollisionShape2D, "Shape node is preserved")
@@ -55,7 +65,9 @@ func _test_production_item_hides_debug_visuals_and_shows_shadow() -> void:
 		_ok(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "production sprite uses nearest texture filtering")
 		if sprite.texture != null:
 			var rendered_size := sprite.texture.get_size() * sprite.scale
-			_ok(rendered_size.x <= 43.0 and rendered_size.y <= 15.0, "production sprite leaves collision padding for visual integration")
+			_ok(sprite.texture.get_size() == EXPECTED_RUNTIME_SIZES["broken_arrow"], "production sprite texture is final scene size")
+			_ok(sprite.scale == Vector2.ONE, "production sprite uses 1:1 runtime scale")
+			_ok(rendered_size == EXPECTED_RUNTIME_SIZES["broken_arrow"], "production sprite renders at final scene size")
 	var shadow := item.get_node_or_null("ShadowVisual") as Sprite2D
 	if shadow != null:
 		_ok(shadow.visible, "production shadow is visible")
@@ -69,20 +81,25 @@ func _test_production_item_hides_debug_visuals_and_shows_shadow() -> void:
 			_ok(shadow.z_index < sprite.z_index, "production shadow renders below item texture")
 	_ok(item.item_tag == "broken_arrow", "item_tag contract remains set by setup")
 	_ok(item.kind == "observation", "kind contract remains set by setup")
+	var shape := item.get_node_or_null("Shape") as CollisionShape2D
+	if shape != null and shape.shape is RectangleShape2D:
+		_ok((shape.shape as RectangleShape2D).size == EXPECTED_RUNTIME_SIZES["broken_arrow"], "broken arrow collision matches final visual size")
 	item.queue_free()
 
 
 func _test_rubble_item_uses_reduced_visual_scale() -> void:
 	var item := _spawn_item()
-	item.setup("rubble", "rubble", Vector2(120, 90), Color.DARK_GRAY, "debug rubble", "")
+	item.setup("rubble", "rubble", Vector2(320, 216), Color.DARK_GRAY, "debug rubble", "")
 	var sprite := item.get_node_or_null("TextureVisual") as Sprite2D
 	_ok(sprite != null, "rubble production item creates TextureVisual")
 	if sprite != null and sprite.texture != null:
 		var rendered_size := sprite.texture.get_size() * sprite.scale
-		_ok(rendered_size.x <= 88.0 and rendered_size.y <= 66.0, "rubble visual is smaller than its collision box")
+		_ok(sprite.texture.get_size() == EXPECTED_RUNTIME_SIZES["rubble"], "rubble texture is final scene size")
+		_ok(sprite.scale == Vector2.ONE, "rubble uses 1:1 runtime scale")
+		_ok(rendered_size == EXPECTED_RUNTIME_SIZES["rubble"], "rubble visual uses authored final size")
 	var shape := item.get_node_or_null("Shape") as CollisionShape2D
 	if shape != null and shape.shape is RectangleShape2D:
-		_ok((shape.shape as RectangleShape2D).size == Vector2(120, 90), "rubble collision box remains available for dragging")
+		_ok((shape.shape as RectangleShape2D).size == EXPECTED_RUNTIME_SIZES["rubble"], "rubble collision matches larger collapsed-stone visual")
 	item.queue_free()
 
 

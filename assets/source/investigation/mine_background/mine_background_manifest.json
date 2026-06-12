@@ -54,47 +54,47 @@
     "contact_sheet": "docs/art/mine_investigation_background_contact_sheet.png",
     "item_collision_sizes_runtime": {
       "broken_arrow": [
-        48,
-        16
-      ],
-      "dented_shield": [
-        64,
-        64
-      ],
-      "lost_boot": [
-        56,
+        120,
         36
       ],
-      "rubble": [
-        120,
-        90
+      "dented_shield": [
+        96,
+        96
       ],
-      "torn_backpack": [
-        72,
+      "lost_boot": [
+        84,
         56
       ],
+      "rubble": [
+        320,
+        216
+      ],
+      "torn_backpack": [
+        112,
+        84
+      ],
       "coins": [
-        20,
-        20
+        64,
+        48
       ],
       "warhammer_token": [
-        28,
-        28
+        56,
+        56
       ],
       "bloodied_paper": [
-        40,
-        52
+        72,
+        88
       ]
     },
     "item_visual_scales": {
-      "broken_arrow": 0.88,
-      "dented_shield": 0.78,
-      "lost_boot": 0.86,
-      "rubble": 0.72,
-      "torn_backpack": 0.82,
-      "coins": 0.95,
-      "warhammer_token": 0.92,
-      "bloodied_paper": 0.9
+      "broken_arrow": 1.0,
+      "dented_shield": 1.0,
+      "lost_boot": 1.0,
+      "rubble": 1.0,
+      "torn_backpack": 1.0,
+      "coins": 1.0,
+      "warhammer_token": 1.0,
+      "bloodied_paper": 1.0
     },
     "item_overlay_positions_runtime": {
       "broken_arrow": [

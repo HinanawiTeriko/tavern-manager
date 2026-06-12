@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: single foreground prop source for a Godot pixel-art abandoned mine investigation scene
+Primary request: Create one large collapsed mine rubble pile, isolated on a perfectly flat solid #ff00ff chroma-key background. No UI.
+Subject: a draggable pile of collapsed gray mine stones and broken timber fragments, broad and heavy, clearly much larger than a backpack, shield, boot, coins, paper, or token. It should feel like the obstruction covering another item, but not a full wall or background mountain.
+Style/medium: painterly source intended for downsampling into chunky low-resolution pixel-game sprite, crisp silhouette, rough ink-like edges, limited dungeon palette, readable at native 44x30 pixels and runtime 176x120 pixels.
+Composition/framing: horizontal low mound, three-quarter top/front view, centered with generous padding, no floor plane, no cast shadow, no separate background, no extra props outside the rubble pile.
+Lighting/mood: cold teal cave ambient light with subtle amber edge highlights, matching a dark abandoned mine.
+Color palette: cold gray stone, dark teal shadows, muted brown broken wood, sparse warm highlights.
+Constraints: perfectly flat uniform #ff00ff background only; do not use #ff00ff inside the rubble; no text, no labels, no numbers, no logos, no characters, no hands, no watermark, no glow, no smoke, no shadow.
