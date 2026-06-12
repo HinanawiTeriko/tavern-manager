@@ -5,7 +5,7 @@ var _failures := 0
 
 
 func _ready() -> void:
-	await _test_bar_counter_art_layer()
+	await _test_physics_aligned_tabletop_art_layer()
 	_finish()
 
 
@@ -38,19 +38,20 @@ func _segment_points(shape: Shape2D) -> Array:
 	return [segment.a, segment.b]
 
 
-func _test_bar_counter_art_layer() -> void:
+func _test_physics_aligned_tabletop_art_layer() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
+	_test_initial_workspace_positions(tavern)
 	await get_tree().process_frame
 
-	var counter := tavern.get_node_or_null("BarCounterArt") as Sprite2D
-	_ok(counter != null, "Tavern has visual-only BarCounterArt node")
-	if counter != null:
-		_ok(_texture_path(counter.texture) == "res://assets/textures/tavern/table/bar_counter.png", "BarCounterArt uses runtime bar counter texture")
-		_ok(counter.z_index > tavern.get_node("Background").z_index, "BarCounterArt draws over full-screen background")
-		_ok(counter.z_index < 0, "BarCounterArt stays behind gameplay props")
-		_ok(counter.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "BarCounterArt uses nearest texture filter")
-		_ok(counter.position == Vector2(640, 624), "BarCounterArt is a smaller bottom bar counter layer")
+	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
+	_ok(tabletop != null, "Tavern keeps the visual-only TabletopArt node")
+	if tabletop != null:
+		_ok(_texture_path(tabletop.texture) == "res://assets/textures/tavern/table/tabletop.png", "TabletopArt uses runtime work-surface texture")
+		_ok(tabletop.z_index > tavern.get_node("Background").z_index, "TabletopArt draws over full-screen background")
+		_ok(tabletop.z_index < 0, "TabletopArt stays behind gameplay props")
+		_ok(tabletop.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "TabletopArt uses nearest texture filter")
+		_ok(tabletop.position == Vector2(640, 560), "TabletopArt stays aligned to the current physics workspace")
 
 	var ground := tavern.get_node("BarWorkspace/World/Walls/Ground") as CollisionShape2D
 	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D
@@ -63,3 +64,13 @@ func _test_bar_counter_art_layer() -> void:
 	_ok(customer_drop != null and customer_drop.shape is RectangleShape2D, "customer drop area shape remains present")
 
 	tavern.queue_free()
+
+
+func _test_initial_workspace_positions(tavern: Node) -> void:
+	_ok(tavern.get_node("BarWorkspace/World/SeasoningShaker").position == Vector2(720, 470), "seasoning shaker starts aligned with work surface")
+	_ok(tavern.get_node("BarWorkspace/World/RecycleAnchor").position == Vector2(640, 470), "recycle anchor starts aligned with rear work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Ledger").position == Vector2(230, 580), "ledger starts on the work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Brewery").position == Vector2(960, 600), "brewery starts on the work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Grill").position == Vector2(330, 620), "grill starts on the work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Pot").position == Vector2(520, 600), "pot starts on the work surface")
+	_ok(tavern.get_node("BarWorkspace/World/Spoon").position == Vector2(700, 590), "spoon starts on the work surface")

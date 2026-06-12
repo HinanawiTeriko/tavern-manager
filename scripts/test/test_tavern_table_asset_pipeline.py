@@ -8,10 +8,14 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST = ROOT / "assets" / "source" / "tavern" / "table" / "bar_counter_manifest.json"
-CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_bar_counter_contact_sheet.png"
-NATIVE_SIZE = (320, 48)
-RUNTIME_SIZE = (1280, 192)
+MANIFEST = ROOT / "assets" / "source" / "tavern" / "table" / "tabletop_manifest.json"
+CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_table_contact_sheet.png"
+NATIVE_SIZE = (320, 80)
+RUNTIME_SIZE = (1280, 320)
+SPRITE_POSITION_RUNTIME = (640, 560)
+SURFACE_TOP_Y_RUNTIME = 455
+FRONT_LIP_Y_RUNTIME = 655
+GROUND_Y_RUNTIME = 655
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -30,18 +34,36 @@ def image_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
     return list(image.getdata())
 
 
+def luma(pixel: tuple[int, int, int, int]) -> int:
+    r, g, b, _a = pixel
+    return int(0.2126 * r + 0.7152 * g + 0.0722 * b)
+
+
 class TavernTableAssetPipelineTest(unittest.TestCase):
-    def test_manifest_records_fixed_bar_counter_contract(self) -> None:
+    def test_manifest_records_fixed_physics_aligned_work_surface_contract(self) -> None:
         manifest = load_manifest(self)
-        self.assertEqual(manifest["id"], "tavern_bar_counter")
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/tavern_table/bar_counter_reference_v1.png")
-        self.assertEqual(manifest["native"], "assets/source/tavern/table/bar_counter_native.png")
-        self.assertEqual(manifest["runtime"], "assets/textures/tavern/table/bar_counter.png")
+        self.assertEqual(manifest["id"], "tavern_bar_work_surface")
+        self.assertEqual(manifest["source"], "art_sources/generated_raw/tavern_table/tabletop_reference_v2.png")
+        self.assertEqual(manifest["native"], "assets/source/tavern/table/tabletop_native.png")
+        self.assertEqual(manifest["runtime"], "assets/textures/tavern/table/tabletop.png")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], 4)
-        self.assertEqual(manifest["safe_area"], [0, 0, 320, 48])
-        self.assertEqual(manifest["intended_godot_use"], "visual-only Tavern bar counter Sprite2D layer")
+        self.assertEqual(manifest["safe_area"], [0, 0, 320, 80])
+        self.assertEqual(
+            manifest["physics_alignment"],
+            {
+                "sprite_position_runtime": list(SPRITE_POSITION_RUNTIME),
+                "surface_top_y_runtime": SURFACE_TOP_Y_RUNTIME,
+                "front_lip_y_runtime": FRONT_LIP_Y_RUNTIME,
+                "ground_y_runtime": GROUND_Y_RUNTIME,
+                "playable_x_range_runtime": [150, 1130],
+            },
+        )
+        self.assertEqual(
+            manifest["intended_godot_use"],
+            "visual-only Tavern physics-aligned bar work surface Sprite2D layer",
+        )
 
     def test_source_native_runtime_and_contact_sheet_exist(self) -> None:
         manifest = load_manifest(self)
@@ -61,21 +83,58 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
         self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
 
-    def test_native_bar_counter_is_opaque_and_visually_restrained(self) -> None:
+    def test_native_work_surface_is_opaque_and_visually_restrained(self) -> None:
         manifest = load_manifest(self)
         native = load_rgba(ROOT / manifest["native"])
         alpha_min, alpha_max = native.getchannel("A").getextrema()
-        self.assertEqual((alpha_min, alpha_max), (255, 255), "bar counter is a rectangular opaque surface")
+        self.assertEqual((alpha_min, alpha_max), (255, 255), "work surface is a rectangular opaque art layer")
         pixels = image_pixels(native)
-        dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 20 <= r <= 95 and 14 <= g <= 70 and 8 <= b <= 60)
-        teal_shadow = sum(1 for r, g, b, a in pixels if a == 255 and b >= 18 and g >= 16 and b >= r * 0.55)
-        amber = sum(1 for r, g, b, a in pixels if a == 255 and r >= 90 and g >= 45 and b <= 45 and r >= b * 2.0)
+        dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 20 <= r <= 120 and 12 <= g <= 82 and 8 <= b <= 70)
+        teal_shadow = sum(1 for r, g, b, a in pixels if a == 255 and b >= 18 and g >= 14 and b >= r * 0.45)
+        amber = sum(1 for r, g, b, a in pixels if a == 255 and r >= 88 and g >= 40 and b <= 46 and r >= b * 1.8)
         bright = sum(1 for r, g, b, a in pixels if a == 255 and max(r, g, b) >= 185)
-        self.assertGreaterEqual(dark_wood, 8200, "bar counter needs enough dark wood mass")
-        self.assertGreaterEqual(teal_shadow, 2200, "bar counter needs dark teal shadow bias")
-        self.assertGreaterEqual(amber, 100, "bar counter needs sparse amber edge highlights")
-        self.assertLessEqual(amber, 3600, "amber accents are flooding the bar counter")
-        self.assertLessEqual(bright, 80, "bar counter should not contain bright noisy pixels")
+        self.assertGreaterEqual(dark_wood, 11000, "work surface needs enough dark wood mass")
+        self.assertGreaterEqual(teal_shadow, 2600, "work surface needs dark teal shadow bias")
+        self.assertGreaterEqual(amber, 250, "work surface needs sparse amber edge highlights")
+        self.assertLessEqual(amber, 5200, "amber accents are flooding the work surface")
+        self.assertLessEqual(bright, 120, "work surface should not contain bright noisy pixels")
+
+    def test_native_work_surface_aligns_readable_edges_with_physics(self) -> None:
+        manifest = load_manifest(self)
+        native = load_rgba(ROOT / manifest["native"])
+        pixels = image_pixels(native)
+        sorted_luma = sorted(luma(pixel) for pixel in pixels)
+        p10 = sorted_luma[int((len(sorted_luma) - 1) * 0.10)]
+        p90 = sorted_luma[int((len(sorted_luma) - 1) * 0.90)]
+        self.assertGreaterEqual(p90 - p10, 28, "work surface is too flat to read")
+        self.assertGreaterEqual(p90, 58, "work surface highlights are too dim to read in scene")
+
+        width, height = native.size
+        grid_luma = [luma(pixel) for pixel in pixels]
+
+        def at(x: int, y: int) -> int:
+            return grid_luma[y * width + x]
+
+        runtime_top_y = SPRITE_POSITION_RUNTIME[1] - RUNTIME_SIZE[1] // 2
+        surface_row = round((SURFACE_TOP_Y_RUNTIME - runtime_top_y) / 4)
+        front_lip_row = round((FRONT_LIP_Y_RUNTIME - runtime_top_y) / 4)
+        self.assertEqual(surface_row, 14, "surface top row should document the current physics alignment")
+        self.assertEqual(front_lip_row, 64, "front lip row should align with the current ground collision")
+
+        def edge_strength(row: int) -> float:
+            return sum(abs(at(x, row) - at(x, row - 1)) for x in range(12, width - 12)) / float(width - 24)
+
+        def row_texture(row_start: int, row_end: int) -> int:
+            return sum(
+                1
+                for y in range(row_start, row_end + 1)
+                for x in range(1, width)
+                if abs(at(x, y) - at(x - 1, y)) >= 9
+            )
+
+        self.assertGreaterEqual(edge_strength(surface_row), 8.0, "work surface needs a visible rear/top edge near y=455")
+        self.assertGreaterEqual(edge_strength(front_lip_row), 9.0, "work surface front lip needs to align with ground y=655")
+        self.assertGreaterEqual(row_texture(surface_row, front_lip_row - 2), 950, "playable table plane needs readable wood grain")
 
 
 if __name__ == "__main__":
