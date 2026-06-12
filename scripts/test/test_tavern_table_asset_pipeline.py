@@ -13,10 +13,11 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_table_contact_sheet.png"
 NATIVE_SIZE = (320, 80)
 RUNTIME_SIZE = (1280, 320)
 SPRITE_POSITION_RUNTIME = (640, 600)
-SURFACE_TOP_Y_RUNTIME = 455
-FRONT_LIP_Y_RUNTIME = 655
-GROUND_Y_RUNTIME = 556
-CUTOUT_POLYGON_NATIVE = [[10, 4], [310, 4], [320, 64], [320, 73], [0, 73], [0, 64]]
+SURFACE_TOP_Y_RUNTIME = 484
+FRONT_LIP_Y_RUNTIME = 588
+GROUND_Y_RUNTIME = 536
+OCCLUSION_RECT_NATIVE = [0, 11, 320, 70]
+BACKGROUND_SAMPLE_NATIVE_Y_RANGE = [110, 180]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -41,9 +42,9 @@ def luma(pixel: tuple[int, int, int, int]) -> int:
 
 
 class TavernTableAssetPipelineTest(unittest.TestCase):
-    def test_manifest_records_fixed_physics_aligned_work_surface_contract(self) -> None:
+    def test_manifest_records_background_aligned_foreground_occlusion_contract(self) -> None:
         manifest = load_manifest(self)
-        self.assertEqual(manifest["id"], "tavern_bar_work_surface")
+        self.assertEqual(manifest["id"], "tavern_bar_background_foreground_occluder")
         self.assertEqual(
             manifest["source"],
             "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
@@ -54,7 +55,9 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], 4)
         self.assertEqual(manifest["safe_area"], [0, 0, 320, 80])
-        self.assertEqual(manifest["cutout_polygon_native"], CUTOUT_POLYGON_NATIVE)
+        self.assertEqual(manifest["derived_from"], "assets/source/tavern/background/tavern_bg_native.png")
+        self.assertEqual(manifest["background_sample_native_y_range"], BACKGROUND_SAMPLE_NATIVE_Y_RANGE)
+        self.assertEqual(manifest["occlusion_rect_native"], OCCLUSION_RECT_NATIVE)
         self.assertEqual(
             manifest["physics_alignment"],
             {
@@ -67,7 +70,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         )
         self.assertEqual(
             manifest["intended_godot_use"],
-            "visual-only Tavern physics-aligned bar work surface Sprite2D layer",
+            "background-matched Tavern foreground bar occluder that preserves customer bust depth",
         )
 
     def test_source_native_runtime_and_contact_sheet_exist(self) -> None:
@@ -88,31 +91,49 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
         self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
 
-    def test_native_work_surface_is_cleanly_cut_out_and_visually_restrained(self) -> None:
+    def test_foreground_occluder_is_background_matched_and_cleanly_cut_out(self) -> None:
         manifest = load_manifest(self)
+        self.assertIn("derived_from", manifest, "manifest should record the background native source for the occluder")
+        self.assertIn("occlusion_rect_native", manifest, "manifest should record the explicit foreground occlusion rectangle")
+        self.assertIn(
+            "background_sample_native_y_range",
+            manifest,
+            "manifest should record the fixed background sample rows",
+        )
         native = load_rgba(ROOT / manifest["native"])
+        background = load_rgba(ROOT / manifest["derived_from"])
         alpha_min, alpha_max = native.getchannel("A").getextrema()
-        self.assertEqual((alpha_min, alpha_max), (0, 255), "work surface should be a transparent cutout, not an opaque rectangle")
+        self.assertEqual((alpha_min, alpha_max), (0, 255), "foreground occluder should be a transparent cutout")
         pixels = image_pixels(native)
         transparent = sum(1 for _r, _g, _b, a in pixels if a == 0)
         opaque = sum(1 for _r, _g, _b, a in pixels if a == 255)
-        self.assertGreaterEqual(transparent, 3600, "work surface still has too much uncut dark background")
-        self.assertGreaterEqual(opaque, 18000, "cutout removed too much of the playable table surface")
-        for x, y in ((0, 0), (319, 0), (0, 79), (319, 79), (160, 0), (160, 79)):
+        self.assertGreaterEqual(transparent, 6600, "foreground occluder should not repaint the upper background")
+        self.assertGreaterEqual(opaque, 18000, "foreground occluder should cover enough bar front to hide busts")
+        left, top, right, bottom = manifest["occlusion_rect_native"]
+        for x, y in ((0, 0), (319, 0), (160, 0), (160, 79), (8, top - 1), (311, top - 1)):
             self.assertEqual(native.getpixel((x, y))[3], 0, "outer padding should be transparent at %s" % ((x, y),))
-        for x, y in ((20, 14), (160, 24), (300, 14), (24, 64), (160, 64), (296, 64)):
-            self.assertEqual(native.getpixel((x, y))[3], 255, "table body should remain opaque at %s" % ((x, y),))
-        dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 20 <= r <= 120 and 12 <= g <= 82 and 8 <= b <= 70)
-        teal_shadow = sum(1 for r, g, b, a in pixels if a == 255 and b >= 18 and g >= 14 and b >= r * 0.45)
+        for x, y in ((left, top), (160, top), (right - 1, top), (8, 40), (160, 40), (311, 40), (160, bottom - 1)):
+            self.assertEqual(native.getpixel((x, y))[3], 255, "background table occluder should remain opaque at %s" % ((x, y),))
+
+        sample_start, sample_end = manifest["background_sample_native_y_range"]
+        for y in range(top, bottom):
+            for x in range(0, native.width, 17):
+                self.assertEqual(
+                    native.getpixel((x, y))[:3],
+                    background.getpixel((x, sample_start + y))[:3],
+                    "occluder RGB must exactly match background at %s" % ((x, y),),
+                )
+        self.assertEqual(sample_end - sample_start, bottom, "background sample range should cover every visible screen row")
+
+        dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 12 <= r <= 120 and 8 <= g <= 82 and 4 <= b <= 70)
         amber = sum(1 for r, g, b, a in pixels if a == 255 and r >= 88 and g >= 40 and b <= 46 and r >= b * 1.8)
         bright = sum(1 for r, g, b, a in pixels if a == 255 and max(r, g, b) >= 185)
-        self.assertGreaterEqual(dark_wood, 11000, "work surface needs enough dark wood mass")
-        self.assertGreaterEqual(teal_shadow, 2600, "work surface needs dark teal shadow bias")
-        self.assertGreaterEqual(amber, 250, "work surface needs sparse amber edge highlights")
+        self.assertGreaterEqual(dark_wood, 7000, "foreground occluder needs enough dark wood mass")
+        self.assertGreaterEqual(amber, 1000, "foreground occluder needs readable amber table highlights")
         self.assertLessEqual(amber, 5200, "amber accents are flooding the work surface")
-        self.assertLessEqual(bright, 120, "work surface should not contain bright noisy pixels")
+        self.assertLessEqual(bright, 120, "foreground occluder should not contain bright noisy pixels")
 
-    def test_native_work_surface_aligns_readable_edges_with_physics(self) -> None:
+    def test_background_table_edges_align_with_physics(self) -> None:
         manifest = load_manifest(self)
         native = load_rgba(ROOT / manifest["native"])
         pixels = image_pixels(native)
@@ -120,7 +141,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         p10 = sorted_luma[int((len(sorted_luma) - 1) * 0.10)]
         p90 = sorted_luma[int((len(sorted_luma) - 1) * 0.90)]
         self.assertGreaterEqual(p90 - p10, 28, "work surface is too flat to read")
-        self.assertGreaterEqual(p90, 58, "work surface highlights are too dim to read in scene")
+        self.assertGreaterEqual(p90, 45, "work surface highlights are too dim to read in scene")
 
         width, height = native.size
         grid_luma = [luma(pixel) for pixel in pixels]
@@ -132,9 +153,9 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         surface_row = round((SURFACE_TOP_Y_RUNTIME - runtime_top_y) / 4)
         ground_row = round((GROUND_Y_RUNTIME - runtime_top_y) / 4)
         front_lip_row = round((FRONT_LIP_Y_RUNTIME - runtime_top_y) / 4)
-        self.assertEqual(surface_row, 4, "surface top guide row should document the shifted visual alignment")
-        self.assertEqual(ground_row, 29, "ground collision should land near the middle of the playable table surface")
-        self.assertEqual(front_lip_row, 54, "front lip guide should stay on the visible counter edge")
+        self.assertEqual(surface_row, 11, "surface top guide row should match the background table top")
+        self.assertEqual(ground_row, 24, "ground collision should land near the middle of the background table plane")
+        self.assertEqual(front_lip_row, 37, "front lip guide should stay on the visible background counter edge")
         self.assertGreater(ground_row, surface_row, "physics baseline must sit inside the wooden table plane")
         self.assertLess(ground_row, front_lip_row, "physics baseline should stay above the front lip")
         self.assertLessEqual(abs(GROUND_Y_RUNTIME - ((SURFACE_TOP_Y_RUNTIME + FRONT_LIP_Y_RUNTIME) / 2.0)), 5)
@@ -156,7 +177,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         self.assertGreaterEqual(surface_alpha, 250, "documented surface top should land on opaque counter pixels")
         self.assertGreaterEqual(ground_alpha, 260, "physics baseline should land on opaque playable tabletop pixels")
         self.assertGreaterEqual(front_lip_alpha, 260, "front lip guide should land on opaque counter-front pixels")
-        self.assertGreaterEqual(row_texture(14, ground_row), 900, "playable table plane needs readable wood grain above the physics baseline")
+        self.assertGreaterEqual(row_texture(14, ground_row), 350, "playable table plane needs readable wood grain above the physics baseline")
 
 
 if __name__ == "__main__":

@@ -107,8 +107,8 @@ func _test_tavern_patience_ui_contract() -> void:
 			"CustomerSprite renders pixel portraits with nearest filtering")
 		_ok(customer_sprite.z_index < tabletop.z_index,
 			"CustomerSprite draws behind TabletopArt so bust portraits can be occluded by the bar")
-		_ok(customer_sprite.global_position.y + customer_sprite.size.y > 455.0,
-			"CustomerSprite extends behind the tabletop top edge for bar occlusion")
+		_ok(customer_sprite.global_position.y + customer_sprite.size.y > 484.0,
+			"CustomerSprite extends behind the background table top edge for bar occlusion")
 
 	var customer_name := tavern.get_node_or_null("CustomerArea/CustomerName") as Label
 	var order_bubble := tavern.get_node_or_null("CustomerArea/OrderBubble") as Label

@@ -1,5 +1,5 @@
 {
-  "id": "tavern_bar_work_surface",
+  "id": "tavern_bar_background_foreground_occluder",
   "source": "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
   "native": "assets/source/tavern/table/tabletop_native.png",
   "runtime": "assets/textures/tavern/table/tabletop.png",
@@ -18,50 +18,29 @@
     320,
     80
   ],
-  "source_box": [
-    0,
-    602,
-    1672,
-    941
+  "derived_from": "assets/source/tavern/background/tavern_bg_native.png",
+  "background_sample_native_y_range": [
+    110,
+    180
   ],
-  "cutout_polygon_native": [
-    [
-      10,
-      4
-    ],
-    [
-      310,
-      4
-    ],
-    [
-      320,
-      64
-    ],
-    [
-      320,
-      73
-    ],
-    [
-      0,
-      73
-    ],
-    [
-      0,
-      64
-    ]
+  "occlusion_rect_native": [
+    0,
+    11,
+    320,
+    70
   ],
   "physics_alignment": {
     "sprite_position_runtime": [
       640,
       600
     ],
-    "surface_top_y_runtime": 455,
-    "front_lip_y_runtime": 655,
-    "ground_y_runtime": 556,
+    "surface_top_y_runtime": 484,
+    "front_lip_y_runtime": 588,
+    "ground_y_runtime": 536,
     "playable_x_range_runtime": [
       150,
       1130
     ]
   },
-  "intended_godot_use": "visual-only Tavern physics-aligned bar work surface Sprite2D layer"
+  "intended_godot_use": "background-matched Tavern foreground bar occluder that preserves customer bust depth"
 }

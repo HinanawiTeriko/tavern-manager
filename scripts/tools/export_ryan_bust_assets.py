@@ -108,7 +108,7 @@ def write_manifest() -> None:
         "bar_occlusion_contract": {
             "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
             "runtime_sprite_size": list(RUNTIME_SIZE),
-            "tabletop_top_y_runtime": 455,
+            "tabletop_top_y_runtime": 484,
             "tabletop_art_z_index": -90,
             "customer_sprite_z_index": -95,
         },

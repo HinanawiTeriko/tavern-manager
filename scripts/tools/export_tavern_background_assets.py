@@ -22,12 +22,12 @@ BACKGROUND_RUNTIME_SIZE = (1280, 720)
 TABLE_NATIVE_SIZE = (320, 80)
 TABLE_RUNTIME_SIZE = (1280, 320)
 SPRITE_POSITION_RUNTIME = (640, 600)
-SURFACE_TOP_Y_RUNTIME = 455
-FRONT_LIP_Y_RUNTIME = 655
-GROUND_Y_RUNTIME = 556
 PLAYABLE_X_RANGE_RUNTIME = [150, 1130]
-TABLE_SOURCE_BOX = (0, 602, 1672, 941)
-CUTOUT_POLYGON_NATIVE = [(10, 4), (310, 4), (320, 64), (320, 73), (0, 73), (0, 64)]
+SURFACE_TOP_Y_RUNTIME = 484
+FRONT_LIP_Y_RUNTIME = 588
+GROUND_Y_RUNTIME = 536
+BACKGROUND_TABLE_SAMPLE_Y_RANGE = (110, 180)
+TABLE_OCCLUSION_RECT_NATIVE = (0, 11, 320, 70)
 
 
 def quantize_image(image: Image.Image, colors: int) -> Image.Image:
@@ -61,57 +61,18 @@ def normalize_background(reference: Image.Image) -> Image.Image:
     return native
 
 
-def apply_table_cutout(image: Image.Image) -> Image.Image:
-    mask = Image.new("L", image.size, 0)
-    draw = ImageDraw.Draw(mask)
-    draw.polygon(CUTOUT_POLYGON_NATIVE, fill=255)
-    cutout = image.convert("RGBA")
-    cutout.putalpha(mask)
-    pixels = cutout.load()
-    for y in range(cutout.height):
-        for x in range(cutout.width):
-            if pixels[x, y][3] == 0:
-                pixels[x, y] = (0, 0, 0, 0)
-    return cutout
-
-
-def normalize_table(reference: Image.Image) -> Image.Image:
-    crop = reference.crop(TABLE_SOURCE_BOX).convert("RGB")
-    resized = crop.resize(TABLE_NATIVE_SIZE, Image.Resampling.LANCZOS)
-    sharpened = resized.filter(ImageFilter.UnsharpMask(radius=1, percent=260, threshold=2))
-    contrast = ImageEnhance.Contrast(sharpened).enhance(1.35)
-    color = ImageEnhance.Color(contrast).enhance(0.72)
-    balanced = ImageEnhance.Brightness(color).enhance(0.92)
-    native = quantize_image(balanced, 24)
+def normalize_table(background_native: Image.Image) -> Image.Image:
+    native = Image.new("RGBA", TABLE_NATIVE_SIZE, (0, 0, 0, 0))
     pixels = native.load()
-    for y in range(native.height):
-        for x in range(native.width):
-            r, g, b, a = pixels[x, y]
-            r = min(150, max(12, r))
-            g = min(104, max(10, g))
-            b = min(78, max(8, b))
-            if r >= 92 and g >= 42 and b <= 46:
-                r = max(r, 96)
-                g = max(g, 42)
-                b = min(b, 44)
-            elif r < 20 and g < 14 and b < 14:
-                r = max(r, 22)
-                g = max(g, 14)
-                b = max(b, 10)
-            if y < 14:
-                r = int(r * 0.80)
-                g = int(g * 0.78)
-                b = int(b * 0.86)
-            elif y > 64:
-                r = int(r * 0.65)
-                g = int(g * 0.64)
-                b = int(b * 0.74)
-            if r < 34 and g < 24:
-                r = max(r, 22)
-                g = max(g, 16)
-                b = max(b, 18)
-            pixels[x, y] = (r, g, b, a)
-    return apply_table_cutout(native)
+    background = background_native.convert("RGBA")
+    source_start_y, _source_end_y = BACKGROUND_TABLE_SAMPLE_Y_RANGE
+    left, top, right, bottom = TABLE_OCCLUSION_RECT_NATIVE
+    for y in range(top, bottom):
+        source_y = source_start_y + y
+        for x in range(left, right):
+            r, g, b, _a = background.getpixel((x, source_y))
+            pixels[x, y] = (r, g, b, 255)
+    return native
 
 
 def save_nearest(native: Image.Image, native_path: Path, runtime_path: Path, runtime_size: tuple[int, int]) -> Image.Image:
@@ -142,7 +103,7 @@ def write_background_manifest() -> None:
 
 def write_table_manifest() -> None:
     manifest = {
-        "id": "tavern_bar_work_surface",
+        "id": "tavern_bar_background_foreground_occluder",
         "source": "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
         "native": "assets/source/tavern/table/tabletop_native.png",
         "runtime": "assets/textures/tavern/table/tabletop.png",
@@ -150,8 +111,9 @@ def write_table_manifest() -> None:
         "runtime_size": list(TABLE_RUNTIME_SIZE),
         "scale": SCALE,
         "safe_area": [0, 0, 320, 80],
-        "source_box": list(TABLE_SOURCE_BOX),
-        "cutout_polygon_native": [list(point) for point in CUTOUT_POLYGON_NATIVE],
+        "derived_from": "assets/source/tavern/background/tavern_bg_native.png",
+        "background_sample_native_y_range": list(BACKGROUND_TABLE_SAMPLE_Y_RANGE),
+        "occlusion_rect_native": list(TABLE_OCCLUSION_RECT_NATIVE),
         "physics_alignment": {
             "sprite_position_runtime": list(SPRITE_POSITION_RUNTIME),
             "surface_top_y_runtime": SURFACE_TOP_Y_RUNTIME,
@@ -159,7 +121,7 @@ def write_table_manifest() -> None:
             "ground_y_runtime": GROUND_Y_RUNTIME,
             "playable_x_range_runtime": PLAYABLE_X_RANGE_RUNTIME,
         },
-        "intended_godot_use": "visual-only Tavern physics-aligned bar work surface Sprite2D layer",
+        "intended_godot_use": "background-matched Tavern foreground bar occluder that preserves customer bust depth",
     }
     TABLE_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     TABLE_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -189,16 +151,25 @@ def make_background_contact_sheet(reference: Image.Image, background: Image.Imag
     sheet.convert("RGB").save(BACKGROUND_CONTACT_SHEET)
 
 
-def make_table_contact_sheet(reference: Image.Image, native: Image.Image, runtime: Image.Image) -> None:
+def make_table_contact_sheet(background: Image.Image, native: Image.Image, runtime: Image.Image) -> None:
     TABLE_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
     sheet = Image.new("RGBA", (720, 560), (18, 14, 11, 255))
     draw = ImageDraw.Draw(sheet)
     draw.text((20, 16), "Tavern counter pipeline from no-people background", fill=(220, 204, 176, 255))
-    draw.text((20, 52), "reference crop", fill=(220, 204, 176, 255))
+    draw.text((20, 52), "background lower sample", fill=(220, 204, 176, 255))
     draw.text((20, 178), "native 4x preview", fill=(220, 204, 176, 255))
-    draw.text((20, 354), "runtime preview with y=455/y=556/y=655 guide rows", fill=(220, 204, 176, 255))
-    ref_crop = reference.crop(TABLE_SOURCE_BOX).convert("RGBA")
-    ref_preview = ImageOps.contain(ref_crop, (640, 96), Image.Resampling.LANCZOS)
+    draw.text(
+        (20, 354),
+        "runtime preview with y=%d/y=%d/y=%d guide rows" % (
+            SURFACE_TOP_Y_RUNTIME,
+            GROUND_Y_RUNTIME,
+            FRONT_LIP_Y_RUNTIME,
+        ),
+        fill=(220, 204, 176, 255),
+    )
+    sample_start, sample_end = BACKGROUND_TABLE_SAMPLE_Y_RANGE
+    sample = background.crop((0, sample_start, TABLE_NATIVE_SIZE[0], sample_end)).convert("RGBA")
+    ref_preview = ImageOps.contain(sample, (640, 96), Image.Resampling.NEAREST)
     native_preview = native.resize((native.width * 4, native.height * 4), Image.Resampling.NEAREST)
     native_preview = ImageOps.contain(native_preview, (640, 144), Image.Resampling.NEAREST)
     runtime_preview = runtime.convert("RGBA").resize((640, 160), Image.Resampling.NEAREST)
@@ -221,15 +192,15 @@ def main() -> None:
         raise FileNotFoundError(f"missing generated Tavern background reference: {RAW_SOURCE}")
     reference = Image.open(RAW_SOURCE).convert("RGB")
     background_native = normalize_background(reference)
-    table_native = normalize_table(reference)
+    table_native = normalize_table(background_native)
     background_runtime = save_nearest(background_native, BACKGROUND_NATIVE, BACKGROUND_RUNTIME, BACKGROUND_RUNTIME_SIZE)
     table_runtime = save_nearest(table_native, TABLE_NATIVE, TABLE_RUNTIME, TABLE_RUNTIME_SIZE)
     write_background_manifest()
     write_table_manifest()
     make_background_contact_sheet(reference, background_native, table_native)
-    make_table_contact_sheet(reference, table_native, table_runtime)
+    make_table_contact_sheet(background_native, table_native, table_runtime)
     print("exported Tavern background: assets/textures/tavern/background/tavern_bg.png")
-    print("exported Tavern counter: assets/textures/tavern/table/tabletop.png")
+    print("exported Tavern foreground occluder: assets/textures/tavern/table/tabletop.png")
     print("contact sheet: docs/art/tavern_background_contact_sheet.png")
 
 
