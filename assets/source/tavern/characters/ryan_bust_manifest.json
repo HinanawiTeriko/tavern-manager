@@ -1,0 +1,97 @@
+{
+  "id": "ryan_bust_portraits",
+  "source": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v2.png",
+  "native_size": [
+    70,
+    90
+  ],
+  "runtime_size": [
+    280,
+    360
+  ],
+  "scale": 4,
+  "portraits": {
+    "ryan_neutral": {
+      "expression": "forced smile",
+      "crop_rect": [
+        18,
+        100,
+        430,
+        760
+      ],
+      "native": "assets/source/tavern/characters/ryan_neutral_native.png",
+      "runtime": "assets/textures/characters/ryan_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_excited": {
+      "expression": "trying to act confident",
+      "crop_rect": [
+        448,
+        88,
+        870,
+        760
+      ],
+      "native": "assets/source/tavern/characters/ryan_excited_native.png",
+      "runtime": "assets/textures/characters/ryan_excited.png",
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_hesitant": {
+      "expression": "worried hesitation",
+      "crop_rect": [
+        880,
+        102,
+        1290,
+        760
+      ],
+      "native": "assets/source/tavern/characters/ryan_hesitant_native.png",
+      "runtime": "assets/textures/characters/ryan_hesitant.png",
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_dejected": {
+      "expression": "tired dejection",
+      "crop_rect": [
+        1290,
+        132,
+        1722,
+        760
+      ],
+      "native": "assets/source/tavern/characters/ryan_dejected_native.png",
+      "runtime": "assets/textures/characters/ryan_dejected.png",
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    }
+  },
+  "bar_occlusion_contract": {
+    "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
+    "runtime_sprite_size": [
+      280,
+      360
+    ],
+    "tabletop_top_y_runtime": 455,
+    "tabletop_art_z_index": -90,
+    "customer_sprite_z_index": -95
+  }
+}

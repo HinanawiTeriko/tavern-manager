@@ -66,6 +66,17 @@ func _test_tavern_patience_ui_contract() -> void:
 			"PatienceIcon loaded texture is the current 32x32 runtime export")
 		_ok(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "PatienceIcon uses nearest texture filtering")
 
+	var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as TextureRect
+	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
+	_ok(customer_sprite != null, "CustomerSprite remains the public Tavern customer portrait path")
+	if customer_sprite != null and tabletop != null:
+		_ok(customer_sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+			"CustomerSprite renders pixel portraits with nearest filtering")
+		_ok(customer_sprite.z_index < tabletop.z_index,
+			"CustomerSprite draws behind TabletopArt so bust portraits can be occluded by the bar")
+		_ok(customer_sprite.global_position.y + customer_sprite.size.y > 455.0,
+			"CustomerSprite extends behind the tabletop top edge for bar occlusion")
+
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
 	if ledger != null:

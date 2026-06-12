@@ -120,11 +120,13 @@ offset_right = 840.0
 offset_bottom = 440.0
 
 [node name="CustomerSprite" type="TextureRect" parent="CustomerArea"]
+z_index = -95
+texture_filter = 1
 layout_mode = 0
 offset_left = 60.0
-offset_top = 0.0
+offset_top = 80.0
 offset_right = 340.0
-offset_bottom = 360.0
+offset_bottom = 440.0
 expand_mode = 1
 stretch_mode = 5
 
