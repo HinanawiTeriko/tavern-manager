@@ -5,7 +5,7 @@ var _failures := 0
 
 
 func _ready() -> void:
-	await _test_tabletop_art_layer()
+	await _test_bar_counter_art_layer()
 	_finish()
 
 
@@ -38,18 +38,19 @@ func _segment_points(shape: Shape2D) -> Array:
 	return [segment.a, segment.b]
 
 
-func _test_tabletop_art_layer() -> void:
+func _test_bar_counter_art_layer() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
 	await get_tree().process_frame
 
-	var table := tavern.get_node_or_null("TabletopArt") as Sprite2D
-	_ok(table != null, "Tavern has visual-only TabletopArt node")
-	if table != null:
-		_ok(_texture_path(table.texture) == "res://assets/textures/tavern/table/tabletop.png", "TabletopArt uses runtime tabletop texture")
-		_ok(table.z_index > tavern.get_node("Background").z_index, "TabletopArt draws over full-screen background")
-		_ok(table.z_index < 0, "TabletopArt stays behind gameplay props")
-		_ok(table.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "TabletopArt uses nearest texture filter")
+	var counter := tavern.get_node_or_null("BarCounterArt") as Sprite2D
+	_ok(counter != null, "Tavern has visual-only BarCounterArt node")
+	if counter != null:
+		_ok(_texture_path(counter.texture) == "res://assets/textures/tavern/table/bar_counter.png", "BarCounterArt uses runtime bar counter texture")
+		_ok(counter.z_index > tavern.get_node("Background").z_index, "BarCounterArt draws over full-screen background")
+		_ok(counter.z_index < 0, "BarCounterArt stays behind gameplay props")
+		_ok(counter.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "BarCounterArt uses nearest texture filter")
+		_ok(counter.position == Vector2(640, 624), "BarCounterArt is a smaller bottom bar counter layer")
 
 	var ground := tavern.get_node("BarWorkspace/World/Walls/Ground") as CollisionShape2D
 	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D
