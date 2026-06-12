@@ -79,6 +79,11 @@ func _apply_theme() -> void:
 	_customer_name.add_theme_font_size_override("font_size", 18)
 	_order_bubble.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_order_bubble.add_theme_font_size_override("font_size", 15)
+	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
+	if patience_icon != null:
+		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
+		patience_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		patience_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_gold_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
 	_gold_label.add_theme_font_size_override("font_size", 16)

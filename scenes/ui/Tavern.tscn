@@ -143,12 +143,24 @@ offset_bottom = 360.0
 text = ""
 horizontal_alignment = 1
 
+[node name="PatienceIcon" type="TextureRect" parent="CustomerArea"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 42.0
+offset_top = 370.0
+offset_right = 66.0
+offset_bottom = 394.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
 [node name="TimerBar" type="ProgressBar" parent="CustomerArea"]
 layout_mode = 0
-offset_left = 50.0
-offset_top = 370.0
-offset_right = 350.0
-offset_bottom = 390.0
+offset_left = 76.0
+offset_top = 368.0
+offset_right = 376.0
+offset_bottom = 396.0
+show_percentage = false
 
 [node name="ShortcutBarBg" type="Panel" parent="."]
 layout_mode = 0
@@ -452,7 +464,9 @@ shape = SubResource("tv_right")
 [node name="Items" type="Node2D" parent="BarWorkspace/World"]
 
 [node name="Ledger" parent="BarWorkspace/World" instance=ExtResource("readable_item")]
+visible = false
 position = Vector2(230, 580)
+input_pickable = false
 
 [node name="RecycleAnchor" type="Marker2D" parent="BarWorkspace/World"]
 position = Vector2(640, 470)
