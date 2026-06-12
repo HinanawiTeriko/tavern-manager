@@ -64,7 +64,7 @@ const PINNED_NOTE_COST_POS := Vector2(120, 224)
 const PINNED_NOTE_COST_SIZE := Vector2(212, 26)
 const PINNED_NOTE_YIELD_POS := Vector2(120, 254)
 const PINNED_NOTE_YIELD_SIZE := Vector2(212, 42)
-const PINNED_NOTE_BUTTON_POS := Vector2(72, 304)
+const PINNED_NOTE_BUTTON_POS := Vector2(114, 316)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)

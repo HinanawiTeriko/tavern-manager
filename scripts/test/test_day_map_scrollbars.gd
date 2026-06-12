@@ -164,8 +164,8 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(action != null and action.size == Vector2(224, 56),
 		"pinned note action button uses smaller note action size")
 	if action != null:
-		_ok(action.position == Vector2(72, 304),
-			"pinned note action button sits centered below the note copy")
+		_ok(action.position == Vector2(114, 316),
+			"pinned note action button sits at the bottom center of the readable note area")
 		var normal := action.get_theme_stylebox("normal") as StyleBoxTexture
 		var hover := action.get_theme_stylebox("hover") as StyleBoxTexture
 		var pressed := action.get_theme_stylebox("pressed") as StyleBoxTexture
