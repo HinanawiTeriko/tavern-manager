@@ -30,6 +30,11 @@ def pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
     return list(rgba.getdata())
 
 
+def color_count(image: Image.Image) -> int:
+    colors = image.convert("RGBA").getcolors(maxcolors=65536)
+    return len(colors) if colors is not None else 65536
+
+
 class TavernBackgroundAssetPipelineTest(unittest.TestCase):
     def test_generated_reference_and_prompt_are_retained(self) -> None:
         self.assertTrue(RAW_SOURCE.exists(), f"{RAW_SOURCE}: missing generated reference")
@@ -78,14 +83,23 @@ class TavernBackgroundAssetPipelineTest(unittest.TestCase):
         native = load_rgba(NATIVE)
         data = pixels(native)
         dark = sum(1 for r, g, b, a in data if a == 255 and max(r, g, b) <= 58)
-        teal = sum(1 for r, g, b, a in data if a == 255 and b >= 30 and g >= 26 and b >= r * 0.9)
+        cool = sum(1 for r, g, b, a in data if a == 255 and b >= 20 and g >= 18 and b >= r * 0.65)
         amber = sum(1 for r, g, b, a in data if a == 255 and r >= 92 and g >= 38 and b <= 58 and r >= b * 1.5)
         bright = sum(1 for r, g, b, a in data if a == 255 and max(r, g, b) >= 210)
         self.assertGreaterEqual(dark, 22_000, "background needs enough dark dungeon mass")
-        self.assertGreaterEqual(teal, 4_500, "background needs visible teal stone depth")
+        self.assertGreaterEqual(cool, 2_400, "background needs visible cool stone depth")
         self.assertGreaterEqual(amber, 450, "background needs readable amber fireplace/candle accents")
         self.assertLessEqual(amber, 10_000, "background amber accents are flooding the frame")
         self.assertLessEqual(bright, 160, "background should avoid bright noisy pixels")
+        color_histogram = native.convert("RGBA").getcolors(maxcolors=65536)
+        self.assertIsNotNone(color_histogram, "background color count should stay bounded")
+        assert color_histogram is not None
+        self.assertGreaterEqual(color_count(native), 72, "background should preserve enough authored color nuance")
+        self.assertLessEqual(
+            max(count for count, _pixel in color_histogram),
+            15_000,
+            "background should not collapse into a single abstract flat color mass",
+        )
 
         midground = native.crop((24, 72, 296, 152)).convert("RGBA")
         mid_pixels = pixels(midground)

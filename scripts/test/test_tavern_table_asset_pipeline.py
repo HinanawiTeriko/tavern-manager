@@ -16,7 +16,7 @@ SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
-CUTOUT_POLYGON_NATIVE = [[10, 10], [310, 10], [320, 64], [320, 73], [0, 73], [0, 64]]
+CUTOUT_POLYGON_NATIVE = [[10, 4], [310, 4], [320, 64], [320, 73], [0, 73], [0, 64]]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -96,7 +96,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         pixels = image_pixels(native)
         transparent = sum(1 for _r, _g, _b, a in pixels if a == 0)
         opaque = sum(1 for _r, _g, _b, a in pixels if a == 255)
-        self.assertGreaterEqual(transparent, 4200, "work surface still has too much uncut dark background")
+        self.assertGreaterEqual(transparent, 3600, "work surface still has too much uncut dark background")
         self.assertGreaterEqual(opaque, 18000, "cutout removed too much of the playable table surface")
         for x, y in ((0, 0), (319, 0), (0, 79), (319, 79), (160, 0), (160, 79)):
             self.assertEqual(native.getpixel((x, y))[3], 0, "outer padding should be transparent at %s" % ((x, y),))
@@ -145,7 +145,9 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
                 if abs(at(x, y) - at(x - 1, y)) >= 9
             )
 
+        surface_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, surface_row))[3] == 255)
         ground_alpha = sum(1 for x in range(24, width - 24) if native.getpixel((x, front_lip_row))[3] == 255)
+        self.assertGreaterEqual(surface_alpha, 250, "documented surface top should land on opaque counter pixels")
         self.assertGreaterEqual(ground_alpha, 260, "current ground line should land on opaque playable table surface")
         self.assertGreaterEqual(row_texture(14, front_lip_row), 900, "playable table plane needs readable wood grain above the ground line")
 

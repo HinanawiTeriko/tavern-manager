@@ -27,7 +27,7 @@ FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
 PLAYABLE_X_RANGE_RUNTIME = [150, 1130]
 TABLE_SOURCE_BOX = (0, 602, 1672, 941)
-CUTOUT_POLYGON_NATIVE = [(10, 10), (310, 10), (320, 64), (320, 73), (0, 73), (0, 64)]
+CUTOUT_POLYGON_NATIVE = [(10, 4), (310, 4), (320, 64), (320, 73), (0, 73), (0, 64)]
 
 
 def quantize_image(image: Image.Image, colors: int) -> Image.Image:
@@ -36,31 +36,27 @@ def quantize_image(image: Image.Image, colors: int) -> Image.Image:
 
 def normalize_background(reference: Image.Image) -> Image.Image:
     fitted = ImageOps.fit(reference.convert("RGB"), BACKGROUND_NATIVE_SIZE, Image.Resampling.LANCZOS, centering=(0.5, 0.47))
-    sharpened = fitted.filter(ImageFilter.UnsharpMask(radius=1, percent=180, threshold=2))
-    contrast = ImageEnhance.Contrast(sharpened).enhance(1.30)
-    color = ImageEnhance.Color(contrast).enhance(0.82)
-    balanced = ImageEnhance.Brightness(color).enhance(0.82)
-    native = quantize_image(balanced, 48)
+    sharpened = fitted.filter(ImageFilter.UnsharpMask(radius=1, percent=150, threshold=2))
+    contrast = ImageEnhance.Contrast(sharpened).enhance(1.16)
+    color = ImageEnhance.Color(contrast).enhance(0.92)
+    balanced = ImageEnhance.Brightness(color).enhance(0.88)
+    native = quantize_image(balanced, 96)
     pixels = native.load()
     for y in range(native.height):
         for x in range(native.width):
             r, g, b, a = pixels[x, y]
             if y < 24 or y > 166:
-                r = int(r * 0.78)
-                g = int(g * 0.80)
+                r = int(r * 0.82)
+                g = int(g * 0.84)
                 b = int(b * 0.88)
-            if r > 120 and g > 46 and b < 72:
-                r = min(178, r)
-                g = min(98, g)
-                b = min(56, b)
-            elif b >= r and g >= int(r * 0.70):
-                b = min(92, max(b, 34))
-                g = min(88, max(g, 30))
-                r = min(r, 76)
+            if r > 135 and g > 48 and b < 76:
+                r = min(185, r)
+                g = min(106, g)
+                b = min(62, b)
             else:
-                r = min(r, 120)
-                g = min(g, 110)
-                b = min(b, 100)
+                r = min(r, 135)
+                g = min(g, 124)
+                b = min(b, 112)
             pixels[x, y] = (r, g, b, 255)
     return native
 
@@ -193,7 +189,7 @@ def make_background_contact_sheet(reference: Image.Image, background: Image.Imag
 
 def make_table_contact_sheet(reference: Image.Image, native: Image.Image, runtime: Image.Image) -> None:
     TABLE_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new("RGBA", (720, 432), (18, 14, 11, 255))
+    sheet = Image.new("RGBA", (720, 560), (18, 14, 11, 255))
     draw = ImageDraw.Draw(sheet)
     draw.text((20, 16), "Tavern counter pipeline from no-people background", fill=(220, 204, 176, 255))
     draw.text((20, 52), "reference crop", fill=(220, 204, 176, 255))
@@ -203,7 +199,7 @@ def make_table_contact_sheet(reference: Image.Image, native: Image.Image, runtim
     ref_preview = ImageOps.contain(ref_crop, (640, 96), Image.Resampling.LANCZOS)
     native_preview = native.resize((native.width * 4, native.height * 4), Image.Resampling.NEAREST)
     native_preview = ImageOps.contain(native_preview, (640, 144), Image.Resampling.NEAREST)
-    runtime_preview = ImageOps.contain(runtime.convert("RGBA"), (640, 48), Image.Resampling.NEAREST)
+    runtime_preview = runtime.convert("RGBA").resize((640, 160), Image.Resampling.NEAREST)
     sheet.alpha_composite(ref_preview, (60, 76))
     sheet.alpha_composite(native_preview, (60, 202))
     sheet.alpha_composite(runtime_preview, (60, 378))
