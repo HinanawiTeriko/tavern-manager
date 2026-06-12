@@ -18,6 +18,32 @@
     320,
     80
   ],
+  "cutout_polygon_native": [
+    [
+      10,
+      14
+    ],
+    [
+      310,
+      14
+    ],
+    [
+      320,
+      64
+    ],
+    [
+      320,
+      73
+    ],
+    [
+      0,
+      73
+    ],
+    [
+      0,
+      64
+    ]
+  ],
   "physics_alignment": {
     "sprite_position_runtime": [
       640,

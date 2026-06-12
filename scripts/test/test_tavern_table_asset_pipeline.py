@@ -16,6 +16,7 @@ SPRITE_POSITION_RUNTIME = (640, 560)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
+CUTOUT_POLYGON_NATIVE = [[10, 14], [310, 14], [320, 64], [320, 73], [0, 73], [0, 64]]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -50,6 +51,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], 4)
         self.assertEqual(manifest["safe_area"], [0, 0, 320, 80])
+        self.assertEqual(manifest["cutout_polygon_native"], CUTOUT_POLYGON_NATIVE)
         self.assertEqual(
             manifest["physics_alignment"],
             {
@@ -83,12 +85,20 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
         self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
 
-    def test_native_work_surface_is_opaque_and_visually_restrained(self) -> None:
+    def test_native_work_surface_is_cleanly_cut_out_and_visually_restrained(self) -> None:
         manifest = load_manifest(self)
         native = load_rgba(ROOT / manifest["native"])
         alpha_min, alpha_max = native.getchannel("A").getextrema()
-        self.assertEqual((alpha_min, alpha_max), (255, 255), "work surface is a rectangular opaque art layer")
+        self.assertEqual((alpha_min, alpha_max), (0, 255), "work surface should be a transparent cutout, not an opaque rectangle")
         pixels = image_pixels(native)
+        transparent = sum(1 for _r, _g, _b, a in pixels if a == 0)
+        opaque = sum(1 for _r, _g, _b, a in pixels if a == 255)
+        self.assertGreaterEqual(transparent, 4200, "work surface still has too much uncut dark background")
+        self.assertGreaterEqual(opaque, 18000, "cutout removed too much of the playable table surface")
+        for x, y in ((0, 0), (319, 0), (0, 79), (319, 79), (160, 0), (160, 79)):
+            self.assertEqual(native.getpixel((x, y))[3], 0, "outer padding should be transparent at %s" % ((x, y),))
+        for x, y in ((20, 14), (160, 24), (300, 14), (24, 64), (160, 64), (296, 64)):
+            self.assertEqual(native.getpixel((x, y))[3], 255, "table body should remain opaque at %s" % ((x, y),))
         dark_wood = sum(1 for r, g, b, a in pixels if a == 255 and 20 <= r <= 120 and 12 <= g <= 82 and 8 <= b <= 70)
         teal_shadow = sum(1 for r, g, b, a in pixels if a == 255 and b >= 18 and g >= 14 and b >= r * 0.45)
         amber = sum(1 for r, g, b, a in pixels if a == 255 and r >= 88 and g >= 40 and b <= 46 and r >= b * 1.8)

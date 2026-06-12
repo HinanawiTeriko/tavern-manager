@@ -19,11 +19,26 @@ SPRITE_POSITION_RUNTIME = (640, 560)
 SURFACE_TOP_Y_RUNTIME = 455
 FRONT_LIP_Y_RUNTIME = 655
 GROUND_Y_RUNTIME = 655
+CUTOUT_POLYGON_NATIVE = [(10, 14), (310, 14), (320, 64), (320, 73), (0, 73), (0, 64)]
 
 
 def quantize_image(image: Image.Image, colors: int = 18) -> Image.Image:
     rgb = image.convert("RGB")
     return rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+
+
+def apply_cutout_mask(image: Image.Image) -> Image.Image:
+    mask = Image.new("L", image.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.polygon(CUTOUT_POLYGON_NATIVE, fill=255)
+    cutout = image.convert("RGBA")
+    cutout.putalpha(mask)
+    pixels = cutout.load()
+    for y in range(cutout.height):
+        for x in range(cutout.width):
+            if pixels[x, y][3] == 0:
+                pixels[x, y] = (0, 0, 0, 0)
+    return cutout
 
 
 def normalize_work_surface(source: Image.Image) -> Image.Image:
@@ -58,7 +73,7 @@ def normalize_work_surface(source: Image.Image) -> Image.Image:
                 g = max(g, 42)
                 b = min(b, 44)
             pixels[x, y] = (r, g, b, 255)
-    return native
+    return apply_cutout_mask(native)
 
 
 def save_manifest() -> None:
@@ -71,6 +86,7 @@ def save_manifest() -> None:
         "runtime_size": list(RUNTIME_SIZE),
         "scale": SCALE,
         "safe_area": [0, 0, 320, 80],
+        "cutout_polygon_native": [list(point) for point in CUTOUT_POLYGON_NATIVE],
         "physics_alignment": {
             "sprite_position_runtime": list(SPRITE_POSITION_RUNTIME),
             "surface_top_y_runtime": SURFACE_TOP_Y_RUNTIME,
