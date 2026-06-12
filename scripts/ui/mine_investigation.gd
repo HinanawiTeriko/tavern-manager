@@ -6,7 +6,10 @@ extends InvestigationScene
 
 const RUBBLE_REVEAL_DIST := 120.0   # 碎石被拖离原位多远算「扒开」
 const SPILL_TILT := 1.2             # 背包倾斜超过此弧度算「倾倒」
-const LEAVE_BUTTON_SIZE := Vector2(200, 48)
+const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_normal.png"
+const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_hover.png"
+const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_pressed.png"
+const LEAVE_BUTTON_SIZE := Vector2(280, 100)
 const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _rubble: MineItem = null
@@ -28,16 +31,38 @@ func _apply_mine_ui_style() -> void:
 	ThemeColors.style_brush_label(_hint_label, 16, ThemeColors.TEXT_SUBTITLE)
 	_apply_label_outline(_obs_label)
 	_apply_label_outline(_hint_label)
-	ThemeColors.style_button(_leave_btn, 16)
+	_apply_leave_button_style()
+
+
+func _apply_leave_button_style() -> void:
 	var font := ThemeColors.menu_font()
 	if font != null:
 		_leave_btn.add_theme_font_override("font", font)
+	_leave_btn.add_theme_font_size_override("font_size", 18)
+	_leave_btn.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_leave_btn.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	_leave_btn.add_theme_color_override("font_pressed_color", ThemeColors.AMBER_BRIGHT)
+	_leave_btn.add_theme_stylebox_override("normal", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
+	_leave_btn.add_theme_stylebox_override("hover", _leave_button_stylebox(LEAVE_BUTTON_HOVER))
+	_leave_btn.add_theme_stylebox_override("pressed", _leave_button_stylebox(LEAVE_BUTTON_PRESSED))
+	_leave_btn.add_theme_stylebox_override("disabled", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
 	_leave_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_leave_btn.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_leave_btn.offset_right = LEAVE_BUTTON_BOTTOM_RIGHT.x
 	_leave_btn.offset_bottom = LEAVE_BUTTON_BOTTOM_RIGHT.y
 	_leave_btn.offset_left = LEAVE_BUTTON_BOTTOM_RIGHT.x - LEAVE_BUTTON_SIZE.x
 	_leave_btn.offset_top = LEAVE_BUTTON_BOTTOM_RIGHT.y - LEAVE_BUTTON_SIZE.y
+
+
+func _leave_button_stylebox(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		style = StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, 58.0)
+	style.set_content_margin(SIDE_RIGHT, 58.0)
+	style.set_content_margin(SIDE_TOP, 30.0)
+	style.set_content_margin(SIDE_BOTTOM, 30.0)
+	return style
 
 
 func _apply_label_outline(label: Label) -> void:

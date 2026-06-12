@@ -3,10 +3,10 @@ extends Node
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
 const BACKGROUND_PATH := "res://assets/ui/generated/investigation/mine_background/mine_background.png"
 const PIXEL_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
-const LEAVE_BUTTON_NORMAL := "res://assets/textures/ui/btn_wide_normal.png"
-const LEAVE_BUTTON_HOVER := "res://assets/textures/ui/btn_wide_hover.png"
-const LEAVE_BUTTON_PRESSED := "res://assets/textures/ui/btn_wide_pressed.png"
-const LEAVE_BUTTON_SIZE := Vector2(200, 48)
+const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_normal.png"
+const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_hover.png"
+const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_pressed.png"
+const LEAVE_BUTTON_SIZE := Vector2(280, 100)
 
 var _checks := 0
 var _failures := 0
@@ -71,7 +71,7 @@ func _test_scene_background_contract() -> void:
 	if hint_label != null:
 		_ok(hint_label.get_theme_font_size("font_size") == 16, "HintLabel uses compact pixel font size")
 	if leave_button != null:
-		_ok(leave_button.size == LEAVE_BUTTON_SIZE, "LeaveButton uses authored 200x48 wide button bounds")
+		_ok(leave_button.size == LEAVE_BUTTON_SIZE, "LeaveButton uses authored 280x100 mine button bounds")
 		_assert_stylebox_texture(leave_button, "normal", LEAVE_BUTTON_NORMAL)
 		_assert_stylebox_texture(leave_button, "hover", LEAVE_BUTTON_HOVER)
 		_assert_stylebox_texture(leave_button, "pressed", LEAVE_BUTTON_PRESSED)
