@@ -41,7 +41,7 @@ func _test_daymap_typography_source() -> void:
 	_ok(source.contains("DAYMAP_TOPBAR_STRIP"), "DayMap top bar uses native texture material")
 	_ok(source.contains("DAYMAP_PINNED_NOTE_PANEL"), "DayMap pinned note uses native texture material")
 	_ok(source.contains("PINNED_NOTE_RIGHT_OFFSET"), "DayMap pinned note position is controlled by a named marker offset")
-	_ok(source.contains("_world_to_daymap_screen"), "DayMap pinned note tracks markers in screen space")
+	_ok(source.contains("_world_to_daymap_screen"), "DayMap pinned note uses a screen-space marker anchor when selected")
 	_ok(source.contains("DAYMAP_DETAIL_INSET"), "DayMap detail text uses a named safe inset")
 	_ok(source.contains("DAYMAP_RESULT_INSET"), "DayMap result text uses a named safe inset")
 	_ok(source.contains("DAYMAP_BUTTON_TEXT_MARGIN_X"), "DayMap button text has a named horizontal safe margin")

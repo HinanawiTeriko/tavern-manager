@@ -155,11 +155,6 @@ func _ready() -> void:
 	_setup_background()
 
 
-func _process(_delta: float) -> void:
-	if _pinned_note_panel != null and _pinned_note_panel.visible:
-		_update_pinned_note_position()
-
-
 func _setup_background() -> void:
 	var gm = get_node("/root/GameManager")
 	var map_world := $MapWorld

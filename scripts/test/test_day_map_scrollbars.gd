@@ -18,7 +18,7 @@ func _ready() -> void:
 	_test_topbar_button_layout(view)
 	_test_static_text_uses_pixel_font(view)
 	_test_pinned_note_contract(view)
-	await _test_pinned_note_tracks_marker_without_scaling(view)
+	await _test_pinned_note_stays_put_after_camera_moves(view)
 	await _test_pinned_note_visibility_paths(view)
 	_test_tavern_node(view)
 	_test_daymap_primary_button_style(view)
@@ -156,7 +156,7 @@ func _test_pinned_note_contract(view) -> void:
 			"pinned note action routes through the existing DayMap action handler")
 
 
-func _test_pinned_note_tracks_marker_without_scaling(view) -> void:
+func _test_pinned_note_stays_put_after_camera_moves(view) -> void:
 	view._ensure_home_marker()
 	view._select_marker("__home__")
 	await get_tree().process_frame
@@ -175,12 +175,9 @@ func _test_pinned_note_tracks_marker_without_scaling(view) -> void:
 	await get_tree().process_frame
 
 	_ok(note.size == initial_size, "pinned note size does not change with camera zoom")
-	_ok(note.position != initial_position,
-		"pinned note screen position changes when the selected marker moves on screen")
+	_ok(note.position == initial_position,
+		"pinned note screen position does not change after map camera movement")
 	var viewport_size: Vector2 = view.get_viewport_rect().size
-	var marker_screen: Vector2 = (view._home_marker.global_position - view._camera.position) * view._camera.zoom + viewport_size * 0.5
-	_ok(absf((note.position.x - marker_screen.x) - 44.0) <= 1.0,
-		"pinned note remains anchored to the selected marker's right side")
 	_ok(note.position.x >= 0.0
 			and note.position.y >= 0.0
 			and note.position.x + note.size.x <= viewport_size.x
