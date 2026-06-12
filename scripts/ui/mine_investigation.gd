@@ -6,6 +6,8 @@ extends InvestigationScene
 
 const RUBBLE_REVEAL_DIST := 120.0   # 碎石被拖离原位多远算「扒开」
 const SPILL_TILT := 1.2             # 背包倾斜超过此弧度算「倾倒」
+const LEAVE_BUTTON_SIZE := Vector2(200, 48)
+const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _rubble: MineItem = null
 var _rubble_origin: Vector2 = Vector2.ZERO
@@ -16,8 +18,31 @@ var _contract_taken: bool = false
 
 
 func _setup_scene() -> void:
+	_apply_mine_ui_style()
 	_spawn_shallow_items()
 	_spawn_deep_layer()
+
+
+func _apply_mine_ui_style() -> void:
+	ThemeColors.style_brush_label(_obs_label, 20, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_hint_label, 16, ThemeColors.TEXT_SUBTITLE)
+	_apply_label_outline(_obs_label)
+	_apply_label_outline(_hint_label)
+	ThemeColors.style_button(_leave_btn, 16)
+	var font := ThemeColors.menu_font()
+	if font != null:
+		_leave_btn.add_theme_font_override("font", font)
+	_leave_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_leave_btn.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_leave_btn.offset_right = LEAVE_BUTTON_BOTTOM_RIGHT.x
+	_leave_btn.offset_bottom = LEAVE_BUTTON_BOTTOM_RIGHT.y
+	_leave_btn.offset_left = LEAVE_BUTTON_BOTTOM_RIGHT.x - LEAVE_BUTTON_SIZE.x
+	_leave_btn.offset_top = LEAVE_BUTTON_BOTTOM_RIGHT.y - LEAVE_BUTTON_SIZE.y
+
+
+func _apply_label_outline(label: Label) -> void:
+	label.add_theme_constant_override("outline_size", 4)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.015, 0.9))
 
 
 func _spawn_shallow_items() -> void:
