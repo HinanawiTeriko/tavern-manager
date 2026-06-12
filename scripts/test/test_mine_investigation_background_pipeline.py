@@ -69,7 +69,7 @@ class MineInvestigationBackgroundPipelineTest(unittest.TestCase):
         self.assertGreater(RAW_BACKGROUND.stat().st_size, 100_000, "AI background source is unexpectedly small")
         self.assertGreater(RAW_SHADOW.stat().st_size, 10_000, "AI shadow source is unexpectedly small")
         for prompt_path, phrases in {
-            RAW_BACKGROUND_PROMPT: ("abandoned mine", "landing zones", "no text", "no labels", "no complete interactive props"),
+            RAW_BACKGROUND_PROMPT: ("abandoned mine", "landing zones", "no text", "no labels", "without drawing complete interactive props"),
             RAW_SHADOW_PROMPT: ("contact shadow", "pure magenta", "no text", "no object"),
         }.items():
             self.assertTrue(prompt_path.exists(), f"{prompt_path}: missing prompt record")
