@@ -48,7 +48,7 @@
     },
     "button_note_action_normal": {
       "id": "button_note_action_normal",
-      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
       "native_file": "assets/source/daymap/ui/button_note_action_normal_native.png",
       "output_file": "assets/textures/daymap/ui/button_note_action_normal.png",
       "size": [
@@ -56,10 +56,10 @@
         56
       ],
       "source_crop": [
-        96,
-        110,
-        1160,
-        406
+        165,
+        111,
+        1089,
+        358
       ],
       "safe_area": [
         56,
@@ -71,7 +71,7 @@
     },
     "button_note_action_hover": {
       "id": "button_note_action_hover",
-      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
       "native_file": "assets/source/daymap/ui/button_note_action_hover_native.png",
       "output_file": "assets/textures/daymap/ui/button_note_action_hover.png",
       "size": [
@@ -79,10 +79,10 @@
         56
       ],
       "source_crop": [
-        96,
-        478,
-        1160,
-        776
+        165,
+        501,
+        1089,
+        748
       ],
       "safe_area": [
         56,
@@ -94,7 +94,7 @@
     },
     "button_note_action_pressed": {
       "id": "button_note_action_pressed",
-      "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
       "native_file": "assets/source/daymap/ui/button_note_action_pressed_native.png",
       "output_file": "assets/textures/daymap/ui/button_note_action_pressed.png",
       "size": [
@@ -102,10 +102,10 @@
         56
       ],
       "source_crop": [
-        88,
-        872,
-        1168,
-        1118
+        165,
+        892,
+        1089,
+        1141
       ],
       "safe_area": [
         56,

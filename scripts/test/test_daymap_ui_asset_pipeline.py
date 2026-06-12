@@ -48,13 +48,13 @@ DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = [80, 60, 1120, 1148]
 PINNED_NOTE_KNIFE_CROP = [80, 60, 520, 540]
-NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
+NOTE_ACTION_PAPER_STAMP_SOURCE = GENERATED_RAW / "note_action_paper_stamp_source.png"
 NOTE_ACTION_NATIVE_SIZE = (56, 14)
 NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
-    "normal": [96, 110, 1160, 406],
-    "hover": [96, 478, 1160, 776],
-    "pressed": [88, 872, 1168, 1118],
+    "normal": [165, 111, 1089, 358],
+    "hover": [165, 501, 1089, 748],
+    "pressed": [165, 892, 1089, 1141],
 }
 STATES = ["normal", "hover", "pressed"]
 TAB_STATES = ["normal", "selected"]
@@ -286,7 +286,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertIn("SHOP_STEPPER_ICONS_REFERENCE", source, "shop stepper icons must keep generated reference art")
         self.assertIn("PANELS_REFERENCE", source, "shop panel and scrollbar must consume retained panel reference art")
         self.assertIn("PINNED_NOTE_PIERCED_SOURCE", source, "pinned note must consume retained AI source art")
-        self.assertIn("NOTE_ACTION_SEAL_SOURCE", source, "note action button must consume retained AI source art")
+        self.assertIn("NOTE_ACTION_PAPER_STAMP_SOURCE", source, "note action button must consume retained AI source art")
         self.assertNotIn("make_pinned_note_panel_native", source, "pinned note must be normalized from retained AI source art")
         self.assertNotIn("make_pinned_note_knife_native", source, "knife pin must be normalized from retained AI source art")
         self.assertIn("make_primary_button_native", source, "primary button must use a deterministic native-pixel constructor")
@@ -309,15 +309,15 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             f"{PINNED_NOTE_PIERCED_SOURCE}: retained AI source art is empty",
         )
 
-    def test_note_action_seal_ai_source_is_retained(self) -> None:
+    def test_note_action_paper_stamp_ai_source_is_retained(self) -> None:
         self.assertTrue(
-            NOTE_ACTION_SEAL_SOURCE.exists(),
-            f"{NOTE_ACTION_SEAL_SOURCE}: missing retained AI source art",
+            NOTE_ACTION_PAPER_STAMP_SOURCE.exists(),
+            f"{NOTE_ACTION_PAPER_STAMP_SOURCE}: missing retained AI source art",
         )
         self.assertGreater(
-            NOTE_ACTION_SEAL_SOURCE.stat().st_size,
+            NOTE_ACTION_PAPER_STAMP_SOURCE.stat().st_size,
             0,
-            f"{NOTE_ACTION_SEAL_SOURCE}: retained AI source art is empty",
+            f"{NOTE_ACTION_PAPER_STAMP_SOURCE}: retained AI source art is empty",
         )
 
     def test_shop_redesign_reference_source_is_retained(self) -> None:
@@ -587,16 +587,16 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                     NOTE_ACTION_NATIVE_SIZE,
                     NOTE_ACTION_RUNTIME_SIZE,
                 )
-                self.assertGreaterEqual(visible_pixel_count(native), 340, f"{state}: note action seal too sparse")
+                self.assertGreaterEqual(visible_pixel_count(native), 340, f"{state}: note action tag too sparse")
                 current_bytes = native.tobytes()
                 if previous_bytes is not None:
                     self.assertNotEqual(current_bytes, previous_bytes, f"{state}: state art matches previous state")
                 previous_bytes = current_bytes
 
-    def test_note_action_button_reads_as_wax_stamp_on_paper(self) -> None:
+    def test_note_action_button_reads_as_old_paper_stamp(self) -> None:
         native = load_rgba(SOURCE / "button_note_action_normal_native.png")
         pixels = list(native.get_flattened_data())
-        muted_wax_pixels = sum(
+        muted_stamp_pixels = sum(
             1 for r, g, b, a in pixels
             if a >= 180 and 58 <= r <= 150 and 20 <= g <= 90 and 18 <= b <= 70 and r > g * 1.25
         )
@@ -610,11 +610,21 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         )
         overheated_pixels = overheated_orange_pixel_count(native)
         muted_paper_pixels = muted_map_parchment_pixel_count(native)
-        self.assertGreaterEqual(muted_wax_pixels, 240, "note action needs a readable muted red-brown wax body")
-        self.assertGreaterEqual(dark_ink_pixels, 50, "note action needs rough dark ink edging")
-        self.assertGreaterEqual(warm_highlight_pixels, 18, "note action needs restrained warm highlights")
-        self.assertLessEqual(overheated_pixels, 120, "note action should not be dominated by saturated orange/red")
-        self.assertGreaterEqual(muted_paper_pixels, 150, "note action paper must match the muted DayMap parchment")
+        label_zone = native.crop((14, 3, 53, 11)).convert("RGBA")
+        label_zone_paper_pixels = muted_map_parchment_pixel_count(label_zone)
+        left_stamp_zone = native.crop((0, 0, 18, 14)).convert("RGBA")
+        left_stamp_pixels = sum(
+            1 for r, g, b, a in left_stamp_zone.get_flattened_data()
+            if a >= 180 and 58 <= r <= 150 and 20 <= g <= 90 and 18 <= b <= 70 and r > g * 1.25
+        )
+        self.assertGreaterEqual(muted_stamp_pixels, 24, "note action needs a small muted red-brown stamped accent")
+        self.assertLessEqual(muted_stamp_pixels, 110, "note action stamped accent must stay small, not become a wax-seal body")
+        self.assertGreaterEqual(dark_ink_pixels, 70, "note action needs rough dark ink edging")
+        self.assertGreaterEqual(warm_highlight_pixels, 18, "note action needs restrained warm paper highlights")
+        self.assertLessEqual(overheated_pixels, 90, "note action should not be dominated by saturated orange/red")
+        self.assertGreaterEqual(muted_paper_pixels, 260, "note action paper must be the main material")
+        self.assertGreaterEqual(label_zone_paper_pixels, 150, "note action label area must stay readable paper")
+        self.assertLessEqual(left_stamp_pixels, 96, "left accent must not read as an oversized wax seal")
         self.assertGreaterEqual(len(set(pixels)), 9, "note action button needs native-pixel tonal variation")
 
     def test_note_action_contact_sheet_exists(self) -> None:
@@ -938,7 +948,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         }
         for state in STATES:
             expected[f"button_note_action_{state}"] = {
-                "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+                "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
                 "native_file": f"assets/source/daymap/ui/button_note_action_{state}_native.png",
                 "output_file": f"assets/textures/daymap/ui/button_note_action_{state}.png",
                 "size": [224, 56],

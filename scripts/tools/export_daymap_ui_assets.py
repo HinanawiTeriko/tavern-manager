@@ -58,13 +58,13 @@ TOPBAR_REFERENCE = REFERENCE / "daymap_ui_topbar_reference_v2_generated.png"
 PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = (80, 60, 1120, 1148)
 PINNED_NOTE_KNIFE_CROP = (80, 60, 520, 540)
-NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
+NOTE_ACTION_PAPER_STAMP_SOURCE = GENERATED_RAW / "note_action_paper_stamp_source.png"
 NOTE_ACTION_NATIVE_SIZE = (56, 14)
 NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
-    "normal": (96, 110, 1160, 406),
-    "hover": (96, 478, 1160, 776),
-    "pressed": (88, 872, 1168, 1118),
+    "normal": (165, 111, 1089, 358),
+    "hover": (165, 501, 1089, 748),
+    "pressed": (165, 892, 1089, 1141),
 }
 PARCHMENT_PALETTE = [
     (112, 78, 48),
@@ -118,7 +118,7 @@ MAP_PARCHMENT_PALETTE = [
     (166, 140, 96),
     (184, 158, 112),
 ]
-MAP_WAX_PALETTE = [
+MAP_STAMP_PALETTE = [
     (62, 24, 22),
     (76, 31, 25),
     (92, 40, 30),
@@ -572,17 +572,17 @@ def harmonize_note_action_palette(image: Image.Image) -> Image.Image:
                 and green > blue * 1.18
                 and red - green <= 88
             )
-            wax = (
+            stamp = (
                 red >= 75
                 and red > green * 1.28
                 and green <= 130
                 and blue <= 96
             )
-            highlight = wax and luma >= 104.0
+            highlight = stamp and luma >= 104.0
             if highlight:
                 pixels[x, y] = (*palette_pick(MAP_AMBER_PALETTE, min(255.0, luma * 1.16)), alpha)
-            elif wax:
-                pixels[x, y] = (*palette_pick(MAP_WAX_PALETTE, min(255.0, luma * 1.32)), alpha)
+            elif stamp:
+                pixels[x, y] = (*palette_pick(MAP_STAMP_PALETTE, min(255.0, luma * 1.32)), alpha)
             elif paper:
                 pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, luma), alpha)
             else:
@@ -813,7 +813,7 @@ def write_pinned_note_manifest() -> None:
         asset_id = f"button_note_action_{state}"
         assets[asset_id] = {
             "id": asset_id,
-            "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
+            "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
             "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
             "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
             "size": [224, 56],
@@ -909,7 +909,7 @@ def main() -> None:
     export_single("pinned_note_panel", pinned_note_panel, PINNED_NOTE_PANEL_RUNTIME_SIZE)
     export_single("pinned_note_knife", pinned_note_knife, PINNED_NOTE_KNIFE_RUNTIME_SIZE)
     export_pinned_note_contact_sheet(pinned_note_panel, pinned_note_knife)
-    note_action_source = load_reference(NOTE_ACTION_SEAL_SOURCE)
+    note_action_source = load_reference(NOTE_ACTION_PAPER_STAMP_SOURCE)
     note_action_states: dict[str, Image.Image] = {}
     for state, crop in NOTE_ACTION_CROPS.items():
         native = fit_note_action_source(note_action_source, crop, f"button_note_action_{state}")
