@@ -456,7 +456,6 @@ position = Vector2(720, 516)
 
 [node name="Ground" type="CollisionShape2D" parent="BarWorkspace/World/Walls"]
 shape = SubResource("tv_ground")
-one_way_collision = true
 
 [node name="LeftWall" type="CollisionShape2D" parent="BarWorkspace/World/Walls"]
 shape = SubResource("tv_left")

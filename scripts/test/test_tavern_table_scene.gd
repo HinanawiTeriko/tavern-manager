@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	await _test_physics_aligned_tabletop_art_layer()
+	await _test_seasoning_shaker_stays_supported_by_midline_ground()
 	_finish()
 
 
@@ -66,6 +67,7 @@ func _test_physics_aligned_tabletop_art_layer() -> void:
 	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D
 	var right_wall := tavern.get_node("BarWorkspace/World/Walls/RightWall") as CollisionShape2D
 	_ok(_segment_points(ground.shape) == [Vector2(150, 556), Vector2(1130, 556)], "ground segment sits at the comfortable tabletop midline")
+	_ok(not ground.one_way_collision, "tabletop midline ground is a solid support, not a one-way platform")
 	_ok(_segment_points(left_wall.shape) == [Vector2(150, 410), Vector2(150, 556)], "left wall ends at the tabletop midline ground segment")
 	_ok(_segment_points(right_wall.shape) == [Vector2(1130, 410), Vector2(1130, 556)], "right wall ends at the tabletop midline ground segment")
 
@@ -83,3 +85,20 @@ func _test_initial_workspace_positions(tavern: Node) -> void:
 	_ok(tavern.get_node("BarWorkspace/World/Grill").position == Vector2(330, 521), "grill starts on the shifted work surface")
 	_ok(tavern.get_node("BarWorkspace/World/Pot").position == Vector2(520, 501), "pot starts on the shifted work surface")
 	_ok(tavern.get_node("BarWorkspace/World/Spoon").position == Vector2(700, 491), "spoon starts on the shifted work surface")
+
+
+func _test_seasoning_shaker_stays_supported_by_midline_ground() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var shaker := tavern.get_node("BarWorkspace/World/SeasoningShaker") as RigidBody2D
+	var start_y := shaker.global_position.y
+	for _i in range(30):
+		await get_tree().physics_frame
+
+	_ok(shaker.global_position.y <= start_y + 8.0,
+		"seasoning shaker remains supported by tabletop midline ground: start %.2f, now %.2f" % [start_y, shaker.global_position.y])
+	_ok(absf(shaker.linear_velocity.y) <= 20.0,
+		"seasoning shaker is not still falling after settling: velocity %.2f" % shaker.linear_velocity.y)
+	tavern.queue_free()
