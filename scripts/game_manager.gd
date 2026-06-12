@@ -26,6 +26,8 @@ var inventory: Dictionary = {}
 var current_ledger_data: LedgerData = null
 
 # Dialogue state
+const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
+
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
@@ -543,7 +545,7 @@ func _start_dialogue_deferred(dialogue_path: String) -> void:
 		_recover_from_dialogue_failure()
 		return
 	var extra_states: Array = [narrative.dialogue_vars]
-	var balloon = DialogueManager.show_example_dialogue_balloon(dialogue_resource, "start", extra_states)
+	var balloon = DialogueManager.show_dialogue_balloon_scene(DIALOGUE_BALLOON_SCENE, dialogue_resource, "start", extra_states)
 	if balloon == null:
 		printerr("[GameManager] 显示对话气球失败: ", dialogue_path)
 		_recover_from_dialogue_failure()

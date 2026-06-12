@@ -1,0 +1,9 @@
+Use case: ui-mockup
+Asset type: game UI source sheet for a pixel-art dialogue box pipeline
+Primary request: Create a single clean component sheet for a dark dungeon tavern story dialogue UI. The sheet must contain exactly four separated UI components: 1) a wide horizontal bottom dialogue panel frame, 2) a small speaker nameplate strip, 3) a response choice button strip, 4) a small downward continue arrow indicator.
+Style/medium: hand-painted fantasy UI source art intended to be converted into crisp pixel art; rough ink lines, historical printmaking influence, worn tavern wood, cold dark teal stone, warm amber candlelit trim, subtle paper grain, low-density chunky detail.
+Composition/framing: four components arranged in a 2x2 sheet with generous padding between components. Top-left: wide dialogue panel, top-right: nameplate strip, bottom-left: response button strip, bottom-right: continue arrow. Every component must be fully separated and fully visible.
+Color palette: dark teal, charcoal, muted warm browns, amber trim, parchment highlights; restrained contrast suitable for a dark pixel-art tavern management game.
+Materials/textures: aged wood frame, rough inked edge, worn paper-grain inset, small amber nail heads or candlelit corner accents.
+Background: perfectly flat solid #ff00ff chroma-key background. The background must be one uniform color with no shadows, gradients, texture, reflections, or lighting variation.
+Constraints: no readable text, no letters, no numbers, no icons that look like text, no logo, no watermark, no labels, no character art, no portraits. Components only. Keep crisp silhouettes and enough internal padding for cropping. Avoid modern glossy UI, soft gradients, neon, sci-fi panels, beige-only parchment, or ornate unreadable clutter.
