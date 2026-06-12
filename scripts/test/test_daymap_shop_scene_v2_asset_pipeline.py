@@ -22,10 +22,13 @@ EXPECTED_ASSETS = {
     "shop_scene_checkout": ((260, 32), (1040, 128), False),
     "shop_scene_gold_area": ((36, 14), (144, 56), True),
     "shop_scene_tab_materials_normal": ((48, 16), (192, 64), True),
+    "shop_scene_tab_materials_hover": ((48, 16), (192, 64), True),
     "shop_scene_tab_materials_selected": ((48, 16), (192, 64), True),
     "shop_scene_tab_recipes_normal": ((48, 16), (192, 64), True),
+    "shop_scene_tab_recipes_hover": ((48, 16), (192, 64), True),
     "shop_scene_tab_recipes_selected": ((48, 16), (192, 64), True),
     "shop_scene_tab_abilities_normal": ((48, 16), (192, 64), True),
+    "shop_scene_tab_abilities_hover": ((48, 16), (192, 64), True),
     "shop_scene_tab_abilities_selected": ((48, 16), (192, 64), True),
     "shop_scene_row_normal": ((145, 16), (580, 64), True),
     "shop_scene_row_hover": ((145, 16), (580, 64), True),
@@ -36,13 +39,20 @@ EXPECTED_ASSETS = {
     "shop_scene_button_pressed": ((64, 18), (256, 72), True),
     "shop_scene_button_disabled": ((64, 18), (256, 72), True),
     "shop_scene_quantity_minus": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_minus_hover": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_minus_pressed": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_minus_disabled": ((18, 18), (72, 72), True),
     "shop_scene_quantity_body": ((44, 18), (176, 72), True),
     "shop_scene_quantity_plus": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_plus_hover": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_plus_pressed": ((18, 18), (72, 72), True),
+    "shop_scene_quantity_plus_disabled": ((18, 18), (72, 72), True),
     "shop_scene_close_normal": ((18, 18), (72, 72), True),
     "shop_scene_close_hover": ((18, 18), (72, 72), True),
     "shop_scene_close_pressed": ((18, 18), (72, 72), True),
     "shop_scene_status_owned": ((14, 12), (56, 48), True),
     "shop_scene_status_discount": ((14, 13), (56, 52), True),
+    "shop_scene_hover_mark": ((10, 14), (40, 56), True),
 }
 
 SAFE_AREAS = {
@@ -248,7 +258,11 @@ class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
             ["shop_scene_row_normal", "shop_scene_row_hover", "shop_scene_row_selected", "shop_scene_row_disabled"],
             ["shop_scene_button_normal", "shop_scene_button_hover", "shop_scene_button_pressed", "shop_scene_button_disabled"],
             ["shop_scene_close_normal", "shop_scene_close_hover", "shop_scene_close_pressed"],
-            ["shop_scene_tab_materials_normal", "shop_scene_tab_materials_selected"],
+            ["shop_scene_tab_materials_normal", "shop_scene_tab_materials_hover", "shop_scene_tab_materials_selected"],
+            ["shop_scene_tab_recipes_normal", "shop_scene_tab_recipes_hover", "shop_scene_tab_recipes_selected"],
+            ["shop_scene_tab_abilities_normal", "shop_scene_tab_abilities_hover", "shop_scene_tab_abilities_selected"],
+            ["shop_scene_quantity_minus", "shop_scene_quantity_minus_hover", "shop_scene_quantity_minus_pressed", "shop_scene_quantity_minus_disabled"],
+            ["shop_scene_quantity_plus", "shop_scene_quantity_plus_hover", "shop_scene_quantity_plus_pressed", "shop_scene_quantity_plus_disabled"],
         ]
         for group in groups:
             seen: set[bytes] = set()
@@ -257,6 +271,14 @@ class DayMapShopSceneV2AssetPipelineTest(unittest.TestCase):
                     data = load_rgba(SOURCE / f"{name}_native.png").tobytes()
                     self.assertNotIn(data, seen, f"{name}: duplicates another state")
                     seen.add(data)
+
+    def test_state_assets_use_component_specific_operations(self) -> None:
+        manifest = json.loads((REFERENCE / "shop_scene_v2_manifest.json").read_text(encoding="utf-8"))
+        forbidden = {"hover_tint", "selected_tint", "pressed_darken", "disabled_darken"}
+        for name, spec in manifest.get("assets", {}).items():
+            operation = spec.get("operation")
+            if operation is not None:
+                self.assertNotIn(operation, forbidden, f"{name}: state uses legacy generic operation")
 
     def test_amber_is_sparse_except_emphasis_states(self) -> None:
         exempt = {

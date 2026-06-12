@@ -43,18 +43,39 @@ var _ending_screen = null
 var _tutorial_manager = null
 
 const MATERIAL_ICON_PATHS: Dictionary = {
-	"ale": "res://assets/textures/icons/materials/wheat.png",
-	"grape": "res://assets/textures/icons/materials/grape.png",
-	"flour": "res://assets/textures/icons/materials/wheat.png",
-	"meat_raw": "res://assets/textures/icons/products/roast.png",
-	"herb": "res://assets/textures/icons/materials/herb.png",
-	"ale_beer": "res://assets/textures/icons/products/ale.png",
-	"bread": "res://assets/textures/icons/products/bread.png",
-	"meat_cooked": "res://assets/textures/icons/products/roast.png",
-	"herb_broth": "res://assets/textures/icons/products/stew.png",
+	"ale": "res://assets/textures/tavern/icons/ale.png",
+	"grape": "res://assets/textures/tavern/icons/grape.png",
+	"flour": "res://assets/textures/tavern/icons/flour.png",
+	"meat_raw": "res://assets/textures/tavern/icons/meat_raw.png",
+	"herb": "res://assets/textures/tavern/icons/herb.png",
+	"dough": "res://assets/textures/tavern/items/dough.png",
+	"bread_burnt": "res://assets/textures/tavern/items/bread_burnt.png",
+	"meat_burnt": "res://assets/textures/tavern/items/meat_burnt.png",
+	"ale_roasted": "res://assets/textures/tavern/items/ale_roasted.png",
+	"ale_burnt": "res://assets/textures/tavern/items/ale_burnt.png",
+	"grape_juice": "res://assets/textures/tavern/items/grape_juice.png",
+	"dough_meat": "res://assets/textures/tavern/items/dough_meat.png",
+	"ale_herb": "res://assets/textures/tavern/items/ale_herb.png",
+	"grape_herb": "res://assets/textures/tavern/items/grape_herb.png",
+	"meat_stew_raw": "res://assets/textures/tavern/items/meat_stew_raw.png",
+	"ale_beer": "res://assets/textures/tavern/items/ale_beer.png",
+	"bread": "res://assets/textures/tavern/items/bread.png",
+	"meat_cooked": "res://assets/textures/tavern/items/meat_cooked.png",
+	"wine": "res://assets/textures/tavern/items/wine.png",
+	"herb_tea": "res://assets/textures/tavern/items/herb_tea.png",
+	"meat_sand": "res://assets/textures/tavern/items/meat_sand.png",
+	"herbal_ale": "res://assets/textures/tavern/items/herbal_ale.png",
+	"spiced_wine": "res://assets/textures/tavern/items/spiced_wine.png",
+	"meat_stew": "res://assets/textures/tavern/items/meat_stew.png",
+	"herb_broth": "res://assets/textures/tavern/items/herb_broth.png",
+	"malt_porridge": "res://assets/textures/tavern/items/malt_porridge.png",
+	"spice": "res://assets/textures/icons/items/spice.png",
+	"herb_spice": "res://assets/textures/icons/items/herb_spice.png",
+	"salt": "res://assets/textures/icons/items/salt.png",
 	"sleep_powder": "res://assets/textures/icons/items/sleep_powder.png",
-	"bloodied_contract": "res://assets/textures/icons/items/bloodied_contract.png",
-	"alternative_contract": "res://assets/textures/icons/items/alternative_contract.png",
+	"bloodied_contract": "res://assets/textures/tavern/items/bloodied_contract.png",
+	"alternative_contract": "res://assets/textures/tavern/items/alternative_contract.png",
+	"toby_contract": "res://assets/textures/tavern/items/toby_contract.png",
 }
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
@@ -157,7 +178,7 @@ func register_view(view: Node) -> void:
 		_guest_lingering = false
 		# 每日账本头（进入夜间营业时记录）
 		_ledger_day_header()
-		# 准备阶段由 TavernView 自己处理，确认菜单后才 configure_night
+		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day), economy.current_day)
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
 		_refresh_close_button()
@@ -194,7 +215,9 @@ func register_view(view: Node) -> void:
 						_spawn_npc_after_tutorial.bind(npc.id, order_key),
 						CONNECT_ONE_SHOT
 					)
-				# 否则等待菜单确认后通过 on_menu_confirmed() 生成
+				elif _tavern_view.daily_menu_confirmed and not guests.has_guest:
+					guests.spawn_important(npc.id, order_key)
+				# 菜单未确认时等待 on_menu_confirmed() 生成
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
@@ -240,13 +263,6 @@ func visit_day_location(location_id: String) -> Dictionary:
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
 		grant_investigation_document(String(document_id))
-	# 账本：探索获得物品
-	var reward_counts: Dictionary = {}
-	for key in result.get("rewards", []):
-		var k := String(key)
-		reward_counts[k] = int(reward_counts.get(k, 0)) + 1
-	for rk in reward_counts:
-		_ledger_item(rk, int(reward_counts[rk]), "探索")
 	var aff = result.get("affection", null)
 	if aff is Dictionary and String(aff.get("npc", "")) != "":
 		var npc_id := String(aff["npc"])
@@ -316,10 +332,6 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 			inventory_sys.add(mat, 1)
 			gathered[mat] = int(gathered.get(mat, 0)) + 1
 
-	# 账本：采集记录
-	for mat_key in gathered:
-		_ledger_item(String(mat_key), int(gathered[mat_key]), "采集")
-
 	notify_inventory_changed()
 	day_cycle.next_phase()
 
@@ -362,13 +374,16 @@ func _on_guest_arrived(guest: GuestData) -> void:
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	var display_name = guest.guest_name
+	var portrait_id: String = guest.npc_id if guest.npc_id != "" else "guest"
 	if guest.has_dialogue:
 		for npc in narrative.all_npcs:
 			if npc.id == guest.npc_id:
 				display_name = npc.npc_name
 				break
 		display_name = ryan_slice.important_display_name(economy.current_day, guest.npc_id, display_name)
-	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), guest.npc_id if guest.npc_id != "" else "guest")
+		portrait_id = ryan_slice.important_portrait_id(economy.current_day, guest.npc_id, portrait_id)
+	guest.set_meta("portrait_id", portrait_id)
+	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 
@@ -515,6 +530,7 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		outcome = "fail_wrong"
 	else:
 		outcome = "fail_weird"
+	_refresh_current_customer_portrait(outcome)
 
 	if is_important and npc_id != "":
 		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
@@ -537,6 +553,17 @@ func _react_then_clear(outcome: String) -> void:
 	await get_tree().create_timer(1.8).timeout
 	_guest_lingering = false
 	guests.clear_guest()
+
+func _refresh_current_customer_portrait(outcome: String = "") -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	if guests.current_guest == null:
+		return
+	if not _tavern_view.has_method("show_customer_reaction"):
+		return
+	var npc_id := guests.current_guest.npc_id if guests.current_guest.npc_id != "" else "guest"
+	var portrait_id := String(guests.current_guest.get_meta("portrait_id", npc_id))
+	_tavern_view.show_customer_reaction(outcome, portrait_id)
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
@@ -801,6 +828,11 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
 		_show_action_feedback(feedback)
 		var accepted: bool = bool(r.get("accepted", false))
+		if accepted and npc_id == "mira" and item_key == "toby_contract":
+			_refresh_current_customer_portrait()
+			if not documents.owns_document("toby_contract"):
+				documents.grant_document("toby_contract")
+			request_open_document("toby_contract")
 		return {"handled": true, "accepted": accepted, "consume": accepted,
 			"interaction_closed": bool(r.get("interaction_closed", false)), "feedback": feedback}
 
@@ -859,6 +891,16 @@ func try_load_material_icon(key: String) -> Texture2D:
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
 	return null
 
+
+func apply_material_icon_to_desk_item(item) -> void:
+	if item == null or not is_instance_valid(item) or not item.has_method("set_art_texture"):
+		return
+	var item_key := String(item.get("item_key"))
+	if item_key == "":
+		item.set_art_texture(null)
+		return
+	item.set_art_texture(try_load_material_icon(item_key))
+
 ## ── 账本记录辅助 ──
 
 func _ledger_gold(amount: int, reason: String) -> void:
@@ -878,7 +920,7 @@ func _ledger_item(key: String, count: int, source: String) -> void:
 	documents.add_ledger_entry("获得 %s×%d （%s）" % [item_name, count, source])
 
 func _ledger_day_header() -> void:
-	documents.add_ledger_entry("———— 第%d天 ————" % economy.current_day)
+	documents.add_ledger_entry_once("———— 第%d天 ————" % economy.current_day)
 
 func _load_initial_inventory() -> Dictionary:
 	var file = FileAccess.open("res://data/inventory_default.json", FileAccess.READ)
@@ -985,6 +1027,20 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 	tm.first_ledger_shown = bool(t.get("first_ledger_shown", false))
 	tm._save_state()
 
+
+func reset_tutorial_progress() -> void:
+	var tm = _tutorial_manager
+	if tm == null:
+		tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.replay_all()
+	if save_sys.has_save():
+		var snapshot := save_sys.read()
+		if snapshot.is_empty():
+			snapshot = _capture_save_state()
+		snapshot["tutorial"] = _default_tutorial_state()
+		save_sys.write(snapshot)
+
 ## 标题页入口（spec §12.3）。
 func has_save() -> bool:
 	return save_sys.has_save()
@@ -1022,12 +1078,24 @@ func _default_new_game_state() -> Dictionary:
 		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
 			"endings": {}, "today_important_npc": ""},
 		"craft": {"unlocked_recipes": [], "unlocked_slam_containers": []},
-		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
-			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
-			"first_guest_served": false, "first_ledger_shown": false},
+		"tutorial": _default_tutorial_state(),
 		"ryan_slice": {"total_orders_success": 0, "completed_days": []},
 		"guests": {"customers": [], "next_seq": 1},
 	}
+
+
+func _default_tutorial_state() -> Dictionary:
+	return {
+		"completed_steps": [],
+		"daymap_first_shown": false,
+		"tavern_first_entered": false,
+		"shop_first_visited": false,
+		"first_guest_arrived": false,
+		"first_product_seasoned": false,
+		"first_guest_served": false,
+		"first_ledger_shown": false,
+	}
+
 
 ## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。
 func _fresh_narrative_vars() -> Dictionary:

@@ -4,7 +4,7 @@
       "id": "gather_intro",
       "group": "gather",
       "title": "白天 · 逐次访问",
-      "description": "点击地点右侧的“访问”按钮会立刻消耗行动力，并马上获得材料或线索。\n\n你可以根据当前库存决定继续采集、调查新线索，或者提前进入夜晚。",
+      "description": "点击地点会打开行动纸条，纸条里的“前往”按钮会立刻消耗行动力，并马上获得材料或线索。\n\n准备结束白天时，点击地图上的“你的酒馆”，再点纸条里的“开门营业”开始夜晚。",
       "highlight_node": "MapArea",
       "highlight_rect": [140, 80, 1000, 420],
       "desc_pos_x": 0.68,
@@ -23,18 +23,6 @@
       "desc_pos_y": 0.15,
       "desc_width": 340,
       "desc_height": 130
-    },
-    {
-      "id": "gather_go",
-      "group": "gather",
-      "title": "进入夜晚",
-      "description": "准备好后点击“进入夜晚”。不必耗尽所有行动力；保留资源和提前营业也是选择。",
-      "highlight_node": "GoButton",
-      "highlight_rect": [540, 520, 200, 50],
-      "desc_pos_x": 0.32,
-      "desc_pos_y": 0.78,
-      "desc_width": 380,
-      "desc_height": 120
     }
   ],
   "shop": [

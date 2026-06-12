@@ -68,30 +68,40 @@ def rectangular_alpha_from_edges(image: Image.Image) -> Image.Image:
     return rgba
 
 
-def tint_visible(image: Image.Image, color: tuple[int, int, int], strength: float) -> Image.Image:
+def state_overlay(
+    image: Image.Image,
+    color: tuple[int, int, int],
+    strength: float,
+    brightness: float = 1.0,
+) -> Image.Image:
     rgba = image.convert("RGBA")
+    rgb = ImageEnhance.Brightness(rgba.convert("RGB")).enhance(brightness).convert("RGBA")
+    rgb.putalpha(rgba.getchannel("A"))
     overlay = Image.new("RGBA", rgba.size, color + (0,))
     alpha = rgba.getchannel("A").point(lambda value: int(value * strength))
     overlay.putalpha(alpha)
-    return Image.alpha_composite(rgba, overlay)
-
-
-def darken_visible(image: Image.Image, factor: float) -> Image.Image:
-    rgba = image.convert("RGBA")
-    rgb = ImageEnhance.Brightness(rgba.convert("RGB")).enhance(factor).convert("RGBA")
-    rgb.putalpha(rgba.getchannel("A"))
-    return rgb
+    return Image.alpha_composite(rgb, overlay)
 
 
 def derive_asset(image: Image.Image, operation: str) -> Image.Image:
-    if operation == "hover_tint":
-        return tint_visible(image, (48, 92, 90), 0.22)
-    if operation == "selected_tint":
-        return tint_visible(image, (70, 92, 70), 0.26)
-    if operation == "pressed_darken":
-        return darken_visible(image, 0.70)
-    if operation == "disabled_darken":
-        return darken_visible(image, 0.55)
+    operations = {
+        "row_hover_state": lambda source: state_overlay(source, (40, 100, 92), 0.34, 1.08),
+        "row_selected_state": lambda source: state_overlay(source, (126, 94, 42), 0.38, 1.10),
+        "row_disabled_state": lambda source: state_overlay(source, (18, 28, 30), 0.40, 0.62),
+        "tab_hover_state": lambda source: state_overlay(source, (42, 104, 96), 0.36, 1.10),
+        "tab_selected_state": lambda source: state_overlay(source, (126, 96, 48), 0.40, 1.12),
+        "button_hover_state": lambda source: state_overlay(source, (150, 96, 42), 0.30, 1.12),
+        "button_pressed_state": lambda source: state_overlay(source, (68, 42, 28), 0.32, 0.72),
+        "button_disabled_state": lambda source: state_overlay(source, (18, 26, 28), 0.44, 0.58),
+        "close_hover_state": lambda source: state_overlay(source, (160, 86, 44), 0.32, 1.12),
+        "close_pressed_state": lambda source: state_overlay(source, (62, 34, 28), 0.34, 0.72),
+        "quantity_hover_state": lambda source: state_overlay(source, (150, 96, 42), 0.32, 1.12),
+        "quantity_pressed_state": lambda source: state_overlay(source, (62, 42, 28), 0.34, 0.72),
+        "quantity_disabled_state": lambda source: state_overlay(source, (18, 28, 30), 0.42, 0.58),
+        "status_emphasis_state": lambda source: state_overlay(source, (155, 98, 42), 0.24, 1.05),
+    }
+    if operation in operations:
+        return operations[operation](image)
     raise ValueError(f"Unknown shop scene v2 derivation operation: {operation}")
 
 

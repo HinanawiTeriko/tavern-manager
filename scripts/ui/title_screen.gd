@@ -60,6 +60,7 @@ func _ready() -> void:
 		continue_btn.pressed.connect(GameManager.continue_game)
 		continue_btn.disabled = not has_save
 	_settings_panel.configure(GameManager.settings)
+	_settings_panel.tutorial_reset_requested.connect(_on_tutorial_reset_requested)
 	var settings_btn = get_node_or_null("UI/SettingsButton")
 	if settings_btn != null:
 		_style_title_menu_button(settings_btn)
@@ -148,6 +149,10 @@ func _try_load_deco(node_path: String, tex_path: String) -> void:
 
 func _on_new_game() -> void:
 	GameManager.new_game()
+
+
+func _on_tutorial_reset_requested() -> void:
+	GameManager.reset_tutorial_progress()
 
 
 func _menu_fade_nodes() -> Array:

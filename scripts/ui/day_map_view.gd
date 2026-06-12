@@ -19,13 +19,18 @@ const DAYMAP_BUTTON_PRIMARY_PRESSED := "res://assets/textures/daymap/ui/button_p
 const DAYMAP_BUTTON_NOTE_ACTION_NORMAL := "res://assets/textures/daymap/ui/button_note_action_normal.png"
 const DAYMAP_BUTTON_NOTE_ACTION_HOVER := "res://assets/textures/daymap/ui/button_note_action_hover.png"
 const DAYMAP_BUTTON_NOTE_ACTION_PRESSED := "res://assets/textures/daymap/ui/button_note_action_pressed.png"
+const DAYMAP_BUTTON_DETAIL_GO_NORMAL := "res://assets/textures/daymap/ui/button_detail_go_normal.png"
+const DAYMAP_BUTTON_DETAIL_GO_HOVER := "res://assets/textures/daymap/ui/button_detail_go_hover.png"
+const DAYMAP_BUTTON_DETAIL_GO_PRESSED := "res://assets/textures/daymap/ui/button_detail_go_pressed.png"
 const DAYMAP_PRIMARY_BUTTON_SIZE := Vector2(280, 72)
 const DAYMAP_NOTE_ACTION_BUTTON_SIZE := Vector2(224, 56)
+const DAYMAP_DETAIL_GO_BUTTON_SIZE := Vector2(224, 56)
 const DAYMAP_BUTTON_LEDGER_NORMAL := "res://assets/textures/daymap/ui/button_ledger_normal.png"
 const DAYMAP_BUTTON_LEDGER_HOVER := "res://assets/textures/daymap/ui/button_ledger_hover.png"
 const DAYMAP_BUTTON_LEDGER_PRESSED := "res://assets/textures/daymap/ui/button_ledger_pressed.png"
 const DAYMAP_LEDGER_BUTTON_SIZE := Vector2(132, 44)
 const DAYMAP_PANEL_DETAIL := "res://assets/textures/daymap/ui/panel_detail.png"
+const DAYMAP_PINNED_DETAIL_PANEL := "res://assets/textures/daymap/ui/pinned_note_detail_panel.png"
 const DAYMAP_PANEL_RESULT := "res://assets/textures/daymap/ui/panel_result.png"
 const DAYMAP_TOPBAR_STRIP := "res://assets/textures/daymap/ui/topbar_strip.png"
 const DAYMAP_PINNED_NOTE_PANEL := "res://assets/textures/daymap/ui/pinned_note_panel.png"
@@ -42,34 +47,38 @@ const PINNED_NOTE_BODY_FONT_SIZE := 14
 const PINNED_NOTE_TITLE_INK := Color(0.36, 0.20, 0.10)
 const PINNED_NOTE_BODY_INK := Color(0.27, 0.19, 0.12)
 const PINNED_NOTE_INK_SHADOW := Color(0.05, 0.03, 0.02, 0.16)
-const DAYMAP_TOPBAR_DAY_POS := Vector2(72, 10)
-const DAYMAP_TOPBAR_DAY_SIZE := Vector2(300, 40)
-const DAYMAP_TOPBAR_STAMINA_POS := Vector2(420, 10)
-const DAYMAP_TOPBAR_STAMINA_SIZE := Vector2(170, 40)
-const DAYMAP_TOPBAR_GOLD_POS := Vector2(610, 10)
-const DAYMAP_TOPBAR_GOLD_SIZE := Vector2(170, 40)
-const DAYMAP_LEDGER_BUTTON_POS := Vector2(1060, 8)
+const DAYMAP_TOPBAR_DAY_POS := Vector2(132, 1)
+const DAYMAP_TOPBAR_DAY_SIZE := Vector2(320, 40)
+const DAYMAP_TOPBAR_STAMINA_POS := Vector2(636, 1)
+const DAYMAP_TOPBAR_STAMINA_SIZE := Vector2(128, 40)
+const DAYMAP_TOPBAR_GOLD_POS := Vector2(904, 1)
+const DAYMAP_TOPBAR_GOLD_SIZE := Vector2(116, 40)
+const DAYMAP_LEDGER_BUTTON_POS := Vector2(1092, 8)
 const DAYMAP_DETAIL_INSET := Vector2(36, 34)
 const DAYMAP_DETAIL_BODY_X := 58.0
 const DAYMAP_DETAIL_BODY_WIDTH := 204.0
 const DAYMAP_RESULT_INSET := Vector2(48, 42)
-const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
-const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
+const DAYMAP_RESULT_TEXT_POS := Vector2(96, 88)
+const DAYMAP_RESULT_TEXT_SIZE := Vector2(508, 184)
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
 const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 20.0
 const DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT := 20.0
+const DAYMAP_DETAIL_GO_TEXT_MARGIN_LEFT := 20.0
+const DAYMAP_DETAIL_GO_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
-const PINNED_NOTE_NAME_POS := Vector2(84, 78)
-const PINNED_NOTE_NAME_SIZE := Vector2(200, 34)
-const PINNED_NOTE_DESC_POS := Vector2(144, 142)
-const PINNED_NOTE_DESC_SIZE := Vector2(168, 76)
-const PINNED_NOTE_COST_POS := Vector2(144, 224)
-const PINNED_NOTE_COST_SIZE := Vector2(168, 26)
-const PINNED_NOTE_YIELD_POS := Vector2(144, 254)
-const PINNED_NOTE_YIELD_SIZE := Vector2(168, 42)
-const PINNED_NOTE_BUTTON_POS := Vector2(92, 296)
+const PINNED_NOTE_NAME_POS := Vector2(112, 72)
+const PINNED_NOTE_NAME_SIZE := Vector2(220, 34)
+const PINNED_NOTE_DESC_POS := Vector2(92, 126)
+const PINNED_NOTE_DESC_SIZE := Vector2(224, 88)
+const PINNED_NOTE_COST_POS := Vector2(92, 224)
+const PINNED_NOTE_COST_SIZE := Vector2(224, 26)
+const PINNED_NOTE_YIELD_POS := Vector2(92, 254)
+const PINNED_NOTE_YIELD_SIZE := Vector2(224, 40)
+const PINNED_NOTE_BUTTON_POS := Vector2(72, 284)
+const GATHERING_TOAST_POS := Vector2(430, 68)
+const GATHERING_TOAST_SIZE := Vector2(420, 56)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -97,6 +106,7 @@ var _day_label: Label
 var _result_panel: Panel
 var _result_label: Label
 var _continue_btn: Button
+var _gathering_toast: GatheringToast
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
 
@@ -134,7 +144,7 @@ func _ready() -> void:
 	ThemeColors.style_header(_day_label, DAYMAP_HEADER_FONT_SIZE)
 	_apply_daymap_label_font(_day_label)
 	_style_daymap_primary_button(_continue_btn, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
-	_continue_btn.position = Vector2(210, 312)
+	_continue_btn.position = Vector2(210, 304)
 	_continue_btn.size = DAYMAP_PRIMARY_BUTTON_SIZE
 	_result_panel.add_theme_stylebox_override("panel", _daymap_panel_style(DAYMAP_PANEL_RESULT))
 	_result_label.position = DAYMAP_RESULT_TEXT_POS
@@ -157,6 +167,7 @@ func _ready() -> void:
 
 	_setup_detail_panel()
 	_setup_pinned_note_panel()
+	_setup_gathering_toast()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
@@ -205,33 +216,40 @@ func _setup_topbar_material() -> void:
 func _apply_topbar_layout(documents_btn: Button) -> void:
 	_day_label.position = DAYMAP_TOPBAR_DAY_POS
 	_day_label.size = DAYMAP_TOPBAR_DAY_SIZE
+	_day_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_stamina_label.position = DAYMAP_TOPBAR_STAMINA_POS
 	_stamina_label.size = DAYMAP_TOPBAR_STAMINA_SIZE
+	_stamina_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_gold_label.position = DAYMAP_TOPBAR_GOLD_POS
 	_gold_label.size = DAYMAP_TOPBAR_GOLD_SIZE
+	_gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	documents_btn.position = DAYMAP_LEDGER_BUTTON_POS
 	documents_btn.size = DAYMAP_LEDGER_BUTTON_SIZE
+	documents_btn.text = ""
+	documents_btn.visible = true
+	documents_btn.disabled = false
+	documents_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	documents_btn.focus_mode = Control.FOCUS_NONE
 
 
 func _setup_detail_panel() -> void:
 	_detail_panel.size = Vector2(320, 480)
 	_detail_panel.add_theme_stylebox_override("panel", _daymap_panel_style(DAYMAP_PANEL_DETAIL))
-	var content_width := _detail_panel.size.x - DAYMAP_DETAIL_INSET.x * 2.0
 	var name_label: Label = _detail_panel.get_node("Name")
-	name_label.position = DAYMAP_DETAIL_INSET
-	name_label.size = Vector2(content_width, 36)
+	name_label.position = Vector2(72, 42)
+	name_label.size = Vector2(196, 38)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ThemeColors.style_header(name_label, DAYMAP_HEADER_FONT_SIZE)
 	_apply_daymap_label_font(name_label)
 	var desc_label: Label = _detail_panel.get_node("Desc")
-	desc_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 88)
-	desc_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 140)
+	desc_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 112)
+	desc_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 132)
 	var cost_label: Label = _detail_panel.get_node("Cost")
-	cost_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 256)
-	cost_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 36)
+	cost_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 272)
+	cost_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 32)
 	var yield_label: Label = _detail_panel.get_node("Yield")
-	yield_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 306)
-	yield_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 62)
+	yield_label.position = Vector2(DAYMAP_DETAIL_BODY_X, 316)
+	yield_label.size = Vector2(DAYMAP_DETAIL_BODY_WIDTH, 56)
 	for lbl in [desc_label, cost_label, yield_label]:
 		lbl.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 		lbl.add_theme_font_size_override("font_size", DAYMAP_BODY_FONT_SIZE)
@@ -239,9 +257,9 @@ func _setup_detail_panel() -> void:
 		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
 		_apply_daymap_label_font(lbl)
 	var go_here: Button = _detail_panel.get_node("GoHereBtn")
-	_style_daymap_primary_button(go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
-	go_here.position = Vector2(20, 388)
-	go_here.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	_style_daymap_detail_go_button(go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	go_here.position = Vector2(48, 392)
+	go_here.size = DAYMAP_DETAIL_GO_BUTTON_SIZE
 	go_here.pressed.connect(_on_go_here_pressed)
 	_detail_panel.visible = false
 
@@ -258,7 +276,7 @@ func _setup_pinned_note_panel() -> void:
 
 	_pinned_note_panel.size = PINNED_NOTE_SIZE
 	_pinned_note_panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	_pinned_note_note_art.texture = _load_daymap_texture(DAYMAP_PINNED_NOTE_PANEL)
+	_pinned_note_note_art.texture = _load_daymap_texture(DAYMAP_PINNED_DETAIL_PANEL)
 	_pinned_note_note_art.position = Vector2.ZERO
 	_pinned_note_note_art.size = PINNED_NOTE_SIZE
 	_pinned_note_note_art.stretch_mode = TextureRect.STRETCH_SCALE
@@ -283,13 +301,24 @@ func _setup_pinned_note_panel() -> void:
 	for lbl in [_pinned_note_desc, _pinned_note_cost, _pinned_note_yield]:
 		_style_pinned_note_body(lbl)
 
-	_style_daymap_note_action_button(_pinned_note_go_here, DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE)
+	_style_daymap_detail_go_button(_pinned_note_go_here, DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE)
 	_pinned_note_go_here.position = PINNED_NOTE_BUTTON_POS
-	_pinned_note_go_here.size = DAYMAP_NOTE_ACTION_BUTTON_SIZE
+	_pinned_note_go_here.size = DAYMAP_DETAIL_GO_BUTTON_SIZE
 	var action := Callable(self, "_on_go_here_pressed")
 	if not _pinned_note_go_here.pressed.is_connected(action):
 		_pinned_note_go_here.pressed.connect(action)
 	_pinned_note_panel.visible = false
+
+
+func _setup_gathering_toast() -> void:
+	_gathering_toast = GatheringToast.new()
+	_gathering_toast.name = "GatheringToast"
+	_gathering_toast.position = GATHERING_TOAST_POS
+	_gathering_toast.size = GATHERING_TOAST_SIZE
+	_gathering_toast.custom_minimum_size = GATHERING_TOAST_SIZE
+	_gathering_toast.z_index = 90
+	_gathering_toast.visible = false
+	$UILayer.add_child(_gathering_toast)
 
 
 func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
@@ -322,6 +351,23 @@ func _style_daymap_note_action_button(button: Button, font_size: int = DAYMAP_PR
 	button.add_theme_stylebox_override("hover", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_HOVER))
 	button.add_theme_stylebox_override("pressed", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_PRESSED))
 	button.add_theme_stylebox_override("disabled", _daymap_note_action_texture_style(DAYMAP_BUTTON_NOTE_ACTION_NORMAL))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _style_daymap_detail_go_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
+	button.custom_minimum_size = DAYMAP_DETAIL_GO_BUTTON_SIZE
+	button.size = DAYMAP_DETAIL_GO_BUTTON_SIZE
+	button.add_theme_font_override("font", DAYMAP_FONT)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
+	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_stylebox_override("normal", _daymap_detail_go_texture_style(DAYMAP_BUTTON_DETAIL_GO_NORMAL))
+	button.add_theme_stylebox_override("hover", _daymap_detail_go_texture_style(DAYMAP_BUTTON_DETAIL_GO_HOVER))
+	button.add_theme_stylebox_override("pressed", _daymap_detail_go_texture_style(DAYMAP_BUTTON_DETAIL_GO_PRESSED))
+	button.add_theme_stylebox_override("disabled", _daymap_detail_go_texture_style(DAYMAP_BUTTON_DETAIL_GO_NORMAL))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
@@ -382,6 +428,20 @@ func _daymap_note_action_texture_style(path: String) -> StyleBoxTexture:
 	return style
 
 
+func _daymap_detail_go_texture_style(path: String) -> StyleBoxTexture:
+	var texture := _load_daymap_texture(path)
+	var style := StyleBoxTexture.new()
+	if texture == null:
+		return style
+	style.texture = texture
+	style.region_rect = Rect2(Vector2.ZERO, Vector2(texture.get_width(), texture.get_height()))
+	style.set_content_margin(SIDE_LEFT, DAYMAP_DETAIL_GO_TEXT_MARGIN_LEFT)
+	style.set_content_margin(SIDE_RIGHT, DAYMAP_DETAIL_GO_TEXT_MARGIN_RIGHT)
+	style.set_content_margin(SIDE_TOP, 8.0)
+	style.set_content_margin(SIDE_BOTTOM, 8.0)
+	return style
+
+
 func _style_daymap_ledger_button(button: Button, font_size: int = DAYMAP_LEDGER_BUTTON_FONT_SIZE) -> void:
 	button.custom_minimum_size = DAYMAP_LEDGER_BUTTON_SIZE
 	button.size = DAYMAP_LEDGER_BUTTON_SIZE
@@ -391,6 +451,7 @@ func _style_daymap_ledger_button(button: Button, font_size: int = DAYMAP_LEDGER_
 	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
 	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_SUBTITLE)
 	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_stylebox_override("normal", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_NORMAL))
 	button.add_theme_stylebox_override("hover", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_HOVER))
 	button.add_theme_stylebox_override("pressed", _daymap_ledger_texture_style(DAYMAP_BUTTON_LEDGER_PRESSED))
@@ -791,6 +852,19 @@ func _visit_location(location_id: String) -> void:
 		_hide_pinned_note()
 		_enter_investigation(INVESTIGATION_SCENES[location_id])
 		return
+	var reward_counts: Dictionary = result.get("reward_counts", {})
+	if bool(result.get("success", false)) and not reward_counts.is_empty():
+		if _gathering_toast != null:
+			_gathering_toast.show_rewards(reward_counts, String(result.get("message", "")))
+		_result_panel.visible = false
+		_stamina_left = gm.day_map.stamina
+		_update_stamina_display()
+		_detail_panel.visible = false
+		_clear_selection()
+		_refresh_map()
+		return
+	if _gathering_toast != null:
+		_gathering_toast.visible = false
 	_result_label.text = String(result.get("message", "访问完成。"))
 	_result_panel.visible = true
 	_continue_btn.text = "知道了"
@@ -842,6 +916,7 @@ func _on_investigation_finished() -> void:
 	# 否则退出调查后地图无法平移/缩放（test_mine_enter_exit 守此）。
 	_camera.enabled = true
 	_camera.set_active(true)
+	_refresh_map()
 
 
 func _update_stamina_display() -> void:
@@ -903,6 +978,8 @@ func _open_shop() -> void:
 	_ensure_shop_overlay()
 	$MapWorld.visible = false
 	_detail_panel.visible = false
+	if _gathering_toast != null:
+		_gathering_toast.visible = false
 	_clear_selection()
 	_camera.set_active(false)
 	_shop_overlay.open()
@@ -928,11 +1005,21 @@ func _trigger_gather_tutorial() -> void:
 	if tm == null:
 		return
 
-	var rects = {
-		"MapArea": [140, 80, 1000, 420],
-		"TopBar": [30, 5, 320, 55],
+	tm.start_tutorial("gather", _gather_tutorial_rects())
+
+
+func _gather_tutorial_rects() -> Dictionary:
+	return {
+		"MapArea": _control_screen_rect($UILayer/MapArea),
+		"TopBar": _control_screen_rect(_stamina_label),
 	}
-	tm.start_tutorial("gather", rects)
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect: Rect2 = control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 
 
 func _trigger_shop_tutorial() -> void:

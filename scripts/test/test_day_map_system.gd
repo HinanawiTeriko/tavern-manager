@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_day2_investigation_chain()
 	_test_game_manager_routes_visits()
+	_test_gathering_confirmation_does_not_write_ledger()
 	_test_get_locations_breadcrumb()
 	_test_board_requires_lead()
 	_test_reveal_tracking()
@@ -61,9 +62,12 @@ func _test_game_manager_routes_visits() -> void:
 	_ok(gm.day_map is DayMapSystem, "GameManager owns DayMapSystem")
 	gm.start_day_map(2)
 	var before: int = gm.inventory_sys.get_count("sleep_powder")
+	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
 	_ok(gm.visit_day_location("mushroom_forest").get("success", false), "GameManager routes forest visit")
 	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "forest reward enters inventory")
 	_ok(gm.narrative.get_var("has_sleep_powder") == true, "forest reward triggers narrative hook")
+	var ledger_after: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	_ok(ledger_after == ledger_before, "forest reward does not enter ledger")
 	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
 	_ok(_location_ids(gm.day_map.get_locations()).has("mercenary_board"), "GM exposes board after lead set")
@@ -79,6 +83,18 @@ func _test_game_manager_routes_visits() -> void:
 	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "re-reading evidence does not duplicate it")
 	gm.visit_day_location("guild_counter")
 	_ok(gm.documents.owns_document("alternative_contract"), "read evidence unlocks counter document")
+
+
+func _test_gathering_confirmation_does_not_write_ledger() -> void:
+	var gm = get_node("/root/GameManager")
+	gm.economy.current_day = 2
+	gm.day_cycle.phase = DayCycleSystem.DayPhase.DAY
+	var before: int = gm.inventory_sys.get_count("sleep_powder")
+	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	gm._on_gathering_confirmed({"mushroom_forest": 1})
+	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "confirmed gathering enters inventory")
+	var ledger_after: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	_ok(ledger_after == ledger_before, "confirmed gathering does not enter ledger")
 
 
 func _location_ids(locations: Array) -> Array:

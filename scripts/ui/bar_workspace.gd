@@ -9,22 +9,36 @@ extends Node2D
 
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
+const TAVERN_ITEM_ICON_PREFIX := "res://assets/textures/tavern/icons/"
+const TAVERN_ITEM_ART_PREFIX := "res://assets/textures/tavern/items/"
+const ITEM_ICON_PREFIX := "res://assets/textures/icons/items/"
+const PRODUCT_ICON_PREFIX := "res://assets/textures/icons/products/"
+const SUBMERGED_ITEM_Z_INDEX := -1
 const MAX_SLOTS := 10
 const KILL_Y := 800.0
+const TABLE_DRAG_CLEARANCE_PADDING := 4.0
+const DEFAULT_DRAG_ITEM_CLEARANCE := 34.0
+const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
+@onready var _ground_shape: CollisionShape2D = $World/Walls/Ground
 @onready var _brewery: Brewery = $World/Brewery
 @onready var _shaker: SeasoningShaker = $World/SeasoningShaker
 @onready var _grill: KitchenContainer = $World/Grill
 @onready var _pot: KitchenContainer = $World/Pot
 @onready var _spoon: StirSpoon = $World/Spoon
+@onready var _ledger: ReadableDeskItem = $World/Ledger
 @onready var _customer_area: Area2D = $CustomerDropArea
 @onready var _shortcut_bar: Control = get_node("../ShortcutBar")
 
 var _gm
 var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
+var _dragged_item_surface_z_indices: Dictionary = {}
+var _shortcut_preview_body: DeskItem = null
+var _shortcut_preview_body_layer: int = 0
+var _shortcut_preview_body_mask: int = 0
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -106,13 +120,22 @@ func _update_shortcut_hover(mouse_position: Vector2) -> void:
 
 
 func _on_drag_started(body: RigidBody2D) -> void:
+	if not _is_body_usable(body):
+		return
 	if body is DeskItem:
 		body.is_held = true
+		_dragged_item_surface_z_indices[body] = body.z_index
 
 
 func _on_drag_ended(body: RigidBody2D) -> void:
+	if not is_instance_valid(body):
+		return
 	if body is DeskItem:
-		body.is_held = false
+		var item := body as DeskItem
+		if not item.is_queued_for_deletion():
+			item.is_held = false
+		_finish_shortcut_drag_preview(item, true)
+		_restore_dragged_item_depth(item)
 
 
 func _init_material_slots() -> void:
@@ -164,7 +187,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		_release_dragged_body()
 	elif event is InputEventMouseMotion:
-		_drag_ctrl.update_target_global(event.global_position)
+		_update_drag_target(event.global_position)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -181,6 +204,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif not event.pressed and _drag_ctrl.is_dragging():
 			var dragged := _drag_ctrl.get_body()
 			_drag_ctrl.end_drag()
+			if not _is_body_usable(dragged):
+				return
 			if dragged == _brewery:
 				_brewery.end_shake_session()
 			elif dragged == _shaker:
@@ -190,12 +215,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif dragged is DeskItem:
 				_try_deliver(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
-		_drag_ctrl.update_target_global(event.global_position)
+		_update_drag_target(event.global_position)
 
 
 func _release_dragged_body() -> void:
 	var dragged := _drag_ctrl.get_body()
 	_drag_ctrl.end_drag()
+	if not _is_body_usable(dragged):
+		return
 	if dragged == _brewery:
 		_brewery.end_shake_session()
 	elif dragged == _shaker:
@@ -204,10 +231,19 @@ func _release_dragged_body() -> void:
 		_try_deliver(dragged)
 
 
+func _is_body_usable(body: RigidBody2D) -> bool:
+	return body != null and is_instance_valid(body) and not body.is_queued_for_deletion()
+
+
 func _try_pickup(pos: Vector2) -> void:
 	var hit_item: DeskItem = _hit_test_item(pos)
 	if hit_item != null:
 		_drag_ctrl.start_drag(hit_item, pos)
+		return
+	var readable_item := _hit_test_readable_item(pos)
+	if readable_item != null:
+		readable_item.sleeping = false
+		_drag_ctrl.start_drag(readable_item, pos)
 		return
 	if _hit_test_brewery(pos):
 		_brewery.begin_shake_session()
@@ -231,13 +267,151 @@ func _try_pickup(pos: Vector2) -> void:
 		if _slot_rects[i].has_point(pos) and _slot_item_keys[i] != "":
 			var body := spawn_inventory_item_at(_slot_item_keys[i], pos)
 			if body != null:
-				_drag_ctrl.start_drag(body, pos)
+				var drag_start := _desk_item_drag_target(body, pos)
+				body.global_position = drag_start
+				_begin_shortcut_drag_preview(body, pos)
+				_drag_ctrl.start_drag(body, drag_start)
 			return
+
+
+func _update_drag_target(mouse_global_position: Vector2) -> void:
+	var body := _drag_ctrl.get_body()
+	if _is_body_usable(body) and body is DeskItem:
+		var item := body as DeskItem
+		var target := _desk_item_drag_target(item, mouse_global_position)
+		_update_shortcut_drag_preview(item, mouse_global_position, target)
+		_drag_ctrl.update_target_global(target)
+		return
+	_drag_ctrl.update_target_global(mouse_global_position)
+
+
+func _desk_item_drag_target(item: DeskItem, mouse_global_position: Vector2) -> Vector2:
+	var baseline_y := _table_baseline_y()
+	if baseline_y == INF:
+		return mouse_global_position
+	var target := mouse_global_position
+	var max_target_y := baseline_y - _desk_item_lower_clearance(item) - TABLE_DRAG_CLEARANCE_PADDING
+	if target.y > max_target_y:
+		target.y = max_target_y
+	return target
+
+
+func _table_baseline_y() -> float:
+	if _ground_shape == null or _ground_shape.shape == null:
+		return INF
+	if _ground_shape.shape is SegmentShape2D:
+		var segment := _ground_shape.shape as SegmentShape2D
+		var a := _ground_shape.to_global(segment.a)
+		var b := _ground_shape.to_global(segment.b)
+		return maxf(a.y, b.y)
+	return _ground_shape.global_position.y
+
+
+func _desk_item_lower_clearance(item: DeskItem) -> float:
+	if item == null or not is_instance_valid(item):
+		return DEFAULT_DRAG_ITEM_CLEARANCE
+	var shape_node := item.get_node_or_null("Shape") as CollisionShape2D
+	if shape_node == null or shape_node.shape == null:
+		return DEFAULT_DRAG_ITEM_CLEARANCE
+	var shape := shape_node.shape
+	var shape_offset := shape_node.position
+	var lower := DEFAULT_DRAG_ITEM_CLEARANCE
+	if shape is RectangleShape2D:
+		var rect := shape as RectangleShape2D
+		lower = shape_offset.y + rect.size.y * 0.5
+	elif shape is CircleShape2D:
+		var circle := shape as CircleShape2D
+		lower = shape_offset.y + circle.radius
+	elif shape is CapsuleShape2D:
+		var capsule := shape as CapsuleShape2D
+		lower = shape_offset.y + capsule.height * 0.5
+	elif shape is ConvexPolygonShape2D:
+		var convex := shape as ConvexPolygonShape2D
+		lower = -INF
+		for point in convex.points:
+			lower = maxf(lower, shape_offset.y + point.y)
+		if lower == -INF:
+			lower = DEFAULT_DRAG_ITEM_CLEARANCE
+	return maxf(8.0, lower)
+
+
+func _begin_shortcut_drag_preview(item: DeskItem, mouse_global_position: Vector2) -> void:
+	if item == null or not is_instance_valid(item):
+		return
+	_finish_shortcut_drag_preview(null, false)
+	_shortcut_preview_body = item
+	_shortcut_preview_body_layer = item.collision_layer
+	_shortcut_preview_body_mask = item.collision_mask
+	item.visible = false
+	item.collision_layer = 0
+	item.collision_mask = 0
+	var preview := _ensure_shortcut_drag_preview()
+	preview.texture = _shortcut_drag_preview_texture(item)
+	preview.scale = _shortcut_drag_preview_scale(item)
+	preview.global_position = mouse_global_position
+	preview.visible = preview.texture != null
+
+
+func _update_shortcut_drag_preview(item: DeskItem, mouse_global_position: Vector2, clamped_target: Vector2) -> void:
+	if item == null or item != _shortcut_preview_body:
+		return
+	if mouse_global_position.distance_to(clamped_target) <= 0.5:
+		_finish_shortcut_drag_preview(item, true)
+		return
+	var preview := _ensure_shortcut_drag_preview()
+	preview.global_position = mouse_global_position
+	preview.visible = preview.texture != null
+
+
+func _finish_shortcut_drag_preview(item: DeskItem, restore_body: bool) -> void:
+	if item != null and item != _shortcut_preview_body:
+		return
+	if restore_body and _shortcut_preview_body != null and is_instance_valid(_shortcut_preview_body):
+		_shortcut_preview_body.visible = true
+		_shortcut_preview_body.collision_layer = _shortcut_preview_body_layer
+		_shortcut_preview_body.collision_mask = _shortcut_preview_body_mask
+	_shortcut_preview_body = null
+	_shortcut_preview_body_layer = 0
+	_shortcut_preview_body_mask = 0
+	var preview := get_node_or_null("ShortcutDragPreview") as Sprite2D
+	if preview != null:
+		preview.visible = false
+
+
+func _ensure_shortcut_drag_preview() -> Sprite2D:
+	var preview := get_node_or_null("ShortcutDragPreview") as Sprite2D
+	if preview != null:
+		return preview
+	preview = Sprite2D.new()
+	preview.name = "ShortcutDragPreview"
+	preview.centered = true
+	preview.z_index = SHORTCUT_DRAG_PREVIEW_Z_INDEX
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	preview.modulate = Color(1.0, 1.0, 1.0, 0.92)
+	add_child(preview)
+	return preview
+
+
+func _shortcut_drag_preview_texture(item: DeskItem) -> Texture2D:
+	var icon_art := item.get_node_or_null("IconArt") as Sprite2D
+	if icon_art != null and icon_art.texture != null:
+		return icon_art.texture
+	return _desk_item_art_texture(item.item_key)
+
+
+func _shortcut_drag_preview_scale(item: DeskItem) -> Vector2:
+	var icon_art := item.get_node_or_null("IconArt") as Sprite2D
+	if icon_art != null:
+		return icon_art.scale
+	return Vector2.ONE
 
 
 func _try_eject_last_ingredient(pos: Vector2) -> void:
 	if _hit_test_brewery(pos):
 		_eject_last_ingredient(_brewery)
+		return
+	if _hit_test_shaker(pos):
+		_eject_last_ingredient(_shaker)
 		return
 	var kitchen = _hit_test_kitchen_container(pos)
 	if kitchen != null and kitchen.container_key == "pot":
@@ -249,7 +423,12 @@ func _eject_last_ingredient(container) -> void:
 	if item_key == "":
 		return
 	var item := _spawn_desk_item_at(container.ingredient_output_position(), item_key)
-	item.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
+	if container.has_method("configure_ejected_item"):
+		container.configure_ejected_item(item)
+	if container.has_method("ingredient_eject_velocity"):
+		item.linear_velocity = container.ingredient_eject_velocity()
+	else:
+		item.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
 
 
 ## 释放桌面物品时的统一分流：
@@ -257,6 +436,8 @@ func _eject_last_ingredient(container) -> void:
 ##   2) 其它落点 → 不处理，留在桌面（越界自走回收）。
 ##   注：香料装罐由 SeasoningShaker.Mouth Area2D 自动吸入（body_entered），不走本方法。
 func _try_deliver(item: DeskItem) -> void:
+	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
+		return
 	if item.item_key == "":
 		return
 
@@ -264,6 +445,9 @@ func _try_deliver(item: DeskItem) -> void:
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
+	var is_story_item: bool = _gm.inventory_sys.is_story_item(item.item_key)
+	if not is_product and not is_story_item:
+		return
 	# 无顾客等待时，普通成品弹回桌面（避免被 _serve_formal 中 queue_free 吞掉）
 	if is_product and item.product_tags.is_empty() and _gm.current_order_key() == "":
 		_on_desk_item_fell(item)
@@ -300,6 +484,19 @@ func _hit_test_item(pos: Vector2) -> DeskItem:
 	for hit in hits:
 		var collider = hit.get("collider")
 		if collider is DeskItem:
+			return collider
+	return null
+
+
+func _hit_test_readable_item(pos: Vector2) -> ReadableDeskItem:
+	var space := get_world_2d().direct_space_state
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = pos
+	params.collide_with_bodies = true
+	var hits := space.intersect_point(params, 8)
+	for hit in hits:
+		var collider = hit.get("collider")
+		if collider is ReadableDeskItem:
 			return collider
 	return null
 
@@ -373,6 +570,9 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	_items_node.add_child(item)
 	var item_data: Dictionary = _gm.craft.get_item(item_key)
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
+	var art_texture := _desk_item_art_texture(item_key)
+	if art_texture != null:
+		item.set_art_texture(art_texture)
 	item.global_position = pos
 	# 可阅读物品：设为可拾取输入，双击时打开关联文档
 	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
@@ -381,6 +581,19 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 		item.document_id = item_key
 		item.open_requested.connect(_gm.request_open_document)
 	return item
+
+
+func _desk_item_art_texture(item_key: String) -> Texture2D:
+	if _gm == null:
+		return null
+	var texture: Texture2D = _gm.try_load_material_icon(item_key)
+	if texture == null:
+		return null
+	var resource_path := String(texture.resource_path)
+	for prefix in [TAVERN_ITEM_ICON_PREFIX, TAVERN_ITEM_ART_PREFIX, ITEM_ICON_PREFIX, PRODUCT_ICON_PREFIX]:
+		if resource_path.begins_with(prefix):
+			return texture
+	return null
 
 
 ## 从背包/快捷栏拖出物品的统一入口：先扣库存，再生成桌面物理体。
@@ -395,6 +608,8 @@ func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 func _capture_docks() -> void:
 	_docks[_brewery] = _brewery.global_position
 	_docks[_shaker] = _shaker.global_position
+	if _ledger != null:
+		_docks[_ledger] = _ledger.global_position
 	for child in _items_node.get_parent().get_children():
 		if _is_kitchen_container(child) or child is StirSpoon:
 			_docks[child] = child.global_position
@@ -438,6 +653,7 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 func _physics_process(_delta: float) -> void:
 	_recover_docked_bodies()
 	_update_spoon_depth()
+	_update_dragged_item_depth()
 
 
 func _update_spoon_depth() -> void:
@@ -449,6 +665,41 @@ func _update_spoon_depth() -> void:
 
 
 ## 容器/工具越界时自动回泊位，避免关键工作台对象永久丢失。
+func _update_dragged_item_depth() -> void:
+	var body := _drag_ctrl.get_body()
+	if not _is_body_usable(body):
+		return
+	if not body is DeskItem:
+		return
+	var item := body as DeskItem
+	if not _dragged_item_surface_z_indices.has(item):
+		_dragged_item_surface_z_indices[item] = item.z_index
+	if _is_item_inside_any_container(item):
+		item.z_index = SUBMERGED_ITEM_Z_INDEX
+	else:
+		item.z_index = int(_dragged_item_surface_z_indices[item])
+
+
+func _restore_dragged_item_depth(item: DeskItem) -> void:
+	if item == null:
+		return
+	if not is_instance_valid(item) or item.is_queued_for_deletion():
+		_dragged_item_surface_z_indices.erase(item)
+		return
+	if not _dragged_item_surface_z_indices.has(item):
+		return
+	item.z_index = int(_dragged_item_surface_z_indices[item])
+	_dragged_item_surface_z_indices.erase(item)
+
+
+func _is_item_inside_any_container(item: DeskItem) -> bool:
+	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
+		return false
+	return _brewery.is_item_inside_mouth(item) \
+		or _grill.is_item_inside_intake(item) \
+		or _pot.is_item_inside_intake(item)
+
+
 func _recover_docked_bodies() -> void:
 	for body in _docks:
 		if is_instance_valid(body) and body.global_position.y > KILL_Y:
@@ -470,10 +721,14 @@ func _exit_tree() -> void:
 ## 两个材料 DeskItem 高速对撞 → 按力度窗口砸合成。
 ## b=被撞对象（body_entered 传入），a=信号发出者（bind 的自己）。产物/容器/低速碰撞不触发。
 func _on_item_collision(b: Node, a: DeskItem) -> void:
+	if not is_instance_valid(a) or a.is_queued_for_deletion():
+		return
+	if not is_instance_valid(b) or b.is_queued_for_deletion():
+		return
 	if not (b is DeskItem):
 		return
 	var other: DeskItem = b as DeskItem
-	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+	if other.is_queued_for_deletion():
 		return
 	var key_a: String = a.item_key
 	var key_b: String = other.item_key

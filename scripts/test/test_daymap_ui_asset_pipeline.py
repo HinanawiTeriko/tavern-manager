@@ -12,10 +12,12 @@ RUNTIME = ROOT / "assets" / "textures" / "daymap" / "ui"
 GENERATED_RAW = ROOT / "art_sources" / "generated_raw" / "daymap"
 NATIVE_SIZE = (70, 18)
 RUNTIME_SIZE = (280, 72)
-LEDGER_NATIVE_SIZE = (33, 11)
+LEDGER_NATIVE_SIZE = (66, 22)
 LEDGER_RUNTIME_SIZE = (132, 44)
 DETAIL_PANEL_NATIVE_SIZE = (80, 120)
 DETAIL_PANEL_RUNTIME_SIZE = (320, 480)
+DETAIL_GO_BUTTON_NATIVE_SIZE = (56, 14)
+DETAIL_GO_BUTTON_RUNTIME_SIZE = (224, 56)
 RESULT_PANEL_NATIVE_SIZE = (175, 100)
 RESULT_PANEL_RUNTIME_SIZE = (700, 400)
 TAB_NATIVE_SIZE = (36, 12)
@@ -42,13 +44,36 @@ PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 96)
 PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
 PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
 PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
+PINNED_DETAIL_PANEL_NATIVE_SIZE = (92, 96)
+PINNED_DETAIL_PANEL_RUNTIME_SIZE = (368, 384)
+GATHERING_TOAST_PANEL_NATIVE_SIZE = (105, 14)
+GATHERING_TOAST_PANEL_RUNTIME_SIZE = (420, 56)
 PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
 NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_action_button_contact_sheet.png"
+DETAIL_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_detail_panel_contact_sheet.png"
+GATHERING_TOAST_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_gathering_toast_contact_sheet.png"
+RESULT_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_result_panel_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
+TOPBAR_DESKTOP_SOURCE = GENERATED_RAW / "topbar_desktop_source.png"
+TOPBAR_SOURCE_CROP = [14, 557, 1240, 698]
 PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = [80, 60, 1120, 1148]
 PINNED_NOTE_KNIFE_CROP = [80, 60, 520, 540]
 NOTE_ACTION_PAPER_STAMP_SOURCE = GENERATED_RAW / "note_action_paper_stamp_source.png"
+DETAIL_PANEL_PINNED_SOURCE = GENERATED_RAW / "detail_panel_pinned_notice_source_v1.png"
+DETAIL_PANEL_PINNED_PROMPT = GENERATED_RAW / "detail_panel_pinned_notice_prompt_v1.txt"
+DETAIL_PANEL_SOURCE_CROP = [72, 44, 966, 1492]
+PINNED_DETAIL_PANEL_SOURCE = GENERATED_RAW / "pinned_note_detail_panel_source_v2.png"
+PINNED_DETAIL_PANEL_PROMPT = GENERATED_RAW / "pinned_note_detail_panel_prompt_v2.txt"
+PINNED_DETAIL_PANEL_CROP = [100, 52, 1188, 1136]
+DETAIL_GO_BUTTON_STATES_SOURCE = GENERATED_RAW / "detail_go_button_states_source_v3.png"
+DETAIL_GO_BUTTON_STATES_PROMPT = GENERATED_RAW / "detail_go_button_states_prompt_v3.txt"
+GATHERING_TOAST_PANEL_SOURCE = GENERATED_RAW / "gathering_toast_panel_source_v2.png"
+GATHERING_TOAST_PANEL_PROMPT = GENERATED_RAW / "gathering_toast_panel_prompt_v2.txt"
+SPECIAL_RESULT_PANEL_SOURCE = GENERATED_RAW / "special_result_panel_source_v1.png"
+SPECIAL_RESULT_PANEL_PROMPT = GENERATED_RAW / "special_result_panel_prompt_v1.txt"
+LEDGER_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_button_states_source_v1.png"
+LEDGER_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_button_states_prompt_v1.txt"
 NOTE_ACTION_NATIVE_SIZE = (56, 14)
 NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
@@ -56,6 +81,18 @@ NOTE_ACTION_CROPS = {
     "hover": [165, 501, 1089, 748],
     "pressed": [165, 892, 1089, 1141],
 }
+LEDGER_BUTTON_CROPS = {
+    "normal": [190, 100, 1064, 360],
+    "hover": [190, 500, 1064, 760],
+    "pressed": [190, 895, 1064, 1155],
+}
+DETAIL_GO_BUTTON_CROPS = {
+    "normal": [60, 195, 975, 429],
+    "hover": [60, 630, 975, 864],
+    "pressed": [60, 1064, 975, 1298],
+}
+GATHERING_TOAST_PANEL_CROP = [50, 552, 1200, 705]
+SPECIAL_RESULT_PANEL_CROP = [0, 0, 1659, 930]
 STATES = ["normal", "hover", "pressed"]
 TAB_STATES = ["normal", "selected"]
 SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.png"
@@ -148,6 +185,17 @@ def alpha_bbox_fill_ratio(image: Image.Image) -> tuple[float, float]:
         return (0.0, 0.0)
     left, top, right, bottom = box
     return ((right - left) / image.width, (bottom - top) / image.height)
+
+
+def alpha_edge_visible_counts(image: Image.Image) -> tuple[int, int, int, int]:
+    alpha = image.getchannel("A")
+    pixels = alpha.load()
+    width, height = alpha.size
+    left = sum(1 for y in range(height) if pixels[0, y] > 0)
+    right = sum(1 for y in range(height) if pixels[width - 1, y] > 0)
+    top = sum(1 for x in range(width) if pixels[x, 0] > 0)
+    bottom = sum(1 for x in range(width) if pixels[x, height - 1] > 0)
+    return (left, right, top, bottom)
 
 
 def long_horizontal_line_pixels(image: Image.Image) -> int:
@@ -285,12 +333,17 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertIn("SHOP_BUTTONS_REFERENCE", source, "shop buttons must consume retained reference art")
         self.assertIn("SHOP_STEPPER_ICONS_REFERENCE", source, "shop stepper icons must keep generated reference art")
         self.assertIn("PANELS_REFERENCE", source, "shop panel and scrollbar must consume retained panel reference art")
+        self.assertIn("TOPBAR_DESKTOP_SOURCE", source, "topbar must consume retained AI source art")
         self.assertIn("PINNED_NOTE_PIERCED_SOURCE", source, "pinned note must consume retained AI source art")
+        self.assertIn("PINNED_DETAIL_PANEL_SOURCE", source, "active pinned detail panel must consume retained AI source art")
         self.assertIn("NOTE_ACTION_PAPER_STAMP_SOURCE", source, "note action button must consume retained AI source art")
+        self.assertIn("DETAIL_GO_BUTTON_STATES_SOURCE", source, "detail go button must consume retained AI state art")
+        self.assertIn("LEDGER_BUTTON_STATES_SOURCE", source, "ledger button must consume retained AI state art")
+        self.assertIn("SPECIAL_RESULT_PANEL_SOURCE", source, "special result panel must consume retained AI source art")
+        self.assertNotIn("def make_ledger_button_native", source, "ledger button must not be procedurally drawn")
         self.assertNotIn("make_pinned_note_panel_native", source, "pinned note must be normalized from retained AI source art")
         self.assertNotIn("make_pinned_note_knife_native", source, "knife pin must be normalized from retained AI source art")
         self.assertIn("make_primary_button_native", source, "primary button must use a deterministic native-pixel constructor")
-        self.assertIn("make_ledger_button_native", source, "ledger button must use a deterministic native-pixel constructor")
 
     def test_shop_reference_sources_are_retained(self) -> None:
         for path in [SHOP_ATLAS_REFERENCE, SHOP_BUTTONS_REFERENCE, SHOP_STEPPER_ICONS_REFERENCE, PANELS_REFERENCE]:
@@ -309,6 +362,23 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             f"{PINNED_NOTE_PIERCED_SOURCE}: retained AI source art is empty",
         )
 
+    def test_pinned_detail_panel_ai_source_is_retained(self) -> None:
+        for path in [PINNED_DETAIL_PANEL_SOURCE, PINNED_DETAIL_PANEL_PROMPT]:
+            with self.subTest(path=path.name):
+                self.assertTrue(path.exists(), f"{path}: missing retained AI pinned detail source")
+                self.assertGreater(path.stat().st_size, 0, f"{path}: retained pinned detail source is empty")
+
+    def test_topbar_desktop_ai_source_is_retained(self) -> None:
+        self.assertTrue(
+            TOPBAR_DESKTOP_SOURCE.exists(),
+            f"{TOPBAR_DESKTOP_SOURCE}: missing retained AI source art",
+        )
+        self.assertGreater(
+            TOPBAR_DESKTOP_SOURCE.stat().st_size,
+            0,
+            f"{TOPBAR_DESKTOP_SOURCE}: retained AI source art is empty",
+        )
+
     def test_note_action_paper_stamp_ai_source_is_retained(self) -> None:
         self.assertTrue(
             NOTE_ACTION_PAPER_STAMP_SOURCE.exists(),
@@ -319,6 +389,18 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             0,
             f"{NOTE_ACTION_PAPER_STAMP_SOURCE}: retained AI source art is empty",
         )
+
+    def test_ledger_button_ai_state_source_is_retained(self) -> None:
+        for path in [LEDGER_BUTTON_STATES_SOURCE, LEDGER_BUTTON_STATES_PROMPT]:
+            with self.subTest(path=path.name):
+                self.assertTrue(path.exists(), f"{path}: missing retained AI ledger button source")
+                self.assertGreater(path.stat().st_size, 0, f"{path}: retained ledger button source is empty")
+
+    def test_special_result_panel_ai_source_is_retained(self) -> None:
+        for path in [SPECIAL_RESULT_PANEL_SOURCE, SPECIAL_RESULT_PANEL_PROMPT]:
+            with self.subTest(path=path.name):
+                self.assertTrue(path.exists(), f"{path}: missing retained AI special result panel source")
+                self.assertGreater(path.stat().st_size, 0, f"{path}: retained special result panel source is empty")
 
     def test_shop_redesign_reference_source_is_retained(self) -> None:
         self.assertTrue(
@@ -627,27 +709,79 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertLessEqual(left_stamp_pixels, 96, "left accent must not read as an oversized wax seal")
         self.assertGreaterEqual(len(set(pixels)), 9, "note action button needs native-pixel tonal variation")
 
+    def test_detail_go_button_states_are_exact_native_exports(self) -> None:
+        previous_bytes: bytes | None = None
+        for state in STATES:
+            with self.subTest(state=state):
+                native = assert_exact_native_export(
+                    self,
+                    SOURCE / f"button_detail_go_{state}_native.png",
+                    RUNTIME / f"button_detail_go_{state}.png",
+                    DETAIL_GO_BUTTON_NATIVE_SIZE,
+                    DETAIL_GO_BUTTON_RUNTIME_SIZE,
+                )
+                self.assertGreaterEqual(visible_pixel_count(native), 340, f"{state}: detail go tag too sparse")
+                current_bytes = native.tobytes()
+                if previous_bytes is not None:
+                    self.assertNotEqual(current_bytes, previous_bytes, f"{state}: state art matches previous state")
+                previous_bytes = current_bytes
+
+    def test_detail_go_button_reads_as_travel_tag(self) -> None:
+        native = load_rgba(SOURCE / "button_detail_go_normal_native.png")
+        pixels = list(native.get_flattened_data())
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 62 and 18 <= g <= 95 and 18 <= b <= 95
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 150 and r >= 145 and 55 <= g <= 165 and b <= 90
+        )
+        self.assertGreaterEqual(parchment_pixels, 360, "detail go button needs a readable travel-tag body")
+        self.assertGreaterEqual(dark_pixels, 44, "detail go button needs a dark pressed shadow/outline")
+        self.assertGreaterEqual(amber_pixels, 12, "detail go button needs small warm pin or seal accents")
+        self.assertLessEqual(overheated_orange_pixel_count(native), 140, "detail go button should not become a hot orange strip")
+
+    def test_detail_go_button_edges_are_not_hard_cropped(self) -> None:
+        for state in STATES:
+            with self.subTest(state=state):
+                native = load_rgba(SOURCE / f"button_detail_go_{state}_native.png")
+                left, right, top, bottom = alpha_edge_visible_counts(native)
+                self.assertEqual(left, 0, f"{state}: detail go button left side is clipped")
+                self.assertEqual(right, 0, f"{state}: detail go button right side is clipped")
+                self.assertLessEqual(top, 50, f"{state}: detail go button top edge is a hard line")
+                self.assertLessEqual(bottom, 50, f"{state}: detail go button bottom edge is a hard line")
+                width_ratio, height_ratio = alpha_bbox_fill_ratio(native)
+                self.assertGreaterEqual(width_ratio, 0.90, f"{state}: detail go button became too narrow")
+                self.assertGreaterEqual(height_ratio, 0.90, f"{state}: detail go button became too short")
+
     def test_note_action_contact_sheet_exists(self) -> None:
         self.assertTrue(NOTE_ACTION_CONTACT_SHEET.exists(), f"{NOTE_ACTION_CONTACT_SHEET}: missing contact sheet")
         self.assertGreater(NOTE_ACTION_CONTACT_SHEET.stat().st_size, 0, "note action contact sheet is empty")
 
     def test_button_silhouettes_fill_their_native_shapes(self) -> None:
         cases = [
-            ("button_primary_normal", 0.86),
-            ("button_note_action_normal", 0.86),
-            ("button_ledger_normal", 0.82),
-            ("button_tab_normal", 0.82),
-            ("button_shop_wide_normal", 0.82),
-            ("button_shop_square_normal", 0.92),
+            ("button_primary_normal", 0.86, 0.90),
+            ("button_note_action_normal", 0.86, 0.90),
+            ("button_detail_go_normal", 0.86, 0.84),
+            ("button_ledger_normal", 0.82, 0.90),
+            ("button_tab_normal", 0.82, 0.90),
+            ("button_shop_wide_normal", 0.82, 0.90),
+            ("button_shop_square_normal", 0.92, 0.90),
         ]
-        for name, min_width_ratio in cases:
+        for name, min_width_ratio, min_height_ratio in cases:
             with self.subTest(name=name):
                 native = load_rgba(SOURCE / f"{name}_native.png")
                 width_ratio, height_ratio = alpha_bbox_fill_ratio(native)
                 self.assertGreaterEqual(width_ratio, min_width_ratio, f"{name}: visible silhouette is too narrow")
-                self.assertGreaterEqual(height_ratio, 0.90, f"{name}: visible silhouette is too short")
+                self.assertGreaterEqual(height_ratio, min_height_ratio, f"{name}: visible silhouette is too short")
 
     def test_ledger_button_states_are_exact_native_exports(self) -> None:
+        natives: dict[str, Image.Image] = {}
         for state in STATES:
             with self.subTest(state=state):
                 native_path = SOURCE / f"button_ledger_{state}_native.png"
@@ -661,6 +795,25 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 self.assertGreaterEqual(visible_pixel_count(native), 160, f"{state}: ledger button too sparse")
                 expected = native.resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
                 self.assertEqual(runtime.tobytes(), expected.tobytes(), f"{state}: ledger not exact nearest export")
+                natives[state] = native
+        normal_pressed_diff = sum(
+            1
+            for normal_px, pressed_px in zip(
+                natives["normal"].get_flattened_data(),
+                natives["pressed"].get_flattened_data(),
+            )
+            if normal_px != pressed_px
+        )
+        normal_hover_diff = sum(
+            1
+            for normal_px, hover_px in zip(
+                natives["normal"].get_flattened_data(),
+                natives["hover"].get_flattened_data(),
+            )
+            if normal_px != hover_px
+        )
+        self.assertGreaterEqual(normal_pressed_diff, 110, "pressed ledger state needs a clear authored state change")
+        self.assertGreaterEqual(normal_hover_diff, 140, "hover ledger state needs a clear authored highlight change")
 
     def test_ledger_button_reads_as_small_book_tab(self) -> None:
         native_path = SOURCE / "button_ledger_normal_native.png"
@@ -787,6 +940,44 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             "result panel lost the right dark frame; panel reference extraction is probably cutting the sheet",
         )
 
+    def test_result_panel_reads_as_special_location_notice(self) -> None:
+        native = load_rgba(SOURCE / "panel_result_native.png")
+        pixels = list(native.get_flattened_data())
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 62 and 18 <= g <= 95 and 18 <= b <= 95
+        )
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 150 and r >= 145 and 55 <= g <= 165 and b <= 90
+        )
+        button_seat = native.crop((55, 77, 120, 99)).convert("RGBA")
+        seat_pixels = list(button_seat.get_flattened_data())
+        seat_dark_pixels = sum(
+            1 for r, g, b, a in seat_pixels
+            if a >= 180 and r <= 70 and 18 <= g <= 100 and 18 <= b <= 100
+        )
+        body_area = native.crop((24, 24, 151, 72)).convert("RGBA")
+        body_pixels = list(body_area.get_flattened_data())
+        body_parchment_pixels = sum(
+            1 for r, g, b, a in body_pixels
+            if a >= 180 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        self.assertGreaterEqual(dark_pixels, 1350, "result panel needs a strong dark teal special-location frame")
+        self.assertGreaterEqual(parchment_pixels, 9800, "result panel needs a broad readable parchment body")
+        self.assertGreaterEqual(amber_pixels, 80, "result panel needs wax, nail, or candle amber accents")
+        self.assertGreaterEqual(seat_dark_pixels, 700, "result panel needs a visible bottom button seat")
+        self.assertGreaterEqual(body_parchment_pixels, 4300, "result panel body safe area must stay readable")
+        self.assertGreaterEqual(len(set(pixels)), 7, "result panel needs native-pixel tonal variation")
+
+    def test_result_panel_contact_sheet_exists(self) -> None:
+        self.assertTrue(RESULT_PANEL_CONTACT_SHEET.exists(), f"{RESULT_PANEL_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(RESULT_PANEL_CONTACT_SHEET.stat().st_size, 0, "result panel contact sheet is empty")
+
     def test_topbar_strip_is_exact_native_export(self) -> None:
         native = assert_exact_native_export(
             self,
@@ -804,8 +995,21 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             1 for r, g, b, a in pixels
             if a >= 150 and r >= 150 and 65 <= g <= 155 and b <= 80
         )
-        self.assertGreaterEqual(dark_pixels, 2800, "topbar strip should read as dark tavern-table material")
-        self.assertGreaterEqual(amber_pixels, 40, "topbar strip needs sparse amber binding accents")
+        wood_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 56 <= r <= 145 and 30 <= g <= 100 and 18 <= b <= 78 and r > g and g >= b
+        )
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 84 <= r <= 185 and 58 <= g <= 145 and 34 <= b <= 112 and r >= g and r - g <= 62
+        )
+        self.assertGreaterEqual(dark_pixels, 900, "topbar strip needs dark map-edge shadows")
+        self.assertGreaterEqual(wood_pixels, 1600, "topbar strip should read as a muted wooden tavern-table ledge")
+        self.assertGreaterEqual(parchment_pixels, 160, "topbar strip needs restrained paper/material patches behind status text")
+        self.assertGreaterEqual(amber_pixels, 24, "topbar strip needs sparse amber binding accents")
+        self.assertLessEqual(amber_pixels, 220, "topbar strip should not flood the bar with saturated orange")
+        self.assertLessEqual(overheated_orange_pixel_count(native), 260, "topbar strip should stay muted, not hot orange")
+        self.assertGreaterEqual(len(set(pixels)), 10, "topbar strip needs more material variation than a flat dark strip")
 
     def test_topbar_covers_the_screen_top_edge(self) -> None:
         native = load_rgba(SOURCE / "topbar_strip_native.png")
@@ -835,6 +1039,37 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             "detail panel body should be opaque; do not use alpha as carved wear",
         )
 
+    def test_detail_panel_reads_as_knife_pinned_location_notice(self) -> None:
+        native = load_rgba(SOURCE / "panel_detail_native.png")
+        pixels = list(native.get_flattened_data())
+        blade_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 105 <= r <= 225 and 110 <= g <= 230 and 100 <= b <= 220
+        )
+        top_left = native.crop((0, 0, 34, 36)).convert("RGBA")
+        top_left_blade_pixels = sum(
+            1 for r, g, b, a in top_left.get_flattened_data()
+            if a >= 180 and 105 <= r <= 225 and 110 <= g <= 230 and 100 <= b <= 220
+        )
+        title_safe = native.crop((18, 8, 70, 28)).convert("RGBA")
+        title_dark_pixels = sum(
+            1 for r, g, b, a in title_safe.get_flattened_data()
+            if a >= 180 and r <= 62 and 18 <= g <= 95 and 18 <= b <= 95
+        )
+        body_safe = native.crop((14, 28, 66, 92)).convert("RGBA")
+        body_parchment_pixels = sum(
+            1 for r, g, b, a in body_safe.get_flattened_data()
+            if a >= 200 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        self.assertGreaterEqual(blade_pixels, 12, "detail panel needs visible knife blade pixels")
+        self.assertGreaterEqual(top_left_blade_pixels, 8, "detail panel knife should visibly pin the upper-left paper corner")
+        self.assertLessEqual(title_dark_pixels, 520, "detail title safe area should not be buried under the knife or dark ornament")
+        self.assertGreaterEqual(body_parchment_pixels, 1900, "detail body safe area needs enough clear parchment for readable labels")
+
+    def test_detail_panel_contact_sheet_exists(self) -> None:
+        self.assertTrue(DETAIL_PANEL_CONTACT_SHEET.exists(), f"{DETAIL_PANEL_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(DETAIL_PANEL_CONTACT_SHEET.stat().st_size, 0, "detail panel contact sheet is empty")
+
     def test_pinned_note_assets_are_exact_native_exports(self) -> None:
         cases = [
             (
@@ -847,6 +1082,11 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 PINNED_NOTE_KNIFE_NATIVE_SIZE,
                 PINNED_NOTE_KNIFE_RUNTIME_SIZE,
             ),
+            (
+                "pinned_note_detail_panel",
+                PINNED_DETAIL_PANEL_NATIVE_SIZE,
+                PINNED_DETAIL_PANEL_RUNTIME_SIZE,
+            ),
         ]
         for name, native_size, runtime_size in cases:
             with self.subTest(name=name):
@@ -857,6 +1097,41 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                     native_size,
                     runtime_size,
                 )
+
+    def test_gathering_toast_panel_is_exact_native_export(self) -> None:
+        assert_exact_native_export(
+            self,
+            SOURCE / "gathering_toast_panel_native.png",
+            RUNTIME / "gathering_toast_panel.png",
+            GATHERING_TOAST_PANEL_NATIVE_SIZE,
+            GATHERING_TOAST_PANEL_RUNTIME_SIZE,
+        )
+
+    def test_gathering_toast_panel_reads_as_top_bubble(self) -> None:
+        native = load_rgba(SOURCE / "gathering_toast_panel_native.png")
+        pixels = list(native.get_flattened_data())
+        visible_pixels = visible_pixel_count(native)
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 62 and 18 <= g <= 95 and 18 <= b <= 95
+        )
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        amber_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 150 and r >= 145 and 55 <= g <= 165 and b <= 90
+        )
+        self.assertGreaterEqual(visible_pixels, 1000, "gathering toast panel needs a readable banner body")
+        self.assertGreaterEqual(dark_pixels, 80, "gathering toast panel needs dark DayMap outline/shadow pixels")
+        self.assertGreaterEqual(parchment_pixels, 680, "gathering toast panel should read as muted parchment")
+        self.assertGreaterEqual(amber_pixels, 10, "gathering toast panel needs sparse warm pin/highlight pixels")
+        self.assertLessEqual(overheated_orange_pixel_count(native), 160, "gathering toast panel should not become a hot orange strip")
+
+    def test_gathering_toast_contact_sheet_exists(self) -> None:
+        self.assertTrue(GATHERING_TOAST_CONTACT_SHEET.exists(), f"{GATHERING_TOAST_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(GATHERING_TOAST_CONTACT_SHEET.stat().st_size, 0, "gathering toast contact sheet is empty")
 
     def test_pinned_note_panel_reads_as_map_parchment(self) -> None:
         native = load_rgba(SOURCE / "pinned_note_panel_native.png")
@@ -897,6 +1172,28 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertGreaterEqual(zone_dark_pixels, 120, "pinned note upper-left area needs puncture shadow and folds")
         self.assertGreaterEqual(len(set(pixels)), 10, "pinned note needs native-pixel tonal variation")
 
+    def test_pinned_detail_panel_matches_daymap_marker_palette(self) -> None:
+        native = load_rgba(SOURCE / "pinned_note_detail_panel_native.png")
+        pixels = list(native.get_flattened_data())
+        parchment_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 200 and 95 <= r <= 190 and 60 <= g <= 150 and 35 <= b <= 112
+        )
+        dark_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and r <= 62 and 18 <= g <= 95 and 18 <= b <= 95
+        )
+        blade_pixels = sum(
+            1 for r, g, b, a in pixels
+            if a >= 180 and 105 <= r <= 225 and 110 <= g <= 230 and 100 <= b <= 220
+        )
+        overheated_pixels = overheated_orange_pixel_count(native)
+        self.assertGreaterEqual(parchment_pixels, 5200, "pinned detail panel needs a broad readable parchment body")
+        self.assertGreaterEqual(dark_pixels, 600, "pinned detail panel needs DayMap dark teal map-shadow pixels")
+        self.assertGreaterEqual(blade_pixels, 12, "pinned detail panel needs a visible dagger pin")
+        self.assertLessEqual(overheated_pixels, 80, "pinned detail panel should stay muted, not hot orange")
+        self.assertGreaterEqual(len(set(pixels)), 10, "pinned detail panel needs native-pixel tonal variation")
+
     def test_pinned_note_knife_reads_as_small_dagger_pin(self) -> None:
         native = load_rgba(SOURCE / "pinned_note_knife_native.png")
         pixels = list(native.get_flattened_data())
@@ -927,6 +1224,33 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         manifest = json.loads(DAYMAP_UI_MANIFEST.read_text(encoding="utf-8"))
         assets = manifest.get("assets", {})
         expected = {
+            "topbar_strip": {
+                "source_file": "art_sources/generated_raw/daymap/topbar_desktop_source.png",
+                "native_file": "assets/source/daymap/ui/topbar_strip_native.png",
+                "output_file": "assets/textures/daymap/ui/topbar_strip.png",
+                "size": [1280, 60],
+                "source_crop": TOPBAR_SOURCE_CROP,
+                "safe_area": [72, 8, 1120, 44],
+                "intended_godot_use": "DayMap UILayer/TopBar/TopStrip",
+            },
+            "gathering_toast_panel": {
+                "source_file": "art_sources/generated_raw/daymap/gathering_toast_panel_source_v2.png",
+                "native_file": "assets/source/daymap/ui/gathering_toast_panel_native.png",
+                "output_file": "assets/textures/daymap/ui/gathering_toast_panel.png",
+                "size": [420, 56],
+                "source_crop": GATHERING_TOAST_PANEL_CROP,
+                "safe_area": [44, 10, 332, 36],
+                "intended_godot_use": "DayMap UILayer/GatheringToast panel",
+            },
+            "panel_result": {
+                "source_file": "art_sources/generated_raw/daymap/special_result_panel_source_v1.png",
+                "native_file": "assets/source/daymap/ui/panel_result_native.png",
+                "output_file": "assets/textures/daymap/ui/panel_result.png",
+                "size": [700, 400],
+                "source_crop": SPECIAL_RESULT_PANEL_CROP,
+                "safe_area": [96, 88, 508, 228],
+                "intended_godot_use": "DayMap UILayer/ResultPanel special-location result notice",
+            },
             "pinned_note_panel": {
                 "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
                 "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
@@ -945,8 +1269,35 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 "safe_area": [18, 0, 74, 112],
                 "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
             },
+            "pinned_note_detail_panel": {
+                "source_file": "art_sources/generated_raw/daymap/pinned_note_detail_panel_source_v2.png",
+                "native_file": "assets/source/daymap/ui/pinned_note_detail_panel_native.png",
+                "output_file": "assets/textures/daymap/ui/pinned_note_detail_panel.png",
+                "size": [368, 384],
+                "source_crop": PINNED_DETAIL_PANEL_CROP,
+                "safe_area": [88, 88, 224, 192],
+                "intended_godot_use": "DayMap MapWorld/PinnedNotePanel/NoteArt active location notice",
+            },
+            "panel_detail": {
+                "source_file": "art_sources/generated_raw/daymap/detail_panel_pinned_notice_source_v1.png",
+                "native_file": "assets/source/daymap/ui/panel_detail_native.png",
+                "output_file": "assets/textures/daymap/ui/panel_detail.png",
+                "size": [320, 480],
+                "source_crop": DETAIL_PANEL_SOURCE_CROP,
+                "safe_area": [56, 112, 208, 256],
+                "intended_godot_use": "DayMap UILayer/DetailPanel pinned location notice",
+            },
         }
         for state in STATES:
+            expected[f"button_ledger_{state}"] = {
+                "source_file": "art_sources/generated_raw/daymap/daymap_ledger_button_states_source_v1.png",
+                "native_file": f"assets/source/daymap/ui/button_ledger_{state}_native.png",
+                "output_file": f"assets/textures/daymap/ui/button_ledger_{state}.png",
+                "size": [132, 44],
+                "source_crop": LEDGER_BUTTON_CROPS[state],
+                "safe_area": [42, 8, 60, 28],
+                "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn",
+            }
             expected[f"button_note_action_{state}"] = {
                 "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
                 "native_file": f"assets/source/daymap/ui/button_note_action_{state}_native.png",
@@ -955,6 +1306,15 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 "source_crop": NOTE_ACTION_CROPS[state],
                 "safe_area": [56, 12, 148, 32],
                 "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
+            }
+            expected[f"button_detail_go_{state}"] = {
+                "source_file": "art_sources/generated_raw/daymap/detail_go_button_states_source_v3.png",
+                "native_file": f"assets/source/daymap/ui/button_detail_go_{state}_native.png",
+                "output_file": f"assets/textures/daymap/ui/button_detail_go_{state}.png",
+                "size": [224, 56],
+                "source_crop": DETAIL_GO_BUTTON_CROPS[state],
+                "safe_area": [44, 10, 136, 36],
+                "intended_godot_use": "DayMap UILayer/DetailPanel/GoHereBtn",
             }
         for asset_id, expected_entry in expected.items():
             with self.subTest(asset_id=asset_id):

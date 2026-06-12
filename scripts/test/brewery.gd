@@ -7,6 +7,7 @@ signal recipe_consumed(product_key: String)
 
 const CONTAINER_KEY := "barrel"
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 const BARREL_MASS := 2.5
 const BARREL_LINEAR_DAMP := 0.8
 const BARREL_ANGULAR_DAMP := 4.0
@@ -20,6 +21,7 @@ const BARREL_CONFIG := "res://data/barrel.json"
 
 @onready var _mouth: Area2D = $Mouth
 @onready var _output_anchor: Marker2D = $OutputAnchor
+@onready var _art: Sprite2D = $Art
 
 var _items_parent: Node2D = null
 var _pending_keys: Array[String] = []
@@ -37,6 +39,7 @@ func _ready() -> void:
 	linear_damp = BARREL_LINEAR_DAMP
 	angular_damp = BARREL_ANGULAR_DAMP
 	lock_rotation = false
+	_fit_collision_to_art_bounds()
 	_mouth.body_entered.connect(_on_mouth_body_entered)
 	_load_shake_config()
 
@@ -73,6 +76,10 @@ func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
 	return _is_point_inside_mouth_opening(item.global_position)
 
 
+func is_item_inside_mouth(item: Node2D) -> bool:
+	return item != null and _is_point_inside_mouth_opening(item.global_position)
+
+
 func is_spoon_inside(spoon: StirSpoon) -> bool:
 	var local_pos: Vector2 = to_local(spoon.tip_global_position())
 	return absf(local_pos.x) <= SPOON_ZONE_INNER_HALF_WIDTH \
@@ -93,6 +100,7 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 	product.global_position = _output_anchor.global_position
 	var item_data: Dictionary = GameManager.craft.get_item(product_key)
 	product.set_item(product_key, item_data, GameManager.craft.get_item_physics_profiles())
+	GameManager.apply_material_icon_to_desk_item(product)
 	product.quality = quality
 	# 冒桶口：向上 + 轻微偏外的初速度，重力把它带成弧线落桌。
 	# 朝上离开桶口，且产出物是成品（_try_accept 的 is_product 守卫会拦它），不会被自己收回。
@@ -158,3 +166,36 @@ func pop_last_ingredient() -> String:
 
 func ingredient_output_position() -> Vector2:
 	return _output_anchor.global_position
+
+
+func _fit_collision_to_art_bounds() -> void:
+	var bounds: Rect2 = TEXTURE_COLLISION_BOUNDS.centered_sprite_alpha_rect(_art)
+	if bounds.size == Vector2.ZERO:
+		return
+	var left := bounds.position.x
+	var right := bounds.position.x + bounds.size.x
+	var top := bounds.position.y
+	var bottom := bounds.position.y + bounds.size.y
+	var inset := bounds.size.x * 0.1
+	var top_left := Vector2(left + inset, top)
+	var top_right := Vector2(right - inset, top)
+	var bottom_left := Vector2(left, bottom)
+	var bottom_right := Vector2(right, bottom)
+	_set_segment_shape("WallLeft", bottom_left, top_left)
+	_set_segment_shape("WallRight", bottom_right, top_right)
+	_set_segment_shape("WallBottom", bottom_left, bottom_right)
+	_set_segment_shape("RimLeft", top_left, Vector2(-MOUTH_INNER_HALF_WIDTH, top))
+	_set_segment_shape("RimRight", Vector2(MOUTH_INNER_HALF_WIDTH, top), top_right)
+	var pickup := get_node_or_null("PickupArea/Shape") as CollisionPolygon2D
+	if pickup != null:
+		pickup.polygon = PackedVector2Array([bottom_left, top_left, top_right, bottom_right])
+
+
+func _set_segment_shape(path: String, a: Vector2, b: Vector2) -> void:
+	var node := get_node_or_null(path) as CollisionShape2D
+	if node == null:
+		return
+	var segment := SegmentShape2D.new()
+	segment.a = a
+	segment.b = b
+	node.shape = segment

@@ -16,6 +16,8 @@ func _ready() -> void:
 	_test_daymap_art_assets(view)
 	_test_marker_labels_use_pixel_font(view)
 	_test_topbar_button_layout(view)
+	_test_gather_tutorial_targets_stamina_label(view)
+	_test_gathering_toast_contract(view)
 	_test_static_text_uses_pixel_font(view)
 	_test_pinned_note_contract(view)
 	await _test_pinned_note_stays_on_map_after_camera_moves(view)
@@ -23,6 +25,7 @@ func _ready() -> void:
 	_test_tavern_node(view)
 	_test_daymap_primary_button_style(view)
 	_test_panel_styles(view)
+	await _test_gathering_toast_replaces_normal_gather_result(view)
 	view._open_shop()
 	await get_tree().process_frame
 	_test_shop_overlay_integration(view)
@@ -63,12 +66,26 @@ func _test_daymap_primary_button_style(view) -> void:
 	_ok(button != null, "detail action button exists")
 	if button == null:
 		return
-	_ok(button.custom_minimum_size == Vector2(280, 72), "detail action button uses native runtime size")
+	_ok(button.custom_minimum_size == Vector2(224, 56), "detail action button uses pinned-notice runtime size")
+	_ok(button.size == Vector2(224, 56), "detail action button does not resize between states")
+	_ok(button.position == Vector2(48, 392), "detail action button sits inside the lower paper tag safe area")
 	var normal := button.get_theme_stylebox("normal") as StyleBoxTexture
+	var hover := button.get_theme_stylebox("hover") as StyleBoxTexture
+	var pressed := button.get_theme_stylebox("pressed") as StyleBoxTexture
 	_ok(normal != null and normal.texture != null, "detail action button uses texture style")
 	if normal != null and normal.texture != null:
-		_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_primary_normal.png"),
-			"detail action button uses DayMap primary normal art")
+		_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_normal.png"),
+			"detail action button uses dedicated pinned-notice normal art")
+		_ok(is_equal_approx(normal.get_content_margin(SIDE_LEFT), normal.get_content_margin(SIDE_RIGHT)),
+			"detail action button keeps text centered with symmetric horizontal margins")
+		_ok(is_equal_approx(normal.get_content_margin(SIDE_TOP), normal.get_content_margin(SIDE_BOTTOM)),
+			"detail action button keeps text vertically centered with symmetric vertical margins")
+	if hover != null and hover.texture != null:
+		_ok(String(hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_hover.png"),
+			"detail action button uses dedicated pinned-notice hover art")
+	if pressed != null and pressed.texture != null:
+		_ok(String(pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_pressed.png"),
+			"detail action button uses dedicated pinned-notice pressed art")
 	var font := button.get_theme_font("font")
 	_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 		"detail action button uses Fusion Pixel font")
@@ -122,8 +139,52 @@ func _test_panel_styles(view) -> void:
 		var result_label := view.get_node_or_null("UILayer/ResultPanel/ResultLabel") as Label
 		_ok(result_label != null, "result panel keeps result body text")
 		if result_label != null:
-			_ok(result_label.position == Vector2(90, 76), "result body text sits lower in the result panel")
-			_ok(result_label.size == Vector2(520, 210), "result body text uses a narrower reading width")
+			_ok(result_label.position == Vector2(96, 88), "result body text sits inside the special result notice safe area")
+			_ok(result_label.size == Vector2(508, 184), "result body text leaves room for the bottom button seat")
+		var continue_btn := view.get_node_or_null("UILayer/ResultPanel/ContinueBtn") as Button
+		_ok(continue_btn != null, "result panel keeps continue button")
+		if continue_btn != null:
+			_ok(continue_btn.position == Vector2(210, 304), "continue button sits on the bottom button seat")
+			_ok(continue_btn.size == Vector2(280, 72), "continue button keeps the DayMap primary button size")
+
+
+func _test_gathering_toast_contract(view) -> void:
+	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
+	_ok(toast != null, "DayMap has a top gathering toast")
+	if toast == null:
+		return
+	_ok(toast.position == Vector2(430, 68), "gathering toast sits at the top center of the screen")
+	_ok(toast.size == Vector2(420, 56), "gathering toast uses the DayMap art panel size")
+	_ok(toast.mouse_filter == Control.MOUSE_FILTER_IGNORE, "gathering toast never blocks map clicks")
+	var content := toast.get_node_or_null("Content") as Label
+	_ok(content != null, "gathering toast keeps a content label")
+	if content != null:
+		var font := content.get_theme_font("font")
+		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
+			"gathering toast content uses Fusion Pixel font")
+	var style := toast.get_theme_stylebox("panel") as StyleBoxTexture
+	_ok(style != null and style.texture != null, "gathering toast uses texture panel art")
+	if style != null and style.texture != null:
+		_ok(String(style.texture.resource_path).ends_with("assets/textures/daymap/ui/gathering_toast_panel.png"),
+			"gathering toast uses DayMap gathering toast art")
+
+
+func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
+	view._visit_location("mushroom_forest")
+	await get_tree().process_frame
+	var result := view.get_node_or_null("UILayer/ResultPanel") as Panel
+	_ok(result != null and not result.visible,
+		"normal gathering reward does not open the blocking result panel")
+	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
+	_ok(toast != null and toast.visible,
+		"normal gathering reward shows the top gathering toast")
+	if toast == null:
+		return
+	var content := toast.get_node_or_null("Content") as Label
+	_ok(content != null and content.text.begins_with("采集获得："),
+		"gathering toast announces collected rewards")
+	_ok(content != null and content.text.contains("×1"),
+		"gathering toast includes the collected item count")
 
 
 func _test_pinned_note_contract(view) -> void:
@@ -141,7 +202,7 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(note.get_parent() == view.get_node("MapWorld"), "pinned note is placed on the map world")
 	_ok(view.get_node_or_null("UILayer/PinnedNotePanel") == null,
 		"pinned note is not a fixed screen-space UI layer")
-	_ok(note.size == Vector2(368, 384), "pinned note keeps its fixed map-world size")
+	_ok(note.size == Vector2(368, 384), "pinned note uses the map-pinned notice size")
 	for child_name in ["KnifeArt", "NoteArt", "Name", "Desc", "Cost", "Yield", "GoHereBtn"]:
 		_ok(note.get_node_or_null(child_name) != null,
 			"pinned note keeps %s" % child_name)
@@ -149,16 +210,16 @@ func _test_pinned_note_contract(view) -> void:
 	var desc_label := note.get_node_or_null("Desc") as Label
 	var cost_label := note.get_node_or_null("Cost") as Label
 	var yield_label := note.get_node_or_null("Yield") as Label
-	_ok(name_label != null and name_label.position == Vector2(84, 78) and name_label.size == Vector2(200, 34),
-		"pinned note title sits centered near the top of the paper")
-	_ok(desc_label != null and desc_label.position == Vector2(144, 142) and desc_label.size == Vector2(168, 76),
-		"pinned note description is inset into a narrower paper column")
-	_ok(cost_label != null and cost_label.position == Vector2(144, 224) and cost_label.size == Vector2(168, 26),
-		"pinned note cost row is inset with the description column")
-	_ok(yield_label != null and yield_label.position == Vector2(144, 254) and yield_label.size == Vector2(168, 42),
-		"pinned note yield row is inset with the description column")
+	_ok(name_label != null and name_label.position == Vector2(112, 72) and name_label.size == Vector2(220, 34),
+		"pinned note title avoids the knife and stays inside the top title safe area")
+	_ok(desc_label != null and desc_label.position == Vector2(92, 126) and desc_label.size == Vector2(224, 88),
+		"pinned note description uses the central paper text safe area")
+	_ok(cost_label != null and cost_label.position == Vector2(92, 224) and cost_label.size == Vector2(224, 26),
+		"pinned note cost row leaves air below the description")
+	_ok(yield_label != null and yield_label.position == Vector2(92, 254) and yield_label.size == Vector2(224, 40),
+		"pinned note yield text ends above the lower action button")
 	if name_label != null:
-		_ok(is_equal_approx(name_label.position.x + name_label.size.x * 0.5, 184.0),
+		_ok(is_equal_approx(name_label.position.x + name_label.size.x * 0.5, 222.0),
 			"pinned note title center aligns with the note centerline")
 	if name_label != null:
 		_ok(_color_close(name_label.get_theme_color("font_color"), Color(0.36, 0.20, 0.10)),
@@ -181,8 +242,8 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(note_art != null and note_art.texture != null,
 		"pinned note has paper art")
 	if note_art != null and note_art.texture != null:
-		_ok(String(note_art.texture.resource_path).ends_with("assets/textures/daymap/ui/pinned_note_panel.png"),
-			"pinned note uses DayMap note paper art")
+		_ok(String(note_art.texture.resource_path).ends_with("assets/textures/daymap/ui/pinned_note_detail_panel.png"),
+			"pinned note uses DayMap pinned location detail art")
 	var knife_art := note.get_node_or_null("KnifeArt") as TextureRect
 	_ok(knife_art != null and knife_art.texture != null,
 		"pinned note has knife art")
@@ -191,10 +252,10 @@ func _test_pinned_note_contract(view) -> void:
 			"pinned note uses DayMap knife art")
 	var action := note.get_node_or_null("GoHereBtn") as Button
 	_ok(action != null and action.size == Vector2(224, 56),
-		"pinned note action button uses smaller note action size")
+		"pinned note action button uses detail go action size")
 	if action != null:
-		_ok(action.position == Vector2(92, 296),
-			"pinned note action button sits further up and left on the note bottom")
+		_ok(action.position == Vector2(72, 284),
+			"pinned note action button sits slightly higher in the lower paper tag safe area")
 		_ok(action.alignment == HORIZONTAL_ALIGNMENT_CENTER,
 			"pinned note action button centers its text horizontally")
 		var normal := action.get_theme_stylebox("normal") as StyleBoxTexture
@@ -203,18 +264,18 @@ func _test_pinned_note_contract(view) -> void:
 		_ok(normal != null and normal.texture != null,
 			"pinned note action button uses texture style")
 		if normal != null and normal.texture != null:
-			_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_normal.png"),
-				"pinned note action button uses paper-tag normal art")
+			_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_normal.png"),
+				"pinned note action button uses pinned-notice normal art")
 			_ok(is_equal_approx(normal.get_content_margin(SIDE_LEFT), normal.get_content_margin(SIDE_RIGHT)),
 				"pinned note action button keeps text centered with symmetric horizontal margins")
 			_ok(is_equal_approx(normal.get_content_margin(SIDE_TOP), normal.get_content_margin(SIDE_BOTTOM)),
 				"pinned note action button keeps text vertically centered with symmetric vertical margins")
 		if hover != null and hover.texture != null:
-			_ok(String(hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_hover.png"),
-				"pinned note action button uses paper-tag hover art")
+			_ok(String(hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_hover.png"),
+				"pinned note action button uses pinned-notice hover art")
 		if pressed != null and pressed.texture != null:
-			_ok(String(pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_note_action_pressed.png"),
-				"pinned note action button uses paper-tag pressed art")
+			_ok(String(pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_detail_go_pressed.png"),
+				"pinned note action button uses pinned-notice pressed art")
 		_ok(action.pressed.is_connected(Callable(view, "_on_go_here_pressed")),
 			"pinned note action routes through the existing DayMap action handler")
 
@@ -303,29 +364,46 @@ func _test_topbar_button_layout(view) -> void:
 	var day_label := view.get_node_or_null("UILayer/TopBar/DayLabel") as Label
 	_ok(day_label != null, "topbar keeps day label")
 	if day_label != null:
-		_ok(day_label.position == Vector2(72, 10), "day label clears the left corner ornament")
-		_ok(day_label.size == Vector2(300, 40), "day label keeps enough room after moving inward")
+		_ok(day_label.position == Vector2(132, 1), "day label is balanced inside the left parchment field")
+		_ok(day_label.size == Vector2(320, 40), "day label stays inside the left parchment field")
+		_ok(day_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "day label is centered on its parchment field")
 	var stamina_label := view.get_node_or_null("UILayer/TopBar/StaminaLabel") as Label
 	_ok(stamina_label != null, "topbar keeps stamina label")
 	if stamina_label != null:
-		_ok(stamina_label.position == Vector2(420, 10), "stamina label follows the safer topbar text lane")
+		_ok(stamina_label.position == Vector2(636, 1), "stamina label is balanced inside the center parchment field")
+		_ok(stamina_label.size == Vector2(128, 40), "stamina label fits the center parchment field")
+		_ok(stamina_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "stamina label is centered on its parchment field")
 	var gold_label := view.get_node_or_null("UILayer/TopBar/GoldLabel") as Label
 	_ok(gold_label != null, "topbar keeps gold label")
 	if gold_label != null:
-		_ok(gold_label.position == Vector2(610, 10), "gold label follows the safer topbar text lane")
+		_ok(gold_label.position == Vector2(904, 1), "gold label is balanced inside the right parchment field")
+		_ok(gold_label.size == Vector2(116, 40), "gold label fits the right parchment field")
+		_ok(gold_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "gold label is centered on its parchment field")
 	var documents := view.get_node_or_null("UILayer/TopBar/DocumentsBtn") as Button
-	_ok(documents != null, "topbar keeps ledger button")
+	_ok(documents != null, "topbar exposes the ledger button node")
 	if documents != null:
-		_ok(documents.position == Vector2(1060, 8), "ledger button clears the right corner ornament")
-		_ok(documents.size == Vector2(132, 44), "ledger button uses the former experimental button size")
+		_ok(documents.visible, "ledger button is visible on the DayMap topbar")
+		_ok(not documents.disabled, "ledger button can be activated from DayMap")
+		_ok(documents.mouse_filter == Control.MOUSE_FILTER_STOP, "ledger button receives click input")
+		_ok(documents.text == "", "ledger button is icon-only without the text label")
+		_ok(documents.position == Vector2(1092, 8) and documents.size == Vector2(132, 44),
+			"ledger button sits in the topbar right action slot")
 		var normal := documents.get_theme_stylebox("normal") as StyleBoxTexture
-		_ok(normal != null and normal.texture != null, "ledger button uses texture style")
+		_ok(normal != null and normal.texture != null, "ledger button keeps texture style")
 		if normal != null and normal.texture != null:
 			_ok(String(normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_ledger_normal.png"),
 				"ledger button uses DayMap ledger art")
 		var font := documents.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"ledger button uses Fusion Pixel font")
+		documents.pressed.emit()
+		var document_overlay := view.get_node_or_null("UILayer/DocumentOverlay") as DocumentOverlay
+		_ok(document_overlay != null and document_overlay.visible,
+			"pressing DayMap ledger button opens the ledger overlay")
+		if document_overlay != null:
+			_ok(document_overlay.get_current_page_text() != "",
+				"DayMap ledger button opens the actual ledger document")
+			document_overlay.close()
 	_ok(view.get_node_or_null("UILayer/TopBar/ExpTavernBtn") == null,
 		"experimental tavern button is removed from DayMap topbar")
 	var detail_name := view.get_node_or_null("UILayer/DetailPanel/Name") as Label
@@ -333,18 +411,44 @@ func _test_topbar_button_layout(view) -> void:
 	if detail_name != null:
 		_ok(detail_name.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER,
 			"detail panel title is centered")
-		_ok(detail_name.position.x == 36.0 and detail_name.size.x == 248.0,
-			"detail panel title keeps clear ornament padding")
+		_ok(detail_name.position == Vector2(72, 42) and detail_name.size == Vector2(196, 38),
+			"detail panel title avoids the knife and stays inside the top title safe area")
 	var detail_desc := view.get_node_or_null("UILayer/DetailPanel/Desc") as Label
 	_ok(detail_desc != null, "detail panel keeps location body")
 	if detail_desc != null:
-		_ok(detail_desc.position.x == 58.0 and detail_desc.size.x == 204.0,
-			"detail panel body uses a narrower reading column")
+		_ok(detail_desc.position == Vector2(58, 112) and detail_desc.size == Vector2(204, 132),
+			"detail panel body uses the central paper text safe area")
+	var detail_cost := view.get_node_or_null("UILayer/DetailPanel/Cost") as Label
+	_ok(detail_cost != null, "detail panel keeps travel cost")
+	if detail_cost != null:
+		_ok(detail_cost.position == Vector2(58, 272) and detail_cost.size == Vector2(204, 32),
+			"detail panel cost row leaves air below the description")
 	var detail_yield := view.get_node_or_null("UILayer/DetailPanel/Yield") as Label
 	_ok(detail_yield != null, "detail panel keeps yield body")
 	if detail_yield != null:
-		_ok(detail_yield.position.x == 58.0 and detail_yield.size.x == 204.0,
-			"detail panel yield text matches the narrower reading column")
+		_ok(detail_yield.position == Vector2(58, 316) and detail_yield.size == Vector2(204, 56),
+			"detail panel yield text ends above the lower action button")
+
+
+func _test_gather_tutorial_targets_stamina_label(view) -> void:
+	_ok(view.has_method("_gather_tutorial_rects"), "DayMap exposes gather tutorial rect builder")
+	if not view.has_method("_gather_tutorial_rects"):
+		return
+	var rects: Dictionary = view._gather_tutorial_rects()
+	var stamina_label := view.get_node_or_null("UILayer/TopBar/StaminaLabel") as Label
+	_ok(stamina_label != null, "stamina label exists for tutorial target")
+	_ok(rects.has("TopBar"), "gather tutorial keeps TopBar contract key")
+	if stamina_label == null or not rects.has("TopBar"):
+		return
+	var stamina_rect := stamina_label.get_global_rect()
+	var tutorial_rect: Array = rects["TopBar"]
+	_ok(tutorial_rect.size() == 4, "TopBar tutorial rect has x/y/w/h")
+	if tutorial_rect.size() < 4:
+		return
+	_ok(is_equal_approx(float(tutorial_rect[0]), stamina_rect.position.x), "gather tutorial highlights stamina label x")
+	_ok(is_equal_approx(float(tutorial_rect[1]), stamina_rect.position.y), "gather tutorial highlights stamina label y")
+	_ok(is_equal_approx(float(tutorial_rect[2]), stamina_rect.size.x), "gather tutorial highlights stamina label width")
+	_ok(is_equal_approx(float(tutorial_rect[3]), stamina_rect.size.y), "gather tutorial highlights stamina label height")
 
 
 func _test_static_text_uses_pixel_font(view) -> void:

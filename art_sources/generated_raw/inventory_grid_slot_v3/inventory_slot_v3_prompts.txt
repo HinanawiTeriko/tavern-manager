@@ -1,0 +1,17 @@
+Shared constraints for all four prompts:
+- Single inventory slot frame only, not a sprite sheet.
+- Perfectly flat solid #ff00ff chroma-key background for background removal.
+- No readable text, numbers, logos, item icons, symbols, black background, drop shadow, cast shadow, vignette, or UI labels.
+- Centered orthographic square tile, complete corners, even margins, no outer shadow extending beyond the frame.
+
+Normal:
+One empty square item slot frame in normal inactive state, original pixel-art dungeon tavern UI, rough inked wood-and-stone frame, cold dark teal inner well, restrained amber rivet highlights.
+
+Hover:
+One empty square item slot frame in hover/selected state, same UI language, brighter amber candlelight rim pixels and rivets to communicate hover.
+
+Pressed:
+One empty square item slot frame in pressed/clicked state, same UI language, inset darker frame with amber underside pixels to communicate pressed depth.
+
+Readable:
+One empty square item slot frame in readable/special state, same UI language, with only a small abstract folded parchment corner and wax blotch in the upper-right corner. The mark must not resemble a letter, number, icon, skull, star, cross, anchor, or logo.

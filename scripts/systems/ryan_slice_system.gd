@@ -16,7 +16,7 @@ const DAY_CONFIG := {
 	},
 	3: {
 		"normal_order_limit": 2,
-		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲"}],
+		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a"}],
 	},
 }
 
@@ -44,6 +44,13 @@ func important_display_name(day: int, npc_id: String, fallback: String) -> Strin
 	for event in night_events(day):
 		if String(event.get("npc_id", "")) == npc_id:
 			return String(event.get("display_name", fallback))
+	return fallback
+
+
+func important_portrait_id(day: int, npc_id: String, fallback: String) -> String:
+	for event in night_events(day):
+		if String(event.get("npc_id", "")) == npc_id:
+			return String(event.get("portrait_id", fallback))
 	return fallback
 
 

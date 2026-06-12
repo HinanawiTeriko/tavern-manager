@@ -14,20 +14,26 @@ const LEDGER_BUTTON_NAV_RIGHT_PRESSED := "res://assets/textures/ledger/ui/button
 const LEDGER_BUTTON_CLOSE_NORMAL := "res://assets/textures/ledger/ui/button_close_normal.png"
 const LEDGER_BUTTON_CLOSE_HOVER := "res://assets/textures/ledger/ui/button_close_hover.png"
 const LEDGER_BUTTON_CLOSE_PRESSED := "res://assets/textures/ledger/ui/button_close_pressed.png"
+const TOBY_CONTRACT_DOCUMENT_ID := "toby_contract"
+const TOBY_CONTRACT_DOCUMENT_TEXTURE := "res://assets/textures/tavern/documents/toby_contract_document.png"
 const DOCUMENT_PANEL_POS := Vector2.ZERO
 const DOCUMENT_PANEL_SIZE := Vector2(1280, 720)
-const DOCUMENT_TITLE_POS := Vector2(416, 38)
-const DOCUMENT_TITLE_SIZE := Vector2(448, 36)
-const DOCUMENT_LEFT_BODY_POS := Vector2(216, 120)
-const DOCUMENT_RIGHT_BODY_POS := Vector2(684, 120)
-const DOCUMENT_BODY_SIZE := Vector2(388, 420)
-const DOCUMENT_PAGE_LABEL_POS := Vector2(560, 570)
+const DOCUMENT_TITLE_POS := Vector2(520, 608)
+const DOCUMENT_TITLE_SIZE := Vector2(240, 36)
+const DOCUMENT_LEFT_BODY_POS := Vector2(280, 120)
+const DOCUMENT_RIGHT_BODY_POS := Vector2(744, 120)
+const DOCUMENT_BODY_SIZE := Vector2(256, 368)
+const DOCUMENT_PAGE_LABEL_POS := Vector2(560, 552)
 const DOCUMENT_PAGE_LABEL_SIZE := Vector2(160, 28)
-const DOCUMENT_PREV_POS := Vector2(244, 624)
-const DOCUMENT_NEXT_POS := Vector2(932, 624)
-const DOCUMENT_CLOSE_POS := Vector2(384, 624)
-const DOCUMENT_NAV_BUTTON_SIZE := Vector2(104, 88)
-const DOCUMENT_CLOSE_BUTTON_SIZE := Vector2(512, 88)
+const TOBY_CONTRACT_ART_POS := Vector2(240, 70)
+const TOBY_CONTRACT_ART_SIZE := Vector2(800, 560)
+const TOBY_CONTRACT_BODY_POS := Vector2(432, 172)
+const TOBY_CONTRACT_BODY_SIZE := Vector2(416, 288)
+const DOCUMENT_PREV_POS := Vector2(96, 300)
+const DOCUMENT_NEXT_POS := Vector2(1072, 300)
+const DOCUMENT_CLOSE_POS := Vector2(1100, 62)
+const DOCUMENT_NAV_BUTTON_SIZE := Vector2(112, 120)
+const DOCUMENT_CLOSE_BUTTON_SIZE := Vector2(96, 96)
 const DOCUMENT_DRAG_THRESHOLD := 240.0
 const LEDGER_INK := Color(0.16, 0.105, 0.062)
 
@@ -43,6 +49,8 @@ const LEDGER_INK := Color(0.16, 0.105, 0.062)
 var _pages: Array = []
 var _page_index: int = 0
 var _kind: String = ""
+var _document_id: String = ""
+var _document_art: TextureRect = null
 var _drag_start_x: float = -1.0
 
 
@@ -56,6 +64,7 @@ func _ready() -> void:
 
 func open_document(document: Dictionary) -> void:
 	_title.text = String(document.get("title", "文档"))
+	_document_id = String(document.get("id", ""))
 	_kind = String(document.get("kind", "document"))
 	_pages = document.get("pages", []).duplicate()
 	if _pages.is_empty():
@@ -116,17 +125,21 @@ func _page_step() -> int:
 
 
 func _refresh_page() -> void:
+	_apply_standard_document_layout()
 	_left_body.text = String(_pages[_page_index])
 	_right_body.visible = _kind == "ledger"
 	_right_body.text = String(_pages[_page_index + 1]) if _kind == "ledger" and _page_index + 1 < _pages.size() else ""
 	var last_visible_page := mini(_page_index + _page_step(), _pages.size())
 	_page_label.text = "%d-%d / %d" % [_page_index + 1, last_visible_page, _pages.size()]
+	_page_label.visible = true
 	_previous_button.disabled = _page_index == 0
 	_next_button.disabled = _page_index + _page_step() >= _pages.size()
+	_sync_document_specific_art()
 
 
 func _apply_document_art() -> void:
 	_ensure_ledger_backdrop()
+	_document_art = _ensure_document_art_layer()
 	_panel.position = DOCUMENT_PANEL_POS
 	_panel.size = DOCUMENT_PANEL_SIZE
 	_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -170,7 +183,7 @@ func _apply_document_art() -> void:
 	)
 	_style_document_button(
 		_close_button,
-		"关闭",
+		"",
 		DOCUMENT_CLOSE_POS,
 		DOCUMENT_CLOSE_BUTTON_SIZE,
 		LEDGER_BUTTON_CLOSE_NORMAL,
@@ -193,6 +206,51 @@ func _ensure_ledger_backdrop() -> void:
 	backdrop.stretch_mode = TextureRect.STRETCH_SCALE
 	backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _ensure_document_art_layer() -> TextureRect:
+	var document_art := get_node_or_null("DocumentArt") as TextureRect
+	if document_art == null:
+		document_art = TextureRect.new()
+		document_art.name = "DocumentArt"
+		add_child(document_art)
+	move_child(document_art, _panel.get_index())
+	document_art.position = TOBY_CONTRACT_ART_POS
+	document_art.size = TOBY_CONTRACT_ART_SIZE
+	document_art.texture = TextureManager.try_load(TOBY_CONTRACT_DOCUMENT_TEXTURE)
+	document_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	document_art.stretch_mode = TextureRect.STRETCH_SCALE
+	document_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	document_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	document_art.visible = false
+	return document_art
+
+
+func _apply_standard_document_layout() -> void:
+	_title.position = DOCUMENT_TITLE_POS
+	_title.size = DOCUMENT_TITLE_SIZE
+	_left_body.position = DOCUMENT_LEFT_BODY_POS
+	_left_body.size = DOCUMENT_BODY_SIZE
+	_right_body.position = DOCUMENT_RIGHT_BODY_POS
+	_right_body.size = DOCUMENT_BODY_SIZE
+	_page_label.position = DOCUMENT_PAGE_LABEL_POS
+	_page_label.size = DOCUMENT_PAGE_LABEL_SIZE
+
+
+func _sync_document_specific_art() -> void:
+	if _document_art == null:
+		return
+	var is_toby_contract := _document_id == TOBY_CONTRACT_DOCUMENT_ID
+	_document_art.visible = is_toby_contract
+	if not is_toby_contract:
+		return
+	_document_art.position = TOBY_CONTRACT_ART_POS
+	_document_art.size = TOBY_CONTRACT_ART_SIZE
+	_document_art.texture = TextureManager.try_load(TOBY_CONTRACT_DOCUMENT_TEXTURE)
+	_left_body.position = TOBY_CONTRACT_BODY_POS
+	_left_body.size = TOBY_CONTRACT_BODY_SIZE
+	_right_body.visible = false
+	_page_label.visible = false
 
 
 func _style_label(label: Label, font_size: int, color: Color) -> void:

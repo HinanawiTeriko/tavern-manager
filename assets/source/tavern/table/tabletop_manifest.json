@@ -38,8 +38,8 @@
     "front_lip_y_runtime": 588,
     "ground_y_runtime": 536,
     "playable_x_range_runtime": [
-      150,
-      1130
+      0,
+      1280
     ]
   },
   "intended_godot_use": "background-matched Tavern foreground bar occluder that preserves customer bust depth"

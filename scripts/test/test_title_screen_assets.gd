@@ -9,6 +9,7 @@ const FULL_LAYER_SOURCES := {
 	"UI/MenuBands": "title_pixel_menu_bands_native.png",
 }
 const RUNTIME_SCALE := 4
+const MARKER_RUNTIME_SCALE := 2
 const FULL_CANVAS_SIZE := Vector2(1280.0, 720.0)
 const LOGO_REST_Y := 360.0
 const NATIVE_PIXEL_SCALE := 4.0
@@ -46,6 +47,7 @@ func _ready() -> void:
 			menu_marker.texture,
 			"UI/MenuMarker",
 			failures,
+			MARKER_RUNTIME_SCALE,
 		)
 
 	var start_button := title_screen.get_node("UI/StartButton") as Button
@@ -107,7 +109,13 @@ func _check_title_font(node: Control, failures: Array[String]) -> void:
 		_check(font.resource_path == "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf", "Wrong title font on %s: %s" % [node.name, font.resource_path], failures)
 
 
-func _check_native_runtime_dimensions(native_path: String, texture: Texture2D, label: String, failures: Array[String]) -> void:
+func _check_native_runtime_dimensions(
+	native_path: String,
+	texture: Texture2D,
+	label: String,
+	failures: Array[String],
+	scale: int = RUNTIME_SCALE
+) -> void:
 	var native := Image.new()
 	var load_error := native.load(ProjectSettings.globalize_path(native_path))
 	_check(load_error == OK and not native.is_empty(), "%s native source must load: %s" % [label, native_path], failures)
@@ -116,8 +124,8 @@ func _check_native_runtime_dimensions(native_path: String, texture: Texture2D, l
 	var runtime := _texture_image(texture, label, failures)
 	if runtime == null:
 		return
-	_check(runtime.get_width() == native.get_width() * RUNTIME_SCALE, "%s runtime width must be native width * %s" % [label, RUNTIME_SCALE], failures)
-	_check(runtime.get_height() == native.get_height() * RUNTIME_SCALE, "%s runtime height must be native height * %s" % [label, RUNTIME_SCALE], failures)
+	_check(runtime.get_width() == native.get_width() * scale, "%s runtime width must be native width * %s" % [label, scale], failures)
+	_check(runtime.get_height() == native.get_height() * scale, "%s runtime height must be native height * %s" % [label, scale], failures)
 
 
 func _check_menu_button_layout(title_screen: Node, failures: Array[String]) -> void:

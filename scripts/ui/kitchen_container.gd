@@ -5,6 +5,7 @@ signal recipe_consumed(product_key: String)
 
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const COOK_STATION_STATE := preload("res://scripts/systems/cook_station_state.gd")
+const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 
 @export_enum("grill", "pot") var container_key: String = "grill"
 @export var cook_time: float = 2.5
@@ -24,12 +25,14 @@ const COOK_STATION_STATE := preload("res://scripts/systems/cook_station_state.gd
 @onready var _intake: Area2D = $Intake
 @onready var _output_anchor: Marker2D = $OutputAnchor
 @onready var _sear_zone: Area2D = get_node_or_null("SearZone")
+@onready var _art: Sprite2D = get_node_or_null("Art")
 
 var _items_parent: Node2D = null
 var _state = COOK_STATION_STATE.new()
 var _stir_tracking: bool = false
 var _prev_tip_pos: Vector2 = Vector2.ZERO
 var _searing_bodies: Array = []   # 上一帧在烤区内的肉,用于检测离开
+var _grill_elapsed_by_item: Dictionary = {}
 var _last_stir_audio_msec: int = -1000
 
 
@@ -47,6 +50,7 @@ func _ready() -> void:
 	if container_key == "pot":
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 		freeze = true
+	_fit_collision_to_art_bounds()
 	# Intake「吞料」是炖锅机制；烤架只靠 SearZone 按压煎制，不该吞掉放上去的生料。
 	if container_key == "pot":
 		_intake.body_entered.connect(_on_intake_body_entered)
@@ -99,44 +103,65 @@ func _accumulate_stir(spoon: StirSpoon, _delta: float) -> void:
 		GameManager.play_audio_event("pot_stir")
 
 
-## 烤架:被抓着且贴在 SearZone 内的物品累积单面熟度;离开烤区时定稿。
+## 烤架：被抓着且贴在 SearZone 内的物品累计时间，到阈值直接切换物品状态。
 func _process_grill_sear(delta: float) -> void:
 	if _sear_zone == null:
 		return
-	var now_inside: Array = []
+	var active_searing: Array = []
 	for body in _sear_zone.get_overlapping_bodies():
 		if not body is DeskItem:
 			continue
 		var item: DeskItem = body
 		if not can_sear_item_key(item.item_key):
 			continue
-		now_inside.append(item)
-		if item.is_held:
-			if not _searing_bodies.has(item):
-				GameManager.play_audio_event("grill_sizzle")
-			item.add_heat(item.down_face_index(), heat_rate * delta)
-	# 离开烤区(上一帧在、这一帧不在)→ 定稿
-	for prev in _searing_bodies:
-		if is_instance_valid(prev) and not now_inside.has(prev):
-			_finalize_grill_item(prev)
-	_searing_bodies = now_inside
+		if not item.is_held:
+			continue
+		active_searing.append(item)
+		if not _searing_bodies.has(item):
+			GameManager.play_audio_event("grill_sizzle")
+		_advance_grill_item(item, delta)
+	_searing_bodies = active_searing
+	_prune_grill_elapsed_items()
 
 
-## 物品离开烤架时按单一熟度定稿:熟→配方产物;焦→焦糊;生→保持原样(留作剧情)。
-func _finalize_grill_item(item: DeskItem) -> void:
-	var verdict := item.grill_result()
-	if verdict == "raw":
+## 烤制进度只改状态，不再驱动物品逐帧变色。
+func _advance_grill_item(item: DeskItem, delta: float) -> void:
+	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
 		return
-	var product_key := ""
-	if verdict == "burnt":
-		product_key = _burnt_key_for(item.item_key)
-	else:
-		product_key = GameManager.craft.query_recipe("grill", [item.item_key])
+	var elapsed := float(_grill_elapsed_by_item.get(item, 0.0)) + maxf(delta, 0.0)
+	_grill_elapsed_by_item[item] = elapsed
+	var product_key := _grill_product_for_elapsed(item.item_key, elapsed)
 	if product_key == "":
 		return
+	_apply_grill_product_state(item, product_key)
+	_grill_elapsed_by_item[item] = 0.0
+
+
+func _grill_product_for_elapsed(item_key: String, elapsed: float) -> String:
+	if elapsed < _grill_threshold_for_item(item_key):
+		return ""
+	if item_key == "meat_cooked" or item_key == "bread":
+		return _burnt_key_for(item_key)
+	return GameManager.craft.query_recipe("grill", [item_key])
+
+
+func _grill_threshold_for_item(item_key: String) -> float:
+	if item_key == "meat_cooked" or item_key == "bread":
+		return maxf(burn_time - cook_time, 0.0)
+	return cook_time
+
+
+func _apply_grill_product_state(item: DeskItem, product_key: String) -> void:
 	var data: Dictionary = GameManager.craft.get_item(product_key)
-	item.set_item(product_key, data)   # 改 key + 重置颜色基线为产物色
+	item.set_item(product_key, data, GameManager.craft.get_item_physics_profiles())
+	GameManager.apply_material_icon_to_desk_item(item)
 	recipe_consumed.emit(product_key)
+
+
+func _prune_grill_elapsed_items() -> void:
+	for item in _grill_elapsed_by_item.keys():
+		if not is_instance_valid(item) or item.is_queued_for_deletion():
+			_grill_elapsed_by_item.erase(item)
 
 
 func _is_point_inside_stir_zone(global_pos: Vector2) -> bool:
@@ -222,9 +247,65 @@ func _spawn_product(product_key: String) -> void:
 	_items_parent.add_child(product)
 	product.global_position = _output_anchor.global_position
 	var item_data: Dictionary = GameManager.craft.get_item(product_key)
-	product.set_item(product_key, item_data)
+	product.set_item(product_key, item_data, GameManager.craft.get_item_physics_profiles())
+	GameManager.apply_material_icon_to_desk_item(product)
 	product.linear_velocity = Vector2(randf_range(-70.0, 70.0), -180.0)
 	GameManager.play_audio_event("product_ready")
+
+
+func _fit_collision_to_art_bounds() -> void:
+	var bounds: Rect2 = TEXTURE_COLLISION_BOUNDS.centered_sprite_alpha_rect(_art)
+	if bounds.size == Vector2.ZERO:
+		return
+	if container_key == "grill":
+		_fit_grill_collision_to_bounds(bounds)
+	elif container_key == "pot":
+		_fit_pot_collision_to_bounds(bounds)
+
+
+func _fit_grill_collision_to_bounds(bounds: Rect2) -> void:
+	_set_rect_shape("Body", bounds.size, bounds.get_center())
+	_set_rect_shape("Intake/Shape", Vector2(bounds.size.x, minf(bounds.size.y, 48.0)), Vector2.ZERO)
+	_set_rect_shape("SearZone/Shape", Vector2(bounds.size.x, minf(bounds.size.y, 28.0)), Vector2.ZERO)
+	intake_inner_half_width = bounds.size.x * 0.5
+
+
+func _fit_pot_collision_to_bounds(bounds: Rect2) -> void:
+	_set_rect_shape("PickupArea/Shape", bounds.size, bounds.get_center())
+	var left := bounds.position.x
+	var right := bounds.position.x + bounds.size.x
+	var top := bounds.position.y
+	var bottom := bounds.position.y + bounds.size.y
+	var inset := bounds.size.x * 0.1
+	var top_left := Vector2(left + inset, top)
+	var top_right := Vector2(right - inset, top)
+	var bottom_left := Vector2(left, bottom)
+	var bottom_right := Vector2(right, bottom)
+	_set_segment_shape("WallLeft", bottom_left, top_left)
+	_set_segment_shape("WallRight", bottom_right, top_right)
+	_set_segment_shape("WallBottom", bottom_left, bottom_right)
+	_set_segment_shape("RimLeft", top_left, Vector2(-intake_inner_half_width, top))
+	_set_segment_shape("RimRight", Vector2(intake_inner_half_width, top), top_right)
+
+
+func _set_rect_shape(path: String, size: Vector2, pos: Vector2) -> void:
+	var node := get_node_or_null(path) as CollisionShape2D
+	if node == null:
+		return
+	var rect := RectangleShape2D.new()
+	rect.size = size
+	node.shape = rect
+	node.position = pos
+
+
+func _set_segment_shape(path: String, a: Vector2, b: Vector2) -> void:
+	var node := get_node_or_null(path) as CollisionShape2D
+	if node == null:
+		return
+	var segment := SegmentShape2D.new()
+	segment.a = a
+	segment.b = b
+	node.shape = segment
 
 
 func pop_last_ingredient() -> String:

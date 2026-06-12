@@ -12,6 +12,8 @@ func _ready() -> void:
 	_test_barrel_pop_last_ingredient()
 	_test_pot_intake_requires_center_inside_mouth()
 	_test_grill_continues_searing_cooked_items()
+	_test_mapped_art_can_be_reapplied_after_item_state_changes()
+	_test_grill_timer_changes_item_state_without_heat_color_animation()
 	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
 	_test_desk_item_split_visuals()
@@ -116,6 +118,50 @@ func _test_grill_continues_searing_cooked_items() -> void:
 	grill.free()
 
 
+func _test_mapped_art_can_be_reapplied_after_item_state_changes() -> void:
+	var item := _spawn_desk_item("ale_beer")
+	var art := item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and not art.visible, "set_item alone leaves product art hidden until mapped art is applied")
+	GameManager.apply_material_icon_to_desk_item(item)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and art.visible, "mapped art application should show product IconArt")
+	_ok(art != null and art.texture != null and art.texture.resource_path == "res://assets/textures/icons/products/ale.png",
+		"mapped art application should use the product icon path")
+	item.queue_free()
+
+
+func _test_grill_timer_changes_item_state_without_heat_color_animation() -> void:
+	var grill = KITCHEN_CONTAINER_SCRIPT.new()
+	grill.container_key = "grill"
+	grill.cook_time = 2.0
+	grill.burn_time = 5.0
+	var item := _spawn_desk_item("meat_raw")
+	GameManager.apply_material_icon_to_desk_item(item)
+	var art := item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and art.visible, "raw grill item starts with mapped art visible")
+	var top_visual := item.get_node("VisualTop") as Polygon2D
+	var raw_color := top_visual.color
+	grill._advance_grill_item(item, grill.cook_time - 0.1)
+	_ok(item.item_key == "meat_raw", "grill should not change item state before cook_time")
+	_ok(top_visual.color == raw_color, "grill should not animate item color while cooking")
+	_ok(art != null and art.visible, "grill should keep mapped art visible while cooking")
+	grill._advance_grill_item(item, 0.1)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(item.item_key == "meat_cooked", "grill should switch raw meat to cooked meat at cook_time")
+	_ok(art != null and art.visible, "cooked grill product should show mapped art")
+	_ok(art != null and art.texture != null and art.texture.resource_path == "res://assets/textures/icons/products/roast.png",
+		"cooked grill product should use the roast icon")
+	grill._advance_grill_item(item, grill.burn_time - grill.cook_time - 0.1)
+	_ok(item.item_key == "meat_cooked", "cooked meat should not burn before burn_time")
+	grill._advance_grill_item(item, 0.1)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(item.item_key == "meat_burnt", "cooked meat should switch to burnt meat after another timed grill pass")
+	_ok(art != null and art.visible and art.texture.resource_path == "res://assets/textures/tavern/items/meat_burnt.png",
+		"burnt grill product should use the burnt item icon")
+	item.queue_free()
+	grill.free()
+
+
 func _test_pot_unfreezes_while_held() -> void:
 	var pot = KITCHEN_CONTAINER_SCRIPT.new()
 	pot.container_key = "pot"
@@ -171,3 +217,12 @@ func _test_tavern_scene_nodes() -> void:
 	_ok(spoon is StirSpoon, "Tavern should contain a StirSpoon for the pot")
 	_ok(spoon.get_node_or_null("Tip") is Marker2D, "stir spoon should expose a Tip marker")
 	tavern.queue_free()
+
+
+func _spawn_desk_item(item_key: String) -> DeskItem:
+	var scene := load("res://scenes/test/desk_item.tscn") as PackedScene
+	_ok(scene != null, "desk item scene should load for " + item_key)
+	var item := scene.instantiate() as DeskItem
+	add_child(item)
+	item.set_item(item_key, GameManager.craft.get_item(item_key), GameManager.craft.get_item_physics_profiles())
+	return item

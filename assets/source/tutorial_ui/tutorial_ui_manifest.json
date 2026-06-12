@@ -1,0 +1,30 @@
+{
+  "source_raw": "art_sources/generated_raw/tutorial_ui/tutorial_ui_reference_v1.png",
+  "source_file": "assets/source/tutorial_ui/reference/tutorial_ui_reference.png",
+  "key_color": [255, 0, 255],
+  "runtime_scale": 4,
+  "assets": [
+    {
+      "id": "tutorial_panel",
+      "source_rect": [48, 138, 1158, 438],
+      "native_file": "assets/source/tutorial_ui/tutorial_panel_native.png",
+      "output_file": "assets/textures/tutorial/ui/tutorial_panel.png",
+      "native_size": [116, 48],
+      "min_visible_ratio": 0.45,
+      "safe_area": [88, 58, 982, 286],
+      "nine_slice_margins": [48, 44, 48, 36],
+      "intended_godot_use": "StyleBoxTexture panel for TutorialOverlay title and body copy; all text is rendered by Godot labels."
+    },
+    {
+      "id": "tutorial_highlight_frame",
+      "source_rect": [160, 696, 930, 438],
+      "native_file": "assets/source/tutorial_ui/tutorial_highlight_frame_native.png",
+      "output_file": "assets/textures/tutorial/ui/tutorial_highlight_frame.png",
+      "native_size": [72, 40],
+      "min_visible_ratio": 0.10,
+      "safe_area": [110, 86, 710, 258],
+      "nine_slice_margins": [36, 32, 36, 32],
+      "intended_godot_use": "TextureRect highlight frame stretched around TutorialOverlay highlight rectangles; gameplay remains visible inside."
+    }
+  ]
+}

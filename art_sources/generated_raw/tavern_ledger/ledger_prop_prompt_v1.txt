@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: source/reference art for a Godot pixel-art tavern desktop prop
+Primary request: one closed tavern ledger book prop, isolated for later sprite extraction
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background, no shadows, no floor plane, no gradients, no texture
+Subject: a single closed worn accounting ledger, slightly angled three-quarter top-down view, thick dark leather cover, parchment page edges visible on one side, simple brass corner caps or clasp, compact silhouette suitable for a small tabletop sprite
+Style/medium: chunky low-detail pixel-game concept art, rough ink-like dark outline, dark teal dungeon tavern palette with sparse amber highlights, readable silhouette after normalization to a 40x28 native pixel grid
+Composition/framing: centered, generous padding, no other props
+Materials/textures: old leather, worn parchment page block, muted brass accents
+Constraints: background must be one uniform #ff00ff color; do not use #ff00ff in the book; no readable text, no letters, no numbers, no logo, no watermark, no hands, no characters, no UI, no cast shadow, no contact shadow

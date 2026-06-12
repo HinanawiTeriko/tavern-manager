@@ -41,7 +41,50 @@ func _ready() -> void:
 	_ok(view._document_overlay.get_parent() == view.get_node("UILayer"), "文档浮层归位 $UILayer（屏幕空间）")
 
 	view.queue_free()
+	await get_tree().process_frame
+	await _test_counter_refreshes_after_mine_document()
 	_finish()
+
+
+func _test_counter_refreshes_after_mine_document() -> void:
+	var gm = get_node("/root/GameManager")
+	var old_day: int = gm.economy.current_day
+	var old_lead: bool = bool(gm.narrative.get_var("ryan_warhammer_lead"))
+	gm.economy.current_day = 2
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	gm.start_day_map(2)
+	gm.visit_day_location("mercenary_board")
+	for loc in gm.day_map.get_locations():
+		gm.day_map.mark_revealed(String(loc.get("id", "")))
+
+	var day_map_scene := preload("res://scenes/ui/DayMap.tscn")
+	var view = day_map_scene.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+	await get_tree().create_timer(1.0).timeout
+	view._refresh_map()
+	await get_tree().process_frame
+	_ok(not view._markers.has("guild_counter"), "return test starts before guild counter is visible")
+
+	view._enter_investigation(view.MINE_SCENE)
+	await get_tree().process_frame
+	gm.grant_investigation_document("bloodied_contract")
+	_ok(_location_ids(gm.day_map.get_locations()).has("guild_counter"), "day map data exposes guild counter after taking the contract")
+	view._on_investigation_finished()
+	await get_tree().create_timer(1.6).timeout
+	_ok(view._markers.has("guild_counter"), "guild counter appears immediately after returning from mine with the contract")
+
+	view.queue_free()
+	await get_tree().process_frame
+	gm.economy.current_day = old_day
+	gm.narrative.set_var("ryan_warhammer_lead", old_lead)
+
+
+func _location_ids(locations: Array) -> Array:
+	var ids := []
+	for loc in locations:
+		ids.append(String(loc.get("id", "")))
+	return ids
 
 func _ok(cond: bool, msg: String) -> void:
 	_checks += 1

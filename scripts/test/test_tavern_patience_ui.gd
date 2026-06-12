@@ -8,6 +8,7 @@ const PIXEL_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-prop
 
 func _ready() -> void:
 	await _test_tavern_patience_ui_contract()
+	await _test_tavern_game_manager_contract()
 	_test_important_guest_patience_ratio_uses_important_guest_max()
 	_finish()
 
@@ -217,9 +218,57 @@ func _test_tavern_patience_ui_contract() -> void:
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
 	if ledger != null:
-		_ok(not ledger.visible, "Tavern work-surface ledger entrance is hidden")
-		_ok(not ledger.input_pickable, "Tavern work-surface ledger entrance no longer receives click input")
-		_ok(ledger.document_id == "ledger", "hidden ledger compatibility node still targets the ledger document")
+		_ok(ledger.visible, "Tavern work-surface ledger is visible on the table")
+		_ok(ledger.input_pickable, "Tavern work-surface ledger receives double-click input")
+		_ok(ledger.document_id == "ledger", "visible ledger still targets the ledger document")
+		var ledger_art := ledger.get_node_or_null("Art") as Sprite2D
+		_ok(ledger_art != null and ledger_art.texture != null, "visible ledger has production texture art")
+		if ledger_art != null and ledger_art.texture != null:
+			_ok(String(ledger_art.texture.resource_path) == "res://assets/textures/tavern/props/ledger.png",
+				"visible ledger uses Tavern ledger prop art")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_tavern_game_manager_contract() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	_ok(tavern.has_method("is_menu_open"), "TavernView exposes is_menu_open for GameManager update gating")
+	_ok(tavern.has_method("is_menu_config_open"), "TavernView exposes is_menu_config_open for GameManager update gating")
+	_ok(tavern.has_method("is_preparation_phase"), "TavernView exposes is_preparation_phase for GameManager update gating")
+	_ok(tavern.has_method("is_business_phase"), "TavernView exposes is_business_phase for phase checks")
+	_ok(tavern.has_method("get_daily_menu_items"), "TavernView exposes get_daily_menu_items for GuestSystem orders")
+	_ok(tavern.has_method("reset_today_gold"), "TavernView exposes reset_today_gold for GameManager day cleanup")
+	var has_daily_menu := "daily_menu" in tavern
+	var has_daily_menu_confirmed := "daily_menu_confirmed" in tavern
+	_ok(has_daily_menu, "TavernView exposes daily_menu for GameManager pricing")
+	_ok(has_daily_menu_confirmed, "TavernView exposes daily_menu_confirmed for GameManager gating")
+	if has_daily_menu:
+		_ok(tavern.daily_menu is Dictionary, "TavernView daily_menu is a Dictionary")
+	if has_daily_menu_confirmed:
+		_ok(tavern.daily_menu_confirmed is bool, "TavernView daily_menu_confirmed is a bool")
+	if tavern.has_method("is_menu_config_open"):
+		_ok(tavern.is_menu_config_open() == false, "TavernView menu config reports closed when no config panel exists")
+	if tavern.has_method("is_preparation_phase"):
+		_ok(tavern.is_preparation_phase() == false, "TavernView defaults to business-compatible phase without the menu config UI")
+	if tavern.has_method("is_business_phase"):
+		_ok(tavern.is_business_phase() == true, "TavernView defaults to business-compatible phase after entering tavern")
+
+	if tavern.has_method("get_daily_menu_items"):
+		var menu_items: Array[Dictionary] = tavern.get_daily_menu_items()
+		_ok(menu_items.size() >= 1, "TavernView provides at least one orderable menu item to GuestSystem")
+		for item in menu_items:
+			_ok(item.has("key"), "TavernView menu item includes key")
+			_ok(item.has("price"), "TavernView menu item includes price")
+			_ok(item.has("name"), "TavernView menu item includes name")
+
+	var gm = get_node("/root/GameManager")
+	_ok(gm.guests._normal_order_limit == gm.ryan_slice.normal_order_limit(gm.economy.current_day),
+		"GameManager configures the Ryan normal order budget when TavernView registers")
 
 	tavern.queue_free()
 	await get_tree().process_frame

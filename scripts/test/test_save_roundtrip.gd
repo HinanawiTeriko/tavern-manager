@@ -8,6 +8,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_capture_apply_roundtrip()
+	_test_reset_tutorial_progress_clears_runtime_and_save_snapshot()
 	_test_new_game_resets()
 	_finish()
 
@@ -59,6 +60,42 @@ func _test_capture_apply_roundtrip() -> void:
 	_ok(String(gm.narrative.endings.get("ryan", "")) == "informed_fallen", "ending restored")
 	_ok(gm.documents.is_read("bloodied_contract"), "document read restored")
 	_ok(gm.inventory == gm.inventory_sys.materials, "gm.inventory still references system stock after restore")
+	gm.save_sys.clear()
+
+func _test_reset_tutorial_progress_clears_runtime_and_save_snapshot() -> void:
+	var gm = _gm()
+	var tm = get_node("/root/TutorialManager")
+	tm._completed_steps = ["gather_intro", "craft_intro", "serve_intro"]
+	tm.daymap_first_shown = true
+	tm.tavern_first_entered = true
+	tm.shop_first_visited = true
+	tm.first_guest_arrived = true
+	tm.first_product_seasoned = true
+	tm.first_guest_served = true
+	tm.first_ledger_shown = true
+	gm.save_sys.write(gm._capture_save_state())
+
+	gm.reset_tutorial_progress()
+
+	_ok(tm._completed_steps.is_empty(), "tutorial reset clears completed steps")
+	_ok(not tm.daymap_first_shown, "tutorial reset clears daymap flag")
+	_ok(not tm.tavern_first_entered, "tutorial reset clears tavern flag")
+	_ok(not tm.shop_first_visited, "tutorial reset clears shop flag")
+	_ok(not tm.first_guest_arrived, "tutorial reset clears guest arrival flag")
+	_ok(not tm.first_product_seasoned, "tutorial reset clears seasoning flag")
+	_ok(not tm.first_guest_served, "tutorial reset clears served flag")
+	_ok(not tm.first_ledger_shown, "tutorial reset clears ledger flag")
+
+	var saved: Dictionary = gm.save_sys.read()
+	var tutorial_state: Dictionary = saved.get("tutorial", {})
+	_ok(tutorial_state.get("completed_steps", ["stale"]).is_empty(), "tutorial reset writes cleared completed steps to save")
+	_ok(not bool(tutorial_state.get("daymap_first_shown", true)), "tutorial reset writes cleared daymap flag to save")
+	_ok(not bool(tutorial_state.get("tavern_first_entered", true)), "tutorial reset writes cleared tavern flag to save")
+	_ok(not bool(tutorial_state.get("shop_first_visited", true)), "tutorial reset writes cleared shop flag to save")
+	_ok(not bool(tutorial_state.get("first_guest_arrived", true)), "tutorial reset writes cleared guest flag to save")
+	_ok(not bool(tutorial_state.get("first_product_seasoned", true)), "tutorial reset writes cleared seasoning flag to save")
+	_ok(not bool(tutorial_state.get("first_guest_served", true)), "tutorial reset writes cleared served flag to save")
+	_ok(not bool(tutorial_state.get("first_ledger_shown", true)), "tutorial reset writes cleared ledger flag to save")
 	gm.save_sys.clear()
 
 func _test_new_game_resets() -> void:

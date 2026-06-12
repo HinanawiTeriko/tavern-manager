@@ -1,0 +1,12 @@
+Use case: stylized-concept
+Asset type: game item icon reference sheet for a pixel-art dungeon tavern management game
+Primary request: Create one clean 6 columns x 3 rows reference sheet of isolated item icons, one object centered in each cell, no labels and no readable text.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background filling the entire image, no shadows, no gradients, no paper texture in the background.
+Style/medium: original low-resolution pixel-art reference, chunky crisp silhouettes, rough ink-like dark outline, limited palette, warm candlelit tavern colors with cold dungeon teal accents, readable at tiny inventory-icon size.
+Composition/framing: six equal columns and three equal rows, generous padding in every cell, each item centered and separated; no grid lines, no labels.
+Row 1 left to right: pale raw dough ball; burnt blackened bread; burnt charred meat; roasted malt grains; burnt malt grains; purple grape juice cup.
+Row 2 left to right: raw dough wrapped around meat; malt-and-herb bundle; grape cluster mixed with herbs; raw meat stew bowl; green herb tea cup; meat sandwich.
+Row 3 left to right: herbal ale tankard; spiced red wine goblet; rich meat stew bowl; malt porridge bowl; parchment contract with plain wax seal and no writing; red wine bottle or goblet.
+Color palette: amber wood browns, muted cream dough, charred black, deep grape purple, herb green, broth brown, parchment tan, dark ink outlines.
+Materials/textures: chunky pixel clusters, simple highlights, hard edges, no antialiased soft glow.
+Constraints: no people, no hands, no scene background, no text, no numbers, no logos, no watermark, no cast shadows, no contact shadows, no object touching cell edges. Do not use #ff00ff inside any item.

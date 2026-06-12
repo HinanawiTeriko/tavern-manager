@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: raw source art for a Godot pixel-art UI panel, later downsampled to an 80x120 native pixel grid and scaled 4x for runtime.
+Primary request: Create one tall pinned location notice panel for a dungeon tavern day-map UI.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background only, no shadows or texture in the background.
+Subject: a single centered vertical ragged parchment notice sheet with a dark teal map-shadow backing and rough inked edge; a small dagger pins the upper-left paper corner into the map. The dagger should be clearly visible but must stay in the upper-left corner.
+Style/medium: chunky low-density pixel game art source, rough ink-line historical printmaking influence, dark teal dungeon palette, muted parchment browns, sparse warm amber accents, crisp silhouettes.
+Composition/framing: one isolated vertical panel, generous padding, full subject visible. Keep a clean title safe area on the upper-right, a large blank parchment body safe area in the center, and a clean lower safe area for a button. Do not include the button itself.
+Constraints: no text, no readable writing, no numbers, no logos, no characters, no people, no fake labels, no decorative marks in the central text safe area. The central parchment area must remain mostly blank and readable. The background must remain uniform #00ff00 and must not appear in the subject.

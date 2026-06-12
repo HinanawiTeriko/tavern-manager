@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: raw source art for a Godot DayMap pinned location notice, later downsampled to a 92x96 native pixel grid and scaled 4x for runtime.
+Input references: use the visible DayMap background, marker contact sheet, and old pinned-note contact sheet as style references. Match their dark teal map shadows, muted warm parchment, sparse amber marks, and low-density chunky pixel clusters.
+Primary request: Create one single map-pinned parchment location notice for a dungeon tavern day-map UI.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background only, no texture, no shadows in the background.
+Subject: one square-ish ragged parchment notice sheet, pinned into a map with a small dagger in the upper-left corner. The sheet should feel like paper lying on the same map as the markers, not like a separate UI card. Use a thin dark teal map-shadow edge, warm parchment body, small ink cuts/folds, and a small dagger that is readable but does not cover the text area.
+Style/medium: native-pixel game art source, low pixel density, limited palette, rough ink-line historical printmaking influence, same visual language as the DayMap markers and old pinned-note art. Use chunky shapes and restrained texture, not high-resolution illustration detail.
+Composition/framing: centered single asset with generous padding. Overall silhouette close to a square notice, about 1.05:1 width-to-height, not a tall vertical panel. Keep the central body mostly blank for Godot text. Reserve clear safe areas: top title area, middle body area, lower action-button area.
+Constraints: no text, no readable writing, no numbers, no logos, no characters, no people, no fake labels. Avoid grey stone frame, avoid thick border, avoid ornate UI-card frame, avoid high-detail parchment noise, avoid saturated orange. The #00ff00 background must not appear inside the subject.

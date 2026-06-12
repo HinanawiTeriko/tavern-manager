@@ -1,0 +1,16 @@
+{
+  "source_image": "art_sources/generated_raw/daymap_markers/market_shop_marker_source_v1.png",
+  "native_size": [24, 24],
+  "runtime_scale": 4,
+  "assets": {
+    "market_shop": {
+      "source_file": "art_sources/generated_raw/daymap_markers/market_shop_marker_source_v1.png",
+      "native_file": "assets/source/daymap/markers/market_shop_native.png",
+      "output_file": "assets/textures/daymap/markers/market_shop.png",
+      "size": [96, 96],
+      "safe_area": [8, 8, 80, 80],
+      "source_crop": [0, 0, 1254, 1254],
+      "intended_godot_use": "DayMap marker icon for market shop"
+    }
+  }
+}

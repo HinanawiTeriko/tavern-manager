@@ -1,0 +1,15 @@
+Use case: stylized-concept
+Asset type: game character portrait expression source sheet for a Godot pixel-art tavern game
+
+Primary request: Create a single source sheet with the same character identity as the visible Mira neutral portrait reference: adult traveling merchant woman, tan skin, brown high ponytail with brass beads, blue-green cloak, cream shirt, leather vest and straps, shoulder merchant bag, small brass scale charm, rugged dungeon tavern fantasy palette. 3 columns x 1 row, equal cells, one bust portrait per cell, same chest-up framing and body scale as the Mira neutral portrait, centered with generous padding.
+
+Expressions:
+left cell mira_smile: genuine warm smile, softer eyes, clearly different from guarded professional smile;
+middle cell mira_surprised: surprised raised brows, slightly wider eyes, small open mouth;
+right cell mira_serious: serious direct gaze, smile gone, slightly furrowed brow, controlled and tense for a Day12 key story moment.
+
+Style/medium: low-detail pixel-game portrait source, chunky readable shapes, rough ink-like pixel edges, limited dark teal / warm leather / amber palette, not a high-resolution illustration, not anime glossy, not photorealistic.
+
+Background: perfectly flat solid #00ff00 chroma-key background in every cell, no shadows, no texture, no gradient.
+
+Constraints: same character identity across all three portraits, same outfit and accessories as Mira neutral, same head size and bust scale, no readable text, no labels, no logos, no watermark, no extra characters, no UI panels, no prop changes beyond the existing merchant gear, no transparent background; use flat #00ff00 only for the background.

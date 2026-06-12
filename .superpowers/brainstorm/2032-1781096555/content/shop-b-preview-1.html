@@ -1,0 +1,74 @@
+<style>
+  .preview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .preview {
+    border: 1px solid rgba(232, 160, 64, 0.28);
+    background: #081014;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .preview img {
+    display: block;
+    width: 100%;
+    image-rendering: pixelated;
+  }
+  .preview .caption {
+    padding: 12px 14px;
+    color: #d0c8b8;
+    line-height: 1.45;
+  }
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .note {
+    border: 1px solid rgba(208, 200, 184, 0.18);
+    background: rgba(6, 18, 22, 0.78);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .note h3 {
+    margin: 0 0 8px;
+    color: #f0c060;
+  }
+  .note p {
+    margin: 0;
+    color: #d0c8b8;
+    line-height: 1.45;
+  }
+</style>
+
+<h2>B 版第一张静态预览</h2>
+<p class="subtitle">这是 320×180 native 构图按 4x 最近邻放大的 1280×720 预览。文字只是验证布局，最终仍由 Godot Label 渲染。</p>
+
+<div class="preview-grid">
+  <div class="preview">
+    <img src="/files/shop-b-main-style-mock.png" alt="B style shop mock">
+    <div class="caption">商店书本摊位版：保留 B 的“摊位账本”方向，但颜色和材质靠近标题屏、账本和主界面实际资源。</div>
+  </div>
+  <div class="preview">
+    <img src="/files/shop-b-slice-plan.png" alt="B style shop slice plan">
+    <div class="caption">切片计划：每块来自固定 native 矩形，后续写入 manifest，不用 chroma key、不用 alpha 猜边。</div>
+  </div>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <h3>残留颜色</h3>
+    <p>这版没有使用粉/紫 chroma 背景，初步紫蓝残留检测为 0。后续 exporter 会把这个检测变成测试。</p>
+  </div>
+  <div class="note">
+    <h3>切图方式</h3>
+    <p>背景、书本、tab、行、详情纸、金币区、数量控件、购买按钮、关闭标签全部按固定矩形输出 native 和 4x runtime。</p>
+  </div>
+  <div class="note">
+    <h3>下一步</h3>
+    <p>你先判断这个方向是否比旧 B 更接近主界面；通过后我再写设计/实现计划，接着做生产资产和 Godot 接入。</p>
+  </div>
+</div>

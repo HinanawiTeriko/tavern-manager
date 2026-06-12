@@ -34,6 +34,8 @@ var orders_failed: int = 0
 var _daily_total_guests: int = 0      # 当日总客人数（含已生成和即将生成）
 var _daily_spawned: int = 0           # 已生成数（普通客人）
 var _daily_cleared: int = 0           # 已离场数（所有客人）
+var _normal_order_limit: int = 0
+var _normal_orders_spawned: int = 0
 var _daily_important_spawned: bool = false
 var _all_completion_emitted: bool = false
 var _normal_completion_emitted: bool = false
@@ -41,6 +43,7 @@ var _normal_completion_emitted: bool = false
 # 客户持久化
 var _customer_db: Dictionary = {}     # customer_id -> CustomerRecord
 var _customer_pool: Array = []        # 模板池（加载自 npc_pool.json）
+var _customer_by_id: Dictionary = {}
 var _reaction_pools: Dictionary = {}
 var _next_customer_seq: int = 1
 
@@ -62,7 +65,7 @@ func _init(menu_items_callable: Callable) -> void:
 	_get_menu_items = menu_items_callable
 	_rng.randomize()
 	_load_reaction_pools()
-	_load_npc_pool()
+	_load_regular_customer_roster()
 
 func _load_reaction_pools() -> void:
 	var file = FileAccess.open("res://data/guest_reactions.json", FileAccess.READ)
@@ -78,6 +81,25 @@ func _load_reaction_pools() -> void:
 	_reaction_pools = data
 	print("[GuestSystem] 加载 ", _reaction_pools.size(), " 组反应台词")
 
+func _load_regular_customer_roster() -> void:
+	var file = FileAccess.open("res://data/regular_customers.json", FileAccess.READ)
+	if file == null:
+		push_warning("[GuestSystem] regular_customers.json missing; using legacy npc_pool.json")
+		_load_npc_pool()
+		return
+	var text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(text)
+	if data == null or not data is Dictionary:
+		push_error("[GuestSystem] regular_customers.json parse failed")
+		return
+	_customer_pool = data.get("customers", [])
+	_customer_by_id.clear()
+	for entry in _customer_pool:
+		if entry is Dictionary:
+			_customer_by_id[String(entry.get("id", ""))] = entry
+	print("[GuestSystem] loaded ", _customer_pool.size(), " named regular customers")
+
 func _load_npc_pool() -> void:
 	var file = FileAccess.open("res://data/npc_pool.json", FileAccess.READ)
 	if file == null:
@@ -90,21 +112,25 @@ func _load_npc_pool() -> void:
 		push_error("[GuestSystem] npc_pool.json 解析失败")
 		return
 	_customer_pool = data.get("templates", [])
+	_customer_by_id.clear()
+	for entry in _customer_pool:
+		if entry is Dictionary:
+			_customer_by_id[String(entry.get("id", ""))] = entry
 	print("[GuestSystem] 加载 ", _customer_pool.size(), " 种NPC模板")
 
 # ── 每日配置 ──
 
 func configure_night(normal_order_limit: int, day: int = 0) -> void:
-	# normal_order_limit 由公式计算的每日基础客流数
-	# 加上回头客数量构成实际总数
 	if day <= 0:
 		day = _get_current_day()
-	var base_count: int = maxi(normal_order_limit, _daily_customer_base(day))
+	var base_count: int = maxi(normal_order_limit, 0)
 
 	# 回头客：从已有顾客库中按概率选取
 	_return_candidates = _build_return_list(day)
 	var return_count: int = min(_return_candidates.size(), int(ceil(base_count * 0.4)))  # 最多40%回头客
 
+	_normal_order_limit = base_count
+	_normal_orders_spawned = 0
 	_daily_total_guests = base_count + return_count
 	_daily_spawned = 0
 	_daily_cleared = 0
@@ -167,7 +193,7 @@ func _try_spawn_next() -> void:
 		_emit_normal_orders_completed()
 		return
 
-	var menu_items: Array[Dictionary] = _get_menu_items.call()
+	var menu_items: Array = _get_menu_items.call()
 	if menu_items.is_empty():
 		return
 
@@ -184,7 +210,117 @@ func _try_spawn_next() -> void:
 	else:
 		_spawn_new_customer(menu_items)
 
-func _spawn_new_customer(menu_items: Array[Dictionary]) -> void:
+
+func _spawn_normal() -> void:
+	_try_spawn_next()
+
+
+func remaining_normal_orders() -> int:
+	return maxi(_daily_total_guests - _daily_spawned, 0)
+
+
+func _regular_customer_entries_for_day(day: int, exclude_seen_today: bool = true) -> Array:
+	var result: Array = []
+	for entry in _customer_pool:
+		if not entry is Dictionary:
+			continue
+		var customer_id := String(entry.get("id", ""))
+		if customer_id == "" or String(entry.get("portrait_key", "")) == "":
+			continue
+		if int(entry.get("unlock_day", 1)) > day:
+			continue
+		var rec: CustomerRecord = _customer_db.get(customer_id, null)
+		if exclude_seen_today and rec != null and rec.last_seen_day >= day:
+			continue
+		result.append(entry)
+	return result
+
+
+func _pick_regular_customer(day: int) -> Dictionary:
+	var candidates := _regular_customer_entries_for_day(day, true)
+	if candidates.is_empty():
+		candidates = _regular_customer_entries_for_day(day, false)
+	if candidates.is_empty():
+		return {}
+	var total_weight := 0.0
+	for entry in candidates:
+		total_weight += maxf(float(entry.get("spawn_weight", 1.0)), 0.0)
+	if total_weight <= 0.0:
+		return candidates[_rng.randi() % candidates.size()]
+	var roll := _rng.randf() * total_weight
+	for entry in candidates:
+		roll -= maxf(float(entry.get("spawn_weight", 1.0)), 0.0)
+		if roll <= 0.0:
+			return entry
+	return candidates.back()
+
+
+func _menu_contains_order(menu_items: Array, order_key: String) -> bool:
+	for item in menu_items:
+		if _menu_item_key(item) == order_key:
+			return true
+	return false
+
+
+func _choose_regular_order(entry: Dictionary, menu_items: Array) -> String:
+	var available_favorites: Array[String] = []
+	var favorites_value = entry.get("favorite_orders", [])
+	if favorites_value is Array:
+		for order in favorites_value:
+			var order_key := String(order)
+			if _menu_contains_order(menu_items, order_key):
+				available_favorites.append(order_key)
+	if not available_favorites.is_empty():
+		return available_favorites[_rng.randi() % available_favorites.size()]
+	var chosen = menu_items[_rng.randi() % menu_items.size()]
+	return _menu_item_key(chosen)
+
+
+func _spawn_regular_customer(entry: Dictionary, menu_items: Array) -> void:
+	var customer_id := String(entry.get("id", ""))
+	if customer_id == "":
+		return
+	var day := _get_current_day()
+	var rec: CustomerRecord = _customer_db.get(customer_id, null)
+	if rec == null:
+		rec = CustomerRecord.new()
+		rec.customer_id = customer_id
+		rec.first_seen_day = day
+		rec.visit_count = 0
+		_customer_db[customer_id] = rec
+	rec.display_name = String(entry.get("display_name", customer_id))
+	rec.template_id = customer_id
+	rec.attributes = (entry.get("attributes", {}) as Dictionary).duplicate()
+	rec.last_seen_day = day
+	rec.visit_count += 1
+
+	var g := GuestData.new()
+	g.guest_name = rec.display_name
+	g.type = GuestData.GuestType.NORMAL
+	g.order_key = _choose_regular_order(entry, menu_items)
+	g.npc_id = customer_id
+	g.patience = GuestData.BASE_PATIENCE * maxf(float(entry.get("patience_multiplier", 1.0)), 0.1)
+	g.has_dialogue = false
+	g.set_meta("customer_id", rec.customer_id)
+	g.set_meta("regular_customer_id", customer_id)
+	g.set_meta("template_id", customer_id)
+
+	if rec.favorite_order == "":
+		rec.favorite_order = g.order_key
+
+	current_guest = g
+	has_guest = true
+	_daily_spawned += 1
+	_normal_orders_spawned = _daily_spawned
+	guest_arrived.emit(g)
+
+
+func _spawn_new_customer(menu_items: Array) -> void:
+	var regular := _pick_regular_customer(_get_current_day())
+	if not regular.is_empty():
+		_spawn_regular_customer(regular, menu_items)
+		return
+
 	var g := GuestData.new()
 	var template: Dictionary
 	var rec: CustomerRecord
@@ -221,8 +357,8 @@ func _spawn_new_customer(menu_items: Array[Dictionary]) -> void:
 		rec.attributes = {}
 
 	# 随机点单（只从当日菜单选）
-	var chosen: Dictionary = menu_items[_rng.randi() % menu_items.size()]
-	g.order_key = chosen["key"]
+	var chosen = menu_items[_rng.randi() % menu_items.size()]
+	g.order_key = _menu_item_key(chosen)
 	g.type = GuestData.GuestType.NORMAL
 	g.patience = GuestData.BASE_PATIENCE
 	g.has_dialogue = false
@@ -230,31 +366,37 @@ func _spawn_new_customer(menu_items: Array[Dictionary]) -> void:
 	g.set_meta("template_id", template.get("id", "") if not template.is_empty() else "")
 
 	if rec != null and rec.favorite_order == "":
-		rec.favorite_order = chosen["key"]
+		rec.favorite_order = g.order_key
 
 	current_guest = g
 	has_guest = true
 	_daily_spawned += 1
+	_normal_orders_spawned = _daily_spawned
 	guest_arrived.emit(g)
 
-func _spawn_return_customer(rec: CustomerRecord, menu_items: Array[Dictionary]) -> void:
+
+func _spawn_return_customer(rec: CustomerRecord, menu_items: Array) -> void:
 	var g := GuestData.new()
 	g.guest_name = rec.display_name
 	g.type = GuestData.GuestType.NORMAL
-	g.patience = GuestData.BASE_PATIENCE
+	var regular_entry: Dictionary = _customer_by_id.get(rec.customer_id, {})
+	g.npc_id = rec.customer_id if String(regular_entry.get("portrait_key", "")) != "" else ""
+	g.patience = GuestData.BASE_PATIENCE * maxf(float(regular_entry.get("patience_multiplier", 1.0)), 0.1)
 	g.has_dialogue = false
 
 	# 回头客偏好：50%概率点最爱
 	var order_key: String
-	if rec.favorite_order != "" and _rng.randf() < 0.5:
+	if not regular_entry.is_empty():
+		order_key = _choose_regular_order(regular_entry, menu_items)
+	elif rec.favorite_order != "" and _rng.randf() < 0.5:
 		# 确认最爱仍在菜单上
 		for item in menu_items:
-			if item["key"] == rec.favorite_order:
+			if _menu_item_key(item) == rec.favorite_order:
 				order_key = rec.favorite_order
 				break
 	if order_key == "":
-		var chosen: Dictionary = menu_items[_rng.randi() % menu_items.size()]
-		order_key = chosen["key"]
+		var chosen = menu_items[_rng.randi() % menu_items.size()]
+		order_key = _menu_item_key(chosen)
 	g.order_key = order_key
 
 	# 更新记录
@@ -262,11 +404,22 @@ func _spawn_return_customer(rec: CustomerRecord, menu_items: Array[Dictionary]) 
 	rec.visit_count += 1
 	g.set_meta("customer_id", rec.customer_id)
 	g.set_meta("is_return", true)
+	if g.npc_id != "":
+		g.set_meta("regular_customer_id", g.npc_id)
+	g.set_meta("template_id", rec.template_id)
 
 	current_guest = g
 	has_guest = true
 	_daily_spawned += 1
+	_normal_orders_spawned = _daily_spawned
 	guest_arrived.emit(g)
+
+
+func _menu_item_key(item) -> String:
+	if item is Dictionary:
+		return String(item.get("key", ""))
+	return String(item)
+
 
 func _mutate_attributes(base: Dictionary) -> Dictionary:
 	# 小幅随机变异属性值（±1）
@@ -303,6 +456,8 @@ func clear_guest() -> void:
 	# 检查是否全部招待完毕（用离场计数器，不关心生成顺序）
 	_daily_cleared += 1
 	var expected_total := _daily_total_guests + (1 if _daily_important_spawned else 0)
+	if departed != null and departed.type == GuestData.GuestType.NORMAL and _daily_spawned >= _daily_total_guests:
+		_emit_normal_orders_completed()
 	if _daily_cleared >= expected_total:
 		_emit_all_guests_served()
 
@@ -335,6 +490,8 @@ func reset_daily() -> void:
 	orders_failed = 0
 	_daily_total_guests = 0
 	_daily_spawned = 0
+	_normal_order_limit = 0
+	_normal_orders_spawned = 0
 	_daily_important_spawned = false
 	_all_completion_emitted = false
 	_normal_completion_emitted = false

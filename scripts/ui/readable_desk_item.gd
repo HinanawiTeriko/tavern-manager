@@ -1,5 +1,5 @@
 class_name ReadableDeskItem
-extends Area2D
+extends RigidBody2D
 
 signal open_requested(document_id: String)
 
@@ -11,6 +11,8 @@ signal open_requested(document_id: String)
 
 func _ready() -> void:
 	_label.text = display_label
+	contact_monitor = true
+	max_contacts_reported = 4
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

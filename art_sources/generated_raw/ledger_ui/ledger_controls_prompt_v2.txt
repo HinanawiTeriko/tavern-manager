@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: source/reference art for Godot pixel UI ledger controls
+Primary request: a clean 3x3 sprite-sheet reference for redesigned ledger controls, with each asset separated by flat #ff00ff gutters for fixed-rectangle cropping
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background across the full image, no shadows, no gradients, no texture outside the controls
+Layout: three columns by three rows, evenly spaced. Column 1 is a vertical left page-tab button with a large left arrow symbol. Column 2 is a vertical right page-tab button with a large right arrow symbol. Column 3 is a round wax-seal close button with a carved X icon. Row 1 normal state, row 2 hover state, row 3 pressed state. Do not include row or column labels.
+Subject/style: medieval tavern ledger controls made from dark leather, dark teal inset material, muted brass hinges, rough ink outline, chunky pixel-game concept art matching a dark dungeon tavern management UI. The controls should look like attached physical parts of an open ledger, not modern UI rectangles.
+State differences: normal is calm/dark with crisp rim; hover is visibly brighter with warm amber rim highlights; pressed is visibly darker/inset with icon shifted down/right by a few pixels, but the outer silhouette and frame size must stay identical to the normal state.
+Composition/framing: generous magenta padding around every control; no overlapping cells; no crop marks; no text, no letters, no numbers, no logos, no watermark, no hands, no characters, no extra props.
+Constraints: background must be one uniform #ff00ff color; do not use #ff00ff in controls; all ornamentation must be part of the generated art; suitable for reduction to native sizes 28x30 for page-tab controls and 24x24 for the close seal.

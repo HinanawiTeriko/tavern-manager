@@ -1,7 +1,21 @@
 class_name TutorialOverlay
 extends CanvasLayer
 
+const TUTORIAL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
+const PANEL_TEXTURE_PATH := "res://assets/textures/tutorial/ui/tutorial_panel.png"
+const HIGHLIGHT_TEXTURE_PATH := "res://assets/textures/tutorial/ui/tutorial_highlight_frame.png"
+const PANEL_TEXT_MARGIN_X := 56.0
+const PANEL_TITLE_Y := 30.0
+const PANEL_TITLE_HEIGHT := 24.0
+const PANEL_TITLE_FONT_SIZE := 20
+const PANEL_BODY_Y := 58.0
+const PANEL_BOTTOM_MARGIN := 22.0
+const PANEL_MIN_HEIGHT := 180.0
+const PANEL_BODY_FONT_SIZE := 15
+const PANEL_MEASURE_MAX_HEIGHT := 1200.0
+
 var _highlight_panels: Array = [null, null, null, null]
+var _highlight_frame: TextureRect
 var _description_panel: Panel
 var _description_label: RichTextLabel
 var _title_label: Label
@@ -20,244 +34,193 @@ func _ready() -> void:
 
 
 func _create_ui() -> void:
-	# 4遮罩面板（盖住高亮区域外的一切，阻挡点击）
 	for i in range(4):
-		var panel = ColorRect.new()
+		var panel := ColorRect.new()
 		panel.mouse_filter = Control.MOUSE_FILTER_STOP
 		add_child(panel)
 		_highlight_panels[i] = panel
 
-	# 高亮区域内点击拦截器（半透明，阻挡高亮区域内的点击）
-	var highlight_click_catcher = ColorRect.new()
+	var highlight_click_catcher := ColorRect.new()
 	highlight_click_catcher.name = "HighlightClickCatcher"
 	highlight_click_catcher.color = Color(0, 0, 0, 0.05)
 	highlight_click_catcher.mouse_filter = Control.MOUSE_FILTER_STOP
+	highlight_click_catcher.z_index = 1
 	add_child(highlight_click_catcher)
 
-	# 高亮边框指示器
-	var border_top = ColorRect.new()
-	border_top.color = Color(1.0, 0.741, 0.498, 0.9)
-	border_top.name = "BorderTop"
-	add_child(border_top)
+	_highlight_frame = TextureRect.new()
+	_highlight_frame.name = "HighlightFrame"
+	_highlight_frame.texture = _load_texture(HIGHLIGHT_TEXTURE_PATH)
+	_highlight_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_highlight_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_highlight_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_highlight_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	_highlight_frame.z_index = 2
+	_highlight_frame.visible = false
+	add_child(_highlight_frame)
 
-	var border_bot = ColorRect.new()
-	border_bot.color = Color(1.0, 0.741, 0.498, 0.9)
-	border_bot.name = "BorderBot"
-	add_child(border_bot)
-
-	var border_left = ColorRect.new()
-	border_left.color = Color(1.0, 0.741, 0.498, 0.9)
-	border_left.name = "BorderLeft"
-	add_child(border_left)
-
-	var border_right = ColorRect.new()
-	border_right.color = Color(1.0, 0.741, 0.498, 0.9)
-	border_right.name = "BorderRight"
-	add_child(border_right)
-
-	# 标题
-	_title_label = Label.new()
-	_title_label.add_theme_color_override("font_color", Color(1.0, 0.741, 0.498))
-	_title_label.add_theme_font_size_override("font_size", 24)
-	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_title_label)
-
-	# 描述面板
 	_description_panel = Panel.new()
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.10, 0.08, 0.06, 0.95)
-	panel_style.border_width_left = 2
-	panel_style.border_width_right = 2
-	panel_style.border_width_top = 2
-	panel_style.border_width_bottom = 2
-	panel_style.border_color = Color(1.0, 0.741, 0.498, 0.5)
-	panel_style.corner_radius_top_left = 8
-	panel_style.corner_radius_top_right = 8
-	panel_style.corner_radius_bottom_left = 8
-	panel_style.corner_radius_bottom_right = 8
-	_description_panel.add_theme_stylebox_override("panel", panel_style)
+	_description_panel.name = "DescriptionPanel"
+	_description_panel.z_index = 10
+	_description_panel.add_theme_stylebox_override("panel", _tutorial_panel_style())
 	add_child(_description_panel)
 
-	# 描述文字
 	_description_label = RichTextLabel.new()
+	_description_label.name = "DescriptionLabel"
 	_description_label.bbcode_enabled = true
-	_description_label.add_theme_color_override("default_color", Color(0.918, 0.882, 0.867))
-	_description_label.add_theme_font_size_override("normal_font_size", 15)
-	_description_label.fit_content = true
+	_description_label.fit_content = false
+	_description_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	_description_label.clip_contents = true
 	_description_label.scroll_active = false
+	_description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_description_label.add_theme_font_override("normal_font", TUTORIAL_FONT)
+	_description_label.add_theme_font_size_override("normal_font_size", PANEL_BODY_FONT_SIZE)
+	_description_label.add_theme_color_override("default_color", ThemeColors.TEXT_LIGHT)
 	_description_panel.add_child(_description_label)
 
-	# "下一步"按钮
+	_title_label = Label.new()
+	_title_label.name = "TitleLabel"
+	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_title_label.clip_text = true
+	_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_title_label.z_index = 11
+	_title_label.add_theme_font_override("font", TUTORIAL_FONT)
+	_title_label.add_theme_font_size_override("font_size", PANEL_TITLE_FONT_SIZE)
+	_title_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_title_label.add_theme_constant_override("outline_size", 2)
+	_title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.68))
+	add_child(_title_label)
+
 	_next_btn = Button.new()
+	_next_btn.name = "NextButton"
 	_next_btn.custom_minimum_size = Vector2(150, 44)
-	var btn_normal = StyleBoxFlat.new()
-	btn_normal.bg_color = Color(1.0, 0.741, 0.498)
-	btn_normal.border_width_left = 2
-	btn_normal.border_width_top = 2
-	btn_normal.border_width_right = 2
-	btn_normal.border_width_bottom = 4
-	btn_normal.border_color = Color(0, 0, 0, 0.35)
-	btn_normal.corner_radius_top_left = 6
-	btn_normal.corner_radius_top_right = 6
-	btn_normal.corner_radius_bottom_left = 6
-	btn_normal.corner_radius_bottom_right = 6
-	_next_btn.add_theme_stylebox_override("normal", btn_normal)
-	var btn_hover = StyleBoxFlat.new()
-	btn_hover.bg_color = Color(1.0, 0.584, 0.0)
-	btn_hover.border_width_left = 2
-	btn_hover.border_width_top = 2
-	btn_hover.border_width_right = 2
-	btn_hover.border_width_bottom = 4
-	btn_hover.border_color = Color(0, 0, 0, 0.4)
-	btn_hover.corner_radius_top_left = 6
-	btn_hover.corner_radius_top_right = 6
-	btn_hover.corner_radius_bottom_left = 6
-	btn_hover.corner_radius_bottom_right = 6
-	_next_btn.add_theme_stylebox_override("hover", btn_hover)
-	var btn_pressed = StyleBoxFlat.new()
-	btn_pressed.bg_color = Color(0.8, 0.45, 0.0)
-	btn_pressed.border_width_left = 2
-	btn_pressed.border_width_top = 4
-	btn_pressed.border_width_right = 2
-	btn_pressed.border_width_bottom = 2
-	btn_pressed.border_color = Color(0, 0, 0, 0.4)
-	btn_pressed.corner_radius_top_left = 6
-	btn_pressed.corner_radius_top_right = 6
-	btn_pressed.corner_radius_bottom_left = 6
-	btn_pressed.corner_radius_bottom_right = 6
-	_next_btn.add_theme_stylebox_override("pressed", btn_pressed)
-	_next_btn.add_theme_color_override("font_color", Color(0.294, 0.157, 0.0))
-	_next_btn.add_theme_font_size_override("font_size", 16)
+	_next_btn.z_index = 12
+	ThemeColors.style_brush_button(_next_btn, 16)
 	_next_btn.pressed.connect(_on_next)
 	add_child(_next_btn)
 
-	# "跳过教程"按钮
 	_skip_btn = Button.new()
+	_skip_btn.name = "SkipButton"
 	_skip_btn.text = "跳过教程"
 	_skip_btn.custom_minimum_size = Vector2(100, 34)
-	var skip_normal = StyleBoxFlat.new()
-	skip_normal.bg_color = Color(0.25, 0.25, 0.25, 0.65)
-	skip_normal.corner_radius_top_left = 4
-	skip_normal.corner_radius_top_right = 4
-	skip_normal.corner_radius_bottom_left = 4
-	skip_normal.corner_radius_bottom_right = 4
-	skip_normal.border_width_left = 1
-	skip_normal.border_width_right = 1
-	skip_normal.border_width_top = 1
-	skip_normal.border_width_bottom = 1
-	skip_normal.border_color = Color(0.45, 0.45, 0.45, 0.5)
-	_skip_btn.add_theme_stylebox_override("normal", skip_normal)
-	var skip_hover = StyleBoxFlat.new()
-	skip_hover.bg_color = Color(0.35, 0.35, 0.35, 0.8)
-	skip_hover.corner_radius_top_left = 4
-	skip_hover.corner_radius_top_right = 4
-	skip_hover.corner_radius_bottom_left = 4
-	skip_hover.corner_radius_bottom_right = 4
-	skip_hover.border_width_left = 1
-	skip_hover.border_width_right = 1
-	skip_hover.border_width_top = 1
-	skip_hover.border_width_bottom = 1
-	skip_hover.border_color = Color(0.55, 0.55, 0.55, 0.5)
-	_skip_btn.add_theme_stylebox_override("hover", skip_hover)
-	_skip_btn.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	_skip_btn.add_theme_font_size_override("font_size", 12)
+	_skip_btn.z_index = 12
+	ThemeColors.style_brush_tab_button(_skip_btn, 12)
 	_skip_btn.pressed.connect(_on_skip)
 	add_child(_skip_btn)
 
 
+func _load_texture(path: String) -> Texture2D:
+	var texture := TextureManager.try_load(path)
+	if texture != null:
+		return texture
+	var image := Image.new()
+	var err := image.load(ProjectSettings.globalize_path(path))
+	if err != OK:
+		return null
+	var image_texture := ImageTexture.create_from_image(image)
+	image_texture.resource_path = path
+	return image_texture
+
+
+func _tutorial_panel_style() -> StyleBox:
+	var texture := _load_texture(PANEL_TEXTURE_PATH)
+	if texture == null:
+		var fallback := StyleBoxFlat.new()
+		fallback.bg_color = Color(ThemeColors.SURFACE_LOW, 0.95)
+		fallback.border_color = Color(ThemeColors.AMBER_PRIMARY, 0.45)
+		fallback.border_width_left = 2
+		fallback.border_width_right = 2
+		fallback.border_width_top = 2
+		fallback.border_width_bottom = 2
+		return fallback
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.region_rect = Rect2(0, 0, texture.get_width(), texture.get_height())
+	style.set_content_margin(SIDE_LEFT, PANEL_TEXT_MARGIN_X)
+	style.set_content_margin(SIDE_RIGHT, PANEL_TEXT_MARGIN_X)
+	style.set_content_margin(SIDE_TOP, 42.0)
+	style.set_content_margin(SIDE_BOTTOM, 24.0)
+	return style
+
+
 func show_step(step: Dictionary, highlight_rect: Array, _has_prev: bool, has_next: bool) -> void:
 	_has_next = has_next
-	var shadow = Color(0.0, 0.0, 0.0, 0.73)
-	var border_w = 2.0
+	if highlight_rect.size() < 4:
+		highlight_rect = [0, 0, 0, 0]
+
+	var shadow := Color(0.0, 0.0, 0.0, 0.73)
+	var border_w := 2.0
 	var x: float = highlight_rect[0]
 	var y: float = highlight_rect[1]
 	var w: float = highlight_rect[2]
 	var h: float = highlight_rect[3]
+	var vs := get_viewport().get_visible_rect().size
 
-	var vs = get_viewport().get_visible_rect().size
-
-	# 上部遮罩
 	_highlight_panels[0].position = Vector2(0, 0)
 	_highlight_panels[0].size = Vector2(vs.x, max(y - border_w, 0))
 	_highlight_panels[0].color = shadow
 
-	# 下部遮罩
 	_highlight_panels[1].position = Vector2(0, y + h + border_w)
 	_highlight_panels[1].size = Vector2(vs.x, max(vs.y - (y + h + border_w), 0))
 	_highlight_panels[1].color = shadow
 
-	# 左部遮罩
 	_highlight_panels[2].position = Vector2(0, max(y - border_w, 0))
 	_highlight_panels[2].size = Vector2(max(x - border_w, 0), min(h + border_w * 2, vs.y))
 	_highlight_panels[2].color = shadow
 
-	# 右部遮罩
 	_highlight_panels[3].position = Vector2(x + w + border_w, max(y - border_w, 0))
 	_highlight_panels[3].size = Vector2(max(vs.x - (x + w + border_w), 0), min(h + border_w * 2, vs.y))
 	_highlight_panels[3].color = shadow
 
-	# 高亮边框
-	var bt = get_node_or_null("BorderTop")
-	var bb = get_node_or_null("BorderBot")
-	var bl = get_node_or_null("BorderLeft")
-	var br = get_node_or_null("BorderRight")
-	if bt != null:
-		bt.position = Vector2(x - border_w, y - border_w)
-		bt.size = Vector2(w + border_w * 2, border_w)
-	if bb != null:
-		bb.position = Vector2(x - border_w, y + h)
-		bb.size = Vector2(w + border_w * 2, border_w)
-	if bl != null:
-		bl.position = Vector2(x - border_w, y - border_w)
-		bl.size = Vector2(border_w, h + border_w * 2)
-	if br != null:
-		br.position = Vector2(x + w, y - border_w)
-		br.size = Vector2(border_w, h + border_w * 2)
+	if _highlight_frame != null:
+		_highlight_frame.position = Vector2(x - 18.0, y - 18.0)
+		_highlight_frame.size = Vector2(w + 36.0, h + 36.0)
+		_highlight_frame.visible = w > 0.0 and h > 0.0
 
-	# 高亮区域内点击拦截器
-	var catcher = get_node_or_null("HighlightClickCatcher")
+	var catcher := get_node_or_null("HighlightClickCatcher") as Control
 	if catcher != null:
 		catcher.position = Vector2(x, y)
 		catcher.size = Vector2(w, h)
 
-	# 标题与描述面板位置（限幅防止超出屏幕）
 	var desc_x: float = step.get("desc_pos_x", 0.5)
 	var desc_y: float = step.get("desc_pos_y", 0.75)
 	var desc_w: float = step.get("desc_width", 420)
 	var desc_h: float = step.get("desc_height", 140)
+	var text_width = max(desc_w - PANEL_TEXT_MARGIN_X * 2.0, 48.0)
+	_description_label.text = "[font_size=%d]%s[/font_size]" % [PANEL_BODY_FONT_SIZE, step.get("description", "")]
+	_description_label.size = Vector2(text_width, PANEL_MEASURE_MAX_HEIGHT)
+	var required_body_h := ceilf(_description_label.get_content_height())
+	var required_panel_h := PANEL_BODY_Y + required_body_h + PANEL_BOTTOM_MARGIN
+	var panel_h: float = maxf(maxf(desc_h, PANEL_MIN_HEIGHT), required_panel_h)
 
-	var panel_x = vs.x * desc_x - desc_w / 2.0
-	var panel_y = vs.y * desc_y + 48
-	var title_y = vs.y * desc_y + 12
-	var btn_next_y = vs.y * desc_y + desc_h + 56
+	var panel_x := vs.x * desc_x - desc_w / 2.0
+	var panel_y := vs.y * desc_y
+	var btn_next_y: float = panel_y + panel_h + 8.0
 
-	# 限幅：面板不能超出屏幕底部（为按钮留出空间）
-	var panel_bottom = panel_y + desc_h
-	var btn_margin = 60  # 按钮 + 间距
+	var panel_bottom: float = panel_y + panel_h
+	var btn_margin := 60.0
 	if panel_bottom + btn_margin > vs.y:
-		var overflow = panel_bottom + btn_margin - vs.y
+		var overflow: float = panel_bottom + btn_margin - vs.y
 		panel_y = max(4, panel_y - overflow)
-		title_y = max(4, title_y - overflow)
-		btn_next_y = panel_y + desc_h + 8
+		btn_next_y = panel_y + panel_h + 8.0
 
-	# 限幅 x 方向
 	panel_x = clamp(panel_x, 10, vs.x - desc_w - 10)
 
-	_title_label.position = Vector2(panel_x, title_y)
-	_title_label.size = Vector2(desc_w, 32)
+	_description_panel.position = Vector2(panel_x, panel_y)
+	_description_panel.size = Vector2(desc_w, panel_h)
+
+	_title_label.position = Vector2(panel_x + PANEL_TEXT_MARGIN_X, panel_y + PANEL_TITLE_Y)
+	_title_label.size = Vector2(text_width, PANEL_TITLE_HEIGHT)
 	_title_label.text = step.get("title", "")
 
-	_description_panel.position = Vector2(panel_x, panel_y)
-	_description_panel.size = Vector2(desc_w, desc_h)
+	var body_height = max(panel_h - PANEL_BODY_Y - PANEL_BOTTOM_MARGIN, 24.0)
+	_description_label.position = Vector2(PANEL_TEXT_MARGIN_X, PANEL_BODY_Y)
+	_description_label.size = Vector2(text_width, body_height)
 
-	_description_label.position = Vector2(16, 14)
-	_description_label.size = Vector2(desc_w - 32, desc_h - 28)
-	_description_label.text = "[font_size=15]" + step.get("description", "") + "[/font_size]"
-
-	# 按钮位置
 	_skip_btn.position = Vector2(vs.x - 120, 16)
 	_next_btn.position = Vector2(vs.x * desc_x - 75, btn_next_y)
-	_next_btn.text = "完成 ✓" if not has_next else "下一步 ▶"
+	_next_btn.text = "完成" if not has_next else "下一步"
 
 	visible = true
 

@@ -1,0 +1,51 @@
+{
+  "runtime_scale": 2,
+  "key_color": [255, 0, 255],
+  "contact_sheet": "docs/art/inventory_grid_slot_contact_sheet.png",
+  "assets": [
+    {
+      "id": "inventory_slot_normal",
+      "source_file": "art_sources/generated_raw/inventory_grid_slot_v3/inventory_slot_normal_source.png",
+      "native_file": "assets/source/ui/inventory_grid_slot/inventory_slot_normal_native.png",
+      "output_file": "assets/textures/ui/inventory_slot_normal.png",
+      "native_size": [40, 40],
+      "runtime_size": [80, 80],
+      "safe_area": [8, 8, 64, 64],
+      "nine_slice_margins": [16, 16, 16, 16],
+      "intended_godot_use": "InventoryGridSlot normal StyleBoxTexture"
+    },
+    {
+      "id": "inventory_slot_hover",
+      "source_file": "art_sources/generated_raw/inventory_grid_slot_v3/inventory_slot_hover_source.png",
+      "native_file": "assets/source/ui/inventory_grid_slot/inventory_slot_hover_native.png",
+      "output_file": "assets/textures/ui/inventory_slot_hover.png",
+      "native_size": [40, 40],
+      "runtime_size": [80, 80],
+      "safe_area": [8, 8, 64, 64],
+      "nine_slice_margins": [16, 16, 16, 16],
+      "intended_godot_use": "InventoryGridSlot hover StyleBoxTexture"
+    },
+    {
+      "id": "inventory_slot_pressed",
+      "source_file": "art_sources/generated_raw/inventory_grid_slot_v3/inventory_slot_pressed_source.png",
+      "native_file": "assets/source/ui/inventory_grid_slot/inventory_slot_pressed_native.png",
+      "output_file": "assets/textures/ui/inventory_slot_pressed.png",
+      "native_size": [40, 40],
+      "runtime_size": [80, 80],
+      "safe_area": [8, 8, 64, 64],
+      "nine_slice_margins": [16, 16, 16, 16],
+      "intended_godot_use": "InventoryGridSlot pressed StyleBoxTexture"
+    },
+    {
+      "id": "inventory_slot_readable",
+      "source_file": "art_sources/generated_raw/inventory_grid_slot_v3/inventory_slot_readable_source.png",
+      "native_file": "assets/source/ui/inventory_grid_slot/inventory_slot_readable_native.png",
+      "output_file": "assets/textures/ui/inventory_slot_readable.png",
+      "native_size": [40, 40],
+      "runtime_size": [80, 80],
+      "safe_area": [8, 8, 64, 64],
+      "nine_slice_margins": [16, 16, 16, 16],
+      "intended_godot_use": "InventoryGridSlot readable StyleBoxTexture"
+    }
+  ]
+}

@@ -15,6 +15,12 @@ const ITEM_TEXTURES := {
 	"coins": "res://assets/ui/generated/investigation/mine_items/coins.png",
 	"warhammer_token": "res://assets/ui/generated/investigation/mine_items/warhammer_token.png",
 	"bloodied_paper": "res://assets/ui/generated/investigation/mine_items/bloodied_paper.png",
+	"oil_lamp": "res://assets/ui/generated/investigation/toby_lodging/items/oil_lamp.png",
+	"hard_bread": "res://assets/ui/generated/investigation/toby_lodging/items/hard_bread.png",
+	"oversized_coat": "res://assets/ui/generated/investigation/toby_lodging/items/oversized_coat.png",
+	"contract_fragment_a": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_a.png",
+	"contract_fragment_b": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_b.png",
+	"contract_fragment_c": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_c.png",
 }
 const ITEM_COLLISION_PROFILES := {
 	"broken_arrow": {"size": Vector2(108, 24), "offset": Vector2(0, 2)},
@@ -25,6 +31,12 @@ const ITEM_COLLISION_PROFILES := {
 	"coins": {"size": Vector2(58, 22), "offset": Vector2(0, 2)},
 	"warhammer_token": {"size": Vector2(50, 30), "offset": Vector2(0, 2)},
 	"bloodied_paper": {"size": Vector2(58, 44), "offset": Vector2(0, 0)},
+	"oil_lamp": {"size": Vector2(44, 70), "offset": Vector2(0, 8)},
+	"hard_bread": {"size": Vector2(60, 30), "offset": Vector2(0, 4)},
+	"oversized_coat": {"size": Vector2(140, 76), "offset": Vector2(0, 10)},
+	"contract_fragment_a": {"size": Vector2(48, 34), "offset": Vector2(0, 2)},
+	"contract_fragment_b": {"size": Vector2(46, 36), "offset": Vector2(0, 2)},
+	"contract_fragment_c": {"size": Vector2(52, 32), "offset": Vector2(0, 2)},
 }
 
 @onready var _shape: CollisionShape2D = $Shape

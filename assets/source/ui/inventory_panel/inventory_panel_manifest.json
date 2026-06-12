@@ -1,0 +1,17 @@
+{
+  "runtime_scale": 2,
+  "contact_sheet": "docs/art/inventory_panel_contact_sheet.png",
+  "asset": {
+    "id": "inventory_panel",
+    "source_file": "assets/source/ui/inventory_panel/inventory_panel_brush_source.png",
+    "source_size": [480, 440],
+    "native_file": "assets/source/ui/inventory_panel/inventory_panel_native.png",
+    "output_file": "assets/textures/ui/inventory_panel.png",
+    "native_size": [310, 270],
+    "runtime_size": [620, 540],
+    "safe_area": [36, 56, 548, 448],
+    "nine_slice_margins": [24, 24, 24, 24],
+    "content_margins": [36, 54, 36, 36],
+    "intended_godot_use": "InventoryOverlay/Panel thin brush carrier StyleBoxTexture"
+  }
+}

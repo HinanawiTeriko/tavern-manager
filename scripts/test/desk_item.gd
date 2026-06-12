@@ -3,7 +3,9 @@ extends RigidBody2D
 
 const KILL_Y: float = 800.0
 const IMPACT_DEBUG_SPEED: float = 260.0
+const ART_TEXTURE_SCALE := 0.82
 const MEAT_DONENESS := preload("res://scripts/systems/meat_doneness.gd")
+const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 
 const PHYSICS_LIMITS := {
 	"mass": Vector2(0.2, 5.0),
@@ -49,6 +51,11 @@ var attribute: String = ""   # L1 单属性（辛辣/清香/咸香/安眠）；�
 var is_held: bool = false
 var feedback_profile: Dictionary = {}
 var _pending_color: Color = Color.WHITE
+var _pending_art_texture: Texture2D = null
+var _icon_art: Sprite2D = null
+var _profile_collision_shape: Shape2D = null
+var _profile_collision_position: Vector2 = Vector2.ZERO
+var _art_collision_active: bool = false
 var _doneness = MEAT_DONENESS.new()
 
 signal fell_out_of_bounds(item: DeskItem)
@@ -65,7 +72,9 @@ var _last_impact_audio_msec: int = -1000
 
 
 func _ready() -> void:
+	_ensure_icon_art()
 	_apply_base_color(_pending_color)
+	_apply_art_texture()
 	contact_monitor = true
 	max_contacts_reported = 4
 	body_entered.connect(_on_body_entered)
@@ -122,6 +131,12 @@ func set_color(c: Color) -> void:
 		_apply_base_color(c)
 
 
+func set_art_texture(texture: Texture2D) -> void:
+	_pending_art_texture = texture
+	if is_node_ready():
+		_apply_art_texture()
+
+
 func set_item(key: String, item_data: Dictionary, profiles: Dictionary = {}) -> void:
 	setup_item(key, item_data, profiles)
 
@@ -129,6 +144,7 @@ func set_item(key: String, item_data: Dictionary, profiles: Dictionary = {}) -> 
 func setup_item(key: String, item_data: Dictionary, profiles: Dictionary = {}) -> void:
 	item_key = key
 	continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE
+	set_art_texture(null)
 	var rgb: Array = item_data.get("color", [0.8, 0.8, 0.8])
 	set_color(Color(rgb[0], rgb[1], rgb[2]))
 	var source_profiles := _merge_with_fallback_profiles(profiles)
@@ -175,6 +191,7 @@ func apply_collision_profile(profile: Dictionary) -> void:
 			rect.size = _array_to_vector2(profile.get("size", [40, 40]), Vector2(40, 40)).clamp(Vector2(4, 4), Vector2(160, 160))
 			collision_shape.shape = rect
 			_set_visual_rect(rect.size)
+	_remember_profile_collision()
 
 
 func apply_feedback_profile(profile: Dictionary) -> void:
@@ -186,6 +203,8 @@ func down_face_index() -> int:
 
 
 func add_heat(face: int, amount: float) -> void:
+	if _pending_art_texture != null:
+		set_art_texture(null)
 	_doneness.add_heat(face, amount)
 	_refresh_face_colors()
 
@@ -290,6 +309,7 @@ func _apply_split_polygons(top_poly: PackedVector2Array, bottom_poly: PackedVect
 	if is_node_ready():
 		_visual_top.polygon = top_poly
 		_visual_bottom.polygon = bottom_poly
+		_apply_icon_art_scale()
 	else:
 		var top := get_node_or_null("VisualTop") as Polygon2D
 		var bot := get_node_or_null("VisualBottom") as Polygon2D
@@ -297,3 +317,74 @@ func _apply_split_polygons(top_poly: PackedVector2Array, bottom_poly: PackedVect
 			top.polygon = top_poly
 		if bot != null:
 			bot.polygon = bottom_poly
+
+
+func _ensure_icon_art() -> void:
+	_icon_art = get_node_or_null("IconArt") as Sprite2D
+	if _icon_art != null:
+		return
+	_icon_art = Sprite2D.new()
+	_icon_art.name = "IconArt"
+	_icon_art.centered = true
+	_icon_art.visible = false
+	_icon_art.z_index = 1
+	_icon_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_child(_icon_art)
+
+
+func _apply_art_texture() -> void:
+	_ensure_icon_art()
+	_icon_art.texture = _pending_art_texture
+	var has_art := _pending_art_texture != null
+	_icon_art.visible = has_art
+	_visual_top.visible = not has_art
+	_visual_bottom.visible = not has_art
+	_apply_icon_art_scale()
+	if has_art:
+		_apply_art_collision_bounds()
+	else:
+		_restore_profile_collision()
+
+
+func _apply_icon_art_scale() -> void:
+	if _icon_art == null or _icon_art.texture == null:
+		return
+	_icon_art.scale = Vector2.ONE * ART_TEXTURE_SCALE
+
+
+func _remember_profile_collision() -> void:
+	var collision_shape := _shape if is_node_ready() else get_node_or_null("Shape") as CollisionShape2D
+	if collision_shape == null or collision_shape.shape == null:
+		return
+	_profile_collision_shape = collision_shape.shape.duplicate()
+	_profile_collision_position = collision_shape.position
+	_art_collision_active = false
+
+
+func _restore_profile_collision() -> void:
+	if not _art_collision_active or _profile_collision_shape == null:
+		return
+	_shape.shape = _profile_collision_shape.duplicate()
+	_shape.position = _profile_collision_position
+	_art_collision_active = false
+
+
+func _apply_art_collision_bounds() -> void:
+	if _icon_art == null or _icon_art.texture == null:
+		return
+	var polygon := TEXTURE_COLLISION_BOUNDS.centered_sprite_alpha_convex_polygon(_icon_art)
+	if polygon.size() >= 3:
+		var convex := ConvexPolygonShape2D.new()
+		convex.points = polygon
+		_shape.shape = convex
+		_shape.position = Vector2.ZERO
+		_art_collision_active = true
+		return
+	var art_bounds: Rect2 = TEXTURE_COLLISION_BOUNDS.centered_sprite_alpha_rect(_icon_art)
+	if art_bounds.size == Vector2.ZERO:
+		return
+	var rect := RectangleShape2D.new()
+	rect.size = art_bounds.size
+	_shape.shape = rect
+	_shape.position = art_bounds.get_center()
+	_art_collision_active = true

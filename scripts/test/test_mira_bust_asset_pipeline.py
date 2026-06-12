@@ -8,6 +8,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "art_sources" / "generated_raw" / "mira_bust" / "mira_neutral_source_v2.png"
 PROMPT = ROOT / "art_sources" / "generated_raw" / "mira_bust" / "mira_neutral_prompt_v2.txt"
+EXPRESSION_RAW = ROOT / "art_sources" / "generated_raw" / "mira_bust" / "mira_expression_sheet_source_v1.png"
+EXPRESSION_PROMPT = ROOT / "art_sources" / "generated_raw" / "mira_bust" / "mira_expression_sheet_prompt_v1.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "mira_bust_manifest.json"
 NATIVE = SOURCE_DIR / "mira_neutral_native.png"
@@ -20,6 +22,28 @@ RUNTIME_SIZE = (280, 360)
 SCALE = 4
 COLOR_LIMIT = 24
 MAX_RYAN_MATCHED_WIDTH_DELTA = 6
+PORTRAITS = {
+    "mira_neutral": {
+        "source": RAW,
+        "prompt": PROMPT,
+        "expected_mood": "guarded professional smile",
+    },
+    "mira_smile": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "genuine warm smile",
+    },
+    "mira_surprised": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "surprised raised brows",
+    },
+    "mira_serious": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "serious direct gaze",
+    },
+}
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -60,6 +84,8 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
     def test_ai_source_prompt_and_manifest_exist(self) -> None:
         self.assertTrue(RAW.exists(), "Mira AI source is missing")
         self.assertTrue(PROMPT.exists(), "Mira prompt record is missing")
+        self.assertTrue(EXPRESSION_RAW.exists(), "Mira expression AI sheet is missing")
+        self.assertTrue(EXPRESSION_PROMPT.exists(), "Mira expression prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
             "flat solid #00ff00",
@@ -70,6 +96,18 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
             "not a high-resolution illustration",
         ):
             self.assertIn(phrase, prompt)
+        expression_prompt = EXPRESSION_PROMPT.read_text(encoding="utf-8").lower()
+        for phrase in (
+            "3 columns x 1 row",
+            "flat solid #00ff00",
+            "same character identity",
+            "mira neutral",
+            "genuine warm smile",
+            "surprised raised brows",
+            "serious direct gaze",
+            "no readable text",
+        ):
+            self.assertIn(phrase, expression_prompt)
 
         self.assertTrue(MANIFEST.exists(), "Mira bust manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -83,33 +121,55 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
         self.assertEqual(manifest.get("safe_area"), [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]])
         self.assertEqual(manifest.get("runtime"), RUNTIME.relative_to(ROOT).as_posix())
         self.assertIn("Tavern CustomerSprite", manifest.get("intended_godot_use", ""))
+        portraits = manifest.get("portraits", {})
+        self.assertEqual(set(PORTRAITS), set(portraits), "manifest must describe all Mira expression portraits")
+        for portrait_id, expected in PORTRAITS.items():
+            with self.subTest(portrait_id=portrait_id):
+                entry = portraits[portrait_id]
+                self.assertEqual(entry.get("source"), expected["source"].relative_to(ROOT).as_posix())
+                self.assertEqual(entry.get("native"), (SOURCE_DIR / f"{portrait_id}_native.png").relative_to(ROOT).as_posix())
+                self.assertEqual(entry.get("runtime"), (ROOT / "assets" / "textures" / "characters" / f"{portrait_id}.png").relative_to(ROOT).as_posix())
+                self.assertEqual(entry.get("native_size"), list(NATIVE_SIZE))
+                self.assertEqual(entry.get("runtime_size"), list(RUNTIME_SIZE))
+                self.assertEqual(entry.get("scale"), SCALE)
+                self.assertIn(expected["expected_mood"], entry.get("expression_notes", []))
+                source_rect = entry.get("source_rect")
+                self.assertIsInstance(source_rect, list, f"{portrait_id}: source_rect must be fixed")
+                self.assertEqual(len(source_rect), 4, f"{portrait_id}: source_rect must have four values")
 
     def test_native_and_runtime_exports(self) -> None:
-        self.assertTrue(NATIVE.exists(), "Mira native source is missing")
-        self.assertTrue(RUNTIME.exists(), "Mira runtime texture is missing")
-        native = load_rgba(NATIVE)
-        runtime = load_rgba(RUNTIME)
-        self.assertEqual(native.size, NATIVE_SIZE)
-        self.assertEqual(runtime.size, RUNTIME_SIZE)
-        expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
-        self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
-        self.assertGreater(visible_pixel_count(native), 900, "portrait has too few visible pixels")
-        self.assertLessEqual(unique_visible_colors(native), COLOR_LIMIT, "native portrait exceeds the 24-color pixel budget")
-        self.assertEqual(green_key_fringe_pixels(native), 0, "green chroma-key fringe remains in native portrait")
+        for portrait_id in PORTRAITS:
+            with self.subTest(portrait_id=portrait_id):
+                native_path = SOURCE_DIR / f"{portrait_id}_native.png"
+                runtime_path = ROOT / "assets" / "textures" / "characters" / f"{portrait_id}.png"
+                self.assertTrue(native_path.exists(), f"{portrait_id}: native source is missing")
+                self.assertTrue(runtime_path.exists(), f"{portrait_id}: runtime texture is missing")
+                native = load_rgba(native_path)
+                runtime = load_rgba(runtime_path)
+                self.assertEqual(native.size, NATIVE_SIZE)
+                self.assertEqual(runtime.size, RUNTIME_SIZE)
+                expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
+                self.assertEqual(runtime.tobytes(), expected.tobytes(), f"{portrait_id}: runtime must be exact 4x nearest export")
+                self.assertGreater(visible_pixel_count(native), 900, f"{portrait_id}: portrait has too few visible pixels")
+                self.assertLessEqual(unique_visible_colors(native), COLOR_LIMIT, f"{portrait_id}: native portrait exceeds the 24-color pixel budget")
+                self.assertEqual(green_key_fringe_pixels(native), 0, f"{portrait_id}: green chroma-key fringe remains")
 
         ryan_native = load_rgba(RYAN_NATIVE)
         ryan_width, ryan_height = visible_size(ryan_native)
-        mira_width, mira_height = visible_size(native)
-        self.assertLessEqual(
-            mira_width,
-            ryan_width + MAX_RYAN_MATCHED_WIDTH_DELTA,
-            "Mira portrait is too wide for the Ryan-matched tavern customer scale",
-        )
-        self.assertGreaterEqual(
-            mira_height,
-            ryan_height - 4,
-            "Mira portrait lost too much vertical scale while matching Ryan",
-        )
+        for portrait_id in PORTRAITS:
+            with self.subTest(scale_match=portrait_id):
+                native = load_rgba(SOURCE_DIR / f"{portrait_id}_native.png")
+                mira_width, mira_height = visible_size(native)
+                self.assertLessEqual(
+                    mira_width,
+                    ryan_width + MAX_RYAN_MATCHED_WIDTH_DELTA,
+                    f"{portrait_id}: portrait is too wide for the Ryan-matched tavern customer scale",
+                )
+                self.assertGreaterEqual(
+                    mira_height,
+                    ryan_height - 4,
+                    f"{portrait_id}: portrait lost too much vertical scale while matching Ryan",
+                )
 
     def test_contact_sheet_exists(self) -> None:
         self.assertTrue(CONTACT_SHEET.exists(), "Mira contact sheet is missing")

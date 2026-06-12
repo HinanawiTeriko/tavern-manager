@@ -16,6 +16,7 @@ SPRITE_POSITION_RUNTIME = (640, 600)
 SURFACE_TOP_Y_RUNTIME = 484
 FRONT_LIP_Y_RUNTIME = 588
 GROUND_Y_RUNTIME = 536
+PLAYABLE_X_RANGE_RUNTIME = [0, 1280]
 OCCLUSION_RECT_NATIVE = [0, 11, 320, 70]
 BACKGROUND_SAMPLE_NATIVE_Y_RANGE = [110, 180]
 
@@ -65,7 +66,7 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
                 "surface_top_y_runtime": SURFACE_TOP_Y_RUNTIME,
                 "front_lip_y_runtime": FRONT_LIP_Y_RUNTIME,
                 "ground_y_runtime": GROUND_Y_RUNTIME,
-                "playable_x_range_runtime": [150, 1130],
+                "playable_x_range_runtime": PLAYABLE_X_RANGE_RUNTIME,
             },
         )
         self.assertEqual(

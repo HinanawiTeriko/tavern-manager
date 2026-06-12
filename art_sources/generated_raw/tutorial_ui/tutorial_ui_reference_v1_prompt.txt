@@ -1,0 +1,7 @@
+Use case: ui-mockup
+Asset type: transparent-ready game tutorial UI art source sheet for a Godot pixel-art dungeon tavern management game
+Primary request: Create a clean source sheet on a perfectly flat solid #ff00ff chroma-key background with two separate UI ornament assets and no readable text: (1) a wide horizontal tutorial prompt panel, worn parchment inset over dark teal ink-washed wood, rough black ink outline, amber candlelit edge accents, chunky low-detail pixel-game silhouette; (2) a rectangular tutorial highlight frame, thin irregular amber brush/ink border with dark chipped corners, meant to surround gameplay objects.
+Style/medium: hand-authored pixel-game UI reference, historical printmaking influence, rough ink lines, paper grain, warm candlelight accents, cold dark teal dungeon palette, low-density chunky pixel clusters.
+Composition/framing: square sheet, prompt panel centered in the upper half with generous empty #ff00ff padding; highlight frame centered in the lower half with generous empty #ff00ff padding; keep both assets separated and front-facing.
+Chroma-key constraints: background must be one uniform #ff00ff color with no shadows, gradients, texture, floor plane, glow, reflection, or lighting variation. Do not use #ff00ff anywhere in the UI assets. Keep crisp separated edges and generous padding.
+Constraints: no readable text, no logo, no watermark, no people, no icons, no numbers, no modern glossy UI, no smooth gradients, no soft antialiased borders, no purple/blue gradient theme, no beige-only palette.

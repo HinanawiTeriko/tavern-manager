@@ -1,0 +1,11 @@
+Use case: game UI asset. Asset type: DayMap special-location result panel source art for a Godot pixel-art tavern management game.
+
+Create one isolated wide horizontal UI panel centered on a perfectly flat solid #00ff00 chroma-key background for local background removal. The background must be one uniform color with no texture, shadows, gradients, floor plane, glow, or lighting variation. Do not use #00ff00 anywhere in the subject.
+
+Subject: a parchment event-result notice laid over dark teal inked wood/stone backing, like a map-room dispatch slip after visiting a special location. The panel should feel richer than a plain card: rough hand-inked dark teal frame, uneven parchment body, small wax seal tabs, tiny brass nail heads, folded paper corners, subtle dagger-pin or map-tool accents, sparse amber candle highlights. Leave a large clean blank central safe area for Godot-rendered Chinese body text, and a clearly separated blank bottom-center button seat/plate area. No readable text, no letters, no numbers, no symbols that look like fake UI text.
+
+Style/medium: authored pixel-game UI reference, historical printmaking influence, chunky crisp pixel clusters, limited palette, dark teal dungeon tavern shadows, muted parchment browns, sparse amber accents. No smooth vector gradients, no modern web UI, no rounded card look, no glossy plastic, no soft antialias blur.
+
+Composition/framing: one complete panel only, full object visible with generous padding, wide aspect around 7:4, horizontal, front-facing orthographic UI asset. Strong silhouette and complete left/right/top/bottom frame. Clean transparent-ready edges against chroma key.
+
+Constraints: no characters, no people, no readable text, no watermark, no logo, no extra separate panels, no fake labels, no UI words. The central body and button seat must remain mostly empty and readable.

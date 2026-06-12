@@ -13,13 +13,21 @@ const PROBE_DOWN := 56.0
 const PROBE_SIZE := Vector2(48, 48)
 const PROBE_QUERY_COUNT := 8
 const EMPTY_COLOR := Color(0.55, 0.55, 0.6)
+const OUTPUT_LOCAL_POS := Vector2(0.0, -42.0)
+const EJECT_LOCAL_VELOCITY := Vector2(280.0, -380.0)
+const EJECT_IGNORE_MSEC := 900
+const EJECT_IGNORE_UNTIL_META := "seasoning_shaker_ignore_until_msec"
+const EJECT_IGNORE_SOURCE_META := "seasoning_shaker_ignore_source_id"
 
 # ── 罐口区域（吸入检测，仿 Brewery._is_point_inside_mouth_opening）──
-const MOUTH_HALF_WIDTH := 18.0
-const MOUTH_TOP_Y := -40.0
-const MOUTH_BOTTOM_Y := -20.0
+const MOUTH_HALF_WIDTH := 34.0
+const MOUTH_TOP_Y := -56.0
+const MOUTH_BOTTOM_Y := -14.0
 
 @onready var _visual: Polygon2D = $Visual
+@onready var _art: Sprite2D = $Art
+@onready var _closed_art: Sprite2D = $ClosedArt
+@onready var _fill: Polygon2D = $Fill
 @onready var _mouth: Area2D = $Mouth
 
 var loaded_key: String = ""
@@ -65,12 +73,14 @@ func _on_mouth_body_entered(body: Node) -> void:
 
 
 func _try_accept_mouth_body(body: Node) -> void:
+	if body == null or not is_instance_valid(body) or body.is_queued_for_deletion():
+		return
 	if not body is DeskItem:
 		return
 	var item: DeskItem = body
-	if item.is_queued_for_deletion():
-		return
 	if item.item_key == "":
+		return
+	if _is_recently_ejected_item(item):
 		return
 	# 只接受香料，拒绝成品/普通材料
 	if not GameManager.seasoning.is_seasoning(item.item_key):
@@ -100,6 +110,45 @@ func load_seasoning(key: String) -> void:
 
 func is_loaded() -> bool:
 	return loaded_key != ""
+
+
+func pop_last_ingredient() -> String:
+	if loaded_key == "":
+		return ""
+	var item_key := loaded_key
+	loaded_key = ""
+	_shake.reset()
+	_refresh_visual()
+	return item_key
+
+
+func ingredient_output_position() -> Vector2:
+	return to_global(OUTPUT_LOCAL_POS)
+
+
+func ingredient_eject_velocity() -> Vector2:
+	return to_global(EJECT_LOCAL_VELOCITY) - global_position
+
+
+func configure_ejected_item(item: DeskItem) -> void:
+	if item == null or not is_instance_valid(item):
+		return
+	item.set_meta(EJECT_IGNORE_UNTIL_META, Time.get_ticks_msec() + EJECT_IGNORE_MSEC)
+	item.set_meta(EJECT_IGNORE_SOURCE_META, get_instance_id())
+	item.angular_velocity = randf_range(-12.0, 12.0)
+
+
+func _is_recently_ejected_item(item: DeskItem) -> bool:
+	if not item.has_meta(EJECT_IGNORE_UNTIL_META) or not item.has_meta(EJECT_IGNORE_SOURCE_META):
+		return false
+	if int(item.get_meta(EJECT_IGNORE_SOURCE_META)) != get_instance_id():
+		return false
+	var ignore_until := int(item.get_meta(EJECT_IGNORE_UNTIL_META))
+	if Time.get_ticks_msec() <= ignore_until:
+		return true
+	item.remove_meta(EJECT_IGNORE_UNTIL_META)
+	item.remove_meta(EJECT_IGNORE_SOURCE_META)
+	return false
 
 
 ## 抓起：唤醒并开始采样摇晃。
@@ -144,6 +193,8 @@ func _find_product_under() -> DeskItem:
 	var hits := space.intersect_shape(params, PROBE_QUERY_COUNT)
 	for h in hits:
 		var c = h.get("collider")
+		if c == null or not is_instance_valid(c) or c.is_queued_for_deletion():
+			continue
 		if c is DeskItem and GameManager.craft.is_product(c.item_key):
 			return c
 	return null
@@ -152,9 +203,19 @@ func _find_product_under() -> DeskItem:
 func _refresh_visual() -> void:
 	if _visual == null:
 		return
+	var loaded := loaded_key != ""
+	if _art != null:
+		_art.visible = not loaded
+		_art.modulate = Color(1, 1, 1, 1)
+	if _closed_art != null:
+		_closed_art.visible = loaded
+		_closed_art.modulate = Color(1, 1, 1, 1)
+	if _fill != null:
+		_fill.visible = false
 	if loaded_key == "":
 		_visual.color = EMPTY_COLOR
 		return
 	var rgb: Array = GameManager.craft.get_item(loaded_key).get("color", [0.8, 0.8, 0.8])
 	if rgb.size() >= 3:
-		_visual.color = Color(rgb[0], rgb[1], rgb[2])
+		var tint := Color(rgb[0], rgb[1], rgb[2])
+		_visual.color = tint
