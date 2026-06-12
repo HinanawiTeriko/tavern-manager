@@ -42,6 +42,18 @@ def alpha_bbox_size(image: Image.Image) -> tuple[int, int]:
     return (box[2] - box[0], box[3] - box[1])
 
 
+def chroma_fringe_pixels(image: Image.Image) -> int:
+    count = 0
+    rgba = image.convert("RGBA")
+    data = rgba.get_flattened_data() if hasattr(rgba, "get_flattened_data") else rgba.getdata()
+    for red, green, blue, alpha in data:
+        if alpha == 0:
+            continue
+        if red >= 10 and blue >= 10 and blue >= red * 0.70 and red >= blue * 0.50 and green <= min(red, blue) * 0.45:
+            count += 1
+    return count
+
+
 class MineInvestigationItemArtPipelineTest(unittest.TestCase):
     def test_manifest_has_all_contract_items(self) -> None:
         self.assertTrue(MANIFEST.exists(), "mine item art manifest is missing")
@@ -89,6 +101,7 @@ class MineInvestigationItemArtPipelineTest(unittest.TestCase):
             bbox_width, bbox_height = alpha_bbox_size(native)
             self.assertGreaterEqual(bbox_width, max(4, native.width // 3), f"{item_id}: alpha bbox too narrow")
             self.assertGreaterEqual(bbox_height, max(4, native.height // 3), f"{item_id}: alpha bbox too short")
+            self.assertEqual(chroma_fringe_pixels(native), 0, f"{item_id}: native contains visible magenta chroma-key fringe pixels")
 
     def test_runtime_files_do_not_reference_raw_sources(self) -> None:
         forbidden = [
