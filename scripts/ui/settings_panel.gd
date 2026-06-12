@@ -35,8 +35,25 @@ func _ready() -> void:
 	_resolution.item_selected.connect(_on_resolution_selected)
 	_volume.value_changed.connect(_on_volume_changed)
 	$Shade/Panel/CloseButton.pressed.connect(close)
+	_add_quit_button()
 	hide()
 	_sync_from_settings()
+
+func _add_quit_button() -> void:
+	var quit_btn = Button.new()
+	quit_btn.name = "QuitBtn"
+	quit_btn.text = "退出游戏"
+	quit_btn.layout_mode = 0
+	quit_btn.offset_left = 160.0
+	quit_btn.offset_top = 430.0
+	quit_btn.offset_right = 320.0
+	quit_btn.offset_bottom = 478.0
+	ThemeColors.style_brush_button(quit_btn, 14)
+	quit_btn.pressed.connect(_on_quit_game)
+	$Shade/Panel.add_child(quit_btn)
+
+func _on_quit_game() -> void:
+	get_tree().quit()
 
 
 func configure(settings: SettingsManager) -> void:

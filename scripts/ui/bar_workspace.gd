@@ -27,7 +27,6 @@ var _slot_rects: Array[Rect2] = []
 var _slot_item_keys: Array[String] = []
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
-@onready var _ledger: ReadableDeskItem = $World/Ledger
 
 
 func _ready() -> void:
@@ -38,7 +37,6 @@ func _ready() -> void:
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
 	_gm.inventory_changed.connect(_init_material_slots)
-	_ledger.open_requested.connect(_gm.request_open_document)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
 
@@ -264,6 +262,10 @@ func _try_deliver(item: DeskItem) -> void:
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
+	# 无顾客等待时，普通成品弹回桌面（避免被 _serve_formal 中 queue_free 吞掉）
+	if is_product and item.product_tags.is_empty() and _gm.current_order_key() == "":
+		_on_desk_item_fell(item)
+		return
 	# 带叙事 tag 的成品（如药酒）必须先走叙事中介，不能被订单匹配直接正常上菜吞掉。
 	if is_product and item.product_tags.is_empty() and item.item_key == _gm.current_order_key():
 		_serve_formal(item)

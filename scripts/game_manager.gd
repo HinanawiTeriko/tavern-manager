@@ -104,13 +104,16 @@ func _ready() -> void:
 	craft_style.load_data()
 
 	guests = GuestSystem.new(func():
-		return craft.get_orderable_products(economy.current_day)
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			return _tavern_view.get_daily_menu_items()
+		return _get_fallback_menu()
 	)
 	guests.guest_arrived.connect(_on_guest_arrived)
 	guests.guest_left.connect(_on_guest_left)
 	guests.patience_low.connect(_on_patience_low)
 	guests.normal_orders_completed.connect(_on_normal_orders_completed)
 	guests.guest_abandoned.connect(_on_guest_abandoned)
+	guests.all_guests_served.connect(_on_all_guests_served)
 
 	economy.changed.connect(_refresh_tavern_ui.unbind(3))
 	day_cycle.phase_changed.connect(_on_phase_changed)
@@ -130,8 +133,9 @@ func _process(delta: float) -> void:
 
 	if day_cycle.phase == DayCycleSystem.DayPhase.NIGHT and _tavern_view != null and is_instance_valid(_tavern_view):
 		var tutorial_active = _tutorial_manager != null and _tutorial_manager._is_active
-		var menu_open = _tavern_view.is_menu_open()
-		if not _is_dialogue_active and not tutorial_active and not _guest_lingering:
+		var menu_open = _tavern_view.is_menu_open() or _tavern_view.is_menu_config_open()
+		var in_prep = _tavern_view.is_preparation_phase() or not _tavern_view.daily_menu_confirmed
+		if not in_prep and not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
 			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
@@ -140,7 +144,9 @@ func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
 		_guest_lingering = false
-		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day))
+		# 每日账本头（进入夜间营业时记录）
+		_ledger_day_header()
+		# 准备阶段由 TavernView 自己处理，确认菜单后才 configure_night
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
 		_refresh_close_button()
@@ -177,8 +183,7 @@ func register_view(view: Node) -> void:
 						_spawn_npc_after_tutorial.bind(npc.id, order_key),
 						CONNECT_ONE_SHOT
 					)
-				else:
-					guests.spawn_important(npc.id, order_key)
+				# 否则等待菜单确认后通过 on_menu_confirmed() 生成
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
@@ -224,6 +229,13 @@ func visit_day_location(location_id: String) -> Dictionary:
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
 		grant_investigation_document(String(document_id))
+	# 账本：探索获得物品
+	var reward_counts: Dictionary = {}
+	for key in result.get("rewards", []):
+		var k := String(key)
+		reward_counts[k] = int(reward_counts.get(k, 0)) + 1
+	for rk in reward_counts:
+		_ledger_item(rk, int(reward_counts[rk]), "探索")
 	var aff = result.get("affection", null)
 	if aff is Dictionary and String(aff.get("npc", "")) != "":
 		var npc_id := String(aff["npc"])
@@ -233,9 +245,16 @@ func visit_day_location(location_id: String) -> Dictionary:
 		if economy.gold >= cost:
 			economy.add_gold(-cost)
 			narrative.set_var("toby_secured", true)
+			_ledger_gold(-cost, "矿洞押金")
 		else:
 			result["blocked_reason"] = "not_enough_gold"
 			narrative.set_var("toby_secured", false)
+	# 聚合 rewards 数组为 {item_key: count} 字典，供 UI Toast 展示
+	var reward_counts_toast: Dictionary = {}
+	for key in result.get("rewards", []):
+		var k := String(key)
+		reward_counts_toast[k] = int(reward_counts_toast.get(k, 0)) + 1
+	result["reward_counts"] = reward_counts_toast
 	return result
 
 
@@ -250,6 +269,7 @@ func grant_investigation_document(document_id: String) -> bool:
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
 			add_to_inventory(id, 1)
+			_ledger_item(id, 1, "剧情获得")
 		# 同步到大世界：拥有文档即视为已获取线索，公会柜台等依赖 requiresRead 的地点可解锁
 		day_map.set_document_owned(id, true)
 	return newly
@@ -264,6 +284,7 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
 	var locations: Array = _load_locations_data()
+	var gathered: Dictionary = {}  # 汇总采集结果
 
 	for loc_id in assignments:
 		var count: int = assignments[loc_id]
@@ -282,6 +303,11 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 		for _i in range(count):
 			var mat = materials[rng.randi() % materials.size()]
 			inventory_sys.add(mat, 1)
+			gathered[mat] = int(gathered.get(mat, 0)) + 1
+
+	# 账本：采集记录
+	for mat_key in gathered:
+		_ledger_item(String(mat_key), int(gathered[mat_key]), "采集")
 
 	notify_inventory_changed()
 	day_cycle.next_phase()
@@ -355,7 +381,7 @@ func _on_guest_arrived(guest: GuestData) -> void:
 			await get_tree().create_timer(0.5).timeout
 			if tm != null and is_instance_valid(tm):
 				var rects = {
-					"CustomerArea": [432, 70, 410, 328],
+					"CustomerNode": [432, 70, 410, 328],
 				}
 				tm.start_tutorial("serve", rects)
 
@@ -363,7 +389,52 @@ func _on_guest_arrived(guest: GuestData) -> void:
 func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: String) -> void:
 	if group_id != "craft":
 		return
+	# 如果准备阶段还未结束（菜单未确认），推迟到 on_menu_confirmed
+	if _tavern_view != null and is_instance_valid(_tavern_view) and not _tavern_view.daily_menu_confirmed:
+		return  # on_menu_confirmed 会在菜单确认后生成
 	guests.spawn_important(npc_id, order_key)
+
+## 准备阶段结束后延迟生成重要NPC
+func _spawn_important_deferred(npc_id: String, order_key: String) -> void:
+	await get_tree().create_timer(1.0).timeout
+	if _tavern_view != null and _tavern_view.daily_menu_confirmed:
+		guests.spawn_important(npc_id, order_key)
+
+## 菜单确认后的回调：触发生成重要NPC（由 TavernView._confirm_menu 调用）
+func on_menu_confirmed() -> void:
+	if _important_npc_pending and narrative.today_important_npc != "":
+		var npc_id = narrative.today_important_npc
+		var npc = null
+		for n in narrative.all_npcs:
+			if n.id == npc_id:
+				npc = n
+				break
+		if npc != null:
+			var scene = null
+			for s in npc.scenes:
+				if s.day == economy.current_day:
+					scene = s
+					break
+			var order_key = scene.order if scene != null else "bread"
+			guests.spawn_important(npc_id, order_key)
+
+## 当所有客人都招待完毕后提示打烊
+func _on_all_guests_served() -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view):
+		_tavern_view.show_stage_caption("今日客流招待完毕，可以打烊了！", ThemeColors.AMBER_PRIMARY)
+
+## 当日菜单回退（从已解锁配方获取，用于 guest_system 初始化回调）
+func _get_fallback_menu() -> Array:
+	var result: Array[Dictionary] = []
+	var products: Array = craft.get_orderable_products(economy.current_day)
+	for key in products:
+		var item: Dictionary = craft.get_item(key)
+		result.append({
+			"key": key,
+			"price": int(item.get("price", 0)),
+			"name": item.get("name", key),
+		})
+	return result
 
 ## 公开上菜入口：沙盘 / 未来 BarWorkspace 调用，避免依赖 craft_station 信号。
 func request_serve(item_key: String, craft_style_data: Dictionary = {}, seasoning_attribute: String = "") -> void:
@@ -380,14 +451,23 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 
 	var item: Dictionary = craft.get_item(item_key)
 	var item_price: int = item.get("price", 0)
+	# 使用当日菜单定价（如果已配置）
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.daily_menu.has(item_key):
+		item_price = int(_tavern_view.daily_menu[item_key].get("price", item_price))
 
 	if success:
 		var serve_quality: String = String(craft_style_data.get("quality", "normal"))
-		economy.add_gold(economy.gold_for_quality(item_price, serve_quality))
-		economy.add_reputation(economy.reputation_for_quality(serve_quality))
+		var earned_gold := economy.gold_for_quality(item_price, serve_quality)
+		var earned_rep := economy.reputation_for_quality(serve_quality)
+		economy.add_gold(earned_gold)
+		economy.add_reputation(earned_rep)
 		guests.record_order_success()
 		ryan_slice.record_order_success()
 		play_audio_event("serve_success")
+		# 账本：金币收入 + 声望变化
+		_ledger_gold(earned_gold, "上菜:%s" % item.get("name", item_key))
+		if earned_rep > 0:
+			_ledger_rep(earned_rep, "品质:%s" % serve_quality)
 		if is_important:
 			narrative.set_var("serve_result", "success")
 	else:
@@ -531,6 +611,10 @@ func end_night() -> void:
 
 	economy.reset_daily()
 	guests.reset_daily()
+	if _tavern_view != null:
+		_tavern_view.reset_today_gold()
+		_tavern_view.daily_menu.clear()
+		_tavern_view.daily_menu_confirmed = false
 
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/LedgerScreen.tscn")
 
@@ -543,6 +627,8 @@ func buy_material(key: String, quantity: int, discount: float = 1.0) -> bool:
 		return false
 	inventory_sys.add(key, quantity)
 	notify_inventory_changed()
+	_ledger_gold(-total, "商店购买")
+	_ledger_item(key, quantity, "商店")
 	return true
 
 func is_mira_in_shop_today() -> bool:
@@ -561,6 +647,7 @@ func buy_recipe_unlock(key: String) -> bool:
 	if not economy.spend_gold(price):
 		return false
 	craft.unlock_recipe(key)
+	_ledger_gold(-price, "配方解锁:%s" % key)
 	return true
 
 const ABILITY_TO_CONTAINER := {"slam_pot": "pot", "slam_barrel": "barrel"}
@@ -577,6 +664,7 @@ func buy_ability(key: String) -> bool:
 	if not economy.spend_gold(price):
 		return false
 	craft.unlock_slam(container)
+	_ledger_gold(-price, "能力购买:%s" % key)
 	return true
 
 func is_ability_owned(key: String) -> bool:
@@ -760,6 +848,27 @@ func try_load_material_icon(key: String) -> Texture2D:
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
 	return null
 
+## ── 账本记录辅助 ──
+
+func _ledger_gold(amount: int, reason: String) -> void:
+	var sign := "+" if amount >= 0 else ""
+	documents.add_ledger_entry("金币 %s%d （%s）" % [sign, amount, reason])
+
+func _ledger_rep(amount: int, reason: String) -> void:
+	documents.add_ledger_entry("声望 +%d （%s）" % [amount, reason])
+
+func _ledger_item(key: String, count: int, source: String) -> void:
+	if key == "" or count <= 0:
+		return
+	var item_name := String(key)
+	var item_data: Dictionary = craft.get_item(key)
+	if not item_data.is_empty():
+		item_name = String(item_data.get("name", key))
+	documents.add_ledger_entry("获得 %s×%d （%s）" % [item_name, count, source])
+
+func _ledger_day_header() -> void:
+	documents.add_ledger_entry("———— 第%d天 ————" % economy.current_day)
+
 func _load_initial_inventory() -> Dictionary:
 	var file = FileAccess.open("res://data/inventory_default.json", FileAccess.READ)
 	if file != null:
@@ -799,6 +908,7 @@ func _capture_save_state() -> Dictionary:
 		},
 		"tutorial": _capture_tutorial_state(),
 		"ryan_slice": ryan_slice.capture_state(),
+		"guests": guests.capture_state(),
 	}
 
 func _capture_tutorial_state() -> Dictionary:
@@ -847,6 +957,7 @@ func _apply_save_state(data: Dictionary) -> void:
 
 	_apply_tutorial_state(data.get("tutorial", {}))
 	ryan_slice.restore_state(data.get("ryan_slice", {}))
+	guests.restore_state(data.get("guests", {}))
 	notify_inventory_changed()
 
 func _apply_tutorial_state(t: Dictionary) -> void:
@@ -904,6 +1015,7 @@ func _default_new_game_state() -> Dictionary:
 			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
 			"first_guest_served": false, "first_ledger_shown": false},
 		"ryan_slice": {"total_orders_success": 0, "completed_days": []},
+		"guests": {"customers": [], "next_seq": 1},
 	}
 
 ## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。

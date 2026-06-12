@@ -22,7 +22,7 @@ var _drag_result_source: String = ""
 var _drag_seasoning: String = ""
 var _drag_panel: ColorRect
 var _overlay_menu: Control
-var _dialogue_overlay: Control
+var _dialogue_overlay
 
 # Shortcut bar
 var bar_materials: Array[String] = []
@@ -57,7 +57,7 @@ func _ready() -> void:
 	_result_slot = $ResultSlot
 	_result_label = $ResultSlot/Label
 	_overlay_menu = get_node_or_null("../OverlayMenu")
-	_dialogue_overlay = get_node_or_null("../DialogueOverlay")
+	_dialogue_overlay = get_node_or_null("../DialogueDim")
 
 	# 隐藏旧的合并查询栏（Tavern.tscn 中已有 CombineQueryBar 节点，直接隐藏）
 	var combine_query_bar = get_node_or_null("CombineQueryBar")
@@ -360,8 +360,8 @@ func _try_drop(pos: Vector2) -> void:
 	var menu_open: bool = _overlay_menu != null and _overlay_menu.visible
 
 	if not menu_open:
-		var customer_area = get_node("../CustomerArea")
-		if _hit_test(customer_area, pos):
+		var customer_drop = get_node_or_null("../BarWorkspace/CustomerDropArea")
+		if customer_drop != null and _point_in_rect(customer_drop.position.x, customer_drop.position.y, 410, 328, pos):
 			if _gm.guests.has_guest and (_drag_material != "" or _drag_result_key != ""):
 				var serve_key = _drag_result_key if _drag_result_key != "" else _drag_material
 				var serve_seasoning = _drag_seasoning if _drag_result_key != "" else _seasoning_zone.get_applied_seasoning()
@@ -573,3 +573,6 @@ func _trigger_seasoning_tutorial() -> void:
 func _hit_test(c: Control, p: Vector2) -> bool:
 	var r = c.get_global_rect()
 	return p.x >= r.position.x and p.x <= r.end.x and p.y >= r.position.y and p.y <= r.end.y
+
+func _point_in_rect(rx: float, ry: float, rw: float, rh: float, p: Vector2) -> bool:
+	return p.x >= rx and p.x <= rx + rw and p.y >= ry and p.y <= ry + rh

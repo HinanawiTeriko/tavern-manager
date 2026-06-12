@@ -30,12 +30,14 @@
   "bread": {
     "name": "面包",
     "ingredients": ["flour"],
-    "container": "grill"
+    "container": "grill",
+    "unlock_day": 2
   },
   "meat_cooked": {
     "name": "烤肉",
     "ingredients": ["meat_raw"],
-    "container": "grill"
+    "container": "grill",
+    "unlock_day": 2
   },
   "meat_sand": {
     "name": "肉夹面包",
@@ -52,11 +54,13 @@
   "herb_broth": {
     "name": "草药清汤",
     "ingredients": ["herb", "ale"],
-    "container": "pot"
+    "container": "pot",
+    "unlock_day": 3
   },
   "malt_porridge": {
     "name": "麦芽粥",
     "ingredients": ["flour", "ale"],
-    "container": "pot"
+    "container": "pot",
+    "unlock_day": 3
   }
 }
