@@ -49,8 +49,8 @@ PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = [80, 60, 1120, 1148]
 PINNED_NOTE_KNIFE_CROP = [80, 60, 520, 540]
 NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
-NOTE_ACTION_NATIVE_SIZE = NATIVE_SIZE
-NOTE_ACTION_RUNTIME_SIZE = RUNTIME_SIZE
+NOTE_ACTION_NATIVE_SIZE = (56, 14)
+NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
     "normal": [96, 110, 1160, 406],
     "hover": [96, 478, 1160, 776],
@@ -565,7 +565,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                     NOTE_ACTION_NATIVE_SIZE,
                     NOTE_ACTION_RUNTIME_SIZE,
                 )
-                self.assertGreaterEqual(visible_pixel_count(native), 500, f"{state}: note action seal too sparse")
+                self.assertGreaterEqual(visible_pixel_count(native), 340, f"{state}: note action seal too sparse")
                 current_bytes = native.tobytes()
                 if previous_bytes is not None:
                     self.assertNotEqual(current_bytes, previous_bytes, f"{state}: state art matches previous state")
@@ -590,10 +590,10 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             1 for r, g, b, a in pixels
             if a >= 160 and r >= 170 and 60 <= g <= 170 and b <= 85
         )
-        self.assertGreaterEqual(wax_pixels, 260, "note action needs a readable red-brown wax body")
-        self.assertGreaterEqual(paper_pixels, 300, "note action needs a paper label zone behind the text")
-        self.assertGreaterEqual(dark_ink_pixels, 80, "note action needs rough dark ink edging")
-        self.assertGreaterEqual(amber_pixels, 32, "note action needs candlelit wax highlights")
+        self.assertGreaterEqual(wax_pixels, 240, "note action needs a readable red-brown wax body")
+        self.assertGreaterEqual(paper_pixels, 170, "note action needs a paper label zone behind the text")
+        self.assertGreaterEqual(dark_ink_pixels, 50, "note action needs rough dark ink edging")
+        self.assertGreaterEqual(amber_pixels, 18, "note action needs candlelit wax highlights")
         self.assertGreaterEqual(len(set(pixels)), 12, "note action button needs native-pixel tonal variation")
 
     def test_note_action_contact_sheet_exists(self) -> None:
@@ -918,9 +918,9 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
                 "native_file": f"assets/source/daymap/ui/button_note_action_{state}_native.png",
                 "output_file": f"assets/textures/daymap/ui/button_note_action_{state}.png",
-                "size": [280, 72],
+                "size": [224, 56],
                 "source_crop": NOTE_ACTION_CROPS[state],
-                "safe_area": [72, 16, 184, 40],
+                "safe_area": [56, 12, 148, 32],
                 "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
             }
         for asset_id, expected_entry in expected.items():

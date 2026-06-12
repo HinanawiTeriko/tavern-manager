@@ -59,6 +59,8 @@ PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
 PINNED_NOTE_PANEL_CROP = (80, 60, 1120, 1148)
 PINNED_NOTE_KNIFE_CROP = (80, 60, 520, 540)
 NOTE_ACTION_SEAL_SOURCE = GENERATED_RAW / "note_action_seal_source.png"
+NOTE_ACTION_NATIVE_SIZE = (56, 14)
+NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
     "normal": (96, 110, 1160, 406),
     "hover": (96, 478, 1160, 776),
@@ -555,7 +557,7 @@ def harmonize_note_action_palette(image: Image.Image) -> Image.Image:
             if highlight:
                 pixels[x, y] = (*palette_pick(AMBER_PALETTE, min(255.0, luma * 1.18)), alpha)
             elif wax:
-                pixels[x, y] = (*palette_pick(WAX_PALETTE, min(255.0, luma * 1.25)), alpha)
+                pixels[x, y] = (*palette_pick(WAX_PALETTE, min(255.0, luma * 1.4)), alpha)
             elif paper:
                 pixels[x, y] = (*palette_pick(PARCHMENT_PALETTE, luma), alpha)
             else:
@@ -572,11 +574,17 @@ def fit_note_action_source(
     keyed = remove_green_key(cropped)
     fitted = ImageOps.contain(
         keyed,
-        NATIVE_SIZE,
+        NOTE_ACTION_NATIVE_SIZE,
         method=Image.Resampling.LANCZOS,
     ).convert("RGBA")
-    canvas = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
-    canvas.alpha_composite(fitted, ((NATIVE_SIZE[0] - fitted.width) // 2, (NATIVE_SIZE[1] - fitted.height) // 2))
+    canvas = Image.new("RGBA", NOTE_ACTION_NATIVE_SIZE, (0, 0, 0, 0))
+    canvas.alpha_composite(
+        fitted,
+        (
+            (NOTE_ACTION_NATIVE_SIZE[0] - fitted.width) // 2,
+            (NOTE_ACTION_NATIVE_SIZE[1] - fitted.height) // 2,
+        ),
+    )
     canvas = ImageEnhance.Contrast(canvas).enhance(1.08)
     alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
     canvas.putalpha(alpha)
@@ -740,12 +748,12 @@ def export_pinned_note_contact_sheet(panel: Image.Image, knife: Image.Image) -> 
 
 def export_note_action_contact_sheet(states: dict[str, Image.Image]) -> None:
     NOTE_ACTION_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new("RGBA", (360, 300), (8, 25, 29, 255))
+    sheet = Image.new("RGBA", (320, 240), (8, 25, 29, 255))
     y = 24
     for state in ["normal", "hover", "pressed"]:
-        runtime = states[state].resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
-        sheet.alpha_composite(runtime, (40, y))
-        y += 88
+        runtime = states[state].resize(NOTE_ACTION_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (48, y))
+        y += 68
     sheet.save(NOTE_ACTION_CONTACT_SHEET)
     print(f"note_action_contact_sheet: {sheet.size}")
 
@@ -783,9 +791,9 @@ def write_pinned_note_manifest() -> None:
             "source_file": "art_sources/generated_raw/daymap/note_action_seal_source.png",
             "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
             "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
-            "size": [280, 72],
+            "size": [224, 56],
             "source_crop": list(crop),
-            "safe_area": [72, 16, 184, 40],
+            "safe_area": [56, 12, 148, 32],
             "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
         }
     DAYMAP_UI_MANIFEST.write_text(
@@ -881,7 +889,7 @@ def main() -> None:
     for state, crop in NOTE_ACTION_CROPS.items():
         native = fit_note_action_source(note_action_source, crop, f"button_note_action_{state}")
         note_action_states[state] = native
-        export_single(f"button_note_action_{state}", native, RUNTIME_SIZE)
+        export_single(f"button_note_action_{state}", native, NOTE_ACTION_RUNTIME_SIZE)
     export_note_action_contact_sheet(note_action_states)
     write_pinned_note_manifest()
 

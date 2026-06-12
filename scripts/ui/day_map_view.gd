@@ -20,6 +20,7 @@ const DAYMAP_BUTTON_NOTE_ACTION_NORMAL := "res://assets/textures/daymap/ui/butto
 const DAYMAP_BUTTON_NOTE_ACTION_HOVER := "res://assets/textures/daymap/ui/button_note_action_hover.png"
 const DAYMAP_BUTTON_NOTE_ACTION_PRESSED := "res://assets/textures/daymap/ui/button_note_action_pressed.png"
 const DAYMAP_PRIMARY_BUTTON_SIZE := Vector2(280, 72)
+const DAYMAP_NOTE_ACTION_BUTTON_SIZE := Vector2(224, 56)
 const DAYMAP_BUTTON_LEDGER_NORMAL := "res://assets/textures/daymap/ui/button_ledger_normal.png"
 const DAYMAP_BUTTON_LEDGER_HOVER := "res://assets/textures/daymap/ui/button_ledger_hover.png"
 const DAYMAP_BUTTON_LEDGER_PRESSED := "res://assets/textures/daymap/ui/button_ledger_pressed.png"
@@ -34,6 +35,7 @@ const DAYMAP_HEADER_FONT_SIZE := 20
 const DAYMAP_BODY_FONT_SIZE := 15
 const DAYMAP_RESULT_FONT_SIZE := 16
 const DAYMAP_PRIMARY_BUTTON_FONT_SIZE := 18
+const DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE := 16
 const DAYMAP_LEDGER_BUTTON_FONT_SIZE := 15
 const DAYMAP_TOPBAR_DAY_POS := Vector2(72, 10)
 const DAYMAP_TOPBAR_DAY_SIZE := Vector2(300, 40)
@@ -50,8 +52,8 @@ const DAYMAP_RESULT_TEXT_POS := Vector2(90, 76)
 const DAYMAP_RESULT_TEXT_SIZE := Vector2(520, 210)
 const DAYMAP_BUTTON_TEXT_MARGIN_X := 28.0
 const DAYMAP_BUTTON_TEXT_MARGIN_Y := 9.0
-const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 72.0
-const DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT := 24.0
+const DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT := 56.0
+const DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
 const PINNED_NOTE_NAME_POS := Vector2(84, 88)
@@ -62,7 +64,7 @@ const PINNED_NOTE_COST_POS := Vector2(84, 218)
 const PINNED_NOTE_COST_SIZE := Vector2(248, 28)
 const PINNED_NOTE_YIELD_POS := Vector2(84, 248)
 const PINNED_NOTE_YIELD_SIZE := Vector2(248, 40)
-const PINNED_NOTE_BUTTON_POS := Vector2(44, 292)
+const PINNED_NOTE_BUTTON_POS := Vector2(72, 304)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -281,9 +283,9 @@ func _setup_pinned_note_panel() -> void:
 		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.38))
 		_apply_daymap_label_font(lbl)
 
-	_style_daymap_note_action_button(_pinned_note_go_here, DAYMAP_PRIMARY_BUTTON_FONT_SIZE)
+	_style_daymap_note_action_button(_pinned_note_go_here, DAYMAP_NOTE_ACTION_BUTTON_FONT_SIZE)
 	_pinned_note_go_here.position = PINNED_NOTE_BUTTON_POS
-	_pinned_note_go_here.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	_pinned_note_go_here.size = DAYMAP_NOTE_ACTION_BUTTON_SIZE
 	var action := Callable(self, "_on_go_here_pressed")
 	if not _pinned_note_go_here.pressed.is_connected(action):
 		_pinned_note_go_here.pressed.connect(action)
@@ -307,8 +309,8 @@ func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMAR
 
 
 func _style_daymap_note_action_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
-	button.custom_minimum_size = DAYMAP_PRIMARY_BUTTON_SIZE
-	button.size = DAYMAP_PRIMARY_BUTTON_SIZE
+	button.custom_minimum_size = DAYMAP_NOTE_ACTION_BUTTON_SIZE
+	button.size = DAYMAP_NOTE_ACTION_BUTTON_SIZE
 	button.add_theme_font_override("font", DAYMAP_FONT)
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
@@ -358,8 +360,8 @@ func _daymap_note_action_texture_style(path: String) -> StyleBoxTexture:
 	style.region_rect = Rect2(Vector2.ZERO, Vector2(texture.get_width(), texture.get_height()))
 	style.set_content_margin(SIDE_LEFT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_LEFT)
 	style.set_content_margin(SIDE_RIGHT, DAYMAP_NOTE_ACTION_TEXT_MARGIN_RIGHT)
-	style.set_content_margin(SIDE_TOP, DAYMAP_BUTTON_TEXT_MARGIN_Y)
-	style.set_content_margin(SIDE_BOTTOM, DAYMAP_BUTTON_TEXT_MARGIN_Y + 1.0)
+	style.set_content_margin(SIDE_TOP, 7.0)
+	style.set_content_margin(SIDE_BOTTOM, 8.0)
 	return style
 
 
