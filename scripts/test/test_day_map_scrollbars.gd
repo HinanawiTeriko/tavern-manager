@@ -164,8 +164,8 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(action != null and action.size == Vector2(224, 56),
 		"pinned note action button uses smaller note action size")
 	if action != null:
-		_ok(action.position == Vector2(104, 308),
-			"pinned note action button sits slightly up and left on the note bottom")
+		_ok(action.position == Vector2(92, 296),
+			"pinned note action button sits further up and left on the note bottom")
 		_ok(action.alignment == HORIZONTAL_ALIGNMENT_CENTER,
 			"pinned note action button centers its text horizontally")
 		var normal := action.get_theme_stylebox("normal") as StyleBoxTexture
