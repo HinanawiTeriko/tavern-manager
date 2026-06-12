@@ -7,13 +7,14 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "tavern_patience" / "patience_meter_reference.png"
 SOURCE = ROOT / "assets" / "source" / "ui"
 RUNTIME = ROOT / "assets" / "textures" / "ui"
 CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_patience_ui_contact_sheet.png"
 EXPECTED = {
     "patience_bar_bg": ((75, 7), (300, 28), "bar_patience_bg"),
     "patience_bar_fill": ((75, 7), (300, 28), "bar_patience_fill"),
-    "icon_patience": ((6, 6), (24, 24), "icon_patience"),
+    "icon_patience": ((8, 8), (32, 32), "icon_patience"),
 }
 
 
@@ -39,6 +40,10 @@ def image_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
 
 
 class TavernPatienceAssetPipelineTest(unittest.TestCase):
+    def test_assets_are_derived_from_generated_reference_source(self) -> None:
+        self.assertTrue(RAW_SOURCE.exists(), f"{RAW_SOURCE}: missing generated raw reference")
+        self.assertGreater(RAW_SOURCE.stat().st_size, 100_000, "generated reference is unexpectedly small")
+
     def test_native_and_runtime_assets_exist_with_expected_sizes(self) -> None:
         for native_id, (native_size, runtime_size, runtime_id) in EXPECTED.items():
             native_path = SOURCE / f"{native_id}_native.png"
@@ -77,10 +82,16 @@ class TavernPatienceAssetPipelineTest(unittest.TestCase):
         teal_pixels = sum(1 for r, g, b, _a in bg_pixels if b >= r and g >= r * 0.7 and b >= 24)
         dark_pixels = sum(1 for r, g, b, _a in bg_pixels if r + g + b <= 120)
         amber_pixels = sum(1 for r, g, b, _a in fill_pixels + icon_pixels if r >= 120 and g >= 64 and b <= 56)
+        bg_colors = len(set(bg_pixels))
+        fill_colors = len(set(fill_pixels))
+        icon_colors = len(set(icon_pixels))
 
         self.assertGreaterEqual(teal_pixels, 18, "patience slot needs visible dark teal bias")
         self.assertGreaterEqual(dark_pixels, 90, "patience slot should stay dark enough for Tavern UI")
         self.assertGreaterEqual(amber_pixels, 24, "patience fill/icon need readable amber pixels")
+        self.assertGreaterEqual(bg_colors, 14, "patience slot should preserve generated art texture, not flat geometry")
+        self.assertGreaterEqual(fill_colors, 14, "patience fill should preserve generated art texture, not flat geometry")
+        self.assertGreaterEqual(icon_colors, 8, "patience icon should preserve generated art texture, not flat geometry")
 
 
 if __name__ == "__main__":

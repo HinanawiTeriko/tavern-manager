@@ -1,0 +1,6 @@
+Use case: ui-mockup
+Asset type: source reference for a 2D game UI patience meter
+Primary request: create a compact horizontal medieval tavern patience meter component sheet with three separated elements: a dark teal carved wooden and blackened iron empty trough, an amber candlelit filling strip, and a small hourglass-like patience icon.
+Style/medium: hand-painted pixel-game reference art, crisp silhouettes, rough inked edges, limited palette, dark teal dungeon tavern UI with warm amber candlelight accents, old wood, soot-dark metal, subtle paper grain.
+Composition/framing: orthographic front view, long thin bar elements, centered on a plain dark neutral background, generous padding around each element, no perspective scene.
+Constraints: no readable text, no numbers, no logos, no watermark, no characters, no buttons, no modern glossy UI, no soft blur, no specific game or artist names.

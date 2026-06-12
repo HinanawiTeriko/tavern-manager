@@ -16,12 +16,13 @@ The patience UI keeps the existing `CustomerArea/TimerBar` `ProgressBar` path. A
 
 ## Asset Pipeline
 
-Use a deterministic native-pixel pipeline:
+Use a generated reference followed by a deterministic native-pixel pipeline:
 
+- Raw generated reference: `art_sources/generated_raw/tavern_patience/patience_meter_reference.png`
 - Native sources: `assets/source/ui/patience_bar_*.png`
 - Runtime textures: `assets/textures/ui/bar_patience_bg.png`, `assets/textures/ui/bar_patience_fill.png`, `assets/textures/ui/icon_patience.png`
 - Export scale: 4x nearest-neighbor
-- Tests verify dimensions, non-empty alpha, and exact nearest-neighbor export.
+- Tests verify raw source presence, dimensions, generated-art color complexity, and exact nearest-neighbor export.
 
 ## UI Contract
 
@@ -32,6 +33,7 @@ The Tavern UI contract must verify:
 - `TimerBar` uses the runtime patience background and fill styleboxes.
 - `TimerBar` has a stable 300x28 layout and value updates via `TavernView.update_timer()`.
 - `BarWorkspace/World/Ledger` still exists for compatibility but is hidden and not pickable.
+- Important guests normalize patience against their 90-second maximum so the visual meter starts moving immediately.
 
 ## Verification
 

@@ -2,86 +2,52 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 
 
 ROOT = Path(__file__).resolve().parents[2]
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "tavern_patience" / "patience_meter_reference.png"
 SOURCE = ROOT / "assets" / "source" / "ui"
 RUNTIME = ROOT / "assets" / "textures" / "ui"
 CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_patience_ui_contact_sheet.png"
 SCALE = 4
 
-
-def put(image: Image.Image, x: int, y: int, color: tuple[int, int, int, int]) -> None:
-    image.putpixel((x, y), color)
-
-
-def create_bar_bg() -> Image.Image:
-    transparent = (0, 0, 0, 0)
-    ink = (8, 12, 15, 255)
-    edge = (25, 60, 62, 255)
-    edge_dark = (14, 36, 42, 255)
-    inner = (13, 25, 31, 255)
-    high = (38, 86, 84, 255)
-    image = Image.new("RGBA", (75, 7), transparent)
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((1, 0, 73, 6), fill=ink)
-    draw.rectangle((0, 1, 74, 5), fill=ink)
-    draw.rectangle((2, 1, 72, 5), fill=edge_dark)
-    draw.rectangle((3, 2, 71, 4), fill=inner)
-    draw.line((4, 1, 70, 1), fill=edge)
-    draw.line((4, 5, 70, 5), fill=(10, 23, 28, 255))
-    for x in range(6, 69, 7):
-        put(image, x, 2, high)
-    for x in range(9, 72, 11):
-        put(image, x, 4, (8, 18, 22, 255))
-    return image
+ASSETS = {
+    "patience_bar_bg": {
+        "source_box": (248, 145, 1522, 330),
+        "native_size": (75, 7),
+        "runtime_name": "bar_patience_bg",
+    },
+    "patience_bar_fill": {
+        "source_box": (250, 445, 1518, 550),
+        "native_size": (75, 7),
+        "runtime_name": "bar_patience_fill",
+    },
+    "icon_patience": {
+        "source_box": (806, 588, 973, 760),
+        "native_size": (8, 8),
+        "runtime_name": "icon_patience",
+    },
+}
 
 
-def create_bar_fill() -> Image.Image:
-    transparent = (0, 0, 0, 0)
-    image = Image.new("RGBA", (75, 7), transparent)
-    draw = ImageDraw.Draw(image)
-    shadow = (94, 45, 28, 255)
-    amber = (205, 124, 50, 255)
-    bright = (236, 171, 74, 255)
-    ember = (166, 76, 34, 255)
-    draw.rectangle((1, 1, 73, 5), fill=shadow)
-    draw.rectangle((2, 2, 72, 4), fill=amber)
-    draw.line((4, 1, 69, 1), fill=bright)
-    draw.line((5, 5, 70, 5), fill=ember)
-    for x in range(6, 70, 8):
-        put(image, x, 2, bright)
-    for x in range(12, 72, 13):
-        put(image, x, 4, (126, 58, 32, 255))
-    return image
+def image_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
+    if hasattr(image, "get_flattened_data"):
+        return list(image.get_flattened_data())
+    return list(image.getdata())
 
 
-def create_patience_icon() -> Image.Image:
-    transparent = (0, 0, 0, 0)
-    outline = (10, 16, 18, 255)
-    teal = (35, 82, 80, 255)
-    amber = (224, 154, 62, 255)
-    image = Image.new("RGBA", (6, 6), transparent)
-    pixels = [
-        ".####.",
-        ".#..#.",
-        "..##..",
-        "..##..",
-        ".#..#.",
-        ".####.",
-    ]
-    for y, row in enumerate(pixels):
-        for x, value in enumerate(row):
-            if value != "#":
-                continue
-            border = y in (0, 5) or x in (1, 4)
-            put(image, x, y, outline if border else amber)
-    put(image, 2, 2, amber)
-    put(image, 3, 3, amber)
-    put(image, 2, 3, teal)
-    put(image, 3, 2, teal)
-    return image
+def quantize(image: Image.Image, colors: int) -> Image.Image:
+    return image.convert("RGB").quantize(colors=colors, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+
+
+def normalize_crop(reference: Image.Image, source_box: tuple[int, int, int, int], native_size: tuple[int, int]) -> Image.Image:
+    crop = reference.crop(source_box).convert("RGB")
+    resized = crop.resize(native_size, Image.Resampling.LANCZOS)
+    contrast = ImageEnhance.Contrast(resized).enhance(1.35)
+    color = ImageEnhance.Color(contrast).enhance(1.08)
+    sharp = ImageEnhance.Sharpness(color).enhance(1.8)
+    return quantize(sharp, 28)
 
 
 def save_pair(native: Image.Image, native_name: str, runtime_name: str) -> None:
@@ -90,38 +56,49 @@ def save_pair(native: Image.Image, native_name: str, runtime_name: str) -> None:
     native_path = SOURCE / f"{native_name}_native.png"
     runtime_path = RUNTIME / f"{runtime_name}.png"
     native.save(native_path)
-    native.resize((native.width * SCALE, native.height * SCALE), Image.Resampling.NEAREST).save(runtime_path)
+    runtime = native.resize((native.width * SCALE, native.height * SCALE), Image.Resampling.NEAREST)
+    runtime.save(runtime_path)
     print(f"{runtime_name}.png: {runtime_path.relative_to(ROOT).as_posix()}")
 
 
-def make_contact_sheet(bg: Image.Image, fill: Image.Image, icon: Image.Image) -> None:
+def make_contact_sheet(reference: Image.Image, assets: dict[str, Image.Image]) -> None:
     CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new("RGBA", (420, 180), (16, 14, 12, 255))
+    sheet = Image.new("RGBA", (640, 320), (16, 14, 12, 255))
     draw = ImageDraw.Draw(sheet)
-    draw.text((12, 10), "Tavern patience UI", fill=(220, 204, 176, 255))
-    draw.text((12, 34), "native", fill=(220, 204, 176, 255))
-    draw.text((12, 96), "runtime 4x", fill=(220, 204, 176, 255))
-    native_preview = Image.new("RGBA", (90, 28), (0, 0, 0, 0))
-    native_preview.alpha_composite(bg, (0, 0))
-    native_preview.alpha_composite(fill, (0, 10))
-    native_preview.alpha_composite(icon, (78, 1))
-    runtime_preview = Image.new("RGBA", (360, 44), (0, 0, 0, 0))
-    runtime_preview.alpha_composite(bg.resize((300, 28), Image.Resampling.NEAREST), (32, 8))
-    runtime_preview.alpha_composite(fill.resize((220, 28), Image.Resampling.NEAREST), (32, 8))
-    runtime_preview.alpha_composite(icon.resize((24, 24), Image.Resampling.NEAREST), (0, 10))
-    sheet.alpha_composite(native_preview.resize((180, 56), Image.Resampling.NEAREST), (88, 30))
-    sheet.alpha_composite(runtime_preview, (40, 112))
+    draw.text((16, 12), "Tavern patience UI - generated reference pipeline", fill=(220, 204, 176, 255))
+
+    ref_preview = reference.resize((320, 160), Image.Resampling.LANCZOS).convert("RGBA")
+    sheet.alpha_composite(ref_preview, (16, 40))
+    draw.text((16, 204), "runtime 4x", fill=(220, 204, 176, 255))
+
+    bg = assets["patience_bar_bg"].resize((300, 28), Image.Resampling.NEAREST)
+    fill = assets["patience_bar_fill"].resize((220, 28), Image.Resampling.NEAREST)
+    icon = assets["icon_patience"].resize((32, 32), Image.Resampling.NEAREST)
+    sheet.alpha_composite(bg, (96, 236))
+    sheet.alpha_composite(fill, (96, 236))
+    sheet.alpha_composite(icon, (48, 234))
+
+    draw.text((428, 44), "native previews", fill=(220, 204, 176, 255))
+    y = 72
+    for name in ("patience_bar_bg", "patience_bar_fill", "icon_patience"):
+        preview = assets[name].resize((assets[name].width * 4, assets[name].height * 4), Image.Resampling.NEAREST)
+        sheet.alpha_composite(preview, (428, y))
+        draw.text((428, y + preview.height + 4), name, fill=(156, 141, 120, 255))
+        y += preview.height + 30
+
     sheet.convert("RGB").save(CONTACT_SHEET)
 
 
 def main() -> None:
-    bg = create_bar_bg()
-    fill = create_bar_fill()
-    icon = create_patience_icon()
-    save_pair(bg, "patience_bar_bg", "bar_patience_bg")
-    save_pair(fill, "patience_bar_fill", "bar_patience_fill")
-    save_pair(icon, "icon_patience", "icon_patience")
-    make_contact_sheet(bg, fill, icon)
+    if not RAW_SOURCE.exists():
+        raise FileNotFoundError(f"missing generated patience reference: {RAW_SOURCE}")
+    reference = Image.open(RAW_SOURCE).convert("RGB")
+    outputs: dict[str, Image.Image] = {}
+    for native_name, spec in ASSETS.items():
+        native = normalize_crop(reference, spec["source_box"], spec["native_size"])
+        outputs[native_name] = native
+        save_pair(native, native_name, spec["runtime_name"])
+    make_contact_sheet(reference, outputs)
     print(f"contact sheet: {CONTACT_SHEET.relative_to(ROOT).as_posix()}")
 
 

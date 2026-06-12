@@ -134,7 +134,16 @@ func _process(delta: float) -> void:
 		if not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
-			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
+			_tavern_view.update_timer(_guest_patience_ratio(guests.current_guest))
+
+
+func _guest_patience_ratio(guest: GuestData) -> float:
+	if guest == null:
+		return 0.0
+	var max_patience := GuestData.BASE_PATIENCE
+	if guest.type == GuestData.GuestType.IMPORTANT:
+		max_patience = GuestData.BASE_PATIENCE * 1.5
+	return clampf(guest.patience / max_patience, 0.0, 1.0)
 
 func register_view(view: Node) -> void:
 	if view is TavernView:

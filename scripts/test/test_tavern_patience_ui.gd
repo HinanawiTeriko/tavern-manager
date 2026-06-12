@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	await _test_tavern_patience_ui_contract()
+	_test_important_guest_patience_ratio_uses_important_guest_max()
 	_finish()
 
 
@@ -58,9 +59,11 @@ func _test_tavern_patience_ui_contract() -> void:
 	var icon := tavern.get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	_ok(icon != null, "Tavern adds a PatienceIcon beside TimerBar")
 	if icon != null:
-		_ok(icon.size == Vector2(24, 24), "PatienceIcon uses the 24x24 runtime icon size")
+		_ok(icon.size == Vector2(32, 32), "PatienceIcon uses the 32x32 runtime icon size")
 		_ok(_texture_path(icon.texture) == "res://assets/textures/ui/icon_patience.png",
 			"PatienceIcon uses the runtime patience icon")
+		_ok(icon.texture != null and icon.texture.get_size() == Vector2(32, 32),
+			"PatienceIcon loaded texture is the current 32x32 runtime export")
 		_ok(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "PatienceIcon uses nearest texture filtering")
 
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
@@ -72,3 +75,21 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_important_guest_patience_ratio_uses_important_guest_max() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.has_method("_guest_patience_ratio"), "GameManager exposes a testable guest patience ratio helper")
+	if not gm.has_method("_guest_patience_ratio"):
+		return
+	var important := GuestData.new()
+	important.type = GuestData.GuestType.IMPORTANT
+	important.patience = GuestData.BASE_PATIENCE * 1.5 - 1.0
+	var important_ratio: float = gm._guest_patience_ratio(important)
+	_ok(important_ratio < 1.0, "important guest patience bar starts moving before dropping below base patience")
+	_ok(important_ratio > 0.95, "important guest patience ratio still starts near full")
+
+	var normal := GuestData.new()
+	normal.type = GuestData.GuestType.NORMAL
+	normal.patience = GuestData.BASE_PATIENCE * 0.5
+	_ok(is_equal_approx(gm._guest_patience_ratio(normal), 0.5), "normal guest patience ratio still uses base patience")
