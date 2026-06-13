@@ -40,6 +40,19 @@
         4
       ],
       "intended_use": "source sheet v3 for approved missing intermediate, product, and story item icons"
+    },
+    "quality_drinks_good_sheet_v1": {
+      "source_file": "art_sources/generated_raw/tavern_missing_item_icons/quality_drinks_good_sheet_v1.png",
+      "production_reference": "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+      "size": [
+        5016,
+        1254
+      ],
+      "grid": [
+        4,
+        1
+      ],
+      "intended_use": "source sheet for good-quality drink item icon variants using the tavern item icon pipeline"
     }
   },
   "icons": {
@@ -642,6 +655,108 @@
         22
       ],
       "intended_godot_use": "alternative readable story item icon for inventory rows and draggable DeskItem art"
+    }
+  },
+  "quality_icons": {
+    "ale_beer_good": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+      "source_rect": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/ale_beer_good_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/ale_beer_good_native.png",
+      "runtime": "assets/textures/tavern/items/ale_beer_good.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "good-quality malt beer product icon for recipe UI and draggable DeskItem art"
+    },
+    "wine_good": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+      "source_rect": [
+        1254,
+        0,
+        2508,
+        1254
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/wine_good_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/wine_good_native.png",
+      "runtime": "assets/textures/tavern/items/wine_good.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "good-quality wine product icon for recipe UI and draggable DeskItem art"
+    },
+    "herbal_ale_good": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+      "source_rect": [
+        2508,
+        0,
+        3762,
+        1254
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/herbal_ale_good_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/herbal_ale_good_native.png",
+      "runtime": "assets/textures/tavern/items/herbal_ale_good.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "good-quality herbal ale product icon for recipe UI and draggable DeskItem art"
+    },
+    "spiced_wine_good": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+      "source_rect": [
+        3762,
+        0,
+        5016,
+        1254
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/spiced_wine_good_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/spiced_wine_good_native.png",
+      "runtime": "assets/textures/tavern/items/spiced_wine_good.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "good-quality spiced wine product icon for recipe UI and draggable DeskItem art"
     }
   }
 }

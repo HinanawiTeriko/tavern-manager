@@ -4,6 +4,11 @@ var _checks := 0
 var _failures := 0
 
 const PIXEL_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
+const ORDER_GROOVE_SAFE_LEFT := 392.0
+const ORDER_GROOVE_SAFE_TOP := 604.0
+const ORDER_GROOVE_SAFE_RIGHT := 888.0
+const ORDER_GROOVE_SAFE_BOTTOM := 636.0
+const PATIENCE_BAR_SIZE := Vector2(192, 16)
 
 
 func _ready() -> void:
@@ -70,22 +75,60 @@ func _test_tavern_patience_ui_contract() -> void:
 	await get_tree().process_frame
 
 	var timer := tavern.get_node_or_null("CustomerArea/TimerBar") as ProgressBar
+	var fill_clip := tavern.get_node_or_null("CustomerArea/PatienceFillClip") as Control
+	var fill_art := tavern.get_node_or_null("CustomerArea/PatienceFillClip/PatienceFillArt") as TextureRect
 	_ok(timer != null, "TimerBar remains the public Tavern patience ProgressBar path")
 	if timer != null:
-		_ok(timer.size == Vector2(300, 28), "TimerBar uses the production 300x28 patience bar layout")
+		_ok(timer.size == PATIENCE_BAR_SIZE, "TimerBar uses the slim tabletop groove patience layout")
+		_ok(timer.global_position.x >= ORDER_GROOVE_SAFE_LEFT and timer.global_position.x + timer.size.x <= ORDER_GROOVE_SAFE_RIGHT,
+			"TimerBar is embedded inside the table-carved order groove horizontally")
+		_ok(timer.global_position.y >= ORDER_GROOVE_SAFE_TOP and timer.global_position.y + timer.size.y <= ORDER_GROOVE_SAFE_BOTTOM,
+			"TimerBar is embedded inside the table-carved order groove vertically")
 		_ok(timer.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"TimerBar does not block table item clicks through the customer area")
-		_ok(_stylebox_texture_path(timer, "background") == "res://assets/textures/ui/bar_patience_bg.png",
-			"TimerBar uses patience background art")
-		_ok(_stylebox_texture_path(timer, "fill") == "res://assets/textures/ui/bar_patience_fill.png",
-			"TimerBar uses patience fill art")
+		_ok(_stylebox_texture_path(timer, "background") == "res://assets/textures/ui/bar_patience_groove_bg.png",
+			"TimerBar uses the groove-sized patience background art")
+		_ok(_stylebox_texture_path(timer, "fill") == "",
+			"TimerBar no longer stretches the patience fill art through ProgressBar fill")
 		tavern.update_timer(0.42)
 		_ok(is_equal_approx(timer.value, 42.0), "TavernView.update_timer still drives TimerBar value")
+	_ok(fill_clip != null, "PatienceFillClip masks the fixed patience fill art")
+	if fill_clip != null:
+		_ok(fill_clip.size.y == PATIENCE_BAR_SIZE.y, "PatienceFillClip keeps the production bar height")
+		_ok(fill_clip.global_position == timer.global_position,
+			"PatienceFillClip is aligned exactly over TimerBar")
+		_ok(fill_clip.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"PatienceFillClip does not block table item clicks")
+		_ok(fill_clip.clip_contents, "PatienceFillClip clips the fill instead of scaling it")
+		_ok(abs(fill_clip.size.x - round(PATIENCE_BAR_SIZE.x * 0.42)) <= 1.0,
+			"update_timer reduces the clip width to reveal less fill")
+	_ok(fill_art != null, "PatienceFillArt keeps the full-size fill texture inside the clip")
+	if fill_art != null:
+		_ok(fill_art.size == PATIENCE_BAR_SIZE, "PatienceFillArt remains full width and is not resized by patience")
+		_ok(fill_art.scale == Vector2.ONE, "PatienceFillArt is not scaled during patience drain")
+		_ok(fill_art.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"PatienceFillArt does not block table item clicks")
+		_ok(fill_art.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+			"PatienceFillArt renders with nearest filtering")
+		_ok(_texture_path(fill_art.texture) == "res://assets/textures/ui/bar_patience_groove_fill.png",
+			"PatienceFillArt uses the groove-sized runtime patience fill art")
+		tavern.update_timer(0.0)
+		_ok(fill_art.size == PATIENCE_BAR_SIZE, "PatienceFillArt stays full width even when patience is empty")
+		if fill_clip != null:
+			_ok(fill_clip.size.x == 0.0, "empty patience hides the fill through clipping")
+		tavern.update_timer(1.0)
+		_ok(fill_art.size == PATIENCE_BAR_SIZE, "PatienceFillArt stays full width when patience refills")
+		if fill_clip != null:
+			_ok(fill_clip.size.x == PATIENCE_BAR_SIZE.x, "full patience reveals the full fixed fill texture")
 
 	var icon := tavern.get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	_ok(icon != null, "Tavern adds a PatienceIcon beside TimerBar")
 	if icon != null:
-		_ok(icon.size == Vector2(32, 32), "PatienceIcon uses the 32x32 runtime icon size")
+		_ok(icon.size == Vector2(32, 32), "PatienceIcon uses the native 32x32 runtime icon size")
+		_ok(icon.global_position.x >= ORDER_GROOVE_SAFE_LEFT and icon.global_position.x + icon.size.x <= ORDER_GROOVE_SAFE_RIGHT,
+			"PatienceIcon sits inside the table-carved order groove horizontally")
+		_ok(icon.global_position.y >= ORDER_GROOVE_SAFE_TOP and icon.global_position.y + icon.size.y <= ORDER_GROOVE_SAFE_BOTTOM,
+			"PatienceIcon sits inside the table-carved order groove vertically")
 		_ok(_texture_path(icon.texture) == "res://assets/textures/ui/icon_patience.png",
 			"PatienceIcon uses the runtime patience icon")
 		_ok(icon.texture != null and icon.texture.get_size() == Vector2(32, 32),
@@ -113,6 +156,9 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	var customer_name := tavern.get_node_or_null("CustomerArea/CustomerName") as Label
 	var order_bubble := tavern.get_node_or_null("CustomerArea/OrderBubble") as Label
+	var order_ticket_frame := tavern.get_node_or_null("CustomerArea/OrderTicketFrame") as TextureRect
+	var order_icon := tavern.get_node_or_null("CustomerArea/OrderIcon") as TextureRect
+	var reaction_bubble := tavern.get_node_or_null("CustomerArea/ReactionBubble") as Label
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
@@ -123,6 +169,38 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(_control_uses_pixel_font(order_bubble), "OrderBubble uses the shared pixel UI font")
 		_ok(order_bubble.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"OrderBubble does not block table item clicks")
+		_ok(order_bubble.global_position.x >= ORDER_GROOVE_SAFE_LEFT and order_bubble.global_position.x + order_bubble.size.x <= ORDER_GROOVE_SAFE_RIGHT,
+			"OrderBubble is embedded inside the table-carved order groove horizontally")
+		_ok(order_bubble.global_position.y >= ORDER_GROOVE_SAFE_TOP and order_bubble.global_position.y + order_bubble.size.y <= ORDER_GROOVE_SAFE_BOTTOM,
+			"OrderBubble is embedded inside the table-carved order groove vertically")
+		_ok(order_bubble.size.y >= 28.0, "OrderBubble has enough room for a readable one-line counter order label")
+		_ok(order_bubble.get_theme_font_size("font_size") >= 18, "OrderBubble uses a readable order font size")
+		_ok(order_bubble.get_theme_color("font_color") == ThemeColors.TEXT_LIGHT,
+			"OrderBubble uses high-contrast light text for the order")
+		_ok(order_bubble.get_theme_constant("outline_size") >= 3,
+			"OrderBubble uses a dark outline so requests remain readable over the counter")
+	_ok(order_ticket_frame == null, "Tavern no longer uses a separate floating OrderTicketFrame")
+	_ok(order_icon == null, "Tavern no longer uses a separate floating OrderIcon")
+	_ok(reaction_bubble != null, "ReactionBubble separates temporary customer reactions from the stable order request")
+	if reaction_bubble != null:
+		_ok(_control_uses_pixel_font(reaction_bubble), "ReactionBubble uses the shared pixel UI font")
+		_ok(reaction_bubble.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"ReactionBubble does not block table item clicks")
+		_ok(reaction_bubble.get_theme_font_size("font_size") >= 16, "ReactionBubble remains readable for short customer reactions")
+
+	if order_bubble != null and reaction_bubble != null:
+		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
+		_ok(order_bubble.visible, "show_customer reveals the table-carved order text")
+		_ok(order_bubble.text.find("order_ale") >= 0, "show_customer writes the stable order request to OrderBubble")
+		tavern.customer_say("hurry")
+		_ok(order_bubble.text.find("order_ale") >= 0, "customer_say does not overwrite the stable order request")
+		_ok(order_bubble.text.find("hurry") == -1, "temporary reaction text stays out of OrderBubble")
+		_ok(reaction_bubble.text == "hurry", "customer_say writes temporary text to ReactionBubble")
+		if tavern.has_method("show_order_timeout"):
+			tavern.show_order_timeout("timeout")
+			_ok(order_bubble.text.find("order_ale") >= 0, "timeout state keeps the original order readable")
+			_ok(order_bubble.text.find("timeout") >= 0, "timeout state adds a clear failure reason in the groove label")
+			_ok(order_bubble.text.find("\n") == -1, "groove order text stays on one readable line")
 	var stage_caption := tavern.get_node_or_null("StageCaption") as Label
 	_ok(stage_caption != null, "StageCaption remains the public tavern feedback caption path")
 	if stage_caption != null:

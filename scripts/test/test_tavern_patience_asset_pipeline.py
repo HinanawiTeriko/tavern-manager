@@ -14,6 +14,8 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_patience_ui_contact_sheet.png"
 EXPECTED = {
     "patience_bar_bg": ((75, 7), (300, 28), "bar_patience_bg"),
     "patience_bar_fill": ((75, 7), (300, 28), "bar_patience_fill"),
+    "patience_groove_bar_bg": ((48, 4), (192, 16), "bar_patience_groove_bg"),
+    "patience_groove_bar_fill": ((48, 4), (192, 16), "bar_patience_groove_fill"),
     "icon_patience": ((8, 8), (32, 32), "icon_patience"),
 }
 
@@ -74,9 +76,11 @@ class TavernPatienceAssetPipelineTest(unittest.TestCase):
     def test_patience_bar_palette_is_dark_teal_with_amber_fill(self) -> None:
         bg = load_rgba_checked(self, SOURCE / "patience_bar_bg_native.png")
         fill = load_rgba_checked(self, SOURCE / "patience_bar_fill_native.png")
+        groove_bg = load_rgba_checked(self, SOURCE / "patience_groove_bar_bg_native.png")
+        groove_fill = load_rgba_checked(self, SOURCE / "patience_groove_bar_fill_native.png")
         icon = load_rgba_checked(self, SOURCE / "icon_patience_native.png")
-        bg_pixels = [pixel for pixel in image_pixels(bg) if pixel[3] > 0]
-        fill_pixels = [pixel for pixel in image_pixels(fill) if pixel[3] > 0]
+        bg_pixels = [pixel for pixel in image_pixels(bg) + image_pixels(groove_bg) if pixel[3] > 0]
+        fill_pixels = [pixel for pixel in image_pixels(fill) + image_pixels(groove_fill) if pixel[3] > 0]
         icon_pixels = [pixel for pixel in image_pixels(icon) if pixel[3] > 0]
 
         teal_pixels = sum(1 for r, g, b, _a in bg_pixels if b >= r and g >= r * 0.7 and b >= 24)

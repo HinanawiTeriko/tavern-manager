@@ -205,10 +205,12 @@ func visit(location_id: String) -> Dictionary:
 		return _failure("行动力不足。")
 
 	stamina -= cost
-	_visited[location_id] = int(_visited.get(location_id, 0)) + 1
+	var previous_visits := int(_visited.get(location_id, 0))
+	_visited[location_id] = previous_visits + 1
 	# 有 postings 时，产出取当前激活贴文（无激活贴文=闲置，不产出）。
 	var unlocked_flag := String(location.get("unlocksFlag", ""))
 	var documents: Array = location.get("documents", []).duplicate()
+	var active_posting := ""
 	var message := String(location.get("result", "访问完成。"))
 	if location.has("postings"):
 		var ap := _active_posting(location)
@@ -216,6 +218,7 @@ func visit(location_id: String) -> Dictionary:
 			unlocked_flag = ""
 			documents = []
 		else:
+			active_posting = String(ap.get("id", ""))
 			unlocked_flag = String(ap.get("unlocksFlag", ""))
 			documents = (ap.get("documents", []) as Array).duplicate()
 			message = String(ap.get("result", location.get("result", "访问完成。")))
@@ -225,14 +228,19 @@ func visit(location_id: String) -> Dictionary:
 	var day_rewards: Dictionary = location.get("dayRewards", {})
 	if day_rewards.has(str(current_day)):
 		rewards = day_rewards[str(current_day)].duplicate()
+	var affection = location.get("affection", null)
+	if bool(location.get("affectionOncePerDay", false)) and previous_visits > 0:
+		affection = null
 	return {
 		"success": true,
 		"location_id": location_id,
 		"message": message,
 		"rewards": rewards,
 		"documents": documents,
+		"unlockedFlag": unlocked_flag,
+		"activePosting": active_posting,
 		"stamina": stamina,
-		"affection": location.get("affection", null),
+		"affection": affection,
 		"goldCost": int(location.get("goldCost", 0)),
 		"securesToby": bool(location.get("securesToby", false)),
 	}

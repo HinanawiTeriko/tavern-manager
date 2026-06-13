@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: pixel-game VFX source sheet for a Godot tavern cooking pot effect atlas
+Primary request: Create a clean sprite source sheet with 6 horizontal rows and 4 columns, 24 isolated single visual-effect elements total, on a perfectly flat solid #ff00ff chroma-key background.
+Rows from top to bottom: 1) small stew bubbles, 2) thin circular soup ripples, 3) pale curled steam wisps, 4) warm golden aroma wisps, 5) tiny food flecks and herb bits, 6) small amber oil glints / broth shine droplets.
+Style/medium: chunky low-resolution pixel-art source, crisp silhouettes, limited palette, dark teal/stone tavern game palette with amber highlights, no antialias blur, no soft shadows.
+Composition/framing: each cell contains exactly one small centered isolated effect element with generous empty magenta padding; elements must not touch cell borders; consistent scale across variants.
+Constraints: no text, no labels, no UI, no watermark, no characters, no cookware, no dense foam, no baked particle cloud, no complete effect burst, only single reusable elements. Background must be one uniform #ff00ff color with no gradient, texture, shadow, or lighting variation. Do not use #ff00ff inside any sprite.

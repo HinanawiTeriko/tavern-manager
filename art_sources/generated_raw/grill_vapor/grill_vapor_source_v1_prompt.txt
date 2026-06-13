@@ -1,0 +1,8 @@
+Create a clean pixel-art source spritesheet for a game effect. Canvas is one image with 4 columns and 3 rows, equal-size cells. Each cell contains exactly ONE isolated vertical wisp, centered in its cell, on a flat pure magenta chroma-key background (#ff00ff). No transparent background.
+
+Rows:
+1) steam: pale blue-white cooking steam wisps, thin, soft curling shapes, no fire, no embers.
+2) smoke: warm gray cooking smoke wisps, slightly denser than steam, one wisp per cell, no embers.
+3) char: dark gray burnt smoke wisps with a few tiny orange ember pixels inside each single wisp.
+
+Style: crisp native pixel art, chunky hand-painted pixels, limited palette, hard pixel edges, no antialiased blur, no text, no labels, no objects, no stove, no food, no scenery, no shadows outside the wisp. The wisps should be separate sprite candidates, not a cloud mass and not foam. Leave clear magenta padding around every wisp and between cells.

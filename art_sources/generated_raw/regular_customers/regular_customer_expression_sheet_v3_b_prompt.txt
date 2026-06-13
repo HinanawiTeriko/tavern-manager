@@ -1,0 +1,19 @@
+Use case: stylized-concept source sheet for the tavern regular customer portrait pipeline.
+Runtime pipeline target: crop into 70x90 native transparent bust portraits, then scale 4x nearest-neighbor to 280x360 runtime textures.
+
+Use the visible reference image of Vera only as the art direction reference: refined dark ink linework, candlelit tavern color, dark teal and charcoal shadows, warm amber brass highlights, wine-red cloth accents, parchment fabric, expressive hands, ornate but readable fantasy tavern detail. Do not copy Vera's face, hair, outfit, cup, ledger, pose, identity, or composition.
+
+Create a single clean character expression sheet: 4 columns x 3 rows, one waist-up bust per cell, consistent camera, consistent lighting, full character silhouette inside each cell, no cell borders, no readable text, no logos.
+
+Flat solid #00ff00 chroma background behind every cell.
+
+Columns:
+1. Dorin, a stocky veteran from the mine side with red beard, dented armor, tankard, tough but warm regular.
+2. Elira, a hooded female ranger with green cloak, bow and quiver, calm sharp gaze.
+3. Marco, a charming traveling merchant with burgundy coat, ledger, coin purse, polished smile.
+4. Nix, a lean hooded rogue or runner with coin token, sleeveless dark gear, alert streetwise posture.
+
+Rows:
+1. neutral expression.
+2. satisfied expression.
+3. dissatisfied expression.

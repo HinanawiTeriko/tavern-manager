@@ -10,6 +10,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_current_order_key()
+	_test_action_feedback_routes_ryan_to_customer_bubble()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
 	_test_alternative_pending_then_serve_decides()
@@ -42,6 +43,47 @@ func _gm():
 	return get_node("/root/GameManager")
 
 
+func _test_action_feedback_routes_ryan_to_customer_bubble() -> void:
+	var gm = _gm()
+	var original_view = gm._tavern_view
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+
+	var ryan_feedback_keys := [
+		"ryan_informed",
+		"ryan_accepts_alternative",
+		"ryan_needs_warning_first",
+		"ryan_alternative_pending",
+		"ryan_accepts_ale",
+		"ryan_drugged",
+		"ryan_refuses_drugged_ale",
+		"ryan_interaction_closed",
+	]
+	for key in ryan_feedback_keys:
+		gm._show_action_feedback(key)
+
+	_ok(fake_view.customer_lines.size() == ryan_feedback_keys.size(),
+		"Ryan action feedback uses the customer speech bubble")
+	_ok(fake_view.stage_lines.is_empty(),
+		"Ryan action feedback does not use StageCaption")
+	for line in fake_view.customer_lines:
+		_ok(not String(line).begins_with("莱恩"),
+			"Ryan customer feedback is spoken dialogue, not narrator prose")
+
+	gm._show_action_feedback("sleep_powder_added")
+	_ok(fake_view.customer_lines.size() == ryan_feedback_keys.size(),
+		"mixing sleep powder does not create customer dialogue")
+	_ok(fake_view.stage_lines.is_empty(),
+		"mixing sleep powder does not use StageCaption")
+
+	gm._show_action_feedback("unsupported_story_product")
+	_ok(fake_view.stage_lines.size() == 1,
+		"non-Ryan mechanical feedback still uses StageCaption")
+
+	gm._tavern_view = original_view
+	fake_view.free()
+
+
 ## 重置 Ryan 剧情变量并让指定客人在场（不依赖 _tavern_view，headless 安全）。
 func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 	var n = _gm().narrative
@@ -52,6 +94,20 @@ func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 	n.set_affection("ryan", 0)
 	_gm().guests.clear_guest()
 	_gm().guests.spawn_important(npc_id, order_key)
+
+
+class FakeFeedbackView extends Node:
+	var customer_lines := []
+	var stage_lines := []
+
+	func customer_say(text) -> void:
+		customer_lines.append(String(text))
+
+	func show_stage_caption(text, color = Color.WHITE) -> void:
+		stage_lines.append({"text": String(text), "color": color})
+
+	func hide_customer() -> void:
+		pass
 
 
 func _test_current_order_key() -> void:

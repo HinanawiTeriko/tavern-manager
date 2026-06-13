@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: pixel-art source sheet for a Godot tavern barrel good-quality celebration VFX atlas
+Primary request: Create a clean 6 row by 4 column source sheet of individual celebration elements, not a finished effect. Row 1: four single golden mouth rings or halo arcs. Row 2: four single narrow vertical beam shards, not a full light column. Row 3: four single star sparkle sprites. Row 4: four single gold bubbles. Row 5: four single warm aroma wisps. Row 6: four single tiny product trail sparks.
+Style/medium: crisp pixel-art game sprites, chunky readable pixels, low-detail dungeon tavern palette, warm gold, amber, pale yellow, tiny white highlights, subtle dark outline pixels.
+Composition/framing: one isolated element centered in each grid cell with generous empty padding; every element separated from every other element; no overlapping elements; no clusters; no full burst composition; no full light column.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background across the whole image, no shadows, no gradients, no texture, no floor plane.
+Constraints: each cell contains exactly one small effect element; no completed explosion, no dense cloud, no pile of stars, no whole barrel, no cookware, no readable text, no numbers, no labels, no watermark. Use #ff00ff only for the background and never inside the sprites.

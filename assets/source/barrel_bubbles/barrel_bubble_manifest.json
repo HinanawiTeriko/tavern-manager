@@ -1,0 +1,121 @@
+{
+  "raw_source": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+  "prompt_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3_prompt.txt",
+  "native_atlas": "assets/source/barrel_bubbles/barrel_bubbles_native.png",
+  "runtime_atlas": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+  "contact_sheet": "docs/art/barrel_bubble_contact_sheet.png",
+  "native_slot_size": [20, 20],
+  "scale": 4,
+  "safe_area": [2, 2, 18, 18],
+  "intended_godot_use": "Sprite2D atlas regions for barrel shake bubble bursts",
+  "sprites": {
+    "pending_0": {
+      "tier": "pending",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [34, 92, 284, 344],
+      "atlas_cell": [0, 0],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "low-count shake bubble"
+    },
+    "pending_1": {
+      "tier": "pending",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [348, 88, 594, 344],
+      "atlas_cell": [1, 0],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "low-count shake bubble"
+    },
+    "pending_2": {
+      "tier": "pending",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [678, 90, 922, 350],
+      "atlas_cell": [2, 0],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "low-count shake bubble"
+    },
+    "pending_3": {
+      "tier": "pending",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [982, 88, 1216, 348],
+      "atlas_cell": [3, 0],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "low-count shake bubble"
+    },
+    "normal_0": {
+      "tier": "normal",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [44, 456, 286, 778],
+      "atlas_cell": [0, 1],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "minimum-count shake bubble"
+    },
+    "normal_1": {
+      "tier": "normal",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [354, 450, 604, 764],
+      "atlas_cell": [1, 1],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "minimum-count shake bubble"
+    },
+    "normal_2": {
+      "tier": "normal",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [678, 450, 922, 764],
+      "atlas_cell": [2, 1],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "minimum-count shake bubble"
+    },
+    "normal_3": {
+      "tier": "normal",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [976, 448, 1220, 772],
+      "atlas_cell": [3, 1],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "minimum-count shake bubble"
+    },
+    "good_0": {
+      "tier": "good",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [38, 842, 304, 1186],
+      "atlas_cell": [0, 2],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "good-quality shake bubble"
+    },
+    "good_1": {
+      "tier": "good",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [344, 842, 616, 1178],
+      "atlas_cell": [1, 2],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "good-quality shake bubble"
+    },
+    "good_2": {
+      "tier": "good",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [674, 840, 928, 1186],
+      "atlas_cell": [2, 2],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "good-quality shake bubble"
+    },
+    "good_3": {
+      "tier": "good",
+      "source_file": "art_sources/generated_raw/barrel_bubbles/barrel_bubble_source_v3.png",
+      "source_rect": [972, 838, 1222, 1174],
+      "atlas_cell": [3, 2],
+      "output_file": "assets/textures/barrel_bubbles/barrel_bubbles.png",
+      "safe_area": [2, 2, 18, 18],
+      "intended_godot_use": "good-quality shake bubble"
+    }
+  }
+}

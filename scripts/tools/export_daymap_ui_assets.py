@@ -54,6 +54,7 @@ NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_act
 DETAIL_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_detail_panel_contact_sheet.png"
 GATHERING_TOAST_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_gathering_toast_contact_sheet.png"
 RESULT_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_result_panel_contact_sheet.png"
+LEDGER_BUTTON_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_ledger_button_states_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 
 PRIMARY_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_primary_buttons_reference_v2_generated.png"
@@ -82,6 +83,8 @@ SPECIAL_RESULT_PANEL_SOURCE = GENERATED_RAW / "special_result_panel_source_v1.pn
 SPECIAL_RESULT_PANEL_PROMPT = GENERATED_RAW / "special_result_panel_prompt_v1.txt"
 LEDGER_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_button_states_source_v1.png"
 LEDGER_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_button_states_prompt_v1.txt"
+LEDGER_UNREAD_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_unread_button_states_source_v1.png"
+LEDGER_UNREAD_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_unread_button_states_prompt_v1.txt"
 NOTE_ACTION_NATIVE_SIZE = (56, 14)
 NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
@@ -961,6 +964,23 @@ def export_note_action_contact_sheet(states: dict[str, Image.Image]) -> None:
     print(f"note_action_contact_sheet: {sheet.size}")
 
 
+def export_ledger_button_contact_sheet(
+    states: dict[str, Image.Image],
+    unread_states: dict[str, Image.Image],
+) -> None:
+    LEDGER_BUTTON_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    sheet = Image.new("RGBA", (360, 320), (8, 25, 29, 255))
+    y = 24
+    for state in ["normal", "hover", "pressed"]:
+        runtime = states[state].resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        unread_runtime = unread_states[state].resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (32, y))
+        sheet.alpha_composite(unread_runtime, (196, y))
+        y += 88
+    sheet.save(LEDGER_BUTTON_CONTACT_SHEET)
+    print(f"ledger_button_contact_sheet: {sheet.size}")
+
+
 def export_detail_panel_contact_sheet(panel: Image.Image, states: dict[str, Image.Image]) -> None:
     DETAIL_PANEL_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
     panel_runtime = panel.resize(PINNED_DETAIL_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
@@ -1015,6 +1035,18 @@ def write_pinned_note_manifest() -> None:
             "source_crop": list(crop),
             "safe_area": [42, 8, 60, 28],
             "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn",
+        }
+        unread_asset_id = f"button_ledger_unread_{state}"
+        assets[unread_asset_id] = {
+            "id": unread_asset_id,
+            "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+            "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+            "native_file": f"assets/source/daymap/ui/{unread_asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{unread_asset_id}.png",
+            "size": [132, 44],
+            "source_crop": list(crop),
+            "safe_area": [42, 8, 60, 28],
+            "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state",
         }
     assets["topbar_strip"] = {
         "id": "topbar_strip",
@@ -1124,6 +1156,8 @@ def main() -> None:
     primary = load_reference(PRIMARY_BUTTONS_REFERENCE)
     if not LEDGER_BUTTON_STATES_PROMPT.exists():
         raise FileNotFoundError(f"Missing DayMap ledger button prompt record: {LEDGER_BUTTON_STATES_PROMPT}")
+    if not LEDGER_UNREAD_BUTTON_STATES_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap unread ledger button prompt record: {LEDGER_UNREAD_BUTTON_STATES_PROMPT}")
     if not DETAIL_PANEL_PINNED_PROMPT.exists():
         raise FileNotFoundError(f"Missing DayMap detail panel prompt record: {DETAIL_PANEL_PINNED_PROMPT}")
     if not PINNED_DETAIL_PANEL_PROMPT.exists():
@@ -1135,6 +1169,7 @@ def main() -> None:
     if not SPECIAL_RESULT_PANEL_PROMPT.exists():
         raise FileNotFoundError(f"Missing DayMap special result panel prompt record: {SPECIAL_RESULT_PANEL_PROMPT}")
     ledger_buttons = load_reference(LEDGER_BUTTON_STATES_SOURCE)
+    unread_ledger_buttons = load_reference(LEDGER_UNREAD_BUTTON_STATES_SOURCE)
     detail_panel_source = load_reference(DETAIL_PANEL_PINNED_SOURCE)
     pinned_detail_panel_source = load_reference(PINNED_DETAIL_PANEL_SOURCE)
     detail_go_buttons = load_reference(DETAIL_GO_BUTTON_STATES_SOURCE)
@@ -1148,15 +1183,34 @@ def main() -> None:
     topbar = load_reference(TOPBAR_DESKTOP_SOURCE)
     _, panel_result = extract_panel_components(panels)
 
+    ledger_states: dict[str, Image.Image] = {}
+    unread_ledger_states: dict[str, Image.Image] = {}
     for index, state in enumerate(["normal", "hover", "pressed"]):
         export_single(
             f"button_primary_{state}",
             make_primary_button_native(state),
             RUNTIME_SIZE,
         )
+        ledger_native = fit_ledger_button_source(
+            ledger_buttons,
+            LEDGER_BUTTON_CROPS[state],
+            f"button_ledger_{state}",
+        )
+        ledger_states[state] = ledger_native
         export_single(
             f"button_ledger_{state}",
-            fit_ledger_button_source(ledger_buttons, LEDGER_BUTTON_CROPS[state], f"button_ledger_{state}"),
+            ledger_native,
+            LEDGER_RUNTIME_SIZE,
+        )
+        unread_ledger_native = fit_ledger_button_source(
+            unread_ledger_buttons,
+            LEDGER_BUTTON_CROPS[state],
+            f"button_ledger_unread_{state}",
+        )
+        unread_ledger_states[state] = unread_ledger_native
+        export_single(
+            f"button_ledger_unread_{state}",
+            unread_ledger_native,
             LEDGER_RUNTIME_SIZE,
         )
         export_single(
@@ -1169,6 +1223,7 @@ def main() -> None:
             fit_shop_button_source(shop, "wide", state),
             SHOP_WIDE_RUNTIME_SIZE,
         )
+    export_ledger_button_contact_sheet(ledger_states, unread_ledger_states)
     export_single(
         "icon_shop_stepper_decrement",
         fit_shop_stepper_icon_source(stepper_icons, "decrement"),

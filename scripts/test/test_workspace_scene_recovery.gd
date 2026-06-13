@@ -10,6 +10,8 @@ var _failures := 0
 func _ready() -> void:
 	await _test_docked_body_recovers_when_out_of_bounds()
 	await _test_inventory_spawn_deducts_and_recovers()
+	await _test_side_table_walls_disabled_and_product_falls_back_to_surface()
+	await _test_desk_items_released_on_open_inventory_overlay_return_only_backpack_items()
 	await _test_material_drop_on_customer_area_stays_on_desk()
 	await _test_inventory_overlay_lists_and_drop()
 	await _test_shortcut_drag_starts_above_table_baseline()
@@ -18,7 +20,14 @@ func _ready() -> void:
 	await _test_container_ejection_spawns_lifo_desk_items()
 	await _test_seasoning_items_fit_into_shaker_mouth()
 	await _test_shaker_absorbed_dragged_seasoning_clears_drag_state()
-	await _test_workspace_containers_do_not_spawn_work_vfx()
+	await _test_seasoning_shaker_spawns_powder_while_moving()
+	await _test_barrel_shake_spawns_persistent_upward_bubbles()
+	await _test_grape_desk_item_loads_into_barrel_mouth()
+	await _test_dragged_barrel_shakes_grape_into_wine()
+	await _test_grill_press_finish_and_burn_feedback_effects()
+	await _test_good_barrel_brew_spawns_celebration()
+	await _test_pot_effects_follow_ingredients_and_real_stirring()
+	await _test_spoon_drag_keeps_cursor_free_while_pot_uses_thick_walls()
 	await _test_spoon_renders_below_container_visuals()
 	await _test_held_items_render_below_container_visuals()
 	await _test_settings_menu_entry()
@@ -107,6 +116,99 @@ func _test_inventory_spawn_deducts_and_recovers() -> void:
 	_ok(gm.inventory_sys.get_count("ale") == before, "out-of-bounds material recovery restores inventory")
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_side_table_walls_disabled_and_product_falls_back_to_surface() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var left_wall := tavern.get_node("BarWorkspace/World/Walls/LeftWall") as CollisionShape2D
+	var right_wall := tavern.get_node("BarWorkspace/World/Walls/RightWall") as CollisionShape2D
+	_ok(left_wall.disabled, "left table air wall is disabled")
+	_ok(right_wall.disabled, "right table air wall is disabled")
+
+	var gm = get_node("/root/GameManager")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var wine_before: int = gm.inventory_sys.get_count("wine")
+	var item := bar._spawn_desk_item_at(Vector2(1180.0, 510.0), "wine")
+	_ok(item != null, "product recovery test creates a wine desk item")
+	if item != null:
+		item.global_position = Vector2(1320.0, OUT_OF_BOUNDS_Y)
+		item.linear_velocity = Vector2(240.0, 360.0)
+		item.angular_velocity = 5.0
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+			"out-of-bounds product is kept as a desk item")
+		_ok(gm.inventory_sys.get_count("wine") == wine_before,
+			"out-of-bounds product is not added to backpack inventory")
+		_ok(item.global_position.y >= 470.0 and item.global_position.y <= 520.0,
+			"out-of-bounds product returns to the visible table surface: got %s" % item.global_position)
+		_ok(item.global_position.x >= 260.0 and item.global_position.x <= 1020.0,
+			"out-of-bounds product return point is clamped inside the table: got %s" % item.global_position)
+		_ok(item.linear_velocity == Vector2.ZERO and is_zero_approx(item.angular_velocity),
+			"out-of-bounds product returns without leftover fall velocity")
+		item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_desk_items_released_on_open_inventory_overlay_return_only_backpack_items() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var overlay := tavern.get_node("InventoryOverlay") as InventoryOverlay
+	var panel := overlay.get_node("Panel") as Panel
+	var drop_pos := panel.global_position + Vector2(48.0, 48.0)
+
+	gm.add_to_inventory("bloodied_contract", 1)
+	var contract_before: int = gm.inventory_sys.get_count("bloodied_contract")
+	var contract_item := bar.spawn_inventory_item_at("bloodied_contract", Vector2(640.0, 420.0))
+	_ok(contract_item != null, "bloodied contract desk item can be spawned from inventory")
+	_ok(gm.inventory_sys.get_count("bloodied_contract") == contract_before - 1,
+		"bloodied contract spawn deducts the story item from inventory")
+
+	overlay.open()
+	await get_tree().process_frame
+	_release_dragged_body_at(bar, contract_item, drop_pos)
+	await get_tree().process_frame
+
+	_ok(gm.inventory_sys.get_count("bloodied_contract") == contract_before,
+		"bloodied contract released on open backpack returns to inventory")
+	_ok(not is_instance_valid(contract_item) or contract_item.is_queued_for_deletion(),
+		"bloodied contract released on open backpack is removed from the desk")
+
+	var wine_before: int = gm.inventory_sys.get_count("wine")
+	var wine_item := bar._spawn_desk_item_at(Vector2(640.0, 420.0), "wine")
+	_ok(wine_item != null, "product desk item can be spawned for backpack rejection test")
+
+	_release_dragged_body_at(bar, wine_item, drop_pos)
+	await get_tree().process_frame
+
+	_ok(gm.inventory_sys.get_count("wine") == wine_before,
+		"product released on open backpack is not added to inventory")
+	_ok(is_instance_valid(wine_item) and not wine_item.is_queued_for_deletion(),
+		"product released on open backpack stays on the desk")
+	if is_instance_valid(wine_item):
+		wine_item.queue_free()
+	overlay.close()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _release_dragged_body_at(bar: BarWorkspace, body: RigidBody2D, global_pos: Vector2) -> void:
+	body.global_position = global_pos
+	bar._drag_ctrl.start_drag(body, global_pos)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = global_pos
+	release.global_position = global_pos
+	bar._unhandled_input(release)
 
 
 func _test_material_drop_on_customer_area_stays_on_desk() -> void:
@@ -713,6 +815,54 @@ func _test_spoon_renders_below_container_visuals() -> void:
 	await get_tree().process_frame
 
 
+func _test_spoon_drag_keeps_cursor_free_while_pot_uses_thick_walls() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	var spoon := tavern.get_node("BarWorkspace/World/Spoon") as StirSpoon
+	var tip_offset := spoon.tip_global_position() - spoon.global_position
+	spoon.global_position = pot.to_global(Vector2(0.0, -12.0)) - tip_offset
+	spoon.sleeping = false
+	await get_tree().physics_frame
+
+	var press_pos := spoon.global_position
+	var tip_to_anchor := spoon.tip_global_position() - press_pos
+	bar._drag_ctrl.start_drag(spoon, press_pos)
+	_ok(bar._drag_ctrl.get_body() == spoon,
+		"pressing the spoon starts a DragController drag")
+
+	var raw_tip_target := pot.to_global(Vector2(96.0, 76.0))
+	var raw_local := pot.to_local(raw_tip_target)
+	_ok(raw_local.x > pot.stir_zone_half_width and raw_local.y > pot.stir_zone_bottom_y,
+		"test target starts outside the pot stir zone: got %s" % raw_local)
+	var raw_anchor_target := raw_tip_target - tip_to_anchor
+	bar._update_drag_target(raw_anchor_target)
+	await get_tree().physics_frame
+
+	var anchor = bar._drag_ctrl._anchor
+	_ok(anchor != null and anchor.global_position.distance_to(raw_anchor_target) <= 0.5,
+		"spoon drag anchor follows the cursor freely instead of clamping the mouse target")
+
+	for wall_path in ["WallLeft", "WallRight", "WallBottom", "RimLeft", "RimRight"]:
+		var wall := pot.get_node(wall_path) as CollisionShape2D
+		var rect := wall.shape as RectangleShape2D
+		_ok(rect != null and minf(rect.size.x, rect.size.y) >= 10.0,
+			"pot %s uses a thick collision volume instead of a zero-width segment" % wall_path)
+	var bottom_wall := pot.get_node("WallBottom") as CollisionShape2D
+	var bottom_rect := bottom_wall.shape as RectangleShape2D
+	var bottom_inner_edge := bottom_wall.position.y - bottom_rect.size.x * 0.5
+	_ok(bottom_inner_edge <= 23.0,
+		"pot bottom collision starts high enough to prevent lower visual clipping: got %.2f" % bottom_inner_edge)
+
+	bar._drag_ctrl.end_drag()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _test_seasoning_items_fit_into_shaker_mouth() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
@@ -758,7 +908,77 @@ func _test_shaker_absorbed_dragged_seasoning_clears_drag_state() -> void:
 	await get_tree().process_frame
 
 
-func _test_workspace_containers_do_not_spawn_work_vfx() -> void:
+func _test_seasoning_shaker_spawns_powder_while_moving() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var shaker := tavern.get_node("BarWorkspace/World/SeasoningShaker") as SeasoningShaker
+	shaker.begin_shake_session()
+	shaker.linear_velocity = Vector2(520.0, 0.0)
+	for i in range(8):
+		shaker._physics_process(0.05)
+	shaker.end_shake_session()
+	_ok(_seasoning_powder_count(shaker) == 0,
+		"empty seasoning shaker does not create powder particles while moving")
+
+	shaker.load_seasoning("spice")
+	shaker.begin_shake_session()
+	shaker.linear_velocity = Vector2.ZERO
+	for i in range(8):
+		shaker._physics_process(0.05)
+	shaker.end_shake_session()
+	_ok(_seasoning_powder_count(shaker) == 0,
+		"loaded seasoning shaker does not shed powder while stationary")
+
+	shaker.begin_shake_session()
+	shaker.linear_velocity = Vector2(180.0, 0.0)
+	for i in range(8):
+		shaker._physics_process(0.05)
+	var slow_powder_count := _seasoning_powder_count(shaker)
+	var first_powder := _first_seasoning_powder(shaker)
+	_ok(slow_powder_count > 0,
+		"loaded seasoning shaker creates falling powder particles while moving")
+	_ok(first_powder != null and String(first_powder.get_meta("seasoning_powder_key", "")) == "spice",
+		"seasoning powder remembers the loaded spice key")
+	var powder_local := shaker.to_local(first_powder.global_position) if first_powder != null else Vector2.ZERO
+	_ok(first_powder != null and absf(powder_local.x) <= 18.0 and powder_local.y >= -54.0 and powder_local.y <= -12.0,
+		"seasoning powder starts from the visible shaker mouth: got %s" % powder_local)
+	var powder_color := _seasoning_powder_color(first_powder)
+	_ok(powder_color.r > powder_color.g and powder_color.r > powder_color.b,
+		"spice powder particles use a red seasoning tint")
+	var powder_kinds := _seasoning_powder_kinds(shaker)
+	_ok(powder_kinds.has("dust") and powder_kinds.has("flake") and powder_kinds.has("mist"),
+		"seasoning powder mixes fine dust, flake, and mist particles")
+	_ok(_seasoning_powder_color_bucket_count(shaker) >= 3,
+		"seasoning powder uses multiple tint values instead of one flat color")
+	_ok(_seasoning_powder_rotating_count(shaker) >= 3,
+		"seasoning powder has rotating irregular particles")
+	var start_y := first_powder.global_position.y if first_powder != null else 0.0
+	shaker.end_shake_session()
+	shaker._physics_process(0.05)
+	_ok(first_powder != null and is_instance_valid(first_powder) and first_powder.global_position.y > start_y,
+		"seasoning powder keeps falling after shaking stops")
+	_clear_seasoning_powder(shaker)
+
+	shaker.load_seasoning("spice")
+	shaker.begin_shake_session()
+	shaker.linear_velocity = Vector2(720.0, 0.0)
+	for i in range(8):
+		shaker._physics_process(0.05)
+	var fast_powder_count := _seasoning_powder_count(shaker)
+	shaker.end_shake_session()
+	_ok(fast_powder_count >= slow_powder_count + 8,
+		"faster seasoning shaker movement creates denser powder: slow=%d fast=%d" % [
+			slow_powder_count,
+			fast_powder_count,
+		])
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_barrel_shake_spawns_persistent_upward_bubbles() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
 	await get_tree().process_frame
@@ -769,25 +989,1145 @@ func _test_workspace_containers_do_not_spawn_work_vfx() -> void:
 	bar.configure_day(2)
 	await get_tree().process_frame
 
+	brewery.begin_shake_session()
+	brewery.linear_velocity = Vector2(260.0, 0.0)
+	for i in range(8):
+		brewery._physics_process(0.016)
+	brewery.end_shake_session()
+	_ok(brewery.get_node_or_null("ShakeBubbles") == null,
+		"empty barrel does not create shake bubbles")
+
 	brewery._pending_keys = ["ale"]
 	brewery.begin_shake_session()
 	brewery.linear_velocity = Vector2(260.0, 0.0)
-	brewery._physics_process(0.016)
-	_ok(brewery.get_node_or_null("BubbleVfx") == null, "barrel no longer spawns bubble work vfx")
+	for i in range(8):
+		brewery._physics_process(0.05)
+	var one_direction_bubble_count := _barrel_bubble_layer_count(brewery)
+	brewery.end_shake_session()
+	_ok(one_direction_bubble_count > 0,
+		"barrel creates continuous bubble feedback from held movement even without reversals")
+	_ok(_brewery_combo_value(brewery) == 0,
+		"barrel combo does not increase from fast one-direction movement")
+	_ok(brewery.get_node_or_null("BrewComboHud") == null,
+		"barrel combo HUD is not shown until real shake reversals happen")
+	_clear_barrel_test_bubbles(brewery)
+	brewery._shake.reset()
+	brewery._pending_keys = ["ale"]
+	brewery.begin_shake_session()
+	brewery.linear_velocity = Vector2(180.0, 0.0)
+	for i in range(8):
+		brewery._physics_process(0.05)
+	var slow_continuous_bubble_count := _barrel_bubble_layer_count(brewery)
+	brewery.end_shake_session()
+	_clear_barrel_test_bubbles(brewery)
+	brewery._shake.reset()
+	brewery._pending_keys = ["ale"]
+	brewery.begin_shake_session()
+	brewery.linear_velocity = Vector2(720.0, 0.0)
+	for i in range(8):
+		brewery._physics_process(0.05)
+	var fast_continuous_bubble_count := _barrel_bubble_layer_count(brewery)
+	brewery.end_shake_session()
+	_ok(fast_continuous_bubble_count >= slow_continuous_bubble_count + 12,
+		"faster held barrel movement creates denser continuous bubbles: slow=%d fast=%d" % [
+			slow_continuous_bubble_count,
+			fast_continuous_bubble_count,
+		])
+	_clear_barrel_test_bubbles(brewery)
+	brewery._shake.reset()
+	brewery._pending_keys = ["ale"]
+	brewery.begin_shake_session()
+	brewery.linear_velocity = Vector2(260.0, 0.0)
+	brewery._physics_process(0.05)
+	brewery.linear_velocity = Vector2(-260.0, 0.0)
+	brewery._physics_process(0.05)
+	_ok(brewery._shake.shake_count == 0,
+		"first valid shake reversal does not count as a full shake")
+	_ok(_brewery_combo_value(brewery) == 0,
+		"first valid shake reversal does not increase combo")
+	brewery.linear_velocity = Vector2(260.0, 0.0)
+	brewery._physics_process(0.05)
+	_ok(brewery._shake.shake_count == 1,
+		"completed full shake still counts exactly one combo-quality shake")
+	brewery.end_shake_session()
+	_clear_barrel_test_bubbles(brewery)
+	brewery._pending_keys = ["ale"]
+
+	var pending_bubble := _spawn_barrel_test_bubble(brewery, 1)
+	var bubble_layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	_ok(brewery.get_node_or_null("BubbleVfx") == null, "barrel does not restore the old BubbleVfx contract")
+	_ok(bubble_layer != null, "barrel creates a dedicated shake bubble layer while shaken")
+	if bubble_layer != null:
+		_ok(bubble_layer.get_child_count() > 0, "barrel shake creates visible bubble nodes")
+		if pending_bubble != null:
+			_ok(_barrel_bubble_quality(pending_bubble) == "pending",
+				"barrel bubble shows pending quality before minimum shakes")
+			_ok(_barrel_bubble_uses_runtime_sprite(pending_bubble),
+				"barrel bubbles use the generated runtime sprite atlas")
+			_ok(_barrel_bubble_region_row(pending_bubble) == 0,
+				"pending barrel bubbles use the pending atlas row")
+			_ok(_barrel_bubble_layer_count(brewery) >= 1 and _barrel_bubble_layer_count(brewery) <= 3,
+				"pending barrel shakes emit a restrained visible bubble set")
+			var pending_pixel_count := _barrel_bubble_pixel_count(pending_bubble)
+			_ok(pending_pixel_count >= 360 and pending_pixel_count <= 3600,
+				"pending barrel bubble sprite stays a single readable bubble")
+			brewery.linear_velocity = Vector2(720.0, 0.0)
+			brewery._shake.shake_count = brewery._shake.min_count - 1
+			var pending_peak_burst := brewery._shake_bubble_burst_count("pending")
+			brewery._shake.shake_count = brewery._shake.min_count
+			var normal_entry_burst := brewery._shake_bubble_burst_count("normal")
+			brewery._shake.shake_count = brewery._shake.good_count
+			var good_entry_burst := brewery._shake_bubble_burst_count("good")
+			_ok(pending_peak_burst <= 5,
+				"pending barrel bubble stage stays restrained even at high speed: got %d" % pending_peak_burst)
+			_ok(normal_entry_burst > pending_peak_burst,
+				"normal barrel bubble stage starts denser than pending: pending=%d normal=%d" % [
+					pending_peak_burst,
+					normal_entry_burst,
+				])
+			_ok(good_entry_burst >= normal_entry_burst,
+				"good barrel bubble stage is not thinner than normal: normal=%d good=%d" % [
+					normal_entry_burst,
+					good_entry_burst,
+				])
+			_clear_barrel_test_bubbles(brewery)
+			brewery._shake.reset()
+			brewery._pending_keys = ["ale"]
+			brewery.linear_velocity = Vector2(260.0, 0.0)
+			brewery._shake.shake_count = brewery._shake.min_count - 1
+			brewery._shake_bubble_spawn_elapsed = 99.0
+			brewery._try_spawn_shake_bubble(0.0)
+			var pending_stage_count := _barrel_bubble_quality_count(brewery, "pending")
+			brewery._shake.shake_count = brewery._shake.min_count
+			brewery._shake_bubble_spawn_elapsed = 0.0
+			brewery._try_spawn_shake_bubble(0.0)
+			_ok(pending_stage_count > 0,
+				"barrel test creates pending bubbles before crossing into normal")
+			_ok(_barrel_bubble_quality_count(brewery, "normal") > 0,
+				"barrel crossing into normal quality emits normal bubbles immediately even during spawn cooldown")
+			_clear_barrel_test_bubbles(brewery)
+			brewery._shake.reset()
+			brewery._pending_keys = ["ale"]
+			brewery.begin_shake_session()
+			var fast_direction := 1.0
+			var fast_guard := 0
+			while brewery._shake.shake_count < brewery._shake.good_count and fast_guard < 40:
+				brewery.linear_velocity = Vector2(720.0 * fast_direction, 0.0)
+				brewery._physics_process(0.05)
+				fast_direction *= -1.0
+				fast_guard += 1
+			var good_transition_count := _barrel_bubble_quality_count(brewery, "good")
+			var normal_before_good_count := _barrel_bubble_quality_count(brewery, "normal")
+			_ok(brewery._shake.shake_count >= brewery._shake.good_count,
+				"barrel test reaches good bubble tier during fast continuous shaking")
+			_ok(good_transition_count >= 18,
+				"fast transition into good quality makes room for visible good bubbles: good=%d normal=%d total=%d" % [
+					good_transition_count,
+					normal_before_good_count,
+					_barrel_bubble_layer_count(brewery),
+				])
+			_ok(_barrel_bubble_layer_count(brewery) <= 220,
+				"making room for good bubbles still respects the barrel bubble performance cap")
+			var normal_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.min_count)
+			_ok(_barrel_bubble_quality(normal_bubble) == "normal",
+				"barrel bubble shows normal quality once minimum shakes are reached")
+			_ok(_barrel_bubble_region_row(normal_bubble) == 1,
+				"normal barrel bubbles use the normal atlas row")
+			_ok(_barrel_bubble_layer_count(brewery) >= 8,
+				"normal barrel shakes create density by spawning more individual bubbles")
+			var normal_pixel_count := _barrel_bubble_pixel_count(normal_bubble)
+			_ok(normal_pixel_count >= 360 and normal_pixel_count <= 3600,
+				"normal barrel bubble sprite remains a single bubble, not baked foam")
+			var good_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.good_count)
+			_ok(_barrel_bubble_quality(good_bubble) == "good",
+				"barrel bubble shows good quality once good-count shakes are reached")
+			_ok(_barrel_bubble_region_row(good_bubble) == 2,
+				"good barrel bubbles use the good-quality atlas row")
+			_ok(_barrel_bubble_layer_count(brewery) >= 14,
+				"good barrel shakes create dense foam by spawning many individual bubbles")
+			var good_pixel_count := _barrel_bubble_pixel_count(good_bubble)
+			_ok(good_pixel_count >= 360 and good_pixel_count <= 3600,
+				"good barrel bubble sprite stays a single bubble")
+			_ok(_barrel_bubble_vivid_hue_bucket_count(good_bubble) >= 4,
+				"good individual bubbles include multiple rainbow hue families")
+			var start_y := good_bubble.global_position.y
+			brewery._pending_keys.clear()
+			brewery.end_shake_session()
+			brewery._physics_process(0.25)
+			_ok(is_instance_valid(good_bubble) and good_bubble.global_position.y < start_y,
+				"barrel bubble keeps floating upward after shaking stops")
+			good_bubble.global_position.y = -12.0
+			brewery._physics_process(0.016)
+			await get_tree().process_frame
+			_ok(not is_instance_valid(good_bubble),
+				"barrel bubble is removed only after floating above the screen")
+			brewery._pending_keys = ["ale"]
+			var just_good_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.good_count)
+			var just_good_bubble_count := _barrel_bubble_layer_count(brewery)
+			_ok(_barrel_bubble_quality(just_good_bubble) == "good",
+				"just-good barrel bubbles use the good-quality visual tier")
+			var late_good_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.good_count + 60)
+			var late_good_bubble_count := _barrel_bubble_layer_count(brewery)
+			_ok(_barrel_bubble_quality(late_good_bubble) == "good",
+				"late over-shaken barrel bubbles remain in the good-quality visual tier")
+			_ok(late_good_bubble_count >= just_good_bubble_count + 30,
+				"late over-shaking creates a much denser bubble burst: just-good=%d late=%d" % [
+					just_good_bubble_count,
+					late_good_bubble_count,
+				])
+			var slow_good_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.good_count, 180.0)
+			var slow_good_bubble_count := _barrel_bubble_layer_count(brewery)
+			_ok(_barrel_bubble_quality(slow_good_bubble) == "good",
+				"slow good-quality barrel shake still uses the good visual tier")
+			var fast_good_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.good_count, 720.0)
+			var fast_good_bubble_count := _barrel_bubble_layer_count(brewery)
+			_ok(_barrel_bubble_quality(fast_good_bubble) == "good",
+				"fast good-quality barrel shake still uses the good visual tier")
+			_ok(fast_good_bubble_count >= slow_good_bubble_count + 8,
+				"faster barrel shaking creates a visibly denser bubble burst at the same quality: slow=%d fast=%d" % [
+					slow_good_bubble_count,
+					fast_good_bubble_count,
+				])
+			_clear_barrel_test_bubbles(brewery)
+			brewery._shake.reset()
+			_drive_barrel_combo_to(brewery, brewery._shake.good_count + 42)
+			var combo_value := _brewery_combo_value(brewery)
+			_ok(combo_value >= brewery._shake.good_count + 42,
+				"barrel combo keeps counting past good quality without a hard cap: got %d" % combo_value)
+			var combo_hud := brewery.get_node_or_null("BrewComboHud") as CanvasLayer
+			_ok(combo_hud != null,
+				"barrel creates a fixed-screen brew combo HUD while real shaking continues")
+			var combo_label := combo_hud.get_node_or_null("ComboLabel") as Label if combo_hud != null else null
+			var rank_label := combo_hud.get_node_or_null("RankLabel") as Label if combo_hud != null else null
+			_ok(combo_label != null and combo_label.text == "BREW COMBO x%d" % combo_value,
+				"barrel combo HUD shows the uncapped combo number")
+			_ok(rank_label != null and rank_label.text.begins_with("酒神 +"),
+				"barrel combo rank advances into uncapped original plus ranks")
+			var combo_vfx := brewery.get_node_or_null("BrewComboVfx") as Node2D
+			_ok(combo_vfx != null and combo_vfx.get_child_count() > 0,
+				"high barrel combo spawns extra capped rank and sparkle VFX")
+			var shake_camera := brewery.get_node_or_null("BrewShakeCamera") as Camera2D
+			_ok(shake_camera != null and shake_camera.offset.length() > 0.0,
+				"high barrel combo drives visible screen shake through a camera offset")
+			_ok(_barrel_bubble_layer_count(brewery) <= 220,
+				"uncapped barrel combo still keeps bubble nodes capped for performance")
+			brewery._pending_keys.clear()
+			if brewery._session_active:
+				brewery.end_shake_session()
+			brewery.linear_velocity = Vector2.ZERO
+			brewery.angular_velocity = 0.0
+
+	tavern.queue_free()
+	await get_tree().process_frame
+	tavern = preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	brewery = tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	grill = tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	bar = tavern.get_node("BarWorkspace") as BarWorkspace
+	bar.configure_day(2)
+	await get_tree().process_frame
 
 	var sear_zone := grill.get_node("SearZone") as Area2D
+	grill._physics_process(0.05)
+	_ok(grill.get_node_or_null("GrillVaporLayer") == null,
+		"empty grill does not create vapor")
+	var item := bar._spawn_desk_item_at(sear_zone.global_position, "meat_raw")
+	item.freeze = true
+	item.is_held = false
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().process_frame
+	grill._physics_process(0.20)
+	_ok(grill.get_node_or_null("SteamVfx") == null, "grill no longer spawns steam work vfx")
+	var idle_vapor_count := _grill_vapor_count(grill)
+	_ok(idle_vapor_count == 1,
+		"resting grill item creates light auto-cook vapor")
+	var steam_vapor := _first_grill_vapor(grill)
+	_ok(_grill_vapor_quality(steam_vapor) == "steam",
+		"resting raw grill item emits steam vapor")
+	_ok(_grill_vapor_uses_runtime_sprite(steam_vapor),
+		"resting grill vapor uses the generated runtime sprite atlas")
+	_ok(_grill_vapor_region_row(steam_vapor) == 0,
+		"resting raw steam uses the steam atlas row")
+
+	_clear_grill_vapors(grill)
+	item.is_held = true
+	grill._physics_process(0.12)
+	steam_vapor = _first_grill_vapor(grill)
+	_ok(_grill_vapor_count(grill) >= 2 and _grill_vapor_count(grill) <= 3,
+		"held raw searing creates denser but readable vapor wisps")
+	_ok(_grill_vapor_quality(steam_vapor) == "steam",
+		"raw searing emits steam vapor")
+	_ok(_grill_vapor_uses_runtime_sprite(steam_vapor),
+		"grill vapor uses the generated runtime sprite atlas")
+	_ok(_grill_vapor_region_row(steam_vapor) == 0,
+		"raw steam uses the steam atlas row")
+
+	_clear_grill_vapors(grill)
+	grill._advance_grill_item(item, grill.cook_time)
+	_clear_grill_vapors(grill)
+	grill._physics_process(0.12)
+	var smoke_vapor := _first_grill_vapor(grill)
+	_ok(_grill_vapor_count(grill) >= 2 and _grill_vapor_count(grill) <= 3,
+		"cooked searing emits a compact smoke wisp set")
+	_ok(_grill_vapor_quality(smoke_vapor) == "smoke",
+		"cooked searing emits smoke vapor")
+	_ok(_grill_vapor_region_row(smoke_vapor) == 1,
+		"cooked smoke uses the smoke atlas row")
+
+	_clear_grill_vapors(grill)
+	grill._advance_grill_item(item, grill.burn_time - grill.cook_time)
+	var char_vapor := _first_grill_vapor(grill)
+	_ok(_grill_vapor_count(grill) >= 3 and _grill_vapor_count(grill) <= 4,
+		"burnt transition emits a short char vapor burst")
+	_ok(_grill_vapor_quality(char_vapor) == "char",
+		"burnt transition emits char vapor")
+	_ok(_grill_vapor_region_row(char_vapor) == 2,
+		"burnt char vapor uses the char atlas row")
+
+	if brewery._session_active:
+		brewery.end_shake_session()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_dragged_barrel_shakes_grape_into_wine() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	brewery._pending_keys = ["grape"]
+	var before := items.get_child_count()
+	var start_pos := brewery.global_position
+
+	_left_press(bar, start_pos)
+	_ok(bar._drag_ctrl.get_body() == brewery, "pressing the visible barrel starts a barrel drag")
+	var direction := 1.0
+	for i in range(18):
+		var target := start_pos + Vector2(170.0 * direction, 0.0)
+		var motion := InputEventMouseMotion.new()
+		motion.position = target
+		motion.global_position = target
+		bar._input(motion)
+		for _step in range(2):
+			await get_tree().physics_frame
+		direction *= -1.0
+
+	var counted_shakes := brewery._shake.shake_count
+	_ok(counted_shakes >= brewery._shake.min_count,
+		"real dragged barrel motion counts enough shakes for brewing: got %d, need %d" % [counted_shakes, brewery._shake.min_count])
+	bar._release_dragged_body()
+	await get_tree().physics_frame
+	await get_tree().process_frame
+
+	_ok(items.get_child_count() == before + 1, "releasing a shaken grape barrel produces one desk item")
+	var product := items.get_child(items.get_child_count() - 1) as DeskItem if items.get_child_count() > before else null
+	_ok(product != null and product.item_key == "wine",
+		"dragged grape barrel produces wine: got %s" % [product.item_key if product != null else "<none>"])
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_grape_desk_item_loads_into_barrel_mouth() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var grape := bar._spawn_desk_item_at(brewery.to_global(Vector2(0.0, -44.0)), "grape")
+	_ok(grape != null, "test creates a grape desk item for barrel loading")
+	if grape != null:
+		grape.linear_velocity = Vector2.ZERO
+		grape.angular_velocity = 0.0
+		_release_dragged_body_at(bar, grape, grape.global_position)
+		_ok(not is_instance_valid(grape) or grape.is_queued_for_deletion(),
+			"grape desk item is absorbed by the barrel mouth on release")
+		_ok(brewery._pending_keys == ["grape"],
+			"barrel stores grape as the pending wine ingredient immediately on release: got %s" % [brewery._pending_keys])
+		await get_tree().process_frame
+		_ok(items.get_child_count() == 0,
+			"absorbed grape is removed from world items")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_grill_press_finish_and_burn_feedback_effects() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	bar.configure_day(2)
+	await get_tree().process_frame
+	var grill := tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	var sear_zone := grill.get_node("SearZone") as Area2D
+	grill.cook_time = 1.0
+	grill.burn_time = 3.0
+	_ok(grill.get_node_or_null("GrillFeedbackLayer") == null,
+		"empty grill starts without the fun feedback layer")
+
 	var item := bar._spawn_desk_item_at(sear_zone.global_position, "meat_raw")
 	item.freeze = true
 	item.is_held = true
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	await get_tree().process_frame
-	grill._physics_process(0.016)
-	_ok(grill.get_node_or_null("SteamVfx") == null, "grill no longer spawns steam work vfx")
+	grill._physics_process(0.13)
+	_ok(_grill_feedback_count(grill, "press_spark") >= 2 and _grill_feedback_count(grill, "press_spark") <= 3,
+		"pressed grill item sprays a readable oil spark pair")
+	_ok(_grill_feedback_count(grill, "press_glow") >= 1,
+		"pressed grill item creates a heat glow")
+	var spark := _first_grill_feedback(grill, "press_spark")
+	_ok(spark != null and spark.get_node_or_null("Sprite") is Sprite2D,
+		"grill oil sparks render as pixel sprites")
+	_ok(_grill_feedback_uses_runtime_sprite(spark),
+		"grill oil sparks use the generated runtime feedback atlas")
 
-	brewery.end_shake_session()
+	_clear_grill_feedback(grill)
+	grill._advance_grill_item(item, grill.cook_time)
+	_ok(_grill_feedback_count(grill, "done_word") >= 1,
+		"finished grill item pops a doneness word")
+	_ok(_grill_feedback_count(grill, "done_spark") >= 4 and _grill_feedback_count(grill, "done_spark") <= 5,
+		"finished grill item throws a compact golden spark burst")
+	var done_word := _first_grill_feedback(grill, "done_word")
+	var done_label := done_word.get_node_or_null("Label") as Label if done_word != null else null
+	_ok(done_label != null and done_label.text != "",
+		"finished grill feedback renders text with a Label")
+	var done_spark := _first_grill_feedback(grill, "done_spark")
+	_ok(_grill_feedback_uses_runtime_sprite(done_spark),
+		"finished grill sparks use the generated runtime feedback atlas")
+
+	_clear_grill_feedback(grill)
+	item.is_held = false
+	grill._grill_elapsed_by_item[item] = grill.burn_time - grill.cook_time - 0.35
+	grill._physics_process(0.08)
+	_ok(_grill_feedback_count(grill, "burn_warning") >= 1,
+		"near-burn grill item warns before ruining food")
+	var warning := _first_grill_feedback(grill, "burn_warning")
+	var warning_label := warning.get_node_or_null("Label") as Label if warning != null else null
+	_ok(warning_label != null and warning_label.text != "",
+		"near-burn warning renders text with a Label")
+
+	_clear_grill_feedback(grill)
+	grill._advance_grill_item(item, grill.burn_time - grill.cook_time)
+	_ok(_grill_feedback_count(grill, "burnt_word") >= 1,
+		"burnt transition pops a charred word")
+	_ok(_grill_feedback_count(grill, "char_spark") >= 4 and _grill_feedback_count(grill, "char_spark") <= 5,
+		"burnt transition adds a compact ember burst")
+	var char_spark := _first_grill_feedback(grill, "char_spark")
+	_ok(_grill_feedback_uses_runtime_sprite(char_spark),
+		"burnt grill embers use the generated runtime feedback atlas")
+
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_good_barrel_brew_spawns_celebration() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var items := tavern.get_node("BarWorkspace/World/Items")
+
+	brewery._pending_keys = ["ale"]
+	brewery._shake.shake_count = brewery._shake.min_count
+	var normal_before := items.get_child_count()
+	brewery._try_brew()
+	_ok(items.get_child_count() == normal_before + 1,
+		"normal barrel brew still produces an item")
+	var normal_product := items.get_child(items.get_child_count() - 1) as DeskItem
+	_ok(normal_product != null and normal_product.quality == "normal",
+		"normal barrel brew keeps normal product quality")
+	var normal_art := normal_product.get_node_or_null("IconArt") as Sprite2D if normal_product != null else null
+	_ok(normal_art != null and _texture_path(normal_art.texture) == "res://assets/textures/tavern/items/ale_beer.png",
+		"normal barrel brew keeps the original ale_beer desk-item texture")
+	var normal_product_vfx := normal_product.get_node_or_null("BrewProductVfx") as Node2D if normal_product != null else null
+	_ok(normal_product_vfx != null and String(normal_product_vfx.get_meta("brew_product_vfx_quality", "")) == "normal",
+		"normal barrel brew attaches a short product trail to the spawned drink")
+	_ok(_product_output_vfx_count(normal_product, "trail") >= 3,
+		"normal barrel brew makes the product itself visibly carry a restrained trail")
+	var output_burst := brewery.get_node_or_null("BrewOutputBurst") as Node2D
+	_ok(output_burst != null,
+		"normal barrel brew creates a dedicated mouth pop output burst layer")
+	_ok(_brew_output_burst_count(brewery, "normal", "pop") >= 5,
+		"normal barrel brew pops several small particles from the barrel mouth")
+	_ok(brewery.get_node_or_null("GoodBrewCelebration") == null,
+		"normal barrel brew does not create good-quality celebration")
+	var normal_feedback := brewery.get_node_or_null("NormalBrewFeedback") as Node2D
+	_ok(normal_feedback != null,
+		"normal barrel brew creates a separate light word feedback layer")
+	_ok(_normal_brew_feedback_count(brewery) == 1,
+		"normal barrel brew only pops one restrained feedback word")
+	var normal_word_effect := _first_normal_brew_feedback_effect(brewery)
+	var normal_word_label := normal_word_effect.get_node_or_null("Label") as Label if normal_word_effect != null else null
+	var normal_words: Array[String] = ["成了", "稳了", "顺口", "够味", "不赖", "过关"]
+	_ok(normal_word_label != null,
+		"normal barrel brew renders feedback text with a Label node")
+	_ok(normal_word_label != null and normal_words.has(normal_word_label.text),
+		"normal barrel brew picks a random approved normal-quality word")
+	_ok(normal_word_label != null and normal_word_label.get_theme_font_size("font_size") <= 22,
+		"normal barrel brew word stays visually quieter than good-quality praise")
+	_ok(normal_word_effect != null and normal_word_effect.get_node_or_null("Sprite") == null,
+		"normal barrel brew word is not baked into a sprite")
+
+	brewery._pending_keys = ["ale"]
+	brewery._shake.shake_count = brewery._shake.good_count
+	var good_before := items.get_child_count()
+	brewery._try_brew()
+	_ok(items.get_child_count() == good_before + 1,
+		"good barrel brew produces an item")
+	var good_product := items.get_child(items.get_child_count() - 1) as DeskItem
+	_ok(good_product != null and good_product.quality == "good",
+		"good barrel brew keeps good product quality")
+	var good_art := good_product.get_node_or_null("IconArt") as Sprite2D if good_product != null else null
+	_ok(good_art != null and _texture_path(good_art.texture) == "res://assets/textures/tavern/items/ale_beer_good.png",
+		"good barrel brew swaps the final drink to its item-pipeline quality texture")
+	var good_product_vfx := good_product.get_node_or_null("BrewProductVfx") as Node2D if good_product != null else null
+	_ok(good_product_vfx != null and String(good_product_vfx.get_meta("brew_product_vfx_quality", "")) == "good",
+		"good barrel brew attaches a brighter product trail to the spawned drink")
+	_ok(_product_output_vfx_count(good_product, "trail") >= 6,
+		"good barrel brew makes the product carry a longer gold trail")
+	_ok(_product_output_vfx_count(good_product, "spark") >= 3,
+		"good barrel brew makes the product carry visible spark highlights")
+	_ok(_brew_output_burst_count(brewery, "good", "impact") >= 1,
+		"good barrel brew adds a punchy mouth impact burst")
+
+	var layer := brewery.get_node_or_null("GoodBrewCelebration") as Node2D
+	_ok(layer != null, "good barrel brew creates a dedicated celebration layer")
+	var elements := _barrel_celebration_elements(brewery)
+	for expected in ["ring", "beam", "star", "gold_bubble", "aroma", "trail", "word", "stamp", "mouth_flash"]:
+		_ok(elements.has(expected),
+			"good barrel celebration includes %s elements" % expected)
+	_ok(_barrel_celebration_count(brewery, "star") >= 18,
+		"good barrel celebration creates denser sparkle burst from individual star nodes")
+	_ok(_barrel_celebration_count(brewery, "beam") >= 6,
+		"good barrel celebration builds a more theatrical light column from separate beam pieces")
+	_ok(_barrel_celebration_count(brewery, "gold_bubble") >= 12,
+		"good barrel celebration adds a denser spray of individual quality bubbles")
+	var word_effect := _first_barrel_celebration_effect_with_element(brewery, "word")
+	var word_label := word_effect.get_node_or_null("Label") as Label if word_effect != null else null
+	var valid_words: Array[String] = ["牛逼", "绝品", "神酿", "爆香", "上头", "天成"]
+	_ok(word_label != null,
+		"good barrel celebration renders random praise text with a Label node")
+	_ok(word_label != null and valid_words.has(word_label.text),
+		"good barrel celebration picks a random approved praise word")
+	_ok(word_effect != null and _barrel_celebration_sprite(word_effect) == null,
+		"good barrel celebration word is not baked into the generated sprite atlas")
+	var stamp_effect := _first_barrel_celebration_effect_with_element(brewery, "stamp")
+	var stamp_label := stamp_effect.get_node_or_null("Label") as Label if stamp_effect != null else null
+	_ok(stamp_label != null,
+		"good barrel celebration adds a rating stamp rendered as a Label")
+	_ok(stamp_label != null and valid_words.has(stamp_label.text),
+		"good barrel celebration stamp uses the approved praise word pool")
+	_ok(stamp_effect != null and _barrel_celebration_sprite(stamp_effect) == null,
+		"good barrel celebration stamp is not baked into a sprite")
+	var first_effect := _first_barrel_celebration_effect(brewery)
+	_ok(_barrel_celebration_uses_runtime_sprite(first_effect),
+		"good barrel celebration uses the generated runtime sprite atlas")
+	_ok(_barrel_celebration_region_row(first_effect) >= 0,
+		"good barrel celebration chooses a valid atlas row")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_pot_effects_follow_ingredients_and_real_stirring() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	var spoon := tavern.get_node("BarWorkspace/World/Spoon") as StirSpoon
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var tip_offset := spoon.tip_global_position() - spoon.global_position
+
+	pot._physics_process(0.75)
+	_ok(pot.get_node_or_null("PotEffectLayer") == null,
+		"empty pot does not create pot effects")
+	_drive_pot_stir_path(pot, spoon, tip_offset, [Vector2(-24.0, -24.0), Vector2(-16.0, -24.0), Vector2(-8.0, -24.0)])
+	_ok(_pot_effect_count(pot) == 0,
+		"empty pot does not create effects even when the spoon is moving inside")
+
+	pot._state.add_item("ale")
+	pot._stir_tracking = false
+	pot._physics_process(0.75)
+	var simmer_count := _pot_effect_kind_count(pot, "simmer")
+	_ok(simmer_count >= 1 and simmer_count <= 2,
+		"loaded pot emits only a light simmer before real stirring: got %d" % simmer_count)
+	_ok(_pot_effect_elements(pot).has("bubble") or _pot_effect_elements(pot).has("steam"),
+		"loaded pot simmer uses single bubble or steam elements")
+	_clear_pot_effects(pot)
+
+	pot._stir_tracking = false
+	_drive_pot_stir_path(pot, spoon, tip_offset, [Vector2(-42.0, -24.0), Vector2(42.0, -24.0)])
+	_ok(_pot_effect_count(pot) == 0,
+		"large spoon position jumps are ignored and do not create active stir effects")
+
+	pot._stir_tracking = false
+	_drive_pot_stir_path(pot, spoon, tip_offset, [
+		Vector2(-24.0, -24.0),
+		Vector2(-16.0, -24.0),
+		Vector2(-8.0, -24.0),
+		Vector2(0.0, -24.0),
+		Vector2(8.0, -24.0),
+		Vector2(16.0, -24.0),
+	])
+	var active_stir_count := _pot_effect_kind_count(pot, "stir")
+	var active_elements := _pot_effect_elements(pot)
+	_ok(active_stir_count >= 16,
+		"real stirring creates dense motion from many individual pot effect nodes: got %d" % active_stir_count)
+	_ok(active_elements.has("bubble") and active_elements.has("ripple") and active_elements.has("steam")
+			and active_elements.has("fleck") and active_elements.has("oil"),
+		"real stirring mixes bubbles, ripples, steam, food flecks, and oil glints")
+	var fleck_effect := _first_pot_effect_with_element(pot, "fleck")
+	var oil_effect := _first_pot_effect_with_element(pot, "oil")
+	_ok(_pot_effect_region_row(fleck_effect) == 4,
+		"food flecks use their own pot atlas row")
+	_ok(_pot_effect_region_row(oil_effect) == 5,
+		"oil glints use their own pot atlas row")
+	var first_stir_effect := _first_pot_effect(pot, "stir")
+	_ok(_pot_effect_uses_runtime_sprite(first_stir_effect),
+		"pot effects use the generated runtime sprite atlas")
+	_ok(_pot_effect_region_row(first_stir_effect) >= 0,
+		"pot effect sprite chooses a valid atlas row")
+	_clear_pot_effects(pot)
+
+	pot._state._stir_progress = pot.required_stir * 0.82
+	pot._physics_process(0.75)
+	_ok(_pot_effect_kind_count(pot, "simmer") >= 1,
+		"high-progress loaded pot keeps simmering")
+	_ok(_pot_effect_elements(pot).has("aroma"),
+		"high-progress simmer starts showing warm aroma before completion")
+	_clear_pot_effects(pot)
+
+	pot._state.add_item("herb")
+	var item_count_before := items.get_child_count()
+	pot._finish_current(GameManager.craft.query_recipe("pot", pot._state.ingredients()))
+	_ok(items.get_child_count() == item_count_before + 1,
+		"pot ready test produces a crafted item")
+	_ok(_pot_effect_kind_count(pot, "ready") >= 6,
+		"pot completion emits a warm ready burst")
+	_ok(_pot_effect_elements(pot).has("aroma"),
+		"pot completion uses aroma elements instead of implying a quality tier")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _drive_pot_stir_path(pot: KitchenContainer, spoon: StirSpoon, tip_offset: Vector2, local_points: Array[Vector2]) -> void:
+	for local_point in local_points:
+		spoon.global_position = pot.to_global(local_point) - tip_offset
+		pot._accumulate_stir(spoon, 0.05)
+
+
+func _spawn_barrel_test_bubble(brewery: Brewery, shake_count: int, shake_speed: float = 260.0) -> Node2D:
+	_clear_barrel_test_bubbles(brewery)
+	brewery._shake.reset()
+	if brewery.has_method("_reset_brew_combo_feedback"):
+		brewery.call("_reset_brew_combo_feedback")
+	brewery.begin_shake_session()
+	brewery.linear_velocity = Vector2(shake_speed, 0.0)
+	brewery._physics_process(0.05)
+	var dir := -1.0
+	while brewery._shake.shake_count < shake_count:
+		brewery.linear_velocity = Vector2(shake_speed * dir, 0.0)
+		brewery._physics_process(0.05)
+		dir *= -1.0
+		if brewery._shake.shake_count < shake_count:
+			_clear_barrel_test_bubbles(brewery)
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null or layer.get_child_count() == 0:
+		return null
+	return layer.get_child(0) as Node2D
+
+
+func _drive_barrel_combo_to(brewery: Brewery, target_combo: int) -> void:
+	brewery._pending_keys = ["ale"]
+	if not brewery._session_active:
+		brewery.begin_shake_session()
+	var direction := 1.0
+	var guard := 0
+	while _brewery_combo_value(brewery) < target_combo and guard < target_combo * 4 + 16:
+		brewery.linear_velocity = Vector2(280.0 * direction, 0.0)
+		brewery._physics_process(0.045)
+		direction *= -1.0
+		guard += 1
+
+
+func _brewery_combo_value(brewery: Brewery) -> int:
+	var value = brewery.get("_brew_combo")
+	if value == null:
+		return 0
+	return int(value)
+
+
+func _clear_barrel_test_bubbles(brewery: Brewery) -> void:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer != null:
+		for child in layer.get_children():
+			child.free()
+	brewery._shake_bubbles.clear()
+
+
+func _barrel_bubble_quality(bubble: Node2D) -> String:
+	if bubble == null or not bubble.has_meta("barrel_bubble_quality"):
+		return ""
+	return String(bubble.get_meta("barrel_bubble_quality"))
+
+
+func _barrel_bubble_pixel_count(bubble: Node2D) -> int:
+	var sprite := _barrel_bubble_sprite(bubble)
+	if sprite == null or sprite.texture == null:
+		return 0
+	var image := sprite.texture.get_image()
+	if image == null:
+		return 0
+	var region := sprite.region_rect
+	var count := 0
+	for y in range(int(region.position.y), int(region.position.y + region.size.y)):
+		for x in range(int(region.position.x), int(region.position.x + region.size.x)):
+			if image.get_pixel(x, y).a > 0.01:
+				count += 1
+	return count
+
+
+func _barrel_bubble_layer_count(brewery: Brewery) -> int:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if not child.is_queued_for_deletion():
+			count += 1
+	return count
+
+
+func _barrel_bubble_quality_count(brewery: Brewery, quality: String) -> int:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child.is_queued_for_deletion():
+			continue
+		if child is Node2D and String(child.get_meta("barrel_bubble_quality", "")) == quality:
+			count += 1
+	return count
+
+
+func _barrel_bubble_vivid_hue_bucket_count(bubble: Node2D) -> int:
+	var sprite := _barrel_bubble_sprite(bubble)
+	if sprite == null or sprite.texture == null:
+		return 0
+	var image := sprite.texture.get_image()
+	if image == null:
+		return 0
+	var region := sprite.region_rect
+	var buckets := {}
+	for y in range(int(region.position.y), int(region.position.y + region.size.y)):
+		for x in range(int(region.position.x), int(region.position.x + region.size.x)):
+			var color := image.get_pixel(x, y)
+			if color.a <= 0.01:
+				continue
+			var max_channel := maxf(color.r, maxf(color.g, color.b))
+			var min_channel := minf(color.r, minf(color.g, color.b))
+			if max_channel < 0.35 or max_channel - min_channel < 0.25:
+				continue
+			var bucket := "red"
+			if color.r >= color.g and color.r >= color.b:
+				bucket = "yellow" if color.g >= 0.55 else "red"
+			elif color.g >= color.r and color.g >= color.b:
+				bucket = "green"
+			elif color.b >= color.r and color.b >= color.g:
+				bucket = "purple" if color.r >= 0.55 else "blue"
+			buckets[bucket] = true
+	return buckets.size()
+
+
+func _barrel_bubble_sprite(bubble: Node2D) -> Sprite2D:
+	if bubble == null:
+		return null
+	return bubble.get_node_or_null("Sprite") as Sprite2D
+
+
+func _barrel_bubble_uses_runtime_sprite(bubble: Node2D) -> bool:
+	var sprite := _barrel_bubble_sprite(bubble)
+	if sprite == null or sprite.texture == null:
+		return false
+	return sprite.texture.resource_path == "res://assets/textures/barrel_bubbles/barrel_bubbles.png"
+
+
+func _barrel_bubble_region_row(bubble: Node2D) -> int:
+	var sprite := _barrel_bubble_sprite(bubble)
+	if sprite == null or sprite.region_rect.size.y <= 0.0:
+		return -1
+	return int(round(sprite.region_rect.position.y / sprite.region_rect.size.y))
+
+
+func _normal_brew_feedback_count(brewery: Brewery) -> int:
+	var layer := brewery.get_node_or_null("NormalBrewFeedback") as Node2D
+	if layer == null:
+		return 0
+	return layer.get_child_count()
+
+
+func _first_normal_brew_feedback_effect(brewery: Brewery) -> Node2D:
+	var layer := brewery.get_node_or_null("NormalBrewFeedback") as Node2D
+	if layer == null or layer.get_child_count() == 0:
+		return null
+	return layer.get_child(0) as Node2D
+
+
+func _product_output_vfx_count(product: DeskItem, element: String) -> int:
+	if product == null:
+		return 0
+	var vfx := product.get_node_or_null("BrewProductVfx") as Node2D
+	if vfx == null:
+		return 0
+	var count := 0
+	for child in vfx.get_children():
+		if child is Node2D and String(child.get_meta("brew_product_vfx_element", "")) == element:
+			count += 1
+	return count
+
+
+func _brew_output_burst_count(brewery: Brewery, quality: String, element: String) -> int:
+	var layer := brewery.get_node_or_null("BrewOutputBurst") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if not child is Node2D:
+			continue
+		if String(child.get_meta("brew_output_burst_quality", "")) != quality:
+			continue
+		if String(child.get_meta("brew_output_burst_element", "")) == element:
+			count += 1
+	return count
+
+
+func _barrel_celebration_elements(brewery: Brewery) -> Array[String]:
+	var layer := brewery.get_node_or_null("GoodBrewCelebration") as Node2D
+	var elements: Array[String] = []
+	if layer == null:
+		return elements
+	for child in layer.get_children():
+		if not child is Node2D:
+			continue
+		var element := String(child.get_meta("barrel_celebration_element", ""))
+		if element != "" and not elements.has(element):
+			elements.append(element)
+	return elements
+
+
+func _barrel_celebration_count(brewery: Brewery, element: String) -> int:
+	var layer := brewery.get_node_or_null("GoodBrewCelebration") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("barrel_celebration_element", "")) == element:
+			count += 1
+	return count
+
+
+func _first_barrel_celebration_effect(brewery: Brewery) -> Node2D:
+	var layer := brewery.get_node_or_null("GoodBrewCelebration") as Node2D
+	if layer == null or layer.get_child_count() == 0:
+		return null
+	return layer.get_child(0) as Node2D
+
+
+func _first_barrel_celebration_effect_with_element(brewery: Brewery, element: String) -> Node2D:
+	var layer := brewery.get_node_or_null("GoodBrewCelebration") as Node2D
+	if layer == null:
+		return null
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("barrel_celebration_element", "")) == element:
+			return child as Node2D
+	return null
+
+
+func _barrel_celebration_sprite(effect: Node2D) -> Sprite2D:
+	if effect == null:
+		return null
+	return effect.get_node_or_null("Sprite") as Sprite2D
+
+
+func _barrel_celebration_uses_runtime_sprite(effect: Node2D) -> bool:
+	var sprite := _barrel_celebration_sprite(effect)
+	if sprite == null or sprite.texture == null:
+		return false
+	return sprite.texture.resource_path == "res://assets/textures/barrel_celebration/barrel_celebration.png"
+
+
+func _barrel_celebration_region_row(effect: Node2D) -> int:
+	var sprite := _barrel_celebration_sprite(effect)
+	if sprite == null or sprite.region_rect.size.y <= 0.0:
+		return -1
+	return int(round(sprite.region_rect.position.y / sprite.region_rect.size.y))
+
+
+func _seasoning_powder_count(shaker: SeasoningShaker) -> int:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if not child.is_queued_for_deletion():
+			count += 1
+	return count
+
+
+func _first_seasoning_powder(shaker: SeasoningShaker) -> Node2D:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	if layer == null:
+		return null
+	for child in layer.get_children():
+		if child is Node2D and not child.is_queued_for_deletion():
+			return child as Node2D
+	return null
+
+
+func _seasoning_powder_color(powder: Node2D) -> Color:
+	if powder == null:
+		return Color.TRANSPARENT
+	var sprite := powder.get_node_or_null("Sprite") as Sprite2D
+	if sprite != null:
+		return sprite.modulate
+	var pixel := powder.get_node_or_null("Pixel") as Polygon2D
+	if pixel != null:
+		return pixel.color
+	return Color.TRANSPARENT
+
+
+func _seasoning_powder_kinds(shaker: SeasoningShaker) -> Array[String]:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	var kinds: Array[String] = []
+	if layer == null:
+		return kinds
+	for child in layer.get_children():
+		if not child is Node2D or child.is_queued_for_deletion():
+			continue
+		var kind := String(child.get_meta("seasoning_powder_kind", ""))
+		if kind != "" and not kinds.has(kind):
+			kinds.append(kind)
+	return kinds
+
+
+func _seasoning_powder_color_bucket_count(shaker: SeasoningShaker) -> int:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	if layer == null:
+		return 0
+	var buckets := {}
+	for child in layer.get_children():
+		if not child is Node2D or child.is_queued_for_deletion():
+			continue
+		var color := _seasoning_powder_color(child as Node2D)
+		if color.a <= 0.01:
+			continue
+		var bucket := "%d:%d:%d" % [int(round(color.r * 10.0)), int(round(color.g * 10.0)), int(round(color.b * 10.0))]
+		buckets[bucket] = true
+	return buckets.size()
+
+
+func _seasoning_powder_rotating_count(shaker: SeasoningShaker) -> int:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if not child is Node2D or child.is_queued_for_deletion():
+			continue
+		if absf(float((child as Node2D).get_meta("seasoning_powder_rotation_speed", 0.0))) > 0.1:
+			count += 1
+	return count
+
+
+func _clear_seasoning_powder(shaker: SeasoningShaker) -> void:
+	var layer := shaker.get_node_or_null("SeasoningPowderLayer") as Node2D
+	if layer != null:
+		for child in layer.get_children():
+			child.free()
+	var particles = shaker.get("_powder_particles")
+	if particles is Array:
+		(particles as Array).clear()
+
+
+func _first_grill_vapor(grill: KitchenContainer) -> Node2D:
+	var layer := grill.get_node_or_null("GrillVaporLayer") as Node2D
+	if layer == null or layer.get_child_count() == 0:
+		return null
+	return layer.get_child(0) as Node2D
+
+
+func _grill_vapor_count(grill: KitchenContainer) -> int:
+	var layer := grill.get_node_or_null("GrillVaporLayer") as Node2D
+	if layer == null:
+		return 0
+	return layer.get_child_count()
+
+
+func _clear_grill_vapors(grill: KitchenContainer) -> void:
+	var layer := grill.get_node_or_null("GrillVaporLayer") as Node2D
+	if layer == null:
+		return
+	for child in layer.get_children():
+		child.free()
+
+
+func _grill_vapor_quality(vapor: Node2D) -> String:
+	if vapor == null or not vapor.has_meta("grill_vapor_quality"):
+		return ""
+	return String(vapor.get_meta("grill_vapor_quality"))
+
+
+func _grill_vapor_sprite(vapor: Node2D) -> Sprite2D:
+	if vapor == null:
+		return null
+	return vapor.get_node_or_null("Sprite") as Sprite2D
+
+
+func _grill_vapor_uses_runtime_sprite(vapor: Node2D) -> bool:
+	var sprite := _grill_vapor_sprite(vapor)
+	if sprite == null or sprite.texture == null:
+		return false
+	return sprite.texture.resource_path == "res://assets/textures/grill_vapor/grill_vapor.png"
+
+
+func _grill_vapor_region_row(vapor: Node2D) -> int:
+	var sprite := _grill_vapor_sprite(vapor)
+	if sprite == null or sprite.region_rect.size.y <= 0.0:
+		return -1
+	return int(round(sprite.region_rect.position.y / sprite.region_rect.size.y))
+
+
+func _grill_feedback_count(grill: KitchenContainer, element: String) -> int:
+	var layer := grill.get_node_or_null("GrillFeedbackLayer") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("grill_feedback_element", "")) == element:
+			count += 1
+	return count
+
+
+func _first_grill_feedback(grill: KitchenContainer, element: String) -> Node2D:
+	var layer := grill.get_node_or_null("GrillFeedbackLayer") as Node2D
+	if layer == null:
+		return null
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("grill_feedback_element", "")) == element:
+			return child as Node2D
+	return null
+
+
+func _grill_feedback_uses_runtime_sprite(effect: Node2D) -> bool:
+	if effect == null:
+		return false
+	var sprite := effect.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null or sprite.texture == null:
+		return false
+	return sprite.texture.resource_path == "res://assets/textures/grill_feedback/grill_feedback.png"
+
+
+func _clear_grill_feedback(grill: KitchenContainer) -> void:
+	var layer := grill.get_node_or_null("GrillFeedbackLayer") as Node2D
+	if layer == null:
+		return
+	for child in layer.get_children():
+		child.free()
+
+
+func _pot_effect_count(pot: KitchenContainer) -> int:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	if layer == null:
+		return 0
+	return layer.get_child_count()
+
+
+func _pot_effect_kind_count(pot: KitchenContainer, kind: String) -> int:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("pot_effect_kind", "")) == kind:
+			count += 1
+	return count
+
+
+func _pot_effect_elements(pot: KitchenContainer) -> Array[String]:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	var elements: Array[String] = []
+	if layer == null:
+		return elements
+	for child in layer.get_children():
+		if not child is Node2D:
+			continue
+		var element := String(child.get_meta("pot_effect_element", ""))
+		if element != "" and not elements.has(element):
+			elements.append(element)
+	return elements
+
+
+func _first_pot_effect(pot: KitchenContainer, kind: String) -> Node2D:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	if layer == null:
+		return null
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("pot_effect_kind", "")) == kind:
+			return child as Node2D
+	return null
+
+
+func _first_pot_effect_with_element(pot: KitchenContainer, element: String) -> Node2D:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	if layer == null:
+		return null
+	for child in layer.get_children():
+		if child is Node2D and String(child.get_meta("pot_effect_element", "")) == element:
+			return child as Node2D
+	return null
+
+
+func _clear_pot_effects(pot: KitchenContainer) -> void:
+	var layer := pot.get_node_or_null("PotEffectLayer") as Node2D
+	if layer == null:
+		return
+	for child in layer.get_children():
+		child.free()
+
+
+func _pot_effect_sprite(effect: Node2D) -> Sprite2D:
+	if effect == null:
+		return null
+	return effect.get_node_or_null("Sprite") as Sprite2D
+
+
+func _pot_effect_uses_runtime_sprite(effect: Node2D) -> bool:
+	var sprite := _pot_effect_sprite(effect)
+	if sprite == null or sprite.texture == null:
+		return false
+	return sprite.texture.resource_path == "res://assets/textures/pot_effects/pot_effects.png"
+
+
+func _pot_effect_region_row(effect: Node2D) -> int:
+	var sprite := _pot_effect_sprite(effect)
+	if sprite == null or sprite.region_rect.size.y <= 0.0:
+		return -1
+	return int(round(sprite.region_rect.position.y / sprite.region_rect.size.y))
 
 
 func _test_held_items_render_below_container_visuals() -> void:

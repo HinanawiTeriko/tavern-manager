@@ -1,0 +1,146 @@
+{
+  "id": "grill_vapor",
+  "raw_source": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+  "prompt_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1_prompt.txt",
+  "native_atlas": "assets/source/grill_vapor/grill_vapor_native.png",
+  "runtime_atlas": "assets/textures/grill_vapor/grill_vapor.png",
+  "contact_sheet": "docs/art/grill_vapor_contact_sheet.png",
+  "native_slot_size": [16, 28],
+  "scale": 4,
+  "safe_area": [2, 2, 14, 26],
+  "intended_godot_use": "Runtime Sprite2D atlas for grill vapor generated while a held item is actively searing.",
+  "sprites": {
+    "steam_0": {
+      "id": "steam_0",
+      "tier": "steam",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [150, 35, 265, 330],
+      "atlas_cell": [0, 0],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Light steam for raw ingredient searing."
+    },
+    "steam_1": {
+      "id": "steam_1",
+      "tier": "steam",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [492, 35, 622, 330],
+      "atlas_cell": [1, 0],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Light steam for raw ingredient searing."
+    },
+    "steam_2": {
+      "id": "steam_2",
+      "tier": "steam",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [840, 25, 970, 330],
+      "atlas_cell": [2, 0],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Light steam for raw ingredient searing."
+    },
+    "steam_3": {
+      "id": "steam_3",
+      "tier": "steam",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [1172, 35, 1304, 330],
+      "atlas_cell": [3, 0],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Light steam for raw ingredient searing."
+    },
+    "smoke_0": {
+      "id": "smoke_0",
+      "tier": "smoke",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [150, 365, 276, 695],
+      "atlas_cell": [0, 1],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Denser smoke for cooked items continuing to sear."
+    },
+    "smoke_1": {
+      "id": "smoke_1",
+      "tier": "smoke",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [482, 385, 635, 690],
+      "atlas_cell": [1, 1],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Denser smoke for cooked items continuing to sear."
+    },
+    "smoke_2": {
+      "id": "smoke_2",
+      "tier": "smoke",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [820, 380, 974, 690],
+      "atlas_cell": [2, 1],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Denser smoke for cooked items continuing to sear."
+    },
+    "smoke_3": {
+      "id": "smoke_3",
+      "tier": "smoke",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [1168, 365, 1308, 695],
+      "atlas_cell": [3, 1],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Denser smoke for cooked items continuing to sear."
+    },
+    "char_0": {
+      "id": "char_0",
+      "tier": "char",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [150, 715, 270, 1045],
+      "atlas_cell": [0, 2],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Burnt transition smoke with ember pixels."
+    },
+    "char_1": {
+      "id": "char_1",
+      "tier": "char",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [472, 720, 635, 1050],
+      "atlas_cell": [1, 2],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Burnt transition smoke with ember pixels."
+    },
+    "char_2": {
+      "id": "char_2",
+      "tier": "char",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [820, 725, 980, 1045],
+      "atlas_cell": [2, 2],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Burnt transition smoke with ember pixels."
+    },
+    "char_3": {
+      "id": "char_3",
+      "tier": "char",
+      "source_file": "art_sources/generated_raw/grill_vapor/grill_vapor_source_v1.png",
+      "source_rect": [1164, 720, 1322, 1045],
+      "atlas_cell": [3, 2],
+      "output_file": "assets/textures/grill_vapor/grill_vapor.png",
+      "size": [16, 28],
+      "safe_area": [2, 2, 14, 26],
+      "intended_godot_use": "Burnt transition smoke with ember pixels."
+    }
+  }
+}

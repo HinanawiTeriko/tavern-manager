@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: raw source for important NPC portrait, later converted through a native pixel pipeline.
+Primary request: Create one single clean portrait for Mercenary A, an original important NPC messenger who should clearly read as more important than regular tavern customers and distinct from Ryan.
+Style reference: approved Vera/Belta and current regular customer portrait sheets, same artist family, crisp readable fantasy tavern bust, strong dark linework, warm browns, limited palette, clean face shapes, designed for 128x160 native and 512x640 runtime.
+Character concept: adult mercenary messenger bringing bad news; battered dark iron half-helmet, black-brown travel cloak, worn leather-and-chain armor, heavy gloves, old military token, sealed message tube, stern tired eyes, weathered stubble. No readable text, no loose paper, no scrolls, no letters, no blue scarf, not Ryan.
+Background: flat solid #00ff00.
+Constraints: no readable text, no plot documents, no loose paper, no scrolls, no letters, same artist family, no labels, no watermark.

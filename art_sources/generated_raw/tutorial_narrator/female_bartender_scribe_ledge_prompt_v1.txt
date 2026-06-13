@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: game tutorial narrator portrait variant for a pixel-art tavern management game
+Primary request: create one new Vera narrator pose based on the visible reference character sheet: same female bartender-scribe character, same face family, auburn-brown side ponytail with red streak, gold hair clips, teal vest, cream sleeves, dark capelet, red neck scarf, leather belt and small book details. She is below a raised dialogue box, grabbing the lower edge with both hands while explaining to the player.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background, no shadows or gradients.
+Subject: Vera, upper-body/waist-up portrait, lively teaching expression, mouth slightly open as if narrating, eyebrows confident. Both arms are raised; both hands grip a thin dark wooden/ink-rim horizontal ledge at the very top edge of the image, as if it is the underside of the dialogue panel. The ledge must be small and simple so the real UI panel can cover or align with it.
+Style/medium: polished 2D game character portrait, same artist family as the approved Vera and Belta pixel pipeline references, crisp ink-like outlines, warm tavern palette, chunky readable pixel-art clusters in the source, not a blurry filter.
+Composition/framing: single centered character with generous green padding; hands and fingers clearly visible at top; face below the ledge; body cropped around waist/upper hips; full silhouette fits inside the frame.
+Constraints: no readable text, no logo, no watermark, no complete dialogue box, no UI labels, no scenery. Do not copy Belta; keep Vera's design. Do not use #00ff00 in the character or ledge.

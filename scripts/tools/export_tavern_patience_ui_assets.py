@@ -23,6 +23,16 @@ ASSETS = {
         "native_size": (75, 7),
         "runtime_name": "bar_patience_fill",
     },
+    "patience_groove_bar_bg": {
+        "source_box": (248, 145, 1522, 330),
+        "native_size": (48, 4),
+        "runtime_name": "bar_patience_groove_bg",
+    },
+    "patience_groove_bar_fill": {
+        "source_box": (250, 445, 1518, 550),
+        "native_size": (48, 4),
+        "runtime_name": "bar_patience_groove_fill",
+    },
     "icon_patience": {
         "source_box": (806, 588, 973, 760),
         "native_size": (8, 8),
@@ -63,7 +73,7 @@ def save_pair(native: Image.Image, native_name: str, runtime_name: str) -> None:
 
 def make_contact_sheet(reference: Image.Image, assets: dict[str, Image.Image]) -> None:
     CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new("RGBA", (640, 320), (16, 14, 12, 255))
+    sheet = Image.new("RGBA", (680, 392), (16, 14, 12, 255))
     draw = ImageDraw.Draw(sheet)
     draw.text((16, 12), "Tavern patience UI - generated reference pipeline", fill=(220, 204, 176, 255))
 
@@ -77,10 +87,16 @@ def make_contact_sheet(reference: Image.Image, assets: dict[str, Image.Image]) -
     sheet.alpha_composite(bg, (96, 236))
     sheet.alpha_composite(fill, (96, 236))
     sheet.alpha_composite(icon, (48, 234))
+    draw.text((16, 282), "groove runtime 4x, clipped at runtime", fill=(220, 204, 176, 255))
+    groove_bg = assets["patience_groove_bar_bg"].resize((192, 16), Image.Resampling.NEAREST)
+    groove_fill = assets["patience_groove_bar_fill"].resize((192, 16), Image.Resampling.NEAREST)
+    sheet.alpha_composite(groove_bg, (96, 310))
+    sheet.alpha_composite(groove_fill, (96, 310))
+    sheet.alpha_composite(groove_fill.crop((0, 0, 80, 16)), (320, 310))
 
     draw.text((428, 44), "native previews", fill=(220, 204, 176, 255))
     y = 72
-    for name in ("patience_bar_bg", "patience_bar_fill", "icon_patience"):
+    for name in ("patience_bar_bg", "patience_bar_fill", "patience_groove_bar_bg", "patience_groove_bar_fill", "icon_patience"):
         preview = assets[name].resize((assets[name].width * 4, assets[name].height * 4), Image.Resampling.NEAREST)
         sheet.alpha_composite(preview, (428, y))
         draw.text((428, y + preview.height + 4), name, fill=(156, 141, 120, 255))

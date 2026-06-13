@@ -18,16 +18,12 @@ func _ready() -> void:
 	data.npc_fates = [
 		{"npc_name": "米拉", "npc_title": "行商", "fate_text": "她把今晚的传闻收进了斗篷。"},
 	]
-	gm.current_ledger_data = data
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null:
 		tm.first_ledger_shown = true
 
-	var scene := preload("res://scenes/ui/LedgerScreen.tscn")
-	var screen = scene.instantiate()
-	add_child(screen)
-	await get_tree().process_frame
+	var screen = await _make_screen(data)
 
 	_test_preserved_nodes(screen)
 	_test_new_art_nodes(screen)
@@ -35,8 +31,37 @@ func _ready() -> void:
 	_test_compact_stats_rows(screen)
 	_test_continue_button_art(screen)
 	_test_pixel_fonts(screen)
+	_test_no_ryan_cinematic_for_non_ryan_fates(screen)
 
 	screen.queue_free()
+	await get_tree().process_frame
+
+	_test_narrative_fates_include_route_keys(gm)
+
+	var ryan_data := LedgerData.new()
+	ryan_data.day = 3
+	ryan_data.gold_today = 12
+	ryan_data.rep_today = 0
+	ryan_data.gold_total = 64
+	ryan_data.rep_total = 2
+	ryan_data.guests_served = 3
+	ryan_data.orders_success = 3
+	ryan_data.orders_failed = 0
+	ryan_data.npc_fates = [
+		{
+			"npc_id": "ryan",
+			"ending_key": "alternative_survivor",
+			"npc_name": "莱恩",
+			"npc_title": "见习骑士",
+			"fate_text": "莱恩带着替代委托离开，放弃了血斧小队和白银阶的快速晋升，改走更慢的安全路线。"
+		},
+	]
+	var ryan_screen = await _make_screen(ryan_data)
+	_test_ryan_cinematic_overlay(ryan_screen)
+	await _test_ryan_cinematic_dismisses_on_click(ryan_screen)
+	ryan_screen.queue_free()
+	await get_tree().process_frame
+
 	_finish()
 
 
@@ -54,6 +79,16 @@ func _finish() -> void:
 	else:
 		push_error("[TEST-NIGHT-SETTLEMENT] FAILURES: %d / %d checks" % [_failures, _checks])
 		get_tree().quit(1)
+
+
+func _make_screen(data: LedgerData):
+	var gm = get_node("/root/GameManager")
+	gm.current_ledger_data = data
+	var scene := preload("res://scenes/ui/LedgerScreen.tscn")
+	var screen = scene.instantiate()
+	add_child(screen)
+	await get_tree().process_frame
+	return screen
 
 
 func _test_preserved_nodes(screen: Node) -> void:
@@ -109,6 +144,55 @@ func _test_dynamic_data(screen: Node) -> void:
 					fate_text += (sub as Label).text + "\n"
 	_ok(fate_text.find("米拉") >= 0, "fate list renders npc name")
 	_ok(fate_text.find("传闻") >= 0, "fate list renders fate text")
+
+
+func _test_no_ryan_cinematic_for_non_ryan_fates(screen: Node) -> void:
+	_ok(screen.get_node_or_null("RyanFateCinematic") == null, "non-Ryan settlement does not show Ryan fate cinematic")
+
+
+func _test_narrative_fates_include_route_keys(gm: Node) -> void:
+	gm.narrative.set_var("ryan_has_alternative", true)
+	gm.narrative.finalize_ryan_ending()
+	var fates: Array = gm.narrative.get_today_npc_fates(3)
+	var ryan_fate: Dictionary = {}
+	for fate in fates:
+		if String(fate.get("npc_name", "")) == "莱恩" or String(fate.get("npc_id", "")) == "ryan":
+			ryan_fate = fate
+			break
+	_ok(String(ryan_fate.get("npc_id", "")) == "ryan", "Ryan fate includes stable npc_id")
+	_ok(String(ryan_fate.get("ending_key", "")) == "alternative_survivor", "Ryan fate includes ending route key")
+
+
+func _test_ryan_cinematic_overlay(screen: Node) -> void:
+	var overlay := screen.get_node_or_null("RyanFateCinematic") as Control
+	_ok(overlay != null, "Ryan settlement shows fate cinematic overlay")
+	if overlay == null:
+		return
+	_ok(overlay.visible, "Ryan fate cinematic starts visible")
+	_ok(overlay.position == Vector2.ZERO and overlay.size == Vector2(1280, 720), "Ryan fate cinematic covers the screen")
+	var still := overlay.get_node_or_null("Still") as TextureRect
+	_ok(still != null, "Ryan fate cinematic has wide still texture")
+	if still != null:
+		_ok(still.position == Vector2(0, 80) and still.size == Vector2(1280, 560), "Ryan fate still uses intro-style letterbox image bounds")
+		_ok(still.texture != null and String(still.texture.resource_path).ends_with("assets/textures/endings/ryan/ryan_alternative_survivor.png"), "Ryan fate still uses route runtime texture")
+		_ok(still.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Ryan fate still uses nearest filtering")
+	var fate_label := overlay.get_node_or_null("FateLabel") as Label
+	_ok(fate_label != null, "Ryan fate cinematic has fate text label")
+	if fate_label != null:
+		_ok(fate_label.text.find("莱恩带着替代委托离开") >= 0, "Ryan fate label renders the fate text")
+		_ok(fate_label.text.find("金币") < 0 and fate_label.text.find("成功订单") < 0, "Ryan fate label does not include settlement stats")
+
+
+func _test_ryan_cinematic_dismisses_on_click(screen: Node) -> void:
+	var overlay := screen.get_node_or_null("RyanFateCinematic") as Control
+	if overlay == null:
+		return
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = true
+	screen._unhandled_input(event)
+	await get_tree().process_frame
+	_ok(not overlay.visible, "Ryan fate cinematic hides after click")
 
 
 func _test_compact_stats_rows(screen: Node) -> void:

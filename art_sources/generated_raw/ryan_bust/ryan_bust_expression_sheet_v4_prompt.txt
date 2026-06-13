@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: raw source sheet for important NPC portrait, later converted through native pixel pipeline.
+Primary request: Create one bold 4 columns x 1 row expression sheet for Ryan, an original important NPC who must clearly look like a story character, not a regular tavern customer.
+Core visual thesis: Ryan is not simply a young trainee knight. He is a young man performing the idea of knighthood too hard. Half of his costume looks like a cheap ceremonial oath outfit; half looks like worn real tavern-road gear. He is visibly trying to become a legend before he is ready.
+Style reference: same artist family as the approved Vera/Belta and regular customer portrait sheets: crisp readable fantasy busts, strong dark linework, warm tavern palette, clean face shapes, broad shapes that survive downscaling to 128x160 native pixels and 512x640 runtime.
+Character silhouette: messy chestnut hair; expressive young face; oversized short blue ceremonial cape pinned too high; polished but cheap silver oath-badge at the chest; one bright theatrical shoulder plate on one side only; the other side is patched leather armor with visible repairs; mismatched gloves; harmless practice gear; old plain sword hilt partly visible. No plot documents, no contracts, no scrolls, no readable paper.
+Expressions left to right: forced oath-smile with fingers on the badge; overbright confidence with one fist raised too formally; hesitation gripping cape clasp; dejected, cape sagging, head lowered.
+Composition: four equal square slots in one horizontal row, same identity and outfit across all four variants, bust visible to bar-front/upper-thigh depth, centered, bottom-aligned consistently.
+Background: perfectly flat solid #00ff00 chroma-key background.
+Constraints: no readable text, no logos, no watermark, no speech bubbles, no plot items, no contracts, no scrolls, no letters, no floating symbols, no comic marks.

@@ -42,7 +42,18 @@
       "opensShop": true,
       "marker": "market_shop",
       "description": "镇上的杂货商店，能买材料、解锁配方与技法。",
-      "result": ""
+      "result": "",
+      "gossip": [
+        {
+          "id": "sleep_powder_hint",
+          "day": 2,
+          "requiresVar": "ryan_warhammer_lead",
+          "seenVar": "merchant_sleep_powder_hint_seen",
+          "unlessInventory": "sleep_powder",
+          "hint": "商人似乎有关于血斧委托的传闻。",
+          "message": "商人：你也看到血斧小队那张委托了？市面上都在传，那队人明早就出发。\n\n商人：有人问我有没有能让人睡死过去的东西。我没有，但菌菇林地那种沉睡花粉……采药人都避着走。\n\n商人：别乱用。掺进酒里，人能睡过一整支队伍出发。"
+        }
+      ]
     },
     {
       "id": "mercenary_board",
@@ -70,6 +81,7 @@
           "id": "toby_commission",
           "dayMin": 6,
           "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
+          "unlocksFlag": "toby_commission_lead",
           "result": "托比……那个被米拉撇下的学徒，接了这趟送命的活。得去他落脚的地方看看。"
         }
       ]
@@ -170,6 +182,7 @@
       "rewards": [],
       "description": "酒馆后巷，托比缩在那儿擦拭一把不合手的短剑。",
       "dayMin": 6,
+      "requiresFlag": "toby_commission_lead",
       "repeatable": false,
       "result": "托比说，他要靠这趟委托证明自己一个人也行。"
     },
@@ -184,6 +197,7 @@
       "materials": [],
       "rewards": [],
       "affection": { "npc": "mira", "amount": 3 },
+      "affectionOncePerDay": true,
       "description": "米拉支起货摊歇脚，似乎并不急着赶路。",
       "dayMin": 6,
       "repeatable": true,
@@ -203,6 +217,7 @@
       "securesToby": true,
       "description": "一个能把危险委托悄悄换掉的掮客，开价不低。",
       "dayMin": 6,
+      "requiresFlag": "toby_commission_lead",
       "repeatable": false,
       "result": "掮客点了头：托比那份委托，会被一份安全的活计顶替。"
     }

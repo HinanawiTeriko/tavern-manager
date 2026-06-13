@@ -1,0 +1,542 @@
+{
+    "id":  "seasoning_particle_v1",
+    "raw_source":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+    "prompt":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_prompt_v1.txt",
+    "native_atlas":  "assets/source/seasoning_particles/seasoning_particles_native.png",
+    "runtime_atlas":  "assets/textures/seasoning_particles/seasoning_particles.png",
+    "contact_sheet":  "docs/art/seasoning_particle_contact_sheet.png",
+    "native_slot_size":  [
+                             24,
+                             24
+                         ],
+    "scale":  4,
+    "safe_area":  [
+                      2,
+                      2,
+                      22,
+                      22
+                  ],
+    "intended_godot_use":  "SeasoningShaker SpiceComboVfx and falling powder particles; runtime code references only assets/textures/seasoning_particles/seasoning_particles.png",
+    "sprites":  {
+                    "dust_0":  {
+                                   "element":  "dust",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       0,
+                                                       0,
+                                                       314,
+                                                       251
+                                                   ],
+                                   "atlas_cell":  [
+                                                      0,
+                                                      0
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker falling powder dust particle"
+                               },
+                    "dust_1":  {
+                                   "element":  "dust",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       314,
+                                                       0,
+                                                       627,
+                                                       251
+                                                   ],
+                                   "atlas_cell":  [
+                                                      1,
+                                                      0
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker falling powder dust particle"
+                               },
+                    "dust_2":  {
+                                   "element":  "dust",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       627,
+                                                       0,
+                                                       941,
+                                                       251
+                                                   ],
+                                   "atlas_cell":  [
+                                                      2,
+                                                      0
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker falling powder dust particle"
+                               },
+                    "dust_3":  {
+                                   "element":  "dust",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       941,
+                                                       0,
+                                                       1254,
+                                                       251
+                                                   ],
+                                   "atlas_cell":  [
+                                                      3,
+                                                      0
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker falling powder dust particle"
+                               },
+                    "flake_0":  {
+                                    "element":  "flake",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        0,
+                                                        251,
+                                                        314,
+                                                        502
+                                                    ],
+                                    "atlas_cell":  [
+                                                       0,
+                                                       1
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker falling herb flake particle"
+                                },
+                    "flake_1":  {
+                                    "element":  "flake",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        314,
+                                                        251,
+                                                        627,
+                                                        502
+                                                    ],
+                                    "atlas_cell":  [
+                                                       1,
+                                                       1
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker falling herb flake particle"
+                                },
+                    "flake_2":  {
+                                    "element":  "flake",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        627,
+                                                        251,
+                                                        941,
+                                                        502
+                                                    ],
+                                    "atlas_cell":  [
+                                                       2,
+                                                       1
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker falling herb flake particle"
+                                },
+                    "flake_3":  {
+                                    "element":  "flake",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        941,
+                                                        251,
+                                                        1254,
+                                                        502
+                                                    ],
+                                    "atlas_cell":  [
+                                                       3,
+                                                       1
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker falling herb flake particle"
+                                },
+                    "mist_0":  {
+                                   "element":  "mist",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       0,
+                                                       502,
+                                                       314,
+                                                       752
+                                                   ],
+                                   "atlas_cell":  [
+                                                      0,
+                                                      2
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker soft powder mist particle"
+                               },
+                    "mist_1":  {
+                                   "element":  "mist",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       314,
+                                                       502,
+                                                       627,
+                                                       752
+                                                   ],
+                                   "atlas_cell":  [
+                                                      1,
+                                                      2
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker soft powder mist particle"
+                               },
+                    "mist_2":  {
+                                   "element":  "mist",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       627,
+                                                       502,
+                                                       941,
+                                                       752
+                                                   ],
+                                   "atlas_cell":  [
+                                                      2,
+                                                      2
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker soft powder mist particle"
+                               },
+                    "mist_3":  {
+                                   "element":  "mist",
+                                   "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                   "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                   "source_rect":  [
+                                                       941,
+                                                       502,
+                                                       1254,
+                                                       752
+                                                   ],
+                                   "atlas_cell":  [
+                                                      3,
+                                                      2
+                                                  ],
+                                   "size":  [
+                                                24,
+                                                24
+                                            ],
+                                   "safe_area":  [
+                                                     2,
+                                                     2,
+                                                     22,
+                                                     22
+                                                 ],
+                                   "intended_godot_use":  "SeasoningShaker soft powder mist particle"
+                               },
+                    "spark_0":  {
+                                    "element":  "spark",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        0,
+                                                        752,
+                                                        314,
+                                                        1003
+                                                    ],
+                                    "atlas_cell":  [
+                                                       0,
+                                                       3
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker high-combo spicy sparkle particle"
+                                },
+                    "spark_1":  {
+                                    "element":  "spark",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        314,
+                                                        752,
+                                                        627,
+                                                        1003
+                                                    ],
+                                    "atlas_cell":  [
+                                                       1,
+                                                       3
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker high-combo spicy sparkle particle"
+                                },
+                    "spark_2":  {
+                                    "element":  "spark",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        627,
+                                                        752,
+                                                        941,
+                                                        1003
+                                                    ],
+                                    "atlas_cell":  [
+                                                       2,
+                                                       3
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker high-combo spicy sparkle particle"
+                                },
+                    "spark_3":  {
+                                    "element":  "spark",
+                                    "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                    "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                    "source_rect":  [
+                                                        941,
+                                                        752,
+                                                        1254,
+                                                        1003
+                                                    ],
+                                    "atlas_cell":  [
+                                                       3,
+                                                       3
+                                                   ],
+                                    "size":  [
+                                                 24,
+                                                 24
+                                             ],
+                                    "safe_area":  [
+                                                      2,
+                                                      2,
+                                                      22,
+                                                      22
+                                                  ],
+                                    "intended_godot_use":  "SeasoningShaker high-combo spicy sparkle particle"
+                                },
+                    "settle_cloud_0":  {
+                                           "element":  "settle_cloud",
+                                           "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                           "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                           "source_rect":  [
+                                                               0,
+                                                               1003,
+                                                               314,
+                                                               1254
+                                                           ],
+                                           "atlas_cell":  [
+                                                              0,
+                                                              4
+                                                          ],
+                                           "size":  [
+                                                        24,
+                                                        24
+                                                    ],
+                                           "safe_area":  [
+                                                             2,
+                                                             2,
+                                                             22,
+                                                             22
+                                                         ],
+                                           "intended_godot_use":  "SeasoningShaker successful application powder cloud particle"
+                                       },
+                    "settle_cloud_1":  {
+                                           "element":  "settle_cloud",
+                                           "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                           "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                           "source_rect":  [
+                                                               314,
+                                                               1003,
+                                                               627,
+                                                               1254
+                                                           ],
+                                           "atlas_cell":  [
+                                                              1,
+                                                              4
+                                                          ],
+                                           "size":  [
+                                                        24,
+                                                        24
+                                                    ],
+                                           "safe_area":  [
+                                                             2,
+                                                             2,
+                                                             22,
+                                                             22
+                                                         ],
+                                           "intended_godot_use":  "SeasoningShaker successful application powder cloud particle"
+                                       },
+                    "settle_cloud_2":  {
+                                           "element":  "settle_cloud",
+                                           "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                           "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                           "source_rect":  [
+                                                               627,
+                                                               1003,
+                                                               941,
+                                                               1254
+                                                           ],
+                                           "atlas_cell":  [
+                                                              2,
+                                                              4
+                                                          ],
+                                           "size":  [
+                                                        24,
+                                                        24
+                                                    ],
+                                           "safe_area":  [
+                                                             2,
+                                                             2,
+                                                             22,
+                                                             22
+                                                         ],
+                                           "intended_godot_use":  "SeasoningShaker successful application powder cloud particle"
+                                       },
+                    "settle_cloud_3":  {
+                                           "element":  "settle_cloud",
+                                           "source_file":  "art_sources/generated_raw/seasoning_particles/seasoning_particle_source_v1.png",
+                                           "output_file":  "assets/textures/seasoning_particles/seasoning_particles.png",
+                                           "source_rect":  [
+                                                               941,
+                                                               1003,
+                                                               1254,
+                                                               1254
+                                                           ],
+                                           "atlas_cell":  [
+                                                              3,
+                                                              4
+                                                          ],
+                                           "size":  [
+                                                        24,
+                                                        24
+                                                    ],
+                                           "safe_area":  [
+                                                             2,
+                                                             2,
+                                                             22,
+                                                             22
+                                                         ],
+                                           "intended_godot_use":  "SeasoningShaker successful application powder cloud particle"
+                                       }
+                }
+}

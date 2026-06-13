@@ -367,6 +367,78 @@
         228
       ],
       "intended_godot_use": "DayMap UILayer/ResultPanel special-location result notice"
+    },
+    "button_ledger_unread_normal": {
+      "id": "button_ledger_unread_normal",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_normal.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        100,
+        1064,
+        360
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
+    },
+    "button_ledger_unread_hover": {
+      "id": "button_ledger_unread_hover",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_hover.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        500,
+        1064,
+        760
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
+    },
+    "button_ledger_unread_pressed": {
+      "id": "button_ledger_unread_pressed",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_pressed.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        895,
+        1064,
+        1155
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
     }
   }
 }

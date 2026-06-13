@@ -19,6 +19,10 @@ GROUND_Y_RUNTIME = 536
 PLAYABLE_X_RANGE_RUNTIME = [0, 1280]
 OCCLUSION_RECT_NATIVE = [0, 11, 320, 70]
 BACKGROUND_SAMPLE_NATIVE_Y_RANGE = [110, 180]
+ORDER_GROOVE_SOURCE = "art_sources/generated_raw/tavern_order_groove/tavern_table_order_groove_source_v1.png"
+ORDER_GROOVE_RECT_NATIVE = [78, 39, 242, 53]
+ORDER_GROOVE_RUNTIME_RECT = [312, 596, 968, 652]
+ORDER_GROOVE_SAFE_AREA_RUNTIME = [392, 604, 888, 636]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -59,6 +63,17 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         self.assertEqual(manifest["derived_from"], "assets/source/tavern/background/tavern_bg_native.png")
         self.assertEqual(manifest["background_sample_native_y_range"], BACKGROUND_SAMPLE_NATIVE_Y_RANGE)
         self.assertEqual(manifest["occlusion_rect_native"], OCCLUSION_RECT_NATIVE)
+        self.assertEqual(manifest["order_groove_source"], ORDER_GROOVE_SOURCE)
+        self.assertEqual(manifest["order_groove_rect_native"], ORDER_GROOVE_RECT_NATIVE)
+        self.assertEqual(manifest["order_groove_runtime_rect"], ORDER_GROOVE_RUNTIME_RECT)
+        self.assertEqual(manifest["order_groove_safe_area_runtime"], ORDER_GROOVE_SAFE_AREA_RUNTIME)
+        self.assertEqual(
+            manifest["order_groove_pipeline"],
+            {
+                "method": "fixed-rect imagegen source composite",
+                "runtime_ui": "Godot Labels and ProgressBar only; no text baked into the texture",
+            },
+        )
         self.assertEqual(
             manifest["physics_alignment"],
             {
@@ -80,6 +95,9 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
             path = ROOT / manifest[key]
             self.assertTrue(path.exists(), f"{path}: missing {key} image")
             self.assertGreater(path.stat().st_size, 0, f"{path}: empty {key} image")
+        groove_source = ROOT / manifest["order_groove_source"]
+        self.assertTrue(groove_source.exists(), f"{groove_source}: missing order groove source")
+        self.assertGreater(groove_source.stat().st_size, 0, "order groove source image is empty")
         self.assertTrue(CONTACT_SHEET.exists(), f"{CONTACT_SHEET}: missing contact sheet")
         self.assertGreater(CONTACT_SHEET.stat().st_size, 0, "contact sheet is empty")
 
@@ -117,8 +135,11 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
             self.assertEqual(native.getpixel((x, y))[3], 255, "background table occluder should remain opaque at %s" % ((x, y),))
 
         sample_start, sample_end = manifest["background_sample_native_y_range"]
+        groove_left, groove_top, groove_right, groove_bottom = manifest["order_groove_rect_native"]
         for y in range(top, bottom):
             for x in range(0, native.width, 17):
+                if groove_left <= x < groove_right and groove_top <= y < groove_bottom:
+                    continue
                 self.assertEqual(
                     native.getpixel((x, y))[:3],
                     background.getpixel((x, sample_start + y))[:3],
@@ -179,6 +200,32 @@ class TavernTableAssetPipelineTest(unittest.TestCase):
         self.assertGreaterEqual(ground_alpha, 260, "physics baseline should land on opaque playable tabletop pixels")
         self.assertGreaterEqual(front_lip_alpha, 260, "front lip guide should land on opaque counter-front pixels")
         self.assertGreaterEqual(row_texture(14, ground_row), 350, "playable table plane needs readable wood grain above the physics baseline")
+
+    def test_order_groove_is_baked_into_table_front_face(self) -> None:
+        manifest = load_manifest(self)
+        native = load_rgba(ROOT / manifest["native"])
+        left, top, right, bottom = manifest["order_groove_rect_native"]
+        self.assertEqual([left, top, right, bottom], ORDER_GROOVE_RECT_NATIVE)
+        self.assertEqual(manifest["order_groove_runtime_rect"], ORDER_GROOVE_RUNTIME_RECT)
+        self.assertEqual(manifest["order_groove_safe_area_runtime"], ORDER_GROOVE_SAFE_AREA_RUNTIME)
+
+        groove = native.crop((left, top, right, bottom))
+        pixels = image_pixels(groove)
+        self.assertTrue(all(a == 255 for _r, _g, _b, a in pixels), "groove must remain part of the opaque tabletop")
+
+        groove_luma = [luma(pixel) for pixel in pixels]
+        self.assertGreaterEqual(max(groove_luma) - min(groove_luma), 24, "groove needs enough carved contrast to read")
+
+        upper_lip = [native.getpixel((x, top + 1)) for x in range(left + 8, right - 8)]
+        lower_lip = [native.getpixel((x, bottom - 2)) for x in range(left + 8, right - 8)]
+        upper_avg = sum(luma(pixel) for pixel in upper_lip) / float(len(upper_lip))
+        lower_avg = sum(luma(pixel) for pixel in lower_lip) / float(len(lower_lip))
+        self.assertLess(upper_avg, lower_avg, "upper groove lip should be darker than the lower candlelit rim")
+
+        dark_cut = sum(1 for pixel in pixels if luma(pixel) <= 34)
+        amber_edge = sum(1 for r, g, b, a in pixels if a == 255 and r >= 70 and g >= 32 and b <= 42 and r >= b * 1.7)
+        self.assertGreaterEqual(dark_cut, 120, "groove needs a dark recessed center")
+        self.assertGreaterEqual(amber_edge, 45, "groove needs warm wood rim pixels from the generated source")
 
 
 if __name__ == "__main__":

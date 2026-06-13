@@ -153,6 +153,12 @@ def export_icon(icon_id: str, spec: dict) -> dict:
     }
 
 
+def pipeline_icons(manifest: dict) -> dict:
+    icons = dict(manifest["icons"])
+    icons.update(manifest.get("quality_icons", {}))
+    return icons
+
+
 def backed_preview(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     preview = ImageOps.contain(image.convert("RGBA"), size, Image.Resampling.LANCZOS)
     backing = Image.new("RGBA", size, (48, 42, 34, 255))
@@ -183,7 +189,7 @@ def make_contact_sheet(exports: list[dict]) -> None:
 
 def main() -> None:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    exports = [export_icon(icon_id, spec) for icon_id, spec in manifest["icons"].items()]
+    exports = [export_icon(icon_id, spec) for icon_id, spec in pipeline_icons(manifest).items()]
     make_contact_sheet(exports)
     print("exported tavern missing item icons: " + ", ".join(exported["id"] for exported in exports))
 

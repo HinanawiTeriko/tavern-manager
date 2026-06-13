@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: raw source sheet for important NPC portrait, later converted through a native pixel pipeline.
+Primary request: Create one clean 4 columns x 1 row expression sheet for Ryan, an original important NPC who should clearly read as more important than regular tavern customers.
+Style reference: approved Vera/Belta and current regular customer portrait sheets, same artist family, crisp readable fantasy tavern busts, strong dark linework, warm browns, limited palette, clean face shapes, designed for 128x160 native and 512x640 runtime.
+Character concept: young trainee knight whose dream is bigger than his experience; patched short dark-blue cape, cheap polished silver badge, asymmetric trainee armor, one shiny shoulder guard over worn leather, training sword or plain old sword hilt.
+Expressions left to right: neutral forced smile gripping badge; excited overconfident grin; hesitant worried look touching scarf or strap; dejected tired shoulders.
+Background: flat solid #00ff00.
+Constraints: 4 columns x 1 row, no readable text, no plot documents, no contracts, no scrolls, no comic emphasis marks, same artist family, no labels, no watermark.

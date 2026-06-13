@@ -37,6 +37,16 @@ ITEM_IDS = (
     "bloodied_contract",
     "alternative_contract",
 )
+QUALITY_DRINK_IDS = (
+    "ale_beer_good",
+    "wine_good",
+    "herbal_ale_good",
+    "spiced_wine_good",
+)
+
+
+def pipeline_icons(manifest: dict) -> dict:
+    return manifest["icons"] | manifest["quality_icons"]
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -71,6 +81,16 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
             "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png",
         )
         self.assertEqual(generated["grid"], [6, 4])
+        quality_generated = manifest["generated_sources"]["quality_drinks_good_sheet_v1"]
+        self.assertEqual(
+            quality_generated["source_file"],
+            "art_sources/generated_raw/tavern_missing_item_icons/quality_drinks_good_sheet_v1.png",
+        )
+        self.assertEqual(
+            quality_generated["production_reference"],
+            "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+        )
+        self.assertEqual(quality_generated["grid"], [4, 1])
         for icon_id in ITEM_IDS:
             with self.subTest(icon_id=icon_id):
                 spec = manifest["icons"][icon_id]
@@ -88,18 +108,37 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
                 self.assertLess(top, bottom)
                 self.assertGreaterEqual(right - left, 280)
                 self.assertGreaterEqual(bottom - top, 280)
+        self.assertEqual(set(manifest["quality_icons"].keys()), set(QUALITY_DRINK_IDS))
+        for icon_id in QUALITY_DRINK_IDS:
+            with self.subTest(icon_id=icon_id):
+                spec = manifest["quality_icons"][icon_id]
+                self.assertEqual(
+                    spec["source_sheet"],
+                    "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
+                )
+                self.assertEqual(spec["native"], f"assets/source/tavern/missing_item_icons/{icon_id}_native.png")
+                self.assertEqual(spec["runtime"], f"assets/textures/tavern/items/{icon_id}.png")
+                self.assertEqual(spec["native_size"], [24, 24])
+                self.assertEqual(spec["scale"], 4)
+                self.assertEqual(len(spec["source_rect"]), 4)
+                left, top, right, bottom = spec["source_rect"]
+                self.assertLess(left, right)
+                self.assertLess(top, bottom)
+                self.assertGreaterEqual(right - left, 700)
+                self.assertGreaterEqual(bottom - top, 700)
 
     def test_sources_references_and_contact_sheet_exist(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        generated = manifest["generated_sources"]["missing_item_icons_sheet_v3"]
-        for key in ("source_file", "production_reference"):
-            with self.subTest(key=key):
-                path = ROOT / generated[key]
-                self.assertTrue(path.exists(), f"{path}: missing generated sheet")
-                self.assertGreater(path.stat().st_size, 100_000)
-        for icon_id in ITEM_IDS:
+        for generated_id in ("missing_item_icons_sheet_v3", "quality_drinks_good_sheet_v1"):
+            generated = manifest["generated_sources"][generated_id]
+            for key in ("source_file", "production_reference"):
+                with self.subTest(generated=generated_id, key=key):
+                    path = ROOT / generated[key]
+                    self.assertTrue(path.exists(), f"{path}: missing generated sheet")
+                    self.assertGreater(path.stat().st_size, 100_000)
+        for icon_id, spec in pipeline_icons(manifest).items():
             with self.subTest(icon_id=icon_id):
-                reference = ROOT / manifest["icons"][icon_id]["reference"]
+                reference = ROOT / spec["reference"]
                 self.assertTrue(reference.exists(), f"{reference}: missing reference crop")
                 self.assertGreater(reference.stat().st_size, 0)
         self.assertTrue(CONTACT_SHEET.exists(), f"{CONTACT_SHEET}: missing contact sheet")
@@ -107,9 +146,8 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
 
     def test_native_and_runtime_are_exact_nearest_exports(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        for icon_id in ITEM_IDS:
+        for icon_id, spec in pipeline_icons(manifest).items():
             with self.subTest(icon_id=icon_id):
-                spec = manifest["icons"][icon_id]
                 native = load_rgba(ROOT / spec["native"])
                 runtime = load_rgba(ROOT / spec["runtime"])
                 self.assertEqual(native.size, (24, 24))
@@ -119,9 +157,9 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
 
     def test_native_icons_have_clean_alpha_and_readable_coverage(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        for icon_id in ITEM_IDS:
+        for icon_id, spec in pipeline_icons(manifest).items():
             with self.subTest(icon_id=icon_id):
-                native = load_rgba(ROOT / manifest["icons"][icon_id]["native"])
+                native = load_rgba(ROOT / spec["native"])
                 corners = [
                     native.getpixel((0, 0)),
                     native.getpixel((23, 0)),

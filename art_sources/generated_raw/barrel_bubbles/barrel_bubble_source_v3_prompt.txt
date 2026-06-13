@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: generated raw source for a 2D pixel-art game single-bubble spritesheet, to be post-processed into small runtime sprites.
+Primary request: Create a square source image containing twelve isolated SINGLE bubble sprites arranged as a precise 4 column x 3 row spritesheet. Each equal slot must contain exactly one bubble only: one circular/oval transparent bubble ring with a tiny connected highlight on the ring or inside the ring. No slot may contain a bubble cluster.
+Rows: top row pending quality: one small cold teal single bubble per slot, dim and sparse. Middle row normal quality: one brighter pale cyan/white single bubble per slot, fuller ring. Bottom row good quality: one single bubble per slot with a few warm amber pixels embedded on the bubble rim or connected highlight; still exactly one bubble, not a cluster.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background only.
+Style/medium: authentic pixel-art production asset source, crisp blocky pixel clusters, limited palette, transparent-bubble look, dark teal shadow pixels, pale cyan/white foam edge, amber pixels only on the bottom-row single bubble rim. No antialias blur, no soft gradients, no painterly rendering.
+Composition/framing: exact 4x3 grid, one isolated single bubble centered in each equal slot, generous padding, no overlap between slots, no grid lines.
+Constraints: EXACTLY ONE BUBBLE PER SLOT. No small extra bubbles, no foam clusters, no loose foam dots, no sparkle stars around the bubble, no cups, no mugs, no glasses, no barrels, no bottles, no hands, no characters, no scenery, no text, no labels, no numbers, no logo, no watermark, no cast shadow, no contact shadow. Do not use #ff00ff anywhere in the bubbles.

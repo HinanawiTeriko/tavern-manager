@@ -62,5 +62,6 @@ func _test_grant_idempotent_and_owned() -> void:
 	var newly: bool = gm.grant_investigation_document("toby_contract")
 	_ok(newly, "first grant returns newly-granted")
 	_ok(gm.documents.owns_document("toby_contract"), "toby_contract owned after grant")
+	_ok(gm.narrative.get_var("toby_contract_found") == true, "granting toby_contract marks route proof found")
 	_ok(gm.inventory_sys.get_count("toby_contract") == 1, "granting adds it to story bag")
 	_ok(not gm.grant_investigation_document("toby_contract"), "second grant is idempotent (not newly)")
