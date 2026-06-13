@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_ledger_art_is_wired()
+	_test_unread_hint_state()
 	_test_double_click_requests_open()
 	_finish()
 
@@ -59,4 +60,22 @@ func _test_ledger_art_is_wired() -> void:
 	var visual := item.get_node_or_null("Visual") as CanvasItem
 	if visual != null:
 		_ok(not visual.visible, "ReadableDeskItem hides placeholder polygon when using ledger art")
+	item.queue_free()
+
+
+func _test_unread_hint_state() -> void:
+	var item = preload("res://scenes/ui/readable_desk_item.tscn").instantiate()
+	add_child(item)
+	_ok(item.has_method("set_unread_hint_visible"), "ReadableDeskItem exposes an unread hint toggle")
+	if not item.has_method("set_unread_hint_visible"):
+		item.queue_free()
+		return
+	var label := item.get_node_or_null("Label") as Label
+	_ok(label != null, "ReadableDeskItem keeps its label node for ledger prompts")
+	item.set_unread_hint_visible(true)
+	_ok(label != null and label.visible, "ReadableDeskItem shows a ledger prompt when unread")
+	if label != null:
+		_ok(label.text.contains("新"), "ReadableDeskItem prompt text announces a new ledger page")
+	item.set_unread_hint_visible(false)
+	_ok(label != null and not label.visible, "ReadableDeskItem hides the ledger prompt after reading")
 	item.queue_free()

@@ -31,6 +31,8 @@ func _ready() -> void:
 	_ok(eff.get("active_posting", "") == "toby_commission", "Day6 托比贴文激活（盖过血斧）")
 	_ok(String(eff.get("description", "")).contains("托比"), "Day6 描述更新为托比委托")
 	var vr := m4.visit("mercenary_board")
+	_ok(String(vr.get("unlockedFlag", "")) == "toby_commission_lead", "Day6 board visit unlocks Toby lead flag")
+	_ok(String(vr.get("activePosting", "")) == "toby_commission", "Day6 board visit reports active Toby posting")
 	_ok(not (vr.get("documents", []) as Array).has("toby_contract"), "告示板贴文不再直接授予委托书（已搬进托比落脚处场景）")
 
 	# 重新亮相：刚亮相无更新；贴文激活后进 updated-locations；宣告后清除

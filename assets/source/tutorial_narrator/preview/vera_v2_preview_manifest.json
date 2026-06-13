@@ -1,0 +1,27 @@
+{
+  "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_source_v2.png",
+  "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_prompt_v2.txt",
+  "style_reference": "art_sources/generated_raw/regular_customers/regular_belta_neutral_pilot_source_v1.png",
+  "runtime_scale": 4,
+  "assets": {
+    "female_bartender_scribe_v2_candidate": {
+      "id": "female_bartender_scribe_v2_candidate",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/preview/female_bartender_scribe_v2_candidate_native.png",
+      "output_file": "assets/textures/tutorial/narrator/preview/female_bartender_scribe_v2_candidate.png",
+      "native_size": [128, 160],
+      "runtime_size": [512, 640],
+      "source_size": [1122, 1402],
+      "source_crop": [61, 0, 1061, 1250],
+      "safe_area": [18, 8, 92, 142],
+      "intended_godot_use": "Preview-only TutorialOverlay narrator portrait candidate for style comparison; not wired into runtime scenes"
+    }
+  },
+  "reports": {
+    "reference_compare": "docs/art/vera_v2_belta_reference_compare.png",
+    "runtime_compare": "docs/art/vera_v2_belta_runtime_compare.png",
+    "reference_runtime_compare": "docs/art/vera_v2_belta_reference_runtime_compare.png",
+    "source_crop_compare": "docs/art/vera_v2_source_full_vs_runtime_crop.png"
+  }
+}

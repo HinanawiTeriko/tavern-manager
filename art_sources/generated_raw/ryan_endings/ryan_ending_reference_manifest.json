@@ -1,0 +1,58 @@
+{
+  "id": "ryan_ending_wide_references_v2",
+  "status": "raw_reference_only",
+  "generated_with": "built_in_image_gen",
+  "target_native_size": [320, 140],
+  "target_runtime_size": [1280, 560],
+  "notes": [
+    "V1 references were too high-detail and should not be used as production sources.",
+    "V2 references are native-pixel-style wide composition candidates for later pipeline normalization.",
+    "These files are not runtime textures and are not referenced by Godot scenes."
+  ],
+  "entries": [
+    {
+      "id": "ryan_uninformed_fallen_reference_v2",
+      "route": "uninformed_fallen",
+      "source_file": "C:/Users/zzc45/.codex/generated_images/019ebf58-9868-7400-a483-eda47ddf47b9/ig_0bc157c7f432e02d016a2cecd4fec48191920bf5383a26c7ca.png",
+      "output_file": "art_sources/generated_raw/ryan_endings/ryan_uninformed_fallen_reference_v2.png",
+      "size": [1896, 830],
+      "safe_area": [0, 0, 1896, 830],
+      "planned_native_file": "assets/source/endings/ryan/ryan_uninformed_fallen_native.png",
+      "planned_runtime_file": "assets/textures/endings/ryan/ryan_uninformed_fallen.png",
+      "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
+    },
+    {
+      "id": "ryan_drugged_survivor_reference_v2",
+      "route": "drugged_survivor",
+      "source_file": "C:/Users/zzc45/.codex/generated_images/019ebf58-9868-7400-a483-eda47ddf47b9/ig_0bc157c7f432e02d016a2ced1c4b148191bfad5b82d69b5345.png",
+      "output_file": "art_sources/generated_raw/ryan_endings/ryan_drugged_survivor_reference_v2.png",
+      "size": [1896, 830],
+      "safe_area": [0, 0, 1896, 830],
+      "planned_native_file": "assets/source/endings/ryan/ryan_drugged_survivor_native.png",
+      "planned_runtime_file": "assets/textures/endings/ryan/ryan_drugged_survivor.png",
+      "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
+    },
+    {
+      "id": "ryan_informed_fallen_reference_v2",
+      "route": "informed_fallen",
+      "source_file": "C:/Users/zzc45/.codex/generated_images/019ebf58-9868-7400-a483-eda47ddf47b9/ig_0bc157c7f432e02d016a2ced704e3c8191b06997568363d60d.png",
+      "output_file": "art_sources/generated_raw/ryan_endings/ryan_informed_fallen_reference_v2.png",
+      "size": [1896, 830],
+      "safe_area": [0, 0, 1896, 830],
+      "planned_native_file": "assets/source/endings/ryan/ryan_informed_fallen_native.png",
+      "planned_runtime_file": "assets/textures/endings/ryan/ryan_informed_fallen.png",
+      "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
+    },
+    {
+      "id": "ryan_alternative_survivor_reference_v2",
+      "route": "alternative_survivor",
+      "source_file": "C:/Users/zzc45/.codex/generated_images/019ebf58-9868-7400-a483-eda47ddf47b9/ig_0bc157c7f432e02d016a2cedcbc2d08191ade3d61a3c74beef.png",
+      "output_file": "art_sources/generated_raw/ryan_endings/ryan_alternative_survivor_reference_v2.png",
+      "size": [1896, 830],
+      "safe_area": [0, 0, 1896, 830],
+      "planned_native_file": "assets/source/endings/ryan/ryan_alternative_survivor_native.png",
+      "planned_runtime_file": "assets/textures/endings/ryan/ryan_alternative_survivor.png",
+      "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
+    }
+  ]
+}

@@ -8,21 +8,27 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v2.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v2_prompt.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v4.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v4_prompt.txt"
 MANIFEST = ROOT / "assets" / "source" / "tavern" / "characters" / "ryan_bust_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME = ROOT / "assets" / "textures" / "characters"
 CONTACT_SHEET = ROOT / "docs" / "art" / "ryan_bust_contact_sheet.png"
-NATIVE_SIZE = (70, 90)
-RUNTIME_SIZE = (280, 360)
+NATIVE_SIZE = (128, 160)
+RUNTIME_SIZE = (512, 640)
 SCALE = 4
+STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v4"
+COLOR_LIMIT = 72
+MIN_VISIBLE_HEIGHT = 138
+MAX_VISIBLE_HEIGHT = 154
+MIN_BOTTOM_PADDING = 2
+MAX_BOTTOM_PADDING = 5
 
 EXPECTED_CROPS = {
-    "ryan_neutral": [18, 100, 430, 760],
-    "ryan_excited": [448, 88, 870, 760],
-    "ryan_hesitant": [880, 102, 1290, 760],
-    "ryan_dejected": [1290, 132, 1722, 760],
+    "ryan_neutral": [0, 0, 543, 724],
+    "ryan_excited": [543, 0, 1086, 724],
+    "ryan_hesitant": [1086, 0, 1629, 724],
+    "ryan_dejected": [1629, 0, 2172, 724],
 }
 
 
@@ -45,13 +51,27 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
         self.assertGreater(RAW.stat().st_size, 0, "generated Ryan bust source is empty")
         self.assertTrue(PROMPT.exists(), f"{PROMPT}: missing Ryan bust generation prompt")
         self.assertGreater(PROMPT.stat().st_size, 0, "Ryan bust prompt is empty")
+        prompt = PROMPT.read_text(encoding="utf-8").lower()
+        for phrase in (
+            "approved vera/belta",
+            "same artist family",
+            "128x160",
+            "512x640",
+            "4 columns x 1 row",
+            "flat solid #00ff00",
+            "no readable text",
+        ):
+            self.assertIn(phrase, prompt)
 
     def test_manifest_uses_explicit_crop_rectangles(self) -> None:
         self.assertTrue(MANIFEST.exists(), f"{MANIFEST}: missing Ryan bust manifest")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v2.png")
+        self.assertEqual(manifest["style_profile"], STYLE_PROFILE)
+        self.assertEqual(manifest["source"], "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png")
+        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
+        self.assertEqual(manifest["scale"], SCALE)
         entries = manifest["portraits"]
         self.assertEqual(set(entries.keys()), set(EXPECTED_CROPS.keys()))
         for portrait_id, crop_rect in EXPECTED_CROPS.items():
@@ -76,9 +96,14 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
                 self.assertEqual(alpha_min, 0, f"{portrait_id}: needs transparent padding")
                 self.assertEqual(alpha_max, 255, f"{portrait_id}: should keep crisp opaque pixels")
                 left, top, right, bottom = visible_bounds(native)
-                self.assertLessEqual(top, 8, f"{portrait_id}: head sits too low for a readable bust")
-                self.assertGreaterEqual(bottom, 78, f"{portrait_id}: bust should extend low enough to be hidden by the bar")
-                self.assertGreaterEqual(right - left, 42, f"{portrait_id}: portrait is too narrow")
+                self.assertLessEqual(top, 20, f"{portrait_id}: head sits too low for a readable bust")
+                self.assertGreaterEqual(bottom, 146, f"{portrait_id}: bust should extend low enough to be hidden by the bar")
+                self.assertGreaterEqual(bottom - top, MIN_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too short")
+                self.assertLessEqual(bottom - top, MAX_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too tall")
+                bottom_padding = native.height - bottom
+                self.assertGreaterEqual(bottom_padding, MIN_BOTTOM_PADDING, f"{portrait_id}: touches bottom edge")
+                self.assertLessEqual(bottom_padding, MAX_BOTTOM_PADDING, f"{portrait_id}: floats too high")
+                self.assertGreaterEqual(right - left, 64, f"{portrait_id}: portrait is too narrow")
 
                 raw_pixels = native.tobytes()
                 visible_colors = {
@@ -88,7 +113,7 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
                 }
                 self.assertLessEqual(
                     len(visible_colors),
-                    36,
+                    COLOR_LIMIT,
                     f"{portrait_id}: palette is too dense and will read like filtered illustration",
                 )
 

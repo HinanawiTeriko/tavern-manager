@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_mira_expression_textures_exist()
 	await _test_tavern_switches_mira_expression_portraits()
+	await _test_mira_day4_entry_tolerates_missing_story_vars()
 	await _test_tavern_uses_mira_portrait()
 	_finish()
 
@@ -122,6 +123,29 @@ func _test_tavern_switches_mira_expression_portraits() -> void:
 
 	gm.economy.current_day = old_day
 	gm.guests.clear_guest()
+	tavern.queue_free()
+
+
+func _test_mira_day4_entry_tolerates_missing_story_vars() -> void:
+	var gm = get_node("/root/GameManager")
+	var old_day: int = gm.economy.current_day
+	var old_vars: Dictionary = gm.narrative.dialogue_vars.duplicate(true)
+	gm.economy.current_day = 4
+	gm.narrative.dialogue_vars.erase("told_mira_truth")
+	gm.narrative.dialogue_vars.erase("mira_ending")
+	gm.narrative.dialogue_vars.erase("toby_secured")
+
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	tavern.show_customer("Mira", "wine", "mira")
+	_ok(_portrait_path(tavern).ends_with("/mira_neutral.png"),
+		"Mira Day4 entry tolerates old saves missing Mira story vars")
+
+	gm.economy.current_day = old_day
+	gm.narrative.dialogue_vars = old_vars
 	tavern.queue_free()
 
 

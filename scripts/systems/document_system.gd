@@ -10,6 +10,7 @@ var _owned: Array[String] = ["ledger"]
 var _read: Dictionary = {}
 var _archived: Array[String] = []
 var _ledger_entries: Array[String] = []
+var _ledger_has_unread_entries: bool = false
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -52,6 +53,14 @@ func is_read(document_id: String) -> bool:
 	return bool(_read.get(document_id, false))
 
 
+func has_unread_ledger_entries() -> bool:
+	return _ledger_has_unread_entries
+
+
+func mark_ledger_read() -> void:
+	_ledger_has_unread_entries = false
+
+
 func request_open(document_id: String) -> Dictionary:
 	if not owns_document(document_id):
 		return {}
@@ -59,6 +68,8 @@ func request_open(document_id: String) -> Dictionary:
 	if document.is_empty():
 		return {}
 	_read[document_id] = true
+	if document_id == "ledger":
+		mark_ledger_read()
 	open_requested.emit(document)
 	return document
 
@@ -77,15 +88,19 @@ func get_archived_documents() -> Array[String]:
 	return result
 
 
-func add_ledger_entry(text: String) -> void:
+func add_ledger_entry(text: String, marks_unread: bool = false) -> void:
 	if text != "":
 		_ledger_entries.append(text)
+		if marks_unread:
+			_ledger_has_unread_entries = true
 
 
-func add_ledger_entry_once(text: String) -> bool:
+func add_ledger_entry_once(text: String, marks_unread: bool = true) -> bool:
 	if text == "" or _ledger_entries.has(text):
 		return false
 	_ledger_entries.append(text)
+	if marks_unread:
+		_ledger_has_unread_entries = true
 	return true
 
 
@@ -119,6 +134,7 @@ func capture_state() -> Dictionary:
 		"read": _read.duplicate(),
 		"archived": _archived.duplicate(),
 		"ledger_entries": _ledger_entries.duplicate(),
+		"ledger_unread": _ledger_has_unread_entries,
 	}
 
 
@@ -138,3 +154,4 @@ func restore_state(data: Dictionary) -> void:
 	_ledger_entries.clear()
 	for e in data.get("ledger_entries", []):
 		_ledger_entries.append(String(e))
+	_ledger_has_unread_entries = bool(data.get("ledger_unread", false))

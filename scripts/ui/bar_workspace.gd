@@ -19,6 +19,8 @@ const KILL_Y := 800.0
 const TABLE_DRAG_CLEARANCE_PADDING := 4.0
 const DEFAULT_DRAG_ITEM_CLEARANCE := 34.0
 const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
+const DESK_RETURN_MIN_X := 260.0
+const DESK_RETURN_MAX_X := 1020.0
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
@@ -31,6 +33,7 @@ const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
 @onready var _ledger: ReadableDeskItem = $World/Ledger
 @onready var _customer_area: Area2D = $CustomerDropArea
 @onready var _shortcut_bar: Control = get_node("../ShortcutBar")
+@onready var _inventory_overlay: InventoryOverlay = get_node_or_null("../InventoryOverlay") as InventoryOverlay
 
 var _gm
 var _slot_rects: Array[Rect2] = []
@@ -213,6 +216,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif _is_kitchen_container(dragged):
 				dragged.end_action_session()
 			elif dragged is DeskItem:
+				if _try_return_to_backpack(dragged, pos):
+					return
+				if _try_store_released_item_in_container(dragged):
+					return
 				_try_deliver(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
 		_update_drag_target(event.global_position)
@@ -228,6 +235,10 @@ func _release_dragged_body() -> void:
 	elif dragged == _shaker:
 		_shaker.end_shake_session()
 	elif dragged is DeskItem:
+		if _try_return_to_backpack(dragged, get_global_mouse_position()):
+			return
+		if _try_store_released_item_in_container(dragged):
+			return
 		_try_deliver(dragged)
 
 
@@ -238,6 +249,7 @@ func _is_body_usable(body: RigidBody2D) -> bool:
 func _try_pickup(pos: Vector2) -> void:
 	var hit_item: DeskItem = _hit_test_item(pos)
 	if hit_item != null:
+		hit_item.sleeping = false
 		_drag_ctrl.start_drag(hit_item, pos)
 		return
 	var readable_item := _hit_test_readable_item(pos)
@@ -604,6 +616,40 @@ func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 	return _spawn_desk_item_at(pos, item_key)
 
 
+func _try_return_to_backpack(item: DeskItem, release_global_position: Vector2) -> bool:
+	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
+		return false
+	if item.item_key == "":
+		return false
+	if _inventory_overlay == null or not _inventory_overlay.accepts_world_drop(release_global_position, item.item_key):
+		return false
+	var target: String = _gm.recover_desk_item_key(item.item_key)
+	if target != "backpack":
+		return true
+	item.queue_free()
+	_inventory_overlay.refresh()
+	_gm.play_audio_event("drop")
+	return true
+
+
+func _try_store_released_item_in_container(item: DeskItem) -> bool:
+	if not _is_body_usable(item):
+		return false
+	if _brewery.visible and _brewery.process_mode != Node.PROCESS_MODE_DISABLED:
+		_brewery._try_accept_mouth_body(item)
+		if not _is_body_usable(item):
+			return true
+	if _shaker.visible and _shaker.process_mode != Node.PROCESS_MODE_DISABLED:
+		_shaker._try_accept_mouth_body(item)
+		if not _is_body_usable(item):
+			return true
+	if _pot.visible and _pot.process_mode != Node.PROCESS_MODE_DISABLED:
+		_pot._try_accept_body(item)
+		if not _is_body_usable(item):
+			return true
+	return false
+
+
 ## 记录容器/勺子的初始位置作为泊位（越界/整理时归位）。延迟到布局稳定后调用。
 func _capture_docks() -> void:
 	_docks[_brewery] = _brewery.global_position
@@ -644,10 +690,19 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 	if target == "recycle":
 		item.linear_velocity = Vector2.ZERO
 		item.angular_velocity = 0.0
-		item.global_position = _recycle_anchor.global_position
+		item.global_position = _desk_item_return_position(item)
+		item.sleeping = true
 		item.reset_fall_state()
 	else:
 		item.queue_free()
+
+
+func _desk_item_return_position(item: DeskItem) -> Vector2:
+	var x := clampf(item.global_position.x, DESK_RETURN_MIN_X, DESK_RETURN_MAX_X)
+	var baseline_y := _table_baseline_y()
+	if baseline_y == INF:
+		return Vector2(x, _recycle_anchor.global_position.y)
+	return Vector2(x, baseline_y - _desk_item_lower_clearance(item) - TABLE_DRAG_CLEARANCE_PADDING)
 
 
 func _physics_process(_delta: float) -> void:

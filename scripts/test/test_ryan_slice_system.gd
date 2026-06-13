@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_three_day_boundary()
 	_test_state_roundtrip()
+	_test_pre_toby_window_can_reach_fixer_price()
 	_test_guest_budget()
 	_test_game_manager_owns_slice()
 	_test_pending_important_guest_blocks_early_close()
@@ -37,6 +38,8 @@ func _test_three_day_boundary() -> void:
 	_ok(slice.normal_order_limit(1) == 2, "Day 1 has two normal orders")
 	_ok(slice.normal_order_limit(2) == 2, "Day 2 has two normal orders")
 	_ok(slice.normal_order_limit(3) == 2, "Day 3 has two normal orders")
+	_ok(slice.normal_order_limit(4) == 3, "Day 4 opens the mid-slice three-normal-order rhythm")
+	_ok(slice.normal_order_limit(12) == 3, "Day 12 keeps the three-normal-order Mira climax rhythm")
 	_ok(slice.day_start_ledger_entries(2).has("第三日。莱恩。\n北矿道。\n未归。"), "Day 2 adds Ryan prediction")
 	_ok(not slice.should_finish_after_day(2), "Day 2 continues")
 	_ok(not slice.should_finish_after_day(3), "Day 3 continues (走查脚手架)")
@@ -52,6 +55,25 @@ func _test_state_roundtrip() -> void:
 	restored.restore_state(slice.capture_state())
 	_ok(restored.total_orders_success == 2, "total successful orders restore")
 	_ok(restored.is_day_complete(1), "completed day restores")
+
+
+func _test_pre_toby_window_can_reach_fixer_price() -> void:
+	var slice := RyanSliceSystem.new()
+	const FIXER_PRICE := 40
+	const NORMAL_ORDER_NET_FLOOR := 2
+	const IMPORTANT_ORDER_NET := {
+		1: 3, # ale_beer 5 - ale 2
+		2: 1, # meat_cooked 4 - meat_raw 3
+		3: 4, # herb_broth 8 - herb 2 - ale 2
+		4: 3, # wine 5 - grape 2
+		6: 4, # herb_broth 8 - herb 2 - ale 2
+	}
+	var projected_gold := 0
+	for day in range(1, 7):
+		projected_gold += slice.normal_order_limit(day) * NORMAL_ORDER_NET_FLOOR
+		projected_gold += int(IMPORTANT_ORDER_NET.get(day, 0))
+	_ok(projected_gold >= FIXER_PRICE,
+		"conservative Day1-6 net income can reach Toby fixer price")
 
 
 func _test_guest_budget() -> void:

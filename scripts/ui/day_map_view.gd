@@ -28,6 +28,9 @@ const DAYMAP_DETAIL_GO_BUTTON_SIZE := Vector2(224, 56)
 const DAYMAP_BUTTON_LEDGER_NORMAL := "res://assets/textures/daymap/ui/button_ledger_normal.png"
 const DAYMAP_BUTTON_LEDGER_HOVER := "res://assets/textures/daymap/ui/button_ledger_hover.png"
 const DAYMAP_BUTTON_LEDGER_PRESSED := "res://assets/textures/daymap/ui/button_ledger_pressed.png"
+const DAYMAP_BUTTON_LEDGER_UNREAD_NORMAL := "res://assets/textures/daymap/ui/button_ledger_unread_normal.png"
+const DAYMAP_BUTTON_LEDGER_UNREAD_HOVER := "res://assets/textures/daymap/ui/button_ledger_unread_hover.png"
+const DAYMAP_BUTTON_LEDGER_UNREAD_PRESSED := "res://assets/textures/daymap/ui/button_ledger_unread_pressed.png"
 const DAYMAP_LEDGER_BUTTON_SIZE := Vector2(132, 44)
 const DAYMAP_PANEL_DETAIL := "res://assets/textures/daymap/ui/panel_detail.png"
 const DAYMAP_PINNED_DETAIL_PANEL := "res://assets/textures/daymap/ui/pinned_note_detail_panel.png"
@@ -109,6 +112,7 @@ var _continue_btn: Button
 var _gathering_toast: GatheringToast
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
+var _documents_btn: Button
 
 var _stamina_left: int = 0
 var _max_stamina: int = 5
@@ -121,6 +125,7 @@ var _overlay_layer: CanvasLayer = null
 var _shop_open: bool = false
 var _shop_overlay: ShopOverlay = null
 var _gold_label: Label
+var _pending_shop_after_gossip: bool = false
 
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
@@ -155,15 +160,16 @@ func _ready() -> void:
 	_apply_daymap_label_font(_result_label)
 
 	_continue_btn.pressed.connect(_on_continue)
-	var documents_btn: Button = $UILayer/TopBar/DocumentsBtn
-	_style_daymap_ledger_button(documents_btn, DAYMAP_LEDGER_BUTTON_FONT_SIZE)
-	documents_btn.pressed.connect(_open_latest_document)
+	_documents_btn = $UILayer/TopBar/DocumentsBtn
+	_style_daymap_ledger_button(_documents_btn, DAYMAP_LEDGER_BUTTON_FONT_SIZE)
+	_documents_btn.pressed.connect(_open_latest_document)
 
 	_gold_label = $UILayer/TopBar/GoldLabel
 	_gold_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_gold_label.add_theme_font_size_override("font_size", DAYMAP_STATUS_FONT_SIZE)
 	_apply_daymap_label_font(_gold_label)
-	_apply_topbar_layout(documents_btn)
+	_apply_topbar_layout(_documents_btn)
+	_refresh_ledger_hint()
 
 	_setup_detail_panel()
 	_setup_pinned_note_panel()
@@ -230,6 +236,30 @@ func _apply_topbar_layout(documents_btn: Button) -> void:
 	documents_btn.disabled = false
 	documents_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	documents_btn.focus_mode = Control.FOCUS_NONE
+
+
+func _refresh_ledger_hint() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	var unread := false
+	if gm != null and gm.documents != null and gm.documents.has_method("has_unread_ledger_entries"):
+		unread = gm.documents.has_unread_ledger_entries()
+	_apply_ledger_button_prompt_state(unread)
+
+
+func _apply_ledger_button_prompt_state(unread: bool) -> void:
+	if _documents_btn == null:
+		return
+	var normal_path := DAYMAP_BUTTON_LEDGER_NORMAL
+	var hover_path := DAYMAP_BUTTON_LEDGER_HOVER
+	var pressed_path := DAYMAP_BUTTON_LEDGER_PRESSED
+	if unread:
+		normal_path = DAYMAP_BUTTON_LEDGER_UNREAD_NORMAL
+		hover_path = DAYMAP_BUTTON_LEDGER_UNREAD_HOVER
+		pressed_path = DAYMAP_BUTTON_LEDGER_UNREAD_PRESSED
+	_documents_btn.add_theme_stylebox_override("normal", _daymap_ledger_texture_style(normal_path))
+	_documents_btn.add_theme_stylebox_override("hover", _daymap_ledger_texture_style(hover_path))
+	_documents_btn.add_theme_stylebox_override("pressed", _daymap_ledger_texture_style(pressed_path))
+	_documents_btn.add_theme_stylebox_override("disabled", _daymap_ledger_texture_style(normal_path))
 
 
 func _setup_detail_panel() -> void:
@@ -497,6 +527,7 @@ func show_day(day: int, total_days: int) -> void:
 	_detail_panel.visible = false
 	_clear_selection()
 	_update_gold_display()
+	_refresh_ledger_hint()
 	_ensure_home_marker()
 	if gm.consume_intro_handoff():
 		_play_intro_handoff()
@@ -712,8 +743,12 @@ func _set_detail_text(name_text: String, desc_text: String, cost_text: String, y
 	_detail_panel.get_node("Yield").text = yield_text
 	(_detail_panel.get_node("GoHereBtn") as Button).text = action_text
 
+	var pinned_desc_size := PINNED_NOTE_DESC_SIZE
+	if cost_text == "" and yield_text == "":
+		pinned_desc_size.y = PINNED_NOTE_YIELD_POS.y - PINNED_NOTE_DESC_POS.y - 12.0
 	_pinned_note_name.text = name_text
 	_pinned_note_desc.text = desc_text
+	_pinned_note_desc.size = pinned_desc_size
 	_pinned_note_cost.text = cost_text
 	_pinned_note_yield.text = yield_text
 	_pinned_note_go_here.text = action_text
@@ -755,14 +790,22 @@ func _show_pinned_detail(location_id: String) -> void:
 	var cost_text := ""
 	var yield_text := ""
 	var action_text := "前往"
+	var desc_text := String(loc.get("description", ""))
 	if bool(loc.get("opensShop", false)):
 		action_text = "进入"
+		var gossip := _peek_shop_gossip(location_id)
+		if bool(gossip.get("success", false)):
+			var hint_text := String(gossip.get("hint", ""))
+			if hint_text == "":
+				hint_text = "商人似乎有新的传闻。"
+			desc_text += "\n\n" + hint_text
+			action_text = "听传闻"
 	else:
 		cost_text = "体力消耗：%d" % int(loc.get("cost", 1))
 		yield_text = _yield_text(loc)
 	_set_detail_text(
 		String(loc.get("name", "")),
-		String(loc.get("description", "")),
+		desc_text,
 		cost_text,
 		yield_text,
 		action_text
@@ -829,6 +872,8 @@ func _on_go_here_pressed() -> void:
 		get_node("/root/GameManager").enter_night_from_day_map()
 		return
 	if _is_shop_location(_selected_id):
+		if _try_show_shop_gossip(_selected_id):
+			return
 		_open_shop()
 		return
 	_visit_location(_selected_id)
@@ -840,6 +885,32 @@ func _is_shop_location(location_id: String) -> bool:
 		if String(l.get("id", "")) == location_id:
 			return bool(l.get("opensShop", false))
 	return false
+
+
+func _peek_shop_gossip(location_id: String) -> Dictionary:
+	var gm = get_node("/root/GameManager")
+	if not gm.has_method("peek_shop_gossip"):
+		return {}
+	return gm.peek_shop_gossip(location_id)
+
+
+func _try_show_shop_gossip(location_id: String) -> bool:
+	var gm = get_node("/root/GameManager")
+	if not gm.has_method("consume_shop_gossip"):
+		return false
+	var gossip: Dictionary = gm.consume_shop_gossip(location_id)
+	if not bool(gossip.get("success", false)):
+		return false
+	if _gathering_toast != null:
+		_gathering_toast.visible = false
+	_result_label.text = String(gossip.get("message", ""))
+	_result_panel.visible = true
+	_continue_btn.text = "进入商店"
+	_pending_shop_after_gossip = true
+	_detail_panel.visible = false
+	_hide_pinned_note()
+	_clear_selection()
+	return true
 
 
 func _visit_location(location_id: String) -> void:
@@ -924,6 +995,9 @@ func _update_stamina_display() -> void:
 
 func _on_continue() -> void:
 	_result_panel.visible = false
+	if _pending_shop_after_gossip:
+		_pending_shop_after_gossip = false
+		_open_shop()
 
 
 func _open_latest_document() -> void:
@@ -933,6 +1007,7 @@ func _open_latest_document() -> void:
 
 func open_document(document: Dictionary) -> void:
 	_document_overlay.open_document(document)
+	_refresh_ledger_hint()
 
 
 func _unhandled_input(event: InputEvent) -> void:

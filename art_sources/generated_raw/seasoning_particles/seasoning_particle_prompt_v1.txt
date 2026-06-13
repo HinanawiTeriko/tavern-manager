@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: source sheet for a pixel-art Godot game VFX atlas
+Primary request: Create a clean source sheet of individual seasoning particle sprites, not a dense particle cloud. The sheet contains 5 rows and 4 columns, each cell has exactly one isolated small VFX element centered with generous padding.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background across the whole image, no shadows, no floor, no gradients, no texture.
+Subject: Row 1 single red/orange powder grains; Row 2 single irregular herb flakes; Row 3 single soft powder mist puffs; Row 4 single tiny spicy sparkle/star flecks; Row 5 single small seasoning impact cloud puffs. Four distinct variants per row.
+Style/medium: hand-painted pixel-game source art, chunky silhouettes, limited tavern palette, crisp readable forms, dark ink-ish outline hints, warm candlelit reds/golds/greens, designed to be downsampled into small pixel sprites.
+Composition/framing: 1024x1024 square sheet, invisible 4 by 5 grid implied by spacing only; each element occupies roughly 35-55% of its cell; keep every element separated and centered.
+Lighting/mood: warm tavern VFX, punchy but not neon, readable on dark dungeon backgrounds.
+Materials/textures: dry spice dust, tiny leaf fragments, soft opaque powder puffs, little glints, compact impact puffs.
+Constraints: exactly one particle element per cell; no clusters, no dense foam, no full explosion, no text, no numbers, no logos, no watermark. Background must be only uniform #ff00ff and #ff00ff must not appear in the particles.

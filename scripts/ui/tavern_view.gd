@@ -5,7 +5,10 @@ var _bg_sprite: Sprite2D
 var _customer_sprite: TextureRect
 var _customer_name: Label
 var _order_bubble: Label
+var _reaction_bubble: Label
 var _timer_bar: ProgressBar
+var _patience_fill_clip: Control
+var _patience_fill_art: TextureRect
 var _gold_label: Label
 var _rep_label: Label
 var _day_label: Label
@@ -24,6 +27,8 @@ var _customer_sprite_normal_modulate: Color = Color.WHITE
 var _customer_dialogue_highlight_active: bool = false
 var _current_customer_npc_id: String = ""
 var _current_customer_reaction_outcome: String = ""
+var _current_order_text: String = ""
+var _current_order_status_text: String = ""
 var _recipe_filter_container: String = "barrel"
 var _recipe_selected_product_key: String = ""
 
@@ -76,7 +81,10 @@ func _ready() -> void:
 	_customer_sprite_normal_modulate = _customer_sprite.modulate
 	_customer_name = $CustomerArea/CustomerName
 	_order_bubble = $CustomerArea/OrderBubble
+	_reaction_bubble = $CustomerArea/ReactionBubble
 	_timer_bar = $CustomerArea/TimerBar
+	_patience_fill_clip = $CustomerArea/PatienceFillClip
+	_patience_fill_art = $CustomerArea/PatienceFillClip/PatienceFillArt
 	_gold_label = $TopPanel/GoldLabel
 	_rep_label = $TopPanel/ReputationLabel
 	_day_label = $TopPanel/DayLabel
@@ -105,6 +113,7 @@ func _ready() -> void:
 	var ledger := get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	if ledger != null and not ledger.open_requested.is_connected(_gm.request_open_document):
 		ledger.open_requested.connect(_gm.request_open_document)
+	_refresh_ledger_hint()
 
 	_apply_theme()
 
@@ -130,12 +139,30 @@ func _apply_theme() -> void:
 		_bg_sprite.texture = grad
 
 	ThemeColors.style_brush_label(_customer_name, 18, ThemeColors.TEXT_LIGHT)
-	ThemeColors.style_brush_label(_order_bubble, 15, ThemeColors.TEXT_SUBTITLE)
+	ThemeColors.style_brush_label(_order_bubble, 18, ThemeColors.TEXT_LIGHT)
+	_order_bubble.add_theme_constant_override("outline_size", 3)
+	_order_bubble.add_theme_color_override("font_outline_color", Color(0.03, 0.025, 0.02, 0.95))
+	_order_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_order_bubble.clip_text = true
+	_order_bubble.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ThemeColors.style_brush_label(_reaction_bubble, 16, ThemeColors.AMBER_PRIMARY)
+	_reaction_bubble.add_theme_constant_override("outline_size", 3)
+	_reaction_bubble.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
+	_reaction_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reaction_bubble.clip_text = true
+	_reaction_bubble.visible = false
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
 		patience_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		patience_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _patience_fill_clip != null:
+		_patience_fill_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_patience_fill_clip.clip_contents = true
+	if _patience_fill_art != null:
+		_patience_fill_art.texture = TextureManager.try_load("res://assets/textures/ui/bar_patience_groove_fill.png")
+		_patience_fill_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_patience_fill_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	ThemeColors.style_brush_label(_gold_label, 16, ThemeColors.AMBER_PRIMARY)
 	ThemeColors.style_brush_label(_rep_label, 16, ThemeColors.TEXT_LIGHT)
@@ -166,8 +193,7 @@ func _apply_theme() -> void:
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
 
-	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_bg.png")
-	var patience_fill = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_fill.png")
+	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_groove_bg.png")
 	if patience_bg != null:
 		_timer_bar.add_theme_stylebox_override("background", patience_bg)
 	else:
@@ -177,9 +203,11 @@ func _apply_theme() -> void:
 		sb.border_width_right = 1; sb.border_width_bottom = 1
 		sb.border_color = ThemeColors.PANEL_BORDER
 		_timer_bar.add_theme_stylebox_override("background", sb)
-	if patience_fill != null:
-		_timer_bar.add_theme_stylebox_override("fill", patience_fill)
+	var empty_fill := StyleBoxFlat.new()
+	empty_fill.bg_color = Color(0, 0, 0, 0)
+	_timer_bar.add_theme_stylebox_override("fill", empty_fill)
 	_timer_bar.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_set_patience_fill_ratio(_timer_bar.value / 100.0)
 
 	var top_bar_tex = ThemeColors.instance().bar_top_panel()
 	var top_panel_bg = get_node_or_null("TopPanelBg")
@@ -211,8 +239,11 @@ func _configure_customer_input_passthrough() -> void:
 		"CustomerArea/CustomerSprite",
 		"CustomerArea/CustomerName",
 		"CustomerArea/OrderBubble",
+		"CustomerArea/ReactionBubble",
 		"CustomerArea/PatienceIcon",
 		"CustomerArea/TimerBar",
+		"CustomerArea/PatienceFillClip",
+		"CustomerArea/PatienceFillClip/PatienceFillArt",
 	]:
 		var control := get_node_or_null(path) as Control
 		if control != null:
@@ -272,11 +303,13 @@ func _configure_shortcut_bar_layout() -> void:
 		slot.size_flags_horizontal = Control.SIZE_FILL
 		slot.size_flags_vertical = Control.SIZE_FILL
 
-func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
+func show_customer(customer_name: String, order: String, npc_id: String = "guest", order_key: String = "") -> void:
 	if _customer_dialogue_highlight_active:
 		_set_customer_dialogue_highlight(false)
 	_current_customer_npc_id = npc_id
 	_current_customer_reaction_outcome = ""
+	_current_order_text = order
+	_current_order_status_text = ""
 	var tex_key: String = _customer_texture_key(npc_id)
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
 	if tex != null:
@@ -294,10 +327,35 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 
 	_customer_sprite.visible = true
 	_customer_name.text = customer_name
-	_order_bubble.text = "「来一份" + order + "！」"
+	_refresh_order_groove_text()
 	_order_bubble.visible = true
+	_reaction_bubble.text = ""
+	_reaction_bubble.visible = false
+	_timer_bar.modulate = Color.WHITE
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color.WHITE
 	if _dialogue_overlay != null and _dialogue_overlay.visible:
 		_set_customer_dialogue_highlight(true)
+
+func _refresh_order_groove_text() -> void:
+	if _current_order_text == "":
+		_order_bubble.text = ""
+		return
+	var text := "需求 · " + _current_order_text
+	if _current_order_status_text != "":
+		text += "  ·  " + _current_order_status_text
+	_order_bubble.text = text
+
+func show_order_warning() -> void:
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color(1.22, 0.74, 0.52, 1.0)
+
+func show_order_timeout(status_text: String = "等太久了") -> void:
+	_current_order_status_text = status_text
+	_refresh_order_groove_text()
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color(1.3, 0.48, 0.4, 1.0)
+	_order_bubble.visible = true
 
 func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
 	var target_npc_id := npc_id if npc_id != "" else _current_customer_npc_id
@@ -346,16 +404,25 @@ func _ryan_story_texture_key() -> String:
 		narrative = _gm.narrative
 	if narrative == null:
 		return RYAN_TEXTURE_NEUTRAL
-	if bool(narrative.get_var("ryan_drugged")) or bool(narrative.get_var("ryan_alternative_declined")):
+	if _story_flag(narrative, "ryan_drugged") or _story_flag(narrative, "ryan_alternative_declined"):
 		return RYAN_TEXTURE_DISSATISFIED
-	var ending := String(narrative.get_var("ryan_ending"))
+	var ending := _story_string(narrative, "ryan_ending")
 	if ending != "":
 		return RYAN_TEXTURE_SATISFIED if ending == "alternative_survivor" else RYAN_TEXTURE_DISSATISFIED
-	if bool(narrative.get_var("ryan_has_alternative")):
+	if _story_flag(narrative, "ryan_has_alternative"):
 		return RYAN_TEXTURE_SATISFIED
-	if bool(narrative.get_var("ryan_informed")) or bool(narrative.get_var("ryan_alternative_pending")):
+	if _story_flag(narrative, "ryan_informed") or _story_flag(narrative, "ryan_alternative_pending"):
 		return RYAN_TEXTURE_HESITANT
 	return RYAN_TEXTURE_NEUTRAL
+
+func _story_flag(narrative, key: String) -> bool:
+	return narrative != null and narrative.get_var(key) == true
+
+func _story_string(narrative, key: String) -> String:
+	if narrative == null:
+		return ""
+	var value = narrative.get_var(key)
+	return "" if value == null else String(value)
 
 func _mira_texture_key(outcome: String = "") -> String:
 	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
@@ -366,8 +433,8 @@ func _mira_texture_key(outcome: String = "") -> String:
 	var told_truth := false
 	var ending := ""
 	if narrative != null:
-		told_truth = bool(narrative.get_var("told_mira_truth"))
-		ending = String(narrative.get_var("mira_ending"))
+		told_truth = _story_flag(narrative, "told_mira_truth")
+		ending = _story_string(narrative, "mira_ending")
 
 	if outcome == "success":
 		if current_day >= 12:
@@ -395,12 +462,32 @@ func hide_customer() -> void:
 	_set_customer_dialogue_highlight(false)
 	_current_customer_npc_id = ""
 	_current_customer_reaction_outcome = ""
+	_current_order_text = ""
+	_current_order_status_text = ""
 	_customer_sprite.visible = false
 	_customer_name.text = "等待中……"
 	_order_bubble.visible = false
+	_reaction_bubble.visible = false
+	_reaction_bubble.text = ""
+	_timer_bar.modulate = Color.WHITE
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color.WHITE
 
 func update_timer(ratio: float) -> void:
 	_timer_bar.value = ratio * 100.0
+	_set_patience_fill_ratio(ratio)
+
+func _set_patience_fill_ratio(ratio: float) -> void:
+	if _patience_fill_clip == null or _timer_bar == null:
+		return
+	var clamped: float = clampf(ratio, 0.0, 1.0)
+	var full_size: Vector2 = _timer_bar.size
+	var clipped_width: float = floor(full_size.x * clamped + 0.5)
+	_patience_fill_clip.size = Vector2(clipped_width, full_size.y)
+	if _patience_fill_art != null:
+		_patience_fill_art.size = full_size
+		_patience_fill_art.position = Vector2.ZERO
+		_patience_fill_art.scale = Vector2.ONE
 
 func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
 	_gold_label.text = "金币：" + str(gold)
@@ -456,8 +543,8 @@ func _refresh_default_daily_menu() -> void:
 
 ## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
 func customer_say(text: String) -> void:
-	_order_bubble.text = text
-	_order_bubble.visible = true
+	_reaction_bubble.text = text
+	_reaction_bubble.visible = text != ""
 
 ## 出口②：舞台提示浮字——第三人称动作描写，淡入→停留→淡出。
 func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
@@ -560,10 +647,21 @@ func open_document(document: Dictionary) -> void:
 	_menu_panel.visible = false
 	_inventory_overlay.close()
 	_document_overlay.open_document(document)
+	_refresh_ledger_hint()
 
 
 func open_ledger() -> void:
 	_gm.request_open_document("ledger")
+
+
+func _refresh_ledger_hint() -> void:
+	var ledger := get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
+	if ledger == null or not ledger.has_method("set_unread_hint_visible"):
+		return
+	var unread := false
+	if _gm != null and _gm.documents != null and _gm.documents.has_method("has_unread_ledger_entries"):
+		unread = _gm.documents.has_unread_ledger_entries()
+	ledger.set_unread_hint_visible(unread)
 
 
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
@@ -625,8 +723,9 @@ func trigger_craft_tutorial() -> void:
 		return
 
 	var rects = {
-		"BarWorkspace": [820, 480, 280, 200],
+		"CraftBarrel": [820, 480, 280, 200],
 		"ShortcutBar": [140, 675, 1000, 40],
+		"RecoveryContainer": [950, 520, 270, 150],
 	}
 	tm.start_tutorial("craft", rects)
 

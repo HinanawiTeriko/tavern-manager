@@ -6,19 +6,24 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_source_v1.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_prompt_v1.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_source_v2.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_prompt_v2.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "mercenary_bust_manifest.json"
 NATIVE = SOURCE_DIR / "mercenary_a_native.png"
 RUNTIME = ROOT / "assets" / "textures" / "characters" / "mercenary_a.png"
 CONTACT_SHEET = ROOT / "docs" / "art" / "mercenary_bust_contact_sheet.png"
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
-NATIVE_SIZE = (70, 90)
-RUNTIME_SIZE = (280, 360)
+NATIVE_SIZE = (128, 160)
+RUNTIME_SIZE = (512, 640)
 SCALE = 4
-COLOR_LIMIT = 28
+COLOR_LIMIT = 72
+STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
 MAX_BLUE_SCARF_RATIO = 0.015
+MIN_VISIBLE_HEIGHT = 138
+MAX_VISIBLE_HEIGHT = 154
+MIN_BOTTOM_PADDING = 2
+MAX_BOTTOM_PADDING = 5
 
 
 def load_rgba(path: Path) -> Image.Image:
@@ -68,20 +73,22 @@ class MercenaryBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(PROMPT.exists(), "Mercenary A prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
+            "approved vera/belta",
+            "same artist family",
             "flat solid #00ff00",
             "no readable text",
             "mercenary messenger",
             "not ryan",
-            "native 70x90",
+            "128x160",
+            "512x640",
             "no blue scarf",
-            "not a high-resolution illustration",
         ):
             self.assertIn(phrase, prompt)
 
         self.assertTrue(MANIFEST.exists(), "Mercenary A manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest.get("id"), "mercenary_bust_portrait")
-        self.assertEqual(manifest.get("style_profile"), "ryan_distinct_low_detail_pixel_v1")
+        self.assertEqual(manifest.get("style_profile"), STYLE_PROFILE)
         self.assertEqual(manifest.get("source"), RAW.relative_to(ROOT).as_posix())
         self.assertEqual(manifest.get("comparison_reference"), RYAN_REFERENCE.relative_to(ROOT).as_posix())
         self.assertEqual(manifest.get("native_size"), list(NATIVE_SIZE))
@@ -100,9 +107,17 @@ class MercenaryBustAssetPipelineTest(unittest.TestCase):
         self.assertEqual(runtime.size, RUNTIME_SIZE)
         expected = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
         self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
-        self.assertGreater(visible_pixel_count(native), 900, "portrait has too few visible pixels")
+        self.assertGreater(visible_pixel_count(native), 3000, "portrait has too few visible pixels")
         self.assertLessEqual(unique_visible_colors(native), COLOR_LIMIT, "native portrait exceeds the 28-color pixel budget")
         self.assertEqual(green_key_fringe_pixels(native), 0, "green chroma-key fringe remains in native portrait")
+        bounds = native.getchannel("A").getbbox()
+        self.assertIsNotNone(bounds, "Mercenary A native should have visible pixels")
+        _left, top, _right, bottom = bounds
+        self.assertGreaterEqual(bottom - top, MIN_VISIBLE_HEIGHT, "Mercenary A visible figure is too short")
+        self.assertLessEqual(bottom - top, MAX_VISIBLE_HEIGHT, "Mercenary A visible figure is too tall")
+        bottom_padding = native.height - bottom
+        self.assertGreaterEqual(bottom_padding, MIN_BOTTOM_PADDING, "Mercenary A touches bottom edge")
+        self.assertLessEqual(bottom_padding, MAX_BOTTOM_PADDING, "Mercenary A floats too high")
         self.assertLessEqual(
             blue_scarf_like_ratio(native),
             MAX_BLUE_SCARF_RATIO,

@@ -1,0 +1,53 @@
+{
+  "id": "ryan_v4_pipeline_preview_report",
+  "results": {
+    "ryan_neutral": {
+      "native_size_ok": true,
+      "runtime_size_ok": true,
+      "exact_nearest_4x": true,
+      "visible_bounds_native": [
+        8,
+        3,
+        119,
+        157
+      ],
+      "visible_color_count": 72
+    },
+    "ryan_excited": {
+      "native_size_ok": true,
+      "runtime_size_ok": true,
+      "exact_nearest_4x": true,
+      "visible_bounds_native": [
+        5,
+        3,
+        122,
+        157
+      ],
+      "visible_color_count": 72
+    },
+    "ryan_hesitant": {
+      "native_size_ok": true,
+      "runtime_size_ok": true,
+      "exact_nearest_4x": true,
+      "visible_bounds_native": [
+        4,
+        3,
+        124,
+        157
+      ],
+      "visible_color_count": 72
+    },
+    "ryan_dejected": {
+      "native_size_ok": true,
+      "runtime_size_ok": true,
+      "exact_nearest_4x": true,
+      "visible_bounds_native": [
+        9,
+        3,
+        118,
+        157
+      ],
+      "visible_color_count": 72
+    }
+  }
+}

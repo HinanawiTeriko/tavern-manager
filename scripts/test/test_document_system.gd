@@ -10,6 +10,7 @@ func _ready() -> void:
 	_test_ledger_toggle_matches_tab_keycode()
 	_test_capture_restore()
 	_test_ledger_entry_once()
+	_test_ledger_unread_entry_state()
 	_finish()
 
 
@@ -35,6 +36,7 @@ func _test_capture_restore() -> void:
 	d.grant_document("bloodied_contract")
 	d.request_open("bloodied_contract")
 	d.add_ledger_entry("第三日。莱恩。北矿道。未归。")
+	d.add_ledger_entry_once("第三日。莱恩。\n北矿道。\n未归。")
 	var snap := d.capture_state()
 	var d2 := DocumentSystem.new()
 	d2.load_data()
@@ -42,8 +44,11 @@ func _test_capture_restore() -> void:
 	_ok(d2.owns_document("bloodied_contract"), "restored ownership")
 	_ok(d2.is_read("bloodied_contract"), "restored read state")
 	_ok(d2.owns_document("ledger"), "ledger always owned after restore")
+	_ok(d2.has_method("has_unread_ledger_entries"), "DocumentSystem exposes ledger unread state")
+	if d2.has_method("has_unread_ledger_entries"):
+		_ok(d2.has_unread_ledger_entries(), "restored ledger remembers unread dynamic entries")
 	var doc := d2.get_document("ledger")
-	_ok(String(doc["pages"][-1]) == "第三日。莱恩。北矿道。未归。", "restored ledger entry")
+	_ok(doc.get("pages", []).has("第三日。莱恩。北矿道。未归。"), "restored ledger entry")
 
 
 func _test_ledger_entry_once() -> void:
@@ -53,6 +58,20 @@ func _test_ledger_entry_once() -> void:
 	_ok(not d.add_ledger_entry_once("第三日。莱恩。\n北矿道。\n未归。"), "duplicate ledger prediction is ignored")
 	var ledger := d.get_document("ledger")
 	_ok(ledger.get("pages", []).count("第三日。莱恩。\n北矿道。\n未归。") == 1, "prediction appears once")
+
+
+func _test_ledger_unread_entry_state() -> void:
+	var d := DocumentSystem.new()
+	d.load_data()
+	_ok(d.has_method("has_unread_ledger_entries"), "DocumentSystem can report unread ledger entries")
+	_ok(d.has_method("mark_ledger_read"), "DocumentSystem can clear unread ledger entries")
+	if not d.has_method("has_unread_ledger_entries") or not d.has_method("mark_ledger_read"):
+		return
+	_ok(not d.has_unread_ledger_entries(), "fresh ledger has no unread dynamic entries")
+	d.add_ledger_entry_once("第三日。莱恩。\n北矿道。\n未归。")
+	_ok(d.has_unread_ledger_entries(), "new fate ledger entry marks the ledger unread")
+	d.request_open("ledger")
+	_ok(not d.has_unread_ledger_entries(), "opening the ledger clears the unread entry prompt")
 
 
 func _test_document_state() -> void:

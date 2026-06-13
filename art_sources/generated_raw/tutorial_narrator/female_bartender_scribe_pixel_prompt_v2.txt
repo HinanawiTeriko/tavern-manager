@@ -1,0 +1,9 @@
+Use case: style-transfer
+Asset type: tutorial narrator portrait source for a pixel dungeon tavern management game, later normalized to 128x160 native and 512x640 runtime.
+Input images: use the existing Vera tutorial narrator source only for limited identity cues; use the Belta miner pilot source as the dominant style reference.
+Primary request: Redraw Vera as an original adult female tavern tutorial narrator in the same artist family as Belta.
+Character identity: keep Vera recognizable through dark brown hair, one wine-red side lock, witty amber eyes, a small brass hairpin, a dark teal or charcoal vest/capelet, parchment-colored rolled sleeves, a burgundy scarf or bow, and a compact tavern-scribe prop such as a closed ledger or small cup.
+Style/medium: crisp pixel-game character portrait, thick dark outlines, warm brown and amber color blocks, chunky pixel clusters, low-density detail, readable face at small runtime size.
+Composition/framing: half-body bust, waist-up or top-apron crop, confident narrator stance, generous padding on a perfectly flat solid #00ff00 chroma-key background.
+Constraints: same artist family as Belta; do not copy Belta; no mining tool, headband, apron, pose, face, or body from Belta; no long full-body skirt focus; no readable text, logo, watermark, UI panel, or speech bubble.
+Avoid: fine filigree, ornate court-scribe overload, tiny facial features, soft antialias blur, gradients in the background, shadows on the background, or any use of #00ff00 in the character.

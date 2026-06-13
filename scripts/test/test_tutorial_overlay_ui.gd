@@ -1,7 +1,12 @@
 extends Node
 
 const PANEL_TEXTURE := "res://assets/textures/tutorial/ui/tutorial_panel.png"
-const HIGHLIGHT_TEXTURE := "res://assets/textures/tutorial/ui/tutorial_highlight_frame.png"
+const DIALOGUE_PANEL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_panel.png"
+const DIALOGUE_NAMEPLATE_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_nameplate.png"
+const DIALOGUE_PROGRESS_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_progress_arrow.png"
+const NARRATOR_NEUTRAL := "res://assets/textures/tutorial/narrator/female_bartender_scribe_neutral.png"
+const NARRATOR_CONCERNED := "res://assets/textures/tutorial/narrator/female_bartender_scribe_concerned.png"
+const NARRATOR_LEDGE := "res://assets/textures/tutorial/narrator/female_bartender_scribe_ledge.png"
 
 var _checks := 0
 var _failures := 0
@@ -35,10 +40,14 @@ func _test_overlay_uses_tutorial_ui_assets() -> void:
 			"tutorial description panel uses pipeline panel art")
 
 	var highlight := overlay.get_node_or_null("HighlightFrame") as TextureRect
-	_ok(highlight != null, "tutorial overlay exposes HighlightFrame")
-	_ok(highlight != null and highlight.texture != null and highlight.texture.resource_path == HIGHLIGHT_TEXTURE,
-		"tutorial highlight uses pipeline frame art")
-	_ok(highlight != null and highlight.visible, "tutorial highlight frame becomes visible for a highlighted step")
+	_ok(highlight != null, "tutorial overlay keeps HighlightFrame compatibility node")
+	_ok(highlight != null and highlight.texture == null,
+		"tutorial highlight frame art is disabled to avoid stretched frame distortion")
+	_ok(highlight != null and not highlight.visible,
+		"tutorial leaves only the mask cutout highlight visible")
+	var catcher := overlay.get_node_or_null("HighlightClickCatcher") as Control
+	_ok(catcher != null and catcher.position == Vector2(200, 160) and catcher.size == Vector2(260, 120),
+		"tutorial highlight click area remains aligned with the cutout")
 
 	var title := overlay.get_node_or_null("TitleLabel") as Label
 	_ok(title != null, "tutorial overlay exposes TitleLabel")
@@ -48,10 +57,106 @@ func _test_overlay_uses_tutorial_ui_assets() -> void:
 	_ok(desc != null, "tutorial overlay exposes DescriptionLabel")
 	_ok(desc != null and desc.get_theme_font("normal_font").resource_path == ThemeColors.MENU_FONT_PATH,
 		"tutorial body uses the project pixel font")
+	await _test_narrator_lines_use_portrait_and_advance(overlay)
+	await _test_narrator_layout_avoids_bottom_highlight(overlay)
+	await _test_narrator_layout_uses_bottom_for_central_highlight(overlay)
 	await _test_tutorial_copy_stays_inside_panel(overlay)
 
 	overlay.queue_free()
 	await get_tree().process_frame
+
+
+func _test_narrator_lines_use_portrait_and_advance(overlay: TutorialOverlay) -> void:
+	overlay.show_step({
+		"title": "Narrator test",
+		"description": "Legacy fallback text",
+		"narrator_lines": [
+			{"expression": "neutral", "text": "第一句旁白。"},
+			{"expression": "concerned", "text": "第二句旁白。"},
+		],
+	}, [200, 160, 260, 120], false, false)
+	await get_tree().process_frame
+
+	var panel := overlay.get_node_or_null("DescriptionPanel") as Panel
+	_ok(panel != null and not panel.visible,
+		"legacy tutorial plaque hides when narrator lines are available")
+	var narrator_panel := overlay.get_node_or_null("NarratorPanel") as Panel
+	_ok(narrator_panel != null and narrator_panel.visible,
+		"tutorial overlay exposes a narrator text panel")
+	_ok(narrator_panel != null and _style_texture_path(narrator_panel.get_theme_stylebox("panel")) == DIALOGUE_PANEL_TEXTURE,
+		"tutorial narrator reuses the shipped dialogue panel art")
+	var name_label := overlay.get_node_or_null("NarratorPanel/NarratorNameLabel") as RichTextLabel
+	_ok(name_label != null and name_label.text.contains("薇拉"),
+		"tutorial narrator reuses the dialogue nameplate for the speaker")
+	_ok(name_label != null and _style_texture_path(name_label.get_theme_stylebox("normal")) == DIALOGUE_NAMEPLATE_TEXTURE,
+		"tutorial narrator nameplate uses dialogue nameplate art")
+	var progress_art := overlay.get_node_or_null("NarratorPanel/NarratorProgressArt") as TextureRect
+	_ok(progress_art != null and progress_art.texture != null and progress_art.texture.resource_path == DIALOGUE_PROGRESS_TEXTURE,
+		"tutorial narrator reuses the dialogue progress arrow art")
+	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
+	_ok(portrait != null and portrait.visible,
+		"tutorial overlay exposes a narrator portrait")
+	_ok(portrait != null and portrait.texture != null and portrait.texture.resource_path == NARRATOR_NEUTRAL,
+		"first narrator line uses the requested expression portrait")
+	var line := overlay.get_node_or_null("NarratorPanel/NarratorLineLabel") as RichTextLabel
+	_ok(line != null and line.text.contains("第一句旁白"),
+		"first narrator line is rendered by Godot text")
+
+	var next := overlay.get_node_or_null("NextButton") as Button
+	_ok(next != null, "tutorial overlay keeps NextButton for narrator mode")
+	if next != null:
+		next.pressed.emit()
+		await get_tree().process_frame
+	_ok(line != null and line.text.contains("第二句旁白"),
+		"NextButton advances narrator lines before completing the tutorial step")
+	_ok(portrait != null and portrait.texture != null and portrait.texture.resource_path == NARRATOR_CONCERNED,
+		"advanced narrator line swaps to its expression portrait")
+
+
+func _test_narrator_layout_avoids_bottom_highlight(overlay: TutorialOverlay) -> void:
+	var highlight := [140, 675, 1000, 40]
+	overlay.show_step({
+		"title": "Bottom highlight",
+		"description": "Legacy fallback text",
+		"narrator_lines": [
+			{"expression": "neutral", "text": "底部高亮时，我应该站到上方。"},
+		],
+	}, highlight, false, true)
+	await get_tree().process_frame
+
+	var narrator_panel := overlay.get_node_or_null("NarratorPanel") as Panel
+	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
+	_assert_narrator_panel_spans_screen(narrator_panel)
+	_ok(narrator_panel != null and narrator_panel.position.y == 0.0,
+		"bottom highlight moves the full narrator dialogue bar to the top")
+	_ok(narrator_panel != null and narrator_panel.position.y + narrator_panel.size.y < float(highlight[1]),
+		"top narrator dialogue bar leaves the shortcut highlight visible")
+	_ok(portrait != null and portrait.position.y + portrait.size.y < float(highlight[1]),
+		"narrator portrait moves above a bottom highlight mask")
+	_ok(portrait != null and narrator_panel != null and absf(portrait.position.y - (narrator_panel.position.y + narrator_panel.size.y - 20.0)) <= 1.0,
+		"raised narrator portrait grips the lower edge of the moved dialogue panel")
+	_ok(portrait != null and portrait.texture != null and portrait.texture.resource_path == NARRATOR_LEDGE,
+		"raised narrator layout uses the ledge-grip Vera pose")
+
+
+func _test_narrator_layout_uses_bottom_for_central_highlight(overlay: TutorialOverlay) -> void:
+	var highlight := [140, 80, 1000, 420]
+	overlay.show_step({
+		"title": "Central highlight",
+		"description": "Legacy fallback text",
+		"narrator_lines": [
+			{"expression": "neutral", "text": "地图高亮时，文字面板不要压住地图。"},
+		],
+	}, highlight, false, true)
+	await get_tree().process_frame
+
+	var narrator_panel := overlay.get_node_or_null("NarratorPanel") as Panel
+	var viewport_size := get_viewport().get_visible_rect().size
+	_assert_narrator_panel_spans_screen(narrator_panel)
+	_ok(narrator_panel != null and narrator_panel.position.y == viewport_size.y - narrator_panel.size.y,
+		"central highlight keeps the full narrator dialogue bar at the bottom")
+	_ok(narrator_panel != null and narrator_panel.position.y > float(highlight[1] + highlight[3]),
+		"bottom narrator dialogue bar stays below a central map highlight")
 
 
 func _test_tutorial_copy_stays_inside_panel(overlay: TutorialOverlay) -> void:
@@ -144,6 +249,21 @@ func _ok(cond: bool, msg: String) -> void:
 	if not cond:
 		_failures += 1
 		push_error("[TEST-TUTORIAL-OVERLAY] FAIL: " + msg)
+
+
+func _style_texture_path(style: StyleBox) -> String:
+	var texture_style := style as StyleBoxTexture
+	if texture_style == null or texture_style.texture == null:
+		return ""
+	return String(texture_style.texture.resource_path)
+
+
+func _assert_narrator_panel_spans_screen(panel: Panel) -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	_ok(panel != null and panel.position.x == 0.0,
+		"narrator dialogue bar starts at the screen edge")
+	_ok(panel != null and panel.size.x == viewport_size.x,
+		"narrator dialogue bar spans the full screen width")
 
 
 func _finish() -> void:

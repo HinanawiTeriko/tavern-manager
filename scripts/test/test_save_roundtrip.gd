@@ -5,9 +5,15 @@ extends Node
 
 var _checks := 0
 var _failures := 0
+var _had_original_save := false
+var _original_save: Dictionary = {}
 
 func _ready() -> void:
+	var gm = _gm()
+	_had_original_save = gm.save_sys.has_save()
+	_original_save = gm.save_sys.read()
 	_test_capture_apply_roundtrip()
+	_test_apply_old_save_merges_new_narrative_defaults()
 	_test_reset_tutorial_progress_clears_runtime_and_save_snapshot()
 	_test_new_game_resets()
 	_finish()
@@ -19,6 +25,7 @@ func _ok(cond: bool, msg: String) -> void:
 		push_error("[TEST-SAVE-RT] FAIL: " + msg)
 
 func _finish() -> void:
+	_restore_original_save()
 	if _failures == 0:
 		print("[TEST-SAVE-RT] ALL PASS (", _checks, " checks)")
 		get_tree().quit(0)
@@ -28,6 +35,13 @@ func _finish() -> void:
 
 func _gm():
 	return get_node("/root/GameManager")
+
+func _restore_original_save() -> void:
+	var gm = _gm()
+	if _had_original_save:
+		gm.save_sys.write(_original_save)
+	else:
+		gm.save_sys.clear()
 
 func _test_capture_apply_roundtrip() -> void:
 	var gm = _gm()
@@ -61,6 +75,37 @@ func _test_capture_apply_roundtrip() -> void:
 	_ok(gm.documents.is_read("bloodied_contract"), "document read restored")
 	_ok(gm.inventory == gm.inventory_sys.materials, "gm.inventory still references system stock after restore")
 	gm.save_sys.clear()
+
+func _test_apply_old_save_merges_new_narrative_defaults() -> void:
+	var gm = _gm()
+	var old_save: Dictionary = gm._default_new_game_state()
+	old_save["economy"]["current_day"] = 4
+	var old_dialogue_vars := {
+		"has_sleep_powder": false,
+		"ryan_informed": false,
+		"ryan_warhammer_lead": true,
+		"ryan_has_alternative": false,
+		"ryan_drugged": false,
+		"ryan_interaction_closed": false,
+		"ryan_alternative_pending": false,
+		"ryan_alternative_declined": false,
+		"ryan_ending": "uninformed_fallen",
+		"aff_ryan": 6,
+		"aff_mira": 5,
+	}
+	old_save["narrative"]["dialogue_vars"] = old_dialogue_vars
+
+	gm._apply_save_state(old_save)
+
+	_ok(gm.economy.current_day == 4, "old save day restored")
+	_ok(gm.narrative.dialogue_vars.has("told_mira_truth"),
+		"old save restore fills missing told_mira_truth default")
+	_ok(gm.narrative.dialogue_vars.has("mira_ending"),
+		"old save restore fills missing mira_ending default")
+	_ok(gm.narrative.dialogue_vars.has("toby_secured"),
+		"old save restore fills missing toby_secured default")
+	_ok(gm.narrative.dialogue_vars.get("ryan_ending", "") == "uninformed_fallen",
+		"old save restore preserves existing Ryan ending")
 
 func _test_reset_tutorial_progress_clears_runtime_and_save_snapshot() -> void:
 	var gm = _gm()

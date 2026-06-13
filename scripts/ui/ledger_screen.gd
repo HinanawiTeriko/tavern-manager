@@ -8,6 +8,12 @@ const CONTINUE_NORMAL := "res://assets/textures/ui/night_settlement/night_settle
 const CONTINUE_HOVER := "res://assets/textures/ui/night_settlement/night_settlement_continue_hover.png"
 const CONTINUE_PRESSED := "res://assets/textures/ui/night_settlement/night_settlement_continue_pressed.png"
 const PIXEL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
+const RYAN_FATE_TEXTURES := {
+	"uninformed_fallen": "res://assets/textures/endings/ryan/ryan_uninformed_fallen.png",
+	"drugged_survivor": "res://assets/textures/endings/ryan/ryan_drugged_survivor.png",
+	"informed_fallen": "res://assets/textures/endings/ryan/ryan_informed_fallen.png",
+	"alternative_survivor": "res://assets/textures/endings/ryan/ryan_alternative_survivor.png",
+}
 const ICONS := {
 	"gold": "res://assets/textures/ui/night_settlement/night_settlement_icon_gold.png",
 	"reputation": "res://assets/textures/ui/night_settlement/night_settlement_icon_reputation.png",
@@ -25,6 +31,7 @@ var _continue_btn: Button
 var _settlement_backdrop: TextureRect
 var _stats_panel_art: TextureRect
 var _fate_panel_art: TextureRect
+var _ryan_fate_cinematic: Control
 
 
 func _ready() -> void:
@@ -45,6 +52,7 @@ func _ready() -> void:
 	var data = gm.current_ledger_data
 	if data != null:
 		_render(data)
+		_show_ryan_fate_cinematic_if_needed(data)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null and not tm.first_ledger_shown:
@@ -79,6 +87,115 @@ func _render(data: LedgerData) -> void:
 			_add_fate_card(fate)
 	else:
 		_add_empty_fate_line("没有特别的传闻留下。")
+
+
+func _show_ryan_fate_cinematic_if_needed(data: LedgerData) -> void:
+	var fate := _find_ryan_fate(data.npc_fates)
+	if fate.is_empty():
+		return
+	var route := String(fate.get("ending_key", ""))
+	if not RYAN_FATE_TEXTURES.has(route):
+		return
+	var texture_path := String(RYAN_FATE_TEXTURES[route])
+	var texture := _load_runtime_texture(texture_path)
+	if texture == null:
+		return
+	_ryan_fate_cinematic = _create_ryan_fate_cinematic(texture, String(fate.get("fate_text", "")))
+	add_child(_ryan_fate_cinematic)
+	_play_ryan_fate_intro(_ryan_fate_cinematic)
+
+
+func _find_ryan_fate(fates: Array) -> Dictionary:
+	for fate in fates:
+		if not fate is Dictionary:
+			continue
+		var data: Dictionary = fate
+		if String(data.get("npc_id", "")) == "ryan":
+			return data
+	return {}
+
+
+func _load_runtime_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	texture.take_over_path(path)
+	return texture
+
+
+func _create_ryan_fate_cinematic(texture: Texture2D, fate_text: String) -> Control:
+	var overlay := Control.new()
+	overlay.name = "RyanFateCinematic"
+	overlay.position = Vector2.ZERO
+	overlay.size = Vector2(1280, 720)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.focus_mode = Control.FOCUS_ALL
+	overlay.gui_input.connect(_on_ryan_fate_cinematic_gui_input)
+
+	var black := ColorRect.new()
+	black.name = "BlackBG"
+	black.position = Vector2.ZERO
+	black.size = Vector2(1280, 720)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	black.color = Color.BLACK
+	overlay.add_child(black)
+
+	var still := TextureRect.new()
+	still.name = "Still"
+	still.position = Vector2(0, 80)
+	still.size = Vector2(1280, 560)
+	still.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	still.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	still.stretch_mode = TextureRect.STRETCH_SCALE
+	still.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	still.texture = texture
+	still.modulate.a = 0.0
+	overlay.add_child(still)
+
+	var fate_label := Label.new()
+	fate_label.name = "FateLabel"
+	fate_label.position = Vector2(180, 642)
+	fate_label.size = Vector2(920, 72)
+	fate_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fate_label.text = fate_text
+	fate_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fate_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	fate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	fate_label.add_theme_font_override("font", PIXEL_FONT)
+	fate_label.add_theme_font_size_override("font_size", 18)
+	fate_label.add_theme_color_override("font_color", Color(0.86, 0.76, 0.64, 1.0))
+	fate_label.add_theme_constant_override("outline_size", 3)
+	fate_label.add_theme_color_override("font_outline_color", Color(0.02, 0.012, 0.008, 0.78))
+	fate_label.modulate.a = 0.0
+	overlay.add_child(fate_label)
+	return overlay
+
+
+func _play_ryan_fate_intro(overlay: Control) -> void:
+	var still := overlay.get_node_or_null("Still") as TextureRect
+	var fate_label := overlay.get_node_or_null("FateLabel") as Label
+	if still == null or fate_label == null:
+		return
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(still, "modulate:a", 1.0, 0.55)
+	tween.tween_property(fate_label, "modulate:a", 1.0, 0.55).set_delay(0.2)
+
+
+func _dismiss_ryan_fate_cinematic() -> void:
+	if _ryan_fate_cinematic == null or not is_instance_valid(_ryan_fate_cinematic):
+		return
+	_ryan_fate_cinematic.visible = false
+	_ryan_fate_cinematic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _on_ryan_fate_cinematic_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		_dismiss_ryan_fate_cinematic()
+		get_viewport().set_input_as_handled()
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -198,6 +315,19 @@ func _add_empty_fate_line(text: String) -> void:
 func _on_continue() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.day_cycle.next_phase()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _ryan_fate_cinematic == null or not is_instance_valid(_ryan_fate_cinematic) or not _ryan_fate_cinematic.visible:
+		return
+	var pressed := false
+	if event is InputEventMouseButton:
+		pressed = event.pressed
+	elif event is InputEventKey:
+		pressed = event.pressed and not event.echo
+	if pressed:
+		_dismiss_ryan_fate_cinematic()
+		get_viewport().set_input_as_handled()
 
 
 func _trigger_ledger_tutorial() -> void:

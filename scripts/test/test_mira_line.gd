@@ -41,6 +41,9 @@ func _test_parse_and_init() -> void:
 	for n in nm.all_npcs:
 		if n.id == "toby":
 			toby = n
+	_ok(nm.get_var("toby_danger_known") == false, "toby_danger_known starts false")
+	_ok(nm.get_var("toby_contract_found") == false, "toby_contract_found starts false")
+	_ok(nm.get_var("toby_secured_by_fixer") == false, "toby_secured_by_fixer starts false")
 	_ok(toby != null, "应解析到 toby")
 	_ok(nm.get_affection("mira") == 5, "aff_mira 初始 5")
 	_ok(nm.get_var("told_mira_truth") == false, "told_mira_truth 初始 false")
@@ -50,6 +53,7 @@ func _test_toby_contract_informs_mira() -> void:
 	var nm := _nm()
 	# 递给 mira：告知真相
 	var r := nm.resolve_action({"type": "give_story_item", "npc_id": "mira", "item_key": "toby_contract"})
+	_ok(nm.get_var("toby_contract_found") == true, "giving contract confirms Toby contract found")
 	_ok(r.get("accepted", false), "Mira 收下托比委托书")
 	_ok(nm.get_var("told_mira_truth") == true, "递交置 told_mira_truth")
 	# 递给非 mira：不认
@@ -59,12 +63,14 @@ func _test_toby_contract_informs_mira() -> void:
 
 func _test_route_she_finally_stopped() -> void:
 	var nm := _nm()
+	nm.set_var("toby_contract_found", true)
 	nm.set_var("told_mira_truth", true)
 	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD)
 	_ok(nm.get_mira_route() == "she_finally_stopped", "告知+信任达标 → 她终于停下")
 
 func _test_route_never_turned_back() -> void:
 	var nm := _nm()
+	nm.set_var("toby_contract_found", true)
 	nm.set_var("told_mira_truth", true)
 	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD - 1)
 	_ok(nm.get_mira_route() == "never_turned_back", "告知+信任不足 → 再没回头")
@@ -79,7 +85,13 @@ func _test_route_another_light_out() -> void:
 	_ok(nm.get_mira_route() == "another_light_out", "未告知+未兜底 → 另一盏熄灭的灯")
 
 func _test_toby_survival_flags() -> void:
+	var nm_missing_contract := _nm()
+	nm_missing_contract.set_var("told_mira_truth", true)
+	nm_missing_contract.set_affection("mira", nm_missing_contract.MIRA_TRUST_THRESHOLD)
+	_ok(not nm_missing_contract.toby_survived(), "truth flag without contract proof does not save Toby")
+
 	var nm := _nm()
+	nm.set_var("toby_contract_found", true)
 	# 担责救活
 	nm.set_var("told_mira_truth", true)
 	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD)
@@ -90,6 +102,7 @@ func _test_toby_survival_flags() -> void:
 	_ok(nm2.toby_survived(), "兜底 → 托比存活")
 	# 告知但信任不足且未兜底 → 死
 	var nm3 := _nm()
+	nm3.set_var("toby_contract_found", true)
 	nm3.set_var("told_mira_truth", true)
 	nm3.set_affection("mira", nm3.MIRA_TRUST_THRESHOLD - 1)
 	_ok(not nm3.toby_survived(), "知情仍逃且未兜底 → 托比赴死")
@@ -100,6 +113,7 @@ func _test_toby_survival_flags() -> void:
 	_ok(nm3.endings.get("toby", "") == "lost", "finalize 写 toby 结局 lost")
 	# 担责存活时托比结局为 saved
 	var nm4 := _nm()
+	nm4.set_var("toby_contract_found", true)
 	nm4.set_var("told_mira_truth", true)
 	nm4.set_affection("mira", nm4.MIRA_TRUST_THRESHOLD)
 	nm4.finalize_mira_ending()

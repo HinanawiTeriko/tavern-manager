@@ -89,6 +89,12 @@ func close() -> void:
 	visible = false
 
 
+func accepts_world_drop(world_position: Vector2, _item_key: String = "") -> bool:
+	if not visible or _panel == null:
+		return false
+	return _panel.get_global_rect().has_point(world_position)
+
+
 func refresh() -> void:
 	if _gm == null:
 		return

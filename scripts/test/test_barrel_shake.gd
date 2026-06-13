@@ -26,42 +26,49 @@ func _meter() -> BrewShakeMeter:
 
 func _test_count_reversals() -> void:
 	var m := _meter()
-	# 每次掉头(且够速)记 1 次；右-左-右-左 = 3 次翻转（第一下只定方向）
+	# 两次有效掉头才记 1 次完整摇晃；右-左只是半摇，右-左-右才算 1 次。
 	m.add_sample(Vector2(300, 0))
-	m.add_sample(Vector2(-300, 0))   # 1
+	m.add_sample(Vector2(-300, 0))   # 半摇
+	_ok(m.shake_count == 0, "一次反向只算半摇，不应增加完整摇晃数，实得 %d" % m.shake_count)
+	m.add_sample(Vector2(300, 0))    # 1 个完整来回
+	_ok(m.shake_count == 1, "左右回到原方向后应算 1 个完整来回，实得 %d" % m.shake_count)
+	m.add_sample(Vector2(-300, 0))   # 下一个半摇
 	m.add_sample(Vector2(300, 0))    # 2
-	m.add_sample(Vector2(-300, 0))   # 3
-	_ok(m.shake_count == 3, "左右来回 4 样本应 3 次翻转，实得 %d" % m.shake_count)
+	_ok(m.shake_count == 2, "5 个交替样本应为 2 个完整来回，实得 %d" % m.shake_count)
 
 func _test_below_min_speed_ignored() -> void:
 	var m := _meter()
 	m.add_sample(Vector2(300, 0))
 	m.add_sample(Vector2(-50, 0))    # 速度 50 < min_speed，不计、不更新方向
-	m.add_sample(Vector2(-300, 0))   # 相对上一个有效方向(+x)掉头 → 1
-	_ok(m.shake_count == 1, "低速样本应被忽略，实得 %d" % m.shake_count)
+	m.add_sample(Vector2(-300, 0))   # 相对上一个有效方向(+x)掉头 → 半摇
+	_ok(m.shake_count == 0, "低速样本应被忽略，第一次有效反向仍只是半摇，实得 %d" % m.shake_count)
+	m.add_sample(Vector2(300, 0))    # 第二次有效掉头 → 1 个完整来回
+	_ok(m.shake_count == 1, "低速样本不应破坏完整来回计数，实得 %d" % m.shake_count)
 
 func _test_enough() -> void:
 	var m := _meter()
 	_ok(not m.has_enough(), "初始不应够")
 	var dir := 1.0
-	# 第一个样本只定方向，之后每个交替样本算 1 次翻转 → 5 个样本 = 4 次翻转
-	for i in range(5):
+	# 第一个样本只定方向，之后每两个交替样本算 1 次完整来回 → 9 个样本 = 4 次完整来回
+	for i in range(9):
 		dir = -dir
 		m.add_sample(Vector2(300.0 * dir, 0))
-	_ok(m.shake_count >= 4, "5 个交替样本后 count>=4，实得 %d" % m.shake_count)
+	_ok(m.shake_count >= 4, "9 个交替样本后 count>=4，实得 %d" % m.shake_count)
 	_ok(m.has_enough(), "count>=min_count 应够")
 
 func _test_any_direction() -> void:
 	# 上下摇也算
 	var mv := _meter()
 	mv.add_sample(Vector2(0, 300))
-	mv.add_sample(Vector2(0, -300))   # 竖直掉头 → 1
-	_ok(mv.shake_count == 1, "上下摇应算翻转，实得 %d" % mv.shake_count)
+	mv.add_sample(Vector2(0, -300))   # 竖直掉头 → 半摇
+	mv.add_sample(Vector2(0, 300))    # 竖直回头 → 1
+	_ok(mv.shake_count == 1, "上下完整来回应算 1 次，实得 %d" % mv.shake_count)
 	# 斜向反向也算
 	var md := _meter()
 	md.add_sample(Vector2(200, 200))
-	md.add_sample(Vector2(-200, -200))   # 反向 → 1
-	_ok(md.shake_count == 1, "斜向反向应算翻转，实得 %d" % md.shake_count)
+	md.add_sample(Vector2(-200, -200))   # 反向 → 半摇
+	md.add_sample(Vector2(200, 200))     # 回到原方向 → 1
+	_ok(md.shake_count == 1, "斜向完整来回应算 1 次，实得 %d" % md.shake_count)
 	# 90° 转向不算（dot == 0，不 < 0）
 	var m90 := _meter()
 	m90.add_sample(Vector2(300, 0))
@@ -74,5 +81,12 @@ func _test_quality_tiers() -> void:
 	_ok(m.quality_tier() == "normal", "5<good_count 应为 normal")
 	m.shake_count = 12
 	_ok(m.quality_tier() == "good", "12>=good_count 应为 good")
+	var reset_half := _meter()
+	reset_half.add_sample(Vector2(300, 0))
+	reset_half.add_sample(Vector2(-300, 0))
+	reset_half.reset()
+	reset_half.add_sample(Vector2(300, 0))
+	reset_half.add_sample(Vector2(-300, 0))
+	_ok(reset_half.shake_count == 0, "reset 应清掉未完成的半摇状态")
 	m.reset()
 	_ok(m.shake_count == 0, "reset 后清零")

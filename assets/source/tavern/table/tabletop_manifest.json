@@ -29,6 +29,29 @@
     320,
     70
   ],
+  "order_groove_source": "art_sources/generated_raw/tavern_order_groove/tavern_table_order_groove_source_v1.png",
+  "order_groove_rect_native": [
+    78,
+    39,
+    242,
+    53
+  ],
+  "order_groove_runtime_rect": [
+    312,
+    596,
+    968,
+    652
+  ],
+  "order_groove_safe_area_runtime": [
+    392,
+    604,
+    888,
+    636
+  ],
+  "order_groove_pipeline": {
+    "method": "fixed-rect imagegen source composite",
+    "runtime_ui": "Godot Labels and ProgressBar only; no text baked into the texture"
+  },
   "physics_alignment": {
     "sprite_position_runtime": [
       640,

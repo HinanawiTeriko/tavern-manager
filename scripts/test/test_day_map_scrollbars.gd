@@ -396,6 +396,26 @@ func _test_topbar_button_layout(view) -> void:
 		var font := documents.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"ledger button uses Fusion Pixel font")
+		_ok(view.has_method("_refresh_ledger_hint"), "DayMap can refresh the ledger unread prompt")
+		var gm = get_node("/root/GameManager")
+		_ok(gm.documents.has_method("has_unread_ledger_entries"), "DocumentSystem exposes unread ledger state to DayMap")
+		if view.has_method("_refresh_ledger_hint") and gm.documents.has_method("has_unread_ledger_entries"):
+			gm.documents.add_ledger_entry_once("测试宿命：账本新页。")
+			view._refresh_ledger_hint()
+			var unread_normal := documents.get_theme_stylebox("normal") as StyleBoxTexture
+			var unread_hover := documents.get_theme_stylebox("hover") as StyleBoxTexture
+			var unread_pressed := documents.get_theme_stylebox("pressed") as StyleBoxTexture
+			_ok(unread_normal != null and unread_normal.texture != null
+					and String(unread_normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_ledger_unread_normal.png"),
+				"unread DayMap ledger button uses the prompt-state normal art")
+			_ok(unread_hover != null and unread_hover.texture != null
+					and String(unread_hover.texture.resource_path).ends_with("assets/textures/daymap/ui/button_ledger_unread_hover.png"),
+				"unread DayMap ledger button uses the prompt-state hover art")
+			_ok(unread_pressed != null and unread_pressed.texture != null
+					and String(unread_pressed.texture.resource_path).ends_with("assets/textures/daymap/ui/button_ledger_unread_pressed.png"),
+				"unread DayMap ledger button uses the prompt-state pressed art")
+			_ok(view.get_node_or_null("UILayer/TopBar/LedgerUnreadHint") == null,
+				"DayMap ledger prompt is authored into the button art instead of a text label")
 		documents.pressed.emit()
 		var document_overlay := view.get_node_or_null("UILayer/DocumentOverlay") as DocumentOverlay
 		_ok(document_overlay != null and document_overlay.visible,
@@ -403,6 +423,10 @@ func _test_topbar_button_layout(view) -> void:
 		if document_overlay != null:
 			_ok(document_overlay.get_current_page_text() != "",
 				"DayMap ledger button opens the actual ledger document")
+			var read_normal := documents.get_theme_stylebox("normal") as StyleBoxTexture
+			_ok(read_normal != null and read_normal.texture != null
+					and String(read_normal.texture.resource_path).ends_with("assets/textures/daymap/ui/button_ledger_normal.png"),
+				"opening the DayMap ledger restores the normal ledger button art")
 			document_overlay.close()
 	_ok(view.get_node_or_null("UILayer/TopBar/ExpTavernBtn") == null,
 		"experimental tavern button is removed from DayMap topbar")

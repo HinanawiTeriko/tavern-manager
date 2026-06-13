@@ -20,6 +20,8 @@ func _ready() -> void:
 	for stale in ["[+]", "[-]", "分配体力", "合成台", "混合区", "结果槽", "撒粉区"]:
 		_ok(not text.contains(stale), "stale tutorial term removed: " + stale)
 	_test_daymap_tutorial_matches_current_continue_flow(parsed)
+	_test_tutorial_data_declares_narrator_lines(parsed)
+	_test_tutorial_highlight_keys_match_trigger_rects(parsed)
 	for required in ["访问", "酒桶", "右键", "整理桌面", "Tab", "E"]:
 		_ok(text.contains(required), "Ryan slice tutorial mentions: " + required)
 	_finish()
@@ -39,6 +41,38 @@ func _test_daymap_tutorial_matches_current_continue_flow(parsed: Dictionary) -> 
 	_ok(not text.contains("继续 → 夜晚"), "daymap tutorial must not mention removed continue-to-night flow")
 	_ok(text.contains("你的酒馆") and text.contains("开门营业"),
 		"daymap tutorial explains the current tavern marker night-entry flow")
+
+
+func _test_tutorial_data_declares_narrator_lines(parsed: Dictionary) -> void:
+	for group_key in parsed.keys():
+		for step in parsed.get(group_key, []):
+			var step_id := String(step.get("id", ""))
+			var lines: Array = step.get("narrator_lines", [])
+			_ok(not lines.is_empty(), "tutorial step has narrator lines: " + step_id)
+			for line in lines:
+				_ok(String(line.get("text", "")) != "",
+					"tutorial narrator line has text: " + step_id)
+				_ok(["neutral", "smirk", "concerned", "surprised"].has(String(line.get("expression", ""))),
+					"tutorial narrator line uses a shipped expression: " + step_id)
+
+
+func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> void:
+	var craft_steps: Array = parsed.get("craft", [])
+	var craft_keys := {}
+	for step in craft_steps:
+		craft_keys[String(step.get("id", ""))] = String(step.get("highlight_node", ""))
+	_ok(craft_keys.get("craft_intro", "") == "CraftBarrel",
+		"craft intro highlights the actual barrel work area")
+	_ok(craft_keys.get("craft_drag", "") == "ShortcutBar",
+		"craft drag highlights the shortcut bar")
+	_ok(craft_keys.get("craft_recovery", "") == "RecoveryContainer",
+		"craft recovery uses its own recovery highlight instead of the intro barrel rect")
+
+	var seasoning_steps: Array = parsed.get("seasoning", [])
+	_ok(not seasoning_steps.is_empty(), "seasoning tutorial step exists")
+	if not seasoning_steps.is_empty():
+		_ok(String(seasoning_steps[0].get("highlight_node", "")) == "SeasoningZone",
+			"seasoning tutorial highlights the seasoning zone trigger rect")
 
 
 func _ok(cond: bool, msg: String) -> void:

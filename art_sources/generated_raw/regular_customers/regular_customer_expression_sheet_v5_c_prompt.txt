@@ -1,0 +1,14 @@
+Use case: stylized-concept
+Asset type: game character portrait expression sheet for a pixel-art tavern management game
+Input images: visible reference image of Vera; visible reference image of Belta; approved Vera/Belta four panel selected by the user.
+Primary request: Generate one production source sheet for regular tavern customers, 4 columns x 3 rows. Match the approved Vera/Belta four panel reference currently visible in the conversation: crisp hand-painted anime pixel portrait feel, chunky dark ink outlines, warm tavern browns, muted teal accents, readable eyes, strong face detail, waist-up bar-front crop. Approved Vera/Belta four panel is the style and runtime-scale standard.
+Characters by column, left to right:
+1. Selene, adult female rune scholar, dark curly hair, teal-blue scholar cloak, brass astrolabe or rune compass, composed analytical eyes.
+2. Gareth, adult wandering knight, short brown hair, practical steel armor and leather straps, traveling cloak, sturdy but friendly expression.
+3. Lyra, adult itinerant bard, expressive woman with auburn hair, small lute/mandolin held close, warm burgundy and gold clothes, theatrical charm.
+4. Oma, elderly ascetic monk, bald head, simple grey-brown robe, prayer beads or folded hands, calm wrinkled face, gentle but severe.
+Rows top to bottom: neutral, satisfied, dissatisfied. Preserve the same identity and outfit for each character across all three rows; only expression and small gesture changes.
+Composition/framing: runtime-scale locked. Each portrait is a large waist-up bust, not a full body. Character fills 88-96% of each cell height; face/head size comparable to approved Belta and Vera; head close to top of cell; crop near belt or upper hip; no tiny figures; no extra empty space. Keep each subject centered in its cell, enough padding to avoid clipping hair/instruments.
+Background/layout: 4 columns x 3 rows on one image, perfectly flat solid #00ff00 chroma-key background in every cell, no shadows on background, no gradients, no texture, no floor plane. Use clean gutters between cells if needed.
+Style/medium: original game character art, hand-painted pixel-anime portrait source designed to be downsampled to 128x160 native and nearest-neighbor scaled to 512x640 runtime. Same artist family as approved Vera/Belta four panel. Do not copy Vera. Do not copy Belta.
+Constraints: no readable text, no logos, no UI, no watermark, no captions, no labels, no speech bubbles. Crisp silhouettes, readable face features, warm dungeon tavern palette, consistent line weight across all twelve portraits.

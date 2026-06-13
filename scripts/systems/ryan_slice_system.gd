@@ -4,6 +4,7 @@ extends RefCounted
 # [走查脚手架] Mira 线高潮在 Day12，需游戏推进到 Day12 才能走查四结局。
 # 原值为 3（Ryan 切片收尾日）。合入 main 前须决策：正式接 30 天循环，还是回退为 3。
 const LAST_DAY := 12
+const DEFAULT_NORMAL_ORDER_LIMIT := 3
 const DAY_CONFIG := {
 	1: {
 		"normal_order_limit": 2,
@@ -29,7 +30,9 @@ func last_day() -> int:
 
 
 func normal_order_limit(day: int) -> int:
-	return int(DAY_CONFIG.get(day, {}).get("normal_order_limit", 0))
+	if DAY_CONFIG.has(day):
+		return int(DAY_CONFIG[day].get("normal_order_limit", DEFAULT_NORMAL_ORDER_LIMIT))
+	return DEFAULT_NORMAL_ORDER_LIMIT
 
 
 func night_events(day: int) -> Array:

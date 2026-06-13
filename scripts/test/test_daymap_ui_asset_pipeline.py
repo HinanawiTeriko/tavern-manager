@@ -53,6 +53,7 @@ NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_act
 DETAIL_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_detail_panel_contact_sheet.png"
 GATHERING_TOAST_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_gathering_toast_contact_sheet.png"
 RESULT_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_result_panel_contact_sheet.png"
+LEDGER_BUTTON_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_ledger_button_states_contact_sheet.png"
 DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 TOPBAR_DESKTOP_SOURCE = GENERATED_RAW / "topbar_desktop_source.png"
 TOPBAR_SOURCE_CROP = [14, 557, 1240, 698]
@@ -74,6 +75,8 @@ SPECIAL_RESULT_PANEL_SOURCE = GENERATED_RAW / "special_result_panel_source_v1.pn
 SPECIAL_RESULT_PANEL_PROMPT = GENERATED_RAW / "special_result_panel_prompt_v1.txt"
 LEDGER_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_button_states_source_v1.png"
 LEDGER_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_button_states_prompt_v1.txt"
+LEDGER_UNREAD_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_unread_button_states_source_v1.png"
+LEDGER_UNREAD_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_unread_button_states_prompt_v1.txt"
 NOTE_ACTION_NATIVE_SIZE = (56, 14)
 NOTE_ACTION_RUNTIME_SIZE = (224, 56)
 NOTE_ACTION_CROPS = {
@@ -339,6 +342,8 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         self.assertIn("NOTE_ACTION_PAPER_STAMP_SOURCE", source, "note action button must consume retained AI source art")
         self.assertIn("DETAIL_GO_BUTTON_STATES_SOURCE", source, "detail go button must consume retained AI state art")
         self.assertIn("LEDGER_BUTTON_STATES_SOURCE", source, "ledger button must consume retained AI state art")
+        self.assertIn("LEDGER_UNREAD_BUTTON_STATES_SOURCE", source, "ledger unread button must consume retained AI state art")
+        self.assertIn("LEDGER_UNREAD_BUTTON_STATES_PROMPT", source, "ledger unread button must keep its prompt record")
         self.assertIn("SPECIAL_RESULT_PANEL_SOURCE", source, "special result panel must consume retained AI source art")
         self.assertNotIn("def make_ledger_button_native", source, "ledger button must not be procedurally drawn")
         self.assertNotIn("make_pinned_note_panel_native", source, "pinned note must be normalized from retained AI source art")
@@ -391,7 +396,12 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
         )
 
     def test_ledger_button_ai_state_source_is_retained(self) -> None:
-        for path in [LEDGER_BUTTON_STATES_SOURCE, LEDGER_BUTTON_STATES_PROMPT]:
+        for path in [
+            LEDGER_BUTTON_STATES_SOURCE,
+            LEDGER_BUTTON_STATES_PROMPT,
+            LEDGER_UNREAD_BUTTON_STATES_SOURCE,
+            LEDGER_UNREAD_BUTTON_STATES_PROMPT,
+        ]:
             with self.subTest(path=path.name):
                 self.assertTrue(path.exists(), f"{path}: missing retained AI ledger button source")
                 self.assertGreater(path.stat().st_size, 0, f"{path}: retained ledger button source is empty")
@@ -769,6 +779,7 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
             ("button_note_action_normal", 0.86, 0.90),
             ("button_detail_go_normal", 0.86, 0.84),
             ("button_ledger_normal", 0.82, 0.90),
+            ("button_ledger_unread_normal", 0.82, 0.90),
             ("button_tab_normal", 0.82, 0.90),
             ("button_shop_wide_normal", 0.82, 0.90),
             ("button_shop_square_normal", 0.92, 0.90),
@@ -781,39 +792,71 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 self.assertGreaterEqual(height_ratio, min_height_ratio, f"{name}: visible silhouette is too short")
 
     def test_ledger_button_states_are_exact_native_exports(self) -> None:
-        natives: dict[str, Image.Image] = {}
-        for state in STATES:
-            with self.subTest(state=state):
-                native_path = SOURCE / f"button_ledger_{state}_native.png"
-                runtime_path = RUNTIME / f"button_ledger_{state}.png"
-                self.assertTrue(native_path.exists(), f"{native_path}: missing native source")
-                self.assertTrue(runtime_path.exists(), f"{runtime_path}: missing runtime texture")
-                native = load_rgba(native_path)
-                runtime = load_rgba(runtime_path)
-                self.assertEqual(native.size, LEDGER_NATIVE_SIZE, f"{state}: wrong native size")
-                self.assertEqual(runtime.size, LEDGER_RUNTIME_SIZE, f"{state}: wrong runtime size")
-                self.assertGreaterEqual(visible_pixel_count(native), 160, f"{state}: ledger button too sparse")
-                expected = native.resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
-                self.assertEqual(runtime.tobytes(), expected.tobytes(), f"{state}: ledger not exact nearest export")
-                natives[state] = native
+        natives: dict[str, dict[str, Image.Image]] = {}
+        for prefix in ["button_ledger", "button_ledger_unread"]:
+            natives[prefix] = {}
+            for state in STATES:
+                with self.subTest(prefix=prefix, state=state):
+                    native_path = SOURCE / f"{prefix}_{state}_native.png"
+                    runtime_path = RUNTIME / f"{prefix}_{state}.png"
+                    self.assertTrue(native_path.exists(), f"{native_path}: missing native source")
+                    self.assertTrue(runtime_path.exists(), f"{runtime_path}: missing runtime texture")
+                    native = load_rgba(native_path)
+                    runtime = load_rgba(runtime_path)
+                    self.assertEqual(native.size, LEDGER_NATIVE_SIZE, f"{prefix} {state}: wrong native size")
+                    self.assertEqual(runtime.size, LEDGER_RUNTIME_SIZE, f"{prefix} {state}: wrong runtime size")
+                    self.assertGreaterEqual(visible_pixel_count(native), 160, f"{prefix} {state}: ledger button too sparse")
+                    expected = native.resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
+                    self.assertEqual(runtime.tobytes(), expected.tobytes(), f"{prefix} {state}: ledger not exact nearest export")
+                    natives[prefix][state] = native
         normal_pressed_diff = sum(
             1
             for normal_px, pressed_px in zip(
-                natives["normal"].get_flattened_data(),
-                natives["pressed"].get_flattened_data(),
+                natives["button_ledger"]["normal"].get_flattened_data(),
+                natives["button_ledger"]["pressed"].get_flattened_data(),
             )
             if normal_px != pressed_px
         )
         normal_hover_diff = sum(
             1
             for normal_px, hover_px in zip(
-                natives["normal"].get_flattened_data(),
-                natives["hover"].get_flattened_data(),
+                natives["button_ledger"]["normal"].get_flattened_data(),
+                natives["button_ledger"]["hover"].get_flattened_data(),
             )
             if normal_px != hover_px
         )
+        unread_normal_diff = sum(
+            1
+            for normal_px, unread_px in zip(
+                natives["button_ledger"]["normal"].get_flattened_data(),
+                natives["button_ledger_unread"]["normal"].get_flattened_data(),
+            )
+            if normal_px != unread_px
+        )
         self.assertGreaterEqual(normal_pressed_diff, 110, "pressed ledger state needs a clear authored state change")
         self.assertGreaterEqual(normal_hover_diff, 140, "hover ledger state needs a clear authored highlight change")
+        self.assertGreaterEqual(unread_normal_diff, 18, "unread ledger button needs a visible authored prompt-state change")
+
+    def test_ledger_unread_button_has_badge_region(self) -> None:
+        normal = load_rgba(SOURCE / "button_ledger_normal_native.png")
+        unread = load_rgba(SOURCE / "button_ledger_unread_normal_native.png")
+        normal_badge_zone = normal.crop((46, 0, 66, 16)).convert("RGBA")
+        unread_badge_zone = unread.crop((46, 0, 66, 16)).convert("RGBA")
+        changed_pixels = sum(
+            1
+            for normal_px, unread_px in zip(normal_badge_zone.get_flattened_data(), unread_badge_zone.get_flattened_data())
+            if normal_px != unread_px
+        )
+        warm_prompt_pixels = sum(
+            1 for r, g, b, a in unread_badge_zone.get_flattened_data()
+            if a >= 170 and r >= 120 and 25 <= g <= 130 and b <= 90 and r > b * 1.8
+        )
+        self.assertGreaterEqual(changed_pixels, 14, "unread ledger button needs a changed prompt region")
+        self.assertGreaterEqual(warm_prompt_pixels, 6, "unread ledger button needs warm wax/amber prompt pixels")
+
+    def test_ledger_button_contact_sheet_exists(self) -> None:
+        self.assertTrue(LEDGER_BUTTON_CONTACT_SHEET.exists(), f"{LEDGER_BUTTON_CONTACT_SHEET}: missing contact sheet")
+        self.assertGreater(LEDGER_BUTTON_CONTACT_SHEET.stat().st_size, 0, "ledger button contact sheet is empty")
 
     def test_ledger_button_reads_as_small_book_tab(self) -> None:
         native_path = SOURCE / "button_ledger_normal_native.png"
@@ -1297,6 +1340,16 @@ class DayMapUiAssetPipelineTest(unittest.TestCase):
                 "source_crop": LEDGER_BUTTON_CROPS[state],
                 "safe_area": [42, 8, 60, 28],
                 "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn",
+            }
+            expected[f"button_ledger_unread_{state}"] = {
+                "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+                "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+                "native_file": f"assets/source/daymap/ui/button_ledger_unread_{state}_native.png",
+                "output_file": f"assets/textures/daymap/ui/button_ledger_unread_{state}.png",
+                "size": [132, 44],
+                "source_crop": LEDGER_BUTTON_CROPS[state],
+                "safe_area": [42, 8, 60, 28],
+                "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state",
             }
             expected[f"button_note_action_{state}"] = {
                 "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
