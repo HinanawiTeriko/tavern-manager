@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageEnhance
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "tavern_reward_hud" / "tavern_reward_hud_sheet_v1.png"
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "tavern_reward_hud" / "tavern_reward_hud_sheet_v2.png"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "reward_hud"
 RUNTIME_DIR = ROOT / "assets" / "textures" / "ui" / "reward_hud"
 MANIFEST_PATH = SOURCE_DIR / "tavern_reward_hud_manifest.json"
@@ -16,59 +16,61 @@ SCALE = 4
 
 ASSETS = {
     "reward_gold_progress_bg": {
-        "crop_rect": [58, 108, 710, 198],
+        "crop_rect": [48, 84, 800, 250],
         "native_size": [48, 12],
         "safe_area": [3, 2, 45, 10],
-        "intended_godot_use": "Tavern TopPanel/GoldProgress/Bg understated milestone groove",
-        "colors": 24,
+        "fill_window": [6, 3, 42, 9],
+        "intended_godot_use": "Tavern TopPanel/GoldProgress/Bg crafted wood-and-brass milestone groove",
+        "colors": 30,
     },
     "reward_gold_progress_fill": {
-        "crop_rect": [788, 128, 1174, 190],
+        "crop_rect": [878, 112, 1520, 210],
         "native_size": [48, 12],
         "safe_area": [2, 2, 46, 10],
-        "intended_godot_use": "Tavern TopPanel/GoldProgress/Fill low-brightness amber fill",
-        "colors": 20,
+        "intended_godot_use": "Tavern TopPanel/GoldProgress/Fill textured amber-gold fill",
+        "colors": 26,
         "mute_gold": True,
     },
     "reward_gold_progress_ornate": {
-        "crop_rect": [92, 518, 1074, 615],
+        "crop_rect": [72, 514, 1478, 646],
         "native_size": [48, 12],
         "safe_area": [2, 1, 46, 11],
         "intended_godot_use": "Tavern TopPanel/GoldProgress/Ornate milestone-only flash overlay",
-        "colors": 26,
+        "colors": 32,
     },
     "reward_rep_progress_bg": {
-        "crop_rect": [58, 314, 710, 400],
+        "crop_rect": [48, 334, 800, 500],
         "native_size": [48, 12],
         "safe_area": [3, 2, 45, 10],
-        "intended_godot_use": "Tavern TopPanel/ReputationProgress/Bg understated milestone groove",
-        "colors": 24,
+        "fill_window": [6, 3, 42, 9],
+        "intended_godot_use": "Tavern TopPanel/ReputationProgress/Bg crafted wood-and-blue-iron milestone groove",
+        "colors": 30,
     },
     "reward_rep_progress_fill": {
-        "crop_rect": [788, 340, 1174, 398],
+        "crop_rect": [878, 362, 1522, 462],
         "native_size": [48, 12],
         "safe_area": [2, 2, 46, 10],
-        "intended_godot_use": "Tavern TopPanel/ReputationProgress/Fill cool low-brightness fill",
-        "colors": 20,
+        "intended_godot_use": "Tavern TopPanel/ReputationProgress/Fill textured cool-blue fill",
+        "colors": 26,
         "coolify": True,
     },
     "reward_rep_progress_ornate": {
-        "crop_rect": [94, 682, 1076, 782],
+        "crop_rect": [72, 704, 1478, 850],
         "native_size": [48, 12],
         "safe_area": [2, 1, 46, 11],
         "intended_godot_use": "Tavern TopPanel/ReputationProgress/Ornate milestone-only flash overlay",
-        "colors": 26,
+        "colors": 32,
         "coolify": True,
     },
     "reward_coin_particle": {
-        "crop_rect": [1290, 88, 1426, 224],
+        "crop_rect": [1582, 158, 1710, 302],
         "native_size": [8, 8],
         "safe_area": [1, 1, 7, 7],
         "intended_godot_use": "RewardCoinPhysicsLayer temporary physical coin sprite",
         "colors": 22,
     },
     "reward_rep_particle": {
-        "crop_rect": [1290, 310, 1425, 430],
+        "crop_rect": [1548, 410, 1660, 515],
         "native_size": [8, 8],
         "safe_area": [1, 1, 7, 7],
         "intended_godot_use": "RewardFeedbackLayer reputation mark particle",
@@ -76,7 +78,7 @@ ASSETS = {
         "boost_cool": True,
     },
     "reward_spark": {
-        "crop_rect": [1312, 548, 1395, 632],
+        "crop_rect": [1560, 590, 1660, 715],
         "native_size": [6, 6],
         "safe_area": [1, 1, 5, 5],
         "intended_godot_use": "RewardFeedbackLayer small milestone spark",
@@ -126,8 +128,8 @@ def mute_gold_fill(image: Image.Image) -> Image.Image:
                 continue
             if r >= 105 and g >= 55 and b <= 95:
                 pixels[x, y] = (
-                    max(78, int(r * 0.72)),
-                    max(48, int(g * 0.72)),
+                    max(74, int(r * 0.66)),
+                    max(46, int(g * 0.68)),
                     max(18, int(b * 0.85)),
                     a,
                 )
@@ -185,6 +187,17 @@ def quantize_visible(image: Image.Image, colors: int) -> Image.Image:
     return quantized
 
 
+def clear_fill_window(image: Image.Image, fill_window: list[int]) -> Image.Image:
+    rgba = image.convert("RGBA")
+    pixels = rgba.load()
+    x0, y0, x1, y1 = fill_window
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            if 0 <= x < rgba.width and 0 <= y < rgba.height:
+                pixels[x, y] = (0, 0, 0, 0)
+    return rgba
+
+
 def normalize_asset(reference: Image.Image, spec: dict[str, object]) -> Image.Image:
     crop = reference.crop(tuple(spec["crop_rect"]))
     keyed = remove_chroma_key(crop)
@@ -203,7 +216,10 @@ def normalize_asset(reference: Image.Image, spec: dict[str, object]) -> Image.Im
         sharp = boost_cool_particle(sharp)
     if bool(spec.get("boost_warm", False)):
         sharp = boost_warm_spark(sharp)
-    return quantize_visible(sharp, int(spec["colors"]))
+    normalized = quantize_visible(sharp, int(spec["colors"]))
+    if "fill_window" in spec:
+        normalized = clear_fill_window(normalized, list(spec["fill_window"]))
+    return normalized
 
 
 def save_assets(reference: Image.Image) -> dict[str, Image.Image]:
@@ -238,10 +254,12 @@ def write_manifest() -> None:
             "safe_area": spec["safe_area"],
             "intended_godot_use": spec["intended_godot_use"],
         }
+        if "fill_window" in spec:
+            manifest_assets[asset_id]["fill_window"] = spec["fill_window"]
     manifest = {
         "id": "tavern_reward_hud",
-        "source": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png",
-        "prompt": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1_prompt.txt",
+        "source": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png",
+        "prompt": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt",
         "scale": SCALE,
         "assets": manifest_assets,
     }

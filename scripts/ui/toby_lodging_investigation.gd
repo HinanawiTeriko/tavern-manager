@@ -7,6 +7,12 @@ extends InvestigationScene
 
 const ASSEMBLE_POINT := Vector2(640, 490)   # 拼合点（窝里地面中央的矮桌）
 const ASSEMBLE_RADIUS := 80.0               # 碎片全部进入此半径即拼合
+const SNAP_RADIUS := 130.0
+const FRAGMENT_SNAP_SLOTS := {
+	"contract_fragment_a": Vector2(592, 490),
+	"contract_fragment_b": Vector2(640, 490),
+	"contract_fragment_c": Vector2(688, 490),
+}
 const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_normal.png"
 const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_hover.png"
 const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_pressed.png"
@@ -14,6 +20,7 @@ const LEAVE_BUTTON_SIZE := Vector2(280, 100)
 const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _fragments: Array[MineItem] = []
+var _snapped_fragments: Dictionary = {}
 var _assembled: bool = false
 
 
@@ -98,17 +105,48 @@ func _priority_kinds() -> Array:
 	return ["fragment"]   # 碎片优先于浅层物被抓起
 
 
+func _can_pickup(item: MineItem) -> bool:
+	return not _snapped_fragments.has(item.item_tag)
+
+
 func _investigation_physics(_delta: float) -> void:
+	if _drag_ctrl.is_dragging():
+		return
+	_snap_nearby_fragments()
 	_check_assembly()
+
+
+func _snap_nearby_fragments() -> void:
+	if _assembled:
+		return
+	for frag in _fragments:
+		if not is_instance_valid(frag):
+			continue
+		if _snapped_fragments.has(frag.item_tag):
+			continue
+		if frag.global_position.distance_to(ASSEMBLE_POINT) > SNAP_RADIUS:
+			continue
+		_snap_fragment(frag)
+
+
+func _snap_fragment(frag: MineItem) -> void:
+	var slot: Vector2 = FRAGMENT_SNAP_SLOTS.get(frag.item_tag, ASSEMBLE_POINT)
+	frag.linear_velocity = Vector2.ZERO
+	frag.angular_velocity = 0.0
+	frag.global_position = slot
+	frag.global_rotation = 0.0
+	frag.freeze = true
+	_snapped_fragments[frag.item_tag] = true
+	_obs_label.text = "这片纸边缘对上了。"
 
 
 func _check_assembly() -> void:
 	if _assembled:
 		return
-	if _drag_ctrl.is_dragging():
-		return   # 拖拽中不判定，待松手安置
 	for frag in _fragments:
 		if not is_instance_valid(frag):
+			return
+		if not _snapped_fragments.has(frag.item_tag):
 			return
 		if frag.global_position.distance_to(ASSEMBLE_POINT) > ASSEMBLE_RADIUS:
 			return
@@ -122,7 +160,7 @@ func _complete_assembly() -> void:
 			frag.queue_free()
 	_fragments.clear()
 	_grant_document("toby_contract")
-	_obs_label.text = "碎片拼回原样——托比为钱接下的那份委托，赫然在目。已放入背包。"
+	_obs_label.text = "碎片拼回原样——托比的委托书背面，抄着米拉那句“一个人走”。已放入背包。"
 
 
 # ============================================================
@@ -130,7 +168,7 @@ func _complete_assembly() -> void:
 # ============================================================
 
 func _has_deep_progress() -> bool:
-	return _assembled
+	return _assembled or not _snapped_fragments.is_empty()
 
 
 func _leave_hint_text() -> String:

@@ -24,6 +24,20 @@ func _ready() -> void:
 	m3.visit("mercenary_board")
 	_ok(_ids(m3.get_locations()).has("abandoned_mine"), "血斧贴文解锁矿道（莱恩线保活）")
 
+	# Day3 起血斧小队已经出发；旧 lead 仍在存档里也不能继续显示招募贴文
+	var m3b := _sys(2)
+	m3b.set_lead_flag("ryan_warhammer_lead", true)
+	m3b.mark_revealed("mercenary_board")
+	m3b.mark_posting_announced("mercenary_board")
+	m3b.start_day(3)
+	m3b.set_lead_flag("ryan_warhammer_lead", true)
+	var expired_board := _eff(m3b, "mercenary_board")
+	_ok(expired_board.get("active_posting", "x") == "", "Day3 血斧贴文过期并回到闲置")
+	_ok(not String(expired_board.get("description", "")).contains("血斧小队"), "Day3 告示牌描述不再显示血斧招募")
+	_ok(_ids(m3b.get_updated_locations()).has("mercenary_board"), "血斧贴文过期后告示牌进入更新列表")
+	var expired_visit := m3b.visit("mercenary_board")
+	_ok(String(expired_visit.get("unlockedFlag", "")) == "", "过期血斧贴文不会继续产出 mine_clue")
+
 	# Day6：托比贴文激活（盖过血斧），描述更新、访问授予 toby_contract
 	var m4 := _sys(6)
 	m4.set_lead_flag("ryan_warhammer_lead", true)
@@ -33,7 +47,29 @@ func _ready() -> void:
 	var vr := m4.visit("mercenary_board")
 	_ok(String(vr.get("unlockedFlag", "")) == "toby_commission_lead", "Day6 board visit unlocks Toby lead flag")
 	_ok(String(vr.get("activePosting", "")) == "toby_commission", "Day6 board visit reports active Toby posting")
+	var board_message := String(vr.get("message", ""))
+	_ok(board_message.contains("托比"), "Day6 board result names Toby as the signer")
+	_ok(board_message.contains("黑齿矿脉"), "Day6 board result keeps the dangerous commission clue")
+	_ok(not board_message.contains("米拉"), "Day6 board result does not reveal Mira's connection to Toby")
+	_ok(not board_message.contains("学徒"), "Day6 board result does not reveal Toby was Mira's apprentice")
+	_ok(not board_message.contains("撇下"), "Day6 board result does not spoil that Mira abandoned Toby")
 	_ok(not (vr.get("documents", []) as Array).has("toby_contract"), "告示板贴文不再直接授予委托书（已搬进托比落脚处场景）")
+	var toby_pre := FileAccess.get_file_as_string("res://dialogue/toby_day6.pre.dialogue")
+	_ok(toby_pre.contains("一个人走"), "Toby Day6 pre dialogue echoes the lone-road clue")
+	_ok(not toby_pre.contains("米拉"), "Toby Day6 pre dialogue hints without naming Mira")
+	var toby_post := FileAccess.get_file_as_string("res://dialogue/toby_day6.post.dialogue")
+	_ok(not toby_post.contains("后天"), "Toby Day6 post avoids a hard departure date before Day12")
+	_ok(toby_post.contains("队伍") or toby_post.contains("点齐"),
+		"Toby Day6 post frames departure as waiting for the escort team")
+	var mira_day4_pre := FileAccess.get_file_as_string("res://dialogue/mira_day4.pre.dialogue")
+	_ok(mira_day4_pre.contains("一个人走") and mira_day4_pre.contains("轻快"),
+		"Mira Day4 pre dialogue plants the exact lone-road phrase before serving")
+	var docs_root: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/documents.json"))
+	var toby_doc: Dictionary = docs_root.get("toby_contract", {})
+	var doc_pages: Array = toby_doc.get("pages", [])
+	var contract_text := String(doc_pages[0]) if not doc_pages.is_empty() else ""
+	_ok(contract_text.contains("一个人走"), "Toby contract document repeats the lone-road phrase")
+	_ok(contract_text.contains("米拉"), "Toby contract document points the evidence back to Mira")
 
 	# 重新亮相：刚亮相无更新；贴文激活后进 updated-locations；宣告后清除
 	var m5 := _sys(2)

@@ -1,0 +1,31 @@
+~ ryan_informed
+莱恩: ……这不是普通委托。你从哪儿弄来的？
+=> END
+
+~ ryan_accepts_alternative
+莱恩: 我接下这个。今晚之后，我自己去问个明白。
+=> END
+
+~ ryan_needs_warning_first
+莱恩: 这是什么？我看不出它和我有什么关系。
+=> END
+
+~ ryan_alternative_pending
+莱恩: 我会考虑。先让我看看你今晚怎么待我。
+=> END
+
+~ ryan_accepts_ale
+莱恩: 好酒。今晚就靠这一杯壮胆了。
+=> END
+
+~ ryan_drugged
+莱恩: ……这酒怎么这么沉……
+=> END
+
+~ ryan_refuses_drugged_ale
+莱恩: 不。今晚我必须保持清醒。
+=> END
+
+~ ryan_interaction_closed
+莱恩: 别再说了。今晚我已经决定了。
+=> END

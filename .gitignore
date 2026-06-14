@@ -18,6 +18,8 @@ export_presets.cfg
 *.tmp.*
 ~*.dll
 tmp/
+tmp_tests/
+tmp_*.log
 
 # Python (asset-pipeline tooling cache)
 __pycache__/

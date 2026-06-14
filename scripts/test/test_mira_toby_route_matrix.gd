@@ -7,7 +7,11 @@ var _failures := 0
 func _ready() -> void:
 	_test_truth_and_trust_route()
 	_test_truth_without_trust_route()
+	_test_contract_found_without_telling_route()
+	_test_mira_stall_accepts_contract()
+	_test_mira_stall_followup_after_contract()
 	_test_fixer_route()
+	_test_fixer_with_unshown_contract_route()
 	_test_missed_route()
 	_finish()
 
@@ -55,11 +59,12 @@ func _tell_mira_truth(gm) -> void:
 	_ok(gm.narrative.get_var("told_mira_truth") == true, "telling Mira truth flag is set")
 
 
-func _visit_mira_on_day(gm, day: int) -> void:
+func _visit_mira_on_day(gm, day: int) -> Dictionary:
 	gm.economy.current_day = day
 	gm.start_day_map(day)
 	var visit: Dictionary = gm.visit_day_location("mira_stall")
 	_ok(visit.get("success", false), "Mira stall visit succeeds on Day %d" % day)
+	return visit
 
 
 func _finalize_and_expect(gm, expected_mira: String, expected_toby: String, msg: String) -> void:
@@ -91,6 +96,48 @@ func _test_truth_without_trust_route() -> void:
 	_finalize_and_expect(gm, "never_turned_back", "lost", "truth without trust route")
 
 
+func _test_contract_found_without_telling_route() -> void:
+	var gm = _reset_gm(6, 0)
+	_learn_toby_danger(gm)
+	_find_contract(gm)
+	_ok(gm.narrative.get_var("told_mira_truth") == false,
+		"finding the contract alone does not tell Mira")
+	_finalize_and_expect(gm, "another_light_out", "lost", "contract found but not shown route")
+
+
+func _test_mira_stall_accepts_contract() -> void:
+	var gm = _reset_gm(6, 0)
+	_learn_toby_danger(gm)
+	_find_contract(gm)
+	var visit := _visit_mira_on_day(gm, 7)
+	_ok(gm.narrative.get_var("told_mira_truth") == true,
+		"Mira stall visit lets the player show Toby contract")
+	var message := String(visit.get("message", ""))
+	_ok(message.contains("米拉:") and message.contains("托比") and message.contains("一个人走"),
+		"Mira stall handoff returns visible dialogue-like event text")
+	var entries: Array = gm.documents.capture_state().get("ledger_entries", [])
+	var saw_handoff := false
+	for entry in entries:
+		var text := String(entry)
+		if text.contains("米拉") and text.contains("一个人走"):
+			saw_handoff = true
+			break
+	_ok(saw_handoff, "Mira stall handoff writes a ledger beat with the shared phrase")
+
+
+func _test_mira_stall_followup_after_contract() -> void:
+	var gm = _reset_gm(6, 0)
+	_learn_toby_danger(gm)
+	_find_contract(gm)
+	_visit_mira_on_day(gm, 7)
+	var followup := _visit_mira_on_day(gm, 8)
+	var message := String(followup.get("message", ""))
+	_ok(message.contains("米拉:") and message.contains("托比") and message.contains("住"),
+		"Mira stall follow-up after contract shows her asking where Toby is")
+	_ok(message.contains("货摊") or message.contains("收拾"),
+		"Mira stall follow-up after contract visibly changes her routine")
+
+
 func _test_fixer_route() -> void:
 	var gm = _reset_gm(6, 50)
 	_learn_toby_danger(gm)
@@ -101,6 +148,17 @@ func _test_fixer_route() -> void:
 	_ok(gm.narrative.get_var("toby_secured_by_fixer") == true, "fixer route sets new secured flag")
 	_ok(gm.narrative.get_var("toby_secured") == true, "fixer route preserves legacy secured flag")
 	_finalize_and_expect(gm, "closed_the_door", "saved", "fixer route")
+
+
+func _test_fixer_with_unshown_contract_route() -> void:
+	var gm = _reset_gm(6, 50)
+	_learn_toby_danger(gm)
+	_find_contract(gm)
+	var fixer: Dictionary = gm.visit_day_location("fixer_den")
+	_ok(fixer.get("success", false), "fixer visit succeeds after finding unshown contract")
+	_ok(gm.narrative.get_var("told_mira_truth") == false,
+		"fixer with contract does not secretly tell Mira")
+	_finalize_and_expect(gm, "closed_the_door", "saved", "fixer plus unshown contract route")
 
 
 func _test_missed_route() -> void:

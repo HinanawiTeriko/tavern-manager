@@ -1,15 +1,15 @@
 {
   "id": "tavern_reward_hud",
-  "source": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png",
-  "prompt": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1_prompt.txt",
+  "source": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png",
+  "prompt": "art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt",
   "scale": 4,
   "assets": {
     "reward_gold_progress_bg": {
       "crop_rect": [
-        58,
-        108,
-        710,
-        198
+        48,
+        84,
+        800,
+        250
       ],
       "native": "assets/source/tavern/reward_hud/reward_gold_progress_bg_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_gold_progress_bg.png",
@@ -27,14 +27,20 @@
         45,
         10
       ],
-      "intended_godot_use": "Tavern TopPanel/GoldProgress/Bg understated milestone groove"
+      "intended_godot_use": "Tavern TopPanel/GoldProgress/Bg crafted wood-and-brass milestone groove",
+      "fill_window": [
+        6,
+        3,
+        42,
+        9
+      ]
     },
     "reward_gold_progress_fill": {
       "crop_rect": [
-        788,
-        128,
-        1174,
-        190
+        878,
+        112,
+        1520,
+        210
       ],
       "native": "assets/source/tavern/reward_hud/reward_gold_progress_fill_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_gold_progress_fill.png",
@@ -52,14 +58,14 @@
         46,
         10
       ],
-      "intended_godot_use": "Tavern TopPanel/GoldProgress/Fill low-brightness amber fill"
+      "intended_godot_use": "Tavern TopPanel/GoldProgress/Fill textured amber-gold fill"
     },
     "reward_gold_progress_ornate": {
       "crop_rect": [
-        92,
-        518,
-        1074,
-        615
+        72,
+        514,
+        1478,
+        646
       ],
       "native": "assets/source/tavern/reward_hud/reward_gold_progress_ornate_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_gold_progress_ornate.png",
@@ -81,10 +87,10 @@
     },
     "reward_rep_progress_bg": {
       "crop_rect": [
-        58,
-        314,
-        710,
-        400
+        48,
+        334,
+        800,
+        500
       ],
       "native": "assets/source/tavern/reward_hud/reward_rep_progress_bg_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_rep_progress_bg.png",
@@ -102,14 +108,20 @@
         45,
         10
       ],
-      "intended_godot_use": "Tavern TopPanel/ReputationProgress/Bg understated milestone groove"
+      "intended_godot_use": "Tavern TopPanel/ReputationProgress/Bg crafted wood-and-blue-iron milestone groove",
+      "fill_window": [
+        6,
+        3,
+        42,
+        9
+      ]
     },
     "reward_rep_progress_fill": {
       "crop_rect": [
-        788,
-        340,
-        1174,
-        398
+        878,
+        362,
+        1522,
+        462
       ],
       "native": "assets/source/tavern/reward_hud/reward_rep_progress_fill_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_rep_progress_fill.png",
@@ -127,14 +139,14 @@
         46,
         10
       ],
-      "intended_godot_use": "Tavern TopPanel/ReputationProgress/Fill cool low-brightness fill"
+      "intended_godot_use": "Tavern TopPanel/ReputationProgress/Fill textured cool-blue fill"
     },
     "reward_rep_progress_ornate": {
       "crop_rect": [
-        94,
-        682,
-        1076,
-        782
+        72,
+        704,
+        1478,
+        850
       ],
       "native": "assets/source/tavern/reward_hud/reward_rep_progress_ornate_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_rep_progress_ornate.png",
@@ -156,10 +168,10 @@
     },
     "reward_coin_particle": {
       "crop_rect": [
-        1290,
-        88,
-        1426,
-        224
+        1582,
+        158,
+        1710,
+        302
       ],
       "native": "assets/source/tavern/reward_hud/reward_coin_particle_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_coin_particle.png",
@@ -181,10 +193,10 @@
     },
     "reward_rep_particle": {
       "crop_rect": [
-        1290,
-        310,
-        1425,
-        430
+        1548,
+        410,
+        1660,
+        515
       ],
       "native": "assets/source/tavern/reward_hud/reward_rep_particle_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_rep_particle.png",
@@ -206,10 +218,10 @@
     },
     "reward_spark": {
       "crop_rect": [
-        1312,
-        548,
-        1395,
-        632
+        1560,
+        590,
+        1660,
+        715
       ],
       "native": "assets/source/tavern/reward_hud/reward_spark_native.png",
       "runtime": "assets/textures/ui/reward_hud/reward_spark.png",

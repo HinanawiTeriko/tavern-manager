@@ -9,6 +9,9 @@ const ORDER_GROOVE_SAFE_TOP := 604.0
 const ORDER_GROOVE_SAFE_RIGHT := 888.0
 const ORDER_GROOVE_SAFE_BOTTOM := 636.0
 const PATIENCE_BAR_SIZE := Vector2(192, 16)
+const REWARD_PROGRESS_FRAME_SIZE := Vector2(192, 48)
+const REWARD_PROGRESS_FILL_INSET := Vector2(24, 12)
+const REWARD_PROGRESS_FILL_SIZE := Vector2(144, 24)
 
 
 func _ready() -> void:
@@ -61,11 +64,86 @@ func _stylebox_texture(control: Control, style_name: String) -> Texture2D:
 	return stylebox.texture
 
 
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
+
+
+func _rect_array_close(actual: Array, expected: Array, tolerance: float = 0.5) -> bool:
+	if actual.size() < 4 or expected.size() < 4:
+		return false
+	for index in range(4):
+		if abs(float(actual[index]) - float(expected[index])) > tolerance:
+			return false
+	return true
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return []
+	var rect := control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+
+func _sprite_screen_rect(sprite: Sprite2D) -> Array:
+	if sprite == null or sprite.texture == null:
+		return []
+	var local_rect := sprite.get_rect()
+	var transform := sprite.get_global_transform()
+	var points := [
+		transform * local_rect.position,
+		transform * (local_rect.position + Vector2(local_rect.size.x, 0.0)),
+		transform * (local_rect.position + Vector2(0.0, local_rect.size.y)),
+		transform * (local_rect.position + local_rect.size),
+	]
+	var min_x := (points[0] as Vector2).x
+	var min_y := (points[0] as Vector2).y
+	var max_x := min_x
+	var max_y := min_y
+	for point in points:
+		var p := point as Vector2
+		min_x = min(min_x, p.x)
+		min_y = min(min_y, p.y)
+		max_x = max(max_x, p.x)
+		max_y = max(max_y, p.y)
+	return [min_x, min_y, max_x - min_x, max_y - min_y]
+
+
+func _rect_contains_point(values: Array, point: Vector2, tolerance: float = 0.5) -> bool:
+	if values.size() < 4:
+		return false
+	return _rect_from_array(values).grow(tolerance).has_point(point)
+
+
+func _rect_center(values: Array) -> Vector2:
+	var rect := _rect_from_array(values)
+	return rect.position + rect.size * 0.5
+
+
+func _tutorial_target_available(node: Node) -> bool:
+	if node == null:
+		return false
+	if node is CanvasItem and not (node as CanvasItem).is_visible_in_tree():
+		return false
+	return node.process_mode != Node.PROCESS_MODE_DISABLED
+
+
 func _button_stylebox_texture_path(button: Button, style_name: String) -> String:
 	var stylebox := button.get_theme_stylebox(style_name) as StyleBoxTexture
 	if stylebox == null:
 		return ""
 	return _texture_path(stylebox.texture)
+
+
+func _reward_coin_body_count(layer: Node) -> int:
+	var count := 0
+	if layer == null:
+		return count
+	for child in layer.get_children():
+		if child is RigidBody2D:
+			count += 1
+	return count
 
 
 func _test_tavern_patience_ui_contract() -> void:
@@ -140,6 +218,15 @@ func _test_tavern_patience_ui_contract() -> void:
 	if customer_area != null:
 		_ok(customer_area.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"CustomerArea lets center-table clicks reach BarWorkspace")
+	_ok(tavern.has_method("get_tutorial_highlight_rects"),
+		"TavernView exposes live tutorial highlight rects for Tavern tutorial triggers")
+	if tavern.has_method("get_tutorial_highlight_rects"):
+		var serve_rects: Dictionary = tavern.get_tutorial_highlight_rects("serve")
+		var customer_rect := serve_rects.get("CustomerNode", []) as Array
+		_ok(serve_rects.has("CustomerNode"), "serve tutorial provides the CustomerNode highlight key")
+		if customer_area != null:
+			_ok(_rect_array_close(customer_rect, _control_screen_rect(customer_area)),
+				"serve tutorial CustomerNode highlight follows the live CustomerArea rect")
 
 	var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as TextureRect
 	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
@@ -263,6 +350,151 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(_button_stylebox_texture_path(end_night_button, "pressed") == "res://assets/textures/ui/topbar_end_night_button_pressed.png",
 				"TopPanel/EndNightBtn pressed art is dedicated topbar art")
 
+	var reward_layer := tavern.get_node_or_null("RewardFeedbackLayer") as CanvasLayer
+	_ok(reward_layer != null, "Tavern adds a visual-only RewardFeedbackLayer for UI-travel rewards")
+	var reward_particles: Node = null
+	if reward_layer != null:
+		reward_particles = reward_layer.get_node_or_null("Particles")
+		_ok(reward_particles is Node2D, "RewardFeedbackLayer exposes a Particles node for travel particles")
+
+	var coin_layer := tavern.get_node_or_null("RewardCoinPhysicsLayer") as Node2D
+	_ok(coin_layer != null, "Tavern adds an isolated RewardCoinPhysicsLayer for bouncing reward coins")
+	if coin_layer != null:
+		_ok(coin_layer.get_node_or_null("CoinGround") is StaticBody2D,
+			"RewardCoinPhysicsLayer exposes an invisible reward-only CoinGround")
+
+	var gold_progress := tavern.get_node_or_null("TopPanel/GoldProgress") as Control
+	var rep_progress := tavern.get_node_or_null("TopPanel/ReputationProgress") as Control
+	_ok(gold_progress != null, "TopPanel adds GoldProgress without replacing GoldLabel")
+	_ok(rep_progress != null, "TopPanel adds ReputationProgress without replacing ReputationLabel")
+	if gold_progress != null and rep_progress != null:
+		_ok(gold_progress.size == rep_progress.size,
+			"GoldProgress and ReputationProgress use the same visual frame size")
+		_ok(abs(gold_progress.global_position.y - rep_progress.global_position.y) <= 0.01,
+			"GoldProgress and ReputationProgress top edges are vertically aligned")
+	for progress in [gold_progress, rep_progress]:
+		if progress == null:
+			continue
+		_ok(progress.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"%s ignores mouse input" % progress.name)
+		_ok(progress.get_node_or_null("Bg") is TextureRect,
+			"%s has a background art node" % progress.name)
+		_ok(progress.get_node_or_null("FillClip") is Control,
+			"%s has a clipping fill node" % progress.name)
+		_ok(progress.get_node_or_null("FillClip/Fill") is TextureRect,
+			"%s has a fixed fill art node" % progress.name)
+		_ok(progress.get_node_or_null("Ornate") is TextureRect,
+			"%s has a milestone-only ornate overlay" % progress.name)
+		var bg := progress.get_node_or_null("Bg") as TextureRect
+		var progress_fill_clip := progress.get_node_or_null("FillClip") as Control
+		var fill := progress.get_node_or_null("FillClip/Fill") as TextureRect
+		var ornate := progress.get_node_or_null("Ornate") as TextureRect
+		if bg != null and progress_fill_clip != null:
+			_ok(bg.z_index > progress_fill_clip.z_index,
+				"%s draws the progress frame above the fill layer" % progress.name)
+			_ok(bg.size == REWARD_PROGRESS_FRAME_SIZE,
+				"%s frame uses the full progress art size" % progress.name)
+			_ok(progress_fill_clip.position == REWARD_PROGRESS_FILL_INSET,
+				"%s fill clip starts inside the frame window" % progress.name)
+			_ok(progress_fill_clip.size.y == REWARD_PROGRESS_FILL_SIZE.y,
+				"%s fill clip height matches the frame window" % progress.name)
+		if bg != null and ornate != null:
+			_ok(ornate.z_index > bg.z_index,
+				"%s milestone overlay draws above the frame" % progress.name)
+		if fill != null:
+			_ok(fill.size == REWARD_PROGRESS_FRAME_SIZE,
+				"%s fill art keeps full frame size for texture alignment" % progress.name)
+			_ok(fill.position == -REWARD_PROGRESS_FILL_INSET,
+				"%s fill art is offset so the texture aligns with the frame window" % progress.name)
+		for art in [bg, fill, ornate]:
+			if art != null:
+				_ok(art.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+					"%s/%s ignores mouse input" % [progress.name, art.name])
+				_ok(art.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+					"%s/%s uses nearest filtering" % [progress.name, art.name])
+	if gold_progress != null and rep_progress != null:
+		var gold_bg := gold_progress.get_node_or_null("Bg") as TextureRect
+		var rep_bg := rep_progress.get_node_or_null("Bg") as TextureRect
+		var gold_fill_layer := gold_progress.get_node_or_null("FillClip") as Control
+		var rep_fill_layer := rep_progress.get_node_or_null("FillClip") as Control
+		if gold_bg != null and rep_bg != null:
+			_ok(abs(gold_bg.global_position.y - rep_bg.global_position.y) <= 0.01,
+				"gold and reputation progress frames share the same top edge")
+		if gold_fill_layer != null and rep_fill_layer != null:
+			_ok(abs(gold_fill_layer.global_position.y - rep_fill_layer.global_position.y) <= 0.01,
+				"gold and reputation progress fill layers share the same top edge")
+
+	_ok(tavern.has_method("show_order_reward_feedback"), "TavernView exposes reward feedback method")
+	if tavern.has_method("show_order_reward_feedback") and coin_layer != null and reward_particles is Node2D:
+		tavern.update_top_bar(13, 8, 1, 30)
+		var gold_label := tavern.get_node_or_null("TopPanel/GoldLabel") as Label
+		var gold_fill_clip := tavern.get_node_or_null("TopPanel/GoldProgress/FillClip") as Control
+		var rep_fill_clip := tavern.get_node_or_null("TopPanel/ReputationProgress/FillClip") as Control
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 37.0) <= 2.0,
+			"GoldProgress fill reflects the visible 13/50 pre-reward progress")
+		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 23.0) <= 2.0,
+			"ReputationProgress fill reflects the visible 8/50 pre-reward progress")
+
+		var coin_count_before := _reward_coin_body_count(coin_layer)
+		var particle_count_before := (reward_particles as Node2D).get_child_count()
+		tavern.update_top_bar(25, 10, 1, 30)
+		tavern.show_order_reward_feedback(12, 2, 13, 8)
+		tavern.update_top_bar(25, 10, 1, 30)
+		await get_tree().process_frame
+		_ok(gold_label != null and gold_label.text.find("13") >= 0 and gold_label.text.find("25") == -1,
+			"gold label keeps the previous total until tabletop coins are collected")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 37.0) <= 2.0,
+			"GoldProgress fill does not advance before tabletop coins are collected")
+		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 29.0) <= 2.0,
+			"ReputationProgress fill can advance with auto-travel reputation particles")
+		var coin_count_after_spawn := _reward_coin_body_count(coin_layer)
+		_ok(coin_count_after_spawn > coin_count_before,
+			"positive gold reward spawns temporary physical coin bodies")
+		_ok((reward_particles as Node2D).get_child_count() > particle_count_before,
+			"positive reputation reward spawns UI-travel reputation particles")
+		await get_tree().create_timer(0.55).timeout
+		_ok(_reward_coin_body_count(coin_layer) >= coin_count_after_spawn,
+			"gold reward coins remain on the bar until the player clicks")
+		var gold_particle_count_before := (reward_particles as Node2D).get_child_count()
+		var click_event := InputEventMouseButton.new()
+		click_event.button_index = MOUSE_BUTTON_LEFT
+		click_event.pressed = true
+		click_event.position = Vector2(64.0, 64.0)
+		_ok(tavern.has_method("_input"), "TavernView captures left-click input for reward collection")
+		tavern.set_dialogue_mode(true)
+		if tavern.has_method("_input"):
+			tavern.call("_input", click_event)
+		await get_tree().process_frame
+		_ok(_reward_coin_body_count(coin_layer) >= coin_count_after_spawn,
+			"left-click during dialogue does not collect pending reward coins")
+		tavern.set_dialogue_mode(false)
+		gold_particle_count_before = (reward_particles as Node2D).get_child_count()
+		if tavern.has_method("_input"):
+			tavern.call("_input", click_event)
+		await get_tree().process_frame
+		_ok(_reward_coin_body_count(coin_layer) == 0,
+			"left-click after dialogue collects all pending reward coins")
+		_ok((reward_particles as Node2D).get_child_count() > gold_particle_count_before,
+			"collected reward coins transfer into UI-travel particles")
+		await get_tree().create_timer(0.78).timeout
+		_ok(gold_label != null and gold_label.text.find("25") >= 0,
+			"gold label advances after collected coins reach the UI")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 72.0) <= 2.0,
+			"GoldProgress fill advances after collected coins reach the UI")
+
+		tavern.update_top_bar(45, 10, 1, 30)
+		tavern.update_top_bar(55, 10, 1, 30)
+		tavern.show_order_reward_feedback(10, 0, 45, 10)
+		await get_tree().process_frame
+		var gold_ornate := tavern.get_node_or_null("TopPanel/GoldProgress/Ornate") as TextureRect
+		_ok(gold_ornate != null and not gold_ornate.visible,
+			"crossing a gold milestone waits for coin collection before showing ornate progress")
+		if tavern.has_method("_input"):
+			tavern.call("_input", click_event)
+		await get_tree().create_timer(0.78).timeout
+		_ok(gold_ornate != null and gold_ornate.visible,
+			"crossing a gold milestone activates the ornate overlay after collection reaches the UI")
+
 	var shortcut_bg := tavern.get_node_or_null("ShortcutBarBg") as Panel
 	var shortcut_bar := tavern.get_node_or_null("ShortcutBar") as HBoxContainer
 	_ok(shortcut_bg != null, "ShortcutBarBg remains the public Tavern shortcut tray path")
@@ -292,6 +524,42 @@ func _test_tavern_patience_ui_contract() -> void:
 				var right_gap := shortcut_bg.global_position.x + shortcut_bg.size.x - (slot9.global_position.x + slot9.size.x)
 				_ok(right_gap >= 2.0 and right_gap <= 6.0,
 					"ShortcutBar/Slot9 ends at the tray right cap instead of leaving a visible right-side void: gap %.2f" % right_gap)
+	if tavern.has_method("get_tutorial_highlight_rects"):
+		var craft_rects: Dictionary = tavern.get_tutorial_highlight_rects("craft")
+		var shortcut_rect := craft_rects.get("ShortcutBar", []) as Array
+		_ok(craft_rects.has("ShortcutBar"), "craft tutorial provides the ShortcutBar highlight key")
+		if shortcut_bar != null:
+			_ok(_rect_array_close(shortcut_rect, _control_screen_rect(shortcut_bar)),
+				"craft tutorial ShortcutBar highlight follows the live ShortcutBar rect")
+		var barrel_rect := craft_rects.get("CraftBarrel", []) as Array
+		var recovery_rect := craft_rects.get("RecoveryContainer", []) as Array
+		var brewery_art := tavern.get_node_or_null("BarWorkspace/World/Brewery/Art") as Sprite2D
+		_ok(craft_rects.has("CraftBarrel"), "craft tutorial provides the CraftBarrel highlight key")
+		if brewery_art != null:
+			_ok(_rect_contains_point(barrel_rect, brewery_art.global_position),
+				"craft tutorial CraftBarrel highlight contains the live brewery art center")
+			_ok(_rect_center(barrel_rect).distance_to(brewery_art.global_position) <= 32.0,
+				"craft tutorial CraftBarrel highlight is centered on the live brewery art")
+		_ok(craft_rects.has("RecoveryContainer"), "craft tutorial provides the RecoveryContainer highlight key")
+		for container_path in [
+			"BarWorkspace/World/Brewery",
+			"BarWorkspace/World/SeasoningShaker",
+			"BarWorkspace/World/Pot",
+		]:
+			var container := tavern.get_node_or_null(container_path) as Node2D
+			if _tutorial_target_available(container):
+				_ok(_rect_contains_point(recovery_rect, container.global_position),
+					"craft tutorial RecoveryContainer highlight covers %s" % container_path)
+		if tavern.has_method("configure_slice_day"):
+			tavern.configure_slice_day(3)
+			await get_tree().process_frame
+			craft_rects = tavern.get_tutorial_highlight_rects("craft")
+			recovery_rect = craft_rects.get("RecoveryContainer", []) as Array
+			var day3_pot := tavern.get_node_or_null("BarWorkspace/World/Pot") as Node2D
+			_ok(_tutorial_target_available(day3_pot), "Day 3 enables the pot tutorial target")
+			if day3_pot != null:
+				_ok(_rect_contains_point(recovery_rect, day3_pot.global_position),
+					"craft tutorial RecoveryContainer highlight covers the pot when it is unlocked")
 
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")

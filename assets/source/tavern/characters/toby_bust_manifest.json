@@ -1,7 +1,8 @@
 {
   "id": "toby_bust_portrait",
-  "style_profile": "ryan_mira_distinct_low_detail_pixel_v2",
-  "source": "art_sources/generated_raw/toby_bust/toby_neutral_source_v2.png",
+  "style_profile": "approved_vera_belta_runtime_matched_important_npc_v1",
+  "source": "art_sources/generated_raw/characters/toby/toby_neutral_source_v3.png",
+  "prompt": "art_sources/generated_raw/characters/toby/toby_neutral_prompt_v3.txt",
   "comparison_references": [
     "assets/textures/characters/ryan_neutral.png",
     "assets/textures/characters/mira_neutral.png"
@@ -9,28 +10,32 @@
   "source_rect": [
     0,
     0,
-    1106,
-    1422
+    1122,
+    1402
   ],
   "native": "assets/source/tavern/characters/toby_neutral_native.png",
   "runtime": "assets/textures/characters/toby_neutral.png",
   "native_size": [
-    70,
-    90
+    128,
+    160
   ],
   "runtime_size": [
-    280,
-    360
+    512,
+    640
   ],
   "safe_area": [
     0,
     0,
-    70,
-    90
+    128,
+    160
   ],
   "scale": 4,
-  "color_limit": 20,
-  "target_visible_width": 54,
+  "color_limit": 72,
+  "visible_target": [
+    124,
+    154
+  ],
+  "bottom_padding": 3,
   "intended_godot_use": "Tavern CustomerSprite Toby bust portrait behind TabletopArt",
   "character_notes": [
     "teenage wandering apprentice",
@@ -42,8 +47,8 @@
   "bar_occlusion_contract": {
     "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
     "runtime_sprite_size": [
-      280,
-      360
+      512,
+      640
     ],
     "tabletop_top_y_runtime": 484,
     "tabletop_art_z_index": -90,

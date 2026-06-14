@@ -6,6 +6,23 @@ extends Node
 var _checks := 0
 var _failures := 0
 
+class RewardFeedbackProbe:
+	extends Node
+	var daily_menu := {"ale_beer": {"price": 10}}
+	var reward_calls: Array = []
+
+	func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int) -> void:
+		reward_calls.append([earned_gold, earned_rep, previous_gold, previous_rep])
+
+	func update_top_bar(_gold: int, _rep: int, _day: int, _max_day: int) -> void:
+		pass
+
+	func customer_say(_text: String) -> void:
+		pass
+
+	func show_customer_reaction(_outcome: String, _npc_id: String = "") -> void:
+		pass
+
 
 func _ready() -> void:
 	_test_shop_abilities()
@@ -13,6 +30,7 @@ func _ready() -> void:
 	_test_find_slam_recipe()
 	_test_quality_payoff()
 	_test_buy_and_serve()
+	_test_order_reward_feedback_routing()
 	_test_save_roundtrip()
 	_finish()
 
@@ -127,6 +145,40 @@ func _test_buy_and_serve() -> void:
 
 	# 未知能力 key 被拒
 	_ok(not gm.buy_ability("nope"), "未知能力购买被拒")
+
+
+func _test_order_reward_feedback_routing() -> void:
+	var gm = _gm()
+	var probe := RewardFeedbackProbe.new()
+	gm._tavern_view = probe
+	gm._guest_lingering = false
+	gm.economy.gold = 20
+	gm.economy.reputation = 7
+	gm.economy.gold_today = 0
+	var guest := GuestData.new()
+	guest.order_key = "ale_beer"
+	guest.has_dialogue = false
+	guest.npc_id = "regular_reward_test"
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	gm.request_serve("ale_beer", {"quality": "good"}, "")
+
+	_ok(probe.reward_calls.size() == 1, "successful serve routes reward feedback to TavernView")
+	if probe.reward_calls.size() == 1:
+		var call: Array = probe.reward_calls[0]
+		_ok(call[0] == 15, "reward feedback receives earned gold from quality pricing")
+		_ok(call[1] == 3, "reward feedback receives earned reputation from quality pricing")
+		_ok(call[2] == 20, "reward feedback receives previous gold before economy mutation")
+		_ok(call[3] == 7, "reward feedback receives previous reputation before economy mutation")
+	_ok(gm.economy.gold == 35, "serve still mutates economy gold")
+	_ok(gm.economy.reputation == 10, "serve still mutates economy reputation")
+
+	gm.guests.has_guest = false
+	gm.guests.current_guest = null
+	gm._guest_lingering = false
+	gm._tavern_view = null
+	probe.free()
 
 
 func _test_save_roundtrip() -> void:

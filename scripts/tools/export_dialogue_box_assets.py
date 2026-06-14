@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,6 +12,18 @@ SOURCE = ROOT / "assets" / "source" / "ui" / "dialogue_box"
 MANIFEST = SOURCE / "dialogue_box_manifest.json"
 CONTACT_SHEET = ROOT / "docs" / "art" / "dialogue_box_contact_sheet.png"
 SCENE_PREVIEW = ROOT / "docs" / "art" / "dialogue_box_scene_preview.png"
+CHARACTER_COMPARE = ROOT / "docs" / "art" / "dialogue_box_character_compare.png"
+SOURCE_TO_NATIVE_RESAMPLE = Image.Resampling.BOX
+CHARACTER_REFERENCES = [
+    (
+        "Vera native",
+        ROOT / "assets" / "source" / "tavern" / "characters" / "vera" / "vera_neutral_native.png",
+    ),
+    (
+        "Marco native",
+        ROOT / "assets" / "source" / "tavern" / "regular_customers" / "regular_marco_neutral_native.png",
+    ),
+]
 
 
 def load_manifest() -> dict[str, Any]:
@@ -77,14 +89,6 @@ def apply_dialogue_grade(image: Image.Image, item_id: str) -> Image.Image:
                 red = int(red * 0.80)
                 green = int(green * 0.92 + 4)
                 blue = int(blue * 1.05 + 4)
-            if item_id.endswith("_hover"):
-                red = int(red * 1.15 + 10)
-                green = int(green * 1.09 + 6)
-                blue = int(blue * 0.96)
-            elif item_id.endswith("_pressed"):
-                red = int(red * 0.72)
-                green = int(green * 0.76)
-                blue = int(blue * 0.82)
             maximum = max(red, green, blue)
             if maximum > 214:
                 scale = 214.0 / maximum
@@ -95,31 +99,82 @@ def apply_dialogue_grade(image: Image.Image, item_id: str) -> Image.Image:
     return graded
 
 
-def fit_to_native(crop: Image.Image, item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int) -> Image.Image:
-    clean = remove_chroma_background(crop, background_rgb, tolerance)
+def validate_margins(size: tuple[int, int], margins: tuple[int, int, int, int], item_id: str, label: str) -> None:
+    left, top, right, bottom = margins
+    if min(margins) < 0:
+        raise ValueError(f"{item_id}: {label} margins must be non-negative")
+    if left + right >= size[0] or top + bottom >= size[1]:
+        raise ValueError(f"{item_id}: {label} margins {margins} do not fit size {size}")
+
+
+def nine_slice_resize(clean: Image.Image, item: dict[str, Any]) -> Image.Image:
+    source_size = clean.size
+    target_size = tuple(item["native_size"])
+    source_margins = tuple(item["source_slice_margins"])
+    target_margins = tuple(item["nine_slice_margins"])
+    validate_margins(source_size, source_margins, item["id"], "source_slice")
+    validate_margins(target_size, target_margins, item["id"], "native nine-slice")
+
+    src_left, src_top, src_right, src_bottom = source_margins
+    dst_left, dst_top, dst_right, dst_bottom = target_margins
+    src_x = [0, src_left, source_size[0] - src_right, source_size[0]]
+    src_y = [0, src_top, source_size[1] - src_bottom, source_size[1]]
+    dst_x = [0, dst_left, target_size[0] - dst_right, target_size[0]]
+    dst_y = [0, dst_top, target_size[1] - dst_bottom, target_size[1]]
+
+    native = Image.new("RGBA", target_size, (0, 0, 0, 0))
+    for row in range(3):
+        for col in range(3):
+            src_box = (src_x[col], src_y[row], src_x[col + 1], src_y[row + 1])
+            dst_box = (dst_x[col], dst_y[row], dst_x[col + 1], dst_y[row + 1])
+            dst_w = dst_box[2] - dst_box[0]
+            dst_h = dst_box[3] - dst_box[1]
+            if dst_w <= 0 or dst_h <= 0:
+                continue
+            patch = clean.crop(src_box)
+            if patch.size != (dst_w, dst_h):
+                patch = patch.resize((dst_w, dst_h), SOURCE_TO_NATIVE_RESAMPLE)
+            native.alpha_composite(patch, (dst_box[0], dst_box[1]))
+    return native
+
+
+def contain_visible_native_grid(clean: Image.Image, native_size: tuple[int, int], item_id: str) -> Image.Image:
     alpha_box = clean.getchannel("A").getbbox()
     if alpha_box is None:
-        raise ValueError(f"{item['id']}: crop has no visible pixels after chroma cleanup")
-    trimmed = clean.crop(alpha_box)
-    native_size = tuple(item["native_size"])
-    if item["id"] == "dialogue_progress_arrow":
-        fitted = ImageOps.contain(trimmed, native_size, Image.Resampling.LANCZOS)
-    else:
-        fitted = trimmed.resize(native_size, Image.Resampling.LANCZOS)
+        raise ValueError(f"{item_id}: crop has no visible pixels after chroma cleanup")
+    visible = clean.crop(alpha_box)
+    scale = min(native_size[0] / visible.width, native_size[1] / visible.height)
+    fitted_size = (
+        max(1, min(native_size[0], int(round(visible.width * scale)))),
+        max(1, min(native_size[1], int(round(visible.height * scale)))),
+    )
+    fitted = visible.resize(fitted_size, SOURCE_TO_NATIVE_RESAMPLE)
     native = Image.new("RGBA", native_size, (0, 0, 0, 0))
-    x = (native.width - fitted.width) // 2
-    y = (native.height - fitted.height) // 2
-    native.alpha_composite(fitted, (x, y))
+    native.alpha_composite(fitted, ((native.width - fitted.width) // 2, (native.height - fitted.height) // 2))
+    return native
+
+
+def fit_to_native(crop: Image.Image, item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int) -> Image.Image:
+    clean = remove_chroma_background(crop, background_rgb, tolerance)
+    native_size = tuple(item["native_size"])
+    if "source_slice_margins" in item:
+        native = nine_slice_resize(clean, item)
+    else:
+        native = contain_visible_native_grid(clean, native_size, item["id"])
     native = apply_dialogue_grade(native, item["id"])
-    return quantize_visible(native, 22)
+    return quantize_visible(native, int(item.get("palette_colors", 22)))
 
 
-def export_item(reference: Image.Image, item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int, scale: int) -> tuple[Image.Image, Image.Image]:
+def export_item(item: dict[str, Any], background_rgb: tuple[int, int, int], tolerance: int, scale: int) -> tuple[Image.Image, Image.Image]:
     source_path = ROOT / item["source"]
     if not source_path.exists():
         raise FileNotFoundError(f"missing source image for {item['id']}: {source_path}")
+    with Image.open(source_path) as source_file:
+        source = source_file.convert("RGBA")
     x, y, width, height = item["source_rect"]
-    crop = reference.crop((x, y, x + width, y + height))
+    if x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > source.width or y + height > source.height:
+        raise ValueError(f"{item['id']}: source_rect {item['source_rect']} does not fit {source_path.relative_to(ROOT)} size {source.size}")
+    crop = source.crop((x, y, x + width, y + height))
     native = fit_to_native(crop, item, background_rgb, tolerance)
     expected_native_size = tuple(item["native_size"])
     if native.size != expected_native_size:
@@ -134,26 +189,61 @@ def export_item(reference: Image.Image, item: dict[str, Any], background_rgb: tu
     return native, runtime
 
 
+def make_checkerboard(size: tuple[int, int], tile: int = 16) -> Image.Image:
+    checker = Image.new("RGBA", size, (50, 50, 50, 255))
+    draw = ImageDraw.Draw(checker)
+    for y in range(0, size[1], tile):
+        for x in range(0, size[0], tile):
+            color = (34, 34, 34, 255) if ((x // tile) + (y // tile)) % 2 == 0 else (60, 60, 60, 255)
+            draw.rectangle((x, y, x + tile - 1, y + tile - 1), fill=color)
+    return checker
+
+
+def paste_on_checkerboard(sheet: Image.Image, image: Image.Image, position: tuple[int, int]) -> None:
+    preview = make_checkerboard(image.size, 16)
+    preview.alpha_composite(image.convert("RGBA"), (0, 0))
+    sheet.alpha_composite(preview, position)
+
+
 def make_contact_sheet(outputs: list[tuple[dict[str, Any], Image.Image, Image.Image]]) -> None:
     CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    cell_width = 280
-    cell_height = 172
-    sheet = Image.new("RGBA", (cell_width * 3, 92 + cell_height * 2), (18, 14, 12, 255))
+    sheet = Image.new("RGBA", (900, 500), (18, 14, 12, 255))
     draw = ImageDraw.Draw(sheet)
-    draw.text((16, 16), "Dialogue box AI pixel pipeline", fill=(226, 210, 178, 255))
-    draw.text((16, 42), "native 4x preview over runtime parity assets", fill=(169, 151, 124, 255))
+    draw.text((16, 16), "Dialogue box UI pipeline v1", fill=(226, 210, 178, 255))
+    draw.text((16, 42), "one shipped panel component, native shown at exact 2x; runtime is exact 4x nearest", fill=(169, 151, 124, 255))
     for index, (item, native, runtime) in enumerate(outputs):
-        column = index % 3
-        row = index // 3
-        origin_x = column * cell_width + 14
-        origin_y = 76 + row * cell_height
+        del runtime
+        origin_x = 24
+        origin_y = 82 + index * 140
         draw.text((origin_x, origin_y), item["id"], fill=(226, 210, 178, 255))
-        native_preview = native.resize((native.width * 4, native.height * 4), Image.Resampling.NEAREST)
-        native_preview = ImageOps.contain(native_preview, (220, 56), Image.Resampling.NEAREST)
-        runtime_preview = ImageOps.contain(runtime, (220, 56), Image.Resampling.NEAREST)
+        native_preview = native.resize((native.width * 2, native.height * 2), Image.Resampling.NEAREST)
         sheet.alpha_composite(native_preview, (origin_x, origin_y + 24))
-        sheet.alpha_composite(runtime_preview, (origin_x, origin_y + 88))
     sheet.convert("RGB").save(CONTACT_SHEET)
+
+
+def make_character_compare_sheet(outputs: list[tuple[dict[str, Any], Image.Image, Image.Image]]) -> None:
+    by_id = {item["id"]: native for item, native, _runtime in outputs}
+    panel = by_id["dialogue_panel"].resize((600, 108), Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (980, 560), (18, 14, 12, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((18, 16), "Dialogue panel vs character native pixel density", fill=(226, 210, 178, 255))
+    draw.text((18, 40), "all previews use exact nearest-neighbor enlargement; no runtime scene text is baked here", fill=(169, 151, 124, 255))
+    draw.text((24, 76), "dialogue_panel_native.png x2", fill=(226, 210, 178, 255))
+    paste_on_checkerboard(sheet, panel, (24, 100))
+
+    x = 24
+    y = 242
+    for label, path in CHARACTER_REFERENCES:
+        if not path.exists():
+            raise FileNotFoundError(f"missing character comparison reference: {path}")
+        with Image.open(path) as character_file:
+            character = character_file.convert("RGBA")
+        preview = character.resize((character.width * 2, character.height * 2), Image.Resampling.NEAREST)
+        draw.text((x, y), f"{label} x2", fill=(226, 210, 178, 255))
+        paste_on_checkerboard(sheet, preview, (x, y + 24))
+        x += preview.width + 40
+    CHARACTER_COMPARE.parent.mkdir(parents=True, exist_ok=True)
+    sheet.convert("RGB").save(CHARACTER_COMPARE)
 
 
 def make_scene_preview(outputs: list[tuple[dict[str, Any], Image.Image, Image.Image]]) -> None:
@@ -165,12 +255,6 @@ def make_scene_preview(outputs: list[tuple[dict[str, Any], Image.Image, Image.Im
         draw.rectangle((0, y, 1280, y + 7), fill=color)
     panel = by_id["dialogue_panel"]
     preview.alpha_composite(panel, ((preview.width - panel.width) // 2, 488))
-    nameplate = by_id["dialogue_nameplate"]
-    preview.alpha_composite(nameplate, (92, 462))
-    response = by_id["dialogue_response_hover"]
-    preview.alpha_composite(response, ((preview.width - response.width) // 2, 356))
-    arrow = by_id["dialogue_progress_arrow"]
-    preview.alpha_composite(arrow, (1068, 610))
     SCENE_PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     preview.save(SCENE_PREVIEW)
 
@@ -180,13 +264,12 @@ def main() -> None:
     reference_path = ROOT / manifest["reference"]
     if not reference_path.exists():
         raise FileNotFoundError(f"missing reference: {reference_path}")
-    reference = Image.open(reference_path).convert("RGBA")
     scale = int(manifest["scale"])
     background_rgb = tuple(manifest["background_rgb"])
     tolerance = int(manifest["background_tolerance"])
     outputs: list[tuple[dict[str, Any], Image.Image, Image.Image]] = []
     for item in manifest["items"]:
-        native, runtime = export_item(reference, item, background_rgb, tolerance, scale)
+        native, runtime = export_item(item, background_rgb, tolerance, scale)
         native_path = ROOT / item["native"]
         runtime_path = ROOT / item["runtime"]
         native_path.parent.mkdir(parents=True, exist_ok=True)
@@ -197,6 +280,7 @@ def main() -> None:
         print(f"{item['id']}: {native.size} -> {runtime.size}")
     make_contact_sheet(outputs)
     make_scene_preview(outputs)
+    make_character_compare_sheet(outputs)
     print(f"contact sheet: {CONTACT_SHEET.relative_to(ROOT)}")
 
 

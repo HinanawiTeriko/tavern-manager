@@ -121,6 +121,9 @@ func _active_posting(location: Dictionary) -> Dictionary:
 	for p in location.get("postings", []):
 		if current_day < int(p.get("dayMin", 1)):
 			continue
+		var day_max := int(p.get("dayMax", 0))
+		if day_max > 0 and current_day > day_max:
+			continue
 		var rf := String(p.get("requiresFlag", ""))
 		if rf != "" and not _flag_satisfied(rf):
 			continue

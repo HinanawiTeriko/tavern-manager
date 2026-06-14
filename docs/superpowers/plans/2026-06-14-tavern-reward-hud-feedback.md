@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add night-service reward feedback where successful orders burst physical gold coins onto the bar, then pull coins/reputation marks into understated Tavern HUD milestone progress bars.
+**Goal:** Add night-service reward feedback where successful orders burst physical gold coins onto the bar, let the player collect pending coins with one click anywhere, then pull coins/reputation marks into understated Tavern HUD milestone progress bars.
 
-**Architecture:** Keep the feature bounded to `Tavern.tscn`, `TavernView`, and the successful-order branch in `GameManager`. Use a dedicated reward coin physics layer that cannot collide with draggable desk items, then transfer coins into UI travel nodes. Use processed pixel UI textures generated through an explicit manifest and deterministic nearest-neighbor exporter; default progress bars must stay visually quiet and milestone ornamentation is a separate temporary overlay.
+**Architecture:** Keep the feature bounded to `Tavern.tscn`, `TavernView`, and the successful-order branch in `GameManager`. Use a dedicated reward coin physics layer that cannot collide with draggable desk items, keep landed coins pending until the player left-clicks anywhere in the Tavern while dialogue is not active, then transfer the pending batch into UI travel nodes. Use processed pixel UI textures generated through an explicit manifest and deterministic nearest-neighbor exporter; default progress bars must look crafted but restrained, while milestone ornamentation remains a separate temporary overlay.
 
 **Tech Stack:** Godot 4.6.3, GDScript, Python Pillow asset pipeline, Python unittest, Godot headless scene tests, built-in image generation for raw source art.
 
@@ -12,14 +12,130 @@
 
 ## Files
 
-- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png` - generated source sheet containing understated progress bars, milestone-only ornate overlays, small coins, reputation marks, and spark art.
-- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1_prompt.txt` - exact image prompt retained with the raw source.
+- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png` - generated source sheet containing crafted-but-restrained default progress bars, milestone-only ornate overlays, small coins, reputation marks, and spark art.
+- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt` - exact image prompt retained with the raw source.
 - Create: `scripts/tools/export_tavern_reward_hud_assets.py` - crops the source sheet from explicit rectangles, normalizes to native pixel assets, exports 4x runtime PNGs, manifest, and contact sheet.
 - Create: `scripts/test/test_tavern_reward_hud_asset_pipeline.py` - validates the asset pipeline and nearest-neighbor exports.
 - Modify: `scripts/test/test_tavern_patience_ui.gd` - extends the existing Tavern topbar contract with reward HUD node and runtime behavior assertions.
 - Modify: `scenes/ui/Tavern.tscn` - adds `RewardFeedbackLayer`, `TopPanel/GoldProgress`, and `TopPanel/ReputationProgress` without renaming existing nodes.
 - Modify: `scripts/ui/tavern_view.gd` - loads reward HUD art, updates progress fill clips, spawns isolated reward coin physics, transfers coins to UI travel, spawns reputation marks, and flashes ornate milestone states.
 - Modify: `scripts/game_manager.gd` - captures previous totals and calls `TavernView.show_order_reward_feedback()` only after successful rewards.
+
+## Task 5: Click Anywhere to Collect Pending Coins
+
+**Files:**
+- Modify: `scripts/test/test_tavern_patience_ui.gd`
+- Modify: `scripts/ui/tavern_view.gd`
+
+- [ ] **Step 1: Update the Tavern contract test**
+
+In `scripts/test/test_tavern_patience_ui.gd`, after `tavern.show_order_reward_feedback(12, 2, 13, 8)`, wait longer than the old auto-collect timer and assert reward coin bodies are still present:
+
+```gdscript
+await get_tree().create_timer(0.55).timeout
+_ok(_reward_coin_body_count(coin_layer) > coin_count_before,
+	"gold reward coins remain on the bar until the player clicks")
+```
+
+Then simulate a left click away from the coins and assert the full pending batch moves into `RewardFeedbackLayer/Particles`:
+
+```gdscript
+var gold_particle_count_before := (reward_particles as Node2D).get_child_count()
+var click_event := InputEventMouseButton.new()
+click_event.button_index = MOUSE_BUTTON_LEFT
+click_event.pressed = true
+click_event.position = Vector2(64, 64)
+tavern._input(click_event)
+await get_tree().process_frame
+_ok(_reward_coin_body_count(coin_layer) == 0,
+	"left-click anywhere collects all pending reward coins")
+_ok((reward_particles as Node2D).get_child_count() > gold_particle_count_before,
+	"collected reward coins transfer into UI-travel particles")
+```
+
+- [ ] **Step 2: Run Tavern test to verify RED**
+
+Run:
+
+```powershell
+& 'C:\Program Files\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64_console.exe' --headless --disable-crash-handler --quit-after 12 --log-file 'tmp_tests\test_tavern_reward_click_red.log' --path . --scene res://scenes/test/test_tavern_patience_ui.tscn
+```
+
+Expected: FAIL because the current implementation auto-collects coins after `REWARD_COIN_BOUNCE_SECONDS`.
+
+- [ ] **Step 3: Implement pending coin collection**
+
+In `scripts/ui/tavern_view.gd`, track pending bodies in an array:
+
+```gdscript
+var _pending_reward_coin_bodies: Array[RigidBody2D] = []
+```
+
+Remove the auto-collect timer from `_spawn_reward_coin()`. Append new bodies to `_pending_reward_coin_bodies`.
+
+Add:
+
+```gdscript
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_LEFT \
+		and event.pressed:
+		_collect_pending_reward_coins()
+```
+
+Add `_collect_pending_reward_coins()` to transfer every valid pending `RigidBody2D` through `_pull_reward_coin_to_ui()`, then clear the array. Non-left clicks do nothing.
+
+- [ ] **Step 4: Run Tavern test to verify GREEN**
+
+Run the same command from Step 2.
+
+Expected: PASS with the existing Tavern contract checks.
+
+## Task 6: Block Coin Collection During Dialogue
+
+**Files:**
+- Modify: `scripts/test/test_tavern_patience_ui.gd`
+- Modify: `scripts/ui/tavern_view.gd`
+
+- [ ] **Step 1: Extend the Tavern contract test**
+
+In `scripts/test/test_tavern_patience_ui.gd`, after pending reward coins have landed, call:
+
+```gdscript
+tavern.set_dialogue_mode(true)
+tavern.call("_input", click_event)
+await get_tree().process_frame
+_ok(_reward_coin_body_count(coin_layer) >= coin_count_after_spawn,
+	"left-click during dialogue does not collect pending reward coins")
+tavern.set_dialogue_mode(false)
+```
+
+Then click again and keep the existing assertions that all pending coins are collected and transferred into `RewardFeedbackLayer/Particles`.
+
+- [ ] **Step 2: Run Tavern test to verify RED**
+
+Run:
+
+```powershell
+& 'C:\Program Files\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64_console.exe' --headless --disable-crash-handler --quit-after 180 --log-file 'tmp_tests\test_tavern_reward_dialogue_click_red.log' --path . --scene res://scenes/test/test_tavern_patience_ui.tscn
+```
+
+Expected: FAIL because the current `_input()` path collects coins even while `DialogueOverlay` is visible.
+
+- [ ] **Step 3: Gate collection behind dialogue state**
+
+In `scripts/ui/tavern_view.gd`, update `_input(event)` so left-click collection returns early while `_dialogue_overlay.visible` is true:
+
+```gdscript
+if _dialogue_overlay != null and _dialogue_overlay.visible:
+	return
+```
+
+- [ ] **Step 4: Run Tavern test to verify GREEN**
+
+Run the same command from Step 2.
+
+Expected: PASS with Tavern contract checks.
 
 ## Task 1: Reward HUD Asset Pipeline
 
@@ -336,6 +452,72 @@ git diff --stat -- scripts/test/test_tavern_reward_hud_asset_pipeline.py scripts
 ```
 
 Expected: diff is limited to the reward HUD feature and generated assets.
+
+## Task 7: Crafted Default Progress Bar Art Pass
+
+**Files:**
+- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png`
+- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt`
+- Modify: `scripts/test/test_tavern_reward_hud_asset_pipeline.py`
+- Modify: `scripts/tools/export_tavern_reward_hud_assets.py`
+- Modify: `assets/source/tavern/reward_hud/*_native.png`
+- Modify: `assets/textures/ui/reward_hud/*.png`
+- Modify: `docs/art/tavern_reward_hud_contact_sheet.png`
+
+- [ ] **Step 1: Tighten asset test for crafted defaults**
+
+Update `scripts/test/test_tavern_reward_hud_asset_pipeline.py` so it expects v2 raw source and prompt paths. Require prompt text to include `Default progress grooves must look crafted, not placeholder-simple` and `small milestone tick marks`. Add edge-accent checks so `reward_gold_progress_bg_native.png` has at least 24 warm edge accent pixels and `reward_rep_progress_bg_native.png` has at least 12 cool edge accent pixels.
+
+- [ ] **Step 2: Run asset test to verify RED**
+
+Run:
+
+```powershell
+python -m unittest scripts.test.test_tavern_reward_hud_asset_pipeline.TavernRewardHudAssetPipelineTest -v
+```
+
+Expected: FAIL because v2 source and the richer default progress art do not exist yet.
+
+- [ ] **Step 3: Generate v2 source sheet**
+
+Use built-in image generation with a flat `#ff00ff` chroma-key prompt. Keep default progress bars crafted but restrained: wood/iron end caps, small milestone tick marks, rivets, inner shadow, material texture, no readable text, and no large default medallions.
+
+Save the selected output to:
+
+```text
+art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png
+```
+
+Save the exact prompt to:
+
+```text
+art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt
+```
+
+- [ ] **Step 4: Update exporter crop rectangles**
+
+In `scripts/tools/export_tavern_reward_hud_assets.py`, point `RAW_SOURCE` and manifest source/prompt paths to v2. Update each asset's explicit `crop_rect` from visual inspection of the generated sheet. Do not infer crops from color or connected components.
+
+- [ ] **Step 5: Export and verify GREEN**
+
+Run:
+
+```powershell
+python scripts/tools/export_tavern_reward_hud_assets.py
+python -m unittest scripts.test.test_tavern_reward_hud_asset_pipeline.TavernRewardHudAssetPipelineTest -v
+```
+
+Expected: PASS and `docs/art/tavern_reward_hud_contact_sheet.png` shows crafted default progress bars and separate ornate milestone overlays.
+
+- [ ] **Step 6: Run Tavern UI contract**
+
+Run:
+
+```powershell
+& 'C:\Program Files\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64_console.exe' --headless --disable-crash-handler --quit-after 180 --log-file 'tmp_tests\test_tavern_reward_bar_v2.log' --path . --scene res://scenes/test/test_tavern_patience_ui.tscn
+```
+
+Expected: PASS, confirming stable Tavern node paths and runtime texture loading.
 
 ## Self-Review
 

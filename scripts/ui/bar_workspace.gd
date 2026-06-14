@@ -579,12 +579,12 @@ func _is_kitchen_container(node: Node) -> bool:
 
 func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
-	_items_node.add_child(item)
 	var item_data: Dictionary = _gm.craft.get_item(item_key)
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	var art_texture := _desk_item_art_texture(item_key)
 	if art_texture != null:
 		item.set_art_texture(art_texture)
+	_items_node.add_child(item)
 	item.global_position = pos
 	# 可阅读物品：设为可拾取输入，双击时打开关联文档
 	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
@@ -751,6 +751,7 @@ func _is_item_inside_any_container(item: DeskItem) -> bool:
 	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
 		return false
 	return _brewery.is_item_inside_mouth(item) \
+		or _shaker.is_item_inside_mouth(item) \
 		or _grill.is_item_inside_intake(item) \
 		or _pot.is_item_inside_intake(item)
 

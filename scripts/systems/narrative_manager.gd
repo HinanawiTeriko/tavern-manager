@@ -88,7 +88,7 @@ func get_mira_route() -> String:
 		or bool(dialogue_vars.get("toby_secured", false))
 	if told and contract_found and trust_ok:
 		return "she_finally_stopped"
-	if told or contract_found:
+	if told:
 		return "never_turned_back"
 	if secured:
 		return "closed_the_door"
@@ -207,6 +207,7 @@ func load_npc_data() -> void:
 	dialogue_vars["told_mira_truth"] = false
 	dialogue_vars["toby_danger_known"] = false
 	dialogue_vars["toby_contract_found"] = false
+	dialogue_vars["mira_contract_aftershock_seen"] = false
 	dialogue_vars["toby_secured"] = false
 	dialogue_vars["toby_secured_by_fixer"] = false
 	dialogue_vars["toby_survived"] = false

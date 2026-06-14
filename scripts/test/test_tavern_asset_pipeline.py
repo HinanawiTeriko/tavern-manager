@@ -65,23 +65,8 @@ ITEM_KEYS = [
     "alternative_contract",
     "toby_contract",
 ]
-CHARACTER_KEYS = [
-    "ryan_neutral",
-    "ryan_excited",
-    "ryan_hesitant",
-    "ryan_dejected",
-    "mira_neutral",
-    "guest_commoner",
-    "guest_knight",
-    "guest_merchant",
-    "guest_rogue",
-    "guest_wizard",
-    "guest_dwarf",
-]
 for key in ITEM_KEYS:
     TRANSPARENT_ASSETS[f"icons/{key}"] = (24, 24)
-for key in CHARACTER_KEYS:
-    TRANSPARENT_ASSETS[f"characters/{key}"] = (70, 90)
 
 
 def load_rgba(path: Path) -> Image.Image:

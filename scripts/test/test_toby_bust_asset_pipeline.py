@@ -6,19 +6,24 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "toby_bust" / "toby_neutral_source_v3.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "toby_bust" / "toby_neutral_prompt_v3.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "toby" / "toby_neutral_source_v3.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "toby" / "toby_neutral_prompt_v3.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "toby_bust_manifest.json"
 NATIVE = SOURCE_DIR / "toby_neutral_native.png"
 RUNTIME = ROOT / "assets" / "textures" / "characters" / "toby_neutral.png"
-CONTACT_SHEET = ROOT / "docs" / "art" / "toby_bust_contact_sheet.png"
+CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "toby_contact_sheet.png"
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
 MIRA_REFERENCE = ROOT / "assets" / "textures" / "characters" / "mira_neutral.png"
 RYAN_NATIVE = SOURCE_DIR / "ryan_neutral_native.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
+CONTACT_SHEET_SIZE = (1180, 820)
+CONTACT_SHEET_NATIVE_SCALE = 2
+CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE, NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE)
+CONTACT_SHEET_NATIVE_BG = (24, 20, 16, 255)
+CONTACT_SHEET_NATIVE_POSITIONS = [(44, 92), (462, 92), (880, 92), (44, 452), (462, 452), (880, 452)]
 COLOR_LIMIT = 72
 STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
 MAX_BLUE_SCARF_RATIO = 0.02
@@ -75,6 +80,13 @@ def blue_scarf_like_ratio(image: Image.Image) -> float:
         if blue >= 52 and blue > red * 1.18 and blue > green * 1.02:
             blue_like += 1
     return blue_like / max(1, visible)
+
+
+def expected_backed_native_preview(native: Image.Image) -> Image.Image:
+    preview = native.resize(CONTACT_SHEET_NATIVE_PREVIEW_SIZE, Image.Resampling.NEAREST)
+    out = Image.new("RGBA", CONTACT_SHEET_NATIVE_PREVIEW_SIZE, CONTACT_SHEET_NATIVE_BG)
+    out.alpha_composite(preview, (0, 0))
+    return out.convert("RGB")
 
 
 class TobyBustAssetPipelineTest(unittest.TestCase):
@@ -155,8 +167,23 @@ class TobyBustAssetPipelineTest(unittest.TestCase):
     def test_contact_sheet_exists(self) -> None:
         self.assertTrue(CONTACT_SHEET.exists(), "Toby contact sheet is missing")
         contact = load_rgba(CONTACT_SHEET)
-        self.assertGreaterEqual(contact.width, 1000)
-        self.assertGreaterEqual(contact.height, 360)
+        self.assertEqual(contact.size, CONTACT_SHEET_SIZE, "Toby contact sheet must use the official important NPC preview size")
+
+    def test_contact_sheet_uses_integer_native_previews(self) -> None:
+        native = load_rgba(NATIVE)
+        contact = load_rgba(CONTACT_SHEET).convert("RGB")
+        x, y = CONTACT_SHEET_NATIVE_POSITIONS[0]
+        actual_native = contact.crop((
+            x,
+            y,
+            x + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[0],
+            y + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[1],
+        ))
+        self.assertEqual(
+            actual_native.tobytes(),
+            expected_backed_native_preview(native).tobytes(),
+            "Toby contact sheet native preview must be exact 2x native pixels",
+        )
 
 
 if __name__ == "__main__":

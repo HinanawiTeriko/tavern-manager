@@ -1,5 +1,13 @@
 extends Node
 
+const TOBY_SCENE := preload("res://scenes/ui/TobyLodgingInvestigation.tscn")
+const ASSEMBLE_POINT := Vector2(640, 490)
+const EXPECTED_SNAP_SLOTS := {
+	"contract_fragment_a": Vector2(592, 490),
+	"contract_fragment_b": Vector2(640, 490),
+	"contract_fragment_c": Vector2(688, 490),
+}
+
 ## 托比落脚处物理调查的 headless 逻辑回归。镜像 test_mine_investigation 的取舍：
 ##   1. locations.json 数据契约——告示板贴文不再授予 toby_contract、改由场景授予；
 ##      托比落脚处地点 day≥6 存在、不走自动授予；
@@ -13,6 +21,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_locations_contract()
 	_test_grant_idempotent_and_owned()
+	await _test_fragments_snap_near_assembly_and_grant_when_complete()
 	_finish()
 
 
@@ -65,3 +74,55 @@ func _test_grant_idempotent_and_owned() -> void:
 	_ok(gm.narrative.get_var("toby_contract_found") == true, "granting toby_contract marks route proof found")
 	_ok(gm.inventory_sys.get_count("toby_contract") == 1, "granting adds it to story bag")
 	_ok(not gm.grant_investigation_document("toby_contract"), "second grant is idempotent (not newly)")
+
+
+func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
+	var gm = get_node("/root/GameManager")
+	var snapshot: Dictionary = gm._capture_save_state()
+	gm.documents.restore_state({"owned": ["ledger"]})
+	gm.inventory_sys.set_initial({})
+	gm.inventory = gm.inventory_sys.materials
+	gm.narrative.set_var("toby_contract_found", false)
+
+	var scene := TOBY_SCENE.instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+
+	var frag_a := _toby_fragment(scene, "contract_fragment_a")
+	var frag_b := _toby_fragment(scene, "contract_fragment_b")
+	var frag_c := _toby_fragment(scene, "contract_fragment_c")
+	_ok(frag_a != null and frag_b != null and frag_c != null,
+		"Toby lodging snap test finds all three contract fragments")
+	if frag_a != null and frag_b != null and frag_c != null:
+		frag_a.global_position = ASSEMBLE_POINT + Vector2(-22, 6)
+		frag_a.linear_velocity = Vector2(180, -40)
+		frag_a.angular_velocity = 5.0
+		scene._investigation_physics(0.016)
+		_ok(frag_a.global_position == EXPECTED_SNAP_SLOTS["contract_fragment_a"],
+			"first nearby Toby contract fragment snaps into its assembly slot")
+		_ok(frag_a.freeze and frag_a.linear_velocity == Vector2.ZERO and is_zero_approx(frag_a.angular_velocity),
+			"snapped Toby contract fragment freezes without residual physics drift")
+		_ok(not gm.documents.owns_document("toby_contract"),
+			"one snapped Toby contract fragment does not grant the document yet")
+
+		frag_b.global_position = ASSEMBLE_POINT + Vector2(10, -8)
+		frag_c.global_position = ASSEMBLE_POINT + Vector2(24, 4)
+		scene._investigation_physics(0.016)
+		_ok(gm.documents.owns_document("toby_contract"),
+			"all three snapped Toby contract fragments grant the contract document")
+		_ok(gm.narrative.get_var("toby_contract_found") == true,
+			"completed Toby fragment assembly marks the route proof found")
+
+	scene.queue_free()
+	await get_tree().process_frame
+	gm._apply_save_state(snapshot)
+
+
+func _toby_fragment(scene: Node, item_tag: String) -> MineItem:
+	var world := scene.get_node_or_null("World")
+	if world == null:
+		return null
+	for child in world.get_children():
+		if child is MineItem and child.item_tag == item_tag:
+			return child
+	return null

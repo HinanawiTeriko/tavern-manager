@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_game_manager_owns_slice()
 	_test_pending_important_guest_blocks_early_close()
 	await _test_day2_important_npc_spawns_when_menu_already_confirmed()
+	_test_day1_settlement_warns_about_day2_fate_ledger_entry()
 	_finish()
 
 
@@ -109,6 +110,36 @@ func _test_pending_important_guest_blocks_early_close() -> void:
 	_ok(gm.current_ledger_data == null, "pending important NPC blocks early close")
 	gm._important_npc_pending = false
 	gm.current_ledger_data = original_ledger_data
+	gm.day_cycle.phase = original_phase
+
+
+func _test_day1_settlement_warns_about_day2_fate_ledger_entry() -> void:
+	var gm = get_node("/root/GameManager")
+	var original_phase = gm.day_cycle.phase
+	var original_day: int = gm.economy.current_day
+	var original_ledger_data = gm.current_ledger_data
+	var original_pending: bool = gm._important_npc_pending
+	var original_guest_lingering: bool = gm._guest_lingering
+
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	gm.guests.reset_daily()
+	gm.day_cycle.phase = DayCycleSystem.DayPhase.NIGHT
+	gm.economy.current_day = 1
+	gm._important_npc_pending = false
+	gm._guest_lingering = false
+	gm.current_ledger_data = null
+	gm.end_night()
+
+	_ok(gm.current_ledger_data != null, "Day 1 can close after all guests are gone")
+	if gm.current_ledger_data != null:
+		_ok(gm.current_ledger_data.fate_warning_next_day,
+			"Day 1 settlement warns that Day 2 will add a fate ledger record")
+
+	gm.current_ledger_data = original_ledger_data
+	gm._important_npc_pending = original_pending
+	gm._guest_lingering = original_guest_lingering
+	gm.economy.current_day = original_day
 	gm.day_cycle.phase = original_phase
 
 

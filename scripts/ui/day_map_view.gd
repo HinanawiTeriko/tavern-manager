@@ -1102,7 +1102,10 @@ func _trigger_shop_tutorial() -> void:
 	if tm == null:
 		return
 
-	var rects = {
-		"MapArea": [140, 80, 1000, 420],
+	tm.start_tutorial("shop", _shop_tutorial_rects())
+
+
+func _shop_tutorial_rects() -> Dictionary:
+	return {
+		"MapArea": _control_screen_rect($UILayer/MapArea),
 	}
-	tm.start_tutorial("shop", rects)

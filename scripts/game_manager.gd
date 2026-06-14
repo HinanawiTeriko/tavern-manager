@@ -27,6 +27,7 @@ var current_ledger_data: LedgerData = null
 
 # Dialogue state
 const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
+const RYAN_ACTION_FEEDBACK_DIALOGUE := "res://dialogue/ryan_action_feedback.dialogue"
 
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
@@ -81,14 +82,6 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
 ## 对话只回应已发生的行为；这里是动作当下的即时反馈（spec §1.1 / §7.3）。
 const ACTION_FEEDBACK: Dictionary = {
-	"ryan_informed": ["……这不是普通委托。你从哪儿弄来的？", Color.ORANGE],
-	"ryan_accepts_alternative": ["我接下这个。今晚之后，我自己去问个明白。", Color.LIME_GREEN],
-	"ryan_needs_warning_first": ["这是什么？我看不出它和我有什么关系。", Color.GRAY],
-	"ryan_alternative_pending": ["我会考虑。先让我看看你今晚怎么待我。", Color.GRAY],
-	"ryan_accepts_ale": ["好酒。今晚就靠这一杯壮胆了。", Color.LIME_GREEN],
-	"ryan_drugged": ["……这酒怎么这么沉……", Color.MEDIUM_PURPLE],
-	"ryan_refuses_drugged_ale": ["不。今晚我必须保持清醒。", Color.GRAY],
-	"ryan_interaction_closed": ["别再说了。今晚我已经决定了。", Color.GRAY],
 	"sleep_powder_added": ["你把沉睡花粉搅入了麦芽酒。", Color.MEDIUM_PURPLE],
 	"unsupported_story_item": ["他不需要这个。", Color.GRAY],
 	"unsupported_npc": ["这东西不该交给他。", Color.GRAY],
@@ -96,15 +89,18 @@ const ACTION_FEEDBACK: Dictionary = {
 }
 
 const ACTION_FEEDBACK_CHANNEL: Dictionary = {
-	"ryan_informed": "customer",
-	"ryan_accepts_alternative": "customer",
-	"ryan_needs_warning_first": "customer",
-	"ryan_alternative_pending": "customer",
-	"ryan_accepts_ale": "customer",
-	"ryan_drugged": "customer",
-	"ryan_refuses_drugged_ale": "customer",
-	"ryan_interaction_closed": "customer",
 	"sleep_powder_added": "silent",
+}
+
+const ACTION_FEEDBACK_DIALOGUE_TITLES: Dictionary = {
+	"ryan_informed": "ryan_informed",
+	"ryan_accepts_alternative": "ryan_accepts_alternative",
+	"ryan_needs_warning_first": "ryan_needs_warning_first",
+	"ryan_alternative_pending": "ryan_alternative_pending",
+	"ryan_accepts_ale": "ryan_accepts_ale",
+	"ryan_drugged": "ryan_drugged",
+	"ryan_refuses_drugged_ale": "ryan_refuses_drugged_ale",
+	"ryan_interaction_closed": "ryan_interaction_closed",
 }
 
 func _ready() -> void:
@@ -270,6 +266,12 @@ func _mira_day_start_ledger_entries(day: int) -> Array:
 	return []
 
 
+func _has_next_day_fate_ledger_warning() -> bool:
+	var next_day := economy.current_day + 1
+	return not ryan_slice.day_start_ledger_entries(next_day).is_empty() \
+		or not _mira_day_start_ledger_entries(next_day).is_empty()
+
+
 func _add_mira_stall_ledger_beat() -> void:
 	var entry := ""
 	if bool(narrative.get_var("toby_contract_found")):
@@ -281,6 +283,42 @@ func _add_mira_stall_ledger_beat() -> void:
 		entry = "米拉收摊时停了停，像是在等一个不被问出口的问题。"
 	if entry != "" and documents.add_ledger_entry_once(entry):
 		play_audio_event("new_document")
+
+
+func _try_show_toby_contract_to_mira_at_stall() -> bool:
+	if bool(narrative.get_var("told_mira_truth")):
+		return false
+	if not documents.owns_document("toby_contract"):
+		return false
+	var result: Dictionary = narrative.resolve_action({
+		"type": "give_story_item",
+		"npc_id": "mira",
+		"item_key": "toby_contract",
+	})
+	if not bool(result.get("accepted", false)):
+		return false
+	if documents.add_ledger_entry_once("你把托比的委托书摊在米拉的货箱上。她认出了那句“一个人走”。"):
+		play_audio_event("new_document")
+	return true
+
+
+func _mira_stall_contract_handoff_message() -> String:
+	return "你把托比的委托书摊在米拉的货箱上。\n米拉: ……这字我认得。托比小时候写错字，尾巴总往下掉。\n米拉: “一个人走，才轻快。”这话不是他自己想出来的。\n米拉: 放这儿吧。今天先别问我。"
+
+
+func _try_show_mira_contract_aftershock_at_stall() -> String:
+	if not bool(narrative.get_var("told_mira_truth")):
+		return ""
+	if bool(narrative.get_var("mira_contract_aftershock_seen")):
+		return ""
+	narrative.set_var("mira_contract_aftershock_seen", true)
+	var trusts_player := narrative.get_affection("mira") >= narrative.MIRA_TRUST_THRESHOLD
+	var entry := "米拉开始打听托比的落脚处。" if trusts_player else "米拉把托比的委托书压在货箱底下。"
+	if documents.add_ledger_entry_once(entry):
+		play_audio_event("new_document")
+	if trusts_player:
+		return "米拉把半开的货箱合上，开始收拾货摊。\n米拉: 那孩子现在住哪儿？托比，不是别人。\n米拉: 别误会。我只是……不能让他一个人进黑齿矿脉。"
+	return "米拉把委托书压在货箱底下，指节在纸面上停了很久。\n米拉: 有些路，回头也是死路。\n米拉: 我知道你想问什么。今天别问。"
 
 
 func visit_day_location(location_id: String) -> Dictionary:
@@ -302,6 +340,12 @@ func visit_day_location(location_id: String) -> Dictionary:
 		var npc_id := String(aff["npc"])
 		narrative.set_affection(npc_id, narrative.get_affection(npc_id) + int(aff.get("amount", 0)))
 	if location_id == "mira_stall":
+		if _try_show_toby_contract_to_mira_at_stall():
+			result["message"] = _mira_stall_contract_handoff_message()
+		else:
+			var aftershock := _try_show_mira_contract_aftershock_at_stall()
+			if aftershock != "":
+				result["message"] = aftershock
 		_add_mira_stall_ledger_beat()
 	if bool(result.get("securesToby", false)):
 		var cost := int(result.get("goldCost", 0))
@@ -511,9 +555,9 @@ func _on_guest_arrived(guest: GuestData) -> void:
 			tm._save_state()
 			await get_tree().create_timer(0.5).timeout
 			if tm != null and is_instance_valid(tm):
-				var rects = {
-					"CustomerNode": [432, 70, 410, 328],
-				}
+				var rects := {}
+				if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("get_tutorial_highlight_rects"):
+					rects = _tavern_view.get_tutorial_highlight_rects("serve")
 				tm.start_tutorial("serve", rects)
 
 ## 教程结束后生成重要 NPC（避免教程期间对话冲突）
@@ -590,8 +634,12 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		var serve_quality: String = String(craft_style_data.get("quality", "normal"))
 		var earned_gold := economy.gold_for_quality(item_price, serve_quality)
 		var earned_rep := economy.reputation_for_quality(serve_quality)
+		var previous_gold := economy.gold
+		var previous_rep := economy.reputation
 		economy.add_gold(earned_gold)
 		economy.add_reputation(earned_rep)
+		if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("show_order_reward_feedback"):
+			_tavern_view.show_order_reward_feedback(earned_gold, earned_rep, previous_gold, previous_rep)
 		guests.record_order_success()
 		ryan_slice.record_order_success()
 		play_audio_event("serve_success")
@@ -672,14 +720,14 @@ func _refresh_current_customer_portrait(outcome: String = "") -> void:
 	var portrait_id := String(guests.current_guest.get_meta("portrait_id", npc_id))
 	_tavern_view.show_customer_reaction(outcome, portrait_id)
 
-func _start_dialogue_deferred(dialogue_path: String) -> void:
+func _start_dialogue_deferred(dialogue_path: String, title: String = "start") -> void:
 	var dialogue_resource = load(dialogue_path)
 	if dialogue_resource == null:
 		printerr("[GameManager] 对话文件加载失败: ", dialogue_path)
 		_recover_from_dialogue_failure()
 		return
 	var extra_states: Array = [narrative.dialogue_vars]
-	var balloon = DialogueManager.show_dialogue_balloon_scene(DIALOGUE_BALLOON_SCENE, dialogue_resource, "start", extra_states)
+	var balloon = DialogueManager.show_dialogue_balloon_scene(DIALOGUE_BALLOON_SCENE, dialogue_resource, title, extra_states)
 	if balloon == null:
 		printerr("[GameManager] 显示对话气球失败: ", dialogue_path)
 		_recover_from_dialogue_failure()
@@ -719,6 +767,11 @@ func _on_dialogue_ended() -> void:
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.set_dialogue_mode(false)
 
+	elif _dialogue_phase == "action_feedback":
+		_dialogue_phase = ""
+		if _tavern_view != null and is_instance_valid(_tavern_view):
+			_tavern_view.set_dialogue_mode(false)
+
 func _on_patience_low() -> void:
 	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
 		if _tavern_view.has_method("show_order_warning"):
@@ -754,6 +807,7 @@ func end_night() -> void:
 	current_ledger_data.orders_success = guests.orders_success
 	current_ledger_data.orders_failed = guests.orders_failed
 	current_ledger_data.npc_fates = fates
+	current_ledger_data.fate_warning_next_day = _has_next_day_fate_ledger_warning()
 	ryan_slice.complete_day(economy.current_day)
 
 	economy.reset_daily()
@@ -862,8 +916,11 @@ func _refresh_close_button() -> void:
 	_tavern_view.set_close_enabled(enabled)
 
 
-## 把 resolve_action 的 feedback key 翻成玩家可见提示（顾客气泡 / 舞台提示 / 静默）。
+## 把 resolve_action 的 feedback key 翻成玩家可见提示（正式对话 / 顾客气泡 / 舞台提示 / 静默）。
 func _show_action_feedback(feedback: String) -> void:
+	if ACTION_FEEDBACK_DIALOGUE_TITLES.has(feedback):
+		_show_action_feedback_dialogue(feedback)
+		return
 	if not ACTION_FEEDBACK.has(feedback):
 		return
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
@@ -878,6 +935,15 @@ func _show_action_feedback(feedback: String) -> void:
 		_tavern_view.customer_say(text)
 		return
 	_tavern_view.show_stage_caption(text, color)
+
+func _show_action_feedback_dialogue(feedback: String) -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	_dialogue_phase = "action_feedback"
+	if _tavern_view.has_method("set_dialogue_mode"):
+		_tavern_view.set_dialogue_mode(true)
+	var title := String(ACTION_FEEDBACK_DIALOGUE_TITLES[feedback])
+	call_deferred("_start_dialogue_deferred", RYAN_ACTION_FEEDBACK_DIALOGUE, title)
 
 
 ## 当前客人订单 key（无客人返回 ""）。视图据此区分「正式上菜」与「叙事递交」。
@@ -1229,6 +1295,7 @@ func _fresh_narrative_vars() -> Dictionary:
 		"ryan_alternative_pending": false, "ryan_alternative_declined": false,
 		"merchant_sleep_powder_hint_seen": false,
 		"told_mira_truth": false, "toby_danger_known": false, "toby_contract_found": false,
+		"mira_contract_aftershock_seen": false,
 		"toby_secured": false, "toby_secured_by_fixer": false, "toby_survived": false,
 		"mira_ending": "",
 		"aff_ryan": 0, "aff_mira": 5,

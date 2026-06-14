@@ -72,6 +72,7 @@
         {
           "id": "ryan_warhammer",
           "dayMin": 2,
+          "dayMax": 2,
           "requiresFlag": "ryan_warhammer_lead",
           "description": "血斧小队正在招募北矿道护送任务。",
           "unlocksFlag": "mine_clue",
@@ -82,7 +83,7 @@
           "dayMin": 6,
           "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
           "unlocksFlag": "toby_commission_lead",
-          "result": "托比……那个被米拉撇下的学徒，接了这趟送命的活。得去他落脚的地方看看。"
+          "result": "托比接下了黑齿矿脉的护送委托。报酬高得像是故意写给走投无路的人，得去他落脚的地方看看。"
         }
       ]
     },

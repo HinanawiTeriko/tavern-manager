@@ -8,16 +8,30 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v4.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "ryan_bust" / "ryan_bust_expression_sheet_v4_prompt.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5_prompt.txt"
 MANIFEST = ROOT / "assets" / "source" / "tavern" / "characters" / "ryan_bust_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME = ROOT / "assets" / "textures" / "characters"
-CONTACT_SHEET = ROOT / "docs" / "art" / "ryan_bust_contact_sheet.png"
+CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "ryan_contact_sheet.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
-STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v4"
+CONTACT_SHEET_SIZE = (1600, 820)
+CONTACT_SHEET_NATIVE_SCALE = 2
+CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE, NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE)
+CONTACT_SHEET_NATIVE_BG = (24, 20, 16, 255)
+CONTACT_SHEET_NATIVE_POSITIONS = [
+    (44, 92),
+    (462, 92),
+    (880, 92),
+    (1298, 92),
+    (44, 452),
+    (462, 452),
+    (880, 452),
+    (1298, 452),
+]
+STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v5"
 COLOR_LIMIT = 72
 MIN_VISIBLE_HEIGHT = 138
 MAX_VISIBLE_HEIGHT = 154
@@ -25,10 +39,14 @@ MIN_BOTTOM_PADDING = 2
 MAX_BOTTOM_PADDING = 5
 
 EXPECTED_CROPS = {
-    "ryan_neutral": [0, 0, 543, 724],
-    "ryan_excited": [543, 0, 1086, 724],
-    "ryan_hesitant": [1086, 0, 1629, 724],
-    "ryan_dejected": [1629, 0, 2172, 724],
+    "ryan_neutral": [0, 0, 418, 470],
+    "ryan_confident": [418, 0, 836, 470],
+    "ryan_hesitant": [836, 0, 1238, 470],
+    "ryan_alarmed": [1254, 0, 1672, 470],
+    "ryan_resolved": [0, 470, 418, 941],
+    "ryan_relieved": [418, 470, 836, 941],
+    "ryan_wary": [836, 470, 1254, 941],
+    "ryan_broken": [1254, 470, 1672, 941],
 }
 
 
@@ -45,6 +63,13 @@ def visible_bounds(image: Image.Image) -> tuple[int, int, int, int]:
     return bounds
 
 
+def expected_backed_native_preview(native: Image.Image) -> Image.Image:
+    preview = native.resize(CONTACT_SHEET_NATIVE_PREVIEW_SIZE, Image.Resampling.NEAREST)
+    out = Image.new("RGBA", CONTACT_SHEET_NATIVE_PREVIEW_SIZE, CONTACT_SHEET_NATIVE_BG)
+    out.alpha_composite(preview, (0, 0))
+    return out.convert("RGB")
+
+
 class RyanBustAssetPipelineTest(unittest.TestCase):
     def test_generated_source_and_prompt_are_retained(self) -> None:
         self.assertTrue(RAW.exists(), f"{RAW}: missing generated Ryan bust source")
@@ -57,7 +82,8 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
             "same artist family",
             "128x160",
             "512x640",
-            "4 columns x 1 row",
+            "4 columns x 2 rows",
+            "eight expressions",
             "flat solid #00ff00",
             "no readable text",
         ):
@@ -67,8 +93,8 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(MANIFEST.exists(), f"{MANIFEST}: missing Ryan bust manifest")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest["style_profile"], STYLE_PROFILE)
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png")
-        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt")
+        self.assertEqual(manifest["source"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png")
+        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], SCALE)
@@ -120,6 +146,26 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
     def test_contact_sheet_exists(self) -> None:
         self.assertTrue(CONTACT_SHEET.exists(), f"{CONTACT_SHEET}: missing Ryan bust contact sheet")
         self.assertGreater(CONTACT_SHEET.stat().st_size, 0, "Ryan bust contact sheet is empty")
+        contact = load_rgba(CONTACT_SHEET)
+        self.assertEqual(contact.size, CONTACT_SHEET_SIZE, "Ryan contact sheet defines the official important NPC preview size")
+
+    def test_contact_sheet_uses_integer_native_previews(self) -> None:
+        contact = load_rgba(CONTACT_SHEET).convert("RGB")
+        for index, portrait_id in enumerate(EXPECTED_CROPS):
+            with self.subTest(portrait_id=portrait_id):
+                native = load_rgba(SOURCE / f"{portrait_id}_native.png")
+                x, y = CONTACT_SHEET_NATIVE_POSITIONS[index]
+                actual_native = contact.crop((
+                    x,
+                    y,
+                    x + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[0],
+                    y + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[1],
+                ))
+                self.assertEqual(
+                    actual_native.tobytes(),
+                    expected_backed_native_preview(native).tobytes(),
+                    f"{portrait_id}: contact sheet native preview must be exact 2x native pixels",
+                )
 
 
 if __name__ == "__main__":

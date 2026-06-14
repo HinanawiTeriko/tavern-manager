@@ -1,8 +1,8 @@
 {
   "id": "ryan_bust_portraits",
-  "style_profile": "approved_vera_belta_runtime_matched_important_npc_v4",
-  "source": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png",
-  "prompt": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt",
+  "style_profile": "approved_vera_belta_runtime_matched_important_npc_v5",
+  "source": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+  "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
   "native_size": [
     128,
     160
@@ -13,19 +13,19 @@
   ],
   "scale": 4,
   "uniform_visible_height": 154,
-  "uniform_max_visible_width": 128,
+  "uniform_max_visible_width": 124,
   "uniform_bottom_padding": 3,
   "color_limit": 72,
   "portraits": {
     "ryan_neutral": {
-      "expression": "forced oath-smile",
-      "source_file": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png",
-      "prompt": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt",
+      "expression": "neutral",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
       "crop_rect": [
         0,
         0,
-        543,
-        724
+        418,
+        470
       ],
       "native": "assets/source/tavern/characters/ryan_neutral_native.png",
       "runtime": "assets/textures/characters/ryan_neutral.png",
@@ -36,26 +36,26 @@
         160
       ],
       "visible_bounds_native": [
-        8,
+        6,
         3,
-        119,
+        122,
         157
       ],
       "visible_color_count": 72,
       "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
     },
-    "ryan_excited": {
-      "expression": "overbright confidence",
-      "source_file": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png",
-      "prompt": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt",
+    "ryan_confident": {
+      "expression": "confident",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
       "crop_rect": [
-        543,
+        418,
         0,
-        1086,
-        724
+        836,
+        470
       ],
-      "native": "assets/source/tavern/characters/ryan_excited_native.png",
-      "runtime": "assets/textures/characters/ryan_excited.png",
+      "native": "assets/source/tavern/characters/ryan_confident_native.png",
+      "runtime": "assets/textures/characters/ryan_confident.png",
       "safe_area": [
         0,
         0,
@@ -65,7 +65,7 @@
       "visible_bounds_native": [
         5,
         3,
-        122,
+        123,
         157
       ],
       "visible_color_count": 72,
@@ -73,13 +73,13 @@
     },
     "ryan_hesitant": {
       "expression": "hesitation",
-      "source_file": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png",
-      "prompt": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
       "crop_rect": [
-        1086,
+        836,
         0,
-        1629,
-        724
+        1238,
+        470
       ],
       "native": "assets/source/tavern/characters/ryan_hesitant_native.png",
       "runtime": "assets/textures/characters/ryan_hesitant.png",
@@ -90,26 +90,26 @@
         160
       ],
       "visible_bounds_native": [
-        4,
+        7,
         3,
-        124,
+        120,
         157
       ],
       "visible_color_count": 72,
       "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
     },
-    "ryan_dejected": {
-      "expression": "dejected",
-      "source_file": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4.png",
-      "prompt": "art_sources/generated_raw/ryan_bust/ryan_bust_expression_sheet_v4_prompt.txt",
+    "ryan_alarmed": {
+      "expression": "alarmed",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
       "crop_rect": [
-        1629,
+        1254,
         0,
-        2172,
-        724
+        1672,
+        470
       ],
-      "native": "assets/source/tavern/characters/ryan_dejected_native.png",
-      "runtime": "assets/textures/characters/ryan_dejected.png",
+      "native": "assets/source/tavern/characters/ryan_alarmed_native.png",
+      "runtime": "assets/textures/characters/ryan_alarmed.png",
       "safe_area": [
         0,
         0,
@@ -117,9 +117,117 @@
         160
       ],
       "visible_bounds_native": [
-        9,
         3,
-        118,
+        3,
+        124,
+        157
+      ],
+      "visible_color_count": 72,
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_resolved": {
+      "expression": "resolved",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
+      "crop_rect": [
+        0,
+        470,
+        418,
+        941
+      ],
+      "native": "assets/source/tavern/characters/ryan_resolved_native.png",
+      "runtime": "assets/textures/characters/ryan_resolved.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "visible_bounds_native": [
+        2,
+        8,
+        126,
+        157
+      ],
+      "visible_color_count": 72,
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_relieved": {
+      "expression": "relieved",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
+      "crop_rect": [
+        418,
+        470,
+        836,
+        941
+      ],
+      "native": "assets/source/tavern/characters/ryan_relieved_native.png",
+      "runtime": "assets/textures/characters/ryan_relieved.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "visible_bounds_native": [
+        2,
+        14,
+        126,
+        157
+      ],
+      "visible_color_count": 72,
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_wary": {
+      "expression": "wary",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
+      "crop_rect": [
+        836,
+        470,
+        1254,
+        941
+      ],
+      "native": "assets/source/tavern/characters/ryan_wary_native.png",
+      "runtime": "assets/textures/characters/ryan_wary.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "visible_bounds_native": [
+        8,
+        3,
+        120,
+        157
+      ],
+      "visible_color_count": 72,
+      "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt"
+    },
+    "ryan_broken": {
+      "expression": "broken",
+      "source_file": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png",
+      "prompt": "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt",
+      "crop_rect": [
+        1254,
+        470,
+        1672,
+        941
+      ],
+      "native": "assets/source/tavern/characters/ryan_broken_native.png",
+      "runtime": "assets/textures/characters/ryan_broken.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "visible_bounds_native": [
+        2,
+        10,
+        126,
         157
       ],
       "visible_color_count": 72,

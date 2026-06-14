@@ -8,6 +8,10 @@ const CONTINUE_NORMAL := "res://assets/textures/ui/night_settlement/night_settle
 const CONTINUE_HOVER := "res://assets/textures/ui/night_settlement/night_settlement_continue_hover.png"
 const CONTINUE_PRESSED := "res://assets/textures/ui/night_settlement/night_settlement_continue_pressed.png"
 const PIXEL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
+const FATE_REVEAL_TEXT := "宿命轨迹已显现"
+const FATE_PREVIEW_TEXT := "宿命轨迹即将显现"
+const FATE_REVEAL_HOLD := 1.25
+const FATE_REVEAL_FADE := 0.45
 const RYAN_FATE_TEXTURES := {
 	"uninformed_fallen": "res://assets/textures/endings/ryan/ryan_uninformed_fallen.png",
 	"drugged_survivor": "res://assets/textures/endings/ryan/ryan_drugged_survivor.png",
@@ -31,6 +35,7 @@ var _continue_btn: Button
 var _settlement_backdrop: TextureRect
 var _stats_panel_art: TextureRect
 var _fate_panel_art: TextureRect
+var _fate_reveal_overlay: Control
 var _ryan_fate_cinematic: Control
 
 
@@ -53,6 +58,8 @@ func _ready() -> void:
 	if data != null:
 		_render(data)
 		_show_ryan_fate_cinematic_if_needed(data)
+		_show_fate_reveal_notice_if_needed(data)
+		_show_fate_preview_notice_if_needed(data)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm != null and not tm.first_ledger_shown:
@@ -103,6 +110,82 @@ func _show_ryan_fate_cinematic_if_needed(data: LedgerData) -> void:
 	_ryan_fate_cinematic = _create_ryan_fate_cinematic(texture, String(fate.get("fate_text", "")))
 	add_child(_ryan_fate_cinematic)
 	_play_ryan_fate_intro(_ryan_fate_cinematic)
+
+
+func _show_fate_reveal_notice_if_needed(data: LedgerData) -> void:
+	if data.npc_fates.is_empty():
+		return
+	_fate_reveal_overlay = _create_fate_reveal_overlay()
+	add_child(_fate_reveal_overlay)
+	_play_fate_reveal_notice(_fate_reveal_overlay)
+
+
+func _show_fate_preview_notice_if_needed(data: LedgerData) -> void:
+	if not data.fate_warning_next_day or not data.npc_fates.is_empty():
+		return
+	var overlay := _create_fate_notice_overlay(
+		"FatePreviewOverlay",
+		"FatePreviewShade",
+		"FatePreviewLabel",
+		FATE_PREVIEW_TEXT
+	)
+	add_child(overlay)
+	_play_fate_reveal_notice(overlay)
+
+
+func _create_fate_reveal_overlay() -> Control:
+	return _create_fate_notice_overlay(
+		"FateRevealOverlay",
+		"FateRevealShade",
+		"FateRevealLabel",
+		FATE_REVEAL_TEXT
+	)
+
+
+func _create_fate_notice_overlay(overlay_name: String, shade_name: String, label_name: String, label_text: String) -> Control:
+	var overlay := Control.new()
+	overlay.name = overlay_name
+	overlay.position = Vector2.ZERO
+	overlay.size = Vector2(1280, 720)
+	overlay.z_index = 400
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var shade := ColorRect.new()
+	shade.name = shade_name
+	shade.position = Vector2.ZERO
+	shade.size = Vector2(1280, 720)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.color = Color(0.0, 0.0, 0.0, 0.64)
+	overlay.add_child(shade)
+
+	var label := Label.new()
+	label.name = label_name
+	label.position = Vector2(0, 284)
+	label.size = Vector2(1280, 112)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = label_text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", PIXEL_FONT)
+	label.add_theme_font_size_override("font_size", 48)
+	label.add_theme_color_override("font_color", Color(0.96, 0.77, 0.36, 1.0))
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.012, 0.008, 0.92))
+	overlay.add_child(label)
+
+	return overlay
+
+
+func _play_fate_reveal_notice(overlay: Control) -> void:
+	if overlay == null:
+		return
+	var tween := create_tween()
+	tween.tween_interval(FATE_REVEAL_HOLD)
+	tween.tween_property(overlay, "modulate:a", 0.0, FATE_REVEAL_FADE)
+	tween.tween_callback(func():
+		if is_instance_valid(overlay):
+			overlay.queue_free()
+	)
 
 
 func _find_ryan_fate(fates: Array) -> Dictionary:

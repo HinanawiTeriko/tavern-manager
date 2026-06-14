@@ -10,7 +10,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_current_order_key()
-	_test_action_feedback_routes_ryan_to_customer_bubble()
+	_test_action_feedback_keeps_ryan_story_out_of_customer_bubble()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
 	_test_alternative_pending_then_serve_decides()
@@ -43,7 +43,7 @@ func _gm():
 	return get_node("/root/GameManager")
 
 
-func _test_action_feedback_routes_ryan_to_customer_bubble() -> void:
+func _test_action_feedback_keeps_ryan_story_out_of_customer_bubble() -> void:
 	var gm = _gm()
 	var original_view = gm._tavern_view
 	var fake_view := FakeFeedbackView.new()
@@ -60,21 +60,32 @@ func _test_action_feedback_routes_ryan_to_customer_bubble() -> void:
 		"ryan_interaction_closed",
 	]
 	for key in ryan_feedback_keys:
-		gm._show_action_feedback(key)
+		_ok(not gm.ACTION_FEEDBACK.has(key),
+			"Ryan action feedback text is not kept in mechanical feedback table: " + key)
+		_ok(gm.ACTION_FEEDBACK_DIALOGUE_TITLES.has(key),
+			"Ryan action feedback is routed to dialogue: " + key)
+		_ok(String(gm.ACTION_FEEDBACK_DIALOGUE_TITLES[key]) == key,
+			"Ryan action feedback dialogue title matches feedback key: " + key)
 
-	_ok(fake_view.customer_lines.size() == ryan_feedback_keys.size(),
-		"Ryan action feedback uses the customer speech bubble")
+	_ok(fake_view.customer_lines.is_empty(),
+		"Ryan story action feedback must not use the customer reaction bubble")
 	_ok(fake_view.stage_lines.is_empty(),
-		"Ryan action feedback does not use StageCaption")
-	for line in fake_view.customer_lines:
-		_ok(not String(line).begins_with("莱恩"),
-			"Ryan customer feedback is spoken dialogue, not narrator prose")
+		"Ryan story action feedback must not use StageCaption")
+
+	var dialogue_text := FileAccess.get_file_as_string("res://dialogue/ryan_action_feedback.dialogue")
+	_ok(not dialogue_text.is_empty(), "Ryan action feedback dialogue file exists")
+	_ok(ResourceLoader.exists("res://dialogue/ryan_action_feedback.dialogue"),
+		"Ryan action feedback dialogue is importable by Godot")
+	for key in ryan_feedback_keys:
+		_ok(dialogue_text.contains("~ " + key), "Ryan action feedback dialogue has title " + key)
 
 	gm._show_action_feedback("sleep_powder_added")
-	_ok(fake_view.customer_lines.size() == ryan_feedback_keys.size(),
+	_ok(fake_view.customer_lines.is_empty(),
 		"mixing sleep powder does not create customer dialogue")
 	_ok(fake_view.stage_lines.is_empty(),
 		"mixing sleep powder does not use StageCaption")
+	_ok(fake_view.dialogue_mode_calls.is_empty(),
+		"mixing sleep powder does not start formal dialogue")
 
 	gm._show_action_feedback("unsupported_story_product")
 	_ok(fake_view.stage_lines.size() == 1,
@@ -99,12 +110,19 @@ func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 class FakeFeedbackView extends Node:
 	var customer_lines := []
 	var stage_lines := []
+	var dialogue_mode_calls := []
 
 	func customer_say(text) -> void:
 		customer_lines.append(String(text))
 
 	func show_stage_caption(text, color = Color.WHITE) -> void:
 		stage_lines.append({"text": String(text), "color": color})
+
+	func set_dialogue_mode(active: bool) -> void:
+		dialogue_mode_calls.append(active)
+
+	func set_close_enabled(_enabled: bool) -> void:
+		pass
 
 	func hide_customer() -> void:
 		pass

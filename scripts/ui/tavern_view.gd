@@ -12,6 +12,26 @@ var _patience_fill_art: TextureRect
 var _gold_label: Label
 var _rep_label: Label
 var _day_label: Label
+var _gold_progress: Control
+var _gold_progress_fill_clip: Control
+var _gold_progress_fill_art: TextureRect
+var _gold_progress_ornate: TextureRect
+var _rep_progress: Control
+var _rep_progress_fill_clip: Control
+var _rep_progress_fill_art: TextureRect
+var _rep_progress_ornate: TextureRect
+var _reward_layer: CanvasLayer
+var _reward_particles: Node2D
+var _reward_coin_layer: Node2D
+var _reward_coin_texture: Texture2D
+var _reward_rep_texture: Texture2D
+var _reward_spark_texture: Texture2D
+var _pending_reward_coin_bodies: Array[RigidBody2D] = []
+var _displayed_gold_total: int = 0
+var _displayed_rep_total: int = 0
+var _deferred_gold_total: int = -1
+var _deferred_gold_previous_total: int = -1
+var _gold_collection_apply_scheduled: bool = false
 var _menu_panel: Panel
 var _end_night_btn: Button
 var _stage_caption: Label
@@ -57,9 +77,13 @@ const NPC_TEXTURE_KEYS: Dictionary = {
 	"mercenary_a": "mercenary_a",
 }
 const RYAN_TEXTURE_NEUTRAL := "ryan_neutral"
-const RYAN_TEXTURE_SATISFIED := "ryan_excited"
+const RYAN_TEXTURE_CONFIDENT := "ryan_confident"
 const RYAN_TEXTURE_HESITANT := "ryan_hesitant"
-const RYAN_TEXTURE_DISSATISFIED := "ryan_dejected"
+const RYAN_TEXTURE_ALARMED := "ryan_alarmed"
+const RYAN_TEXTURE_RESOLVED := "ryan_resolved"
+const RYAN_TEXTURE_RELIEVED := "ryan_relieved"
+const RYAN_TEXTURE_WARY := "ryan_wary"
+const RYAN_TEXTURE_BROKEN := "ryan_broken"
 const MIRA_TEXTURE_NEUTRAL := "mira_neutral"
 const MIRA_TEXTURE_SMILE := "mira_smile"
 const MIRA_TEXTURE_SURPRISED := "mira_surprised"
@@ -67,6 +91,13 @@ const MIRA_TEXTURE_SERIOUS := "mira_serious"
 const TOPBAR_LEFT_INSET := Vector2(28, 48)
 const TOPBAR_RIGHT_INSET := Vector2(28, 48)
 const TOPBAR_LABEL_HEIGHT := 48.0
+const REWARD_PROGRESS_SIZE := Vector2(192.0, 48.0)
+const REWARD_PROGRESS_FILL_INSET := Vector2(24.0, 12.0)
+const REWARD_PROGRESS_FILL_SIZE := Vector2(144.0, 24.0)
+const REWARD_COIN_COLLISION_LAYER := 524288
+const REWARD_TRAVEL_SECONDS := 0.68
+const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
+const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
 const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
 const SHORTCUT_SEPARATION := 4
 const DIALOGUE_SPEAKER_Z_INDEX := 10
@@ -88,6 +119,17 @@ func _ready() -> void:
 	_gold_label = $TopPanel/GoldLabel
 	_rep_label = $TopPanel/ReputationLabel
 	_day_label = $TopPanel/DayLabel
+	_gold_progress = $TopPanel/GoldProgress
+	_gold_progress_fill_clip = $TopPanel/GoldProgress/FillClip
+	_gold_progress_fill_art = $TopPanel/GoldProgress/FillClip/Fill
+	_gold_progress_ornate = $TopPanel/GoldProgress/Ornate
+	_rep_progress = $TopPanel/ReputationProgress
+	_rep_progress_fill_clip = $TopPanel/ReputationProgress/FillClip
+	_rep_progress_fill_art = $TopPanel/ReputationProgress/FillClip/Fill
+	_rep_progress_ornate = $TopPanel/ReputationProgress/Ornate
+	_reward_layer = $RewardFeedbackLayer
+	_reward_particles = $RewardFeedbackLayer/Particles
+	_reward_coin_layer = $RewardCoinPhysicsLayer
 	_end_night_btn = $TopPanel/EndNightBtn
 	_stage_caption = $StageCaption
 	_dialogue_overlay = $DialogueOverlay
@@ -119,10 +161,19 @@ func _ready() -> void:
 
 	_gm.register_view(self)
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_LEFT \
+		and event.pressed:
+		if _dialogue_overlay != null and _dialogue_overlay.visible:
+			return
+		_collect_pending_reward_coins()
+
 func _apply_theme() -> void:
 	_configure_customer_input_passthrough()
 	_configure_topbar_layout()
 	_configure_shortcut_bar_layout()
+	_configure_reward_hud()
 
 	var bg_tex = TextureManager.try_load("res://assets/textures/tavern/background/tavern_bg.png")
 	if bg_tex == null:
@@ -258,15 +309,19 @@ func _configure_topbar_layout() -> void:
 	var right_inset := _configure_topbar_spacer(top_panel, "TopbarRightInset", TOPBAR_RIGHT_INSET, false)
 	top_panel.move_child(left_inset, 0)
 	top_panel.move_child(_gold_label, 1)
-	top_panel.move_child(_rep_label, 2)
-	top_panel.move_child(_day_label, 3)
-	top_panel.move_child(action_spacer, 4)
-	top_panel.move_child($TopPanel/MenuButton, 5)
-	top_panel.move_child(_end_night_btn, 6)
-	top_panel.move_child(right_inset, 7)
-	_configure_topbar_label(_gold_label, Vector2(220, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
-	_configure_topbar_label(_rep_label, Vector2(210, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
-	_configure_topbar_label(_day_label, Vector2(170, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	top_panel.move_child(_gold_progress, 2)
+	top_panel.move_child(_rep_label, 3)
+	top_panel.move_child(_rep_progress, 4)
+	top_panel.move_child(_day_label, 5)
+	top_panel.move_child(action_spacer, 6)
+	top_panel.move_child($TopPanel/MenuButton, 7)
+	top_panel.move_child(_end_night_btn, 8)
+	top_panel.move_child(right_inset, 9)
+	_configure_topbar_label(_gold_label, Vector2(150, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_progress(_gold_progress)
+	_configure_topbar_label(_rep_label, Vector2(150, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_progress(_rep_progress)
+	_configure_topbar_label(_day_label, Vector2(130, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
 
 
 func _configure_topbar_spacer(top_panel: HBoxContainer, spacer_name: String, minimum_size: Vector2, expand: bool) -> Control:
@@ -288,6 +343,164 @@ func _configure_topbar_label(label: Label, minimum_size: Vector2, alignment: Hor
 	label.horizontal_alignment = alignment
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_topbar_progress(progress: Control) -> void:
+	progress.custom_minimum_size = REWARD_PROGRESS_SIZE
+	progress.size_flags_horizontal = Control.SIZE_FILL
+	progress.size_flags_vertical = Control.SIZE_FILL
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_reward_hud() -> void:
+	_reward_coin_texture = TextureManager.try_load("res://assets/textures/ui/reward_hud/reward_coin_particle.png")
+	_reward_rep_texture = TextureManager.try_load("res://assets/textures/ui/reward_hud/reward_rep_particle.png")
+	_reward_spark_texture = TextureManager.try_load("res://assets/textures/ui/reward_hud/reward_spark.png")
+	_configure_reward_progress_art(
+		_gold_progress,
+		"res://assets/textures/ui/reward_hud/reward_gold_progress_bg.png",
+		"res://assets/textures/ui/reward_hud/reward_gold_progress_fill.png",
+		"res://assets/textures/ui/reward_hud/reward_gold_progress_ornate.png"
+	)
+	_configure_reward_progress_art(
+		_rep_progress,
+		"res://assets/textures/ui/reward_hud/reward_rep_progress_bg.png",
+		"res://assets/textures/ui/reward_hud/reward_rep_progress_fill.png",
+		"res://assets/textures/ui/reward_hud/reward_rep_progress_ornate.png"
+	)
+	var coin_ground := get_node_or_null("RewardCoinPhysicsLayer/CoinGround") as StaticBody2D
+	if coin_ground != null:
+		coin_ground.collision_layer = REWARD_COIN_COLLISION_LAYER
+		coin_ground.collision_mask = 0
+	if _gm != null and _gm.economy != null:
+		_set_gold_display(_gm.economy.gold)
+		_set_reputation_display(_gm.economy.reputation)
+
+
+func _configure_reward_progress_art(progress: Control, bg_path: String, fill_path: String, ornate_path: String) -> void:
+	if progress == null:
+		return
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg := progress.get_node_or_null("Bg") as TextureRect
+	var fill_clip := progress.get_node_or_null("FillClip") as Control
+	var fill := progress.get_node_or_null("FillClip/Fill") as TextureRect
+	var ornate := progress.get_node_or_null("Ornate") as TextureRect
+	_configure_reward_texture(bg, bg_path)
+	_configure_reward_texture(fill, fill_path)
+	_configure_reward_texture(ornate, ornate_path)
+	if fill_clip != null:
+		fill_clip.z_index = 0
+		fill_clip.position = REWARD_PROGRESS_FILL_INSET
+		fill_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fill_clip.clip_contents = true
+		fill_clip.size = Vector2(0.0, REWARD_PROGRESS_FILL_SIZE.y)
+	if fill != null:
+		fill.z_index = 0
+		fill.size = REWARD_PROGRESS_SIZE
+		fill.position = -REWARD_PROGRESS_FILL_INSET
+	if ornate != null:
+		ornate.z_index = 2
+		ornate.visible = false
+		ornate.modulate = Color.WHITE
+	if bg != null:
+		bg.z_index = 1
+	if fill_clip != null:
+		progress.move_child(fill_clip, 0)
+	if bg != null:
+		progress.move_child(bg, 1)
+	if ornate != null:
+		progress.move_child(ornate, 2)
+
+
+func _configure_reward_texture(texture_rect: TextureRect, texture_path: String) -> void:
+	if texture_rect == null:
+		return
+	texture_rect.texture = TextureManager.try_load(texture_path)
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.size = REWARD_PROGRESS_SIZE
+	texture_rect.position = Vector2.ZERO
+
+
+func _refresh_reward_progress(gold: int, rep: int) -> void:
+	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(gold))
+	_set_reward_progress_fill(_rep_progress_fill_clip, _rep_progress_fill_art, _threshold_progress_ratio(rep, REP_PROGRESS_THRESHOLDS))
+
+
+func _set_gold_display(gold: int) -> void:
+	_displayed_gold_total = gold
+	if _gold_label != null:
+		_gold_label.text = "金币：" + str(gold)
+	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(gold))
+
+
+func _set_reputation_display(rep: int) -> void:
+	_displayed_rep_total = rep
+	if _rep_label != null:
+		_rep_label.text = "声望：" + str(rep)
+	_set_reward_progress_fill(_rep_progress_fill_clip, _rep_progress_fill_art, _threshold_progress_ratio(rep, REP_PROGRESS_THRESHOLDS))
+
+
+func _is_gold_display_deferred() -> bool:
+	return _deferred_gold_total >= 0 or _gold_collection_apply_scheduled or _has_pending_reward_coins()
+
+
+func _has_pending_reward_coins() -> bool:
+	for body in _pending_reward_coin_bodies:
+		if body != null and is_instance_valid(body):
+			return true
+	return false
+
+
+func _set_reward_progress_fill(fill_clip: Control, fill_art: TextureRect, ratio: float) -> void:
+	if fill_clip == null:
+		return
+	var clamped := clampf(ratio, 0.0, 1.0)
+	fill_clip.position = REWARD_PROGRESS_FILL_INSET
+	fill_clip.size = Vector2(floor(REWARD_PROGRESS_FILL_SIZE.x * clamped + 0.5), REWARD_PROGRESS_FILL_SIZE.y)
+	if fill_art != null:
+		fill_art.size = REWARD_PROGRESS_SIZE
+		fill_art.position = -REWARD_PROGRESS_FILL_INSET
+		fill_art.scale = Vector2.ONE
+
+
+func _gold_progress_ratio(gold: int) -> float:
+	if gold < 400:
+		return _threshold_progress_ratio(gold, GOLD_PROGRESS_THRESHOLDS)
+	return float((gold - 400) % 400) / 400.0
+
+
+func _threshold_progress_ratio(value: int, thresholds: Array) -> float:
+	if thresholds.size() < 2:
+		return 1.0
+	for index in range(thresholds.size() - 1):
+		var start := int(thresholds[index])
+		var finish := int(thresholds[index + 1])
+		if value < finish:
+			return clampf(float(value - start) / float(finish - start), 0.0, 1.0)
+	return 1.0
+
+
+func _gold_progress_band(gold: int) -> int:
+	if gold < 50:
+		return 0
+	if gold < 100:
+		return 1
+	if gold < 200:
+		return 2
+	if gold < 400:
+		return 3
+	return 4 + int(floor(float(gold - 400) / 400.0))
+
+
+func _rep_progress_band(rep: int) -> int:
+	if rep < 50:
+		return 0
+	if rep < 150:
+		return 1
+	return 2
 
 
 func _configure_shortcut_bar_layout() -> void:
@@ -390,12 +603,12 @@ func _regular_customer_texture_key(customer_id: String, outcome: String = "") ->
 
 func _ryan_texture_key(outcome: String = "") -> String:
 	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
-		return RYAN_TEXTURE_DISSATISFIED
+		return RYAN_TEXTURE_ALARMED
 	var story_key := _ryan_story_texture_key()
 	if outcome == "success":
 		if story_key != RYAN_TEXTURE_NEUTRAL:
 			return story_key
-		return RYAN_TEXTURE_SATISFIED
+		return RYAN_TEXTURE_CONFIDENT
 	return story_key
 
 func _ryan_story_texture_key() -> String:
@@ -405,13 +618,15 @@ func _ryan_story_texture_key() -> String:
 	if narrative == null:
 		return RYAN_TEXTURE_NEUTRAL
 	if _story_flag(narrative, "ryan_drugged") or _story_flag(narrative, "ryan_alternative_declined"):
-		return RYAN_TEXTURE_DISSATISFIED
+		return RYAN_TEXTURE_BROKEN
 	var ending := _story_string(narrative, "ryan_ending")
 	if ending != "":
-		return RYAN_TEXTURE_SATISFIED if ending == "alternative_survivor" else RYAN_TEXTURE_DISSATISFIED
+		return RYAN_TEXTURE_RELIEVED if ending == "alternative_survivor" else RYAN_TEXTURE_BROKEN
 	if _story_flag(narrative, "ryan_has_alternative"):
-		return RYAN_TEXTURE_SATISFIED
-	if _story_flag(narrative, "ryan_informed") or _story_flag(narrative, "ryan_alternative_pending"):
+		return RYAN_TEXTURE_RESOLVED
+	if _story_flag(narrative, "ryan_alternative_pending"):
+		return RYAN_TEXTURE_WARY
+	if _story_flag(narrative, "ryan_informed"):
 		return RYAN_TEXTURE_HESITANT
 	return RYAN_TEXTURE_NEUTRAL
 
@@ -490,9 +705,187 @@ func _set_patience_fill_ratio(ratio: float) -> void:
 		_patience_fill_art.scale = Vector2.ONE
 
 func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
-	_gold_label.text = "金币：" + str(gold)
-	_rep_label.text = "声望：" + str(rep)
+	if _is_gold_display_deferred():
+		_set_gold_display(_displayed_gold_total)
+	else:
+		_set_gold_display(gold)
+	_set_reputation_display(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
+
+
+func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int) -> void:
+	var new_gold := previous_gold + earned_gold
+	var new_rep := previous_rep + earned_rep
+	if earned_gold > 0:
+		if _deferred_gold_previous_total < 0:
+			_deferred_gold_previous_total = previous_gold
+		_deferred_gold_total = new_gold
+		_set_gold_display(_displayed_gold_total if _gold_collection_apply_scheduled else previous_gold)
+		_spawn_reward_coins(earned_gold)
+		if not _has_pending_reward_coins() and not _gold_collection_apply_scheduled:
+			_apply_deferred_gold_display()
+	elif not _is_gold_display_deferred():
+		_set_gold_display(new_gold)
+	if earned_rep > 0:
+		_set_reputation_display(new_rep)
+		_spawn_reward_reputation_particles(earned_rep)
+		_pulse_reward_label(_rep_label)
+	if _rep_progress_band(new_rep) > _rep_progress_band(previous_rep):
+		_activate_reward_ornate(_rep_progress_ornate)
+
+
+func _spawn_reward_coins(earned_gold: int) -> void:
+	if _reward_coin_layer == null:
+		return
+	var coin_count := clampi(earned_gold, 1, 8)
+	for index in range(coin_count):
+		_spawn_reward_coin(index, coin_count)
+
+
+func _spawn_reward_coin(index: int, coin_count: int) -> void:
+	var body := RigidBody2D.new()
+	body.name = "RewardCoin"
+	body.gravity_scale = 1.15
+	body.mass = 0.22
+	body.collision_layer = 0
+	body.collision_mask = REWARD_COIN_COLLISION_LAYER
+	var material := PhysicsMaterial.new()
+	material.bounce = 0.36
+	material.friction = 0.62
+	body.physics_material_override = material
+	var spread := float(index) - (float(coin_count - 1) * 0.5)
+	body.position = Vector2(640.0 + spread * 9.0, 500.0 - float(index % 3) * 4.0)
+	body.linear_velocity = Vector2(spread * 32.0, -210.0 - float(index % 4) * 22.0)
+	body.angular_velocity = -10.0 + float(index % 6) * 4.0
+
+	var shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = 10.0
+	shape.shape = circle
+	body.add_child(shape)
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Art"
+	sprite.texture = _reward_coin_texture
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	body.add_child(sprite)
+	_reward_coin_layer.add_child(body)
+	_pending_reward_coin_bodies.append(body)
+
+
+func _collect_pending_reward_coins() -> void:
+	if _pending_reward_coin_bodies.is_empty():
+		return
+	var bodies := _pending_reward_coin_bodies.duplicate()
+	_pending_reward_coin_bodies.clear()
+	for body in bodies:
+		if body != null and is_instance_valid(body):
+			_pull_reward_coin_to_ui(body)
+	_schedule_deferred_gold_display()
+
+
+func _pull_reward_coin_to_ui(body: RigidBody2D) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	_pending_reward_coin_bodies.erase(body)
+	var start_position := body.global_position
+	body.queue_free()
+	_spawn_reward_travel_particle(_reward_coin_texture, start_position, _control_center(_gold_progress), Color.WHITE, 1.0)
+
+
+func _schedule_deferred_gold_display() -> void:
+	if _deferred_gold_total < 0 or _gold_collection_apply_scheduled:
+		return
+	_gold_collection_apply_scheduled = true
+	var timer := get_tree().create_timer(REWARD_TRAVEL_SECONDS)
+	timer.timeout.connect(_apply_deferred_gold_display)
+
+
+func _apply_deferred_gold_display() -> void:
+	_gold_collection_apply_scheduled = false
+	if _has_pending_reward_coins():
+		_schedule_deferred_gold_display()
+		return
+	if _deferred_gold_total < 0:
+		return
+	var final_gold := _deferred_gold_total
+	var previous_gold := _deferred_gold_previous_total
+	if previous_gold < 0:
+		previous_gold = _displayed_gold_total
+	_deferred_gold_total = -1
+	_deferred_gold_previous_total = -1
+	_set_gold_display(final_gold)
+	_pulse_reward_label(_gold_label)
+	if _gold_progress_band(final_gold) > _gold_progress_band(previous_gold):
+		_activate_reward_ornate(_gold_progress_ornate)
+
+
+func _spawn_reward_reputation_particles(earned_rep: int) -> void:
+	if _reward_particles == null:
+		return
+	var particle_count := clampi(earned_rep + 1, 1, 5)
+	for index in range(particle_count):
+		var offset := Vector2((float(index) - float(particle_count - 1) * 0.5) * 18.0, -float(index % 2) * 10.0)
+		_spawn_reward_travel_particle(
+			_reward_rep_texture,
+			Vector2(640.0, 500.0) + offset,
+			_control_center(_rep_progress),
+			Color(0.72, 0.96, 1.0, 1.0),
+			0.92
+		)
+	if _reward_spark_texture != null:
+		_spawn_reward_travel_particle(_reward_spark_texture, Vector2(640.0, 510.0), _control_center(_rep_progress), Color.WHITE, 0.8)
+
+
+func _spawn_reward_travel_particle(texture: Texture2D, start_position: Vector2, target_position: Vector2, tint: Color, scale_amount: float) -> void:
+	if _reward_particles == null:
+		return
+	var sprite := Sprite2D.new()
+	sprite.name = "RewardParticle"
+	sprite.texture = texture
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.position = start_position
+	sprite.modulate = tint
+	sprite.scale = Vector2.ONE * scale_amount
+	_reward_particles.add_child(sprite)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "position", target_position, REWARD_TRAVEL_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "scale", Vector2(0.35, 0.35), REWARD_TRAVEL_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "modulate:a", 0.0, REWARD_TRAVEL_SECONDS).set_delay(REWARD_TRAVEL_SECONDS * 0.62)
+	tween.finished.connect(sprite.queue_free)
+
+
+func _activate_reward_ornate(ornate: TextureRect) -> void:
+	if ornate == null:
+		return
+	ornate.visible = true
+	ornate.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	ornate.scale = Vector2.ONE
+	var tween := create_tween()
+	tween.tween_interval(0.72)
+	tween.tween_property(ornate, "modulate:a", 0.0, 0.32)
+	tween.finished.connect(func():
+		if is_instance_valid(ornate):
+			ornate.visible = false
+			ornate.modulate = Color.WHITE
+	)
+
+
+func _pulse_reward_label(label: Label) -> void:
+	if label == null:
+		return
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2(1.0, 1.0)
+	var tween := create_tween()
+	tween.tween_property(label, "scale", Vector2(1.08, 1.08), 0.08)
+	tween.tween_property(label, "scale", Vector2.ONE, 0.14)
+
+
+func _control_center(control: Control) -> Vector2:
+	if control == null:
+		return Vector2(640.0, 24.0)
+	return control.global_position + control.size * 0.5
 
 
 func reset_today_gold() -> void:
@@ -717,17 +1110,130 @@ func _reset_tutorial_progress_from_ui() -> void:
 	show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 
 
+func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
+	match group_key:
+		"craft":
+			return _craft_tutorial_rects()
+		"serve":
+			return _serve_tutorial_rects()
+	return {}
+
+
 func trigger_craft_tutorial() -> void:
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm == null:
 		return
 
-	var rects = {
-		"CraftBarrel": [820, 480, 280, 200],
-		"ShortcutBar": [140, 675, 1000, 40],
-		"RecoveryContainer": [950, 520, 270, 150],
+	tm.start_tutorial("craft", get_tutorial_highlight_rects("craft"))
+
+
+func _craft_tutorial_rects() -> Dictionary:
+	var brewery_rect := _sprite_screen_rect("BarWorkspace/World/Brewery/Art", "BarWorkspace/World/Brewery", Vector2(116.0, 136.0), Vector2(14.0, 14.0))
+	var recovery_rects := [
+		_available_sprite_screen_rect("BarWorkspace/World/Brewery/Art", "BarWorkspace/World/Brewery", Vector2(116.0, 136.0), Vector2(10.0, 10.0)),
+		_available_sprite_screen_rect("BarWorkspace/World/SeasoningShaker/Art", "BarWorkspace/World/SeasoningShaker", Vector2(74.0, 118.0), Vector2(10.0, 10.0)),
+		_available_sprite_screen_rect("BarWorkspace/World/Pot/Art", "BarWorkspace/World/Pot", Vector2(112.0, 124.0), Vector2(10.0, 10.0)),
+	]
+	var recovery_rect := _union_screen_rects(recovery_rects)
+	if recovery_rect.size() < 4:
+		recovery_rect = brewery_rect
+	return {
+		"CraftBarrel": brewery_rect,
+		"ShortcutBar": _control_screen_rect(get_node_or_null("ShortcutBar") as Control),
+		"RecoveryContainer": recovery_rect,
 	}
-	tm.start_tutorial("craft", rects)
+
+
+func _serve_tutorial_rects() -> Dictionary:
+	return {
+		"CustomerNode": _control_screen_rect(get_node_or_null("CustomerArea") as Control),
+	}
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := control.get_global_rect()
+	return _rect_to_array(rect)
+
+
+func _available_sprite_screen_rect(sprite_path: String, fallback_node_path: String, fallback_size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:
+	var node := get_node_or_null(fallback_node_path)
+	if node == null:
+		return []
+	if node is CanvasItem and not (node as CanvasItem).is_visible_in_tree():
+		return []
+	if node.process_mode == Node.PROCESS_MODE_DISABLED:
+		return []
+	return _sprite_screen_rect(sprite_path, fallback_node_path, fallback_size, padding)
+
+
+func _sprite_screen_rect(sprite_path: String, fallback_node_path: String, fallback_size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:
+	var sprite := get_node_or_null(sprite_path) as Sprite2D
+	if sprite != null and sprite.texture != null:
+		return _rect_to_array(_grow_rect(_sprite_global_rect(sprite), padding))
+	return _node_centered_screen_rect(fallback_node_path, fallback_size, padding)
+
+
+func _sprite_global_rect(sprite: Sprite2D) -> Rect2:
+	var local_rect := sprite.get_rect()
+	var transform := sprite.get_global_transform()
+	var points := [
+		transform * local_rect.position,
+		transform * (local_rect.position + Vector2(local_rect.size.x, 0.0)),
+		transform * (local_rect.position + Vector2(0.0, local_rect.size.y)),
+		transform * (local_rect.position + local_rect.size),
+	]
+	var min_x := (points[0] as Vector2).x
+	var min_y := (points[0] as Vector2).y
+	var max_x := min_x
+	var max_y := min_y
+	for point in points:
+		var p := point as Vector2
+		min_x = min(min_x, p.x)
+		min_y = min(min_y, p.y)
+		max_x = max(max_x, p.x)
+		max_y = max(max_y, p.y)
+	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+
+
+func _node_centered_screen_rect(node_path: String, size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:
+	var node := get_node_or_null(node_path) as Node2D
+	if node == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := Rect2(node.global_position - size * 0.5, size)
+	return _rect_to_array(_grow_rect(rect, padding))
+
+
+func _union_screen_rects(rect_arrays: Array) -> Array:
+	var has_rect := false
+	var union_rect := Rect2()
+	for values in rect_arrays:
+		var rect := _rect_from_array(values as Array)
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		if not has_rect:
+			union_rect = rect
+			has_rect = true
+		else:
+			union_rect = union_rect.merge(rect)
+	if not has_rect:
+		return []
+	return _rect_to_array(union_rect)
+
+
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
+
+
+func _rect_to_array(rect: Rect2) -> Array:
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+
+func _grow_rect(rect: Rect2, padding: Vector2) -> Rect2:
+	return Rect2(rect.position - padding, rect.size + padding * 2.0)
 
 ## 配方表：按 recipes.json 显示「产物 价格 ← 配料 [容器]」，让玩家能学会怎么做。
 ## 需购买且未解锁的配方标灰并注明（需解锁）。

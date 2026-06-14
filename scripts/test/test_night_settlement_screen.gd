@@ -28,12 +28,44 @@ func _ready() -> void:
 	_test_preserved_nodes(screen)
 	_test_new_art_nodes(screen)
 	_test_dynamic_data(screen)
+	_test_fate_reveal_notice(screen)
 	_test_compact_stats_rows(screen)
 	_test_continue_button_art(screen)
 	_test_pixel_fonts(screen)
 	_test_no_ryan_cinematic_for_non_ryan_fates(screen)
 
 	screen.queue_free()
+	await get_tree().process_frame
+
+	var empty_data := LedgerData.new()
+	empty_data.day = 4
+	empty_data.gold_today = 0
+	empty_data.rep_today = 0
+	empty_data.gold_total = 128
+	empty_data.rep_total = 7
+	empty_data.guests_served = 2
+	empty_data.orders_success = 2
+	empty_data.orders_failed = 0
+	empty_data.npc_fates = []
+	var empty_screen = await _make_screen(empty_data)
+	_test_no_fate_reveal_notice_without_fates(empty_screen)
+	empty_screen.queue_free()
+	await get_tree().process_frame
+
+	var preview_data := LedgerData.new()
+	preview_data.day = 1
+	preview_data.gold_today = 8
+	preview_data.rep_today = 0
+	preview_data.gold_total = 24
+	preview_data.rep_total = 1
+	preview_data.guests_served = 2
+	preview_data.orders_success = 2
+	preview_data.orders_failed = 0
+	preview_data.npc_fates = []
+	preview_data.fate_warning_next_day = true
+	var preview_screen = await _make_screen(preview_data)
+	_test_fate_preview_notice(preview_screen)
+	preview_screen.queue_free()
 	await get_tree().process_frame
 
 	_test_narrative_fates_include_route_keys(gm)
@@ -148,6 +180,60 @@ func _test_dynamic_data(screen: Node) -> void:
 
 func _test_no_ryan_cinematic_for_non_ryan_fates(screen: Node) -> void:
 	_ok(screen.get_node_or_null("RyanFateCinematic") == null, "non-Ryan settlement does not show Ryan fate cinematic")
+
+
+func _test_fate_reveal_notice(screen: Node) -> void:
+	var overlay := screen.get_node_or_null("FateRevealOverlay") as Control
+	_ok(overlay != null, "settlement with fate records shows fate reveal overlay")
+	if overlay == null:
+		return
+	_ok(overlay.visible, "fate reveal overlay starts visible")
+	_ok(overlay.position == Vector2.ZERO and overlay.size == Vector2(1280, 720), "fate reveal overlay covers the screen")
+	_ok(overlay.mouse_filter == Control.MOUSE_FILTER_IGNORE, "fate reveal overlay does not block settlement input")
+	var shade := overlay.get_node_or_null("FateRevealShade") as ColorRect
+	_ok(shade != null, "fate reveal overlay has screen dim shade")
+	if shade != null:
+		_ok(shade.position == Vector2.ZERO and shade.size == Vector2(1280, 720), "fate reveal shade covers the screen")
+		_ok(shade.color.a >= 0.55, "fate reveal shade darkens the settlement screen")
+	var label := overlay.get_node_or_null("FateRevealLabel") as Label
+	_ok(label != null, "fate reveal overlay has highlighted title label")
+	if label != null:
+		_ok(label.text == "宿命轨迹已显现", "fate reveal label uses the approved player-facing copy")
+		_ok(label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "fate reveal title is centered")
+		_ok(label.get_theme_font_size("font_size") >= 40, "fate reveal title uses large type")
+		_ok(label.get_theme_constant("outline_size") >= 4, "fate reveal title has a strong outline")
+		var font: Font = label.get_theme_font("font")
+		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"), "fate reveal title uses Fusion Pixel font")
+
+
+func _test_no_fate_reveal_notice_without_fates(screen: Node) -> void:
+	_ok(screen.get_node_or_null("FateRevealOverlay") == null, "settlement without fate records does not show fate reveal overlay")
+
+
+func _test_fate_preview_notice(screen: Node) -> void:
+	_ok(screen.get_node_or_null("FateRevealOverlay") == null,
+		"next-day fate preview does not pretend the fate record already appeared")
+	var overlay := screen.get_node_or_null("FatePreviewOverlay") as Control
+	_ok(overlay != null, "settlement before fate ledger records shows next-day fate preview overlay")
+	if overlay == null:
+		return
+	_ok(overlay.visible, "fate preview overlay starts visible")
+	_ok(overlay.position == Vector2.ZERO and overlay.size == Vector2(1280, 720), "fate preview overlay covers the screen")
+	_ok(overlay.mouse_filter == Control.MOUSE_FILTER_IGNORE, "fate preview overlay does not block settlement input")
+	var shade := overlay.get_node_or_null("FatePreviewShade") as ColorRect
+	_ok(shade != null, "fate preview overlay has screen dim shade")
+	if shade != null:
+		_ok(shade.position == Vector2.ZERO and shade.size == Vector2(1280, 720), "fate preview shade covers the screen")
+		_ok(shade.color.a >= 0.55, "fate preview shade darkens the settlement screen")
+	var label := overlay.get_node_or_null("FatePreviewLabel") as Label
+	_ok(label != null, "fate preview overlay has highlighted title label")
+	if label != null:
+		_ok(label.text == "宿命轨迹即将显现", "fate preview label warns before the next-day ledger record")
+		_ok(label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "fate preview title is centered")
+		_ok(label.get_theme_font_size("font_size") >= 40, "fate preview title uses large type")
+		_ok(label.get_theme_constant("outline_size") >= 4, "fate preview title has a strong outline")
+		var font: Font = label.get_theme_font("font")
+		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"), "fate preview title uses Fusion Pixel font")
 
 
 func _test_narrative_fates_include_route_keys(gm: Node) -> void:

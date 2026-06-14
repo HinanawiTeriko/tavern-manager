@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make successful night orders feel rewarding by adding visible motion, physical coin weight, and stage progress to the Tavern HUD. The player should see earned gold coins burst out, bounce once on the bar, then get pulled into the top HUD while dedicated milestone bars advance instead of only watching static numbers change.
+Make successful night orders feel rewarding by adding visible motion, physical coin weight, player collection, and stage progress to the Tavern HUD. The player should see earned gold coins burst out, fall onto the bar, remain collectible, then get pulled into the top HUD when the player clicks anywhere in the Tavern while dedicated milestone bars advance instead of only watching static numbers change.
 
 ## Scope
 
@@ -16,14 +16,16 @@ Make successful night orders feel rewarding by adding visible motion, physical c
 
 When an order is served correctly:
 
-- Gold coins burst from the customer/order area, fall into a narrow safe zone on the bar, rotate, and bounce once for about 0.35 to 0.5 seconds.
-- After the bounce, coins stop participating in physics and curve into the gold HUD area.
+- Gold coins burst from the customer/order area, fall into a narrow safe zone on the bar, rotate, and settle as visible collectible coins.
+- Coins do not auto-collect after a timer. If at least one reward coin is waiting on the bar, the next left-click anywhere on the Tavern screen collects all pending reward coins at once.
+- If an important-guest dialogue is active, Tavern clicks are reserved for dialogue. Reward coins remain on the bar during dialogue, and the player must click once more after dialogue ends to collect them.
+- On collection, coins stop participating in physics and curve into the gold HUD area.
 - If the order awards reputation, small cool blue-white reputation marks float up from the customer/order area and curve into the reputation HUD area. Reputation does not use heavy coin physics.
 - When particles arrive, the matching HUD number gives a small scale pulse and the matching progress bar flashes.
-- Default progress bars stay understated: dark narrow grooves with low-brightness fills. If the new total crosses a milestone, the matching progress bar enters a short ornate state for about one second, with a thin brighter rim and a few spark pixels.
+- Default progress bars stay restrained but crafted: dark narrow grooves with wood/iron end caps, small milestone tick marks, inner shadow, and textured fills. If the new total crosses a milestone, the matching progress bar enters a short ornate state for about one second, with a brighter rim and a few spark pixels.
 - Failed orders do not trigger reward particles or milestone flashes.
 
-The effect is feedback only. It must not delay guest cleanup, dialogue, ledger updates, or the next order.
+The effect is feedback only. It must not delay guest cleanup, dialogue, ledger updates, or the next order. Waiting coins are visual collectibles only; uncollected coins can remain on the bar until the player clicks.
 
 ## HUD Structure
 
@@ -35,7 +37,7 @@ Add visual-only Tavern nodes while keeping existing public paths stable:
 - `TopPanel/GoldProgress`: the gold milestone progress surface, placed near `GoldLabel`.
 - `TopPanel/ReputationProgress`: the reputation milestone progress surface, placed near `ReputationLabel`.
 
-Reward coins must not reuse the existing draggable desk item system. They are temporary visual physics objects with their own collision layer/mask, no pickup behavior, no inventory meaning, and no interaction with ingredients, products, or table tools.
+Reward coins must not reuse the existing draggable desk item system. They are temporary visual physics objects with their own collision layer/mask, no pickup behavior, no inventory meaning, and no interaction with ingredients, products, or table tools. Collection is global to the Tavern view: any left mouse press while coins are pending collects the full pending batch, except while `DialogueOverlay` is visible.
 
 The exact progress child structure can use `TextureRect` plus clipped fill controls, but all new controls must ignore mouse input so they do not block table interaction or topbar buttons.
 
@@ -75,8 +77,8 @@ func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold
 
 Use the existing native-pixel asset pipeline pattern used by Tavern topbar and patience UI work:
 
-- Raw source sheet: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png`
-- Prompt/source notes: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1_prompt.txt`
+- Raw source sheet: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2.png`
+- Prompt/source notes: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v2_prompt.txt`
 - Native assets: `assets/source/tavern/reward_hud/*_native.png`
 - Runtime assets: `assets/textures/ui/reward_hud/*.png`
 - Manifest: `assets/source/tavern/reward_hud/tavern_reward_hud_manifest.json`
@@ -94,7 +96,7 @@ Required asset IDs:
 - `reward_rep_particle`
 - `reward_spark`
 
-The default progress assets must be visually quiet. No large medallions, candles, oversized clasps, or ornate frames belong in default assets. Ornate art is a separate milestone overlay only.
+The default progress assets must look intentionally crafted without becoming milestone-ornate. Use small end caps, tick marks, rivets, and material texture; avoid large medallions, candles, oversized clasps, or ornate default frames. Ornate art is a separate milestone overlay only.
 
 Every crop must come from explicit manifest rectangles. Runtime exports must be exact nearest-neighbor integer scaling from native sources. Godot runtime scenes must reference only processed runtime textures, not raw generated sources.
 
@@ -108,7 +110,9 @@ Before modifying the Tavern scene, add or update a Tavern HUD contract test to v
 - New reward controls ignore mouse input.
 - `TavernView` exposes `show_order_reward_feedback()`.
 - Calling the feedback method with positive gold spawns temporary coin physics bodies under `RewardCoinPhysicsLayer`.
-- After enough simulated frames, bounced coins transfer into travel nodes under `RewardFeedbackLayer`.
+- After enough simulated frames, gold coins remain as physics bodies instead of auto-transferring.
+- A left-click anywhere in the Tavern transfers all pending coin bodies into travel nodes under `RewardFeedbackLayer`.
+- While `TavernView.set_dialogue_mode(true)` is active, left-clicks do not collect pending coins; after `set_dialogue_mode(false)`, the next left-click collects them.
 - Calling it with positive reputation spawns reputation particles under the feedback layer.
 - `update_top_bar()` updates progress fill ratios for gold and reputation totals.
 - Crossing a milestone activates a temporary ornate state.
@@ -125,7 +129,7 @@ Add an asset pipeline test to verify:
 - Runtime textures are exact nearest-neighbor exports from native textures.
 - Particle textures are small, crisp, and contain visible warm gold or cold reputation accent pixels.
 - Progress bar textures stay restrained: dark teal body, amber gold fill, and cooler reputation fill.
-- Default progress bar assets do not contain large candle, medallion, or oversized ornate elements.
+- Default progress bar assets contain visible crafted details such as end caps or tick marks, but do not contain large candle, medallion, or oversized ornate elements.
 
 ## Verification
 

@@ -10,3 +10,4 @@ var guests_served: int = 0
 var orders_success: int = 0
 var orders_failed: int = 0
 var npc_fates: Array[Dictionary] = []
+var fate_warning_next_day: bool = false

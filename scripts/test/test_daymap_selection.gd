@@ -13,6 +13,7 @@ const DAYMAP_SCENE := preload("res://scenes/ui/DayMap.tscn")
 
 func _ready() -> void:
 	await _test_single_selection_ring()
+	await _test_tutorial_highlight_rects_follow_map_area()
 	_test_clear_selection_is_centralized()
 	_finish()
 
@@ -43,6 +44,22 @@ func _selected_ring_count(view) -> int:
 	return n
 
 
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return []
+	var rect := control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+
+func _rect_array_close(actual: Array, expected: Array, tolerance: float = 0.5) -> bool:
+	if actual.size() < 4 or expected.size() < 4:
+		return false
+	for index in range(4):
+		if abs(float(actual[index]) - float(expected[index])) > tolerance:
+			return false
+	return true
+
+
 func _test_single_selection_ring() -> void:
 	var view = DAYMAP_SCENE.instantiate()
 	add_child(view)
@@ -65,6 +82,27 @@ func _test_single_selection_ring() -> void:
 	# 直接换选（不经清空）也只能有一个圈
 	view._select_marker("loc_a")
 	_ok(_selected_ring_count(view) == 1, "switching selection A↔B never stacks two rings")
+
+	view.queue_free()
+
+
+func _test_tutorial_highlight_rects_follow_map_area() -> void:
+	var view = DAYMAP_SCENE.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var map_area := view.get_node_or_null("UILayer/MapArea") as Control
+	_ok(map_area != null, "DayMap MapArea remains available for tutorial highlights")
+	if map_area != null:
+		var expected_rect := _control_screen_rect(map_area)
+		var gather_rects: Dictionary = view._gather_tutorial_rects()
+		_ok(_rect_array_close(gather_rects.get("MapArea", []) as Array, expected_rect),
+			"gather tutorial MapArea highlight follows the live DayMap MapArea rect")
+		_ok(view.has_method("_shop_tutorial_rects"), "DayMapView exposes live shop tutorial rects")
+		if view.has_method("_shop_tutorial_rects"):
+			var shop_rects: Dictionary = view._shop_tutorial_rects()
+			_ok(_rect_array_close(shop_rects.get("MapArea", []) as Array, expected_rect),
+				"shop tutorial MapArea highlight follows the live DayMap MapArea rect")
 
 	view.queue_free()
 

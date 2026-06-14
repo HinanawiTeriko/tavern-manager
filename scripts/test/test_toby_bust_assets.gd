@@ -46,8 +46,8 @@ func _test_tavern_uses_toby_portrait() -> void:
 	if sprite != null:
 		_ok(_texture_path(sprite.texture) == "res://assets/textures/characters/toby_neutral.png",
 			"Tavern resolves toby npc_id to Toby runtime portrait")
-		_ok(sprite.texture != null and sprite.texture.get_size() == Vector2(280, 360),
-			"Toby runtime portrait is 280x360 for the customer slot")
+		_ok(sprite.texture != null and sprite.texture.get_size() == Vector2(512, 640),
+			"Toby runtime portrait uses the official 512x640 character pipeline")
 		_ok(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
 			"Toby portrait renders with nearest filtering")
 

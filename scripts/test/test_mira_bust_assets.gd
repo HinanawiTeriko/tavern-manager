@@ -49,8 +49,8 @@ func _test_tavern_uses_mira_portrait() -> void:
 	if sprite != null:
 		_ok(_texture_path(sprite.texture) == "res://assets/textures/characters/mira_neutral.png",
 			"Tavern resolves mira npc_id to Mira runtime portrait")
-		_ok(sprite.texture != null and sprite.texture.get_size() == Vector2(280, 360),
-			"Mira runtime portrait is 280x360 for the customer slot")
+		_ok(sprite.texture != null and sprite.texture.get_size() == Vector2(512, 640),
+			"Mira runtime portrait uses the official 512x640 character pipeline")
 		_ok(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
 			"Mira portrait renders with nearest filtering")
 
@@ -64,7 +64,7 @@ func _test_mira_expression_textures_exist() -> void:
 		var texture := load(path) as Texture2D
 		_ok(texture != null, portrait_id + " runtime portrait loads as Texture2D")
 		if texture != null:
-			_ok(texture.get_size() == Vector2(280, 360), portrait_id + " runtime portrait is 280x360")
+			_ok(texture.get_size() == Vector2(512, 640), portrait_id + " runtime portrait uses official 512x640")
 
 
 func _test_tavern_switches_mira_expression_portraits() -> void:

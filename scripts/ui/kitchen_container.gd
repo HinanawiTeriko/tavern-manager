@@ -6,6 +6,7 @@ signal recipe_consumed(product_key: String)
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const COOK_STATION_STATE := preload("res://scripts/systems/cook_station_state.gd")
 const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
+const PHYSICS_MOTION_TRAIL := preload("res://scripts/ui/physics_motion_trail.gd")
 const GRILL_VAPOR_LAYER_NAME := "GrillVaporLayer"
 const GRILL_VAPOR_LAYER_Z_INDEX := 17
 const GRILL_VAPOR_SPAWN_INTERVAL := 0.09
@@ -109,9 +110,12 @@ var _pot_effect_layer: Node2D = null
 var _pot_effects: Array[Node2D] = []
 var _pot_simmer_elapsed: float = 0.0
 var _pot_effect_texture: Texture2D = null
+var _motion_trail = PHYSICS_MOTION_TRAIL.new()
 
 
 func _ready() -> void:
+	set_process(true)
+	set_physics_process(true)
 	assert(GameManager.craft != null, "[KitchenContainer] GameManager.craft is not ready")
 	_items_parent = get_parent().get_node("Items")
 	assert(_items_parent != null, "[KitchenContainer] Missing sibling Items node")
@@ -129,6 +133,10 @@ func _ready() -> void:
 	# Intake「吞料」是炖锅机制；烤架只靠 SearZone 按压煎制，不该吞掉放上去的生料。
 	if container_key == "pot":
 		_intake.body_entered.connect(_on_intake_body_entered)
+
+
+func _process(delta: float) -> void:
+	_update_container_motion_trail(delta)
 
 
 func _physics_process(delta: float) -> void:
@@ -166,6 +174,38 @@ func end_action_session() -> void:
 
 ## 勺尖在锅内时，按勺尖的"移动距离"累积搅拌进度——比读物理速度稳，
 ## 不受勺子被锅壁约束影响（料为空时 add_stir 自动忽略）。
+func _update_container_motion_trail(delta: float) -> void:
+	_motion_trail.update(
+		self,
+		delta,
+		_art,
+		_container_motion_trail_fallback_polygon(),
+		_container_motion_trail_tint()
+	)
+
+
+func _container_motion_trail_tint() -> Color:
+	if container_key == "pot":
+		return Color(0.30, 0.53, 0.62, 1.0)
+	return Color(0.80, 0.34, 0.18, 1.0)
+
+
+func _container_motion_trail_fallback_polygon() -> PackedVector2Array:
+	if container_key == "pot":
+		return PackedVector2Array([
+			Vector2(-50.0, 40.0),
+			Vector2(-42.0, -42.0),
+			Vector2(42.0, -42.0),
+			Vector2(50.0, 40.0),
+		])
+	return PackedVector2Array([
+		Vector2(-75.0, 18.0),
+		Vector2(75.0, 18.0),
+		Vector2(68.0, -18.0),
+		Vector2(-68.0, -18.0),
+	])
+
+
 func _accumulate_stir(spoon: StirSpoon, _delta: float) -> void:
 	var tip: Vector2 = spoon.tip_global_position()
 	if not _is_point_inside_stir_zone(tip):
