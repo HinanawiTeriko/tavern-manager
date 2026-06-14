@@ -88,6 +88,10 @@ const MIRA_TEXTURE_NEUTRAL := "mira_neutral"
 const MIRA_TEXTURE_SMILE := "mira_smile"
 const MIRA_TEXTURE_SURPRISED := "mira_surprised"
 const MIRA_TEXTURE_SERIOUS := "mira_serious"
+const MIRA_TEXTURE_GUILTY := "mira_guilty"
+const MIRA_TEXTURE_CONFLICTED := "mira_conflicted"
+const MIRA_TEXTURE_RESOLVED := "mira_resolved"
+const MIRA_TEXTURE_DETACHED := "mira_detached"
 const TOPBAR_LEFT_INSET := Vector2(28, 48)
 const TOPBAR_RIGHT_INSET := Vector2(28, 48)
 const TOPBAR_LABEL_HEIGHT := 48.0
@@ -654,18 +658,22 @@ func _mira_texture_key(outcome: String = "") -> String:
 	if outcome == "success":
 		if current_day >= 12:
 			if ending == "she_finally_stopped":
-				return MIRA_TEXTURE_SURPRISED
+				return MIRA_TEXTURE_RESOLVED
 			if ending == "never_turned_back":
-				return MIRA_TEXTURE_SERIOUS
+				return MIRA_TEXTURE_DETACHED
 			if ending in ["closed_the_door", "another_light_out"]:
 				return MIRA_TEXTURE_SMILE
-			return MIRA_TEXTURE_SURPRISED if told_truth else MIRA_TEXTURE_SMILE
+			if told_truth:
+				if narrative != null and narrative.get_affection("mira") >= narrative.MIRA_TRUST_THRESHOLD:
+					return MIRA_TEXTURE_RESOLVED
+				return MIRA_TEXTURE_CONFLICTED
+			return MIRA_TEXTURE_SMILE
 		return MIRA_TEXTURE_SMILE
 
 	if current_day >= 12:
 		if told_truth and ending == "":
-			return MIRA_TEXTURE_SURPRISED
-		return MIRA_TEXTURE_SERIOUS
+			return MIRA_TEXTURE_GUILTY
+		return MIRA_TEXTURE_DETACHED
 	return MIRA_TEXTURE_NEUTRAL
 
 func _current_story_day() -> int:

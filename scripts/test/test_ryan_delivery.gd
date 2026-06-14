@@ -11,6 +11,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_current_order_key()
 	_test_action_feedback_keeps_ryan_story_out_of_customer_bubble()
+	_test_ryan_contract_delivery_refreshes_portrait_state()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
 	_test_alternative_pending_then_serve_decides()
@@ -95,6 +96,47 @@ func _test_action_feedback_keeps_ryan_story_out_of_customer_bubble() -> void:
 	fake_view.free()
 
 
+func _test_ryan_contract_delivery_refreshes_portrait_state() -> void:
+	var gm = _gm()
+	var original_view = gm._tavern_view
+	var old_day: int = gm.economy.current_day
+	var tutorial = get_node_or_null("/root/TutorialManager")
+	var old_tutorial_active := false
+	if tutorial != null:
+		old_tutorial_active = bool(tutorial._is_active)
+		tutorial._is_active = true
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+	gm.economy.current_day = 99
+	_reset_ryan()
+
+	var evidence_result: Dictionary = gm.request_narrative_delivery("bloodied_contract", [])
+	_ok(evidence_result.get("accepted", false), "Ryan accepts bloodied contract before portrait refresh")
+	_ok(fake_view.reactions.size() == 1,
+		"bloodied contract delivery refreshes the current Ryan portrait")
+	if fake_view.reactions.size() >= 1:
+		_ok(fake_view.reactions[0]["npc_id"] == "ryan",
+			"bloodied contract portrait refresh targets Ryan")
+		_ok(fake_view.reactions[0]["outcome"] == "",
+			"bloodied contract portrait refresh uses story-state portrait selection")
+
+	var alternative_result: Dictionary = gm.request_narrative_delivery("alternative_contract", [])
+	_ok(alternative_result.get("accepted", false), "Ryan accepts alternative contract prompt before portrait refresh")
+	_ok(fake_view.reactions.size() == 2,
+		"alternative contract delivery refreshes the current Ryan portrait")
+	if fake_view.reactions.size() >= 2:
+		_ok(fake_view.reactions[1]["npc_id"] == "ryan",
+			"alternative contract portrait refresh targets Ryan")
+		_ok(fake_view.reactions[1]["outcome"] == "",
+			"alternative contract portrait refresh uses story-state portrait selection")
+
+	gm.economy.current_day = old_day
+	if tutorial != null:
+		tutorial._is_active = old_tutorial_active
+	gm._tavern_view = original_view
+	fake_view.free()
+
+
 ## 重置 Ryan 剧情变量并让指定客人在场（不依赖 _tavern_view，headless 安全）。
 func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 	var n = _gm().narrative
@@ -111,9 +153,13 @@ class FakeFeedbackView extends Node:
 	var customer_lines := []
 	var stage_lines := []
 	var dialogue_mode_calls := []
+	var reactions := []
 
 	func customer_say(text) -> void:
 		customer_lines.append(String(text))
+
+	func show_customer(_customer_name: String, _order_name: String, _npc_id: String = "guest", _order_key: String = "") -> void:
+		pass
 
 	func show_stage_caption(text, color = Color.WHITE) -> void:
 		stage_lines.append({"text": String(text), "color": color})
@@ -123,6 +169,9 @@ class FakeFeedbackView extends Node:
 
 	func set_close_enabled(_enabled: bool) -> void:
 		pass
+
+	func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
+		reactions.append({"outcome": outcome, "npc_id": npc_id})
 
 	func hide_customer() -> void:
 		pass

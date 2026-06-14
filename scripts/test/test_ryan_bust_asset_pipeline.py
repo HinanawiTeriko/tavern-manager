@@ -8,8 +8,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5_prompt.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6_prompt.txt"
 MANIFEST = ROOT / "assets" / "source" / "tavern" / "characters" / "ryan_bust_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME = ROOT / "assets" / "textures" / "characters"
@@ -31,22 +31,22 @@ CONTACT_SHEET_NATIVE_POSITIONS = [
     (880, 452),
     (1298, 452),
 ]
-STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v5"
+STYLE_PROFILE = "approved_mira_vera_belta_runtime_matched_tiefling_contract_runner_v6"
 COLOR_LIMIT = 72
-MIN_VISIBLE_HEIGHT = 138
+MIN_VISIBLE_HEIGHT = 150
 MAX_VISIBLE_HEIGHT = 154
 MIN_BOTTOM_PADDING = 2
 MAX_BOTTOM_PADDING = 5
 
 EXPECTED_CROPS = {
-    "ryan_neutral": [0, 0, 418, 470],
-    "ryan_confident": [418, 0, 836, 470],
-    "ryan_hesitant": [836, 0, 1238, 470],
-    "ryan_alarmed": [1254, 0, 1672, 470],
-    "ryan_resolved": [0, 470, 418, 941],
-    "ryan_relieved": [418, 470, 836, 941],
-    "ryan_wary": [836, 470, 1254, 941],
-    "ryan_broken": [1254, 470, 1672, 941],
+    "ryan_neutral": [2, 2, 382, 510],
+    "ryan_confident": [386, 2, 766, 510],
+    "ryan_hesitant": [770, 2, 1150, 510],
+    "ryan_alarmed": [1154, 2, 1534, 510],
+    "ryan_resolved": [2, 514, 382, 1022],
+    "ryan_relieved": [386, 514, 766, 1022],
+    "ryan_wary": [770, 514, 1150, 1022],
+    "ryan_broken": [1154, 514, 1534, 1022],
 }
 
 
@@ -74,12 +74,17 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
     def test_generated_source_and_prompt_are_retained(self) -> None:
         self.assertTrue(RAW.exists(), f"{RAW}: missing generated Ryan bust source")
         self.assertGreater(RAW.stat().st_size, 0, "generated Ryan bust source is empty")
+        with Image.open(RAW) as source:
+            self.assertEqual(source.size, (1536, 1024), "Ryan v6 source must remain the approved 4x2 sheet")
         self.assertTrue(PROMPT.exists(), f"{PROMPT}: missing Ryan bust generation prompt")
         self.assertGreater(PROMPT.stat().st_size, 0, "Ryan bust prompt is empty")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "approved vera/belta",
+            "approved mira/vera/belta",
             "same artist family",
+            "tiefling contract runner",
+            "head including horns",
+            "belt and upper hips",
             "128x160",
             "512x640",
             "4 columns x 2 rows",
@@ -93,8 +98,9 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(MANIFEST.exists(), f"{MANIFEST}: missing Ryan bust manifest")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest["style_profile"], STYLE_PROFILE)
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5.png")
-        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v5_prompt.txt")
+        self.assertEqual(manifest["source"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v6.png")
+        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v6_prompt.txt")
+        self.assertEqual(manifest["normalization"]["mode"], "explicit_crop_visible_subject_v6")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], SCALE)
@@ -104,6 +110,7 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
             with self.subTest(portrait_id=portrait_id):
                 entry = entries[portrait_id]
                 self.assertEqual(entry["crop_rect"], crop_rect)
+                self.assertEqual(entry["normalization"]["mode"], "explicit_crop_visible_subject_v6")
                 self.assertEqual(entry["native"], f"assets/source/tavern/characters/{portrait_id}_native.png")
                 self.assertEqual(entry["runtime"], f"assets/textures/characters/{portrait_id}.png")
                 self.assertIn("Tavern CustomerSprite", entry["intended_godot_use"])

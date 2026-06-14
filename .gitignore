@@ -20,6 +20,7 @@ export_presets.cfg
 tmp/
 tmp_tests/
 tmp_*.log
+tmp_*.png
 
 # Python (asset-pipeline tooling cache)
 __pycache__/

@@ -6,8 +6,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_source_v2.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_prompt_v2.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_source_v3.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_prompt_v3.txt"
 EXPRESSION_RAW = RAW
 EXPRESSION_PROMPT = PROMPT
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
@@ -20,12 +20,23 @@ RYAN_NATIVE = SOURCE_DIR / "ryan_neutral_native.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
-CONTACT_SHEET_SIZE = (1180, 820)
+CONTACT_SHEET_SIZE = (1600, 820)
 CONTACT_SHEET_NATIVE_SCALE = 2
 CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE, NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE)
 CONTACT_SHEET_NATIVE_BG = (24, 20, 16, 255)
-CONTACT_SHEET_NATIVE_POSITIONS = [(44, 92), (462, 92), (880, 92), (44, 452), (462, 452), (880, 452)]
+CONTACT_SHEET_NATIVE_POSITIONS = [
+    (44, 92),
+    (462, 92),
+    (880, 92),
+    (1298, 92),
+    (44, 452),
+    (462, 452),
+    (880, 452),
+    (1298, 452),
+]
 COLOR_LIMIT = 72
+FIXED_CELL_SIZE = (384, 512)
+NORMALIZATION_MODE = "explicit_rect_visible_subject"
 STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
 MAX_RYAN_MATCHED_WIDTH_DELTA = 18
 MIN_VISIBLE_HEIGHT = 138
@@ -53,6 +64,36 @@ PORTRAITS = {
         "prompt": EXPRESSION_PROMPT,
         "expected_mood": "serious direct gaze",
     },
+    "mira_guilty": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "guilty averted glance",
+    },
+    "mira_conflicted": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "conflicted hesitation",
+    },
+    "mira_resolved": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "resolved accountability",
+    },
+    "mira_detached": {
+        "source": EXPRESSION_RAW,
+        "prompt": EXPRESSION_PROMPT,
+        "expected_mood": "detached withdrawal",
+    },
+}
+EXPECTED_SOURCE_RECTS = {
+    "mira_neutral": [0, 0, 384, 512],
+    "mira_smile": [384, 0, 768, 512],
+    "mira_surprised": [752, 0, 1136, 512],
+    "mira_serious": [1120, 0, 1504, 512],
+    "mira_guilty": [0, 512, 384, 1024],
+    "mira_conflicted": [384, 512, 768, 1024],
+    "mira_resolved": [752, 512, 1136, 1024],
+    "mira_detached": [1120, 512, 1504, 1024],
 }
 
 
@@ -105,24 +146,28 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(EXPRESSION_PROMPT.exists(), "Mira expression prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "approved vera/belta",
-            "same artist family",
+            "direction c1",
+            "austere debt broker",
             "flat solid #00ff00",
             "no readable text",
-            "traveling merchant",
+            "traveling account-merchant",
             "128x160",
             "512x640",
-            "4 columns x 1 row",
+            "4 columns x 2 rows",
             "genuine warm smile",
             "surprised raised brows",
             "serious direct gaze",
+            "guilty averted glance",
+            "conflicted hesitation",
+            "resolved accountability",
+            "detached withdrawal",
         ):
             self.assertIn(phrase, prompt)
 
         self.assertTrue(MANIFEST.exists(), "Mira bust manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest.get("id"), "mira_bust_portrait")
-        self.assertEqual(manifest.get("style_profile"), STYLE_PROFILE)
+        self.assertEqual(manifest.get("style_profile"), "mira_direction_c1_debt_broker_v1")
         self.assertEqual(manifest.get("source"), RAW.relative_to(ROOT).as_posix())
         self.assertEqual(manifest.get("comparison_reference"), RYAN_REFERENCE.relative_to(ROOT).as_posix())
         self.assertEqual(manifest.get("native_size"), list(NATIVE_SIZE))
@@ -130,6 +175,8 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
         self.assertEqual(manifest.get("scale"), SCALE)
         self.assertEqual(manifest.get("safe_area"), [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]])
         self.assertEqual(manifest.get("runtime"), RUNTIME.relative_to(ROOT).as_posix())
+        self.assertEqual(manifest.get("grid"), {"columns": 4, "rows": 2})
+        self.assertEqual(manifest.get("normalization", {}).get("mode"), NORMALIZATION_MODE)
         self.assertIn("Tavern CustomerSprite", manifest.get("intended_godot_use", ""))
         portraits = manifest.get("portraits", {})
         self.assertEqual(set(PORTRAITS), set(portraits), "manifest must describe all Mira expression portraits")
@@ -146,6 +193,13 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
                 source_rect = entry.get("source_rect")
                 self.assertIsInstance(source_rect, list, f"{portrait_id}: source_rect must be fixed")
                 self.assertEqual(len(source_rect), 4, f"{portrait_id}: source_rect must have four values")
+                self.assertEqual(source_rect, EXPECTED_SOURCE_RECTS[portrait_id])
+                self.assertEqual(
+                    (source_rect[2] - source_rect[0], source_rect[3] - source_rect[1]),
+                    FIXED_CELL_SIZE,
+                    f"{portrait_id}: source_rect must keep the full fixed expression cell",
+                )
+                self.assertEqual(entry.get("normalization", {}).get("mode"), NORMALIZATION_MODE)
 
     def test_native_and_runtime_exports(self) -> None:
         for portrait_id in PORTRAITS:

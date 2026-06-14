@@ -15,8 +15,8 @@ from character_green_matte import despill_green_edges
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v5_prompt.txt"
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6_prompt.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME_DIR = ROOT / "assets" / "textures" / "characters"
 MANIFEST_PATH = SOURCE_DIR / "ryan_bust_manifest.json"
@@ -25,7 +25,10 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "ryan_contact_sheet.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
-STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v5"
+STYLE_PROFILE = "approved_mira_vera_belta_runtime_matched_tiefling_contract_runner_v6"
+NORMALIZATION_MODE = "explicit_crop_visible_subject_v6"
+EXPRESSION_COLUMNS = 4
+EXPRESSION_ROWS = 2
 COLOR_LIMIT = 72
 UNIFORM_VISIBLE_HEIGHT = 154
 UNIFORM_MAX_VISIBLE_WIDTH = 124
@@ -51,35 +54,35 @@ CONTACT_SHEET_BAR_LINE = (205, 132, 58, 255)
 PORTRAITS = {
     "ryan_neutral": {
         "expression": "neutral",
-        "crop_rect": [0, 0, 418, 470],
+        "crop_rect": [2, 2, 382, 510],
     },
     "ryan_confident": {
         "expression": "confident",
-        "crop_rect": [418, 0, 836, 470],
+        "crop_rect": [386, 2, 766, 510],
     },
     "ryan_hesitant": {
         "expression": "hesitation",
-        "crop_rect": [836, 0, 1238, 470],
+        "crop_rect": [770, 2, 1150, 510],
     },
     "ryan_alarmed": {
         "expression": "alarmed",
-        "crop_rect": [1254, 0, 1672, 470],
+        "crop_rect": [1154, 2, 1534, 510],
     },
     "ryan_resolved": {
         "expression": "resolved",
-        "crop_rect": [0, 470, 418, 941],
+        "crop_rect": [2, 514, 382, 1022],
     },
     "ryan_relieved": {
         "expression": "relieved",
-        "crop_rect": [418, 470, 836, 941],
+        "crop_rect": [386, 514, 766, 1022],
     },
     "ryan_wary": {
         "expression": "wary",
-        "crop_rect": [836, 470, 1254, 941],
+        "crop_rect": [770, 514, 1150, 1022],
     },
     "ryan_broken": {
         "expression": "broken",
-        "crop_rect": [1254, 470, 1672, 941],
+        "crop_rect": [1154, 514, 1534, 1022],
     },
 }
 
@@ -90,9 +93,18 @@ def remove_chroma_key(image: Image.Image) -> Image.Image:
     for y in range(rgba.height):
         for x in range(rgba.width):
             r, g, b, a = pixels[x, y]
-            if g >= 150 and g > r * 1.4 and g > b * 1.4 and g > max(r, b) + 50:
+            is_key = g >= 110 and g > r * 1.45 and g > b * 1.45 and g > max(r, b) + 30
+            is_dark_key = (
+                g >= 12
+                and r <= 96
+                and b <= 96
+                and g > r + 3
+                and g > b + 3
+                and max(r, g, b) <= 140
+            )
+            if is_key or is_dark_key:
                 pixels[x, y] = (0, 0, 0, 0)
-            elif g > max(r, b) + 30:
+            elif g > max(r, b) + 18:
                 pixels[x, y] = (r, max(r, b) + 4, b, a)
     return rgba
 
@@ -175,6 +187,9 @@ def write_manifest(natives: dict[str, Image.Image]) -> None:
             "source_file": RAW_SOURCE.relative_to(ROOT).as_posix(),
             "prompt": PROMPT.relative_to(ROOT).as_posix(),
             "crop_rect": spec["crop_rect"],
+            "normalization": {
+                "mode": NORMALIZATION_MODE,
+            },
             "native": f"assets/source/tavern/characters/{portrait_id}_native.png",
             "runtime": f"assets/textures/characters/{portrait_id}.png",
             "safe_area": [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]],
@@ -190,11 +205,24 @@ def write_manifest(natives: dict[str, Image.Image]) -> None:
         "native_size": list(NATIVE_SIZE),
         "runtime_size": list(RUNTIME_SIZE),
         "scale": SCALE,
+        "grid": {
+            "columns": EXPRESSION_COLUMNS,
+            "rows": EXPRESSION_ROWS,
+        },
+        "normalization": {
+            "mode": NORMALIZATION_MODE,
+        },
         "uniform_visible_height": UNIFORM_VISIBLE_HEIGHT,
         "uniform_max_visible_width": UNIFORM_MAX_VISIBLE_WIDTH,
         "uniform_bottom_padding": UNIFORM_BOTTOM_PADDING,
         "color_limit": COLOR_LIMIT,
         "portraits": portraits,
+        "character_notes": [
+            "subtle tiefling contract runner approved from the top-left direction",
+            "ash-lilac short braid, small horn nubs, mostly human face",
+            "simple oath tag and wax-seal pouch only, with low accessory density",
+            "source sheet uses a dark-green grid fringe, so each explicit crop is inset by two pixels",
+        ],
         "bar_occlusion_contract": {
             "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
             "runtime_sprite_size": list(RUNTIME_SIZE),
@@ -243,15 +271,37 @@ def make_contact_sheet(sheet: Image.Image, natives: dict[str, Image.Image]) -> N
     )
 
 
+def validate_crop_rect(portrait_id: str, source: Image.Image, crop_rect: list[int]) -> None:
+    if len(crop_rect) != 4:
+        raise ValueError(f"{portrait_id}: crop_rect must have four values")
+    left, top, right, bottom = crop_rect
+    if left < 0 or top < 0 or right > source.width or bottom > source.height:
+        raise ValueError(f"{portrait_id}: crop_rect {crop_rect} is outside source {source.size}")
+    cell_width = source.width // EXPRESSION_COLUMNS
+    cell_height = source.height // EXPRESSION_ROWS
+    expected_size = (cell_width - 4, cell_height - 4)
+    if (right - left, bottom - top) != expected_size:
+        raise ValueError(
+            f"{portrait_id}: crop_rect {crop_rect} must keep the approved "
+            f"{expected_size[0]}x{expected_size[1]} inset expression-cell size"
+        )
+
+
 def main() -> None:
     if not RAW_SOURCE.exists():
         raise FileNotFoundError(f"missing Ryan bust source: {RAW_SOURCE}")
     if not PROMPT.exists():
         raise FileNotFoundError(f"missing Ryan bust prompt: {PROMPT}")
     sheet = Image.open(RAW_SOURCE).convert("RGBA")
+    if sheet.width % EXPRESSION_COLUMNS != 0 or sheet.height % EXPRESSION_ROWS != 0:
+        raise ValueError(
+            f"Ryan expression source {sheet.size} must divide into "
+            f"{EXPRESSION_COLUMNS}x{EXPRESSION_ROWS} fixed cells"
+        )
     natives = {}
     runtimes = {}
     for portrait_id, spec in PORTRAITS.items():
+        validate_crop_rect(portrait_id, sheet, spec["crop_rect"])
         native = normalize_portrait(sheet, spec["crop_rect"])
         runtime = save_runtime(native, portrait_id)
         natives[portrait_id] = native

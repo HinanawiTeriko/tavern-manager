@@ -939,6 +939,8 @@ func _show_action_feedback(feedback: String) -> void:
 func _show_action_feedback_dialogue(feedback: String) -> void:
 	if _tavern_view == null or not is_instance_valid(_tavern_view):
 		return
+	if _tavern_view is Node and not (_tavern_view as Node).is_inside_tree():
+		return
 	_dialogue_phase = "action_feedback"
 	if _tavern_view.has_method("set_dialogue_mode"):
 		_tavern_view.set_dialogue_mode(true)
@@ -1013,8 +1015,9 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
 		_show_action_feedback(feedback)
 		var accepted: bool = bool(r.get("accepted", false))
-		if accepted and npc_id == "mira" and item_key == "toby_contract":
+		if accepted:
 			_refresh_current_customer_portrait()
+		if accepted and npc_id == "mira" and item_key == "toby_contract":
 			if not documents.owns_document("toby_contract"):
 				documents.grant_document("toby_contract")
 			request_open_document("toby_contract")
