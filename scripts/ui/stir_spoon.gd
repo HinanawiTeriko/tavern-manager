@@ -7,8 +7,11 @@ extends RigidBody2D
 
 const RESET_Y: float = 800.0
 const SUBMERGED_Z_INDEX := -1
+const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 
 @onready var _tip: Marker2D = $Tip
+@onready var _shape: CollisionShape2D = $Shape
+@onready var _art: Sprite2D = $Art
 
 var _home_position: Vector2
 var _surface_z_index: int
@@ -23,6 +26,7 @@ func _ready() -> void:
 	can_sleep = false   # 常醒着，避免静置后抓起不跟手
 	_home_position = global_position
 	_surface_z_index = z_index
+	_fit_collision_to_art_bounds()
 
 
 func _physics_process(_delta: float) -> void:
@@ -44,3 +48,14 @@ func _return_home() -> void:
 	angular_velocity = 0.0
 	rotation = 0.0
 	global_position = _home_position
+
+
+func _fit_collision_to_art_bounds() -> void:
+	var bounds: Rect2 = TEXTURE_COLLISION_BOUNDS.centered_sprite_alpha_rect(_art)
+	if bounds.size == Vector2.ZERO:
+		return
+	var capsule := CapsuleShape2D.new()
+	capsule.radius = bounds.size.x * 0.5
+	capsule.height = maxf(bounds.size.y, capsule.radius * 2.0)
+	_shape.shape = capsule
+	_shape.position = bounds.get_center()

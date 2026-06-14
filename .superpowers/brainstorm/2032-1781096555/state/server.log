@@ -1,0 +1,6 @@
+{"type":"server-started","port":52940,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:52940","screen_dir":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\content","state_dir":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\state"}
+{"type":"screen-added","file":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\content\\shop-direction-1.html"}
+{"type":"screen-added","file":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\content\\shop-b-preview-1.html"}
+{"type":"screen-added","file":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\content\\shop-b-preview-2.html"}
+{"type":"screen-added","file":"D:\\game\\tavern-manager\\.superpowers\\brainstorm\\2032-1781096555\\content\\shop-b-preview-3.html"}
+{"type":"server-stopped","reason":"idle timeout"}

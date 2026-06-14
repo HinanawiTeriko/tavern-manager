@@ -1,6 +1,7 @@
 extends Node
 
 var _checks := 0
+var _failures := 0
 const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
 
 
@@ -12,17 +13,31 @@ func _ready() -> void:
 	_test_barrel_pop_last_ingredient()
 	_test_pot_intake_requires_center_inside_mouth()
 	_test_grill_continues_searing_cooked_items()
+	_test_mapped_art_can_be_reapplied_after_item_state_changes()
+	_test_grill_timer_changes_item_state_without_heat_color_animation()
+	await _test_grill_auto_sears_and_held_accelerates()
+	await _test_grill_feedback_uses_generated_atlas()
 	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
 	_test_desk_item_split_visuals()
 	_test_tavern_scene_nodes()
-	print("[TEST-KITCHEN] ALL PASS (", _checks, " checks)")
-	get_tree().quit()
+	_finish()
 
 
 func _ok(cond: bool, msg: String) -> void:
 	_checks += 1
-	assert(cond, "[TEST-KITCHEN] FAIL: " + msg)
+	if not cond:
+		_failures += 1
+		push_error("[TEST-KITCHEN] FAIL: " + msg)
+
+
+func _finish() -> void:
+	if _failures == 0:
+		print("[TEST-KITCHEN] ALL PASS (", _checks, " checks)")
+		get_tree().quit(0)
+	else:
+		push_error("[TEST-KITCHEN] FAILURES: %d / %d checks" % [_failures, _checks])
+		get_tree().quit(1)
 
 
 func _new_state():
@@ -116,6 +131,122 @@ func _test_grill_continues_searing_cooked_items() -> void:
 	grill.free()
 
 
+func _test_mapped_art_can_be_reapplied_after_item_state_changes() -> void:
+	var item := _spawn_desk_item("ale_beer")
+	var art := item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and not art.visible, "set_item alone leaves product art hidden until mapped art is applied")
+	GameManager.apply_material_icon_to_desk_item(item)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and art.visible, "mapped art application should show product IconArt")
+	_ok(art != null and art.texture != null and art.texture.resource_path == "res://assets/textures/tavern/items/ale_beer.png",
+		"mapped art application should use the Tavern ale item art path")
+	item.queue_free()
+
+
+func _test_grill_timer_changes_item_state_without_heat_color_animation() -> void:
+	var grill = KITCHEN_CONTAINER_SCRIPT.new()
+	grill.container_key = "grill"
+	grill.cook_time = 2.0
+	grill.burn_time = 5.0
+	var item := _spawn_desk_item("meat_raw")
+	GameManager.apply_material_icon_to_desk_item(item)
+	var art := item.get_node_or_null("IconArt") as Sprite2D
+	_ok(art != null and art.visible, "raw grill item starts with mapped art visible")
+	var top_visual := item.get_node("VisualTop") as Polygon2D
+	var raw_color := top_visual.color
+	grill._advance_grill_item(item, grill.cook_time - 0.1)
+	_ok(item.item_key == "meat_raw", "grill should not change item state before cook_time")
+	_ok(top_visual.color == raw_color, "grill should not animate item color while cooking")
+	_ok(art != null and art.visible, "grill should keep mapped art visible while cooking")
+	grill._advance_grill_item(item, 0.1)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(item.item_key == "meat_cooked", "grill should switch raw meat to cooked meat at cook_time")
+	_ok(art != null and art.visible, "cooked grill product should show mapped art")
+	_ok(art != null and art.texture != null and art.texture.resource_path == "res://assets/textures/tavern/items/meat_cooked.png",
+		"cooked grill product should use the Tavern cooked meat item art path")
+	grill._advance_grill_item(item, grill.burn_time - grill.cook_time - 0.1)
+	_ok(item.item_key == "meat_cooked", "cooked meat should not burn before burn_time")
+	grill._advance_grill_item(item, 0.1)
+	art = item.get_node_or_null("IconArt") as Sprite2D
+	_ok(item.item_key == "meat_burnt", "cooked meat should switch to burnt meat after another timed grill pass")
+	_ok(art != null and art.visible and art.texture.resource_path == "res://assets/textures/tavern/items/meat_burnt.png",
+		"burnt grill product should use the burnt item icon")
+	item.queue_free()
+	grill.free()
+
+
+func _test_grill_auto_sears_and_held_accelerates() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	var bar := tavern.get_node("BarWorkspace")
+	bar.configure_day(2)
+	await get_tree().process_frame
+	var grill := tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	var sear_zone := grill.get_node("SearZone") as Area2D
+	grill.cook_time = 1.0
+	grill.burn_time = 3.0
+
+	var auto_item: DeskItem = bar._spawn_desk_item_at(sear_zone.global_position, "meat_raw")
+	auto_item.freeze = true
+	auto_item.is_held = false
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	grill._physics_process(0.55)
+	_ok(auto_item.item_key == "meat_raw",
+		"resting meat should not auto-finish before cook_time")
+	grill._physics_process(0.50)
+	_ok(auto_item.item_key == "meat_cooked",
+		"resting meat on the grill should auto-cook after enough time")
+	auto_item.queue_free()
+	await get_tree().physics_frame
+
+	var held_item: DeskItem = bar._spawn_desk_item_at(sear_zone.global_position, "meat_raw")
+	held_item.freeze = true
+	held_item.is_held = true
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	grill._physics_process(0.45)
+	_ok(held_item.item_key == "meat_cooked",
+		"held meat should cook faster than the passive grill rate")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_grill_feedback_uses_generated_atlas() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	var bar := tavern.get_node("BarWorkspace")
+	bar.configure_day(2)
+	await get_tree().process_frame
+	var grill := tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	var sear_zone := grill.get_node("SearZone") as Area2D
+	grill.cook_time = 1.0
+	grill.burn_time = 3.0
+
+	var item: DeskItem = bar._spawn_desk_item_at(sear_zone.global_position, "meat_raw")
+	item.freeze = true
+	item.is_held = true
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	grill._physics_process(0.13)
+	_ok(_grill_feedback_uses_runtime_sprite(grill, "press_spark"),
+		"pressed grill oil sparks should use the generated grill feedback atlas")
+
+	grill._advance_grill_item(item, grill.cook_time)
+	_ok(_grill_feedback_uses_runtime_sprite(grill, "done_spark"),
+		"finished grill sparks should use the generated grill feedback atlas")
+
+	grill._advance_grill_item(item, grill.burn_time - grill.cook_time)
+	_ok(_grill_feedback_uses_runtime_sprite(grill, "char_spark"),
+		"burnt grill embers should use the generated grill feedback atlas")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _test_pot_unfreezes_while_held() -> void:
 	var pot = KITCHEN_CONTAINER_SCRIPT.new()
 	pot.container_key = "pot"
@@ -171,3 +302,28 @@ func _test_tavern_scene_nodes() -> void:
 	_ok(spoon is StirSpoon, "Tavern should contain a StirSpoon for the pot")
 	_ok(spoon.get_node_or_null("Tip") is Marker2D, "stir spoon should expose a Tip marker")
 	tavern.queue_free()
+
+
+func _spawn_desk_item(item_key: String) -> DeskItem:
+	var scene := load("res://scenes/test/desk_item.tscn") as PackedScene
+	_ok(scene != null, "desk item scene should load for " + item_key)
+	var item := scene.instantiate() as DeskItem
+	add_child(item)
+	item.set_item(item_key, GameManager.craft.get_item(item_key), GameManager.craft.get_item_physics_profiles())
+	return item
+
+
+func _grill_feedback_uses_runtime_sprite(grill: KitchenContainer, element: String) -> bool:
+	var layer := grill.get_node_or_null("GrillFeedbackLayer") as Node2D
+	if layer == null:
+		return false
+	for child in layer.get_children():
+		if not child is Node2D:
+			continue
+		if String(child.get_meta("grill_feedback_element", "")) != element:
+			continue
+		var sprite := child.get_node_or_null("Sprite") as Sprite2D
+		if sprite != null and sprite.texture != null \
+				and sprite.texture.resource_path == "res://assets/textures/grill_feedback/grill_feedback.png":
+			return true
+	return false

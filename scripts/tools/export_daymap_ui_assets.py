@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageOps
@@ -9,12 +10,17 @@ ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / "assets" / "source" / "daymap" / "reference"
 SOURCE = ROOT / "assets" / "source" / "daymap" / "ui"
 RUNTIME = ROOT / "assets" / "textures" / "daymap" / "ui"
+GENERATED_RAW = ROOT / "art_sources" / "generated_raw" / "daymap"
 NATIVE_SIZE = (70, 18)
 RUNTIME_SIZE = (280, 72)
-LEDGER_NATIVE_SIZE = (33, 11)
+LEDGER_NATIVE_SIZE = (66, 22)
 LEDGER_RUNTIME_SIZE = (132, 44)
 DETAIL_PANEL_NATIVE_SIZE = (80, 120)
 DETAIL_PANEL_RUNTIME_SIZE = (320, 480)
+DETAIL_GO_BUTTON_NATIVE_SIZE = (56, 14)
+DETAIL_GO_BUTTON_RUNTIME_SIZE = (224, 56)
+GATHERING_TOAST_PANEL_NATIVE_SIZE = (105, 14)
+GATHERING_TOAST_PANEL_RUNTIME_SIZE = (420, 56)
 RESULT_PANEL_NATIVE_SIZE = (175, 100)
 RESULT_PANEL_RUNTIME_SIZE = (700, 400)
 TAB_NATIVE_SIZE = (36, 12)
@@ -37,15 +43,67 @@ SCROLL_GRABBER_NATIVE_SIZE = (4, 16)
 SCROLL_GRABBER_RUNTIME_SIZE = (16, 64)
 TOPBAR_NATIVE_SIZE = (320, 15)
 TOPBAR_RUNTIME_SIZE = (1280, 60)
+PINNED_NOTE_PANEL_NATIVE_SIZE = (92, 96)
+PINNED_NOTE_PANEL_RUNTIME_SIZE = (368, 384)
+PINNED_NOTE_KNIFE_NATIVE_SIZE = (28, 28)
+PINNED_NOTE_KNIFE_RUNTIME_SIZE = (112, 112)
+PINNED_DETAIL_PANEL_NATIVE_SIZE = (92, 96)
+PINNED_DETAIL_PANEL_RUNTIME_SIZE = (368, 384)
+PINNED_NOTE_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_pinned_note_contact_sheet.png"
+NOTE_ACTION_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_note_action_button_contact_sheet.png"
+DETAIL_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_detail_panel_contact_sheet.png"
+GATHERING_TOAST_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_gathering_toast_contact_sheet.png"
+RESULT_PANEL_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_result_panel_contact_sheet.png"
+LEDGER_BUTTON_CONTACT_SHEET = ROOT / "docs" / "ui" / "previews" / "daymap_ledger_button_states_contact_sheet.png"
+DAYMAP_UI_MANIFEST = SOURCE / "daymap_ui_manifest.json"
 
 PRIMARY_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_primary_buttons_reference_v2_generated.png"
-LEDGER_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_ledger_buttons_reference_v2_generated.png"
 TAB_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_tab_buttons_reference_v2_generated.png"
 SHOP_BUTTONS_REFERENCE = REFERENCE / "daymap_ui_shop_buttons_reference_v2_generated.png"
 SHOP_ATLAS_REFERENCE = REFERENCE / "daymap_ui_shop_atlas_reference_v3_generated.png"
 SHOP_STEPPER_ICONS_REFERENCE = REFERENCE / "daymap_ui_shop_stepper_icons_reference_v1_generated.png"
 PANELS_REFERENCE = REFERENCE / "daymap_ui_panels_reference_v2_generated.png"
-TOPBAR_REFERENCE = REFERENCE / "daymap_ui_topbar_reference_v2_generated.png"
+TOPBAR_DESKTOP_SOURCE = GENERATED_RAW / "topbar_desktop_source.png"
+TOPBAR_SOURCE_CROP = (14, 557, 1240, 698)
+PINNED_NOTE_PIERCED_SOURCE = GENERATED_RAW / "pinned_note_pierced_source.png"
+PINNED_NOTE_PANEL_CROP = (80, 60, 1120, 1148)
+PINNED_NOTE_KNIFE_CROP = (80, 60, 520, 540)
+NOTE_ACTION_PAPER_STAMP_SOURCE = GENERATED_RAW / "note_action_paper_stamp_source.png"
+DETAIL_PANEL_PINNED_SOURCE = GENERATED_RAW / "detail_panel_pinned_notice_source_v1.png"
+DETAIL_PANEL_PINNED_PROMPT = GENERATED_RAW / "detail_panel_pinned_notice_prompt_v1.txt"
+DETAIL_PANEL_SOURCE_CROP = (72, 44, 966, 1492)
+PINNED_DETAIL_PANEL_SOURCE = GENERATED_RAW / "pinned_note_detail_panel_source_v2.png"
+PINNED_DETAIL_PANEL_PROMPT = GENERATED_RAW / "pinned_note_detail_panel_prompt_v2.txt"
+PINNED_DETAIL_PANEL_CROP = (100, 52, 1188, 1136)
+DETAIL_GO_BUTTON_STATES_SOURCE = GENERATED_RAW / "detail_go_button_states_source_v3.png"
+DETAIL_GO_BUTTON_STATES_PROMPT = GENERATED_RAW / "detail_go_button_states_prompt_v3.txt"
+GATHERING_TOAST_PANEL_SOURCE = GENERATED_RAW / "gathering_toast_panel_source_v2.png"
+GATHERING_TOAST_PANEL_PROMPT = GENERATED_RAW / "gathering_toast_panel_prompt_v2.txt"
+SPECIAL_RESULT_PANEL_SOURCE = GENERATED_RAW / "special_result_panel_source_v1.png"
+SPECIAL_RESULT_PANEL_PROMPT = GENERATED_RAW / "special_result_panel_prompt_v1.txt"
+LEDGER_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_button_states_source_v1.png"
+LEDGER_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_button_states_prompt_v1.txt"
+LEDGER_UNREAD_BUTTON_STATES_SOURCE = GENERATED_RAW / "daymap_ledger_unread_button_states_source_v1.png"
+LEDGER_UNREAD_BUTTON_STATES_PROMPT = GENERATED_RAW / "daymap_ledger_unread_button_states_prompt_v1.txt"
+NOTE_ACTION_NATIVE_SIZE = (56, 14)
+NOTE_ACTION_RUNTIME_SIZE = (224, 56)
+NOTE_ACTION_CROPS = {
+    "normal": (165, 111, 1089, 358),
+    "hover": (165, 501, 1089, 748),
+    "pressed": (165, 892, 1089, 1141),
+}
+LEDGER_BUTTON_CROPS = {
+    "normal": (190, 100, 1064, 360),
+    "hover": (190, 500, 1064, 760),
+    "pressed": (190, 895, 1064, 1155),
+}
+DETAIL_GO_BUTTON_CROPS = {
+    "normal": (60, 195, 975, 429),
+    "hover": (60, 630, 975, 864),
+    "pressed": (60, 1064, 975, 1298),
+}
+GATHERING_TOAST_PANEL_CROP = (50, 552, 1200, 705)
+SPECIAL_RESULT_PANEL_CROP = (0, 0, 1659, 930)
 PARCHMENT_PALETTE = [
     (112, 78, 48),
     (124, 88, 52),
@@ -70,6 +128,64 @@ AMBER_PALETTE = [
     (207, 117, 18),
     (224, 136, 25),
     (245, 165, 32),
+]
+BLADE_PALETTE = [
+    (58, 65, 65),
+    (86, 96, 94),
+    (118, 133, 127),
+    (156, 174, 164),
+    (190, 208, 194),
+]
+WAX_PALETTE = [
+    (104, 28, 20),
+    (116, 31, 21),
+    (128, 36, 22),
+    (142, 41, 24),
+    (158, 49, 26),
+    (178, 62, 29),
+    (198, 82, 30),
+    (235, 128, 38),
+]
+MAP_PARCHMENT_PALETTE = [
+    (82, 64, 42),
+    (94, 72, 44),
+    (104, 82, 52),
+    (118, 93, 58),
+    (132, 106, 68),
+    (148, 121, 80),
+    (166, 140, 96),
+    (184, 158, 112),
+]
+MAP_STAMP_PALETTE = [
+    (62, 24, 22),
+    (76, 31, 25),
+    (92, 40, 30),
+    (108, 50, 35),
+    (126, 64, 43),
+    (146, 82, 54),
+]
+MAP_AMBER_PALETTE = [
+    (96, 58, 26),
+    (124, 79, 34),
+    (150, 101, 45),
+    (176, 126, 62),
+    (198, 148, 78),
+]
+TOPBAR_WOOD_PALETTE = [
+    (48, 29, 20),
+    (58, 35, 24),
+    (70, 43, 29),
+    (84, 53, 36),
+    (100, 66, 45),
+    (118, 82, 56),
+    (136, 99, 70),
+]
+TOPBAR_AMBER_PALETTE = [
+    (96, 58, 26),
+    (124, 79, 34),
+    (150, 101, 45),
+    (176, 126, 62),
+    (198, 148, 78),
 ]
 DARK_INK = (6, 20, 22, 255)
 DARK_BODY = (8, 25, 29, 255)
@@ -279,44 +395,6 @@ def make_primary_button_native(state: str) -> Image.Image:
     return image
 
 
-def make_ledger_button_native(state: str) -> Image.Image:
-    image = Image.new("RGBA", LEDGER_NATIVE_SIZE, (0, 0, 0, 0))
-    amber = AMBER_HOVER if state == "hover" else AMBER_PRESSED if state == "pressed" else AMBER_NORMAL
-    body = (11, 31, 35, 255) if state == "hover" else DARK_BODY
-    page = (140, 96, 54, 255) if state == "pressed" else PARCHMENT_LIGHT if state == "hover" else PARCHMENT_BODY
-    page_light = (178, 128, 74, 255) if state == "hover" else PARCHMENT_LIGHT
-    page_shadow = (93, 59, 34, 255)
-    page_rule = (115, 88, 45, 255)
-    spine_highlight = (39, 82, 78, 255)
-
-    fill_rect(image, (2, 0, 31, 11), DARK_EDGE)
-    fill_rect(image, (1, 2, 32, 10), DARK_EDGE)
-    fill_rect(image, (3, 1, 30, 10), body)
-    fill_rect(image, (4, 2, 9, 9), DARK_LIFT)
-    fill_rect(image, (5, 3, 7, 8), spine_highlight)
-
-    fill_rect(image, (8, 2, 25, 9), page)
-    fill_rect(image, (9, 3, 15, 8), page_light)
-    fill_rect(image, (17, 3, 24, 8), PARCHMENT_BODY)
-    fill_rect(image, (16, 2, 17, 9), page_shadow)
-    for y in [4, 6]:
-        fill_rect(image, (10, y, 15, y + 1), page_rule)
-        fill_rect(image, (18, y, 24, y + 1), page_rule)
-
-    fill_rect(image, (25, 2, 30, 9), amber)
-    fill_rect(image, (26, 3, 29, 8), AMBER_HOVER if state == "hover" else AMBER_NORMAL)
-    fill_rect(image, (30, 2, 31, 9), DARK_LIFT)
-    for x, y in [(4, 2), (4, 8), (29, 2), (29, 8)]:
-        set_pixel(image, x, y, AMBER_HOVER if state == "hover" else AMBER_NORMAL)
-    for x, y in [(6, 4), (6, 6), (11, 3), (21, 7), (27, 5)]:
-        set_pixel(image, x, y, (245, 165, 32, 255) if state == "hover" else (224, 136, 25, 255))
-    set_pixel(image, 1, 0, (0, 0, 0, 0))
-    set_pixel(image, 32, 0, (0, 0, 0, 0))
-    set_pixel(image, 0, 10, (0, 0, 0, 0))
-    set_pixel(image, 32, 10, (0, 0, 0, 0))
-    return image
-
-
 def make_document_panel_native() -> Image.Image:
     image = Image.new("RGBA", DOCUMENT_PANEL_NATIVE_SIZE, (0, 0, 0, 0))
     width, height = image.size
@@ -411,6 +489,301 @@ def harmonize_ui_palette(image: Image.Image, profile: str = "default") -> Image.
     return clear_transparent_pixels(out)
 
 
+def harmonize_topbar_palette(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            luma = red * 0.32 + green * 0.42 + blue * 0.26
+            saturation = max(red, green, blue) - min(red, green, blue)
+            amber_metal = (
+                red >= 158
+                and 70 <= green <= 155
+                and blue <= 82
+                and red > green * 1.14
+                and saturation >= 70
+                and luma >= 102.0
+            )
+            paper_patch = (
+                red >= 92
+                and green >= 70
+                and blue >= 45
+                and red >= green >= blue
+                and red - green <= 55
+                and green - blue <= 55
+                and luma >= 70.0
+            )
+            wood_plank = (
+                red >= 50
+                and red > green
+                and 18 <= green <= 115
+                and 12 <= blue <= 85
+                and green >= blue - 4
+            )
+            if amber_metal:
+                pixels[x, y] = (*palette_pick(TOPBAR_AMBER_PALETTE, min(255.0, luma * 1.45)), alpha)
+            elif paper_patch:
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, min(240.0, luma * 1.05)), alpha)
+            elif wood_plank:
+                pixels[x, y] = (*palette_pick(TOPBAR_WOOD_PALETTE, min(255.0, luma * 1.65)), alpha)
+            else:
+                pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, min(255.0, luma * 2.7)), alpha)
+    return clear_transparent_pixels(out)
+
+
+def crop_explicit_source(
+    image: Image.Image,
+    box: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    left, top, right, bottom = box
+    if left < 0 or top < 0 or right > image.width or bottom > image.height or left >= right or top >= bottom:
+        raise ValueError(f"{label}: crop {box} is outside source size {image.size}")
+    return image.crop(box).convert("RGBA")
+
+
+def harmonize_pinned_note_palette(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            luma = red * 0.32 + green * 0.42 + blue * 0.26
+            amberish = (
+                red >= 178
+                and 55 <= green <= 150
+                and blue <= 84
+                and red >= green * 1.42
+                and red > blue * 2.0
+            )
+            metal = (
+                abs(red - green) <= 44
+                and abs(green - blue) <= 54
+                and blue >= red * 0.70
+                and luma >= 42.0
+                and not amberish
+            )
+            wood = (
+                58 <= red <= 150
+                and 28 <= green <= 105
+                and blue <= 82
+                and red >= green * 1.05
+                and green >= blue * 1.05
+            )
+            if metal:
+                pixels[x, y] = (*palette_pick(BLADE_PALETTE, min(255.0, luma * 1.08)), alpha)
+            elif amberish or wood:
+                pixels[x, y] = (*palette_pick(MAP_AMBER_PALETTE if luma >= 112.0 else MAP_PARCHMENT_PALETTE, luma), alpha)
+            elif luma >= 74.0:
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, luma), alpha)
+            else:
+                pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
+    return clear_transparent_pixels(out)
+
+
+def fit_pinned_note_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    native_size: tuple[int, int],
+    label: str,
+    fill: bool = True,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    if fill:
+        fitted = ImageOps.fit(
+            keyed,
+            native_size,
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        ).convert("RGBA")
+    else:
+        fitted = ImageOps.contain(
+            keyed,
+            native_size,
+            method=Image.Resampling.LANCZOS,
+        ).convert("RGBA")
+        canvas = Image.new("RGBA", native_size, (0, 0, 0, 0))
+        canvas.alpha_composite(fitted, ((native_size[0] - fitted.width) // 2, (native_size[1] - fitted.height) // 2))
+        fitted = canvas
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.08)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    fitted.putalpha(alpha)
+    return harmonize_pinned_note_palette(clear_transparent_pixels(fitted))
+
+
+def mute_pinned_detail_panel_orange(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            overheated = (
+                red >= 190
+                and 55 <= green <= 130
+                and blue <= 55
+                and red > green * 1.45
+            )
+            bright_amber = (
+                red >= 150
+                and 55 <= green <= 165
+                and blue <= 90
+                and red > green * 1.16
+            )
+            if overheated or bright_amber:
+                luma = red * 0.32 + green * 0.42 + blue * 0.26
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, min(255.0, luma * 0.92)), alpha)
+    return clear_transparent_pixels(out)
+
+
+def fit_detail_panel_source(source: Image.Image) -> Image.Image:
+    cropped = crop_explicit_source(source, DETAIL_PANEL_SOURCE_CROP, "panel_detail")
+    keyed = remove_green_key(cropped)
+    fitted = ImageOps.fit(
+        keyed,
+        DETAIL_PANEL_NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.47),
+    ).convert("RGBA")
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.06)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    fitted.putalpha(alpha)
+    return harmonize_pinned_note_palette(clear_transparent_pixels(fitted))
+
+
+def harmonize_note_action_palette(image: Image.Image) -> Image.Image:
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                continue
+            luma = red * 0.32 + green * 0.42 + blue * 0.26
+            paper = (
+                red >= 130
+                and green >= 82
+                and blue >= 42
+                and green > blue * 1.18
+                and red - green <= 88
+            )
+            stamp = (
+                red >= 75
+                and red > green * 1.28
+                and green <= 130
+                and blue <= 96
+            )
+            highlight = stamp and luma >= 104.0
+            if highlight:
+                pixels[x, y] = (*palette_pick(MAP_AMBER_PALETTE, min(255.0, luma * 1.16)), alpha)
+            elif stamp:
+                pixels[x, y] = (*palette_pick(MAP_STAMP_PALETTE, min(255.0, luma * 1.32)), alpha)
+            elif paper:
+                pixels[x, y] = (*palette_pick(MAP_PARCHMENT_PALETTE, luma), alpha)
+            else:
+                pixels[x, y] = (*palette_pick(DARK_TEAL_PALETTE, luma), alpha)
+    return clear_transparent_pixels(out)
+
+
+def fit_note_action_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    fitted = ImageOps.contain(
+        keyed,
+        NOTE_ACTION_NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    ).convert("RGBA")
+    canvas = Image.new("RGBA", NOTE_ACTION_NATIVE_SIZE, (0, 0, 0, 0))
+    canvas.alpha_composite(
+        fitted,
+        (
+            (NOTE_ACTION_NATIVE_SIZE[0] - fitted.width) // 2,
+            (NOTE_ACTION_NATIVE_SIZE[1] - fitted.height) // 2,
+        ),
+    )
+    canvas = ImageEnhance.Contrast(canvas).enhance(1.08)
+    alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    canvas.putalpha(alpha)
+    return harmonize_note_action_palette(clear_transparent_pixels(canvas))
+
+
+def fit_detail_go_button_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    fitted = ImageOps.contain(
+        keyed,
+        DETAIL_GO_BUTTON_NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    ).convert("RGBA")
+    canvas = Image.new("RGBA", DETAIL_GO_BUTTON_NATIVE_SIZE, (0, 0, 0, 0))
+    canvas.alpha_composite(
+        fitted,
+        (
+            (DETAIL_GO_BUTTON_NATIVE_SIZE[0] - fitted.width) // 2,
+            (DETAIL_GO_BUTTON_NATIVE_SIZE[1] - fitted.height) // 2,
+        ),
+    )
+    canvas = ImageEnhance.Contrast(canvas).enhance(1.08)
+    alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    canvas.putalpha(alpha)
+    return harmonize_note_action_palette(clear_transparent_pixels(canvas))
+
+
+def fit_gathering_toast_panel_source(source: Image.Image) -> Image.Image:
+    cropped = crop_explicit_source(source, GATHERING_TOAST_PANEL_CROP, "gathering_toast_panel")
+    keyed = remove_green_key(cropped)
+    fitted = ImageOps.fit(
+        keyed,
+        GATHERING_TOAST_PANEL_NATIVE_SIZE,
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
+    ).convert("RGBA")
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.08)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    fitted.putalpha(alpha)
+    return harmonize_note_action_palette(clear_transparent_pixels(fitted))
+
+
+def fit_ledger_button_source(
+    source: Image.Image,
+    crop: tuple[int, int, int, int],
+    label: str,
+) -> Image.Image:
+    cropped = crop_explicit_source(source, crop, label)
+    keyed = remove_green_key(cropped)
+    trimmed = dominant_alpha_component(trim_to_alpha(keyed))
+    fitted = trimmed.resize(LEDGER_NATIVE_SIZE, Image.Resampling.LANCZOS).convert("RGBA")
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.08)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 30 else 0)
+    rgb = Image.new("RGB", LEDGER_NATIVE_SIZE, (0, 0, 0))
+    rgb.paste(fitted.convert("RGB"), mask=alpha)
+    quantized = rgb.quantize(colors=24, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+    quantized.putalpha(alpha)
+    pixels = quantized.load()
+    for y in range(quantized.height):
+        for x in range(quantized.width):
+            red, green, blue, pixel_alpha = pixels[x, y]
+            if pixel_alpha > 0 and red >= 185 and 80 <= green <= 180 and blue <= 120:
+                luma = red * 0.32 + green * 0.42 + blue * 0.26
+                pixels[x, y] = (*palette_pick(AMBER_PALETTE, luma), pixel_alpha)
+    return clear_transparent_pixels(quantized)
+
+
 def fit_ui_source(
     image: Image.Image,
     native_size: tuple[int, int],
@@ -436,6 +809,19 @@ def fit_ui_source(
     out = canvas.convert("RGBA")
     out.putalpha(alpha)
     return harmonize_ui_palette(clear_transparent_pixels(out), profile)
+
+
+def fit_special_result_panel_source(image: Image.Image) -> Image.Image:
+    cropped = image.crop(SPECIAL_RESULT_PANEL_CROP).convert("RGBA")
+    keyed = remove_green_key(cropped)
+    fitted = keyed.resize(RESULT_PANEL_NATIVE_SIZE, Image.Resampling.LANCZOS).convert("RGBA")
+    fitted = ImageEnhance.Contrast(fitted).enhance(1.08)
+    alpha = fitted.getchannel("A").point(lambda value: 255 if value >= 24 else 0)
+    rgb = Image.new("RGB", RESULT_PANEL_NATIVE_SIZE, (0, 0, 0))
+    rgb.paste(fitted.convert("RGB"), mask=alpha)
+    quantized = rgb.quantize(colors=40, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+    quantized.putalpha(alpha)
+    return harmonize_ui_palette(clear_transparent_pixels(quantized), "panel")
 
 
 def fit_shop_backdrop_source(image: Image.Image) -> Image.Image:
@@ -521,22 +907,22 @@ def fit_shop_scroll_grabber_source(panel: Image.Image) -> Image.Image:
     )
 
 
-def fit_topbar_source(image: Image.Image) -> Image.Image:
-    keyed = remove_green_key(image)
-    trimmed = trim_to_alpha(keyed)
+def fit_topbar_source(image: Image.Image, crop: tuple[int, int, int, int]) -> Image.Image:
+    source = crop_explicit_source(image, crop, "topbar_strip")
+    keyed = remove_green_key(source)
     fitted = ImageOps.fit(
-        trimmed,
+        keyed,
         TOPBAR_NATIVE_SIZE,
         method=Image.Resampling.LANCZOS,
-        centering=(0.5, 0.5),
+        centering=(0.5, 0.45),
     ).convert("RGBA")
     canvas = Image.new("RGBA", TOPBAR_NATIVE_SIZE, (0, 0, 0, 0))
     canvas.alpha_composite(fitted, (0, 0))
-    canvas = ImageEnhance.Contrast(canvas).enhance(1.08)
-    alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 28 else 0)
+    canvas = ImageEnhance.Contrast(canvas).enhance(1.05)
+    alpha = canvas.getchannel("A").point(lambda value: 255 if value >= 24 else 0)
     out = canvas.convert("RGBA")
     out.putalpha(alpha)
-    out = harmonize_ui_palette(clear_transparent_pixels(out), "topbar")
+    out = harmonize_topbar_palette(clear_transparent_pixels(out))
     pixels = out.load()
     for x in range(out.width):
         if pixels[x, 0][3] == 0:
@@ -551,29 +937,280 @@ def export_single(name: str, native: Image.Image, runtime_size: tuple[int, int])
     print(f"{name}: {native.size} -> {runtime.size}")
 
 
+def export_pinned_note_contact_sheet(panel: Image.Image, knife: Image.Image) -> None:
+    PINNED_NOTE_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    panel_runtime = panel.resize(PINNED_NOTE_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    knife_runtime = knife.resize(PINNED_NOTE_KNIFE_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (640, 520), (8, 25, 29, 255))
+    sheet.alpha_composite(panel_runtime, (136, 32))
+    sheet.alpha_composite(knife_runtime, (44, 76))
+    native_preview = panel.resize((184, 192), Image.Resampling.NEAREST)
+    knife_preview = knife.resize((72, 72), Image.Resampling.NEAREST)
+    sheet.alpha_composite(native_preview, (20, 300))
+    sheet.alpha_composite(knife_preview, (236, 360))
+    sheet.save(PINNED_NOTE_CONTACT_SHEET)
+    print(f"pinned_note_contact_sheet: {sheet.size}")
+
+
+def export_note_action_contact_sheet(states: dict[str, Image.Image]) -> None:
+    NOTE_ACTION_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    sheet = Image.new("RGBA", (320, 240), (8, 25, 29, 255))
+    y = 24
+    for state in ["normal", "hover", "pressed"]:
+        runtime = states[state].resize(NOTE_ACTION_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (48, y))
+        y += 68
+    sheet.save(NOTE_ACTION_CONTACT_SHEET)
+    print(f"note_action_contact_sheet: {sheet.size}")
+
+
+def export_ledger_button_contact_sheet(
+    states: dict[str, Image.Image],
+    unread_states: dict[str, Image.Image],
+) -> None:
+    LEDGER_BUTTON_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    sheet = Image.new("RGBA", (360, 320), (8, 25, 29, 255))
+    y = 24
+    for state in ["normal", "hover", "pressed"]:
+        runtime = states[state].resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        unread_runtime = unread_states[state].resize(LEDGER_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (32, y))
+        sheet.alpha_composite(unread_runtime, (196, y))
+        y += 88
+    sheet.save(LEDGER_BUTTON_CONTACT_SHEET)
+    print(f"ledger_button_contact_sheet: {sheet.size}")
+
+
+def export_detail_panel_contact_sheet(panel: Image.Image, states: dict[str, Image.Image]) -> None:
+    DETAIL_PANEL_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    panel_runtime = panel.resize(PINNED_DETAIL_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (760, 560), (8, 25, 29, 255))
+    sheet.alpha_composite(panel_runtime, (36, 32))
+    y = 72
+    for state in ["normal", "hover", "pressed"]:
+        runtime = states[state].resize(DETAIL_GO_BUTTON_RUNTIME_SIZE, Image.Resampling.NEAREST)
+        sheet.alpha_composite(runtime, (420, y))
+        y += 88
+    native_preview = panel.resize((184, 192), Image.Resampling.NEAREST)
+    sheet.alpha_composite(native_preview, (500, 296))
+    sheet.save(DETAIL_PANEL_CONTACT_SHEET)
+    print(f"detail_panel_contact_sheet: {sheet.size}")
+
+
+def export_gathering_toast_contact_sheet(panel: Image.Image) -> None:
+    GATHERING_TOAST_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    runtime = panel.resize(GATHERING_TOAST_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (560, 180), (8, 25, 29, 255))
+    sheet.alpha_composite(runtime, (70, 32))
+    sheet.alpha_composite(runtime, (70, 104))
+    sheet.save(GATHERING_TOAST_CONTACT_SHEET)
+    print(f"gathering_toast_contact_sheet: {sheet.size}")
+
+
+def export_result_panel_contact_sheet(panel: Image.Image) -> None:
+    RESULT_PANEL_CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    runtime = panel.resize(RESULT_PANEL_RUNTIME_SIZE, Image.Resampling.NEAREST)
+    native_preview = panel.resize((350, 200), Image.Resampling.NEAREST)
+    sheet = Image.new("RGBA", (860, 560), (8, 25, 29, 255))
+    sheet.alpha_composite(runtime, (80, 44))
+    sheet.alpha_composite(native_preview, (254, 328))
+    sheet.save(RESULT_PANEL_CONTACT_SHEET)
+    print(f"result_panel_contact_sheet: {sheet.size}")
+
+
+def write_pinned_note_manifest() -> None:
+    if DAYMAP_UI_MANIFEST.exists():
+        manifest = json.loads(DAYMAP_UI_MANIFEST.read_text(encoding="utf-8"))
+    else:
+        manifest = {"assets": {}}
+    assets = manifest.setdefault("assets", {})
+    for state, crop in LEDGER_BUTTON_CROPS.items():
+        asset_id = f"button_ledger_{state}"
+        assets[asset_id] = {
+            "id": asset_id,
+            "source_file": "art_sources/generated_raw/daymap/daymap_ledger_button_states_source_v1.png",
+            "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
+            "size": [132, 44],
+            "source_crop": list(crop),
+            "safe_area": [42, 8, 60, 28],
+            "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn",
+        }
+        unread_asset_id = f"button_ledger_unread_{state}"
+        assets[unread_asset_id] = {
+            "id": unread_asset_id,
+            "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+            "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+            "native_file": f"assets/source/daymap/ui/{unread_asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{unread_asset_id}.png",
+            "size": [132, 44],
+            "source_crop": list(crop),
+            "safe_area": [42, 8, 60, 28],
+            "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state",
+        }
+    assets["topbar_strip"] = {
+        "id": "topbar_strip",
+        "source_file": "art_sources/generated_raw/daymap/topbar_desktop_source.png",
+        "native_file": "assets/source/daymap/ui/topbar_strip_native.png",
+        "output_file": "assets/textures/daymap/ui/topbar_strip.png",
+        "size": [1280, 60],
+        "source_crop": list(TOPBAR_SOURCE_CROP),
+        "safe_area": [72, 8, 1120, 44],
+        "intended_godot_use": "DayMap UILayer/TopBar/TopStrip",
+    }
+    assets["gathering_toast_panel"] = {
+        "id": "gathering_toast_panel",
+        "source_file": "art_sources/generated_raw/daymap/gathering_toast_panel_source_v2.png",
+        "native_file": "assets/source/daymap/ui/gathering_toast_panel_native.png",
+        "output_file": "assets/textures/daymap/ui/gathering_toast_panel.png",
+        "size": [420, 56],
+        "source_crop": list(GATHERING_TOAST_PANEL_CROP),
+        "safe_area": [44, 10, 332, 36],
+        "intended_godot_use": "DayMap UILayer/GatheringToast panel",
+    }
+    assets["panel_result"] = {
+        "id": "panel_result",
+        "source_file": "art_sources/generated_raw/daymap/special_result_panel_source_v1.png",
+        "native_file": "assets/source/daymap/ui/panel_result_native.png",
+        "output_file": "assets/textures/daymap/ui/panel_result.png",
+        "size": [700, 400],
+        "source_crop": list(SPECIAL_RESULT_PANEL_CROP),
+        "safe_area": [96, 88, 508, 228],
+        "intended_godot_use": "DayMap UILayer/ResultPanel special-location result notice",
+    }
+    assets["pinned_note_panel"] = {
+        "id": "pinned_note_panel",
+        "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+        "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+        "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
+        "size": [368, 384],
+        "source_crop": list(PINNED_NOTE_PANEL_CROP),
+        "safe_area": [84, 88, 248, 228],
+        "intended_godot_use": "DayMap PinnedNotePanel/NoteArt",
+    }
+    assets["pinned_note_knife"] = {
+        "id": "pinned_note_knife",
+        "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+        "native_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+        "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
+        "size": [112, 112],
+        "source_crop": list(PINNED_NOTE_KNIFE_CROP),
+        "safe_area": [18, 0, 74, 112],
+        "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer",
+    }
+    assets["pinned_note_detail_panel"] = {
+        "id": "pinned_note_detail_panel",
+        "source_file": "art_sources/generated_raw/daymap/pinned_note_detail_panel_source_v2.png",
+        "native_file": "assets/source/daymap/ui/pinned_note_detail_panel_native.png",
+        "output_file": "assets/textures/daymap/ui/pinned_note_detail_panel.png",
+        "size": [368, 384],
+        "source_crop": list(PINNED_DETAIL_PANEL_CROP),
+        "safe_area": [88, 88, 224, 192],
+        "intended_godot_use": "DayMap MapWorld/PinnedNotePanel/NoteArt active location notice",
+    }
+    assets["panel_detail"] = {
+        "id": "panel_detail",
+        "source_file": "art_sources/generated_raw/daymap/detail_panel_pinned_notice_source_v1.png",
+        "native_file": "assets/source/daymap/ui/panel_detail_native.png",
+        "output_file": "assets/textures/daymap/ui/panel_detail.png",
+        "size": [320, 480],
+        "source_crop": list(DETAIL_PANEL_SOURCE_CROP),
+        "safe_area": [56, 112, 208, 256],
+        "intended_godot_use": "DayMap UILayer/DetailPanel pinned location notice",
+    }
+    for state, crop in NOTE_ACTION_CROPS.items():
+        asset_id = f"button_note_action_{state}"
+        assets[asset_id] = {
+            "id": asset_id,
+            "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
+            "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
+            "size": [224, 56],
+            "source_crop": list(crop),
+            "safe_area": [56, 12, 148, 32],
+            "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn",
+        }
+    for state, crop in DETAIL_GO_BUTTON_CROPS.items():
+        asset_id = f"button_detail_go_{state}"
+        assets[asset_id] = {
+            "id": asset_id,
+            "source_file": "art_sources/generated_raw/daymap/detail_go_button_states_source_v3.png",
+            "native_file": f"assets/source/daymap/ui/{asset_id}_native.png",
+            "output_file": f"assets/textures/daymap/ui/{asset_id}.png",
+            "size": [224, 56],
+            "source_crop": list(crop),
+            "safe_area": [44, 10, 136, 36],
+            "intended_godot_use": "DayMap UILayer/DetailPanel/GoHereBtn",
+        }
+    DAYMAP_UI_MANIFEST.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(f"daymap_ui_manifest: {DAYMAP_UI_MANIFEST}")
+
+
 def main() -> None:
     SOURCE.mkdir(parents=True, exist_ok=True)
     RUNTIME.mkdir(parents=True, exist_ok=True)
 
     primary = load_reference(PRIMARY_BUTTONS_REFERENCE)
-    ledger = load_reference(LEDGER_BUTTONS_REFERENCE)
+    if not LEDGER_BUTTON_STATES_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap ledger button prompt record: {LEDGER_BUTTON_STATES_PROMPT}")
+    if not LEDGER_UNREAD_BUTTON_STATES_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap unread ledger button prompt record: {LEDGER_UNREAD_BUTTON_STATES_PROMPT}")
+    if not DETAIL_PANEL_PINNED_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap detail panel prompt record: {DETAIL_PANEL_PINNED_PROMPT}")
+    if not PINNED_DETAIL_PANEL_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap pinned detail panel prompt record: {PINNED_DETAIL_PANEL_PROMPT}")
+    if not DETAIL_GO_BUTTON_STATES_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap detail go button prompt record: {DETAIL_GO_BUTTON_STATES_PROMPT}")
+    if not GATHERING_TOAST_PANEL_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap gathering toast prompt record: {GATHERING_TOAST_PANEL_PROMPT}")
+    if not SPECIAL_RESULT_PANEL_PROMPT.exists():
+        raise FileNotFoundError(f"Missing DayMap special result panel prompt record: {SPECIAL_RESULT_PANEL_PROMPT}")
+    ledger_buttons = load_reference(LEDGER_BUTTON_STATES_SOURCE)
+    unread_ledger_buttons = load_reference(LEDGER_UNREAD_BUTTON_STATES_SOURCE)
+    detail_panel_source = load_reference(DETAIL_PANEL_PINNED_SOURCE)
+    pinned_detail_panel_source = load_reference(PINNED_DETAIL_PANEL_SOURCE)
+    detail_go_buttons = load_reference(DETAIL_GO_BUTTON_STATES_SOURCE)
+    gathering_toast_panel_source = load_reference(GATHERING_TOAST_PANEL_SOURCE)
+    special_result_panel_source = load_reference(SPECIAL_RESULT_PANEL_SOURCE)
     tabs = load_reference(TAB_BUTTONS_REFERENCE)
     shop = load_reference(SHOP_BUTTONS_REFERENCE)
     shop_atlas = load_reference(SHOP_ATLAS_REFERENCE)
     stepper_icons = extract_shop_stepper_icons(load_reference(SHOP_STEPPER_ICONS_REFERENCE))
     panels = load_reference(PANELS_REFERENCE)
-    topbar = load_reference(TOPBAR_REFERENCE)
-    panel_detail, panel_result = extract_panel_components(panels)
+    topbar = load_reference(TOPBAR_DESKTOP_SOURCE)
+    _, panel_result = extract_panel_components(panels)
 
+    ledger_states: dict[str, Image.Image] = {}
+    unread_ledger_states: dict[str, Image.Image] = {}
     for index, state in enumerate(["normal", "hover", "pressed"]):
         export_single(
             f"button_primary_{state}",
             make_primary_button_native(state),
             RUNTIME_SIZE,
         )
+        ledger_native = fit_ledger_button_source(
+            ledger_buttons,
+            LEDGER_BUTTON_CROPS[state],
+            f"button_ledger_{state}",
+        )
+        ledger_states[state] = ledger_native
         export_single(
             f"button_ledger_{state}",
-            make_ledger_button_native(state),
+            ledger_native,
+            LEDGER_RUNTIME_SIZE,
+        )
+        unread_ledger_native = fit_ledger_button_source(
+            unread_ledger_buttons,
+            LEDGER_BUTTON_CROPS[state],
+            f"button_ledger_unread_{state}",
+        )
+        unread_ledger_states[state] = unread_ledger_native
+        export_single(
+            f"button_ledger_unread_{state}",
+            unread_ledger_native,
             LEDGER_RUNTIME_SIZE,
         )
         export_single(
@@ -586,6 +1223,7 @@ def main() -> None:
             fit_shop_button_source(shop, "wide", state),
             SHOP_WIDE_RUNTIME_SIZE,
         )
+    export_ledger_button_contact_sheet(ledger_states, unread_ledger_states)
     export_single(
         "icon_shop_stepper_decrement",
         fit_shop_stepper_icon_source(stepper_icons, "decrement"),
@@ -599,22 +1237,60 @@ def main() -> None:
 
     export_single("button_tab_normal", fit_ui_source(crop_sheet_cell(tabs, 2, 1, 0), TAB_NATIVE_SIZE, colors=12, fill=True, horizontal_pad=1), TAB_RUNTIME_SIZE)
     export_single("button_tab_selected", fit_ui_source(crop_sheet_cell(tabs, 2, 1, 1), TAB_NATIVE_SIZE, colors=12, fill=True, horizontal_pad=1), TAB_RUNTIME_SIZE)
-    export_single(
-        "panel_detail",
-        fit_ui_source(panel_detail, DETAIL_PANEL_NATIVE_SIZE, colors=28, profile="panel", fill=True),
-        DETAIL_PANEL_RUNTIME_SIZE,
+    detail_panel = fit_detail_panel_source(detail_panel_source)
+    export_single("panel_detail", detail_panel, DETAIL_PANEL_RUNTIME_SIZE)
+    pinned_detail_panel = fit_pinned_note_source(
+        pinned_detail_panel_source,
+        PINNED_DETAIL_PANEL_CROP,
+        PINNED_DETAIL_PANEL_NATIVE_SIZE,
+        "pinned_note_detail_panel",
+        fill=False,
     )
-    export_single(
-        "panel_result",
-        fit_ui_source(panel_result, RESULT_PANEL_NATIVE_SIZE, colors=28, profile="panel", fill=True),
-        RESULT_PANEL_RUNTIME_SIZE,
-    )
+    pinned_detail_panel = mute_pinned_detail_panel_orange(pinned_detail_panel)
+    export_single("pinned_note_detail_panel", pinned_detail_panel, PINNED_DETAIL_PANEL_RUNTIME_SIZE)
+    result_panel = fit_special_result_panel_source(special_result_panel_source)
+    export_single("panel_result", result_panel, RESULT_PANEL_RUNTIME_SIZE)
+    export_result_panel_contact_sheet(result_panel)
     export_single("panel_shop", fit_shop_panel_source(panel_result), SHOP_PANEL_RUNTIME_SIZE)
     export_single("shop_backdrop", fit_shop_backdrop_source(shop_atlas), SHOP_BACKDROP_RUNTIME_SIZE)
     export_single("panel_document", make_document_panel_native(), DOCUMENT_PANEL_RUNTIME_SIZE)
     export_single("scroll_track", fit_shop_scroll_track_source(panel_result), SCROLL_TRACK_RUNTIME_SIZE)
     export_single("scroll_grabber", fit_shop_scroll_grabber_source(panel_result), SCROLL_GRABBER_RUNTIME_SIZE)
-    export_single("topbar_strip", fit_topbar_source(topbar), TOPBAR_RUNTIME_SIZE)
+    export_single("topbar_strip", fit_topbar_source(topbar, TOPBAR_SOURCE_CROP), TOPBAR_RUNTIME_SIZE)
+    gathering_toast_panel = fit_gathering_toast_panel_source(gathering_toast_panel_source)
+    export_single("gathering_toast_panel", gathering_toast_panel, GATHERING_TOAST_PANEL_RUNTIME_SIZE)
+    export_gathering_toast_contact_sheet(gathering_toast_panel)
+    pinned_note_source = load_reference(PINNED_NOTE_PIERCED_SOURCE)
+    pinned_note_panel = fit_pinned_note_source(
+        pinned_note_source,
+        PINNED_NOTE_PANEL_CROP,
+        PINNED_NOTE_PANEL_NATIVE_SIZE,
+        "pinned_note_panel",
+    )
+    pinned_note_knife = fit_pinned_note_source(
+        pinned_note_source,
+        PINNED_NOTE_KNIFE_CROP,
+        PINNED_NOTE_KNIFE_NATIVE_SIZE,
+        "pinned_note_knife",
+        fill=False,
+    )
+    export_single("pinned_note_panel", pinned_note_panel, PINNED_NOTE_PANEL_RUNTIME_SIZE)
+    export_single("pinned_note_knife", pinned_note_knife, PINNED_NOTE_KNIFE_RUNTIME_SIZE)
+    export_pinned_note_contact_sheet(pinned_note_panel, pinned_note_knife)
+    note_action_source = load_reference(NOTE_ACTION_PAPER_STAMP_SOURCE)
+    note_action_states: dict[str, Image.Image] = {}
+    for state, crop in NOTE_ACTION_CROPS.items():
+        native = fit_note_action_source(note_action_source, crop, f"button_note_action_{state}")
+        note_action_states[state] = native
+        export_single(f"button_note_action_{state}", native, NOTE_ACTION_RUNTIME_SIZE)
+    export_note_action_contact_sheet(note_action_states)
+    detail_go_states: dict[str, Image.Image] = {}
+    for state, crop in DETAIL_GO_BUTTON_CROPS.items():
+        native = fit_detail_go_button_source(detail_go_buttons, crop, f"button_detail_go_{state}")
+        detail_go_states[state] = native
+        export_single(f"button_detail_go_{state}", native, DETAIL_GO_BUTTON_RUNTIME_SIZE)
+    export_detail_panel_contact_sheet(pinned_detail_panel, detail_go_states)
+    write_pinned_note_manifest()
 
 
 if __name__ == "__main__":

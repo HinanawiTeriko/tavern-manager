@@ -1,0 +1,10 @@
+Use case: ui-mockup
+Asset type: 2D game UI button source art for a pixel-art abandoned mine investigation screen
+Primary request: a single horizontal fantasy UI button with no text, designed as an abandoned mine exit sign: dark weathered wooden plank over cold stone and iron brackets, subtle amber rim highlights, cracked edges, hand-painted rough ink outline, suitable behind a Godot Button label.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background only.
+Subject: one centered wide button, front-facing orthographic, rectangular but irregular hand-cut silhouette, generous transparent padding around it after chroma-key removal.
+Style/medium: original pixel dungeon tavern management UI source art, historical printmaking influence, rough ink lines, chunky low-detail pixel-game shapes, dark teal/cold stone palette with small amber candlelight accents.
+Composition/framing: one button centered, horizontal, about 80 percent image width and 25 percent image height; no extra icons, no labels, no repeated variants.
+Lighting/mood: dim mine/tavern UI mood, crisp silhouette, readable edge separation.
+Text: none.
+Constraints: background must be one uniform chroma-key color with no shadows, gradients, texture, reflections, floor plane, or lighting variation. No cast shadow, no contact shadow, no readable text, no logos, no numbers, no watermark. Avoid photorealism and avoid soft blurry antialiasing.

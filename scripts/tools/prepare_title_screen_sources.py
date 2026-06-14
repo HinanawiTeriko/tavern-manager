@@ -6,7 +6,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "title"
 REFERENCE = SOURCE / "reference"
 NATIVE_SIZE = (320, 180)
-MARKER_SIZE = (61, 7)
+MARKER_SCALE = 2
+MARKER_SIZE = (122, 14)
+ACCEPTED_MARKER_REFERENCE = ROOT / "assets" / "textures" / "ui" / "menu_brush_hover_marker.png"
 LOGO_DIAGNOSTIC = REFERENCE / "title_pixel_logo_extracted.png"
 MENU_BANDS_DIAGNOSTIC = REFERENCE / "title_pixel_menu_bands_extracted.png"
 OBSOLETE_DIAGNOSTICS = [
@@ -27,9 +29,9 @@ GLOW_MIN_BBOX_WIDTH = 180
 GLOW_MIN_BBOX_HEIGHT = 120
 GLOW_MAX_BBOX_WIDTH = 240
 GLOW_MAX_BBOX_HEIGHT = 170
-MARKER_MIN_VISIBLE_PIXELS = 250
-MARKER_MIN_BBOX_WIDTH = 60
-MARKER_MIN_BBOX_HEIGHT = 5
+MARKER_MIN_VISIBLE_PIXELS = 900
+MARKER_MIN_BBOX_WIDTH = 100
+MARKER_MIN_BBOX_HEIGHT = 10
 EXTRACTED_LOGO_MIN_VISIBLE_PIXELS = 150_000
 EXTRACTED_LOGO_MIN_BBOX_WIDTH = 900
 EXTRACTED_LOGO_MIN_BBOX_HEIGHT = 450
@@ -321,13 +323,22 @@ def build_glow(background: Image.Image) -> Image.Image:
 
 
 def build_marker() -> Image.Image:
+    if ACCEPTED_MARKER_REFERENCE.exists():
+        with Image.open(ACCEPTED_MARKER_REFERENCE) as image:
+            source = image.convert("RGBA")
+        runtime_size = (MARKER_SIZE[0] * MARKER_SCALE, MARKER_SIZE[1] * MARKER_SCALE)
+        padded = Image.new("RGBA", runtime_size, (0, 0, 0, 0))
+        padded.alpha_composite(source.crop((0, 0, min(source.width, runtime_size[0]), min(source.height, runtime_size[1]))))
+        return padded.resize(MARKER_SIZE, Image.Resampling.NEAREST)
+
     marker = Image.new("RGBA", MARKER_SIZE, (0, 0, 0, 0))
     draw = ImageDraw.Draw(marker)
-    draw.rectangle((4, 1, 55, 5), fill=(155, 75, 0, 255))
-    draw.rectangle((1, 2, 59, 4), fill=(224, 133, 0, 255))
-    draw.rectangle((8, 2, 51, 3), fill=(255, 184, 24, 255))
-    draw.rectangle((0, 3, 2, 4), fill=(224, 133, 0, 255))
-    draw.rectangle((57, 2, 60, 3), fill=(224, 133, 0, 255))
+    draw.polygon([(0, 9), (13, 6), (31, 4), (56, 1), (99, 1), (121, 5), (121, 8), (83, 8), (64, 10), (26, 12), (0, 11)], fill=(224, 133, 0, 255))
+    draw.polygon([(7, 7), (25, 4), (48, 2), (98, 2), (116, 5), (105, 7), (42, 7), (18, 10), (7, 10)], fill=(255, 184, 24, 255))
+    draw.rectangle((38, 4, 91, 5), fill=(255, 224, 35, 255))
+    draw.rectangle((52, 6, 86, 7), fill=(255, 196, 20, 255))
+    draw.rectangle((21, 11, 38, 13), fill=(170, 72, 0, 255))
+    draw.rectangle((114, 9, 121, 10), fill=(180, 76, 0, 255))
     return marker
 
 

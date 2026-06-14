@@ -1,0 +1,183 @@
+{
+  "id": "tavern_topbar",
+  "source": "art_sources/generated_raw/tavern_topbar/tavern_topbar_ui_sheet_v2.png",
+  "prompt": "art_sources/generated_raw/tavern_topbar/tavern_topbar_ui_sheet_v2_prompt.txt",
+  "scale": 4,
+  "assets": {
+    "bar_top_panel": {
+      "crop_rect": [
+        48,
+        188,
+        1730,
+        348
+      ],
+      "native": "assets/source/tavern/topbar/bar_top_panel_native.png",
+      "runtime": "assets/textures/ui/bar_top_panel.png",
+      "native_size": [
+        320,
+        12
+      ],
+      "runtime_size": [
+        1280,
+        48
+      ],
+      "safe_area": [
+        8,
+        1,
+        312,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanelBg long pixel UI strip"
+    },
+    "topbar_menu_button_normal": {
+      "crop_rect": [
+        36,
+        528,
+        300,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_menu_button_normal_native.png",
+      "runtime": "assets/textures/ui/topbar_menu_button_normal.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/MenuButton normal StyleBoxTexture"
+    },
+    "topbar_menu_button_hover": {
+      "crop_rect": [
+        324,
+        526,
+        588,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_menu_button_hover_native.png",
+      "runtime": "assets/textures/ui/topbar_menu_button_hover.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/MenuButton hover StyleBoxTexture"
+    },
+    "topbar_menu_button_pressed": {
+      "crop_rect": [
+        612,
+        528,
+        876,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_menu_button_pressed_native.png",
+      "runtime": "assets/textures/ui/topbar_menu_button_pressed.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/MenuButton pressed StyleBoxTexture"
+    },
+    "topbar_end_night_button_normal": {
+      "crop_rect": [
+        900,
+        528,
+        1164,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_end_night_button_normal_native.png",
+      "runtime": "assets/textures/ui/topbar_end_night_button_normal.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/EndNightBtn normal StyleBoxTexture"
+    },
+    "topbar_end_night_button_hover": {
+      "crop_rect": [
+        1190,
+        526,
+        1454,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_end_night_button_hover_native.png",
+      "runtime": "assets/textures/ui/topbar_end_night_button_hover.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/EndNightBtn hover StyleBoxTexture"
+    },
+    "topbar_end_night_button_pressed": {
+      "crop_rect": [
+        1480,
+        528,
+        1744,
+        666
+      ],
+      "native": "assets/source/tavern/topbar/topbar_end_night_button_pressed_native.png",
+      "runtime": "assets/textures/ui/topbar_end_night_button_pressed.png",
+      "native_size": [
+        24,
+        12
+      ],
+      "runtime_size": [
+        96,
+        48
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        11
+      ],
+      "intended_godot_use": "Tavern TopPanel/EndNightBtn pressed StyleBoxTexture"
+    }
+  }
+}

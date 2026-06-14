@@ -1,85 +1,107 @@
 class_name TavernView
 extends Node2D
 
-enum Phase { PREPARATION, BUSINESS }
-
-var _phase: Phase = Phase.PREPARATION
 var _bg_sprite: Sprite2D
-var _customer_sprite: Sprite2D
+var _customer_sprite: TextureRect
 var _customer_name: Label
 var _order_bubble: Label
+var _reaction_bubble: Label
 var _timer_bar: ProgressBar
-var _revenue_label: Label
+var _patience_fill_clip: Control
+var _patience_fill_art: TextureRect
+var _gold_label: Label
+var _rep_label: Label
 var _day_label: Label
 var _menu_panel: Panel
 var _end_night_btn: Button
-var _ledger_btn: Button
-var _menu_config_btn: Button
-var _option_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
-var _dialogue_dim: Sprite2D
-var _desk_overlay: Sprite2D
-var _revenue_panel: Panel
+var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
 var _settings_panel: SettingsPanel
-var _menu_config_panel: Panel
-var _cyclopedia_panel: Control
 var _gm
 var _today_gold: int = 0
-var _inventory_opened_from_menu: bool = false
+var _customer_sprite_normal_z_index: int = 0
+var _customer_sprite_normal_modulate: Color = Color.WHITE
+var _customer_dialogue_highlight_active: bool = false
+var _current_customer_npc_id: String = ""
+var _current_customer_reaction_outcome: String = ""
+var _current_order_text: String = ""
+var _current_order_status_text: String = ""
+var _recipe_filter_container: String = "barrel"
+var _recipe_selected_product_key: String = ""
 
-## 当日菜单配置: {product_key: {"price": int, "enabled": bool}}
 var daily_menu: Dictionary = {}
-var daily_menu_confirmed: bool = false
+var daily_menu_confirmed: bool = true
 
 const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
+
+const RECIPE_CONTAINER_ORDER := ["barrel", "grill", "pot"]
+const RECIPE_CONTAINER_INSTRUCTIONS: Dictionary = {
+	"barrel": "投入酒桶后摇晃，完成后从桶口取出。",
+	"grill": "放到烤架上，到时间后取下成品。",
+	"pot": "投入炖锅后用勺子搅拌，完成后从锅口取出。",
+}
+const RECIPE_LAYOUT_MIN_SIZE := Vector2(660.0, 360.0)
+const RECIPE_LEFT_COLUMN_WIDTH := 300.0
+const RECIPE_DETAIL_WIDTH := 340.0
+const RECIPE_DETAIL_PANEL_ART := "res://assets/textures/ui/menu_brush_panel.png"
+const RECIPE_DETAIL_BAND_ART := "res://assets/textures/ui/menu_brush_band.png"
+const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
 
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
 	"mira": "mira_neutral",
+	"toby": "toby_neutral",
+	"mercenary_a": "mercenary_a",
 }
-
-## 食物属性名（魔幻化名称）
-const ATTRIBUTE_NAMES: Dictionary = {
-	"might": "蛮勇之力",
-	"alacrity": "疾风之敏",
-	"fortune": "命运眷顾",
-	"arcana": "奥术灵韵",
-	"vitality": "磐石之躯",
-	"charm": "魅惑之息",
-}
+const RYAN_TEXTURE_NEUTRAL := "ryan_neutral"
+const RYAN_TEXTURE_SATISFIED := "ryan_excited"
+const RYAN_TEXTURE_HESITANT := "ryan_hesitant"
+const RYAN_TEXTURE_DISSATISFIED := "ryan_dejected"
+const MIRA_TEXTURE_NEUTRAL := "mira_neutral"
+const MIRA_TEXTURE_SMILE := "mira_smile"
+const MIRA_TEXTURE_SURPRISED := "mira_surprised"
+const MIRA_TEXTURE_SERIOUS := "mira_serious"
+const TOPBAR_LEFT_INSET := Vector2(28, 48)
+const TOPBAR_RIGHT_INSET := Vector2(28, 48)
+const TOPBAR_LABEL_HEIGHT := 48.0
+const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
+const SHORTCUT_SEPARATION := 4
+const DIALOGUE_SPEAKER_Z_INDEX := 10
+const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
+	_refresh_default_daily_menu()
 	_bg_sprite = $Background
-	_customer_sprite = $CustomerNode/CustomerSprite
-	_customer_name = $CustomerName
-	_order_bubble = $OrderBubble
-	_timer_bar = $TimerBar
-	_revenue_label = $RightArea/RevenuePanel/RevenueLabel
-	_ledger_btn = $RightArea/LedgerBtn
-	_menu_config_btn = $RightArea/MenuConfigBtn
-	_option_btn = $RightArea/OptionButton
-	_day_label = $DayLabel
-	_end_night_btn = $RightArea/EndNightBtn
+	_customer_sprite = $CustomerArea/CustomerSprite
+	_customer_sprite_normal_z_index = _customer_sprite.z_index
+	_customer_sprite_normal_modulate = _customer_sprite.modulate
+	_customer_name = $CustomerArea/CustomerName
+	_order_bubble = $CustomerArea/OrderBubble
+	_reaction_bubble = $CustomerArea/ReactionBubble
+	_timer_bar = $CustomerArea/TimerBar
+	_patience_fill_clip = $CustomerArea/PatienceFillClip
+	_patience_fill_art = $CustomerArea/PatienceFillClip/PatienceFillArt
+	_gold_label = $TopPanel/GoldLabel
+	_rep_label = $TopPanel/ReputationLabel
+	_day_label = $TopPanel/DayLabel
+	_end_night_btn = $TopPanel/EndNightBtn
 	_stage_caption = $StageCaption
-	_dialogue_dim = $DialogueDim
-	_desk_overlay = $DeskOverlay
-	_revenue_panel = $RightArea/RevenuePanel
+	_dialogue_overlay = $DialogueOverlay
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
-	_inventory_overlay.closed.connect(_on_inventory_closed)
 	_document_overlay = $DocumentOverlay
 	_settings_panel = $SettingsPanel
 	_settings_panel.configure(_gm.settings)
 	_settings_panel.closed.connect(_on_settings_closed)
+	_settings_panel.tutorial_reset_requested.connect(_on_tutorial_reset_requested)
 
 	_menu_panel = $OverlayMenu
-	_option_btn.pressed.connect(_toggle_menu)
-	_menu_config_btn.pressed.connect(_toggle_menu_config)
+	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
 	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
 	var tidy_btn = $OverlayMenu/BtnTidy
@@ -88,19 +110,23 @@ func _ready() -> void:
 	_menu_panel.visible = false
 
 	_end_night_btn.pressed.connect(_on_end_night)
-	_ledger_btn.pressed.connect(open_ledger)
-
-	_create_menu_config_panel()
-	_create_encyclopedia_panel()
+	var ledger := get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
+	if ledger != null and not ledger.open_requested.is_connected(_gm.request_open_document):
+		ledger.open_requested.connect(_gm.request_open_document)
+	_refresh_ledger_hint()
 
 	_apply_theme()
 
-	# 进入准备阶段
-	_enter_preparation_phase()
 	_gm.register_view(self)
 
 func _apply_theme() -> void:
-	var bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
+	_configure_customer_input_passthrough()
+	_configure_topbar_layout()
+	_configure_shortcut_bar_layout()
+
+	var bg_tex = TextureManager.try_load("res://assets/textures/tavern/background/tavern_bg.png")
+	if bg_tex == null:
+		bg_tex = TextureManager.try_load("res://assets/textures/backgrounds/tavern_bg.png")
 	if bg_tex != null:
 		_bg_sprite.texture = bg_tex
 	else:
@@ -112,44 +138,38 @@ func _apply_theme() -> void:
 		grad.gradient = g
 		_bg_sprite.texture = grad
 
-	# Load desk overlay (covers full screen width: 0-1280 x, 410-655 y = 1280x245)
-	var desk_tex = TextureManager.try_load("res://assets/textures/workspace/desk_overlay.png")
-	if desk_tex != null:
-		_desk_overlay.texture = desk_tex
-	else:
-		# Fallback to gradient if image not found
-		var desk_grad = GradientTexture2D.new()
-		desk_grad.width = 1280; desk_grad.height = 245
-		var dg = Gradient.new()
-		dg.colors = [Color(0.12, 0.08, 0.04, 0.0), Color(0.18, 0.12, 0.06, 0.95)]
-		dg.offsets = [0.0, 1.0]
-		desk_grad.gradient = dg
-		_desk_overlay.texture = desk_grad
+	ThemeColors.style_brush_label(_customer_name, 18, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_order_bubble, 18, ThemeColors.TEXT_LIGHT)
+	_order_bubble.add_theme_constant_override("outline_size", 3)
+	_order_bubble.add_theme_color_override("font_outline_color", Color(0.03, 0.025, 0.02, 0.95))
+	_order_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_order_bubble.clip_text = true
+	_order_bubble.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ThemeColors.style_brush_label(_reaction_bubble, 16, ThemeColors.AMBER_PRIMARY)
+	_reaction_bubble.add_theme_constant_override("outline_size", 3)
+	_reaction_bubble.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
+	_reaction_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reaction_bubble.clip_text = true
+	_reaction_bubble.visible = false
+	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
+	if patience_icon != null:
+		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
+		patience_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		patience_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _patience_fill_clip != null:
+		_patience_fill_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_patience_fill_clip.clip_contents = true
+	if _patience_fill_art != null:
+		_patience_fill_art.texture = TextureManager.try_load("res://assets/textures/ui/bar_patience_groove_fill.png")
+		_patience_fill_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_patience_fill_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Generate dialogue dim texture
-	var dim_grad = GradientTexture2D.new()
-	dim_grad.width = 1280; dim_grad.height = 720
-	var dim_g = Gradient.new()
-	dim_g.colors = [Color(0, 0, 0, 0.55), Color(0, 0, 0, 0.55)]
-	dim_g.offsets = [0.0, 1.0]
-	dim_grad.gradient = dim_g
-	_dialogue_dim.texture = dim_grad
+	ThemeColors.style_brush_label(_gold_label, 16, ThemeColors.AMBER_PRIMARY)
+	ThemeColors.style_brush_label(_rep_label, 16, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_day_label, 15, ThemeColors.TEXT_SUBTITLE)
 
-	_customer_name.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	_customer_name.add_theme_font_size_override("font_size", 18)
-	_order_bubble.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	_order_bubble.add_theme_font_size_override("font_size", 15)
-
-	_revenue_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	_revenue_label.add_theme_font_size_override("font_size", 13)
-	_day_label.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	_day_label.add_theme_font_size_override("font_size", 15)
-
-	ThemeColors.style_brush_panel(_revenue_panel)
-	ThemeColors.style_button(_option_btn, 14)
-	ThemeColors.style_button(_menu_config_btn, 14)
-	ThemeColors.style_button(_ledger_btn, 14)
-	ThemeColors.style_button(_end_night_btn, 14)
+	ThemeColors.style_topbar_button($TopPanel/MenuButton, "menu", 14)
+	ThemeColors.style_topbar_button(_end_night_btn, "end_night", 14)
 
 	# 添加教程按钮到菜单
 	_add_tutorial_button_to_menu()
@@ -159,7 +179,6 @@ func _apply_theme() -> void:
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnRecipes)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnBackpack)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnSettings)
-	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnEncyclopedia)
 	ThemeColors.style_brush_button($OverlayMenu/BtnTidy, 14)
 	ThemeColors.style_brush_button($OverlayMenu/CloseBtn, 14)
 
@@ -167,18 +186,14 @@ func _apply_theme() -> void:
 	var backpack_panel = $OverlayMenu/BackpackPanel
 	recipe_panel.visible = true
 	backpack_panel.visible = false
-	_cyclopedia_panel.visible = false
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
-	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _cyclopedia_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
+	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
 	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
-	# 图鉴选项卡
-	$OverlayMenu/TabBtns/BtnEncyclopedia.pressed.connect(func(): recipe_panel.visible = false; backpack_panel.visible = false; _cyclopedia_panel.visible = true; _select_overlay_tab($OverlayMenu/TabBtns/BtnEncyclopedia))
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
 
-	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_bg.png")
-	var patience_fill = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_fill.png")
+	var patience_bg = TextureManager.try_load_style_box("res://assets/textures/ui/bar_patience_groove_bg.png")
 	if patience_bg != null:
 		_timer_bar.add_theme_stylebox_override("background", patience_bg)
 	else:
@@ -188,9 +203,11 @@ func _apply_theme() -> void:
 		sb.border_width_right = 1; sb.border_width_bottom = 1
 		sb.border_color = ThemeColors.PANEL_BORDER
 		_timer_bar.add_theme_stylebox_override("background", sb)
-	if patience_fill != null:
-		_timer_bar.add_theme_stylebox_override("fill", patience_fill)
+	var empty_fill := StyleBoxFlat.new()
+	empty_fill.bg_color = Color(0, 0, 0, 0)
+	_timer_bar.add_theme_stylebox_override("fill", empty_fill)
 	_timer_bar.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_set_patience_fill_ratio(_timer_bar.value / 100.0)
 
 	var top_bar_tex = ThemeColors.instance().bar_top_panel()
 	var top_panel_bg = get_node_or_null("TopPanelBg")
@@ -206,70 +223,328 @@ func _apply_theme() -> void:
 
 	var shortcut_bg = get_node_or_null("ShortcutBarBg")
 	if shortcut_bg != null:
-		ThemeColors.style_brush_panel(shortcut_bg)
+		var shortcut_style := ThemeColors.instance().bar_shortcut_bg()
+		if shortcut_style != null:
+			shortcut_bg.add_theme_stylebox_override("panel", shortcut_style)
+		else:
+			ThemeColors.style_brush_panel(shortcut_bg)
 
 	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_stage_caption.add_theme_font_size_override("font_size", 15)
 
-func show_customer(customer_name: String, order: String, npc_id: String = "guest") -> void:
-	var tex_key: String = NPC_TEXTURE_KEYS.get(npc_id, npc_id)
+
+func _configure_customer_input_passthrough() -> void:
+	for path in [
+		"CustomerArea",
+		"CustomerArea/CustomerSprite",
+		"CustomerArea/CustomerName",
+		"CustomerArea/OrderBubble",
+		"CustomerArea/ReactionBubble",
+		"CustomerArea/PatienceIcon",
+		"CustomerArea/TimerBar",
+		"CustomerArea/PatienceFillClip",
+		"CustomerArea/PatienceFillClip/PatienceFillArt",
+	]:
+		var control := get_node_or_null(path) as Control
+		if control != null:
+			control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_topbar_layout() -> void:
+	var top_panel := $TopPanel as HBoxContainer
+	top_panel.add_theme_constant_override("separation", 8)
+	var left_inset := _configure_topbar_spacer(top_panel, "TopbarLeftInset", TOPBAR_LEFT_INSET, false)
+	var action_spacer := _configure_topbar_spacer(top_panel, "TopbarActionSpacer", Vector2(0, TOPBAR_LABEL_HEIGHT), true)
+	var right_inset := _configure_topbar_spacer(top_panel, "TopbarRightInset", TOPBAR_RIGHT_INSET, false)
+	top_panel.move_child(left_inset, 0)
+	top_panel.move_child(_gold_label, 1)
+	top_panel.move_child(_rep_label, 2)
+	top_panel.move_child(_day_label, 3)
+	top_panel.move_child(action_spacer, 4)
+	top_panel.move_child($TopPanel/MenuButton, 5)
+	top_panel.move_child(_end_night_btn, 6)
+	top_panel.move_child(right_inset, 7)
+	_configure_topbar_label(_gold_label, Vector2(220, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_label(_rep_label, Vector2(210, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+	_configure_topbar_label(_day_label, Vector2(170, TOPBAR_LABEL_HEIGHT), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _configure_topbar_spacer(top_panel: HBoxContainer, spacer_name: String, minimum_size: Vector2, expand: bool) -> Control:
+	var spacer := top_panel.get_node_or_null(spacer_name) as Control
+	if spacer == null:
+		spacer = Control.new()
+		spacer.name = spacer_name
+		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		top_panel.add_child(spacer)
+	spacer.custom_minimum_size = minimum_size
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL if expand else Control.SIZE_FILL
+	spacer.size_flags_vertical = Control.SIZE_FILL
+	return spacer
+
+
+func _configure_topbar_label(label: Label, minimum_size: Vector2, alignment: HorizontalAlignment) -> void:
+	label.custom_minimum_size = minimum_size
+	label.size_flags_vertical = Control.SIZE_FILL
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _configure_shortcut_bar_layout() -> void:
+	var shortcut_bar := get_node_or_null("ShortcutBar") as HBoxContainer
+	if shortcut_bar == null:
+		return
+	shortcut_bar.add_theme_constant_override("separation", SHORTCUT_SEPARATION)
+	for slot_index in range(10):
+		var slot := shortcut_bar.get_node_or_null("Slot%d" % slot_index) as Control
+		if slot == null:
+			continue
+		slot.custom_minimum_size = SHORTCUT_SLOT_SIZE
+		slot.size_flags_horizontal = Control.SIZE_FILL
+		slot.size_flags_vertical = Control.SIZE_FILL
+
+func show_customer(customer_name: String, order: String, npc_id: String = "guest", order_key: String = "") -> void:
+	if _customer_dialogue_highlight_active:
+		_set_customer_dialogue_highlight(false)
+	_current_customer_npc_id = npc_id
+	_current_customer_reaction_outcome = ""
+	_current_order_text = order
+	_current_order_status_text = ""
+	var tex_key: String = _customer_texture_key(npc_id)
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
 	if tex != null:
 		_customer_sprite.texture = tex
-		_customer_sprite.scale = Vector2(1.0, 1.0)
-		# 200×250 半身像, 左侧, 吧台后方.
-		# 画面 1280x720, 桌面遮罩 y=410 起. 角色腰部在 y≈350, 上半身完整露出.
-		_customer_sprite.position = Vector2(60, 100)
 		_customer_sprite.modulate = Color.WHITE
 	else:
-		_customer_sprite.texture = _make_placeholder_texture(200, 250, Color(0.35, 0.25, 0.4), Color(0.2, 0.15, 0.25))
-		_customer_sprite.scale = Vector2(1.0, 1.0)
-		_customer_sprite.position = Vector2(60, 100)
+		var grad = GradientTexture2D.new()
+		grad.width = 200; grad.height = 250
+		var g = Gradient.new()
+		g.colors = [Color(0.35, 0.25, 0.4), Color(0.2, 0.15, 0.25)]
+		g.offsets = [0.0, 1.0]
+		grad.gradient = g
+		_customer_sprite.texture = grad
 		_customer_sprite.modulate = Color.WHITE
 
 	_customer_sprite.visible = true
 	_customer_name.text = customer_name
-	_order_bubble.text = "「来一份" + order + "！」"
+	_refresh_order_groove_text()
+	_order_bubble.visible = true
+	_reaction_bubble.text = ""
+	_reaction_bubble.visible = false
+	_timer_bar.modulate = Color.WHITE
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color.WHITE
+	if _dialogue_overlay != null and _dialogue_overlay.visible:
+		_set_customer_dialogue_highlight(true)
+
+func _refresh_order_groove_text() -> void:
+	if _current_order_text == "":
+		_order_bubble.text = ""
+		return
+	var text := "需求 · " + _current_order_text
+	if _current_order_status_text != "":
+		text += "  ·  " + _current_order_status_text
+	_order_bubble.text = text
+
+func show_order_warning() -> void:
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color(1.22, 0.74, 0.52, 1.0)
+
+func show_order_timeout(status_text: String = "等太久了") -> void:
+	_current_order_status_text = status_text
+	_refresh_order_groove_text()
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color(1.3, 0.48, 0.4, 1.0)
 	_order_bubble.visible = true
 
-func _make_placeholder_texture(width: int, height: int, color1: Color, color2: Color) -> GradientTexture2D:
-	var grad = GradientTexture2D.new()
-	grad.width = width; grad.height = height
-	var g = Gradient.new()
-	g.colors = [color1, color2]
-	g.offsets = [0.0, 1.0]
-	grad.gradient = g
-	return grad
+func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
+	var target_npc_id := npc_id if npc_id != "" else _current_customer_npc_id
+	if target_npc_id == "":
+		return
+	_current_customer_npc_id = target_npc_id
+	_current_customer_reaction_outcome = outcome
+	_apply_customer_texture_key(_customer_texture_key(target_npc_id, outcome))
+
+func _apply_customer_texture_key(tex_key: String) -> void:
+	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
+	if tex != null:
+		_customer_sprite.texture = tex
+		_customer_sprite.modulate = Color.WHITE
+
+func _customer_texture_key(npc_id: String, outcome: String = "") -> String:
+	if npc_id == "ryan":
+		return _ryan_texture_key(outcome)
+	if npc_id == "mira":
+		return _mira_texture_key(outcome)
+	if npc_id.begins_with("regular_"):
+		return _regular_customer_texture_key(npc_id, outcome)
+	return NPC_TEXTURE_KEYS.get(npc_id, npc_id)
+
+func _regular_customer_texture_key(customer_id: String, outcome: String = "") -> String:
+	var state := "neutral"
+	if outcome == "success":
+		state = "satisfied"
+	elif outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		state = "dissatisfied"
+	return "%s_%s" % [customer_id, state]
+
+func _ryan_texture_key(outcome: String = "") -> String:
+	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		return RYAN_TEXTURE_DISSATISFIED
+	var story_key := _ryan_story_texture_key()
+	if outcome == "success":
+		if story_key != RYAN_TEXTURE_NEUTRAL:
+			return story_key
+		return RYAN_TEXTURE_SATISFIED
+	return story_key
+
+func _ryan_story_texture_key() -> String:
+	var narrative = null
+	if _gm != null:
+		narrative = _gm.narrative
+	if narrative == null:
+		return RYAN_TEXTURE_NEUTRAL
+	if _story_flag(narrative, "ryan_drugged") or _story_flag(narrative, "ryan_alternative_declined"):
+		return RYAN_TEXTURE_DISSATISFIED
+	var ending := _story_string(narrative, "ryan_ending")
+	if ending != "":
+		return RYAN_TEXTURE_SATISFIED if ending == "alternative_survivor" else RYAN_TEXTURE_DISSATISFIED
+	if _story_flag(narrative, "ryan_has_alternative"):
+		return RYAN_TEXTURE_SATISFIED
+	if _story_flag(narrative, "ryan_informed") or _story_flag(narrative, "ryan_alternative_pending"):
+		return RYAN_TEXTURE_HESITANT
+	return RYAN_TEXTURE_NEUTRAL
+
+func _story_flag(narrative, key: String) -> bool:
+	return narrative != null and narrative.get_var(key) == true
+
+func _story_string(narrative, key: String) -> String:
+	if narrative == null:
+		return ""
+	var value = narrative.get_var(key)
+	return "" if value == null else String(value)
+
+func _mira_texture_key(outcome: String = "") -> String:
+	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		return MIRA_TEXTURE_SERIOUS
+
+	var current_day := _current_story_day()
+	var narrative = _gm.narrative if _gm != null else null
+	var told_truth := false
+	var ending := ""
+	if narrative != null:
+		told_truth = _story_flag(narrative, "told_mira_truth")
+		ending = _story_string(narrative, "mira_ending")
+
+	if outcome == "success":
+		if current_day >= 12:
+			if ending == "she_finally_stopped":
+				return MIRA_TEXTURE_SURPRISED
+			if ending == "never_turned_back":
+				return MIRA_TEXTURE_SERIOUS
+			if ending in ["closed_the_door", "another_light_out"]:
+				return MIRA_TEXTURE_SMILE
+			return MIRA_TEXTURE_SURPRISED if told_truth else MIRA_TEXTURE_SMILE
+		return MIRA_TEXTURE_SMILE
+
+	if current_day >= 12:
+		if told_truth and ending == "":
+			return MIRA_TEXTURE_SURPRISED
+		return MIRA_TEXTURE_SERIOUS
+	return MIRA_TEXTURE_NEUTRAL
+
+func _current_story_day() -> int:
+	if _gm == null or _gm.economy == null:
+		return 0
+	return int(_gm.economy.current_day)
 
 func hide_customer() -> void:
+	_set_customer_dialogue_highlight(false)
+	_current_customer_npc_id = ""
+	_current_customer_reaction_outcome = ""
+	_current_order_text = ""
+	_current_order_status_text = ""
 	_customer_sprite.visible = false
 	_customer_name.text = "等待中……"
 	_order_bubble.visible = false
+	_reaction_bubble.visible = false
+	_reaction_bubble.text = ""
+	_timer_bar.modulate = Color.WHITE
+	if _patience_fill_art != null:
+		_patience_fill_art.modulate = Color.WHITE
 
 func update_timer(ratio: float) -> void:
 	_timer_bar.value = ratio * 100.0
+	_set_patience_fill_ratio(ratio)
+
+func _set_patience_fill_ratio(ratio: float) -> void:
+	if _patience_fill_clip == null or _timer_bar == null:
+		return
+	var clamped: float = clampf(ratio, 0.0, 1.0)
+	var full_size: Vector2 = _timer_bar.size
+	var clipped_width: float = floor(full_size.x * clamped + 0.5)
+	_patience_fill_clip.size = Vector2(clipped_width, full_size.y)
+	if _patience_fill_art != null:
+		_patience_fill_art.size = full_size
+		_patience_fill_art.position = Vector2.ZERO
+		_patience_fill_art.scale = Vector2.ONE
 
 func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
+	_gold_label.text = "金币：" + str(gold)
+	_rep_label.text = "声望：" + str(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
-	_revenue_label.text = "今日+%d金 | 共%d金 | ★%d" % [_today_gold, gold, rep]
 
-## 更新今日收入（供 GameManager 在上菜后调用）
-func add_today_gold(amount: int) -> void:
-	_today_gold += amount
-	# 同步更新收入面板单行文本
-	var total_gold = _gm.economy.gold if _gm != null else 0
-	var rep = _gm.economy.reputation if _gm != null else 0
-	_revenue_label.text = "今日+%d金 | 共%d金 | ★%d" % [_today_gold, total_gold, rep]
 
-## 重置每日收入（新的一天开始）
 func reset_today_gold() -> void:
 	_today_gold = 0
-	_revenue_label.text = "今日+0金 | 共%d金 | ★%d" % [_gm.economy.gold if _gm != null else 0, _gm.economy.reputation if _gm != null else 0]
+
+
+func get_daily_menu_items() -> Array[Dictionary]:
+	if daily_menu.is_empty():
+		_refresh_default_daily_menu()
+	var result: Array[Dictionary] = []
+	for key in daily_menu:
+		var entry: Dictionary = daily_menu[key]
+		if not bool(entry.get("enabled", true)):
+			continue
+		var item: Dictionary = _gm.craft.get_item(key) if _gm != null and _gm.craft != null else {}
+		result.append({
+			"key": key,
+			"price": int(entry.get("price", item.get("price", 0))),
+			"name": String(item.get("name", key)),
+		})
+	return result
+
+
+func is_preparation_phase() -> bool:
+	return false
+
+
+func is_business_phase() -> bool:
+	return true
+
+
+func is_menu_config_open() -> bool:
+	return false
+
+
+func _refresh_default_daily_menu() -> void:
+	daily_menu.clear()
+	daily_menu_confirmed = true
+	if _gm == null or _gm.craft == null:
+		return
+	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
+	for key in products:
+		var item: Dictionary = _gm.craft.get_item(key)
+		daily_menu[key] = {
+			"price": int(item.get("price", 0)),
+			"enabled": true,
+		}
 
 ## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
 func customer_say(text: String) -> void:
-	_order_bubble.text = text
-	_order_bubble.visible = true
+	_reaction_bubble.text = text
+	_reaction_bubble.visible = text != ""
 
 ## 出口②：舞台提示浮字——第三人称动作描写，淡入→停留→淡出。
 func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
@@ -293,7 +568,27 @@ func configure_slice_day(day: int) -> void:
 		bar.configure_day(day)
 
 func set_dialogue_mode(active: bool) -> void:
-	_dialogue_dim.visible = active
+	_dialogue_overlay.visible = active
+	_set_customer_dialogue_highlight(active)
+
+
+func _set_customer_dialogue_highlight(active: bool) -> void:
+	if _customer_sprite == null:
+		return
+	if active:
+		if not _customer_dialogue_highlight_active:
+			_customer_sprite_normal_z_index = _customer_sprite.z_index
+			_customer_sprite_normal_modulate = _customer_sprite.modulate
+		_customer_dialogue_highlight_active = true
+		var overlay_z := _dialogue_overlay.z_index if _dialogue_overlay != null else 0
+		_customer_sprite.z_index = max(DIALOGUE_SPEAKER_Z_INDEX, overlay_z + 1)
+		_customer_sprite.modulate = DIALOGUE_SPEAKER_MODULATE
+	else:
+		if not _customer_dialogue_highlight_active:
+			return
+		_customer_sprite.z_index = _customer_sprite_normal_z_index
+		_customer_sprite.modulate = _customer_sprite_normal_modulate
+		_customer_dialogue_highlight_active = false
 
 func _exit_tree() -> void:
 	if _gm != null and _gm.inventory_changed.is_connected(_on_inventory_changed):
@@ -315,12 +610,6 @@ func toggle_menu() -> void:
 	if _menu_panel.visible:
 		_build_recipe_list()
 		_build_backpack_list()
-		_build_encyclopedia()
-		# 默认显示配方选项卡
-		$OverlayMenu/RecipePanel.visible = true
-		$OverlayMenu/BackpackPanel.visible = false
-		_cyclopedia_panel.visible = false
-		_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
 
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
@@ -339,12 +628,6 @@ func _on_settings_closed() -> void:
 	_menu_panel.visible = true
 
 
-func _on_inventory_closed() -> void:
-	if _inventory_opened_from_menu:
-		_menu_panel.visible = true
-	_inventory_opened_from_menu = false
-
-
 func _select_overlay_tab(selected: Button) -> void:
 	for tab_button in $OverlayMenu/TabBtns.get_children():
 		if tab_button is Button:
@@ -352,12 +635,11 @@ func _select_overlay_tab(selected: Button) -> void:
 
 
 func toggle_inventory_overlay() -> void:
+	_menu_panel.visible = false
 	_document_overlay.close()
 	if _inventory_overlay.visible:
 		_inventory_overlay.close()
 	else:
-		_inventory_opened_from_menu = _menu_panel.visible
-		_menu_panel.visible = false
 		_inventory_overlay.open()
 
 
@@ -365,10 +647,21 @@ func open_document(document: Dictionary) -> void:
 	_menu_panel.visible = false
 	_inventory_overlay.close()
 	_document_overlay.open_document(document)
+	_refresh_ledger_hint()
 
 
 func open_ledger() -> void:
 	_gm.request_open_document("ledger")
+
+
+func _refresh_ledger_hint() -> void:
+	var ledger := get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
+	if ledger == null or not ledger.has_method("set_unread_hint_visible"):
+		return
+	var unread := false
+	if _gm != null and _gm.documents != null and _gm.documents.has_method("has_unread_ledger_entries"):
+		unread = _gm.documents.has_unread_ledger_entries()
+	ledger.set_unread_hint_visible(unread)
 
 
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
@@ -386,9 +679,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
-		if _inventory_opened_from_menu:
-			_menu_panel.visible = true
-		_inventory_opened_from_menu = false
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -400,32 +690,31 @@ func _add_tutorial_button_to_menu() -> void:
 	var tab_btns = $OverlayMenu/TabBtns
 	if tab_btns == null:
 		return
+	if tab_btns.get_node_or_null("BtnTutorial") != null:
+		return
 
 	var tutorial_btn = Button.new()
 	tutorial_btn.name = "BtnTutorial"
-	tutorial_btn.text = "教程"
-	tutorial_btn.custom_minimum_size = Vector2(60, 30)
+	tutorial_btn.text = "重置教程"
+	tutorial_btn.custom_minimum_size = Vector2(96, 30)
 	ThemeColors.style_brush_tab_button(tutorial_btn)
 	tutorial_btn.pressed.connect(_on_tutorial_btn_pressed)
 	tab_btns.add_child(tutorial_btn)
 
 
 func _on_tutorial_btn_pressed() -> void:
-	var tm = get_node_or_null("/root/TutorialManager")
-	if tm == null:
-		return
+	_reset_tutorial_progress_from_ui()
 
-	# 检查是否所有教程都已完成
-	if tm.is_group_completed("gather") and tm.is_group_completed("shop") and \
-	   tm.is_group_completed("craft") and tm.is_group_completed("seasoning") and \
-	   tm.is_group_completed("serve") and tm.is_group_completed("ledger"):
-		# 全部完成，点击重新开始
-		tm.replay_all()
-		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
-	else:
-		# 还有未完成的教程，重新开始全部
-		tm.replay_all()
-		show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
+
+func _on_tutorial_reset_requested() -> void:
+	_reset_tutorial_progress_from_ui()
+
+
+func _reset_tutorial_progress_from_ui() -> void:
+	if _gm == null or not _gm.has_method("reset_tutorial_progress"):
+		return
+	_gm.reset_tutorial_progress()
+	show_stage_caption("教程已重置！下次进入对应场景时将重新显示。", ThemeColors.AMBER_PRIMARY)
 
 
 func trigger_craft_tutorial() -> void:
@@ -434,8 +723,9 @@ func trigger_craft_tutorial() -> void:
 		return
 
 	var rects = {
-		"BarWorkspace": [820, 480, 280, 200],
+		"CraftBarrel": [820, 480, 280, 200],
 		"ShortcutBar": [140, 675, 1000, 40],
+		"RecoveryContainer": [950, 520, 270, 150],
 	}
 	tm.start_tutorial("craft", rects)
 
@@ -452,6 +742,9 @@ func _new_brush_recipe_row() -> Dictionary:
 
 
 func _build_recipe_list() -> void:
+	_build_split_recipe_list()
+	return
+
 	var recipe_list = _menu_panel.get_node("RecipePanel/RecipeList")
 	for child in recipe_list.get_children():
 		child.queue_free()
@@ -508,6 +801,272 @@ func _build_recipe_list() -> void:
 
 		recipe_list.add_child(row_panel)
 
+
+func _build_split_recipe_list() -> void:
+	var recipe_list := _menu_panel.get_node("RecipePanel/RecipeList") as VBoxContainer
+	for child in recipe_list.get_children():
+		recipe_list.remove_child(child)
+		child.queue_free()
+
+	recipe_list.custom_minimum_size = RECIPE_LAYOUT_MIN_SIZE
+	var keys := _recipe_keys_for_container(_recipe_filter_container)
+	if keys.is_empty():
+		_recipe_filter_container = "barrel"
+		keys = _recipe_keys_for_container(_recipe_filter_container)
+	if _recipe_selected_product_key == "" or not keys.has(_recipe_selected_product_key):
+		_recipe_selected_product_key = keys[0] if not keys.is_empty() else ""
+
+	var layout := HBoxContainer.new()
+	layout.name = "RecipeLayout"
+	layout.custom_minimum_size = RECIPE_LAYOUT_MIN_SIZE
+	layout.add_theme_constant_override("separation", 12)
+	recipe_list.add_child(layout)
+
+	var left_column := VBoxContainer.new()
+	left_column.name = "LeftColumn"
+	left_column.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, 0.0)
+	left_column.add_theme_constant_override("separation", 8)
+	layout.add_child(left_column)
+
+	var tabs := HBoxContainer.new()
+	tabs.name = "ContainerTabs"
+	tabs.add_theme_constant_override("separation", 6)
+	left_column.add_child(tabs)
+	for container_key in RECIPE_CONTAINER_ORDER:
+		var tab := Button.new()
+		tab.name = "Tab_%s" % container_key
+		tab.text = String(CONTAINER_NAMES.get(container_key, container_key))
+		tab.custom_minimum_size = Vector2(92.0, 34.0)
+		tab.set_meta("container_key", container_key)
+		ThemeColors.style_brush_tab_button(tab, 13)
+		ThemeColors.set_brush_selected(tab, container_key == _recipe_filter_container)
+		tab.pressed.connect(_on_recipe_container_tab_pressed.bind(tab))
+		tabs.add_child(tab)
+
+	var rows := VBoxContainer.new()
+	rows.name = "RecipeRows"
+	rows.add_theme_constant_override("separation", 6)
+	left_column.add_child(rows)
+	for product_key in keys:
+		var row := Button.new()
+		row.name = "Recipe_%s" % product_key
+		row.text = _recipe_row_text(product_key)
+		row.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, 42.0)
+		row.set_meta("product_key", product_key)
+		row.set_meta("container_key", _recipe_filter_container)
+		ThemeColors.style_brush_button(row, 13)
+		ThemeColors.set_brush_selected(row, product_key == _recipe_selected_product_key)
+		row.pressed.connect(_on_recipe_row_pressed.bind(product_key))
+		rows.add_child(row)
+
+	var detail := PanelContainer.new()
+	detail.name = "RecipeDetail"
+	detail.custom_minimum_size = Vector2(RECIPE_DETAIL_WIDTH, 0.0)
+	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_recipe_panel_art(detail, RECIPE_DETAIL_PANEL_ART, Vector4(14.0, 14.0, 14.0, 14.0))
+	layout.add_child(detail)
+	_render_recipe_detail(detail, _recipe_selected_product_key)
+
+
+func _recipe_keys_for_container(container_key: String) -> Array[String]:
+	var keys: Array[String] = []
+	for product_key in _gm.craft.recipes.keys():
+		var recipe: Dictionary = _gm.craft.recipes[product_key]
+		if String(recipe.get("container", "")) == container_key and not Array(recipe.get("ingredients", [])).is_empty():
+			keys.append(String(product_key))
+	keys.sort()
+	return keys
+
+
+func _on_recipe_container_tab_pressed(tab: Button) -> void:
+	var container_key := String(tab.get_meta("container_key", ""))
+	if container_key == "" or container_key == _recipe_filter_container:
+		return
+	_recipe_filter_container = container_key
+	var keys := _recipe_keys_for_container(_recipe_filter_container)
+	_recipe_selected_product_key = keys[0] if not keys.is_empty() else ""
+	_build_recipe_list()
+
+
+func _on_recipe_row_pressed(product_key: String) -> void:
+	if product_key == _recipe_selected_product_key:
+		return
+	_recipe_selected_product_key = product_key
+	_build_recipe_list()
+
+
+func _recipe_row_text(product_key: String) -> String:
+	var recipe: Dictionary = _gm.craft.recipes.get(product_key, {})
+	var product_data: Dictionary = _gm.craft.get_item(product_key)
+	var product_name := String(product_data.get("name", product_key))
+	var price := int(product_data.get("price", 0))
+	var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
+	var status := "需解锁" if locked else "已掌握"
+	return "%s  %d金  %s" % [product_name, price, status]
+
+
+func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
+	for child in detail.get_children():
+		detail.remove_child(child)
+		child.queue_free()
+
+	var recipe: Dictionary = _gm.craft.recipes.get(product_key, {})
+	var container_key := String(recipe.get("container", ""))
+	var ingredients: Array = recipe.get("ingredients", [])
+	var product_data: Dictionary = _gm.craft.get_item(product_key)
+	detail.set_meta("product_key", product_key)
+	detail.set_meta("container_key", container_key)
+
+	var body := VBoxContainer.new()
+	body.name = "Body"
+	body.add_theme_constant_override("separation", 8)
+	detail.add_child(body)
+
+	if product_key == "" or recipe.is_empty():
+		body.add_child(_new_recipe_label("Empty", "暂无配方", 14, ThemeColors.TEXT_DIM))
+		return
+
+	var header_frame := PanelContainer.new()
+	header_frame.name = "HeaderFrame"
+	header_frame.custom_minimum_size = Vector2(0.0, 96.0)
+	header_frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_apply_recipe_panel_art(header_frame, RECIPE_DETAIL_BAND_ART, Vector4(8.0, 7.0, 8.0, 7.0))
+	body.add_child(header_frame)
+
+	var header := HBoxContainer.new()
+	header.name = "Header"
+	header.add_theme_constant_override("separation", 10)
+	header_frame.add_child(header)
+
+	var product_slot := _new_recipe_slot_panel("ProductSlot", Vector2(80.0, 80.0))
+	var product_slot_center := CenterContainer.new()
+	product_slot_center.name = "Center"
+	product_slot.add_child(product_slot_center)
+	var product_icon := _new_recipe_icon(product_key, product_data, Vector2(60.0, 56.0))
+	product_icon.name = "ProductIcon"
+	product_slot_center.add_child(product_icon)
+	header.add_child(product_slot)
+
+	var title_box := VBoxContainer.new()
+	title_box.name = "TitleBox"
+	title_box.custom_minimum_size = Vector2(190.0, 0.0)
+	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_box.add_theme_constant_override("separation", 2)
+	header.add_child(title_box)
+	var title_label := _new_recipe_label("Title", String(product_data.get("name", product_key)), 16, ThemeColors.AMBER_PRIMARY)
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.custom_minimum_size = Vector2(180.0, 22.0)
+	title_box.add_child(title_label)
+	title_box.add_child(_new_recipe_label("Meta", "售价 %d金 · %s" % [int(product_data.get("price", 0)), String(CONTAINER_NAMES.get(container_key, container_key))], 12, ThemeColors.TEXT_SUBTITLE))
+	title_box.add_child(_new_recipe_label("Status", _recipe_status_text(product_key, recipe), 12, ThemeColors.TEXT_LIGHT))
+
+	body.add_child(_new_recipe_label("IngredientTitle", "材料", 13, ThemeColors.AMBER_PRIMARY))
+	var ingredient_grid := GridContainer.new()
+	ingredient_grid.name = "IngredientGrid"
+	ingredient_grid.columns = 3
+	ingredient_grid.add_theme_constant_override("h_separation", 6)
+	ingredient_grid.add_theme_constant_override("v_separation", 6)
+	body.add_child(ingredient_grid)
+	for ingredient in ingredients:
+		ingredient_grid.add_child(_new_recipe_ingredient_cell(String(ingredient)))
+
+	body.add_child(_new_recipe_instruction_panel(String(RECIPE_CONTAINER_INSTRUCTIONS.get(container_key, ""))))
+
+
+func _recipe_status_text(product_key: String, recipe: Dictionary) -> String:
+	var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
+	if locked:
+		return "状态 需商店解锁"
+	return "状态 已掌握"
+
+
+func _new_recipe_label(label_name: String, text: String, font_size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.name = label_name
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ThemeColors.style_brush_label(label, font_size, color)
+	return label
+
+
+func _apply_recipe_panel_art(panel: Control, texture_path: String, margins: Vector4) -> void:
+	panel.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var style := TextureManager.try_load_style_box(texture_path)
+	if style == null:
+		if panel is PanelContainer:
+			ThemeColors.style_brush_content_panel(panel)
+		return
+	style.set_texture_margin(SIDE_LEFT, margins.x)
+	style.set_texture_margin(SIDE_TOP, margins.y)
+	style.set_texture_margin(SIDE_RIGHT, margins.z)
+	style.set_texture_margin(SIDE_BOTTOM, margins.w)
+	style.set_content_margin(SIDE_LEFT, margins.x)
+	style.set_content_margin(SIDE_TOP, margins.y)
+	style.set_content_margin(SIDE_RIGHT, margins.z)
+	style.set_content_margin(SIDE_BOTTOM, margins.w)
+	panel.add_theme_stylebox_override("panel", style)
+
+
+func _new_recipe_slot_panel(panel_name: String, min_size: Vector2) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = panel_name
+	panel.custom_minimum_size = min_size
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_apply_recipe_panel_art(panel, RECIPE_SLOT_ART, Vector4(4.0, 4.0, 4.0, 4.0))
+	return panel
+
+
+func _new_recipe_instruction_panel(text: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = "InstructionPanel"
+	_apply_recipe_panel_art(panel, RECIPE_DETAIL_BAND_ART, Vector4(10.0, 6.0, 10.0, 6.0))
+	var label := _new_recipe_label("Instruction", text, 12, ThemeColors.TEXT_LIGHT)
+	panel.add_child(label)
+	return panel
+
+
+func _new_recipe_icon(item_key: String, item_data: Dictionary, size: Vector2) -> Control:
+	var icon_tex = _gm.try_load_material_icon(item_key)
+	if icon_tex != null:
+		var icon := TextureRect.new()
+		icon.texture = icon_tex
+		icon.custom_minimum_size = size
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		return icon
+
+	var swatch := ColorRect.new()
+	var rgb: Array = item_data.get("color", [0.55, 0.5, 0.45])
+	swatch.color = Color(rgb[0], rgb[1], rgb[2])
+	swatch.custom_minimum_size = size
+	return swatch
+
+
+func _new_recipe_ingredient_cell(item_key: String) -> PanelContainer:
+	var item_data: Dictionary = _gm.craft.get_item(item_key)
+	var cell := _new_recipe_slot_panel("Ingredient_%s" % item_key, Vector2(88.0, 80.0))
+	cell.set_meta("item_key", item_key)
+
+	var box := VBoxContainer.new()
+	box.name = "Body"
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 2)
+	cell.add_child(box)
+
+	var icon := _new_recipe_icon(item_key, item_data, Vector2(32.0, 30.0))
+	icon.name = "Icon"
+	box.add_child(icon)
+
+	var label := _new_recipe_label("Name", String(item_data.get("name", item_key)), 10, ThemeColors.TEXT_LIGHT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(72.0, 24.0)
+	box.add_child(label)
+	return cell
+
+
 func _build_backpack_list() -> void:
 	var inventory: Dictionary = _gm.inventory
 	var backpack_list = _menu_panel.get_node("BackpackPanel/BackpackList")
@@ -560,389 +1119,3 @@ func _on_tidy_desk_pressed() -> void:
 		bar.tidy_desk()
 	if has_method("toggle_menu"):
 		toggle_menu()
-
-## ── 准备阶段 ──
-
-func _enter_preparation_phase() -> void:
-	_phase = Phase.PREPARATION
-	daily_menu_confirmed = false
-	# 初始化当日菜单：从可点单产品中，默认启用基础产品
-	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
-	for key in products:
-		var item: Dictionary = _gm.craft.get_item(key)
-		daily_menu[key] = {"price": int(item.get("price", 0)), "enabled": false}
-	# 默认启用前3项（至少3项要求）
-	var default_enabled = products.slice(0, min(3, products.size()))
-	for key in default_enabled:
-		daily_menu[key]["enabled"] = true
-	set_close_enabled(false)
-	show_stage_caption("准备阶段 — 点击右上角「菜单」配置当日菜品", ThemeColors.AMBER_PRIMARY)
-	_refresh_menu_config_panel()
-	# 教程进行时不自动弹出菜单面板
-	var tm = get_node_or_null("/root/TutorialManager")
-	if tm == null or not tm._is_active:
-		_toggle_menu_config()
-
-func _confirm_menu() -> void:
-	var enabled_count := 0
-	for key in daily_menu:
-		if daily_menu[key].get("enabled", false):
-			enabled_count += 1
-	if enabled_count < 3:
-		show_stage_caption("至少需要选择3道菜品！", Color.ORANGE_RED)
-		return
-	daily_menu_confirmed = true
-	_phase = Phase.BUSINESS
-	_menu_config_panel.visible = false
-	show_stage_caption("菜单已确认，准备迎接客人！", ThemeColors.AMBER_PRIMARY)
-	set_close_enabled(not _gm.guests.has_guest)
-	# 通知 GuestSystem 配置完毕，可以开始刷客人
-	if _gm != null and _gm.guests != null:
-		_gm.guests.configure_night(_gm.ryan_slice.normal_order_limit(_gm.economy.current_day), _gm.economy.current_day)
-	# 通知 GM 准备阶段结束，可以生成重要NPC
-	if _gm != null and _gm.has_method("on_menu_confirmed"):
-		_gm.call_deferred("on_menu_confirmed")
-
-func _toggle_menu_config() -> void:
-	_menu_panel.visible = false
-	_inventory_overlay.close()
-	_document_overlay.close()
-	_menu_config_panel.visible = not _menu_config_panel.visible
-	if _menu_config_panel.visible:
-		_refresh_menu_config_panel()
-
-func _refresh_menu_config_panel() -> void:
-	if _menu_config_panel == null:
-		return
-	var list: VBoxContainer = _menu_config_panel.get_node_or_null("Scroll/ProductList")
-	if list == null:
-		return
-	for child in list.get_children():
-		child.queue_free()
-
-	# 标题
-	var status_label: Label = _menu_config_panel.get_node_or_null("StatusLabel")
-	if status_label != null:
-		var count := 0
-		for key in daily_menu:
-			if daily_menu[key].get("enabled", false):
-				count += 1
-		status_label.text = "已选 %d 道菜品（至少3项）" % count
-
-	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
-	for product_key in products:
-		var item: Dictionary = _gm.craft.get_item(product_key)
-		var product_name: String = item.get("name", product_key)
-		var base_price: int = int(item.get("price", 0))
-		var menu_entry: Dictionary = daily_menu.get(product_key, {"price": base_price, "enabled": false})
-
-		var row := PanelContainer.new()
-		row.custom_minimum_size = Vector2(0, 38)
-		ThemeColors.style_brush_content_panel(row)
-
-		var hbox := HBoxContainer.new()
-		hbox.add_theme_constant_override("separation", 8)
-		row.add_child(hbox)
-
-		var cb := CheckBox.new()
-		cb.text = product_name
-		cb.button_pressed = menu_entry.get("enabled", false)
-		cb.custom_minimum_size = Vector2(280, 0)
-		var cb_key = product_key
-		cb.pressed.connect(func():
-			daily_menu[cb_key]["enabled"] = cb.button_pressed
-			_refresh_menu_config_panel()
-		)
-		hbox.add_child(cb)
-
-		var price_label := Label.new()
-		price_label.text = "基础价 %d金" % base_price
-		price_label.custom_minimum_size = Vector2(100, 0)
-
-		var price_spin := SpinBox.new()
-		price_spin.min_value = 1
-		price_spin.max_value = 99
-		price_spin.value = menu_entry.get("price", base_price)
-		price_spin.custom_minimum_size = Vector2(70, 0)
-		var pk_price = product_key
-		price_spin.value_changed.connect(func(v: float):
-			daily_menu[pk_price]["price"] = int(v)
-		)
-		price_spin.editable = true
-
-		hbox.add_child(price_label)
-		hbox.add_child(price_spin)
-
-		list.add_child(row)
-
-func _create_menu_config_panel() -> void:
-	_menu_config_panel = Panel.new()
-	_menu_config_panel.name = "MenuConfigPanel"
-	_menu_config_panel.visible = false
-	_menu_config_panel.layout_mode = 0
-	_menu_config_panel.offset_left = 290.0
-	_menu_config_panel.offset_top = 80.0
-	_menu_config_panel.offset_right = 990.0
-	_menu_config_panel.offset_bottom = 620.0
-	_menu_config_panel.z_index = 200
-	add_child(_menu_config_panel)
-
-	ThemeColors.style_brush_panel(_menu_config_panel)
-
-	# 标题
-	var title := Label.new()
-	title.name = "TitleLabel"
-	title.text = "当日菜单配置"
-	title.layout_mode = 0
-	title.offset_left = 20; title.offset_top = 12
-	title.offset_right = 680; title.offset_bottom = 40
-	title.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	title.add_theme_font_size_override("font_size", 20)
-	_menu_config_panel.add_child(title)
-
-	# 状态提示
-	var status := Label.new()
-	status.name = "StatusLabel"
-	status.text = "已选 0 道菜品（至少3项）"
-	status.layout_mode = 0
-	status.offset_left = 20; status.offset_top = 42
-	status.offset_right = 680; status.offset_bottom = 64
-	status.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	status.add_theme_font_size_override("font_size", 14)
-	_menu_config_panel.add_child(status)
-
-	# 滚动列表
-	var scroll := ScrollContainer.new()
-	scroll.name = "Scroll"
-	scroll.layout_mode = 0
-	scroll.offset_left = 20; scroll.offset_top = 72
-	scroll.offset_right = 680; scroll.offset_bottom = 470
-	_menu_config_panel.add_child(scroll)
-
-	var product_list := VBoxContainer.new()
-	product_list.name = "ProductList"
-	product_list.layout_mode = 0
-	scroll.add_child(product_list)
-
-	# 提示文字
-	var hint := Label.new()
-	hint.name = "HintLabel"
-	hint.text = "勾选菜品并设定售价，至少选择3项。已解锁的配方产物均可选择。"
-	hint.layout_mode = 0
-	hint.offset_left = 20; hint.offset_top = 478
-	hint.offset_right = 680; hint.offset_bottom = 500
-	hint.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	hint.add_theme_font_size_override("font_size", 12)
-	_menu_config_panel.add_child(hint)
-
-	# 确认按钮
-	var confirm_btn := Button.new()
-	confirm_btn.name = "ConfirmBtn"
-	confirm_btn.text = "确认菜单"
-	confirm_btn.layout_mode = 0
-	confirm_btn.offset_left = 280; confirm_btn.offset_top = 505
-	confirm_btn.offset_right = 420; confirm_btn.offset_bottom = 540
-	confirm_btn.pressed.connect(_confirm_menu)
-	_menu_config_panel.add_child(confirm_btn)
-	ThemeColors.style_button(confirm_btn, 16)
-
-	# 关闭按钮
-	var close_btn := Button.new()
-	close_btn.name = "CloseBtn"
-	close_btn.text = "关闭"
-	close_btn.layout_mode = 0
-	close_btn.offset_left = 430; close_btn.offset_top = 505
-	close_btn.offset_right = 570; close_btn.offset_bottom = 540
-	close_btn.pressed.connect(_toggle_menu_config)
-	_menu_config_panel.add_child(close_btn)
-	ThemeColors.style_button(close_btn, 16)
-
-## ── 图鉴面板 ──
-
-func _create_encyclopedia_panel() -> void:
-	_cyclopedia_panel = Control.new()
-	_cyclopedia_panel.name = "EncyclopediaPanel"
-	_cyclopedia_panel.visible = false
-	_cyclopedia_panel.layout_mode = 0
-	_cyclopedia_panel.offset_left = 10; _cyclopedia_panel.offset_top = 60
-	_cyclopedia_panel.offset_right = 690; _cyclopedia_panel.offset_bottom = 440
-	# 添加到 OverlayMenu 下
-	var menu = $OverlayMenu
-	menu.add_child(_cyclopedia_panel)
-
-	var scroll := ScrollContainer.new()
-	scroll.name = "EncycScroll"
-	scroll.layout_mode = 0
-	scroll.offset_left = 0; scroll.offset_top = 0
-	scroll.offset_right = 680; scroll.offset_bottom = 370
-	_cyclopedia_panel.add_child(scroll)
-
-	var main_vbox := VBoxContainer.new()
-	main_vbox.name = "EncycContent"
-	main_vbox.layout_mode = 0
-	scroll.add_child(main_vbox)
-
-func _build_encyclopedia() -> void:
-	var content: VBoxContainer = _cyclopedia_panel.get_node_or_null("EncycScroll/EncycContent")
-	if content == null:
-		return
-	for child in content.get_children():
-		child.queue_free()
-
-	# === 食品图鉴 ===
-	var food_header := Label.new()
-	food_header.text = "— 食品图鉴 —"
-	food_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	food_header.add_theme_font_size_override("font_size", 18)
-	content.add_child(food_header)
-
-	content.add_child(_make_spacer(4))
-
-	# 加载属性数据
-	var attr_data: Dictionary = _load_food_attributes()
-
-	var product_keys: Array = []
-	for key in _gm.craft.items:
-		var item: Dictionary = _gm.craft.items[key]
-		if item.get("type", "") == "product":
-			product_keys.append(key)
-	product_keys.sort()
-
-	for product_key in product_keys:
-		var item: Dictionary = _gm.craft.get_item(product_key)
-		var attrs: Dictionary = attr_data.get(product_key, {})
-		var row_panel := PanelContainer.new()
-		row_panel.custom_minimum_size = Vector2(0, 32)
-		ThemeColors.style_brush_content_panel(row_panel)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row_panel.add_child(row)
-
-		var icon_tex = _gm.try_load_material_icon(product_key)
-		if icon_tex != null:
-			var tex_rect = TextureRect.new()
-			tex_rect.texture = icon_tex
-			tex_rect.custom_minimum_size = Vector2(24, 24)
-			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(tex_rect)
-
-		var name_label := Label.new()
-		name_label.text = " %s  %d金" % [item.get("name", product_key), int(item.get("price", 0))]
-		name_label.custom_minimum_size = Vector2(180, 0)
-		name_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-		name_label.add_theme_font_size_override("font_size", 14)
-		row.add_child(name_label)
-
-		# 属性标签
-		if attrs.is_empty():
-			var none_l := Label.new()
-			none_l.text = "（无特殊属性）"
-			none_l.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			none_l.add_theme_font_size_override("font_size", 12)
-			row.add_child(none_l)
-		else:
-			for attr_key in attrs:
-				var val: int = int(attrs[attr_key])
-				var attr_name: String = ATTRIBUTE_NAMES.get(attr_key, attr_key)
-				var sign := "+" if val >= 0 else ""
-				var al := Label.new()
-				al.text = "%s%s%d" % [attr_name, sign, val]
-				al.add_theme_color_override("font_color", _attribute_color(attr_key))
-				al.add_theme_font_size_override("font_size", 12)
-				row.add_child(al)
-
-		content.add_child(row_panel)
-
-	content.add_child(_make_spacer(8))
-
-	# === 剧情道具 ===
-	var story_header := Label.new()
-	story_header.text = "— 剧情道具 —"
-	story_header.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	story_header.add_theme_font_size_override("font_size", 18)
-	content.add_child(story_header)
-
-	content.add_child(_make_spacer(4))
-
-	# 遍历已获得的文档/剧情道具（排除"账本"）
-	var doc_sys = _gm.documents if _gm != null else null
-	if doc_sys != null and doc_sys.has_method("get_owned_documents"):
-		for doc_id in doc_sys.get_owned_documents():
-			if doc_id == "ledger":
-				continue  # 账本不显示在图鉴中
-			var doc: Dictionary = doc_sys.get_document(doc_id)
-			if doc.is_empty():
-				continue
-			var dp := PanelContainer.new()
-			dp.custom_minimum_size = Vector2(0, 32)
-			ThemeColors.style_brush_content_panel(dp)
-			var dh := HBoxContainer.new()
-			dp.add_child(dh)
-
-			var dn := Label.new()
-			dn.text = " %s" % doc.get("title", doc_id)
-			dn.custom_minimum_size = Vector2(200, 0)
-			dn.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-			dn.add_theme_font_size_override("font_size", 14)
-			dh.add_child(dn)
-
-			var dd := Label.new()
-			dd.text = doc.get("description", "")
-			dd.custom_minimum_size = Vector2(420, 0)
-			dd.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-			dd.add_theme_font_size_override("font_size", 12)
-			dh.add_child(dd)
-
-			content.add_child(dp)
-
-func _make_spacer(height: int) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(0, height)
-	return c
-
-func _attribute_color(attr_key: String) -> Color:
-	match attr_key:
-		"might": return Color(0.95, 0.3, 0.2)      # 红
-		"alacrity": return Color(0.2, 0.7, 0.4)   # 绿
-		"fortune": return Color(0.95, 0.85, 0.1)   # 金
-		"arcana": return Color(0.5, 0.3, 0.9)      # 紫
-		"vitality": return Color(0.3, 0.5, 0.8)    # 蓝
-		"charm": return Color(0.95, 0.45, 0.65)    # 粉
-		_: return ThemeColors.TEXT_SUBTITLE
-
-func _load_food_attributes() -> Dictionary:
-	var file = FileAccess.open("res://data/food_attributes.json", FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var data = JSON.parse_string(text)
-	if data == null or not data is Dictionary:
-		return {}
-	return data
-
-## 获取当日菜单（供 GuestSystem 点单）: Array[{key, price, name}]
-func get_daily_menu_items() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	for key in daily_menu:
-		var entry: Dictionary = daily_menu[key]
-		if entry.get("enabled", false):
-			var item: Dictionary = _gm.craft.get_item(key)
-			result.append({
-				"key": key,
-				"price": int(entry.get("price", item.get("price", 0))),
-				"name": item.get("name", key),
-			})
-	return result
-
-## 当前阶段
-func is_preparation_phase() -> bool:
-	return _phase == Phase.PREPARATION
-
-func is_business_phase() -> bool:
-	return _phase == Phase.BUSINESS
-
-## 菜单面板是否开启（用于暂停顾客生成）
-func is_menu_config_open() -> bool:
-	return _menu_config_panel != null and _menu_config_panel.visible

@@ -1,0 +1,10 @@
+Use case: game-asset
+Asset type: single character bust portrait source for a pixel-art tavern management game, later downsampled to native 70x90 and exported 4x to 280x360.
+Primary request: Create one original mercenary messenger bust portrait for the character key mercenary_a, used for the Day 3 "Mercenary A" fate reveal. He must be clearly distinct from Ryan.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for background removal. The background must be one uniform color with no shadows, gradients, texture, floor plane, reflections, or lighting variation. Do not use #00ff00 anywhere in the subject.
+Subject: adult male mercenary messenger, late 30s to 40s, stockier and older than a trainee knight, tired stern face, short dark hair mostly under a battered dark iron helmet or hood, one small scar, stubble, weathered leather-and-iron shoulder armor, muted brown cloak, no blue scarf, no youthful heroic smile, no Ryan-like silhouette.
+Style/medium: low-detail pixel-art-friendly game portrait source, crisp chunky shapes, rough ink outline, limited palette, dark teal dungeon tavern UI mood with small amber highlights, historical printmaking influence. It should read well after being reduced to native 70x90 pixels. Not a high-resolution illustration texture.
+Composition/framing: centered chest-up bust, full head and shoulders visible, generous padding, no legs, no weapons crossing outside the body, transparent-ready silhouette.
+Lighting/mood: cold dungeon shadows with restrained warm tavern edge light; grave messenger mood.
+Text: none.
+Constraints: no readable text, no symbols/logos, no watermark, no UI, no thin hair strands, no high-resolution illustration texture, not Ryan, no blue scarf, no bright saturated colors, no soft antialiased borders.

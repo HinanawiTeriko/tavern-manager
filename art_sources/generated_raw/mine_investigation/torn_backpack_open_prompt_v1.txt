@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: single foreground prop source for a Godot pixel-art abandoned mine investigation scene
+Primary request: Create one torn open backpack, isolated on a perfectly flat solid #ff00ff chroma-key background. No UI.
+Subject: a battered leather backpack lying on the ground with its mouth opening upward, clearly visible dark interior, torn rim, loose straps, ripped side holes, and worn buckles. It should read as an open container that can spill coins, a token, and paper when tipped.
+Style/medium: painterly source intended for downsampling into a chunky low-resolution pixel-game sprite, crisp silhouette, rough ink-like edges, limited dungeon palette, readable at native 32x28 pixels and runtime 128x112 pixels.
+Composition/framing: three-quarter top/front view, vertical-ish bag with the open mouth at the top, centered with generous padding, no floor plane, no cast shadow, no separate background, no extra props outside the backpack.
+Lighting/mood: cold teal cave ambient light with subtle warm amber leather highlights, matching a dark abandoned mine.
+Color palette: worn brown leather, dark teal shadows, muted brass buckles, sparse warm highlights.
+Constraints: perfectly flat uniform #ff00ff background only; do not use #ff00ff inside the backpack; no text, no labels, no numbers, no logos, no characters, no hands, no watermark, no glow, no smoke, no shadow.

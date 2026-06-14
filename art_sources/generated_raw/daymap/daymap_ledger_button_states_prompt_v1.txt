@@ -1,0 +1,9 @@
+Use case: game asset
+Asset type: pixel-art UI source sheet for a DayMap topbar ledger button, later downscaled to a tiny 33x11 native pixel button and 132x44 runtime texture.
+Primary request: Create a single square 1024x1024 source sheet with three separate horizontal rows, one centered button in each row: top row normal, middle row hover, bottom row pressed.
+Subject: A compact horizontal ledger/book button for a dungeon tavern management game. The button should read as a small dark teal leather ledger tab with visible parchment page block, rough ink-line edges, and brass/amber clasp or corner tabs. It should feel authored, not a flat rectangle.
+Style/medium: chunky pixel-art UI source, historical printmaking influence, rough ink edges, dark teal dungeon tavern palette, warm amber metal accents, parchment page texture, crisp silhouette.
+Composition/framing: Three equal rows. Each row contains one centered wide short button with generous padding. The three buttons must keep the same overall size and silhouette. The hover state has stronger amber rim light and brighter parchment highlights. The pressed state is visibly lower/darker with a compressed shadow and darker top edge, not just a brightness change.
+Background: perfectly flat solid #00ff00 chroma-key background only.
+Text: no text, no letters, no numbers, no symbols that look like readable text.
+Constraints: no cast shadow outside the button, no gradients in the background, no watermark, no logo. Keep the button isolated from the background. Do not use green anywhere in the button itself. Make the three states visually distinct while preserving the same silhouette.

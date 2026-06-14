@@ -1,0 +1,444 @@
+{
+  "assets": {
+    "pinned_note_panel": {
+      "id": "pinned_note_panel",
+      "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+      "native_file": "assets/source/daymap/ui/pinned_note_panel_native.png",
+      "output_file": "assets/textures/daymap/ui/pinned_note_panel.png",
+      "size": [
+        368,
+        384
+      ],
+      "source_crop": [
+        80,
+        60,
+        1120,
+        1148
+      ],
+      "safe_area": [
+        84,
+        88,
+        248,
+        228
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/NoteArt"
+    },
+    "pinned_note_knife": {
+      "id": "pinned_note_knife",
+      "source_file": "art_sources/generated_raw/daymap/pinned_note_pierced_source.png",
+      "native_file": "assets/source/daymap/ui/pinned_note_knife_native.png",
+      "output_file": "assets/textures/daymap/ui/pinned_note_knife.png",
+      "size": [
+        112,
+        112
+      ],
+      "source_crop": [
+        80,
+        60,
+        520,
+        540
+      ],
+      "safe_area": [
+        18,
+        0,
+        74,
+        112
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel optional KnifeArt compatibility layer"
+    },
+    "button_note_action_normal": {
+      "id": "button_note_action_normal",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_normal.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        165,
+        111,
+        1089,
+        358
+      ],
+      "safe_area": [
+        56,
+        12,
+        148,
+        32
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
+    },
+    "button_note_action_hover": {
+      "id": "button_note_action_hover",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_hover.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        165,
+        501,
+        1089,
+        748
+      ],
+      "safe_area": [
+        56,
+        12,
+        148,
+        32
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
+    },
+    "button_note_action_pressed": {
+      "id": "button_note_action_pressed",
+      "source_file": "art_sources/generated_raw/daymap/note_action_paper_stamp_source.png",
+      "native_file": "assets/source/daymap/ui/button_note_action_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_note_action_pressed.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        165,
+        892,
+        1089,
+        1141
+      ],
+      "safe_area": [
+        56,
+        12,
+        148,
+        32
+      ],
+      "intended_godot_use": "DayMap PinnedNotePanel/GoHereBtn"
+    },
+    "topbar_strip": {
+      "id": "topbar_strip",
+      "source_file": "art_sources/generated_raw/daymap/topbar_desktop_source.png",
+      "native_file": "assets/source/daymap/ui/topbar_strip_native.png",
+      "output_file": "assets/textures/daymap/ui/topbar_strip.png",
+      "size": [
+        1280,
+        60
+      ],
+      "source_crop": [
+        14,
+        557,
+        1240,
+        698
+      ],
+      "safe_area": [
+        72,
+        8,
+        1120,
+        44
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/TopStrip"
+    },
+    "button_ledger_normal": {
+      "id": "button_ledger_normal",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_button_states_source_v1.png",
+      "native_file": "assets/source/daymap/ui/button_ledger_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_normal.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        100,
+        1064,
+        360
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn"
+    },
+    "button_ledger_hover": {
+      "id": "button_ledger_hover",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_button_states_source_v1.png",
+      "native_file": "assets/source/daymap/ui/button_ledger_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_hover.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        500,
+        1064,
+        760
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn"
+    },
+    "button_ledger_pressed": {
+      "id": "button_ledger_pressed",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_button_states_source_v1.png",
+      "native_file": "assets/source/daymap/ui/button_ledger_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_pressed.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        895,
+        1064,
+        1155
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn"
+    },
+    "panel_detail": {
+      "id": "panel_detail",
+      "source_file": "art_sources/generated_raw/daymap/detail_panel_pinned_notice_source_v1.png",
+      "native_file": "assets/source/daymap/ui/panel_detail_native.png",
+      "output_file": "assets/textures/daymap/ui/panel_detail.png",
+      "size": [
+        320,
+        480
+      ],
+      "source_crop": [
+        72,
+        44,
+        966,
+        1492
+      ],
+      "safe_area": [
+        56,
+        112,
+        208,
+        256
+      ],
+      "intended_godot_use": "DayMap UILayer/DetailPanel pinned location notice"
+    },
+    "button_detail_go_normal": {
+      "id": "button_detail_go_normal",
+      "source_file": "art_sources/generated_raw/daymap/detail_go_button_states_source_v3.png",
+      "native_file": "assets/source/daymap/ui/button_detail_go_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_detail_go_normal.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        60,
+        195,
+        975,
+        429
+      ],
+      "safe_area": [
+        44,
+        10,
+        136,
+        36
+      ],
+      "intended_godot_use": "DayMap UILayer/DetailPanel/GoHereBtn"
+    },
+    "button_detail_go_hover": {
+      "id": "button_detail_go_hover",
+      "source_file": "art_sources/generated_raw/daymap/detail_go_button_states_source_v3.png",
+      "native_file": "assets/source/daymap/ui/button_detail_go_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_detail_go_hover.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        60,
+        630,
+        975,
+        864
+      ],
+      "safe_area": [
+        44,
+        10,
+        136,
+        36
+      ],
+      "intended_godot_use": "DayMap UILayer/DetailPanel/GoHereBtn"
+    },
+    "button_detail_go_pressed": {
+      "id": "button_detail_go_pressed",
+      "source_file": "art_sources/generated_raw/daymap/detail_go_button_states_source_v3.png",
+      "native_file": "assets/source/daymap/ui/button_detail_go_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_detail_go_pressed.png",
+      "size": [
+        224,
+        56
+      ],
+      "source_crop": [
+        60,
+        1064,
+        975,
+        1298
+      ],
+      "safe_area": [
+        44,
+        10,
+        136,
+        36
+      ],
+      "intended_godot_use": "DayMap UILayer/DetailPanel/GoHereBtn"
+    },
+    "pinned_note_detail_panel": {
+      "id": "pinned_note_detail_panel",
+      "source_file": "art_sources/generated_raw/daymap/pinned_note_detail_panel_source_v2.png",
+      "native_file": "assets/source/daymap/ui/pinned_note_detail_panel_native.png",
+      "output_file": "assets/textures/daymap/ui/pinned_note_detail_panel.png",
+      "size": [
+        368,
+        384
+      ],
+      "source_crop": [
+        100,
+        52,
+        1188,
+        1136
+      ],
+      "safe_area": [
+        88,
+        88,
+        224,
+        192
+      ],
+      "intended_godot_use": "DayMap MapWorld/PinnedNotePanel/NoteArt active location notice"
+    },
+    "gathering_toast_panel": {
+      "id": "gathering_toast_panel",
+      "source_file": "art_sources/generated_raw/daymap/gathering_toast_panel_source_v2.png",
+      "native_file": "assets/source/daymap/ui/gathering_toast_panel_native.png",
+      "output_file": "assets/textures/daymap/ui/gathering_toast_panel.png",
+      "size": [
+        420,
+        56
+      ],
+      "source_crop": [
+        50,
+        552,
+        1200,
+        705
+      ],
+      "safe_area": [
+        44,
+        10,
+        332,
+        36
+      ],
+      "intended_godot_use": "DayMap UILayer/GatheringToast panel"
+    },
+    "panel_result": {
+      "id": "panel_result",
+      "source_file": "art_sources/generated_raw/daymap/special_result_panel_source_v1.png",
+      "native_file": "assets/source/daymap/ui/panel_result_native.png",
+      "output_file": "assets/textures/daymap/ui/panel_result.png",
+      "size": [
+        700,
+        400
+      ],
+      "source_crop": [
+        0,
+        0,
+        1659,
+        930
+      ],
+      "safe_area": [
+        96,
+        88,
+        508,
+        228
+      ],
+      "intended_godot_use": "DayMap UILayer/ResultPanel special-location result notice"
+    },
+    "button_ledger_unread_normal": {
+      "id": "button_ledger_unread_normal",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_normal_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_normal.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        100,
+        1064,
+        360
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
+    },
+    "button_ledger_unread_hover": {
+      "id": "button_ledger_unread_hover",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_hover_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_hover.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        500,
+        1064,
+        760
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
+    },
+    "button_ledger_unread_pressed": {
+      "id": "button_ledger_unread_pressed",
+      "source_file": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/daymap/daymap_ledger_unread_button_states_prompt_v1.txt",
+      "native_file": "assets/source/daymap/ui/button_ledger_unread_pressed_native.png",
+      "output_file": "assets/textures/daymap/ui/button_ledger_unread_pressed.png",
+      "size": [
+        132,
+        44
+      ],
+      "source_crop": [
+        190,
+        895,
+        1064,
+        1155
+      ],
+      "safe_area": [
+        42,
+        8,
+        60,
+        28
+      ],
+      "intended_godot_use": "DayMap UILayer/TopBar/DocumentsBtn unread prompt state"
+    }
+  }
+}

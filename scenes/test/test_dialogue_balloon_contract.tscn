@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/test/test_dialogue_balloon_contract.gd" id="1_b04tb"]
+
+[node name="TestDialogueBalloonContract" type="Node"]
+script = ExtResource("1_b04tb")

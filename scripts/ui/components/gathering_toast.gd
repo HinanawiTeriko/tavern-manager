@@ -1,12 +1,14 @@
 class_name GatheringToast
 extends Panel
 
-## 顶部短暂提示：显示采集获得的物品种类×数量，自动消失，连续采集覆盖旧提示。
+## Top reward toast for DayMap gathering. Text is rendered by Godot; the panel art is a texture.
 
 const TOAST_WIDTH := 420.0
-const TOAST_HEIGHT := 44.0
+const TOAST_HEIGHT := 56.0
 const DISPLAY_DURATION := 3.0
 const FADE_DURATION := 0.4
+const PANEL_TEXTURE := "res://assets/textures/daymap/ui/gathering_toast_panel.png"
+const TOAST_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
 
 var _label: Label
 var _timer: Timer
@@ -14,21 +16,26 @@ var _current_tween: Tween
 
 
 func _ready() -> void:
+	custom_minimum_size = Vector2(TOAST_WIDTH, TOAST_HEIGHT)
+	size = Vector2(TOAST_WIDTH, TOAST_HEIGHT)
 	mouse_filter = MOUSE_FILTER_IGNORE
-
-	# 面板样式
 	add_theme_stylebox_override("panel", _toast_style())
 
 	_label = Label.new()
 	_label.name = "Content"
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_label.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_label.add_theme_font_override("font", TOAST_FONT)
+	_label.add_theme_color_override("font_color", Color(0.27, 0.19, 0.12))
 	_label.add_theme_font_size_override("font_size", 15)
 	_label.anchor_left = 0.0
 	_label.anchor_right = 1.0
 	_label.anchor_top = 0.0
 	_label.anchor_bottom = 1.0
+	_label.offset_left = 44.0
+	_label.offset_right = -44.0
+	_label.offset_top = 8.0
+	_label.offset_bottom = -8.0
 	add_child(_label)
 
 	_timer = Timer.new()
@@ -39,26 +46,25 @@ func _ready() -> void:
 	visible = false
 
 
-## 显示采集提示。rewards: {item_key: count}，message: 结果文案（无奖励或失败时显示）。
 func show_rewards(rewards: Dictionary, message: String) -> void:
-	# 覆盖旧提示：杀死旧动画、重置计时器
 	if _current_tween != null and _current_tween.is_valid():
 		_current_tween.kill()
 		_current_tween = null
 	_timer.stop()
 	modulate.a = 1.0
 
-	# 构建文字
-	var parts: Array = []
-	for key in rewards:
-		var count: int = rewards[key]
-		var item_name: String = _resolve_name(key)
-		parts.append("%s×%d" % [item_name, count])
+	var parts: Array[String] = []
+	var keys := rewards.keys()
+	keys.sort()
+	for key in keys:
+		var item_key := String(key)
+		var count := int(rewards[key])
+		parts.append("%s×%d" % [_resolve_name(item_key), count])
 
 	if parts.is_empty():
 		_label.text = message
 	else:
-		_label.text = "采集获得：" + "、".join(parts)
+		_label.text = "采集获得：" + "、".join(PackedStringArray(parts))
 
 	visible = true
 	_timer.start(DISPLAY_DURATION)
@@ -73,26 +79,24 @@ func _on_timeout() -> void:
 	)
 
 
-## 通过 GameManager 查物品中文名
 func _resolve_name(key: String) -> String:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm != null and gm.craft != null:
 		var item: Dictionary = gm.craft.get_item(key)
 		if not item.is_empty():
-			return item.get("name", key)
+			return String(item.get("name", key))
 	return key
 
 
-static func _toast_style() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.08, 0.07, 0.06, 0.90)
-	sb.border_width_left = 2
-	sb.border_width_top = 2
-	sb.border_width_right = 2
-	sb.border_width_bottom = 2
-	sb.border_color = Color(ThemeColors.AMBER_PRIMARY, 0.30)
-	sb.corner_radius_top_left = 6
-	sb.corner_radius_top_right = 6
-	sb.corner_radius_bottom_left = 6
-	sb.corner_radius_bottom_right = 6
-	return sb
+static func _toast_style() -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	var texture := load(PANEL_TEXTURE) as Texture2D
+	if texture == null:
+		return style
+	style.texture = texture
+	style.region_rect = Rect2(Vector2.ZERO, Vector2(texture.get_width(), texture.get_height()))
+	style.set_content_margin(SIDE_LEFT, 44.0)
+	style.set_content_margin(SIDE_RIGHT, 44.0)
+	style.set_content_margin(SIDE_TOP, 8.0)
+	style.set_content_margin(SIDE_BOTTOM, 8.0)
+	return style

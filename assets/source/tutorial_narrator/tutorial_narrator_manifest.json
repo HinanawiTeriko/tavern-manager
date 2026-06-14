@@ -1,0 +1,185 @@
+{
+  "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_source_v2.png",
+  "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_prompt_v2.txt",
+  "expression_sheet": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_source_v2.png",
+  "expression_prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_prompt_v2.txt",
+  "ledge_source": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_ledge_source_v3.png",
+  "ledge_prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_ledge_prompt_v3.txt",
+  "style_reference": "art_sources/generated_raw/regular_customers/regular_belta_neutral_pilot_source_v1.png",
+  "runtime_scale": 4,
+  "assets": {
+    "female_bartender_scribe": {
+      "id": "female_bartender_scribe",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_pixel_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        0,
+        0,
+        1122,
+        1402
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "intended_godot_use": "TutorialOverlay narrator portrait source, not wired into runtime yet"
+    },
+    "female_bartender_scribe_neutral": {
+      "id": "female_bartender_scribe_neutral",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_neutral_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe_neutral.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        104,
+        20,
+        570,
+        620
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "expression": "neutral",
+      "intended_godot_use": "TutorialOverlay narrator portrait expression variant, not wired into runtime yet"
+    },
+    "female_bartender_scribe_smirk": {
+      "id": "female_bartender_scribe_smirk",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_smirk_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe_smirk.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        674,
+        20,
+        1138,
+        620
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "expression": "smirk",
+      "intended_godot_use": "TutorialOverlay narrator portrait expression variant, not wired into runtime yet"
+    },
+    "female_bartender_scribe_concerned": {
+      "id": "female_bartender_scribe_concerned",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_concerned_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe_concerned.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        86,
+        636,
+        552,
+        1236
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "expression": "concerned",
+      "intended_godot_use": "TutorialOverlay narrator portrait expression variant, not wired into runtime yet"
+    },
+    "female_bartender_scribe_surprised": {
+      "id": "female_bartender_scribe_surprised",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_source_v2.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_expression_sheet_prompt_v2.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_surprised_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe_surprised.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        676,
+        636,
+        1142,
+        1236
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "expression": "surprised",
+      "intended_godot_use": "TutorialOverlay narrator portrait expression variant, not wired into runtime yet"
+    },
+    "female_bartender_scribe_ledge": {
+      "id": "female_bartender_scribe_ledge",
+      "source_file": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_ledge_source_v3.png",
+      "prompt": "art_sources/generated_raw/tutorial_narrator/female_bartender_scribe_ledge_prompt_v3.txt",
+      "native_file": "assets/source/tutorial_narrator/female_bartender_scribe_ledge_native.png",
+      "output_file": "assets/textures/tutorial/narrator/female_bartender_scribe_ledge.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        183,
+        168,
+        903,
+        1068
+      ],
+      "safe_area": [
+        18,
+        8,
+        92,
+        142
+      ],
+      "expression": "ledge",
+      "intended_godot_use": "TutorialOverlay narrator portrait raised dialogue edge pose"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "tavern_no_people_background",
+  "source": "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
+  "native": "assets/source/tavern/background/tavern_bg_native.png",
+  "runtime": "assets/textures/tavern/background/tavern_bg.png",
+  "native_size": [
+    320,
+    180
+  ],
+  "runtime_size": [
+    1280,
+    720
+  ],
+  "scale": 4,
+  "safe_area": [
+    0,
+    0,
+    320,
+    180
+  ],
+  "source_fit": {
+    "method": "ImageOps.fit",
+    "centering": [
+      0.5,
+      0.47
+    ]
+  },
+  "intended_godot_use": "Tavern service scene visual-only no-people background Sprite2D layer"
+}

@@ -1,0 +1,10 @@
+Use case: game asset source art
+Asset type: source/reference sheet for a Godot pixel-art DayMap ledger button unread prompt state
+Primary request: Create a three-state button source sheet for a small horizontal closed tavern ledger book UI button with an unread prompt visual. The three button states are stacked vertically: normal on top, hover in the middle, pressed on bottom.
+Subject: a compact closed ledger book button, same silhouette across all three states: dark teal worn leather cover, visible parchment page block along the lower half, brass corner caps, center clasp, pixel-art chunky edges. Add a small unread prompt built into the button art: a red-brown wax seal, folded parchment corner, or amber fate mark near the upper-right corner, clearly visible but not covering the book silhouette.
+Style/medium: original low-resolution pixel-game UI source art, dark dungeon tavern management interface, rough ink-like outlines, chunky pixel clusters, limited palette, crisp silhouettes.
+Composition/framing: three horizontal book buttons on a perfectly flat #00ff00 chroma-key background, generous padding around each state, no cropping. Keep the buttons wide and short, suitable to downsample into 66x22 native pixel UI assets.
+Lighting/mood: warm candlelit amber accents against cold dark teal leather, restrained and readable at small size.
+Color palette: dark teal leather, parchment tan page edges, brass/amber hardware, muted red-brown wax prompt mark.
+Text: no text, no letters, no numbers, no symbols that look like readable writing.
+Constraints: no logos, no readable text, no watermark, no UI labels, no characters, no hands, no scene background, no gradients in the background. The background must be perfectly flat solid #00ff00 for removal. Make all three states visually related: hover brighter brass/page accents, pressed darker and slightly lowered.

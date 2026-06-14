@@ -1,0 +1,37 @@
+{
+  "source_sheet": "assets/source/workspace_style_trial/reference/exterior_only_pixel_sheet_v3.png",
+  "raw_source": "art_sources/generated_raw/workspace_style_trial/exterior_only_pixel_sheet_v3.png",
+  "native_size": [48, 48],
+  "preview_scale": 2,
+  "contact_sheet": "docs/art/workspace_style_trial_contact_sheet.png",
+  "items": {
+    "flour": {
+      "kind": "food",
+      "sheet_rect": [0, 0, 627, 627],
+      "target_longest": 34,
+      "native": "assets/source/workspace_style_trial/flour_native.png",
+      "preview": "docs/art/workspace_style_trial/flour_preview.png"
+    },
+    "ale": {
+      "kind": "food",
+      "sheet_rect": [627, 0, 1254, 627],
+      "target_longest": 34,
+      "native": "assets/source/workspace_style_trial/ale_native.png",
+      "preview": "docs/art/workspace_style_trial/ale_preview.png"
+    },
+    "barrel": {
+      "kind": "container",
+      "sheet_rect": [0, 627, 627, 1254],
+      "target_longest": 44,
+      "native": "assets/source/workspace_style_trial/barrel_native.png",
+      "preview": "docs/art/workspace_style_trial/barrel_preview.png"
+    },
+    "pot": {
+      "kind": "container",
+      "sheet_rect": [627, 627, 1254, 1254],
+      "target_longest": 44,
+      "native": "assets/source/workspace_style_trial/pot_native.png",
+      "preview": "docs/art/workspace_style_trial/pot_preview.png"
+    }
+  }
+}

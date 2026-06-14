@@ -1,0 +1,271 @@
+{
+  "scale": 4,
+  "source_files": {
+    "backdrop": "art_sources/generated_raw/shop_clean/shop_clean_backdrop_v3.png",
+    "backdrop_v4": "art_sources/generated_raw/shop_clean/shop_clean_backdrop_v4_shopkeeper_generated_raw.png",
+    "backdrop_v5": "art_sources/generated_raw/shop_clean/shop_clean_backdrop_v5_shopkeeper_lowcontrast_generated_raw.png",
+    "backdrop_v6": "art_sources/generated_raw/shop_clean/shop_clean_backdrop_v6_shopkeeper_gap_generated_raw.png",
+    "backdrop_v7": "art_sources/generated_raw/shop_clean/shop_clean_backdrop_v7_pouch_clear_retry2_generated_raw.png",
+    "components": "art_sources/generated_raw/shop_clean/shop_clean_components_with_states_v10_chroma.png",
+    "tabs_v2": "art_sources/generated_raw/shop_clean/shop_clean_tabs_v2_generated_raw.png",
+    "purchase_seal_v3": "art_sources/generated_raw/shop_clean/shop_clean_purchase_seal_v3_generated_raw.png",
+    "close_tag_v2": "art_sources/generated_raw/shop_clean/shop_clean_close_tag_v2_generated_raw.png",
+    "quantity_controls_v5": "art_sources/generated_raw/shop_clean/shop_clean_quantity_controls_v5_generated_raw.png"
+  },
+  "preview_dir": "docs/ui/previews/shop_clean_components_v10",
+  "assets": {
+    "shop_clean_backdrop": {
+      "source": "backdrop_v7",
+      "source_box": null,
+      "native_size": [320, 180],
+      "runtime_size": [1280, 720],
+      "transparent": false,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect backdrop with visible lower-left pouch and hooded shopkeeper in the panel gap"
+    },
+    "shop_clean_list_panel": {
+      "source": "components",
+      "source_box": [18, 32, 706, 434],
+      "native_size": [170, 100],
+      "runtime_size": [680, 400],
+      "transparent": true,
+      "safe_area": [12, 10, 156, 86],
+      "intended_godot_use": "TextureRect left stacked ledger panel"
+    },
+    "shop_clean_detail_page_base": {
+      "source": "components",
+      "source_box": [1068, 28, 1485, 520],
+      "native_size": [108, 130],
+      "runtime_size": [432, 520],
+      "transparent": true,
+      "clear_native_boxes": [[0, 128, 108, 130]],
+      "safe_area": [8, 8, 92, 114],
+      "intended_godot_use": "TextureRect right detail page"
+    },
+    "shop_clean_detail_title_slip": {
+      "source": "components",
+      "source_box": [750, 34, 1024, 98],
+      "native_size": [92, 16],
+      "runtime_size": [368, 64],
+      "transparent": true,
+      "safe_area": [6, 3, 82, 10],
+      "intended_godot_use": "TextureRect detail title paper"
+    },
+    "shop_clean_detail_body_panel": {
+      "source": "components",
+      "source_box": [748, 116, 1035, 270],
+      "native_size": [92, 52],
+      "runtime_size": [368, 208],
+      "transparent": true,
+      "safe_area": [6, 5, 82, 42],
+      "intended_godot_use": "TextureRect detail body paper"
+    },
+    "shop_clean_detail_uses_panel": {
+      "source": "components",
+      "source_box": [748, 294, 1024, 352],
+      "native_size": [92, 20],
+      "runtime_size": [368, 80],
+      "transparent": true,
+      "safe_area": [6, 4, 82, 14],
+      "intended_godot_use": "TextureRect detail uses paper"
+    },
+    "shop_clean_gold_tag": {
+      "source": "components",
+      "source_box": [612, 664, 820, 732],
+      "native_size": [36, 14],
+      "runtime_size": [144, 56],
+      "transparent": true,
+      "safe_area": [6, 3, 30, 10],
+      "intended_godot_use": "TextureRect balance or price tag"
+    },
+    "shop_clean_tab_normal": {
+      "source": "tabs_v2",
+      "source_box": [230, 44, 1545, 270],
+      "native_size": [42, 16],
+      "runtime_size": [168, 64],
+      "transparent": true,
+      "safe_area": [7, 3, 30, 9],
+      "intended_godot_use": "TextureRect category tab normal v2"
+    },
+    "shop_clean_tab_hover": {
+      "source": "tabs_v2",
+      "source_box": [230, 338, 1545, 564],
+      "native_size": [42, 16],
+      "runtime_size": [168, 64],
+      "transparent": true,
+      "safe_area": [7, 3, 30, 9],
+      "intended_godot_use": "TextureRect category tab hover v2"
+    },
+    "shop_clean_tab_selected": {
+      "source": "tabs_v2",
+      "source_box": [230, 632, 1545, 858],
+      "native_size": [42, 16],
+      "runtime_size": [168, 64],
+      "transparent": true,
+      "safe_area": [7, 3, 30, 9],
+      "intended_godot_use": "TextureRect category tab selected v2"
+    },
+    "shop_clean_item_row_normal": {
+      "source": "components",
+      "source_box": [44, 585, 562, 643],
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "safe_area": [19, 3, 120, 9],
+      "intended_godot_use": "TextureRect item row normal"
+    },
+    "shop_clean_item_row_hover": {
+      "source": "components",
+      "source_box": [44, 666, 563, 724],
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "safe_area": [19, 3, 120, 9],
+      "intended_godot_use": "TextureRect item row hover"
+    },
+    "shop_clean_item_row_selected": {
+      "source": "components",
+      "source_box": [44, 747, 563, 805],
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "safe_area": [19, 3, 120, 9],
+      "intended_godot_use": "TextureRect item row selected"
+    },
+    "shop_clean_item_row_disabled": {
+      "source": "components",
+      "source_box": [44, 827, 563, 886],
+      "native_size": [145, 16],
+      "runtime_size": [580, 64],
+      "transparent": true,
+      "safe_area": [19, 3, 120, 9],
+      "intended_godot_use": "TextureRect item row disabled"
+    },
+    "shop_clean_quantity_button_minus_normal": {
+      "source": "quantity_controls_v5",
+      "source_box": [90, 110, 405, 425],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect minus normal"
+    },
+    "shop_clean_quantity_button_minus_hover": {
+      "source": "quantity_controls_v5",
+      "source_box": [475, 110, 790, 425],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect minus hover"
+    },
+    "shop_clean_quantity_button_minus_disabled": {
+      "source": "quantity_controls_v5",
+      "source_box": [860, 110, 1175, 425],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect minus disabled"
+    },
+    "shop_clean_quantity_button_plus_normal": {
+      "source": "quantity_controls_v5",
+      "source_box": [90, 500, 405, 815],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect plus normal"
+    },
+    "shop_clean_quantity_button_plus_hover": {
+      "source": "quantity_controls_v5",
+      "source_box": [475, 500, 790, 815],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect plus hover"
+    },
+    "shop_clean_quantity_button_plus_disabled": {
+      "source": "quantity_controls_v5",
+      "source_box": [860, 500, 1175, 815],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect plus disabled"
+    },
+    "shop_clean_quantity_body": {
+      "source": "quantity_controls_v5",
+      "source_box": [475, 870, 790, 1185],
+      "native_size": [9, 9],
+      "runtime_size": [36, 36],
+      "transparent": true,
+      "safe_area": [2, 2, 7, 7],
+      "intended_godot_use": "TextureRect quantity value body"
+    },
+    "shop_clean_purchase_receipt": {
+      "source": "components",
+      "source_box": [862, 660, 1194, 732],
+      "native_size": [64, 18],
+      "runtime_size": [256, 72],
+      "transparent": true,
+      "safe_area": [8, 4, 48, 10],
+      "intended_godot_use": "TextureRect purchase label strip"
+    },
+    "shop_clean_purchase_seal_normal": {
+      "source": "purchase_seal_v3",
+      "source_box": [13, 17, 269, 273],
+      "native_size": [24, 24],
+      "runtime_size": [96, 96],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect purchase seal normal"
+    },
+    "shop_clean_purchase_seal_hover": {
+      "source": "purchase_seal_v3",
+      "source_box": [242, 17, 498, 273],
+      "native_size": [24, 24],
+      "runtime_size": [96, 96],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect purchase seal hover"
+    },
+    "shop_clean_purchase_seal_pressed": {
+      "source": "purchase_seal_v3",
+      "source_box": [13, 253, 269, 509],
+      "native_size": [24, 24],
+      "runtime_size": [96, 96],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect purchase seal pressed"
+    },
+    "shop_clean_purchase_seal_disabled": {
+      "source": "purchase_seal_v3",
+      "source_box": [242, 253, 498, 509],
+      "native_size": [24, 24],
+      "runtime_size": [96, 96],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect purchase seal disabled"
+    },
+    "shop_clean_close_tag_normal": {
+      "source": "close_tag_v2",
+      "source_box": [31, 60, 266, 436],
+      "native_size": [20, 32],
+      "runtime_size": [80, 128],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect close tag normal"
+    },
+    "shop_clean_close_tag_hover": {
+      "source": "close_tag_v2",
+      "source_box": [247, 60, 482, 436],
+      "native_size": [20, 32],
+      "runtime_size": [80, 128],
+      "transparent": true,
+      "safe_area": null,
+      "intended_godot_use": "TextureRect close tag hover"
+    }
+  }
+}

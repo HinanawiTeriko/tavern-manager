@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/settings_panel.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/textures/ui/menu_brush_slider_track.png" id="2"]
-[ext_resource type="Texture2D" uid="uid://dlehpihdd6r87" path="res://assets/textures/ui/menu_brush_divider.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://djwk60qefe78o" path="res://assets/textures/ui/menu_brush_divider.png" id="3"]
 
 [node name="SettingsPanel" type="Control"]
 layout_mode = 3
@@ -118,10 +118,18 @@ texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="ResetTutorialButton" type="Button" parent="Shade/Panel"]
+layout_mode = 0
+offset_left = 160.0
+offset_top = 318.0
+offset_right = 320.0
+offset_bottom = 366.0
+text = "重置教程"
+
 [node name="CloseButton" type="Button" parent="Shade/Panel"]
 layout_mode = 0
 offset_left = 160.0
-offset_top = 350.0
+offset_top = 382.0
 offset_right = 320.0
-offset_bottom = 398.0
+offset_bottom = 430.0
 text = "返回"

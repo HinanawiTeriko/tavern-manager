@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: source/reference art for a Godot pixel-art ledger overlay background
+Primary request: a complete redesigned full-screen tavern ledger interface background, with no baked buttons or text, for later pixel pipeline export
+Scene/backdrop: dark wooden tavern bar viewed from above, warm candlelit amber accents, deep teal shadows around the edges
+Subject: one large open accounting ledger book lying on the bar, thick worn leather cover visible underneath, center binding spine, layered page edges, brass corner caps, small wax smudges, faint ink stains and page wear only near edges. Two broad clean parchment pages with very clear empty writing areas.
+Style/medium: chunky low-density pixel-game concept art, rough ink-like dark outlines, limited dark teal / warm parchment / muted brass palette, matching a pixel dungeon tavern management UI. It must survive reduction to a 320x180 native pixel grid and 4x nearest-neighbor export.
+Composition/framing: 16:9 landscape composition. The open ledger fills the center from roughly 9% to 91% width and 9% to 88% height. Leave clean text-safe parchment rectangles: left page roughly x 16%-46%, y 20%-70%; right page roughly x 54%-84%, y 20%-70%. Leave space for separate controls: left page tab area at far left center, right page tab area at far right center, small close seal area at upper right, page label plate near bottom center. Do not draw those controls.
+Text: no text.
+Constraints: no readable text, no letters, no numbers, no logos, no watermark, no buttons, no arrows, no close icon, no UI labels, no people, no hands, no props covering the clean page safe areas. Dynamic text will be rendered by Godot labels later.
+Avoid: high resolution smooth rendering, photorealism, dense noisy paper texture under the text areas, purple palette dominance, beige-only palette, decorative gradient blobs.

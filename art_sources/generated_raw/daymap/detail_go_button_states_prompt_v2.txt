@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: raw source art for a Godot DayMap pinned-note action button state sheet, later downsampled to 56x14 native pixels and scaled 4x.
+Input references: use the visible DayMap background, marker contact sheet, and old pinned-note contact sheet as style references. Match their muted parchment, dark teal shadow, low-density chunky pixel clusters, and sparse amber-brown accents.
+Primary request: Create a vertical three-state sheet for the pinned note action button, with no text.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background only.
+Subject: three separate small horizontal paper tabs stacked vertically with equal size and same silhouette: normal, hover, pressed. The tabs should look like a small scrap of parchment pinned or tucked on the same map note, not a polished UI button. Use thin dark teal underside shadow, muted warm parchment, rough inked corners, and a tiny brown/amber fold accent.
+Style/medium: native-pixel game art source, low-density pixel clusters, limited palette, matching DayMap markers and old pinned-note art. No high-resolution illustration look.
+Composition/framing: three centered rows, generous spacing. Keep each tab center blank for Godot text. Hover is subtly brighter; pressed is darker and shifted visually downward only by shadow, but the silhouette size must remain stable.
+Constraints: no text, no readable writing, no numbers, no logos, no characters, no people. Avoid saturated orange, avoid wax-seal dominance, avoid grey stone, avoid ornate framed button. The #00ff00 background must not appear inside the tabs.

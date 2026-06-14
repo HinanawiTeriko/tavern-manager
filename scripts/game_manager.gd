@@ -26,6 +26,8 @@ var inventory: Dictionary = {}
 var current_ledger_data: LedgerData = null
 
 # Dialogue state
+const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
+
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
@@ -41,35 +43,68 @@ var _ending_screen = null
 var _tutorial_manager = null
 
 const MATERIAL_ICON_PATHS: Dictionary = {
-	"ale": "res://assets/textures/icons/materials/wheat.png",
-	"grape": "res://assets/textures/icons/materials/grape.png",
-	"flour": "res://assets/textures/icons/materials/wheat.png",
-	"meat_raw": "res://assets/textures/icons/products/roast.png",
-	"herb": "res://assets/textures/icons/materials/herb.png",
-	"ale_beer": "res://assets/textures/icons/products/ale.png",
-	"bread": "res://assets/textures/icons/products/bread.png",
-	"meat_cooked": "res://assets/textures/icons/products/roast.png",
-	"herb_broth": "res://assets/textures/icons/products/stew.png",
+	"ale": "res://assets/textures/tavern/icons/ale.png",
+	"grape": "res://assets/textures/tavern/icons/grape.png",
+	"flour": "res://assets/textures/tavern/icons/flour.png",
+	"meat_raw": "res://assets/textures/tavern/icons/meat_raw.png",
+	"herb": "res://assets/textures/tavern/icons/herb.png",
+	"dough": "res://assets/textures/tavern/items/dough.png",
+	"bread_burnt": "res://assets/textures/tavern/items/bread_burnt.png",
+	"meat_burnt": "res://assets/textures/tavern/items/meat_burnt.png",
+	"ale_roasted": "res://assets/textures/tavern/items/ale_roasted.png",
+	"ale_burnt": "res://assets/textures/tavern/items/ale_burnt.png",
+	"grape_juice": "res://assets/textures/tavern/items/grape_juice.png",
+	"dough_meat": "res://assets/textures/tavern/items/dough_meat.png",
+	"ale_herb": "res://assets/textures/tavern/items/ale_herb.png",
+	"grape_herb": "res://assets/textures/tavern/items/grape_herb.png",
+	"meat_stew_raw": "res://assets/textures/tavern/items/meat_stew_raw.png",
+	"ale_beer": "res://assets/textures/tavern/items/ale_beer.png",
+	"bread": "res://assets/textures/tavern/items/bread.png",
+	"meat_cooked": "res://assets/textures/tavern/items/meat_cooked.png",
+	"wine": "res://assets/textures/tavern/items/wine.png",
+	"herb_tea": "res://assets/textures/tavern/items/herb_tea.png",
+	"meat_sand": "res://assets/textures/tavern/items/meat_sand.png",
+	"herbal_ale": "res://assets/textures/tavern/items/herbal_ale.png",
+	"spiced_wine": "res://assets/textures/tavern/items/spiced_wine.png",
+	"meat_stew": "res://assets/textures/tavern/items/meat_stew.png",
+	"herb_broth": "res://assets/textures/tavern/items/herb_broth.png",
+	"malt_porridge": "res://assets/textures/tavern/items/malt_porridge.png",
+	"spice": "res://assets/textures/icons/items/spice.png",
+	"herb_spice": "res://assets/textures/icons/items/herb_spice.png",
+	"salt": "res://assets/textures/icons/items/salt.png",
 	"sleep_powder": "res://assets/textures/icons/items/sleep_powder.png",
-	"bloodied_contract": "res://assets/textures/icons/items/bloodied_contract.png",
-	"alternative_contract": "res://assets/textures/icons/items/alternative_contract.png",
+	"bloodied_contract": "res://assets/textures/tavern/items/bloodied_contract.png",
+	"alternative_contract": "res://assets/textures/tavern/items/alternative_contract.png",
+	"toby_contract": "res://assets/textures/tavern/items/toby_contract.png",
 }
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
 ## 对话只回应已发生的行为；这里是动作当下的即时反馈（spec §1.1 / §7.3）。
 const ACTION_FEEDBACK: Dictionary = {
-	"ryan_informed": ["莱恩盯着那份染血的委托书，脸色一点点沉了下来。", Color.ORANGE],
-	"ryan_accepts_alternative": ["莱恩收起替代委托，郑重地点了点头。", Color.LIME_GREEN],
-	"ryan_needs_warning_first": ["莱恩疑惑地看着这份委托，似乎还不明白其中的分量。", Color.GRAY],
-	"ryan_alternative_pending": ["莱恩默默收起替代委托：让我看看你今晚怎么待我。", Color.GRAY],
-	"ryan_accepts_ale": ["莱恩一饮而尽，咧嘴笑了。", Color.LIME_GREEN],
-	"ryan_drugged": ["莱恩喝下那杯酒，眼皮越来越沉……趴在桌上睡了过去。", Color.MEDIUM_PURPLE],
-	"ryan_refuses_drugged_ale": ["莱恩警觉地推开酒杯：今晚我必须保持清醒。", Color.GRAY],
-	"ryan_interaction_closed": ["莱恩已经没有再交谈的心思了。", Color.GRAY],
+	"ryan_informed": ["……这不是普通委托。你从哪儿弄来的？", Color.ORANGE],
+	"ryan_accepts_alternative": ["我接下这个。今晚之后，我自己去问个明白。", Color.LIME_GREEN],
+	"ryan_needs_warning_first": ["这是什么？我看不出它和我有什么关系。", Color.GRAY],
+	"ryan_alternative_pending": ["我会考虑。先让我看看你今晚怎么待我。", Color.GRAY],
+	"ryan_accepts_ale": ["好酒。今晚就靠这一杯壮胆了。", Color.LIME_GREEN],
+	"ryan_drugged": ["……这酒怎么这么沉……", Color.MEDIUM_PURPLE],
+	"ryan_refuses_drugged_ale": ["不。今晚我必须保持清醒。", Color.GRAY],
+	"ryan_interaction_closed": ["别再说了。今晚我已经决定了。", Color.GRAY],
 	"sleep_powder_added": ["你把沉睡花粉搅入了麦芽酒。", Color.MEDIUM_PURPLE],
 	"unsupported_story_item": ["他不需要这个。", Color.GRAY],
 	"unsupported_npc": ["这东西不该交给他。", Color.GRAY],
 	"unsupported_story_product": ["花粉化不进这样东西里。", Color.GRAY],
+}
+
+const ACTION_FEEDBACK_CHANNEL: Dictionary = {
+	"ryan_informed": "customer",
+	"ryan_accepts_alternative": "customer",
+	"ryan_needs_warning_first": "customer",
+	"ryan_alternative_pending": "customer",
+	"ryan_accepts_ale": "customer",
+	"ryan_drugged": "customer",
+	"ryan_refuses_drugged_ale": "customer",
+	"ryan_interaction_closed": "customer",
+	"sleep_powder_added": "silent",
 }
 
 func _ready() -> void:
@@ -138,7 +173,16 @@ func _process(delta: float) -> void:
 		if not in_prep and not _is_dialogue_active and not tutorial_active and not _guest_lingering:
 			guests.update(delta, guests.has_guest, menu_open)
 		if guests.has_guest:
-			_tavern_view.update_timer(guests.current_guest.patience / GuestData.BASE_PATIENCE)
+			_tavern_view.update_timer(_guest_patience_ratio(guests.current_guest))
+
+
+func _guest_patience_ratio(guest: GuestData) -> float:
+	if guest == null:
+		return 0.0
+	var max_patience := GuestData.BASE_PATIENCE
+	if guest.type == GuestData.GuestType.IMPORTANT:
+		max_patience = GuestData.BASE_PATIENCE * 1.5
+	return clampf(guest.patience / max_patience, 0.0, 1.0)
 
 func register_view(view: Node) -> void:
 	if view is TavernView:
@@ -146,7 +190,7 @@ func register_view(view: Node) -> void:
 		_guest_lingering = false
 		# 每日账本头（进入夜间营业时记录）
 		_ledger_day_header()
-		# 准备阶段由 TavernView 自己处理，确认菜单后才 configure_night
+		guests.configure_night(ryan_slice.normal_order_limit(economy.current_day), economy.current_day)
 		_tavern_view.configure_slice_day(economy.current_day)
 		_refresh_tavern_ui()
 		_refresh_close_button()
@@ -183,7 +227,9 @@ func register_view(view: Node) -> void:
 						_spawn_npc_after_tutorial.bind(npc.id, order_key),
 						CONNECT_ONE_SHOT
 					)
-				# 否则等待菜单确认后通过 on_menu_confirmed() 生成
+				elif _tavern_view.daily_menu_confirmed and not guests.has_guest:
+					guests.spawn_important(npc.id, order_key)
+				# 菜单未确认时等待 on_menu_confirmed() 生成
 
 		if tutorial_will_start:
 			view.call_deferred("trigger_craft_tutorial")
@@ -205,6 +251,10 @@ func start_day_map(day: int) -> void:
 	day_map.start_day(day)
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
 	day_map.set_lead_flag("ryan_warhammer_lead", bool(narrative.get_var("ryan_warhammer_lead")))
+	day_map.set_lead_flag("toby_commission_lead", bool(narrative.get_var("toby_danger_known")))
+	day_map.set_document_owned("toby_contract", documents.owns_document("toby_contract"))
+	if documents.owns_document("toby_contract"):
+		narrative.set_var("toby_contract_found", true)
 	for entry in ryan_slice.day_start_ledger_entries(day):
 		if documents.add_ledger_entry_once(String(entry)):
 			play_audio_event("new_document")
@@ -220,31 +270,47 @@ func _mira_day_start_ledger_entries(day: int) -> Array:
 	return []
 
 
+func _add_mira_stall_ledger_beat() -> void:
+	var entry := ""
+	if bool(narrative.get_var("toby_contract_found")):
+		if narrative.get_affection("mira") >= narrative.MIRA_TRUST_THRESHOLD:
+			entry = "米拉已经听得懂黑齿矿脉意味着什么。"
+		else:
+			entry = "米拉听见黑齿矿脉时停了一下。"
+	else:
+		entry = "米拉收摊时停了停，像是在等一个不被问出口的问题。"
+	if entry != "" and documents.add_ledger_entry_once(entry):
+		play_audio_event("new_document")
+
+
 func visit_day_location(location_id: String) -> Dictionary:
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
 	var result := day_map.visit(location_id)
 	if not bool(result.get("success", false)):
 		return result
+	var unlocked_flag := String(result.get("unlockedFlag", ""))
+	if unlocked_flag == "toby_commission_lead":
+		narrative.set_var("toby_danger_known", true)
+		if documents.add_ledger_entry_once("托比的名字在黑齿矿脉护送委托上。"):
+			play_audio_event("new_document")
 	for key in result.get("rewards", []):
 		add_to_inventory(String(key), 1)
 	for document_id in result.get("documents", []):
 		grant_investigation_document(String(document_id))
-	# 账本：探索获得物品
-	var reward_counts: Dictionary = {}
-	for key in result.get("rewards", []):
-		var k := String(key)
-		reward_counts[k] = int(reward_counts.get(k, 0)) + 1
-	for rk in reward_counts:
-		_ledger_item(rk, int(reward_counts[rk]), "探索")
 	var aff = result.get("affection", null)
 	if aff is Dictionary and String(aff.get("npc", "")) != "":
 		var npc_id := String(aff["npc"])
 		narrative.set_affection(npc_id, narrative.get_affection(npc_id) + int(aff.get("amount", 0)))
+	if location_id == "mira_stall":
+		_add_mira_stall_ledger_beat()
 	if bool(result.get("securesToby", false)):
 		var cost := int(result.get("goldCost", 0))
 		if economy.gold >= cost:
 			economy.add_gold(-cost)
 			narrative.set_var("toby_secured", true)
+			narrative.set_var("toby_secured_by_fixer", true)
+			if documents.add_ledger_entry_once("有人替托比换掉了那条路。"):
+				play_audio_event("new_document")
 			_ledger_gold(-cost, "矿洞押金")
 		else:
 			result["blocked_reason"] = "not_enough_gold"
@@ -258,6 +324,68 @@ func visit_day_location(location_id: String) -> Dictionary:
 	return result
 
 
+func peek_shop_gossip(location_id: String) -> Dictionary:
+	return _shop_gossip(location_id, false)
+
+
+func consume_shop_gossip(location_id: String) -> Dictionary:
+	return _shop_gossip(location_id, true)
+
+
+func _shop_gossip(location_id: String, mark_seen: bool) -> Dictionary:
+	var location := _find_day_map_location(location_id)
+	if location.is_empty():
+		return {"success": false, "message": ""}
+	for gossip in location.get("gossip", []):
+		if not gossip is Dictionary:
+			continue
+		var entry := gossip as Dictionary
+		if not _is_shop_gossip_available(entry):
+			continue
+		var seen_var := String(entry.get("seenVar", ""))
+		if mark_seen and seen_var != "":
+			narrative.set_var(seen_var, true)
+		return {
+			"success": true,
+			"id": String(entry.get("id", "")),
+			"hint": String(entry.get("hint", "")),
+			"message": String(entry.get("message", "")),
+		}
+	return {"success": false, "message": ""}
+
+
+func _find_day_map_location(location_id: String) -> Dictionary:
+	for loc in day_map.get_locations():
+		if String(loc.get("id", "")) == location_id:
+			return loc
+	return {}
+
+
+func _is_shop_gossip_available(entry: Dictionary) -> bool:
+	var exact_day := int(entry.get("day", 0))
+	if exact_day > 0 and day_map.current_day != exact_day:
+		return false
+	var day_min := int(entry.get("dayMin", 0))
+	if day_min > 0 and day_map.current_day < day_min:
+		return false
+	var day_max := int(entry.get("dayMax", 0))
+	if day_max > 0 and day_map.current_day > day_max:
+		return false
+	var required_var := String(entry.get("requiresVar", ""))
+	if required_var != "" and not bool(narrative.get_var(required_var)):
+		return false
+	var seen_var := String(entry.get("seenVar", ""))
+	if seen_var != "" and bool(narrative.get_var(seen_var)):
+		return false
+	var unless_var := String(entry.get("unlessVar", ""))
+	if unless_var != "" and bool(narrative.get_var(unless_var)):
+		return false
+	var unless_inventory := String(entry.get("unlessInventory", ""))
+	if unless_inventory != "" and inventory_sys.get_count(unless_inventory) > 0:
+		return false
+	return true
+
+
 func grant_investigation_document(document_id: String) -> bool:
 	# 物理调查场景捡起/拼合出线索时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
 	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
@@ -266,6 +394,10 @@ func grant_investigation_document(document_id: String) -> bool:
 	var newly := documents.grant_document(id) and not already_owned
 	if newly:
 		play_audio_event("new_document")
+		if id == "toby_contract":
+			narrative.set_var("toby_contract_found", true)
+			if documents.add_ledger_entry_once("托比的委托是真的，米拉还不知道。"):
+				play_audio_event("new_document")
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
 			add_to_inventory(id, 1)
@@ -304,10 +436,6 @@ func _on_gathering_confirmed(assignments: Dictionary) -> void:
 			var mat = materials[rng.randi() % materials.size()]
 			inventory_sys.add(mat, 1)
 			gathered[mat] = int(gathered.get(mat, 0)) + 1
-
-	# 账本：采集记录
-	for mat_key in gathered:
-		_ledger_item(String(mat_key), int(gathered[mat_key]), "采集")
 
 	notify_inventory_changed()
 	day_cycle.next_phase()
@@ -351,13 +479,16 @@ func _on_guest_arrived(guest: GuestData) -> void:
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	var display_name = guest.guest_name
+	var portrait_id: String = guest.npc_id if guest.npc_id != "" else "guest"
 	if guest.has_dialogue:
 		for npc in narrative.all_npcs:
 			if npc.id == guest.npc_id:
 				display_name = npc.npc_name
 				break
 		display_name = ryan_slice.important_display_name(economy.current_day, guest.npc_id, display_name)
-	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), guest.npc_id if guest.npc_id != "" else "guest")
+		portrait_id = ryan_slice.important_portrait_id(economy.current_day, guest.npc_id, portrait_id)
+	guest.set_meta("portrait_id", portrait_id)
+	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 
@@ -504,6 +635,7 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		outcome = "fail_wrong"
 	else:
 		outcome = "fail_weird"
+	_refresh_current_customer_portrait(outcome)
 
 	if is_important and npc_id != "":
 		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
@@ -520,12 +652,25 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 ## 散客 / 无 post 重要客人：气泡反应一句 → 停留让玩家读到 → 清场。
 func _react_then_clear(outcome: String) -> void:
 	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		if outcome == "fail_abandon" and _tavern_view.has_method("show_order_timeout"):
+			_tavern_view.show_order_timeout("等太久了")
 		var line: String = guests.get_reaction_line(outcome, guests.current_guest.npc_id)
 		_tavern_view.customer_say(line)
 	_guest_lingering = true
 	await get_tree().create_timer(1.8).timeout
 	_guest_lingering = false
 	guests.clear_guest()
+
+func _refresh_current_customer_portrait(outcome: String = "") -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	if guests.current_guest == null:
+		return
+	if not _tavern_view.has_method("show_customer_reaction"):
+		return
+	var npc_id := guests.current_guest.npc_id if guests.current_guest.npc_id != "" else "guest"
+	var portrait_id := String(guests.current_guest.get_meta("portrait_id", npc_id))
+	_tavern_view.show_customer_reaction(outcome, portrait_id)
 
 func _start_dialogue_deferred(dialogue_path: String) -> void:
 	var dialogue_resource = load(dialogue_path)
@@ -534,7 +679,7 @@ func _start_dialogue_deferred(dialogue_path: String) -> void:
 		_recover_from_dialogue_failure()
 		return
 	var extra_states: Array = [narrative.dialogue_vars]
-	var balloon = DialogueManager.show_example_dialogue_balloon(dialogue_resource, "start", extra_states)
+	var balloon = DialogueManager.show_dialogue_balloon_scene(DIALOGUE_BALLOON_SCENE, dialogue_resource, "start", extra_states)
 	if balloon == null:
 		printerr("[GameManager] 显示对话气球失败: ", dialogue_path)
 		_recover_from_dialogue_failure()
@@ -576,6 +721,8 @@ func _on_dialogue_ended() -> void:
 
 func _on_patience_low() -> void:
 	if _tavern_view != null and is_instance_valid(_tavern_view) and guests.current_guest != null:
+		if _tavern_view.has_method("show_order_warning"):
+			_tavern_view.show_order_warning()
 		_tavern_view.customer_say(guests.get_reaction_line("impatient", guests.current_guest.npc_id))
 
 func _on_guest_abandoned() -> void:
@@ -715,12 +862,22 @@ func _refresh_close_button() -> void:
 	_tavern_view.set_close_enabled(enabled)
 
 
-## 把 resolve_action 的 feedback key 翻成玩家可见提示（出口②舞台浮字）。
+## 把 resolve_action 的 feedback key 翻成玩家可见提示（顾客气泡 / 舞台提示 / 静默）。
 func _show_action_feedback(feedback: String) -> void:
-	if ACTION_FEEDBACK.has(feedback):
-		var entry: Array = ACTION_FEEDBACK[feedback]
-		if _tavern_view != null and is_instance_valid(_tavern_view):
-			_tavern_view.show_stage_caption(String(entry[0]), entry[1])
+	if not ACTION_FEEDBACK.has(feedback):
+		return
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	var channel := String(ACTION_FEEDBACK_CHANNEL.get(feedback, "stage"))
+	if channel == "silent":
+		return
+	var entry: Array = ACTION_FEEDBACK[feedback]
+	var text := String(entry[0])
+	var color: Color = entry[1]
+	if channel == "customer" and _tavern_view.has_method("customer_say"):
+		_tavern_view.customer_say(text)
+		return
+	_tavern_view.show_stage_caption(text, color)
 
 
 ## 当前客人订单 key（无客人返回 ""）。视图据此区分「正式上菜」与「叙事递交」。
@@ -790,6 +947,11 @@ func request_narrative_delivery(item_key: String, product_tags: Array = []) -> D
 			return {"handled": true, "accepted": false, "consume": false, "interaction_closed": false, "feedback": feedback}
 		_show_action_feedback(feedback)
 		var accepted: bool = bool(r.get("accepted", false))
+		if accepted and npc_id == "mira" and item_key == "toby_contract":
+			_refresh_current_customer_portrait()
+			if not documents.owns_document("toby_contract"):
+				documents.grant_document("toby_contract")
+			request_open_document("toby_contract")
 		return {"handled": true, "accepted": accepted, "consume": accepted,
 			"interaction_closed": bool(r.get("interaction_closed", false)), "feedback": feedback}
 
@@ -848,6 +1010,16 @@ func try_load_material_icon(key: String) -> Texture2D:
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
 	return null
 
+
+func apply_material_icon_to_desk_item(item) -> void:
+	if item == null or not is_instance_valid(item) or not item.has_method("set_art_texture"):
+		return
+	var item_key := String(item.get("item_key"))
+	if item_key == "":
+		item.set_art_texture(null)
+		return
+	item.set_art_texture(try_load_material_icon(item_key))
+
 ## ── 账本记录辅助 ──
 
 func _ledger_gold(amount: int, reason: String) -> void:
@@ -867,7 +1039,7 @@ func _ledger_item(key: String, count: int, source: String) -> void:
 	documents.add_ledger_entry("获得 %s×%d （%s）" % [item_name, count, source])
 
 func _ledger_day_header() -> void:
-	documents.add_ledger_entry("———— 第%d天 ————" % economy.current_day)
+	documents.add_ledger_entry_once("———— 第%d天 ————" % economy.current_day, false)
 
 func _load_initial_inventory() -> Dictionary:
 	var file = FileAccess.open("res://data/inventory_default.json", FileAccess.READ)
@@ -943,7 +1115,11 @@ func _apply_save_state(data: Dictionary) -> void:
 	documents.restore_state(data.get("documents", {}))
 
 	var nar: Dictionary = data.get("narrative", {})
-	narrative.dialogue_vars = (nar.get("dialogue_vars", {}) as Dictionary).duplicate(true)
+	var restored_vars := _fresh_narrative_vars()
+	var saved_vars := (nar.get("dialogue_vars", {}) as Dictionary).duplicate(true)
+	for key in saved_vars.keys():
+		restored_vars[key] = saved_vars[key]
+	narrative.dialogue_vars = restored_vars
 	narrative.affection = (nar.get("affection", {}) as Dictionary).duplicate(true)
 	narrative.endings = (nar.get("endings", {}) as Dictionary).duplicate(true)
 	narrative.today_important_npc = String(nar.get("today_important_npc", ""))
@@ -973,6 +1149,20 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 	tm.first_guest_served = bool(t.get("first_guest_served", false))
 	tm.first_ledger_shown = bool(t.get("first_ledger_shown", false))
 	tm._save_state()
+
+
+func reset_tutorial_progress() -> void:
+	var tm = _tutorial_manager
+	if tm == null:
+		tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.replay_all()
+	if save_sys.has_save():
+		var snapshot := save_sys.read()
+		if snapshot.is_empty():
+			snapshot = _capture_save_state()
+		snapshot["tutorial"] = _default_tutorial_state()
+		save_sys.write(snapshot)
 
 ## 标题页入口（spec §12.3）。
 func has_save() -> bool:
@@ -1011,12 +1201,24 @@ func _default_new_game_state() -> Dictionary:
 		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
 			"endings": {}, "today_important_npc": ""},
 		"craft": {"unlocked_recipes": [], "unlocked_slam_containers": []},
-		"tutorial": {"completed_steps": [], "daymap_first_shown": false, "tavern_first_entered": false,
-			"shop_first_visited": false, "first_guest_arrived": false, "first_product_seasoned": false,
-			"first_guest_served": false, "first_ledger_shown": false},
+		"tutorial": _default_tutorial_state(),
 		"ryan_slice": {"total_orders_success": 0, "completed_days": []},
 		"guests": {"customers": [], "next_seq": 1},
 	}
+
+
+func _default_tutorial_state() -> Dictionary:
+	return {
+		"completed_steps": [],
+		"daymap_first_shown": false,
+		"tavern_first_entered": false,
+		"shop_first_visited": false,
+		"first_guest_arrived": false,
+		"first_product_seasoned": false,
+		"first_guest_served": false,
+		"first_ledger_shown": false,
+	}
+
 
 ## 与 narrative_manager.load_npc_data() 的默认值保持一致（fresh game 的真相源）。
 func _fresh_narrative_vars() -> Dictionary:
@@ -1025,5 +1227,10 @@ func _fresh_narrative_vars() -> Dictionary:
 		"ryan_warhammer_lead": false,
 		"ryan_drugged": false, "ryan_interaction_closed": false, "ryan_ending": "",
 		"ryan_alternative_pending": false, "ryan_alternative_declined": false,
+		"merchant_sleep_powder_hint_seen": false,
+		"told_mira_truth": false, "toby_danger_known": false, "toby_contract_found": false,
+		"toby_secured": false, "toby_secured_by_fixer": false, "toby_survived": false,
+		"mira_ending": "",
 		"aff_ryan": 0, "aff_mira": 5,
+		"aff_toby": 0,
 	}

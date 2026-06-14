@@ -2,6 +2,7 @@ class_name SettingsPanel
 extends Control
 
 signal closed
+signal tutorial_reset_requested
 
 var _settings: SettingsManager
 var _syncing := false
@@ -11,12 +12,14 @@ var _syncing := false
 @onready var _resolution: OptionButton = $Shade/Panel/Resolution
 @onready var _volume: HSlider = $Shade/Panel/Volume
 @onready var _volume_value: Label = $Shade/Panel/VolumeValue
+@onready var _reset_tutorial_button: Button = $Shade/Panel/ResetTutorialButton
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ThemeColors.style_brush_panel(_panel)
 	ThemeColors.style_brush_button($Shade/Panel/CloseButton)
+	ThemeColors.style_brush_button(_reset_tutorial_button, 14)
 	ThemeColors.style_brush_option_button(_mode)
 	ThemeColors.style_brush_option_button(_resolution)
 	ThemeColors.style_brush_slider(_volume)
@@ -34,26 +37,10 @@ func _ready() -> void:
 	_mode.item_selected.connect(_on_mode_selected)
 	_resolution.item_selected.connect(_on_resolution_selected)
 	_volume.value_changed.connect(_on_volume_changed)
+	_reset_tutorial_button.pressed.connect(_on_reset_tutorial_pressed)
 	$Shade/Panel/CloseButton.pressed.connect(close)
-	_add_quit_button()
 	hide()
 	_sync_from_settings()
-
-func _add_quit_button() -> void:
-	var quit_btn = Button.new()
-	quit_btn.name = "QuitBtn"
-	quit_btn.text = "退出游戏"
-	quit_btn.layout_mode = 0
-	quit_btn.offset_left = 160.0
-	quit_btn.offset_top = 430.0
-	quit_btn.offset_right = 320.0
-	quit_btn.offset_bottom = 478.0
-	ThemeColors.style_brush_button(quit_btn, 14)
-	quit_btn.pressed.connect(_on_quit_game)
-	$Shade/Panel.add_child(quit_btn)
-
-func _on_quit_game() -> void:
-	get_tree().quit()
 
 
 func configure(settings: SettingsManager) -> void:
@@ -89,6 +76,10 @@ func _on_volume_changed(value: float) -> void:
 	_volume_value.text = "%d%%" % int(value)
 	if not _syncing and _settings != null:
 		_settings.set_master_volume_percent(value)
+
+
+func _on_reset_tutorial_pressed() -> void:
+	tutorial_reset_requested.emit()
 
 
 func _sync_from_settings() -> void:

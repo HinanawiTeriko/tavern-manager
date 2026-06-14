@@ -1,0 +1,164 @@
+{
+  "id": "ledger_ui_v2",
+  "backdrop": {
+    "source": "art_sources/generated_raw/ledger_ui/ledger_overlay_background_reference_v2.png",
+    "prompt": "art_sources/generated_raw/ledger_ui/ledger_overlay_background_prompt_v2.txt",
+    "native": "assets/source/ledger/ui/ledger_overlay_backdrop_native.png",
+    "runtime": "assets/textures/ledger/ui/ledger_overlay_backdrop.png",
+    "native_size": [
+      320,
+      180
+    ],
+    "runtime_size": [
+      1280,
+      720
+    ],
+    "text_safe_zones_native": {
+      "left": [
+        70,
+        30,
+        134,
+        122
+      ],
+      "right": [
+        186,
+        30,
+        250,
+        122
+      ]
+    }
+  },
+  "controls": {
+    "source": "art_sources/generated_raw/ledger_ui/ledger_controls_reference_v2.png",
+    "prompt": "art_sources/generated_raw/ledger_ui/ledger_controls_prompt_v2.txt",
+    "assets": {
+      "button_nav_left": {
+        "native_size": [
+          28,
+          30
+        ],
+        "runtime_size": [
+          112,
+          120
+        ],
+        "states": {
+          "normal": {
+            "source_rect": [
+              105,
+              105,
+              365,
+              390
+            ],
+            "native": "assets/source/ledger/ui/button_nav_left_normal_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_left_normal.png"
+          },
+          "hover": {
+            "source_rect": [
+              105,
+              475,
+              365,
+              760
+            ],
+            "native": "assets/source/ledger/ui/button_nav_left_hover_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_left_hover.png"
+          },
+          "pressed": {
+            "source_rect": [
+              105,
+              850,
+              365,
+              1135
+            ],
+            "native": "assets/source/ledger/ui/button_nav_left_pressed_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_left_pressed.png"
+          }
+        }
+      },
+      "button_nav_right": {
+        "native_size": [
+          28,
+          30
+        ],
+        "runtime_size": [
+          112,
+          120
+        ],
+        "states": {
+          "normal": {
+            "source_rect": [
+              500,
+              105,
+              760,
+              390
+            ],
+            "native": "assets/source/ledger/ui/button_nav_right_normal_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_right_normal.png"
+          },
+          "hover": {
+            "source_rect": [
+              500,
+              475,
+              760,
+              760
+            ],
+            "native": "assets/source/ledger/ui/button_nav_right_hover_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_right_hover.png"
+          },
+          "pressed": {
+            "source_rect": [
+              500,
+              850,
+              760,
+              1135
+            ],
+            "native": "assets/source/ledger/ui/button_nav_right_pressed_native.png",
+            "runtime": "assets/textures/ledger/ui/button_nav_right_pressed.png"
+          }
+        }
+      },
+      "button_close": {
+        "native_size": [
+          24,
+          24
+        ],
+        "runtime_size": [
+          96,
+          96
+        ],
+        "states": {
+          "normal": {
+            "source_rect": [
+              880,
+              95,
+              1175,
+              390
+            ],
+            "native": "assets/source/ledger/ui/button_close_normal_native.png",
+            "runtime": "assets/textures/ledger/ui/button_close_normal.png"
+          },
+          "hover": {
+            "source_rect": [
+              880,
+              465,
+              1175,
+              760
+            ],
+            "native": "assets/source/ledger/ui/button_close_hover_native.png",
+            "runtime": "assets/textures/ledger/ui/button_close_hover.png"
+          },
+          "pressed": {
+            "source_rect": [
+              880,
+              835,
+              1175,
+              1130
+            ],
+            "native": "assets/source/ledger/ui/button_close_pressed_native.png",
+            "runtime": "assets/textures/ledger/ui/button_close_pressed.png"
+          }
+        }
+      }
+    }
+  },
+  "intended_godot_use": "DocumentOverlay full-screen ledger v2 art with separate normal/hover/pressed controls"
+}

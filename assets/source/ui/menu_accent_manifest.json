@@ -1,0 +1,103 @@
+{
+  "assets": {
+    "menu_brush_hover_marker_base": {
+      "source_file": "assets/textures/ui/menu_brush_hover_marker.png",
+      "output_file": "assets/source/ui/menu_brush_hover_marker_base.png",
+      "size": [
+        243,
+        28
+      ],
+      "safe_area": [
+        16,
+        6,
+        211,
+        16
+      ],
+      "intended_godot_use": "source base for brush hover marker variants"
+    },
+    "menu_brush_hover_marker_1": {
+      "source_file": "art_sources/generated_raw/menu_hover_marker/menu_brush_hover_marker_generated_1.png",
+      "output_file": "assets/textures/ui/menu_brush_hover_marker_1.png",
+      "size": [
+        243,
+        28
+      ],
+      "safe_area": [
+        16,
+        6,
+        211,
+        16
+      ],
+      "source_crop": [
+        58,
+        325,
+        1854,
+        532
+      ],
+      "intended_godot_use": "ThemeColors brush button hover/selected marker variant"
+    },
+    "menu_brush_hover_marker_2": {
+      "source_file": "art_sources/generated_raw/menu_hover_marker/menu_brush_hover_marker_generated_2.png",
+      "output_file": "assets/textures/ui/menu_brush_hover_marker_2.png",
+      "size": [
+        243,
+        28
+      ],
+      "safe_area": [
+        16,
+        6,
+        211,
+        16
+      ],
+      "source_crop": [
+        0,
+        320,
+        1853,
+        534
+      ],
+      "intended_godot_use": "ThemeColors brush button hover/selected marker variant"
+    },
+    "menu_brush_hover_marker_3": {
+      "source_file": "art_sources/generated_raw/menu_hover_marker/menu_brush_hover_marker_generated_3.png",
+      "output_file": "assets/textures/ui/menu_brush_hover_marker_3.png",
+      "size": [
+        243,
+        28
+      ],
+      "safe_area": [
+        16,
+        6,
+        211,
+        16
+      ],
+      "source_crop": [
+        160,
+        360,
+        1820,
+        540
+      ],
+      "intended_godot_use": "ThemeColors brush button hover/selected marker variant"
+    },
+    "menu_brush_hover_marker_4": {
+      "source_file": "art_sources/generated_raw/menu_hover_marker/menu_brush_hover_marker_generated_4.png",
+      "output_file": "assets/textures/ui/menu_brush_hover_marker_4.png",
+      "size": [
+        243,
+        28
+      ],
+      "safe_area": [
+        16,
+        6,
+        211,
+        16
+      ],
+      "source_crop": [
+        150,
+        310,
+        1800,
+        500
+      ],
+      "intended_godot_use": "ThemeColors brush button hover/selected marker variant"
+    }
+  }
+}

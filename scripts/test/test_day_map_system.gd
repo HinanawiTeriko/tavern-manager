@@ -7,8 +7,14 @@ var _failures := 0
 func _ready() -> void:
 	_test_day2_investigation_chain()
 	_test_game_manager_routes_visits()
+	_test_gathering_confirmation_does_not_write_ledger()
 	_test_get_locations_breadcrumb()
 	_test_board_requires_lead()
+	_test_day6_toby_choice_chain()
+	_test_day2_shop_gossip_points_to_sleep_powder()
+	_test_game_manager_previews_shop_gossip_without_consuming()
+	_test_game_manager_consumes_shop_gossip_once()
+	_test_shop_button_checks_gossip_before_opening()
 	_test_reveal_tracking()
 	_test_intro_handoff_timing_contract()
 	_finish()
@@ -61,9 +67,12 @@ func _test_game_manager_routes_visits() -> void:
 	_ok(gm.day_map is DayMapSystem, "GameManager owns DayMapSystem")
 	gm.start_day_map(2)
 	var before: int = gm.inventory_sys.get_count("sleep_powder")
+	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
 	_ok(gm.visit_day_location("mushroom_forest").get("success", false), "GameManager routes forest visit")
 	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "forest reward enters inventory")
 	_ok(gm.narrative.get_var("has_sleep_powder") == true, "forest reward triggers narrative hook")
+	var ledger_after: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	_ok(ledger_after == ledger_before, "forest reward does not enter ledger")
 	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
 	_ok(_location_ids(gm.day_map.get_locations()).has("mercenary_board"), "GM exposes board after lead set")
@@ -79,6 +88,18 @@ func _test_game_manager_routes_visits() -> void:
 	_ok(gm.inventory_sys.get_count("bloodied_contract") == 1, "re-reading evidence does not duplicate it")
 	gm.visit_day_location("guild_counter")
 	_ok(gm.documents.owns_document("alternative_contract"), "read evidence unlocks counter document")
+
+
+func _test_gathering_confirmation_does_not_write_ledger() -> void:
+	var gm = get_node("/root/GameManager")
+	gm.economy.current_day = 2
+	gm.day_cycle.phase = DayCycleSystem.DayPhase.DAY
+	var before: int = gm.inventory_sys.get_count("sleep_powder")
+	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	gm._on_gathering_confirmed({"mushroom_forest": 1})
+	_ok(gm.inventory_sys.get_count("sleep_powder") == before + 1, "confirmed gathering enters inventory")
+	var ledger_after: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	_ok(ledger_after == ledger_before, "confirmed gathering does not enter ledger")
 
 
 func _location_ids(locations: Array) -> Array:
@@ -120,6 +141,120 @@ func _test_board_requires_lead() -> void:
 	map.set_lead_flag("ryan_warhammer_lead", true)
 	map.visit("mercenary_board")
 	_ok(_location_ids(map.get_locations()).has("abandoned_mine"), "ryan posting unlocks the mine")
+
+
+func _test_day6_toby_choice_chain() -> void:
+	var map := DayMapSystem.new()
+	_ok(map.load_data(), "Day6 route locations data loads")
+	map.start_day(6)
+	var ids_before := _location_ids(map.get_locations())
+	_ok(ids_before.has("mercenary_board"), "Day6 board is visible before Toby lead")
+	_ok(not ids_before.has("toby_lodging"), "Toby lodging is hidden before board lead")
+	_ok(not ids_before.has("fixer_den"), "fixer is hidden before board lead")
+	var board := map.visit("mercenary_board")
+	_ok(board.get("success", false), "Day6 board visit succeeds")
+	_ok(String(board.get("unlockedFlag", "")) == "toby_commission_lead", "board returns Toby lead unlock")
+	var ids_after := _location_ids(map.get_locations())
+	_ok(ids_after.has("toby_lodging"), "Toby lodging appears after board lead")
+	_ok(ids_after.has("fixer_den"), "fixer appears after board lead")
+
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 6
+	gm.economy.add_gold(50)
+	gm.start_day_map(6)
+	_ok(not _location_ids(gm.day_map.get_locations()).has("toby_lodging"), "GM hides Toby lodging before persistent lead")
+	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	var gm_board: Dictionary = gm.visit_day_location("mercenary_board")
+	_ok(gm_board.get("success", false), "GM board visit succeeds")
+	_ok(gm.narrative.get_var("toby_danger_known") == true, "GM persists Toby danger after board")
+	var ledger_after_board: int = gm.documents.capture_state().get("ledger_entries", []).size()
+	_ok(ledger_after_board > ledger_before, "board visit writes a ledger pressure beat")
+	gm.start_day_map(7)
+	_ok(_location_ids(gm.day_map.get_locations()).has("toby_lodging"), "persistent Toby lead unlocks lodging next day")
+	var aff_before: int = gm.narrative.get_affection("mira")
+	_ok(gm.visit_day_location("mira_stall").get("success", false), "Mira stall visit succeeds")
+	_ok(gm.narrative.get_affection("mira") == aff_before + 3, "Mira stall still grants trust")
+	_ok(gm.visit_day_location("mira_stall").get("success", false), "same-day repeat Mira stall visit still succeeds")
+	_ok(gm.narrative.get_affection("mira") == aff_before + 3, "same-day repeat Mira stall visit does not stack trust")
+	gm.start_day_map(8)
+	_ok(gm.visit_day_location("mira_stall").get("success", false), "next-day Mira stall visit succeeds")
+	_ok(gm.narrative.get_affection("mira") == aff_before + 6, "next-day Mira stall visit grants trust again")
+	_ok(gm.grant_investigation_document("toby_contract"), "Toby contract grant succeeds")
+	_ok(gm.narrative.get_var("toby_contract_found") == true, "contract grant marks proof found")
+	var fixer: Dictionary = gm.visit_day_location("fixer_den")
+	_ok(fixer.get("success", false), "fixer visit succeeds with enough gold")
+	_ok(gm.narrative.get_var("toby_secured_by_fixer") == true, "fixer marks Toby secured by fixer")
+	_ok(gm.narrative.get_var("toby_secured") == true, "legacy Toby secured flag remains true")
+
+
+func _test_day2_shop_gossip_points_to_sleep_powder() -> void:
+	var map := DayMapSystem.new()
+	map.load_data()
+	map.start_day(2)
+	map.set_lead_flag("ryan_warhammer_lead", true)
+	var shop: Dictionary = {}
+	for loc in map.get_locations():
+		if String(loc.get("id", "")) == "market_shop":
+			shop = loc
+			break
+	_ok(not shop.is_empty(), "market shop is visible on day2")
+	var gossip: Array = shop.get("gossip", [])
+	_ok(not gossip.is_empty(), "market shop carries merchant gossip")
+	var hint: Dictionary = gossip[0] if not gossip.is_empty() else {}
+	var message := String(hint.get("message", ""))
+	_ok(String(hint.get("id", "")) == "sleep_powder_hint", "merchant gossip has stable sleep powder hint id")
+	_ok(String(hint.get("hint", "")).contains("传闻"), "merchant gossip exposes a short shop-entry hint")
+	_ok(message.contains("菌菇林地"), "merchant gossip names mushroom forest")
+	_ok(message.contains("沉睡花粉"), "merchant gossip names sleep powder")
+	_ok(message.contains("酒"), "merchant gossip hints that powder can go into drink")
+
+
+func _test_game_manager_previews_shop_gossip_without_consuming() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.has_method("peek_shop_gossip"), "GameManager exposes peek_shop_gossip")
+	if not gm.has_method("peek_shop_gossip"):
+		return
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	gm.start_day_map(2)
+	var preview: Dictionary = gm.peek_shop_gossip("market_shop")
+	_ok(bool(preview.get("success", false)), "shop gossip preview is available after Ryan lead")
+	_ok(String(preview.get("hint", "")).contains("传闻"), "shop gossip preview provides map-detail hint text")
+	_ok(not bool(gm.narrative.get_var("merchant_sleep_powder_hint_seen")), "previewing shop gossip does not mark it seen")
+
+
+func _test_game_manager_consumes_shop_gossip_once() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.has_method("consume_shop_gossip"), "GameManager exposes consume_shop_gossip")
+	if not gm.has_method("consume_shop_gossip"):
+		return
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	gm.start_day_map(2)
+	var gossip: Dictionary = gm.consume_shop_gossip("market_shop")
+	_ok(bool(gossip.get("success", false)), "day2 shop gossip is available after Ryan lead")
+	_ok(String(gossip.get("message", "")).contains("菌菇林地"), "consumed gossip points to mushroom forest")
+	_ok(bool(gm.narrative.get_var("merchant_sleep_powder_hint_seen")), "consuming gossip records seen flag")
+	var repeated: Dictionary = gm.consume_shop_gossip("market_shop")
+	_ok(not bool(repeated.get("success", true)), "merchant gossip is only shown once")
+	gm.narrative.set_var("merchant_sleep_powder_hint_seen", false)
+	gm.add_to_inventory("sleep_powder", 1)
+	var already_has_powder: Dictionary = gm.consume_shop_gossip("market_shop")
+	_ok(not bool(already_has_powder.get("success", true)), "merchant gossip is skipped after player has sleep powder")
+
+
+func _test_shop_button_checks_gossip_before_opening() -> void:
+	var script := FileAccess.open("res://scripts/ui/day_map_view.gd", FileAccess.READ)
+	_ok(script != null, "DayMapView script is readable for shop gossip contract")
+	if script == null:
+		return
+	var source := script.get_as_text()
+	script.close()
+	_ok(source.contains("peek_shop_gossip"), "DayMap shop detail previews merchant gossip before opening shop")
+	_ok(source.contains("听传闻"), "DayMap shop action text tells the player there is gossip")
+	_ok(source.contains("consume_shop_gossip"), "DayMap shop button checks merchant gossip before opening shop")
+	_ok(source.contains("_pending_shop_after_gossip"), "DayMap can continue into shop after gossip panel")
 
 
 func _test_reveal_tracking() -> void:

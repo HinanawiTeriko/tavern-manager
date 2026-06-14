@@ -1,0 +1,19 @@
+Use case: stylized-concept source sheet for the tavern regular customer portrait pipeline.
+Runtime pipeline target: crop into 70x90 native transparent bust portraits, then scale 4x nearest-neighbor to 280x360 runtime textures.
+
+Use the visible reference image of Vera only as the art direction reference: refined dark ink linework, candlelit tavern color, dark teal and charcoal shadows, warm amber brass highlights, wine-red cloth accents, parchment fabric, expressive hands, ornate but readable fantasy tavern detail. Do not copy Vera's face, hair, outfit, cup, ledger, pose, identity, or composition.
+
+Create a single clean character expression sheet: 4 columns x 3 rows, one waist-up bust per cell, consistent camera, consistent lighting, full character silhouette inside each cell, no cell borders, no readable text, no logos.
+
+Flat solid #00ff00 chroma background behind every cell.
+
+Columns:
+1. Belta, a strong female mine porter with a shoulder pick, leather work apron, red headband, confident practical tavern worker energy.
+2. Noel, a young male ledger apprentice with round glasses, quill, small notebook, neat vest, anxious scholar energy.
+3. Masha, a warm female laundry worker with folded cloth, rolled sleeves, cream apron, practical kindness.
+4. Coen, a middle-aged male night watchman with dark coat, brimmed hat, brass buttons, lantern, cautious stern expression.
+
+Rows:
+1. neutral expression.
+2. satisfied expression.
+3. dissatisfied expression.

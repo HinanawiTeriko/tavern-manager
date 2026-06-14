@@ -7,6 +7,10 @@ const TRUST_THRESHOLD := 5
 ## Mira 线信任阀门：告知真相后 aff_mira 达此值她才肯担责。Mira 专属，不复用 Ryan 的 TRUST_THRESHOLD。
 const MIRA_TRUST_THRESHOLD := 10
 
+const LINKED_FATE_DAYS: Dictionary = {
+	12: ["toby"],
+}
+
 var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
 var key_items: Array = []
@@ -68,19 +72,25 @@ func finalize_ryan_ending() -> void:
 ## 托比存活充要：Mira 担责（告知真相且信任达标）或玩家在掮客处兜底。
 func toby_survived() -> bool:
 	var told := bool(dialogue_vars.get("told_mira_truth", false))
+	var contract_found := bool(dialogue_vars.get("toby_contract_found", false))
 	var trust_ok := get_affection("mira") >= MIRA_TRUST_THRESHOLD
-	return (told and trust_ok) or bool(dialogue_vars.get("toby_secured", false))
+	var secured := bool(dialogue_vars.get("toby_secured_by_fixer", false)) \
+		or bool(dialogue_vars.get("toby_secured", false))
+	return (told and contract_found and trust_ok) or secured
 
 
 ## Mira 结局路线（单一真相源；对话只读 mira_ending，不自行判定）。
 func get_mira_route() -> String:
 	var told := bool(dialogue_vars.get("told_mira_truth", false))
+	var contract_found := bool(dialogue_vars.get("toby_contract_found", false))
 	var trust_ok := get_affection("mira") >= MIRA_TRUST_THRESHOLD
-	if told and trust_ok:
+	var secured := bool(dialogue_vars.get("toby_secured_by_fixer", false)) \
+		or bool(dialogue_vars.get("toby_secured", false))
+	if told and contract_found and trust_ok:
 		return "she_finally_stopped"
-	if told:
+	if told or contract_found:
 		return "never_turned_back"
-	if bool(dialogue_vars.get("toby_secured", false)):
+	if secured:
 		return "closed_the_door"
 	return "another_light_out"
 
@@ -115,6 +125,7 @@ func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
 func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
 	match String(action.get("item_key", "")):
 		"toby_contract":
+			set_var("toby_contract_found", true)
 			set_var("told_mira_truth", true)
 			return _action_result(true, "mira_informed")
 	return _action_result(false, "unsupported_story_item")
@@ -190,10 +201,14 @@ func load_npc_data() -> void:
 	dialogue_vars["ryan_alternative_pending"] = false
 	dialogue_vars["ryan_alternative_declined"] = false
 	dialogue_vars["ryan_ending"] = ""
+	dialogue_vars["merchant_sleep_powder_hint_seen"] = false
 	dialogue_vars["aff_ryan"] = 0
 	dialogue_vars["aff_mira"] = 5
 	dialogue_vars["told_mira_truth"] = false
+	dialogue_vars["toby_danger_known"] = false
+	dialogue_vars["toby_contract_found"] = false
 	dialogue_vars["toby_secured"] = false
+	dialogue_vars["toby_secured_by_fixer"] = false
 	dialogue_vars["toby_survived"] = false
 	dialogue_vars["mira_ending"] = ""
 	dialogue_vars["aff_toby"] = 0
@@ -287,17 +302,39 @@ func get_today_npc_fates(day: int) -> Array[Dictionary]:
 	for npc in all_npcs:
 		for scene in npc.scenes:
 			if scene.day == day:
-				var ending_var: String = npc.id + "_ending"
-				if dialogue_vars.has(ending_var):
-					var ending_key: String = dialogue_vars[ending_var]
-					if ending_key != null and ending_key != "" and npc.endings.has(ending_key):
-						result.append({
-							"npc_name": npc.npc_name,
-							"npc_title": npc.title,
-							"fate_text": npc.endings[ending_key]
-						})
+				_append_npc_fate(result, npc)
 				break
+	for npc_id in LINKED_FATE_DAYS.get(day, []):
+		if _fate_result_has_npc(result, String(npc_id)):
+			continue
+		var linked_npc := _find_npc(String(npc_id))
+		if linked_npc != null:
+			_append_npc_fate(result, linked_npc)
 	return result
+
+func _append_npc_fate(result: Array[Dictionary], npc: NpcData) -> void:
+	var ending_var: String = npc.id + "_ending"
+	if not dialogue_vars.has(ending_var):
+		return
+	var raw_ending = dialogue_vars.get(ending_var, "")
+	if raw_ending == null:
+		return
+	var ending_key: String = String(raw_ending)
+	if ending_key == "" or not npc.endings.has(ending_key):
+		return
+	result.append({
+		"npc_id": npc.id,
+		"ending_key": ending_key,
+		"npc_name": npc.npc_name,
+		"npc_title": npc.title,
+		"fate_text": npc.endings[ending_key]
+	})
+
+func _fate_result_has_npc(result: Array[Dictionary], npc_id: String) -> bool:
+	for fate in result:
+		if String(fate.get("npc_id", "")) == npc_id:
+			return true
+	return false
 
 func _find_npc(npc_id: String) -> NpcData:
 	for n in all_npcs:

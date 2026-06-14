@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: raw source art for a Godot pixel-art UI button state sheet, later downsampled to a 56x14 native pixel grid and scaled 4x for runtime.
+Primary request: Create a vertical three-state sheet for a DayMap detail "go/travel" button, but do not render any text.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background only, no shadows or texture in the background.
+Subject: three separate horizontal travel-tag buttons stacked vertically with generous space between them: top is normal, middle is hover, bottom is pressed. Each button is a parchment or thin wooden travel tag with rough inked dark edge, small dagger-pin or wax fleck accent, and clean blank center for Godot text.
+Style/medium: chunky low-density pixel game art source, rough ink-line historical printmaking influence, dark teal dungeon-tavern UI palette, muted parchment browns, sparse amber highlights, crisp silhouettes.
+Composition/framing: each state must be a wide short button centered horizontally. The three states must have the same silhouette and size so they do not visually resize. Hover is slightly warmer/brighter; pressed is slightly darker/lower with stronger bottom shadow.
+Constraints: no text, no readable writing, no numbers, no logos, no characters, no fake labels. The central label area of every button must remain mostly blank and readable. The background must remain uniform #00ff00 and must not appear in the buttons.

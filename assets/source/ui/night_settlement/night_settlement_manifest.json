@@ -1,0 +1,263 @@
+{
+  "id": "night_settlement_v1",
+  "backdrop": {
+    "source": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v1.png",
+    "prompt": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v1.txt",
+    "native": "assets/source/ui/night_settlement/night_settlement_backdrop_native.png",
+    "runtime": "assets/textures/ui/night_settlement/night_settlement_backdrop.png",
+    "native_size": [
+      320,
+      180
+    ],
+    "runtime_size": [
+      1280,
+      720
+    ]
+  },
+  "text_safe_zones_native": {
+    "title": [
+      88,
+      11,
+      232,
+      27
+    ],
+    "stats": [
+      34,
+      103,
+      128,
+      160
+    ],
+    "fates": [
+      158,
+      103,
+      280,
+      160
+    ],
+    "continue": [
+      276,
+      152,
+      314,
+      174
+    ]
+  },
+  "panels": {
+    "stats": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_stats_panel_source_v3.png",
+      "source_rect": [
+        120,
+        70,
+        1550,
+        857
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_panel_stats_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_panel_stats.png",
+      "native_size": [
+        120,
+        66
+      ],
+      "runtime_size": [
+        480,
+        264
+      ],
+      "safe_area_native": [
+        8,
+        8,
+        112,
+        58
+      ],
+      "intended_godot_use": "LedgerScreen/ArtLayer/StatsPanelArt"
+    },
+    "fates": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        405,
+        760,
+        1198,
+        1162
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_panel_fates_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_panel_fates.png",
+      "native_size": [
+        120,
+        66
+      ],
+      "runtime_size": [
+        480,
+        264
+      ],
+      "safe_area_native": [
+        8,
+        8,
+        112,
+        58
+      ],
+      "intended_godot_use": "LedgerScreen/ArtLayer/FatePanelArt"
+    }
+  },
+  "continue_button": {
+    "native_size": [
+      34,
+      24
+    ],
+    "runtime_size": [
+      136,
+      96
+    ],
+    "states": {
+      "normal": {
+        "source_rect": [
+          96,
+          72,
+          390,
+          378
+        ],
+        "native": "assets/source/ui/night_settlement/night_settlement_continue_normal_native.png",
+        "runtime": "assets/textures/ui/night_settlement/night_settlement_continue_normal.png"
+      },
+      "hover": {
+        "source_rect": [
+          444,
+          72,
+          738,
+          378
+        ],
+        "native": "assets/source/ui/night_settlement/night_settlement_continue_hover_native.png",
+        "runtime": "assets/textures/ui/night_settlement/night_settlement_continue_hover.png"
+      },
+      "pressed": {
+        "source_rect": [
+          794,
+          72,
+          1088,
+          378
+        ],
+        "native": "assets/source/ui/night_settlement/night_settlement_continue_pressed_native.png",
+        "runtime": "assets/textures/ui/night_settlement/night_settlement_continue_pressed.png"
+      }
+    },
+    "intended_godot_use": "LedgerScreen/UI/ContinueBtn StyleBoxTexture"
+  },
+  "icons": {
+    "gold": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        94,
+        495,
+        248,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_gold_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_gold.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon gold"
+    },
+    "reputation": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        276,
+        495,
+        430,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_reputation_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_reputation.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon reputation"
+    },
+    "guests": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        456,
+        495,
+        610,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_guests_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_guests.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon guests"
+    },
+    "success": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        636,
+        495,
+        790,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_success_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_success.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon success"
+    },
+    "failed": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        816,
+        495,
+        970,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_failed_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_failed.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon failed"
+    },
+    "fate": {
+      "source": "art_sources/generated_raw/night_settlement/night_settlement_controls_source_v1.png",
+      "source_rect": [
+        996,
+        495,
+        1150,
+        665
+      ],
+      "native": "assets/source/ui/night_settlement/night_settlement_icon_fate_native.png",
+      "runtime": "assets/textures/ui/night_settlement/night_settlement_icon_fate.png",
+      "native_size": [
+        14,
+        14
+      ],
+      "runtime_size": [
+        56,
+        56
+      ],
+      "intended_godot_use": "LedgerScreen stat icon fate"
+    }
+  },
+  "intended_godot_use": "LedgerScreen post-close settlement art and controls"
+}

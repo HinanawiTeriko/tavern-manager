@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: game background source for a Godot pixel-art dungeon tavern management investigation scene
+Primary request: Create an abandoned mine investigation background, 16:9 full-screen scene, no UI.
+Scene/backdrop: a quiet cold dark mine tunnel interior with rough stone walls, timber supports, a dusty broad flat floor, left-side shallow investigation space, and a right-side collapsed passage shown mostly as distant dark silhouette, dust, broken beams, and low-contrast wall damage.
+Style/medium: painterly source image intended to be normalized into a 320x180 chunky pixel-game background; rough ink-like silhouettes, historical printmaking influence, paper grain, readable low-density pixel composition.
+Composition/framing: wide 16:9 view, clear central and lower floor area for separate draggable foreground props, background details smaller and lower contrast than foreground props, no large foreground boulders.
+Lighting/mood: cold stone blues and dark teal dungeon palette, sparse amber edge highlights, subtle candle-warm accents, gloomy abandoned atmosphere.
+Color palette: dark teal, cold stone blue-green, muted charcoal, tiny dark red blood accent only.
+Materials/textures: rough stone, weathered timber supports, dust, damp cave floor.
+Constraints: Do not draw a foreground rubble pile, large standalone rocks, boulders, loose item-like stones, broken arrow, shield, boot, backpack, coins, token, or paper. Add only a subtle dark red blood trail on the floor leading toward the right collapse. No text, no labels, no numbers, no logos, no characters, no hands, no buttons. Keep the floor visually calm and usable as a background layer.

@@ -1,0 +1,8 @@
+Use case: game asset sprite sheet
+Asset type: source art for a pixel-art tavern cooking game, to be processed into a native pixel atlas later
+Primary request: Create a clean sprite-sheet source image of individual grill feedback VFX elements, not a full effect cloud. The sheet must have 5 rows and 4 columns of isolated single elements, with generous padding in each cell.
+Rows, top to bottom: 1) tiny orange oil sparks and droplets from sizzling food, 2) golden perfect-doneness star sparks, 3) dark charred ember sparks with small orange cores, 4) warm orange flattened heat glows / grill-light ovals, 5) short little flame tongues and flash flickers.
+Style/medium: chunky pixel-art inspired source, crisp silhouettes, limited palette, dungeon tavern cooking game feel, warm amber firelight, dark inked edges, no photorealism.
+Composition/framing: centered single object per cell, four variants per row, no overlap between cells. Each element should be small and readable by itself.
+Background: perfectly flat solid #ff00ff chroma-key background, one uniform color, no gradients, no shadows, no floor, no texture.
+Constraints: no readable text, no labels, no numbers, no UI, no watermark. Do not bake dense foam/smoke/fire clusters; every cell is one single effect element. Avoid green in the subject; avoid using the chroma key color inside the sprites.

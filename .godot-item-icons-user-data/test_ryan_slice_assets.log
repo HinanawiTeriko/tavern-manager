@@ -1,0 +1,38 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+WARNING: res://scenes/ui/SettingsPanel.tscn:5 - ext_resource, invalid UID: uid://dlehpihdd6r87 - using text path instead: res://assets/textures/ui/menu_brush_divider.png
+   at: load (scene/resources/resource_format_text.cpp:500)
+[Craft] 加载 33 种物品, 16 个加工节点, 8 条组合规则, 11 条容器配方
+[Narrative] 加载 3 个 NPC
+[Shop] 加载 5 种材料, 4 种可解锁配方, 2 种技法
+[Seasoning] 加载 4 种香料
+[GuestSystem] 加载 5 组反应台词
+ERROR: BUG: Unreferenced static string to 0: servers
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: Variant
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore_restore
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore_start
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @warning_ignore
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_range
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export_multiline
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @export
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @icon
+   at: unref (core/string/string_name.cpp:116)
+ERROR: BUG: Unreferenced static string to 0: @tool
+   at: unref (core/string/string_name.cpp:116)
+WARNING: A Thread object is being destroyed without its completion having been realized.
+Please call wait_to_finish() on it to ensure correct cleanup.
+   at: ~Thread (core/os/thread.cpp:102)
+ERROR: 7 RID allocations of type '23NavMeshGeometryParser2D' were leaked at exit.
+ERROR: 6 RID allocations of type '23NavMeshGeometryParser3D' were leaked at exit.
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketLargeE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)

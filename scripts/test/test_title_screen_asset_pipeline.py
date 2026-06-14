@@ -14,6 +14,7 @@ REFERENCE = SOURCE / "reference"
 RUNTIME = ROOT / "assets" / "textures" / "title"
 TOOLS = ROOT / "scripts" / "tools"
 SCALE = 4
+MARKER_SCALE = 2
 FULL_LAYERS = [
     "title_pixel_bg_clean",
     "title_pixel_glow_mask",
@@ -49,9 +50,11 @@ GLOW_MIN_BBOX_WIDTH = 180
 GLOW_MIN_BBOX_HEIGHT = 120
 GLOW_MAX_BBOX_WIDTH = 240
 GLOW_MAX_BBOX_HEIGHT = 170
-MARKER_MIN_VISIBLE_PIXELS = 250
-MARKER_MIN_BBOX_WIDTH = 60
-MARKER_MIN_BBOX_HEIGHT = 5
+MARKER_SIZE = (122, 14)
+MARKER_MIN_VISIBLE_PIXELS = 900
+MARKER_MIN_BBOX_WIDTH = 100
+MARKER_MIN_BBOX_HEIGHT = 10
+MARKER_MIN_VISIBLE_COLORS = 64
 EXTRACTED_LOGO_MIN_VISIBLE_PIXELS = 150_000
 EXTRACTED_LOGO_MIN_BBOX_WIDTH = 900
 EXTRACTED_LOGO_MIN_BBOX_HEIGHT = 450
@@ -114,6 +117,12 @@ def file_hash(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
+def visible_color_count(image: Image.Image) -> int:
+    rgba = image.convert("RGBA")
+    pixels = rgba.get_flattened_data() if hasattr(rgba, "get_flattened_data") else rgba.getdata()
+    return len({pixel for pixel in pixels if pixel[3] > 0})
+
+
 def load_image(path: Path) -> Image.Image:
     with Image.open(path) as image:
         return image.copy()
@@ -139,10 +148,10 @@ class TitleScreenAssetPipelineTest(unittest.TestCase):
         self.assertEqual(alpha_extrema[0], 0, f"{path.name}: needs transparent pixels")
         self.assertGreater(alpha_extrema[1], 0, f"{path.name}: transparent layer is empty")
 
-    def assert_exact_scale(self, name: str) -> None:
+    def assert_exact_scale(self, name: str, scale: int = SCALE) -> None:
         native = load_image(SOURCE / f"{name}_native.png")
         runtime = load_image(RUNTIME / f"{name}.png")
-        expected_size = (native.width * SCALE, native.height * SCALE)
+        expected_size = (native.width * scale, native.height * scale)
         self.assertEqual(runtime.size, expected_size, f"{name}: wrong runtime size {runtime.size}")
         expected = native.resize(expected_size, Image.Resampling.NEAREST)
         self.assertEqual(runtime.mode, expected.mode, f"{name}: wrong runtime mode {runtime.mode}")
@@ -167,7 +176,7 @@ class TitleScreenAssetPipelineTest(unittest.TestCase):
             self.assertEqual(native.size, (320, 180), f"{name}: wrong native size {native.size}")
 
         marker = load_image(SOURCE / "title_pixel_menu_marker_native.png")
-        self.assertEqual(marker.size, (61, 7), f"title_pixel_menu_marker: wrong native size {marker.size}")
+        self.assertEqual(marker.size, MARKER_SIZE, f"title_pixel_menu_marker: wrong native size {marker.size}")
 
         for name in TRANSPARENT_LAYERS:
             native_path = SOURCE / f"{name}_native.png"
@@ -185,8 +194,9 @@ class TitleScreenAssetPipelineTest(unittest.TestCase):
         self.assertEqual([top for top, _ in native_band_groups], EXPECTED_NATIVE_BAND_TOPS)
         self.assertEqual([top for top, _ in runtime_band_groups], EXPECTED_RUNTIME_BAND_TOPS)
 
-        for name in FULL_LAYERS + CROPPED_LAYERS:
+        for name in FULL_LAYERS:
             self.assert_exact_scale(name)
+        self.assert_exact_scale("title_pixel_menu_marker", MARKER_SCALE)
 
     def test_generated_diagnostics_have_clear_names_and_alpha(self) -> None:
         for name in DIAGNOSTIC_LAYERS:
@@ -256,6 +266,11 @@ class TitleScreenAssetPipelineTest(unittest.TestCase):
             MARKER_MIN_BBOX_WIDTH,
             MARKER_MIN_BBOX_HEIGHT,
         )
+        self.assertGreaterEqual(
+            visible_color_count(marker),
+            MARKER_MIN_VISIBLE_COLORS,
+            "title_pixel_menu_marker must keep the hand-painted brush variation",
+        )
 
     def test_prepare_does_not_replace_outputs_when_late_validation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -292,7 +307,7 @@ class TitleScreenAssetPipelineTest(unittest.TestCase):
             for name in FULL_LAYERS + CROPPED_LAYERS:
                 shutil.copy2(SOURCE / f"{name}_native.png", source)
 
-            tiny_marker = Image.new("RGBA", (61, 7), (0, 0, 0, 0))
+            tiny_marker = Image.new("RGBA", MARKER_SIZE, (0, 0, 0, 0))
             ImageDraw.Draw(tiny_marker).rectangle((2, 2, 3, 3), fill=(255, 184, 24, 255))
             tiny_marker.save(source / "title_pixel_menu_marker_native.png")
 

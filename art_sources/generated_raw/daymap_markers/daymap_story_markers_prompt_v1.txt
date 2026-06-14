@@ -1,0 +1,10 @@
+Create a single source sheet for three small game map marker icon artworks, 3 columns x 1 row, equal cells, generous padding, flat solid #ff00ff chroma background, no labels, no readable text, no numbers, no UI panels, no circular marker base, no pin, no glow ring, no drop shadow.
+
+Match the existing DayMap marker icons in a dark teal dungeon tavern pixel-game art direction: chunky readable silhouettes, rough ink-like edges, restrained colors, sparse amber highlights, cold blue-green shadows.
+
+Each icon should be an isolated object silhouette suitable for later pixel downsampling to 24x24:
+left cell Mira market stall icon with tiny striped cloth awning and small goods basket;
+middle cell Toby lodging lane icon with narrow crooked tavern back-alley door, small window, bedroll hint, no sign text;
+right cell fixer den icon with dark hooded doorway, sealed folded note and coin, secretive but readable.
+
+Keep each icon centered and similar visual weight; fixer and lodging can be slightly darker, stall has one amber cloth accent. Transparent-looking edges are okay but background must remain flat #ff00ff. High-resolution clean source sheet, not final pixel art, no anti-aliased text, no logos, no watermark.

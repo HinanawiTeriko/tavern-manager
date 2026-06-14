@@ -1,0 +1,8 @@
+Use case: ui-mockup
+Asset type: source art for a native-pixel game HUD top bar, final runtime target is 1280x48 pixels
+Primary request: Create exactly one extremely thin, long horizontal pixel-art top UI strip. The strip must visually match a 1280x48 HUD header: very wide and low, about 26:1 aspect ratio, only around 5 percent of the image height. No text, no numbers, no icons, no logos.
+Style/medium: true pixel-art UI source, crisp square pixels, chunky limited palette, rough tavern wood and dark iron, dark teal dungeon interior band, warm amber edge highlights, hand-authored pixel clusters. Not smooth, not glossy, not vector-flat, not a digital painting.
+Composition/framing: one straight rectangular top bar centered horizontally with generous green padding above and below. The bar should be long and thin, with visible top rim, dark center band for HUD text, and visible bottom rim all inside the thin strip. Slight chipped wooden ends and tiny nail marks, but no separate objects. Do not make a tall banner or plaque.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background outside the strip, one uniform color with no shadows, gradients, floor, or texture.
+Color palette: blue-black teal center, soot brown border, muted amber highlights, restrained dark palette.
+Constraints: no readable text, no fake UI, no symbols, no watermark, no people, no decorative icons, no modern rounded glossy UI, no purple gradients, no beige parchment dominance, no antialias blur. Do not use #00ff00 in the strip.

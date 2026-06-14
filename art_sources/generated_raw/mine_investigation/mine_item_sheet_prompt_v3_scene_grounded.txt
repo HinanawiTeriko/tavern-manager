@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: source sheet for 2D game investigation props, later cropped by fixed rectangles into individual runtime sprites
+Primary request: create one scene-grounded 4 columns x 2 rows item sheet for an abandoned mine investigation screen. Each slot contains exactly one prop, isolated on a perfectly flat solid #ff00ff chroma-key background. The props must look like objects lying on the same cold mine floor, not icon stickers.
+Layout, left to right, top row: broken arrow lying flat; dented round shield lying on floor at a shallow angle; lost single leather boot lying on side; small spilled coins pile lying flat.
+Layout, left to right, bottom row: one large broad collapsed mine rubble pile, much wider than every other item; torn open backpack with mouth opening upward but resting on floor; small red mercenary warhammer token lying flat; bloodied paper/contract lying rumpled on floor.
+Style/medium: original dark pixel dungeon tavern management UI source art, rough ink edge, chunky pixel-game silhouettes, low-density pixel clusters, not photoreal, not glossy, not clean icons.
+Lighting/mood: scene-grounded, same left-side warm light across every item, cold teal-blue ambient shadow from the cave, dark muted values, low contrast so objects integrate into a dark mine background.
+Composition/framing: fixed 4 columns x 2 rows grid, each object centered in its slot with generous padding, no overlap across slot boundaries; ground-perspective props should be slightly flattened as if resting on the floor. Rubble must be broad and heavy; backpack smaller than rubble; paper, coins, and token clearly small.
+Color palette: dark teal stone shadows, desaturated brown leather/wood, muted iron gray, tiny amber highlights, restrained blood red. Avoid bright white highlights.
+Text: none.
+Constraints: perfectly flat solid #ff00ff background only, no labels, no text, no numbers, no logos, no UI frame, no cast shadow, no contact shadow, no floor plane or ground texture, no repeated extra props, no decorative tags. Do not use #ff00ff in the items. Keep silhouettes crisp and readable for later pixel downsampling.

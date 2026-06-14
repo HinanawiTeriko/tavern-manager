@@ -33,7 +33,11 @@ const ICON_TEXTURES := {
 	"mill_farm": "res://assets/textures/daymap/markers/mill_farm.png",
 	"mercenary_board": "res://assets/textures/daymap/markers/mercenary_board.png",
 	"abandoned_mine": "res://assets/textures/daymap/markers/abandoned_mine.png",
+	"market_shop": "res://assets/textures/daymap/markers/market_shop.png",
 	"guild_counter": "res://assets/textures/daymap/markers/guild_counter.png",
+	"mira_stall": "res://assets/textures/daymap/markers/mira_stall.png",
+	"toby_lodging": "res://assets/textures/daymap/markers/toby_lodging.png",
+	"fixer_den": "res://assets/textures/daymap/markers/fixer_den.png",
 }
 
 var location_id: String = ""

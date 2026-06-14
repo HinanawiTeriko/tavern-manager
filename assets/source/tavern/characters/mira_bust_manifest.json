@@ -1,0 +1,181 @@
+{
+  "id": "mira_bust_portrait",
+  "style_profile": "ryan_matched_low_detail_pixel_v2",
+  "source": "art_sources/generated_raw/mira_bust/mira_neutral_source_v2.png",
+  "expression_source": "art_sources/generated_raw/mira_bust/mira_expression_sheet_source_v1.png",
+  "comparison_reference": "assets/textures/characters/ryan_neutral.png",
+  "source_rect": [
+    0,
+    0,
+    1107,
+    1421
+  ],
+  "native": "assets/source/tavern/characters/mira_neutral_native.png",
+  "runtime": "assets/textures/characters/mira_neutral.png",
+  "native_size": [
+    70,
+    90
+  ],
+  "runtime_size": [
+    280,
+    360
+  ],
+  "safe_area": [
+    0,
+    0,
+    70,
+    90
+  ],
+  "scale": 4,
+  "color_limit": 20,
+  "target_visible_width": 58,
+  "intended_godot_use": "Tavern CustomerSprite Mira bust portrait behind TabletopArt",
+  "portraits": {
+    "mira_neutral": {
+      "source": "art_sources/generated_raw/mira_bust/mira_neutral_source_v2.png",
+      "source_rect": [
+        0,
+        0,
+        1107,
+        1421
+      ],
+      "native": "assets/source/tavern/characters/mira_neutral_native.png",
+      "runtime": "assets/textures/characters/mira_neutral.png",
+      "native_size": [
+        70,
+        90
+      ],
+      "runtime_size": [
+        280,
+        360
+      ],
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "scale": 4,
+      "color_limit": 20,
+      "target_visible_width": 58,
+      "expression_notes": [
+        "guarded professional smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
+    },
+    "mira_smile": {
+      "source": "art_sources/generated_raw/mira_bust/mira_expression_sheet_source_v1.png",
+      "source_rect": [
+        0,
+        0,
+        724,
+        724
+      ],
+      "native": "assets/source/tavern/characters/mira_smile_native.png",
+      "runtime": "assets/textures/characters/mira_smile.png",
+      "native_size": [
+        70,
+        90
+      ],
+      "runtime_size": [
+        280,
+        360
+      ],
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "scale": 4,
+      "color_limit": 20,
+      "target_visible_width": 58,
+      "expression_notes": [
+        "genuine warm smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
+    },
+    "mira_surprised": {
+      "source": "art_sources/generated_raw/mira_bust/mira_expression_sheet_source_v1.png",
+      "source_rect": [
+        724,
+        0,
+        1448,
+        724
+      ],
+      "native": "assets/source/tavern/characters/mira_surprised_native.png",
+      "runtime": "assets/textures/characters/mira_surprised.png",
+      "native_size": [
+        70,
+        90
+      ],
+      "runtime_size": [
+        280,
+        360
+      ],
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "scale": 4,
+      "color_limit": 20,
+      "target_visible_width": 58,
+      "expression_notes": [
+        "surprised raised brows"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
+    },
+    "mira_serious": {
+      "source": "art_sources/generated_raw/mira_bust/mira_expression_sheet_source_v1.png",
+      "source_rect": [
+        1448,
+        0,
+        2172,
+        724
+      ],
+      "native": "assets/source/tavern/characters/mira_serious_native.png",
+      "runtime": "assets/textures/characters/mira_serious.png",
+      "native_size": [
+        70,
+        90
+      ],
+      "runtime_size": [
+        280,
+        360
+      ],
+      "safe_area": [
+        0,
+        0,
+        70,
+        90
+      ],
+      "scale": 4,
+      "color_limit": 20,
+      "target_visible_width": 58,
+      "expression_notes": [
+        "serious direct gaze"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
+    }
+  },
+  "character_notes": [
+    "adult traveling merchant",
+    "guarded professional smile",
+    "expression set includes genuine warm smile, surprised raised brows, and serious direct gaze",
+    "high ponytail",
+    "large readable merchant shapes: cloak, shoulder bag, scroll tube, brass scale",
+    "nearest-neighbor native pass with a tight palette to avoid high-resolution illustration texture"
+  ],
+  "bar_occlusion_contract": {
+    "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
+    "runtime_sprite_size": [
+      280,
+      360
+    ],
+    "tabletop_top_y_runtime": 484,
+    "tabletop_art_z_index": -90,
+    "customer_sprite_z_index": -95
+  }
+}

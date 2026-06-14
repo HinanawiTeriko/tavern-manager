@@ -1,0 +1,10 @@
+AI-generated controls and icons source sheet for a Godot pixel-art dungeon tavern management game.
+
+Canvas: square source sheet, no readable text, no numbers, no logos. Arrange isolated pixel-game UI objects on a flat chroma green background with generous spacing.
+
+Required objects:
+1. Three states of a "continue / extinguish the light" button: normal, hover, pressed. Use a candle snuffer, door latch, or extinguished flame motif, not a rectangular text button. The three states must share the same silhouette and size.
+2. Six small status icons: coin income, reputation, served guests, successful order, failed order, fate/rumor. Each icon must be simple, high-contrast, and readable after reduction to 14x14 native pixels.
+3. Two dark tactile reading panels: one compact left stats tray, one wider right fate tray. Use rough wood, stained paper, or pinned cloth, but no readable text.
+
+Visual language: dark teal, old wood, worn parchment, sparse amber highlights, rough ink edges, chunky low-density pixel clusters, no smooth gradients, no antialiased modern UI.

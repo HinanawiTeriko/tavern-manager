@@ -1,0 +1,22 @@
+Godot Engine v4.6.3.stable.mono.official.7d41c59c4 - https://godotengine.org
+
+ERROR: .NET: Assemblies not found
+   at: initialize (modules/mono/mono_gd/gd_mono.cpp:647)
+[Craft] 加载 33 种物品, 16 个加工节点, 8 条组合规则, 11 条容器配方
+[Narrative] 加载 3 个 NPC
+[Shop] 加载 5 种材料, 4 种可解锁配方, 2 种技法
+[Seasoning] 加载 4 种香料
+[GuestSystem] 加载 5 组反应台词
+[GuestSystem] 加载 8 种NPC模板
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_material_icon_to_desk_item' in base 'Node (game_manager.gd)'.
+   at: _test_mapped_art_can_be_reapplied_after_item_state_changes (res://scripts/test/test_kitchen_containers.gd:125)
+   GDScript backtrace (most recent call first):
+       [0] _test_mapped_art_can_be_reapplied_after_item_state_changes (res://scripts/test/test_kitchen_containers.gd:125)
+       [1] _ready (res://scripts/test/test_kitchen_containers.gd:15)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_material_icon_to_desk_item' in base 'Node (game_manager.gd)'.
+   at: _test_grill_timer_changes_item_state_without_heat_color_animation (res://scripts/test/test_kitchen_containers.gd:138)
+   GDScript backtrace (most recent call first):
+       [0] _test_grill_timer_changes_item_state_without_heat_color_animation (res://scripts/test/test_kitchen_containers.gd:138)
+       [1] _ready (res://scripts/test/test_kitchen_containers.gd:16)
+[Craft] 加载 33 种物品, 16 个加工节点, 8 条组合规则, 11 条容器配方
+[TEST-KITCHEN] ALL PASS (62 checks)

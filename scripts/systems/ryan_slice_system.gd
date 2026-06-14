@@ -4,6 +4,7 @@ extends RefCounted
 # [走查脚手架] Mira 线高潮在 Day12，需游戏推进到 Day12 才能走查四结局。
 # 原值为 3（Ryan 切片收尾日）。合入 main 前须决策：正式接 30 天循环，还是回退为 3。
 const LAST_DAY := 12
+const DEFAULT_NORMAL_ORDER_LIMIT := 3
 const DAY_CONFIG := {
 	1: {
 		"normal_order_limit": 2,
@@ -16,7 +17,7 @@ const DAY_CONFIG := {
 	},
 	3: {
 		"normal_order_limit": 2,
-		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲"}],
+		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a"}],
 	},
 }
 
@@ -29,7 +30,9 @@ func last_day() -> int:
 
 
 func normal_order_limit(day: int) -> int:
-	return int(DAY_CONFIG.get(day, {}).get("normal_order_limit", 0))
+	if DAY_CONFIG.has(day):
+		return int(DAY_CONFIG[day].get("normal_order_limit", DEFAULT_NORMAL_ORDER_LIMIT))
+	return DEFAULT_NORMAL_ORDER_LIMIT
 
 
 func night_events(day: int) -> Array:
@@ -44,6 +47,13 @@ func important_display_name(day: int, npc_id: String, fallback: String) -> Strin
 	for event in night_events(day):
 		if String(event.get("npc_id", "")) == npc_id:
 			return String(event.get("display_name", fallback))
+	return fallback
+
+
+func important_portrait_id(day: int, npc_id: String, fallback: String) -> String:
+	for event in night_events(day):
+		if String(event.get("npc_id", "")) == npc_id:
+			return String(event.get("portrait_id", fallback))
 	return fallback
 
 

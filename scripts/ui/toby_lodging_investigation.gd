@@ -7,36 +7,86 @@ extends InvestigationScene
 
 const ASSEMBLE_POINT := Vector2(640, 490)   # 拼合点（窝里地面中央的矮桌）
 const ASSEMBLE_RADIUS := 80.0               # 碎片全部进入此半径即拼合
+const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_normal.png"
+const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_hover.png"
+const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_pressed.png"
+const LEAVE_BUTTON_SIZE := Vector2(280, 100)
+const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _fragments: Array[MineItem] = []
 var _assembled: bool = false
 
 
 func _setup_scene() -> void:
+	_apply_toby_lodging_ui_style()
 	_spawn_shallow_items()
 	_spawn_fragments()
 
 
+func _apply_toby_lodging_ui_style() -> void:
+	ThemeColors.style_brush_label(_obs_label, 20, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_hint_label, 16, ThemeColors.TEXT_SUBTITLE)
+	_apply_label_outline(_obs_label)
+	_apply_label_outline(_hint_label)
+	_apply_leave_button_style()
+
+
+func _apply_leave_button_style() -> void:
+	var font := ThemeColors.menu_font()
+	if font != null:
+		_leave_btn.add_theme_font_override("font", font)
+	_leave_btn.add_theme_font_size_override("font_size", 18)
+	_leave_btn.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_leave_btn.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	_leave_btn.add_theme_color_override("font_pressed_color", ThemeColors.AMBER_BRIGHT)
+	_leave_btn.add_theme_stylebox_override("normal", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
+	_leave_btn.add_theme_stylebox_override("hover", _leave_button_stylebox(LEAVE_BUTTON_HOVER))
+	_leave_btn.add_theme_stylebox_override("pressed", _leave_button_stylebox(LEAVE_BUTTON_PRESSED))
+	_leave_btn.add_theme_stylebox_override("disabled", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
+	_leave_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_leave_btn.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_leave_btn.offset_right = LEAVE_BUTTON_BOTTOM_RIGHT.x
+	_leave_btn.offset_bottom = LEAVE_BUTTON_BOTTOM_RIGHT.y
+	_leave_btn.offset_left = LEAVE_BUTTON_BOTTOM_RIGHT.x - LEAVE_BUTTON_SIZE.x
+	_leave_btn.offset_top = LEAVE_BUTTON_BOTTOM_RIGHT.y - LEAVE_BUTTON_SIZE.y
+
+
+func _leave_button_stylebox(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		style = StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, 58.0)
+	style.set_content_margin(SIDE_RIGHT, 58.0)
+	style.set_content_margin(SIDE_TOP, 30.0)
+	style.set_content_margin(SIDE_BOTTOM, 30.0)
+	return style
+
+
+func _apply_label_outline(label: Label) -> void:
+	label.add_theme_constant_override("outline_size", 4)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.015, 0.9))
+
+
 func _spawn_shallow_items() -> void:
 	# 浅层肖像物：捡起=一句观察，不授予、不参与拼合。堆出「这孩子怎么活」。
-	_spawn_item("oil_lamp", "observation", Vector2(40, 56), Color(0.55, 0.5, 0.3),
+	_spawn_item("oil_lamp", "observation", Vector2(72, 96), Color(0.55, 0.5, 0.3),
 		"将灭的油灯", "灯油只剩一指——他舍不得点。", Vector2(300, 470))
-	_spawn_item("hard_bread", "observation", Vector2(48, 32), Color(0.5, 0.42, 0.28),
+	_spawn_item("hard_bread", "observation", Vector2(80, 48), Color(0.5, 0.42, 0.28),
 		"干硬的面包", "硬得硌牙，是他攒着的几天口粮。", Vector2(440, 478))
-	_spawn_item("oversized_coat", "observation", Vector2(72, 52), Color(0.3, 0.3, 0.38),
+	_spawn_item("oversized_coat", "observation", Vector2(176, 112), Color(0.3, 0.3, 0.38),
 		"不合身的旧外套", "袖子长出一截——别人穿剩的。", Vector2(560, 468))
 
 
 func _spawn_fragments() -> void:
 	# 撕碎的委托书：三片，散在窝里不同角落。拖到拼合点靠拢即成。
 	var specs := [
-		["褥子边的碎片", Vector2(220, 460)],
-		["灯影里的碎片", Vector2(700, 462)],
-		["扣在碗底的碎片", Vector2(940, 470)],
+		["contract_fragment_a", "褥子边的碎片", Vector2(220, 460), Vector2(68, 52)],
+		["contract_fragment_b", "灯影里的碎片", Vector2(700, 462), Vector2(64, 56)],
+		["contract_fragment_c", "扣在碗底的碎片", Vector2(940, 470), Vector2(76, 48)],
 	]
 	for s in specs:
-		var frag := _spawn_item("contract_fragment", "fragment", Vector2(44, 44),
-			Color(0.62, 0.54, 0.34), String(s[0]), "撕开的委托书一角——他动摇过，撕了，却没扔。", s[1])
+		var frag := _spawn_item(String(s[0]), "fragment", s[3] as Vector2,
+			Color(0.62, 0.54, 0.34), String(s[1]), "撕开的委托书一角——他动摇过，撕了，却没扔。", s[2] as Vector2)
 		_fragments.append(frag)
 
 

@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: AI source sheet for small foreground props in a Godot pixel-art abandoned mine investigation scene
+Primary request: Create a clean 4 columns x 2 rows sprite source sheet on a perfectly flat solid #ff00ff chroma-key background. The sheet contains exactly eight separate abandoned mine evidence props, one centered per cell, in this order left to right, top row then bottom row: broken arrow, dented round shield, lost single boot, small rubble pile, torn backpack, small coin spill, small red warhammer mercenary token, bloodied folded paper. No labels, no text, no numbers, no UI.
+Style/medium: painterly source intended for downsampling into chunky low-resolution pixel-game sprites, dark dungeon tavern palette, crisp silhouettes, rough ink-like edges, limited colors, readable at tiny sizes.
+Composition/framing: each prop isolated with generous padding, no cast shadow, no floor plane, no perspective background, no overlap between cells. Make object scale coherent for a 1280x720 scene: shield is hand-sized, boot smaller than shield, rubble larger than backpack but not huge, coins and token very small, paper small and vertical, arrow long and thin.
+Lighting/mood: cold teal ambient light with sparse warm amber edge highlights, matching an abandoned mine interior.
+Materials/textures: aged wood arrow shaft, dull metal shield, worn leather boot and backpack, cold gray stones, muted gold coins, dark red token, stained parchment.
+Constraints: perfectly flat uniform #ff00ff background only; do not use #ff00ff inside any prop; no shadows, no reflections, no glow, no readable text, no labels, no watermark, no characters, no hands, no extra props.

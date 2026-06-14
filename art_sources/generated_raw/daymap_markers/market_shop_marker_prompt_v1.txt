@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: source art for one DayMap marker icon in a pixel-art tavern management game
+Primary request: one original market shop / general goods store marker icon, clearly distinct from a guild counter marker and from a named NPC stall marker.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background; no shadow, gradient, texture, floor plane, or lighting variation. Do not use #ff00ff anywhere in the subject.
+Subject: tiny front-facing general store sign/stall icon: squat wooden shop booth with small cloth awning, stacked crates and jars, one warm hanging lantern, no people, no readable text, no guild desk/counter.
+Style/medium: low-detail pixel-art-friendly source, rough ink outline, limited dark teal, dark wood, and sparse amber palette matching dark dungeon tavern map marker icons.
+Composition/framing: centered square icon with generous padding, isolated object silhouette, readable after reduction to native 24x24 then 4x runtime 96x96.
+Constraints: no readable text, no labels, no symbols, no logos, no watermark, no soft blur, no anti-aliased thin decorative lines, no circular marker base, no pin, no glow ring, no drop shadow.

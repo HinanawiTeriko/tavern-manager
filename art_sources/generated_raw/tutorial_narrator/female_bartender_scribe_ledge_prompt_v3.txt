@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: corrected game tutorial narrator portrait variant for a pixel-art tavern management game
+Primary request: create Vera ledge-grip narrator pose v3, fixing the previous problem where the right hand was too close to the crop edge. Same character as the approved Vera narrator: auburn-brown side ponytail with a red streak, gold hair clips, teal vest, cream sleeves, dark capelet, red neck scarf, leather belt, small red book and scholar-bartender details. She is below a raised dialogue panel and grips its lower edge while explaining.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background, no shadows or gradients.
+Subject: Vera, waist-up portrait, lively teaching expression, mouth open mid-explanation. Both arms are raised but the pose is NARROWER than before: elbows almost vertical, hands closer to the center, not wide-spread. Both hands, all fingers, both wrists, both elbows, hair, and full head must be completely visible.
+Critical crop rule: leave a large empty green safety margin on both left and right sides. Each hand must be at least 180 pixels away from the nearest left or right image edge on a 1024x1024 canvas. Both hands must fit within the central 60 percent of the image width. Do not let either hand touch, approach, or leave the image edge.
+Ledge rule: show only a short thin dark wooden/ink-rim horizontal ledge segment above her hands, ending well before the left and right image edges. The ledge should not span the full image width.
+Style/medium: polished 2D game character portrait, same artist family as the approved Vera and Belta pixel pipeline references, crisp ink-like outlines, warm tavern palette, chunky readable pixel-art clusters in the source, not a blurry filter.
+Composition/framing: single centered character, slightly smaller upper body so arms and hands fit comfortably inside a centered 4:5 portrait crop. Body cropped around waist/upper hips.
+Constraints: no readable text, no logo, no watermark, no complete dialogue box, no UI labels, no scenery. Do not copy Belta; keep Vera's design. Do not use #00ff00 in the character or ledge.

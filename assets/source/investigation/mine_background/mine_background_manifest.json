@@ -1,0 +1,134 @@
+{
+  "scale": 4,
+  "background": {
+    "id": "mine_investigation_background",
+    "source": "art_sources/generated_raw/mine_investigation_background/mine_background_reference_v2.png",
+    "reference": "assets/source/investigation/mine_background/reference/mine_background_reference_v2.png",
+    "native": "assets/source/investigation/mine_background/mine_background_native.png",
+    "runtime": "assets/ui/generated/investigation/mine_background/mine_background.png",
+    "native_size": [
+      320,
+      180
+    ],
+    "runtime_size": [
+      1280,
+      720
+    ],
+    "safe_area": [
+      0,
+      0,
+      320,
+      180
+    ],
+    "intended_godot_use": "MineInvestigation visual-only BackgroundArt Sprite2D layer"
+  },
+  "shadow": {
+    "id": "mine_item_shadow",
+    "source": "art_sources/generated_raw/mine_investigation_background/mine_item_shadow_source_v1.png",
+    "reference": "assets/source/investigation/mine_background/reference/mine_item_shadow_source_v1.png",
+    "native": "assets/source/investigation/mine_background/mine_item_shadow_native.png",
+    "runtime": "assets/ui/generated/investigation/mine_background/mine_item_shadow.png",
+    "native_size": [
+      40,
+      14
+    ],
+    "runtime_size": [
+      160,
+      56
+    ],
+    "source_rect": [
+      0,
+      0,
+      512,
+      256
+    ],
+    "safe_area": [
+      2,
+      2,
+      38,
+      12
+    ],
+    "intended_godot_use": "MineItem non-rotating contact shadow Sprite2D for mapped production items"
+  },
+  "review": {
+    "contact_sheet": "docs/art/mine_investigation_background_contact_sheet.png",
+    "item_collision_sizes_runtime": {
+      "broken_arrow": [
+        128,
+        40
+      ],
+      "dented_shield": [
+        104,
+        72
+      ],
+      "lost_boot": [
+        96,
+        56
+      ],
+      "rubble": [
+        328,
+        168
+      ],
+      "torn_backpack": [
+        136,
+        96
+      ],
+      "coins": [
+        72,
+        36
+      ],
+      "warhammer_token": [
+        64,
+        40
+      ],
+      "bloodied_paper": [
+        80,
+        64
+      ]
+    },
+    "item_visual_scales": {
+      "broken_arrow": 1.0,
+      "dented_shield": 1.0,
+      "lost_boot": 1.0,
+      "rubble": 1.0,
+      "torn_backpack": 1.0,
+      "coins": 1.0,
+      "warhammer_token": 1.0,
+      "bloodied_paper": 1.0
+    },
+    "item_overlay_positions_runtime": {
+      "broken_arrow": [
+        260,
+        470
+      ],
+      "dented_shield": [
+        380,
+        460
+      ],
+      "lost_boot": [
+        500,
+        475
+      ],
+      "rubble": [
+        980,
+        455
+      ],
+      "torn_backpack": [
+        980,
+        470
+      ],
+      "coins": [
+        950,
+        495
+      ],
+      "warhammer_token": [
+        990,
+        495
+      ],
+      "bloodied_paper": [
+        1030,
+        480
+      ]
+    }
+  }
+}

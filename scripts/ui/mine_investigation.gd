@@ -6,6 +6,11 @@ extends InvestigationScene
 
 const RUBBLE_REVEAL_DIST := 120.0   # 碎石被拖离原位多远算「扒开」
 const SPILL_TILT := 1.2             # 背包倾斜超过此弧度算「倾倒」
+const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_normal.png"
+const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_hover.png"
+const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/mine_ui/mine_leave_button_pressed.png"
+const LEAVE_BUTTON_SIZE := Vector2(280, 100)
+const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _rubble: MineItem = null
 var _rubble_origin: Vector2 = Vector2.ZERO
@@ -16,28 +21,73 @@ var _contract_taken: bool = false
 
 
 func _setup_scene() -> void:
+	_apply_mine_ui_style()
 	_spawn_shallow_items()
 	_spawn_deep_layer()
 
 
+func _apply_mine_ui_style() -> void:
+	ThemeColors.style_brush_label(_obs_label, 20, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_hint_label, 16, ThemeColors.TEXT_SUBTITLE)
+	_apply_label_outline(_obs_label)
+	_apply_label_outline(_hint_label)
+	_apply_leave_button_style()
+
+
+func _apply_leave_button_style() -> void:
+	var font := ThemeColors.menu_font()
+	if font != null:
+		_leave_btn.add_theme_font_override("font", font)
+	_leave_btn.add_theme_font_size_override("font_size", 18)
+	_leave_btn.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	_leave_btn.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	_leave_btn.add_theme_color_override("font_pressed_color", ThemeColors.AMBER_BRIGHT)
+	_leave_btn.add_theme_stylebox_override("normal", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
+	_leave_btn.add_theme_stylebox_override("hover", _leave_button_stylebox(LEAVE_BUTTON_HOVER))
+	_leave_btn.add_theme_stylebox_override("pressed", _leave_button_stylebox(LEAVE_BUTTON_PRESSED))
+	_leave_btn.add_theme_stylebox_override("disabled", _leave_button_stylebox(LEAVE_BUTTON_NORMAL))
+	_leave_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_leave_btn.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_leave_btn.offset_right = LEAVE_BUTTON_BOTTOM_RIGHT.x
+	_leave_btn.offset_bottom = LEAVE_BUTTON_BOTTOM_RIGHT.y
+	_leave_btn.offset_left = LEAVE_BUTTON_BOTTOM_RIGHT.x - LEAVE_BUTTON_SIZE.x
+	_leave_btn.offset_top = LEAVE_BUTTON_BOTTOM_RIGHT.y - LEAVE_BUTTON_SIZE.y
+
+
+func _leave_button_stylebox(path: String) -> StyleBoxTexture:
+	var style := TextureManager.try_load_style_box(path)
+	if style == null:
+		style = StyleBoxTexture.new()
+	style.set_content_margin(SIDE_LEFT, 58.0)
+	style.set_content_margin(SIDE_RIGHT, 58.0)
+	style.set_content_margin(SIDE_TOP, 30.0)
+	style.set_content_margin(SIDE_BOTTOM, 30.0)
+	return style
+
+
+func _apply_label_outline(label: Label) -> void:
+	label.add_theme_constant_override("outline_size", 4)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.015, 0.9))
+
+
 func _spawn_shallow_items() -> void:
 	# 浅层散落物：捡起=一句观察，不授予。
-	_spawn_item("broken_arrow", "observation", Vector2(48, 16), Color(0.55, 0.4, 0.25),
+	_spawn_item("broken_arrow", "observation", Vector2(128, 40), Color(0.55, 0.4, 0.25),
 		"断箭", "箭杆从中折断——这里被打崩过。", Vector2(260, 470))
-	_spawn_item("dented_shield", "observation", Vector2(64, 64), Color(0.45, 0.45, 0.5),
+	_spawn_item("dented_shield", "observation", Vector2(104, 72), Color(0.45, 0.45, 0.5),
 		"凹盾", "盾面一个深陷的凹痕，挡下过重重一击。", Vector2(380, 460))
-	_spawn_item("lost_boot", "observation", Vector2(56, 36), Color(0.35, 0.25, 0.2),
+	_spawn_item("lost_boot", "observation", Vector2(96, 56), Color(0.35, 0.25, 0.2),
 		"破靴", "一只孤零零的靴子，主人走得很急——或者没走成。", Vector2(500, 475))
 
 
 func _spawn_deep_layer() -> void:
 	# 深层：血迹尽头的塌方碎石，底下压着撕裂的背包。
 	# 背包先生成、冻结、隐藏；碎石盖在其上，扒开碎石才解封背包。
-	_backpack = _spawn_item("torn_backpack", "backpack", Vector2(72, 56), Color(0.3, 0.22, 0.16),
+	_backpack = _spawn_item("torn_backpack", "backpack", Vector2(136, 96), Color(0.3, 0.22, 0.16),
 		"撕裂的背包", "", Vector2(980, 470))
 	_backpack.visible = false
 	_backpack.freeze = true
-	_rubble = _spawn_item("rubble", "rubble", Vector2(120, 90), Color(0.4, 0.38, 0.36),
+	_rubble = _spawn_item("rubble", "rubble", Vector2(328, 168), Color(0.4, 0.38, 0.36),
 		"塌方碎石", "", Vector2(980, 455))
 	_rubble.freeze = true
 	_rubble_origin = _rubble.global_position
@@ -86,15 +136,15 @@ func _check_backpack_spill() -> void:
 
 func _spill_backpack() -> void:
 	_backpack_spilled = true
-	var mouth := _backpack.global_position + Vector2(0, 40)
+	var mouth := _backpack.global_position + Vector2(0, -22)
 	# 洒落物 Y 向上偏移，避免生成时穿入地面 StaticBody2D（地面顶 y≈520）
-	var coins := _spawn_item("coins", "plain", Vector2(20, 20), Color(0.85, 0.7, 0.25),
+	var coins := _spawn_item("coins", "plain", Vector2(72, 36), Color(0.85, 0.7, 0.25),
 		"硬币", "", mouth + Vector2(-30, -15))
 	coins.linear_velocity = Vector2(-90, -200)
-	var token := _spawn_item("warhammer_token", "plain", Vector2(28, 28), Color(0.6, 0.15, 0.12),
+	var token := _spawn_item("warhammer_token", "plain", Vector2(64, 40), Color(0.6, 0.15, 0.12),
 		"血斧队牌", "", mouth + Vector2(10, -15))
 	token.linear_velocity = Vector2(40, -220)
-	var paper := _spawn_item("bloodied_paper", "contract", Vector2(40, 52), Color(0.7, 0.62, 0.5),
+	var paper := _spawn_item("bloodied_paper", "contract", Vector2(80, 64), Color(0.7, 0.62, 0.5),
 		"沾血的纸", "", mouth + Vector2(50, -30))
 	paper.linear_velocity = Vector2(120, -250)
 	_obs_label.text = "背包一倒，硬币、一枚血斧队牌、还有一张沾血的纸哗啦落了出来。"

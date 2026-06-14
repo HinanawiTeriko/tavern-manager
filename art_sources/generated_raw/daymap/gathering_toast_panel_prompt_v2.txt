@@ -1,0 +1,8 @@
+Use case: game asset
+Asset type: ultra-wide top notification toast panel for a pixel-art dungeon tavern management UI
+Primary request: Create one very wide, very short horizontal reward notification panel on a perfectly flat solid #00ff00 chroma-key background. No readable text, no letters, no numbers, no logo.
+Subject: a compact parchment-and-dark-ink top screen reward toast panel for game-rendered item reward text. It must be much thinner than a banner: roughly 8:1 aspect ratio, like a narrow map slip or paper ribbon. It should feel like a pinned tavern notice, not a modern rounded rectangle.
+Style/medium: native-looking chunky pixel game UI art, rough ink outline, muted parchment center, tiny dark red-brown wax/pin accents near the left and right ends, sparse amber candlelight highlights. Crisp silhouette, low-density chunky pixel grain, historical printmaking influence.
+Composition/framing: square source image, one centered panel. The panel must occupy most of the width but only a small height band. Keep the top and bottom edge low and compact. Broad clean center safe area for text. Irregular torn-paper silhouette, but the whole object remains low and thin. Generous solid green padding around it.
+Color palette: muted parchment tan, map-brown, dark teal/black ink, small dark red-brown wax, sparse amber highlight. Avoid saturated orange strips.
+Constraints: background must be uniform #00ff00 with no texture, no shadows, no gradients, no floor, no lighting variation. Do not use #00ff00 inside the panel art. No readable text, no fake glyphs, no labels, no watermark. No cast shadow outside the panel. Keep edges crisp and separated from background.

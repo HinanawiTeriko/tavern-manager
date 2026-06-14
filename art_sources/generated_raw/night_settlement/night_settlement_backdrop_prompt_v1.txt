@@ -1,0 +1,7 @@
+AI-generated source for a Godot pixel-art dungeon tavern management game post-close settlement screen.
+
+Canvas: 16:9 full-screen source, no UI text, no readable letters, no numbers, no logos.
+
+Scene: a closed underground tavern after the last customer has left. Upper half: rough cold stone wall with candlelight casting shadow-play silhouettes of tonight's guests: a seated drinking figure, an empty chair, a leaving figure, a small mysterious fate silhouette. Lower half: bar counter edge with cleared mugs, a few coins, a cracked cup, dark ale stain, and small leftover objects. Leave clean darker reading zones at lower left and lower right for dynamic Godot Labels. Leave a small clear button area at lower right. No open book as the main object, no modern report panel, no victory screen, no high-resolution painterly faces.
+
+Visual language: native-pixel game art after normalization, dark teal dungeon palette, warm amber candle accents, rough ink-like silhouettes, chunky low-density pixel clusters, crisp edges, limited palette, readable after reduction to 320x180. Mood: quiet, tactile, strange, the tavern replaying the night as shadows.

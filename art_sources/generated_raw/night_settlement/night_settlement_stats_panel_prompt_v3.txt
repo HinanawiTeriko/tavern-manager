@@ -1,0 +1,11 @@
+AI-generated single UI panel source for a Godot pixel-art dungeon tavern management game.
+
+Canvas: one isolated compact settlement stats panel on a perfectly flat solid #00ff00 chroma-key background. No readable text, no numbers, no logos, no labels.
+
+Critical shape: the panel object itself must be a compact horizontal rectangle with an aspect ratio around 1.8:1. The full object must be visible with padding; no cropped edges.
+
+Object: a quiet left-side tavern closing tally surface for dynamic Godot UI labels and icons. Dark old wood frame, brass corner caps, worn blue-black cloth or stained slate writing surface, subtle dents, small nail heads, wax smudges, and rough ink-like edge wear only.
+
+Hard constraints: no baked icons, no pictograms, no tag slots, no label tabs, no coin images, no coin grooves, no tally marks, no check marks, no X marks, no stars, no mugs, no papers, no glyph-like scratches, no fake UI symbols. The art must be a neutral container behind Godot-rendered text and separate runtime icons.
+
+Visual language: dark teal dungeon tavern UI, old wood, brass, sparse amber highlights, rough ink edges, chunky low-density pixel clusters, crisp silhouette, limited palette, no smooth modern gradient, readable after reduction to 120x66 native pixels and 4x runtime scaling.

@@ -1,0 +1,69 @@
+{
+  "id": "tavern_bar_background_foreground_occluder",
+  "source": "art_sources/generated_raw/tavern_background/tavern_background_no_people_reference_v1.png",
+  "native": "assets/source/tavern/table/tabletop_native.png",
+  "runtime": "assets/textures/tavern/table/tabletop.png",
+  "native_size": [
+    320,
+    80
+  ],
+  "runtime_size": [
+    1280,
+    320
+  ],
+  "scale": 4,
+  "safe_area": [
+    0,
+    0,
+    320,
+    80
+  ],
+  "derived_from": "assets/source/tavern/background/tavern_bg_native.png",
+  "background_sample_native_y_range": [
+    110,
+    180
+  ],
+  "occlusion_rect_native": [
+    0,
+    11,
+    320,
+    70
+  ],
+  "order_groove_source": "art_sources/generated_raw/tavern_order_groove/tavern_table_order_groove_source_v1.png",
+  "order_groove_rect_native": [
+    78,
+    39,
+    242,
+    53
+  ],
+  "order_groove_runtime_rect": [
+    312,
+    596,
+    968,
+    652
+  ],
+  "order_groove_safe_area_runtime": [
+    392,
+    604,
+    888,
+    636
+  ],
+  "order_groove_pipeline": {
+    "method": "fixed-rect imagegen source composite",
+    "runtime_ui": "Godot Labels and ProgressBar only; no text baked into the texture"
+  },
+  "physics_alignment": {
+    "sprite_position_runtime": [
+      640,
+      600
+    ],
+    "surface_top_y_runtime": 484,
+    "front_lip_y_runtime": 588,
+    "ground_y_runtime": 536,
+    "playable_x_range_runtime": [
+      0,
+      1280
+    ]
+  },
+  "intended_godot_use": "background-matched Tavern foreground bar occluder that preserves customer bust depth"
+}

@@ -26,7 +26,20 @@ const MENU_BRUSH_TAB := "res://assets/textures/ui/menu_brush_tab.png"
 const MENU_BRUSH_SLIDER_TRACK := "res://assets/textures/ui/menu_brush_slider_track.png"
 const MENU_BRUSH_SLIDER_GRABBER := "res://assets/textures/ui/menu_brush_slider_grabber.png"
 const MENU_BRUSH_MARKER := "res://assets/textures/ui/menu_brush_hover_marker.png"
+const MENU_BRUSH_MARKERS := [
+	"res://assets/textures/ui/menu_brush_hover_marker_1.png",
+	"res://assets/textures/ui/menu_brush_hover_marker_2.png",
+	"res://assets/textures/ui/menu_brush_hover_marker_3.png",
+	"res://assets/textures/ui/menu_brush_hover_marker_4.png",
+]
+const INVENTORY_PANEL := "res://assets/textures/ui/inventory_panel.png"
+const INVENTORY_PANEL_TEXTURE_MARGINS := Vector4(24.0, 24.0, 24.0, 24.0)
+const INVENTORY_PANEL_CONTENT_MARGINS := Vector4(36.0, 54.0, 36.0, 36.0)
 const MENU_FONT_PATH := "res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"
+const TOPBAR_BUTTON_SIZE := Vector2(96, 48)
+const SHORTCUT_SLOT_EMPTY := "res://assets/textures/ui/shortcut_slot_empty.png"
+const SHORTCUT_SLOT_FILLED := "res://assets/textures/ui/shortcut_slot_filled.png"
+const SHORTCUT_SLOT_HOVER := "res://assets/textures/ui/shortcut_slot_hover.png"
 
 static var _menu_font: Font = null
 
@@ -140,12 +153,60 @@ static func style_brush_panel(panel: Control) -> void:
 	panel.add_theme_stylebox_override("panel", _brush_texture_style(MENU_BRUSH_PANEL))
 
 
+static func style_inventory_panel(panel: Control) -> void:
+	var style := _brush_texture_style(INVENTORY_PANEL)
+	var texture_style := style as StyleBoxTexture
+	if texture_style != null:
+		texture_style.set_texture_margin(SIDE_LEFT, INVENTORY_PANEL_TEXTURE_MARGINS.x)
+		texture_style.set_texture_margin(SIDE_TOP, INVENTORY_PANEL_TEXTURE_MARGINS.y)
+		texture_style.set_texture_margin(SIDE_RIGHT, INVENTORY_PANEL_TEXTURE_MARGINS.z)
+		texture_style.set_texture_margin(SIDE_BOTTOM, INVENTORY_PANEL_TEXTURE_MARGINS.w)
+	style.set_content_margin(SIDE_LEFT, INVENTORY_PANEL_CONTENT_MARGINS.x)
+	style.set_content_margin(SIDE_TOP, INVENTORY_PANEL_CONTENT_MARGINS.y)
+	style.set_content_margin(SIDE_RIGHT, INVENTORY_PANEL_CONTENT_MARGINS.z)
+	style.set_content_margin(SIDE_BOTTOM, INVENTORY_PANEL_CONTENT_MARGINS.w)
+	panel.add_theme_stylebox_override("panel", style)
+
+
 static func style_brush_button(button: Button, font_size: int = 16) -> void:
 	_apply_brush_button_style(button, MENU_BRUSH_BAND, font_size)
 
 
 static func style_brush_tab_button(button: Button, font_size: int = 14) -> void:
 	_apply_brush_button_style(button, MENU_BRUSH_TAB, font_size)
+
+
+static func style_topbar_button(button: Button, button_key: String, font_size: int = 14) -> void:
+	button.custom_minimum_size = TOPBAR_BUTTON_SIZE
+	var normal := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_normal.png" % button_key)
+	var hover := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_hover.png" % button_key)
+	var pressed := TextureManager.try_load_style_box("res://assets/textures/ui/topbar_%s_button_pressed.png" % button_key)
+	if normal != null:
+		_apply_topbar_button_content_margins(normal)
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("disabled", normal)
+	if hover != null:
+		_apply_topbar_button_content_margins(hover)
+		button.add_theme_stylebox_override("hover", hover)
+	if pressed != null:
+		_apply_topbar_button_content_margins(pressed)
+		button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var font := menu_font()
+	if font != null:
+		button.add_theme_font_override("font", font)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", AMBER_BRIGHT)
+	button.add_theme_color_override("font_disabled_color", TEXT_DIM)
+
+
+static func _apply_topbar_button_content_margins(style: StyleBoxTexture) -> void:
+	style.set_content_margin(SIDE_LEFT, 10.0)
+	style.set_content_margin(SIDE_RIGHT, 10.0)
+	style.set_content_margin(SIDE_TOP, 5.0)
+	style.set_content_margin(SIDE_BOTTOM, 5.0)
 
 
 static func style_brush_popup(popup: PopupMenu) -> void:
@@ -202,18 +263,35 @@ static func style_shortcut_slot(slot: ColorRect) -> void:
 		background = TextureRect.new()
 		background.name = "BrushBackground"
 		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		background.texture = TextureManager.try_load(MENU_BRUSH_TAB)
 		background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		background.stretch_mode = TextureRect.STRETCH_SCALE
+		background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		slot.add_child(background)
 		slot.move_child(background, 0)
+	background.texture = TextureManager.try_load(SHORTCUT_SLOT_EMPTY)
+	background.modulate = Color.WHITE
+	slot.set_meta("shortcut_filled", false)
 
 
 static func set_shortcut_slot_hover(slot: ColorRect, hovered: bool) -> void:
 	var background := slot.get_node_or_null("BrushBackground") as TextureRect
 	if background != null:
-		background.modulate = AMBER_PRIMARY if hovered else Color.WHITE
+		if hovered:
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_HOVER)
+		elif bool(slot.get_meta("shortcut_filled", false)):
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_FILLED)
+		else:
+			background.texture = TextureManager.try_load(SHORTCUT_SLOT_EMPTY)
+		background.modulate = Color.WHITE
+
+
+static func set_shortcut_slot_filled(slot: ColorRect, filled: bool) -> void:
+	slot.set_meta("shortcut_filled", filled)
+	var background := slot.get_node_or_null("BrushBackground") as TextureRect
+	if background != null:
+		background.texture = TextureManager.try_load(SHORTCUT_SLOT_FILLED if filled else SHORTCUT_SLOT_EMPTY)
+		background.modulate = Color.WHITE
 
 
 static func _brush_texture_style(texture_path: String) -> StyleBox:
@@ -229,6 +307,10 @@ static func _brush_hover_style() -> StyleBoxFlat:
 
 static func set_brush_selected(button: Button, selected: bool) -> void:
 	button.set_meta("brush_selected", selected)
+	if selected:
+		_choose_brush_marker(button)
+	elif not bool(button.get_meta("brush_marker_hovered", false)):
+		button.set_meta("brush_marker_path", "")
 	_sync_brush_marker(button)
 
 
@@ -256,7 +338,6 @@ static func _apply_brush_button_style(button: Button, texture_path: String, font
 		return
 	var marker := TextureRect.new()
 	marker.name = "BrushHoverMarker"
-	marker.texture = TextureManager.try_load(MENU_BRUSH_MARKER)
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -272,14 +353,61 @@ static func _apply_brush_button_style(button: Button, texture_path: String, font
 	marker.offset_right = 48.0
 	marker.offset_top = -18.0
 	marker.offset_bottom = 6.0
-	button.mouse_entered.connect(_sync_brush_marker.bind(button))
-	button.mouse_exited.connect(_sync_brush_marker.bind(button))
+	_apply_brush_marker_texture(button)
+	button.mouse_entered.connect(_on_brush_marker_mouse_entered.bind(button))
+	button.mouse_exited.connect(_on_brush_marker_mouse_exited.bind(button))
 
 
 static func _sync_brush_marker(button: Button) -> void:
 	var marker := button.get_node_or_null("BrushHoverMarker") as TextureRect
 	if marker != null:
-		marker.visible = bool(button.get_meta("brush_selected", false)) or button.is_hovered()
+		var active := bool(button.get_meta("brush_selected", false)) or bool(button.get_meta("brush_marker_hovered", false))
+		if active:
+			_choose_brush_marker(button)
+		marker.visible = active
+
+
+static func _on_brush_marker_mouse_entered(button: Button) -> void:
+	button.set_meta("brush_marker_hovered", true)
+	_choose_brush_marker(button)
+	_sync_brush_marker(button)
+
+
+static func _on_brush_marker_mouse_exited(button: Button) -> void:
+	button.set_meta("brush_marker_hovered", false)
+	if not bool(button.get_meta("brush_selected", false)):
+		button.set_meta("brush_marker_path", "")
+	_sync_brush_marker(button)
+
+
+static func _choose_brush_marker(button: Button) -> void:
+	if String(button.get_meta("brush_marker_path", "")) != "":
+		return
+	var marker_paths := _brush_marker_paths()
+	if marker_paths.is_empty():
+		button.set_meta("brush_marker_path", MENU_BRUSH_MARKER)
+	else:
+		var index := int(randi() % marker_paths.size())
+		button.set_meta("brush_marker_path", marker_paths[index])
+	_apply_brush_marker_texture(button)
+
+
+static func _apply_brush_marker_texture(button: Button) -> void:
+	var marker := button.get_node_or_null("BrushHoverMarker") as TextureRect
+	if marker == null:
+		return
+	var marker_path := String(button.get_meta("brush_marker_path", ""))
+	if marker_path == "":
+		var marker_paths := _brush_marker_paths()
+		marker_path = marker_paths[0] if not marker_paths.is_empty() else MENU_BRUSH_MARKER
+	var texture := TextureManager.try_load(marker_path)
+	if texture == null:
+		texture = TextureManager.try_load(MENU_BRUSH_MARKER)
+	marker.texture = texture
+
+
+static func _brush_marker_paths() -> Array:
+	return MENU_BRUSH_MARKERS
 
 
 static func _brush_fallback() -> StyleBoxFlat:

@@ -1,0 +1,280 @@
+{
+  "customers": [
+    {
+      "id": "regular_belta",
+      "display_name": "贝尔塔",
+      "role": "矿区搬运工",
+      "portrait_key": "regular_belta",
+      "favorite_orders": ["meat_cooked", "bread"],
+      "patience_multiplier": 0.9,
+      "tip_multiplier": 1.05,
+      "reputation_on_success": 1,
+      "unlock_day": 2,
+      "spawn_weight": 1.2,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_belta_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_belta_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_belta_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这才像能填饱人的东西。」",
+        "fail_wrong": "「我点的不是这个，老板。」",
+        "fail_weird": "「矿洞里的石头都比这像饭。」",
+        "impatient": "「快点，我还得回矿口。」"
+      }
+    },
+    {
+      "id": "regular_noel",
+      "display_name": "诺尔",
+      "role": "账房学徒",
+      "portrait_key": "regular_noel",
+      "favorite_orders": ["herb_tea", "ale_beer"],
+      "patience_multiplier": 1.15,
+      "tip_multiplier": 0.9,
+      "reputation_on_success": 1,
+      "unlock_day": 1,
+      "spawn_weight": 1.0,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_noel_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_noel_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_noel_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「账上应该给这份记个好评。」",
+        "fail_wrong": "「呃……这和我记的不一样。」",
+        "fail_weird": "「这个配方是不是抄错了？」",
+        "impatient": "「我只剩一小会儿休息时间。」"
+      }
+    },
+    {
+      "id": "regular_masha",
+      "display_name": "玛莎",
+      "role": "洗衣女工",
+      "portrait_key": "regular_masha",
+      "favorite_orders": ["herb_broth", "bread"],
+      "patience_multiplier": 1.0,
+      "tip_multiplier": 1.0,
+      "reputation_on_success": 1,
+      "unlock_day": 3,
+      "spawn_weight": 1.0,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_masha_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_masha_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_masha_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「热乎，正好暖暖手。」",
+        "fail_wrong": "「哎呀，我可没点这个。」",
+        "fail_weird": "「这味道洗三遍都洗不掉吧。」",
+        "impatient": "「锅里还没好吗？」"
+      }
+    },
+    {
+      "id": "regular_coen",
+      "display_name": "科恩",
+      "role": "巡夜人",
+      "portrait_key": "regular_coen",
+      "favorite_orders": ["ale_beer", "wine"],
+      "patience_multiplier": 0.95,
+      "tip_multiplier": 1.15,
+      "reputation_on_success": 1,
+      "unlock_day": 1,
+      "spawn_weight": 0.9,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_coen_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_coen_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_coen_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「今晚巡街前就靠这个了。」",
+        "fail_wrong": "「我眼神还没差到点错菜。」",
+        "fail_weird": "「这东西该交给药师，不该上桌。」",
+        "impatient": "「夜巡不等人。」"
+      }
+    },
+    {
+      "id": "regular_dorin",
+      "display_name": "多林",
+      "role": "矿侧退伍兵",
+      "portrait_key": "regular_dorin",
+      "favorite_orders": ["meat_cooked", "ale_beer"],
+      "patience_multiplier": 0.85,
+      "tip_multiplier": 1.1,
+      "reputation_on_success": 1,
+      "unlock_day": 2,
+      "spawn_weight": 0.95,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_dorin_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_dorin_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_dorin_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这口劲道，像在炉边吃的。」",
+        "fail_wrong": "「我点的不是给新兵练胆的东西。」",
+        "fail_weird": "「这味儿连矿渣都压不住。」",
+        "impatient": "「酒凉了，肉也该上了吧。」"
+      }
+    },
+    {
+      "id": "regular_elira",
+      "display_name": "艾莉拉",
+      "role": "银叶巡林人",
+      "portrait_key": "regular_elira",
+      "favorite_orders": ["herb_tea", "herb_broth"],
+      "patience_multiplier": 1.2,
+      "tip_multiplier": 1.0,
+      "reputation_on_success": 1,
+      "unlock_day": 3,
+      "spawn_weight": 0.85,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_elira_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_elira_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_elira_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「草叶的味道还在，手艺不错。」",
+        "fail_wrong": "「这不是我想带进林子的东西。」",
+        "fail_weird": "「闻起来像迷路三天的蘑菇。」",
+        "impatient": "「林中的路不会等我太久。」"
+      }
+    },
+    {
+      "id": "regular_marco",
+      "display_name": "马尔科",
+      "role": "走货商人",
+      "portrait_key": "regular_marco",
+      "favorite_orders": ["wine", "bread"],
+      "patience_multiplier": 0.95,
+      "tip_multiplier": 1.2,
+      "reputation_on_success": 1,
+      "unlock_day": 4,
+      "spawn_weight": 0.95,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_marco_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_marco_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_marco_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这个价钱配得上这口味。」",
+        "fail_wrong": "「账目和盘子都不该出错。」",
+        "fail_weird": "「这东西卖不出去，也吃不下去。」",
+        "impatient": "「每等一刻都是成本。」"
+      }
+    },
+    {
+      "id": "regular_nix",
+      "display_name": "尼克斯",
+      "role": "后巷跑腿人",
+      "portrait_key": "regular_nix",
+      "favorite_orders": ["ale_beer", "meat_sand"],
+      "patience_multiplier": 0.9,
+      "tip_multiplier": 0.95,
+      "reputation_on_success": 1,
+      "unlock_day": 5,
+      "spawn_weight": 0.8,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_nix_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_nix_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_nix_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「够快，够香，我记下了。」",
+        "fail_wrong": "「嘘，错盘子会招麻烦的。」",
+        "fail_weird": "「这玩意儿连后巷都不收。」",
+        "impatient": "「我不能在明处站太久。」"
+      }
+    },
+    {
+      "id": "regular_selene",
+      "display_name": "塞琳",
+      "role": "符文学者",
+      "portrait_key": "regular_selene",
+      "favorite_orders": ["herb_tea", "spiced_wine"],
+      "patience_multiplier": 1.1,
+      "tip_multiplier": 1.1,
+      "reputation_on_success": 1,
+      "unlock_day": 5,
+      "spawn_weight": 0.85,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_selene_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_selene_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_selene_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「配比稳定，余味也清楚。」",
+        "fail_wrong": "「我的记录里不是这一项。」",
+        "fail_weird": "「这不像料理，更像失败的药剂。」",
+        "impatient": "「墨水都快干了。」"
+      }
+    },
+    {
+      "id": "regular_gareth",
+      "display_name": "盖瑞斯",
+      "role": "流浪骑士",
+      "portrait_key": "regular_gareth",
+      "favorite_orders": ["meat_cooked", "meat_stew"],
+      "patience_multiplier": 0.95,
+      "tip_multiplier": 1.15,
+      "reputation_on_success": 1,
+      "unlock_day": 6,
+      "spawn_weight": 0.85,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_gareth_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_gareth_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_gareth_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「朴实，有力，值得致谢。」",
+        "fail_wrong": "「这不是我向柜台请求的盘子。」",
+        "fail_weird": "「请别把骑士的胃当盾牌。」",
+        "impatient": "「我的马还在门外等着。」"
+      }
+    },
+    {
+      "id": "regular_lyra",
+      "display_name": "莉拉",
+      "role": "巡游吟游诗人",
+      "portrait_key": "regular_lyra",
+      "favorite_orders": ["wine", "herbal_ale"],
+      "patience_multiplier": 1.05,
+      "tip_multiplier": 1.05,
+      "reputation_on_success": 1,
+      "unlock_day": 4,
+      "spawn_weight": 0.9,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_lyra_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_lyra_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_lyra_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这味道能写进副歌里。」",
+        "fail_wrong": "「旋律偏了，盘子也偏了。」",
+        "fail_weird": "「这不是不协和，是走音。」",
+        "impatient": "「灵感等太久会跑掉的。」"
+      }
+    },
+    {
+      "id": "regular_oma",
+      "display_name": "奥玛",
+      "role": "苦修僧",
+      "portrait_key": "regular_oma",
+      "favorite_orders": ["bread", "malt_porridge"],
+      "patience_multiplier": 1.25,
+      "tip_multiplier": 0.85,
+      "reputation_on_success": 1,
+      "unlock_day": 6,
+      "spawn_weight": 0.75,
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_oma_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_oma_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_oma_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「简单，却让心安定。」",
+        "fail_wrong": "「错也可受，只是不能称为所求。」",
+        "fail_weird": "「苦行也不必如此苦。」",
+        "impatient": "「等待也是修行，饥饿不是。」"
+      }
+    }
+  ]
+}

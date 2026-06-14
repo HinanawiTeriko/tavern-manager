@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets" / "source" / "title"
 OUTPUT = ROOT / "assets" / "textures" / "title"
 SCALE = 4
+MARKER_SCALE = 2
 FULL_LAYERS = [
     "title_pixel_bg_clean",
     "title_pixel_glow_mask",
@@ -20,7 +21,7 @@ TRANSPARENT_LAYERS = {
     "title_pixel_menu_marker",
 }
 NATIVE_SIZE = (320, 180)
-MARKER_SIZE = (61, 7)
+MARKER_SIZE = (122, 14)
 NATIVE_BAND_TOPS = [36, 62, 88, 114]
 LOGO_MIN_VISIBLE_PIXELS = 5_500
 LOGO_MIN_BBOX_WIDTH = 175
@@ -34,9 +35,9 @@ GLOW_MIN_BBOX_WIDTH = 180
 GLOW_MIN_BBOX_HEIGHT = 120
 GLOW_MAX_BBOX_WIDTH = 240
 GLOW_MAX_BBOX_HEIGHT = 170
-MARKER_MIN_VISIBLE_PIXELS = 250
-MARKER_MIN_BBOX_WIDTH = 60
-MARKER_MIN_BBOX_HEIGHT = 5
+MARKER_MIN_VISIBLE_PIXELS = 900
+MARKER_MIN_BBOX_WIDTH = 100
+MARKER_MIN_BBOX_HEIGHT = 10
 
 
 def visible_pixel_count(image: Image.Image) -> int:
@@ -161,16 +162,18 @@ def build_runtime_images(sources: dict[str, Image.Image]) -> dict[str, Image.Ima
     }
     for name, expected_size in expected_sizes.items():
         validate_source(name, sources[name], expected_size)
-    return {
-        name: source.resize((source.width * SCALE, source.height * SCALE), Image.Resampling.NEAREST)
-        for name, source in sources.items()
-    }
+    runtimes: dict[str, Image.Image] = {}
+    for name, source in sources.items():
+        scale = MARKER_SCALE if name == "title_pixel_menu_marker" else SCALE
+        runtimes[name] = source.resize((source.width * scale, source.height * scale), Image.Resampling.NEAREST)
+    return runtimes
 
 
 def validate_runtime_images(sources: dict[str, Image.Image], runtimes: dict[str, Image.Image]) -> None:
     for name, source in sources.items():
         runtime = runtimes[name]
-        expected_size = (source.width * SCALE, source.height * SCALE)
+        scale = MARKER_SCALE if name == "title_pixel_menu_marker" else SCALE
+        expected_size = (source.width * scale, source.height * scale)
         if runtime.size != expected_size:
             raise ValueError(f"{name}: wrong runtime size {runtime.size}")
         expected = source.resize(expected_size, Image.Resampling.NEAREST)

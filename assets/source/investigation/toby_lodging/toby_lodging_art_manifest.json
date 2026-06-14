@@ -1,0 +1,152 @@
+{
+  "scale": 4,
+  "style_profile": "toby_lodging_scene_v1",
+  "background_rgb": [255, 0, 255],
+  "background_tolerance": 36,
+  "background": {
+    "id": "toby_lodging_background",
+    "source": "art_sources/generated_raw/toby_lodging/toby_lodging_background_source_v1.png",
+    "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_background_reference_v1.png",
+    "native": "assets/source/investigation/toby_lodging/background_native.png",
+    "runtime": "assets/ui/generated/investigation/toby_lodging/background.png",
+    "source_rect": [0, 0, 1672, 941],
+    "native_size": [320, 180],
+    "runtime_size": [1280, 720],
+    "safe_area": [0, 0, 320, 180],
+    "intended_godot_use": "Sprite2D BackgroundArt in scenes/ui/TobyLodgingInvestigation.tscn"
+  },
+  "items": [
+    {
+      "id": "oil_lamp",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_items_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_items_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/oil_lamp_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/oil_lamp.png",
+      "source_rect": [0, 0, 627, 627],
+      "native_size": [18, 24],
+      "runtime_size": [72, 96],
+      "safe_area": [1, 1, 16, 22],
+      "intended_godot_use": "MineItem TextureVisual for item_tag oil_lamp"
+    },
+    {
+      "id": "hard_bread",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_items_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_items_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/hard_bread_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/hard_bread.png",
+      "source_rect": [627, 0, 627, 627],
+      "native_size": [20, 12],
+      "runtime_size": [80, 48],
+      "safe_area": [1, 1, 18, 10],
+      "intended_godot_use": "MineItem TextureVisual for item_tag hard_bread"
+    },
+    {
+      "id": "oversized_coat",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_items_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_items_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/oversized_coat_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/oversized_coat.png",
+      "source_rect": [0, 627, 627, 627],
+      "native_size": [44, 28],
+      "runtime_size": [176, 112],
+      "safe_area": [2, 1, 40, 26],
+      "intended_godot_use": "MineItem TextureVisual for item_tag oversized_coat"
+    },
+    {
+      "id": "contract_fragment_a",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_contract_fragments_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_contract_fragments_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/contract_fragment_a_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/contract_fragment_a.png",
+      "source_rect": [0, 0, 724, 724],
+      "native_size": [17, 13],
+      "runtime_size": [68, 52],
+      "safe_area": [1, 1, 15, 11],
+      "intended_godot_use": "MineItem TextureVisual for item_tag contract_fragment_a"
+    },
+    {
+      "id": "contract_fragment_b",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_contract_fragments_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_contract_fragments_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/contract_fragment_b_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/contract_fragment_b.png",
+      "source_rect": [724, 0, 724, 724],
+      "native_size": [16, 14],
+      "runtime_size": [64, 56],
+      "safe_area": [1, 1, 14, 12],
+      "intended_godot_use": "MineItem TextureVisual for item_tag contract_fragment_b"
+    },
+    {
+      "id": "contract_fragment_c",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_contract_fragments_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_contract_fragments_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/contract_fragment_c_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/contract_fragment_c.png",
+      "source_rect": [1448, 0, 724, 724],
+      "native_size": [19, 12],
+      "runtime_size": [76, 48],
+      "safe_area": [1, 1, 17, 10],
+      "intended_godot_use": "MineItem TextureVisual for item_tag contract_fragment_c"
+    }
+  ],
+  "leave_button": {
+    "id": "toby_lodging_leave_button",
+    "source_rect": [0, 0, 1774, 887],
+    "states": [
+      {
+        "state": "normal",
+        "source": "art_sources/generated_raw/toby_lodging/toby_lodging_leave_button_source_v1.png",
+        "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_leave_button_reference_v1.png",
+        "native": "assets/source/investigation/toby_lodging/ui/leave_button_normal_native.png",
+        "runtime": "assets/ui/generated/investigation/toby_lodging/ui/leave_button_normal.png",
+        "native_size": [70, 25],
+        "runtime_size": [280, 100],
+        "safe_area": [4, 3, 62, 19],
+        "nine_slice_margins": [14, 8, 14, 8],
+        "intended_godot_use": "StyleBoxTexture normal state for UI/LeaveButton"
+      },
+      {
+        "state": "hover",
+        "source": "art_sources/generated_raw/toby_lodging/toby_lodging_leave_button_source_v1.png",
+        "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_leave_button_reference_v1.png",
+        "native": "assets/source/investigation/toby_lodging/ui/leave_button_hover_native.png",
+        "runtime": "assets/ui/generated/investigation/toby_lodging/ui/leave_button_hover.png",
+        "native_size": [70, 25],
+        "runtime_size": [280, 100],
+        "safe_area": [4, 3, 62, 19],
+        "nine_slice_margins": [14, 8, 14, 8],
+        "intended_godot_use": "StyleBoxTexture hover state for UI/LeaveButton"
+      },
+      {
+        "state": "pressed",
+        "source": "art_sources/generated_raw/toby_lodging/toby_lodging_leave_button_source_v1.png",
+        "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_leave_button_reference_v1.png",
+        "native": "assets/source/investigation/toby_lodging/ui/leave_button_pressed_native.png",
+        "runtime": "assets/ui/generated/investigation/toby_lodging/ui/leave_button_pressed.png",
+        "native_size": [70, 25],
+        "runtime_size": [280, 100],
+        "safe_area": [4, 3, 62, 19],
+        "nine_slice_margins": [14, 8, 14, 8],
+        "intended_godot_use": "StyleBoxTexture pressed state for UI/LeaveButton"
+      }
+    ]
+  },
+  "review": {
+    "item_positions_runtime": {
+      "oil_lamp": [300, 470],
+      "hard_bread": [440, 478],
+      "oversized_coat": [560, 468],
+      "contract_fragment_a": [220, 460],
+      "contract_fragment_b": [700, 462],
+      "contract_fragment_c": [940, 470]
+    },
+    "item_collision_profiles_runtime": {
+      "oil_lamp": {"size": [44, 70], "offset": [0, 8]},
+      "hard_bread": {"size": [60, 30], "offset": [0, 4]},
+      "oversized_coat": {"size": [140, 76], "offset": [0, 10]},
+      "contract_fragment_a": {"size": [48, 34], "offset": [0, 2]},
+      "contract_fragment_b": {"size": [46, 36], "offset": [0, 2]},
+      "contract_fragment_c": {"size": [52, 32], "offset": [0, 2]}
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "reference": "assets/source/investigation/mine_items/reference/mine_item_sheet_v3_scene_grounded_reference.png",
+  "scale": 4,
+  "style_profile": "mine_scene_grounded_v3",
+  "background_rgb": [255, 0, 255],
+  "background_tolerance": 58,
+  "items": [
+    {
+      "id": "broken_arrow",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [90, 190, 500, 230],
+      "native": "assets/source/investigation/mine_items/broken_arrow_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/broken_arrow.png",
+      "native_size": [32, 10],
+      "runtime_size": [128, 40],
+      "safe_area": [2, 2, 30, 8],
+      "intended_godot_use": "MineItem scene-grounded visual texture for broken_arrow observation prop"
+    },
+    {
+      "id": "dented_shield",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [590, 120, 460, 330],
+      "native": "assets/source/investigation/mine_items/dented_shield_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/dented_shield.png",
+      "native_size": [26, 18],
+      "runtime_size": [104, 72],
+      "safe_area": [2, 2, 24, 16],
+      "intended_godot_use": "MineItem scene-grounded visual texture for dented_shield observation prop"
+    },
+    {
+      "id": "lost_boot",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [1080, 120, 440, 330],
+      "native": "assets/source/investigation/mine_items/lost_boot_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/lost_boot.png",
+      "native_size": [24, 14],
+      "runtime_size": [96, 56],
+      "safe_area": [2, 2, 22, 12],
+      "intended_godot_use": "MineItem scene-grounded visual texture for lost_boot observation prop"
+    },
+    {
+      "id": "coins",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [1530, 130, 480, 320],
+      "native": "assets/source/investigation/mine_items/coins_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/coins.png",
+      "native_size": [18, 9],
+      "runtime_size": [72, 36],
+      "safe_area": [2, 1, 16, 8],
+      "intended_godot_use": "MineItem scene-grounded visual texture for spilled coins"
+    },
+    {
+      "id": "rubble",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [40, 530, 760, 420],
+      "native": "assets/source/investigation/mine_items/rubble_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/rubble.png",
+      "native_size": [82, 42],
+      "runtime_size": [328, 168],
+      "safe_area": [4, 3, 78, 39],
+      "intended_godot_use": "MineItem scene-grounded visual texture for rubble reveal blocker"
+    },
+    {
+      "id": "torn_backpack",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [810, 570, 380, 360],
+      "native": "assets/source/investigation/mine_items/torn_backpack_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/torn_backpack.png",
+      "native_size": [34, 24],
+      "runtime_size": [136, 96],
+      "safe_area": [3, 2, 31, 22],
+      "intended_godot_use": "MineItem scene-grounded visual texture for torn_backpack spill container"
+    },
+    {
+      "id": "warhammer_token",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [1210, 610, 300, 300],
+      "native": "assets/source/investigation/mine_items/warhammer_token_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/warhammer_token.png",
+      "native_size": [16, 10],
+      "runtime_size": [64, 40],
+      "safe_area": [2, 1, 14, 9],
+      "intended_godot_use": "MineItem scene-grounded visual texture for blood axe mercenary token"
+    },
+    {
+      "id": "bloodied_paper",
+      "source": "art_sources/generated_raw/mine_investigation/mine_item_sheet_v3_scene_grounded.png",
+      "source_rect": [1580, 570, 420, 360],
+      "native": "assets/source/investigation/mine_items/bloodied_paper_native.png",
+      "runtime": "assets/ui/generated/investigation/mine_items/bloodied_paper.png",
+      "native_size": [20, 16],
+      "runtime_size": [80, 64],
+      "safe_area": [2, 2, 18, 14],
+      "intended_godot_use": "MineItem scene-grounded visual texture for bloodied contract pickup"
+    }
+  ]
+}

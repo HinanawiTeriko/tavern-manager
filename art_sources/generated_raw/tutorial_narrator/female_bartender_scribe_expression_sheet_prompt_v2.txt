@@ -1,0 +1,10 @@
+Use case: expression-sheet generation
+Asset type: tutorial narrator expression sheet source for a pixel dungeon tavern management game, later normalized to 128x160 native and 512x640 runtime portraits.
+Input images: use the approved Vera narrator identity and Belta miner pilot source as style references; keep Vera in the same artist family as Belta, but do not copy Belta.
+Primary request: Create a 2x2 expression sheet for Vera, an original adult female tavern tutorial narrator.
+Character identity: dark brown hair tied back, one wine-red side lock, witty amber eyes, small brass hairpin, dark teal or charcoal vest/capelet, parchment-colored rolled sleeves, burgundy scarf or bow, leather belt, and compact tavern-scribe props such as a closed ledger or small metal cup.
+Style/medium: crisp pixel-game character portrait, thick dark outlines, warm brown and amber color blocks, chunky pixel clusters, low-density detail, readable face at small runtime size.
+Composition/framing: exactly four separate half-body bust portraits in a clean 2x2 grid, consistent silhouette size, generous padding, on a perfectly flat solid #00ff00 chroma-key background. No labels or readable text.
+Expressions: neutral confident narrator with a slight knowing smile; smirk with one finger raised as if giving a tip; concerned with tilted brows and a caution hand gesture; surprised with widened eyes, small open mouth, and light comic emphasis marks.
+Constraints: same artist family as Belta and Vera; do not copy Belta; do not copy Belta's mining tool, headband, apron, pose, face, or body; no readable text, logo, watermark, UI panel, or speech bubble.
+Avoid: fine filigree, tiny facial features, filtered-high-resolution look, soft antialias blur, background gradients, shadows on the background, or any use of #00ff00 in the character.

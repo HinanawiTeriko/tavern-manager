@@ -1,0 +1,198 @@
+from __future__ import annotations
+
+from collections import Counter
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageOps
+
+
+ROOT = Path(__file__).resolve().parents[2]
+MANIFEST = ROOT / "assets" / "source" / "tavern" / "missing_item_icons" / "tavern_missing_item_icons_manifest.json"
+CONTACT_SHEET = ROOT / "docs" / "art" / "tavern_missing_item_icons_contact_sheet.png"
+OUTLINE = (20, 16, 12, 255)
+
+
+def project_path(path: str) -> Path:
+    return ROOT / path
+
+
+def validate_rect(rect: tuple[int, int, int, int], image: Image.Image, icon_id: str) -> None:
+    left, top, right, bottom = rect
+    if left < 0 or top < 0 or right > image.width or bottom > image.height:
+        raise ValueError(f"{icon_id}: source_rect outside sheet bounds")
+    if left >= right or top >= bottom:
+        raise ValueError(f"{icon_id}: source_rect must have positive area")
+
+
+def detect_chroma_key(image: Image.Image) -> tuple[int, int, int] | None:
+    rgba = image.convert("RGBA")
+    pixels: list[tuple[int, int, int]] = []
+    for x in range(rgba.width):
+        for y in (0, rgba.height - 1):
+            red, green, blue, alpha = rgba.getpixel((x, y))
+            if alpha > 0:
+                pixels.append((red, green, blue))
+    for y in range(rgba.height):
+        for x in (0, rgba.width - 1):
+            red, green, blue, alpha = rgba.getpixel((x, y))
+            if alpha > 0:
+                pixels.append((red, green, blue))
+    if not pixels:
+        return None
+    return Counter(pixels).most_common(1)[0][0]
+
+
+def remove_chroma(image: Image.Image, threshold: int = 84) -> Image.Image:
+    rgba = image.convert("RGBA")
+    key = detect_chroma_key(rgba)
+    if key is None:
+        return rgba
+    max_distance_sq = threshold * threshold
+    pixels = rgba.load()
+    for y in range(rgba.height):
+        for x in range(rgba.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0:
+                pixels[x, y] = (0, 0, 0, 0)
+                continue
+            dr = red - key[0]
+            dg = green - key[1]
+            db = blue - key[2]
+            if dr * dr + dg * dg + db * db <= max_distance_sq:
+                pixels[x, y] = (0, 0, 0, 0)
+            else:
+                pixels[x, y] = (red, green, blue, 255)
+    return rgba
+
+
+def harden_alpha(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    pixels = rgba.load()
+    for y in range(rgba.height):
+        for x in range(rgba.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha < 48:
+                pixels[x, y] = (0, 0, 0, 0)
+            else:
+                pixels[x, y] = (red, green, blue, 255)
+    return rgba
+
+
+def add_pixel_outline(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    out = rgba.copy()
+    src = rgba.load()
+    dst = out.load()
+    for y in range(rgba.height):
+        for x in range(rgba.width):
+            if src[x, y][3] > 0:
+                continue
+            for ny in range(max(0, y - 1), min(rgba.height, y + 2)):
+                for nx in range(max(0, x - 1), min(rgba.width, x + 2)):
+                    if src[nx, ny][3] > 0:
+                        dst[x, y] = OUTLINE
+                        break
+                if dst[x, y][3] > 0:
+                    break
+    return out
+
+
+def quantize_visible(image: Image.Image, colors: int = 14) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    rgb = Image.new("RGB", rgba.size, (0, 0, 0))
+    rgb.paste(rgba.convert("RGB"), mask=alpha)
+    quantized = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT).convert("RGBA")
+    quantized.putalpha(alpha)
+    return quantized
+
+
+def materialize_reference(icon_id: str, spec: dict) -> Image.Image:
+    sheet = Image.open(project_path(spec["source_sheet"])).convert("RGBA")
+    rect = tuple(int(v) for v in spec["source_rect"])
+    validate_rect(rect, sheet, icon_id)
+    reference_path = project_path(spec["reference"])
+    reference_path.parent.mkdir(parents=True, exist_ok=True)
+    sheet.crop(rect).save(reference_path)
+    return Image.open(reference_path).convert("RGBA")
+
+
+def fit_to_native(cutout: Image.Image, native_size: tuple[int, int], padding: int) -> Image.Image:
+    alpha_bbox = cutout.getchannel("A").getbbox()
+    if alpha_bbox is None:
+        return cutout
+    cropped = cutout.crop(alpha_bbox)
+    fitted_size = (native_size[0] - padding * 2, native_size[1] - padding * 2)
+    return ImageOps.contain(cropped, fitted_size, method=Image.Resampling.LANCZOS)
+
+
+def export_icon(icon_id: str, spec: dict) -> dict:
+    reference = materialize_reference(icon_id, spec)
+    native_size = tuple(int(v) for v in spec["native_size"])
+    cutout = remove_chroma(reference, int(spec.get("chroma_threshold", 84)))
+    padding = int(spec.get("padding", 2))
+    fitted = fit_to_native(cutout, native_size, padding)
+    fitted = harden_alpha(quantize_visible(fitted, 14))
+    fitted = add_pixel_outline(fitted)
+    native = Image.new("RGBA", native_size, (0, 0, 0, 0))
+    native.alpha_composite(fitted, ((native_size[0] - fitted.width) // 2, (native_size[1] - fitted.height) // 2))
+    scale = int(spec["scale"])
+    runtime = native.resize((native_size[0] * scale, native_size[1] * scale), Image.Resampling.NEAREST)
+    native_path = project_path(spec["native"])
+    runtime_path = project_path(spec["runtime"])
+    native_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_path.parent.mkdir(parents=True, exist_ok=True)
+    native.save(native_path)
+    runtime.save(runtime_path)
+    return {
+        "id": icon_id,
+        "reference": reference,
+        "native": native,
+        "runtime": runtime,
+    }
+
+
+def pipeline_icons(manifest: dict) -> dict:
+    icons = dict(manifest["icons"])
+    icons.update(manifest.get("quality_icons", {}))
+    return icons
+
+
+def backed_preview(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    preview = ImageOps.contain(image.convert("RGBA"), size, Image.Resampling.LANCZOS)
+    backing = Image.new("RGBA", size, (48, 42, 34, 255))
+    backing.alpha_composite(preview, ((size[0] - preview.width) // 2, (size[1] - preview.height) // 2))
+    return backing
+
+
+def make_contact_sheet(exports: list[dict]) -> None:
+    CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
+    row_height = 128
+    sheet = Image.new("RGBA", (600, 36 + row_height * len(exports)), (18, 14, 11, 255))
+    draw = ImageDraw.Draw(sheet)
+    headers = [("id", 12), ("reference", 132), ("native 4x", 300), ("runtime", 456)]
+    for label, x in headers:
+        draw.text((x, 10), label, fill=(208, 200, 184, 255))
+    for row, exported in enumerate(exports):
+        y = 34 + row * row_height
+        draw.text((12, y + 48), exported["id"], fill=(208, 200, 184, 255))
+        previews = [
+            backed_preview(exported["reference"], (112, 112)),
+            backed_preview(exported["native"].resize((96, 96), Image.Resampling.NEAREST), (112, 112)),
+            backed_preview(exported["runtime"], (112, 112)),
+        ]
+        for preview, x in zip(previews, [132, 300, 456]):
+            sheet.alpha_composite(preview, (x, y))
+    sheet.convert("RGB").save(CONTACT_SHEET)
+
+
+def main() -> None:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    exports = [export_icon(icon_id, spec) for icon_id, spec in pipeline_icons(manifest).items()]
+    make_contact_sheet(exports)
+    print("exported tavern missing item icons: " + ", ".join(exported["id"] for exported in exports))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,9 @@
+Use case: game asset sprite sheet
+Asset type: UI button source sheet for a pixel-art dungeon tavern management game
+Primary request: Create a single vertical sprite sheet containing exactly three horizontal parchment action-tag buttons on a perfectly flat solid #00ff00 chroma-key background. Top row is normal, middle row is hover, bottom row is pressed.
+Subject: three matching long narrow torn parchment/map tags, suitable for a small "travel/go" action button on a pinned map note. No readable text, no letters, no numbers, no logo.
+Style/medium: native-looking chunky pixel game art, historical printmaking influence, rough ink outline, parchment grain, warm candlelit amber accents, dark teal-brown shadow pixels. Crisp silhouettes, low-density chunky pixel clusters, no high-resolution smooth painting.
+Composition/framing: portrait 2:3 sheet, one centered button per row, all three buttons same footprint and same silhouette, generous empty #00ff00 padding around each. Each button is long and low, roughly 4:1 aspect ratio. The button has irregular torn-paper edges but must not read as a plain rectangle. Include small non-text visual accents only: a tiny dark red wax dab or pin mark near the left edge and a few dark ink/torn fibers near the right edge.
+State differences: normal is muted parchment; hover is slightly lighter and warmer with subtle amber lift; pressed is slightly darker and lower-contrast with a heavier lower shadow. The silhouette and size must not change between states.
+Color palette: muted parchment tan, map-brown, dark teal ink, small dark red-brown wax, sparse amber highlight. Avoid saturated orange strips.
+Constraints: the background must be one uniform #00ff00 with no texture, no shadows, no gradients, no floor, no lighting variation. Do not use #00ff00 inside the button art. No readable text, no fake glyphs, no labels, no watermark, no drop shadow outside the object. Keep edges crisp and separated from the background.

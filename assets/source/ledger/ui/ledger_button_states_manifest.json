@@ -1,0 +1,134 @@
+{
+  "id": "ledger_button_states",
+  "source": "art_sources/generated_raw/ledger_ui/ledger_button_states_reference_v1.png",
+  "prompt": "art_sources/generated_raw/ledger_ui/ledger_button_states_prompt_v1.txt",
+  "assets": {
+    "button_nav_left": {
+      "native_size": [
+        26,
+        22
+      ],
+      "runtime_size": [
+        104,
+        88
+      ],
+      "states": {
+        "normal": {
+          "source_rect": [
+            108,
+            122,
+            330,
+            330
+          ],
+          "native": "assets/source/ledger/ui/button_nav_left_normal_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_left_normal.png"
+        },
+        "hover": {
+          "source_rect": [
+            108,
+            398,
+            330,
+            606
+          ],
+          "native": "assets/source/ledger/ui/button_nav_left_hover_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_left_hover.png"
+        },
+        "pressed": {
+          "source_rect": [
+            108,
+            668,
+            330,
+            876
+          ],
+          "native": "assets/source/ledger/ui/button_nav_left_pressed_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_left_pressed.png"
+        }
+      }
+    },
+    "button_nav_right": {
+      "native_size": [
+        26,
+        22
+      ],
+      "runtime_size": [
+        104,
+        88
+      ],
+      "states": {
+        "normal": {
+          "source_rect": [
+            476,
+            122,
+            698,
+            330
+          ],
+          "native": "assets/source/ledger/ui/button_nav_right_normal_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_right_normal.png"
+        },
+        "hover": {
+          "source_rect": [
+            476,
+            398,
+            698,
+            606
+          ],
+          "native": "assets/source/ledger/ui/button_nav_right_hover_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_right_hover.png"
+        },
+        "pressed": {
+          "source_rect": [
+            476,
+            668,
+            698,
+            876
+          ],
+          "native": "assets/source/ledger/ui/button_nav_right_pressed_native.png",
+          "runtime": "assets/textures/ledger/ui/button_nav_right_pressed.png"
+        }
+      }
+    },
+    "button_close": {
+      "native_size": [
+        128,
+        22
+      ],
+      "runtime_size": [
+        512,
+        88
+      ],
+      "states": {
+        "normal": {
+          "source_rect": [
+            810,
+            143,
+            1460,
+            311
+          ],
+          "native": "assets/source/ledger/ui/button_close_normal_native.png",
+          "runtime": "assets/textures/ledger/ui/button_close_normal.png"
+        },
+        "hover": {
+          "source_rect": [
+            810,
+            420,
+            1460,
+            588
+          ],
+          "native": "assets/source/ledger/ui/button_close_hover_native.png",
+          "runtime": "assets/textures/ledger/ui/button_close_hover.png"
+        },
+        "pressed": {
+          "source_rect": [
+            810,
+            693,
+            1460,
+            861
+          ],
+          "native": "assets/source/ledger/ui/button_close_pressed_native.png",
+          "runtime": "assets/textures/ledger/ui/button_close_pressed.png"
+        }
+      }
+    }
+  },
+  "intended_godot_use": "DocumentOverlay PreviousBtn, NextBtn, and CloseBtn normal/hover/pressed StyleBoxTexture art"
+}

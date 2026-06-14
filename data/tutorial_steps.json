@@ -4,7 +4,12 @@
       "id": "gather_intro",
       "group": "gather",
       "title": "白天 · 逐次访问",
-      "description": "点击地点右侧的“访问”按钮会立刻消耗行动力，并马上获得材料或线索。\n\n你可以根据当前库存决定继续采集、调查新线索，或者提前进入夜晚。",
+      "description": "点击地点会打开行动纸条，纸条里的“前往”按钮会立刻消耗行动力，并马上获得材料或线索。\n\n准备结束白天时，点击地图上的“你的酒馆”，再点纸条里的“开门营业”开始夜晚。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "白天先看地图。点一个地点，会展开一张行动纸条。"},
+        {"expression": "concerned", "text": "纸条里的“前往”会立刻花掉行动力，也会马上结算收获。"},
+        {"expression": "smirk", "text": "想结束白天，就点地图上的“你的酒馆”，再点“开门营业”。"}
+      ],
       "highlight_node": "MapArea",
       "highlight_rect": [140, 80, 1000, 420],
       "desc_pos_x": 0.68,
@@ -17,24 +22,16 @@
       "group": "gather",
       "title": "行动力",
       "description": "这里显示剩余行动力。访问地点后结果会立即出现；行动力不足时，当天就不能再前往高消耗地点。",
+      "narrator_lines": [
+        {"expression": "concerned", "text": "这里是行动力。地点越远，花得越多。"},
+        {"expression": "neutral", "text": "行动力不够时，当天就别硬跑了，回酒馆准备夜晚。"}
+      ],
       "highlight_node": "TopBar",
       "highlight_rect": [30, 5, 320, 55],
       "desc_pos_x": 0.22,
       "desc_pos_y": 0.15,
       "desc_width": 340,
       "desc_height": 130
-    },
-    {
-      "id": "gather_go",
-      "group": "gather",
-      "title": "进入夜晚",
-      "description": "准备好后点击“进入夜晚”。不必耗尽所有行动力；保留资源和提前营业也是选择。",
-      "highlight_node": "GoButton",
-      "highlight_rect": [540, 520, 200, 50],
-      "desc_pos_x": 0.32,
-      "desc_pos_y": 0.78,
-      "desc_width": 380,
-      "desc_height": 120
     }
   ],
   "shop": [
@@ -43,6 +40,10 @@
       "group": "shop",
       "title": "商店",
       "description": "切换到商店页可以购买材料和解锁配方。白天行动和金币都有限，先为今晚真正需要的订单准备库存。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "商店能买材料，也能解锁配方。"},
+        {"expression": "concerned", "text": "白天行动和金币都有限，先补今晚订单真正需要的东西。"}
+      ],
       "highlight_node": "MapArea",
       "highlight_rect": [140, 80, 1000, 420],
       "desc_pos_x": 0.68,
@@ -57,8 +58,13 @@
       "group": "craft",
       "title": "夜晚 · 物理吧台",
       "description": "从快捷栏拖出麦芽，投入右侧酒桶。抓住酒桶摇晃，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
-      "highlight_node": "BarWorkspace",
-      "highlight_rect": [150, 410, 980, 245],
+      "narrator_lines": [
+        {"expression": "neutral", "text": "夜晚在吧台上直接操作材料。先从快捷栏拖出麦芽。"},
+        {"expression": "smirk", "text": "把麦芽丢进右侧酒桶，抓住酒桶摇一摇，再松手。"},
+        {"expression": "neutral", "text": "Day 2 会解锁烤架，Day 3 会解锁炖锅和勺子。"}
+      ],
+      "highlight_node": "CraftBarrel",
+      "highlight_rect": [820, 480, 280, 200],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.25,
       "desc_width": 470,
@@ -69,6 +75,11 @@
       "group": "craft",
       "title": "取出材料",
       "description": "从底部快捷栏拖出常用材料。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "底部快捷栏放常用材料，直接拖到桌面。"},
+        {"expression": "smirk", "text": "按 E 可以打开背包，把材料或剧情物品也拖出来。"},
+        {"expression": "concerned", "text": "剧情物品不会永久丢失，掉出桌面会回到背包。"}
+      ],
       "highlight_node": "ShortcutBar",
       "highlight_rect": [140, 675, 1000, 40],
       "desc_pos_x": 0.5,
@@ -81,7 +92,12 @@
       "group": "craft",
       "title": "恢复桌面",
       "description": "酒桶或炖锅放错材料时，右键容器可以让最近投入的一份材料蹦回桌面。连续右键可以逐份取回。桌面太乱时，也可以从菜单点击“整理桌面”。",
-      "highlight_node": "BarWorkspace",
+      "narrator_lines": [
+        {"expression": "concerned", "text": "材料丢错容器时，别急着重开。"},
+        {"expression": "smirk", "text": "右键酒桶或炖锅，最近投入的一份材料会蹦回桌面。"},
+        {"expression": "neutral", "text": "桌面太乱时，菜单里还有“整理桌面”。"}
+      ],
+      "highlight_node": "RecoveryContainer",
       "highlight_rect": [950, 520, 270, 150],
       "desc_pos_x": 0.32,
       "desc_pos_y": 0.15,
@@ -95,8 +111,13 @@
       "group": "seasoning",
       "title": "剧情物品也是动作",
       "description": "某些证据和特殊材料可以从背包拖到桌面，再直接交给重要客人。你做出的实际动作会改变后续对话。\n\n有些材料还能拖到桌面成品上，例如把花粉加入麦芽酒。",
-      "highlight_node": "CustomerNode",
-      "highlight_rect": [432, 70, 410, 328],
+      "narrator_lines": [
+        {"expression": "surprised", "text": "有些特殊材料不是直接卖的，它们会改变成品或剧情。"},
+        {"expression": "neutral", "text": "把成品放到调味区，再把花粉这类材料拖上去。"},
+        {"expression": "concerned", "text": "某些证据也能从背包拖出来，直接交给重要客人。"}
+      ],
+      "highlight_node": "SeasoningZone",
+      "highlight_rect": [821, 556, 114, 75],
       "desc_pos_x": 0.82,
       "desc_pos_y": 0.18,
       "desc_width": 390,
@@ -109,6 +130,12 @@
       "group": "serve",
       "title": "服务客人",
       "description": "客人头顶会显示订单。把桌面上的正确成品拖到客人区域完成服务。\n\n注意耐心条：等待太久，客人会离开。每晚普通订单数量有限，完成后可以打烊。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "客人头顶会显示订单。"},
+        {"expression": "smirk", "text": "把桌面上的正确成品拖到客人身上，就能完成服务。"},
+        {"expression": "concerned", "text": "注意耐心条。等太久，客人会离开。"},
+        {"expression": "neutral", "text": "每晚普通订单数量有限，做完后就可以打烊。"}
+      ],
       "highlight_node": "CustomerNode",
       "highlight_rect": [432, 70, 410, 328],
       "desc_pos_x": 0.5,
@@ -123,6 +150,11 @@
       "group": "ledger",
       "title": "账本",
       "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。",
+      "narrator_lines": [
+        {"expression": "surprised", "text": "账本会记录每天的金币、声望，还有重要人物的命运。"},
+        {"expression": "neutral", "text": "白天或夜晚按 Tab，也能随时翻开桌面账本。"},
+        {"expression": "concerned", "text": "新线索出现时，账本和文档按钮会留下提示，别漏看。"}
+      ],
       "highlight_node": "UI",
       "highlight_rect": [90, 50, 1100, 560],
       "desc_pos_x": 0.5,
