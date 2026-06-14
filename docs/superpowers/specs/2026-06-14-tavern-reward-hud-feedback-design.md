@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make successful night orders feel rewarding by adding visible motion and stage progress to the Tavern HUD. The player should see earned gold and reputation burst out from the customer area, travel into the top HUD, and advance dedicated milestone bars instead of only watching static numbers change.
+Make successful night orders feel rewarding by adding visible motion, physical coin weight, and stage progress to the Tavern HUD. The player should see earned gold coins burst out, bounce once on the bar, then get pulled into the top HUD while dedicated milestone bars advance instead of only watching static numbers change.
 
 ## Scope
 
@@ -16,10 +16,11 @@ Make successful night orders feel rewarding by adding visible motion and stage p
 
 When an order is served correctly:
 
-- Gold particles burst from the customer/order area, spread briefly, then curve into the gold HUD area.
-- If the order awards reputation, reputation particles burst beside the gold particles and curve into the reputation HUD area.
+- Gold coins burst from the customer/order area, fall into a narrow safe zone on the bar, rotate, and bounce once for about 0.35 to 0.5 seconds.
+- After the bounce, coins stop participating in physics and curve into the gold HUD area.
+- If the order awards reputation, small cool blue-white reputation marks float up from the customer/order area and curve into the reputation HUD area. Reputation does not use heavy coin physics.
 - When particles arrive, the matching HUD number gives a small scale pulse and the matching progress bar flashes.
-- If the new total crosses a milestone, the matching progress bar enters a short ornate state for about one second, with a brighter rim and a few spark pixels.
+- Default progress bars stay understated: dark narrow grooves with low-brightness fills. If the new total crosses a milestone, the matching progress bar enters a short ornate state for about one second, with a thin brighter rim and a few spark pixels.
 - Failed orders do not trigger reward particles or milestone flashes.
 
 The effect is feedback only. It must not delay guest cleanup, dialogue, ledger updates, or the next order.
@@ -28,11 +29,15 @@ The effect is feedback only. It must not delay guest cleanup, dialogue, ledger u
 
 Add visual-only Tavern nodes while keeping existing public paths stable:
 
-- `RewardFeedbackLayer`: a top-level or CanvasLayer-backed visual-only layer for particles and arrival flashes.
+- `RewardFeedbackLayer`: a top-level or CanvasLayer-backed visual-only layer for particles, UI-travel coins, and arrival flashes.
+- `RewardCoinPhysicsLayer`: a dedicated world-space layer for temporary reward coins while they bounce on the bar.
+- `RewardCoinPhysicsLayer/CoinGround`: an invisible collision line or body used only by reward coins.
 - `TopPanel/GoldProgress`: the gold milestone progress surface, placed near `GoldLabel`.
 - `TopPanel/ReputationProgress`: the reputation milestone progress surface, placed near `ReputationLabel`.
 
-The exact child structure can use `TextureRect` plus clipped fill controls, but all new controls must ignore mouse input so they do not block table interaction or topbar buttons.
+Reward coins must not reuse the existing draggable desk item system. They are temporary visual physics objects with their own collision layer/mask, no pickup behavior, no inventory meaning, and no interaction with ingredients, products, or table tools.
+
+The exact progress child structure can use `TextureRect` plus clipped fill controls, but all new controls must ignore mouse input so they do not block table interaction or topbar buttons.
 
 Text remains Godot-rendered through existing labels. Generated images must not contain readable text, numbers, logos, or fake labels.
 
@@ -89,6 +94,8 @@ Required asset IDs:
 - `reward_rep_particle`
 - `reward_spark`
 
+The default progress assets must be visually quiet. No large medallions, candles, oversized clasps, or ornate frames belong in default assets. Ornate art is a separate milestone overlay only.
+
 Every crop must come from explicit manifest rectangles. Runtime exports must be exact nearest-neighbor integer scaling from native sources. Godot runtime scenes must reference only processed runtime textures, not raw generated sources.
 
 ## Testing Contract
@@ -96,11 +103,12 @@ Every crop must come from explicit manifest rectangles. Runtime exports must be 
 Before modifying the Tavern scene, add or update a Tavern HUD contract test to verify:
 
 - Existing topbar public paths still exist.
-- `GoldProgress`, `ReputationProgress`, and `RewardFeedbackLayer` exist after the scene instantiates.
+- `GoldProgress`, `ReputationProgress`, `RewardFeedbackLayer`, and `RewardCoinPhysicsLayer` exist after the scene instantiates.
 - New reward controls use nearest texture filtering where applicable.
 - New reward controls ignore mouse input.
 - `TavernView` exposes `show_order_reward_feedback()`.
-- Calling the feedback method with positive gold spawns gold particles under the feedback layer.
+- Calling the feedback method with positive gold spawns temporary coin physics bodies under `RewardCoinPhysicsLayer`.
+- After enough simulated frames, bounced coins transfer into travel nodes under `RewardFeedbackLayer`.
 - Calling it with positive reputation spawns reputation particles under the feedback layer.
 - `update_top_bar()` updates progress fill ratios for gold and reputation totals.
 - Crossing a milestone activates a temporary ornate state.
@@ -117,6 +125,7 @@ Add an asset pipeline test to verify:
 - Runtime textures are exact nearest-neighbor exports from native textures.
 - Particle textures are small, crisp, and contain visible warm gold or cold reputation accent pixels.
 - Progress bar textures stay restrained: dark teal body, amber gold fill, and cooler reputation fill.
+- Default progress bar assets do not contain large candle, medallion, or oversized ornate elements.
 
 ## Verification
 
@@ -147,4 +156,5 @@ If the local Godot binary path differs, use the installed Godot 4.6.3 console ex
 - The scope is limited to one UI surface: Tavern night service.
 - Existing public node paths and public methods are preserved.
 - The reward HUD is display-only and does not alter economy, save/load, ledger, guests, or narrative logic.
+- Reward coin physics are isolated visual physics only; they cannot collide with or modify playable desk items.
 - The design follows the project asset pipeline rule: generated sources are retained, production UI references processed runtime textures only, and text stays in Godot labels.

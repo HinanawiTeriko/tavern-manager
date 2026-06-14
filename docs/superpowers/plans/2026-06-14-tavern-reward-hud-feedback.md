@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add night-service reward feedback where successful orders burst gold/reputation particles into Tavern HUD milestone progress bars.
+**Goal:** Add night-service reward feedback where successful orders burst physical gold coins onto the bar, then pull coins/reputation marks into understated Tavern HUD milestone progress bars.
 
-**Architecture:** Keep the feature bounded to `Tavern.tscn`, `TavernView`, and the successful-order branch in `GameManager`. Use processed pixel UI textures generated through an explicit manifest and deterministic nearest-neighbor exporter. Preserve existing topbar node paths and add visual-only child nodes that ignore mouse input.
+**Architecture:** Keep the feature bounded to `Tavern.tscn`, `TavernView`, and the successful-order branch in `GameManager`. Use a dedicated reward coin physics layer that cannot collide with draggable desk items, then transfer coins into UI travel nodes. Use processed pixel UI textures generated through an explicit manifest and deterministic nearest-neighbor exporter; default progress bars must stay visually quiet and milestone ornamentation is a separate temporary overlay.
 
 **Tech Stack:** Godot 4.6.3, GDScript, Python Pillow asset pipeline, Python unittest, Godot headless scene tests, built-in image generation for raw source art.
 
@@ -12,13 +12,13 @@
 
 ## Files
 
-- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png` - generated source sheet containing progress bars, ornate states, particles, and spark art.
+- Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png` - generated source sheet containing understated progress bars, milestone-only ornate overlays, small coins, reputation marks, and spark art.
 - Create: `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1_prompt.txt` - exact image prompt retained with the raw source.
 - Create: `scripts/tools/export_tavern_reward_hud_assets.py` - crops the source sheet from explicit rectangles, normalizes to native pixel assets, exports 4x runtime PNGs, manifest, and contact sheet.
 - Create: `scripts/test/test_tavern_reward_hud_asset_pipeline.py` - validates the asset pipeline and nearest-neighbor exports.
 - Modify: `scripts/test/test_tavern_patience_ui.gd` - extends the existing Tavern topbar contract with reward HUD node and runtime behavior assertions.
 - Modify: `scenes/ui/Tavern.tscn` - adds `RewardFeedbackLayer`, `TopPanel/GoldProgress`, and `TopPanel/ReputationProgress` without renaming existing nodes.
-- Modify: `scripts/ui/tavern_view.gd` - loads reward HUD art, updates progress fill clips, spawns reward particles, and flashes ornate milestone states.
+- Modify: `scripts/ui/tavern_view.gd` - loads reward HUD art, updates progress fill clips, spawns isolated reward coin physics, transfers coins to UI travel, spawns reputation marks, and flashes ornate milestone states.
 - Modify: `scripts/game_manager.gd` - captures previous totals and calls `TavernView.show_order_reward_feedback()` only after successful rewards.
 
 ## Task 1: Reward HUD Asset Pipeline
@@ -41,13 +41,13 @@ Use this prompt:
 Use case: stylized-concept
 Asset type: pixel-game UI source sheet for a Godot tavern management game
 Primary request: Create a clean source sheet on a perfectly flat solid #ff00ff chroma-key background with separate UI reward HUD assets and no readable text.
-Subject: two narrow horizontal milestone progress bars, two matching filled bar strips, two ornate completed/level-up rim overlays, a small gold coin particle, a small cool silver-blue reputation sigil particle, and a tiny amber spark.
-Style/medium: authored pixel-game UI source art, historical printmaking influence, rough ink silhouettes, dark teal dungeon tavern material, warm amber candlelight for gold, cool stone-blue accent for reputation.
+Subject: two very plain narrow horizontal milestone progress grooves, two matching low-brightness filled bar strips, two separate milestone-only thin ornate rim overlays, a small gold coin sprite that can read as a physical coin, a small cool silver-blue reputation sigil particle, and a tiny amber spark.
+Style/medium: understated authored pixel-game UI source art, historical printmaking influence, rough ink silhouettes, dark teal dungeon tavern material, muted warm amber for gold, cool stone-blue accent for reputation.
 Composition/framing: all assets separated with generous padding, no overlap, arranged in a grid, front-facing orthographic UI sprites, crisp silhouettes.
-Color palette: dark teal and near-black wood/stone bodies; muted amber/gold highlights; cool blue-gray reputation highlights; sparse bright pixels only for reward glints.
-Materials/textures: chunky low-density pixel clusters, rough ink edges, paper-grain suggestion baked into ornamental frames only, no soft blur.
-Constraints: no text, no numbers, no logos, no characters, no UI labels, no gradients that would blur after pixel normalization, no shadows on the chroma-key background, no antialiased soft borders.
-Avoid: references to existing games, living artists, readable writing, fake interface text, modern flat vector style, smooth glossy mobile-game icons.
+Color palette: dark teal and near-black wood/stone bodies; low-brightness amber/gold fills; cool blue-gray reputation fills; sparse bright pixels only for reward glints.
+Materials/textures: chunky low-density pixel clusters, rough ink edges, no soft blur.
+Constraints: no text, no numbers, no logos, no characters, no UI labels, no large medallions, no candles, no oversized clasps, no ornate default frames, no gradients that would blur after pixel normalization, no shadows on the chroma-key background, no antialiased soft borders.
+Avoid: default-state luxury, big ceremonial frames, references to existing games, living artists, readable writing, fake interface text, modern flat vector style, smooth glossy mobile-game icons.
 ```
 
 Save the generated image as `art_sources/generated_raw/tavern_reward_hud/tavern_reward_hud_sheet_v1.png`.
@@ -74,7 +74,7 @@ ASSETS = {
 }
 ```
 
-The test must check raw source and prompt existence, manifest completeness, runtime sizes, exact 4x nearest-neighbor export, visible non-transparent pixels, warm pixels in coin/gold assets, and cool pixels in reputation assets.
+The test must check raw source and prompt existence, manifest completeness, runtime sizes, exact 4x nearest-neighbor export, visible non-transparent pixels, warm pixels in coin/gold assets, cool pixels in reputation assets, and that default progress textures remain visually restrained.
 
 - [ ] **Step 4: Run asset test to verify RED**
 
@@ -123,7 +123,10 @@ Extend `_test_tavern_patience_ui_contract()` to assert:
 
 ```gdscript
 var reward_layer := tavern.get_node_or_null("RewardFeedbackLayer") as CanvasLayer
-_ok(reward_layer != null, "Tavern adds a visual-only RewardFeedbackLayer for flying rewards")
+_ok(reward_layer != null, "Tavern adds a visual-only RewardFeedbackLayer for UI-travel rewards")
+
+var coin_layer := tavern.get_node_or_null("RewardCoinPhysicsLayer") as Node2D
+_ok(coin_layer != null, "Tavern adds an isolated RewardCoinPhysicsLayer for bouncing reward coins")
 
 var gold_progress := tavern.get_node_or_null("TopPanel/GoldProgress") as Control
 var rep_progress := tavern.get_node_or_null("TopPanel/ReputationProgress") as Control
@@ -139,7 +142,7 @@ tavern.update_top_bar(25, 10, 1, 30)
 tavern.show_order_reward_feedback(12, 2, 13, 8)
 ```
 
-spawns at least one child under `RewardFeedbackLayer`.
+spawns at least one coin body under `RewardCoinPhysicsLayer` and at least one reputation particle under `RewardFeedbackLayer`.
 
 - [ ] **Step 2: Run Tavern test to verify RED**
 
@@ -174,9 +177,11 @@ TopPanel/ReputationProgress/FillClip/Fill
 TopPanel/ReputationProgress/Ornate
 RewardFeedbackLayer
 RewardFeedbackLayer/Particles
+RewardCoinPhysicsLayer
+RewardCoinPhysicsLayer/CoinGround
 ```
 
-Keep all controls `mouse_filter = MOUSE_FILTER_IGNORE`.
+Keep all controls `mouse_filter = MOUSE_FILTER_IGNORE`. Configure `CoinGround` as invisible reward-only collision.
 
 - [ ] **Step 2: Add TavernView member variables and constants**
 
@@ -185,6 +190,7 @@ Add variables for progress nodes, fill clips, ornate overlays, and particle root
 ```gdscript
 const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
 const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
+const REWARD_COIN_BOUNCE_TIME := 0.42
 const REWARD_PARTICLE_TRAVEL_TIME := 0.72
 ```
 
@@ -213,7 +219,7 @@ Implement:
 func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int) -> void
 ```
 
-It should spawn gold particles when `earned_gold > 0`, reputation particles when `earned_rep > 0`, pulse the matching label, and flash ornate overlays when the previous and current totals cross a milestone band.
+It should spawn temporary reward coin bodies when `earned_gold > 0`, transfer those bodies into UI travel nodes after `REWARD_COIN_BOUNCE_TIME`, spawn reputation particles when `earned_rep > 0`, pulse the matching label, and flash ornate overlays when the previous and current totals cross a milestone band.
 
 - [ ] **Step 6: Run Tavern test to verify GREEN**
 
