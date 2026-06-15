@@ -15,6 +15,7 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "ryan_ending_backgrounds_contact_sheet.p
 NATIVE_SIZE = (320, 140)
 RUNTIME_SIZE = (1280, 560)
 SCALE = 4
+REFERENCE_VERSION = "v3"
 ROUTES = [
     "uninformed_fallen",
     "drugged_survivor",
@@ -58,7 +59,7 @@ def write_manifest() -> None:
     routes = {}
     for route in ROUTES:
         routes[route] = {
-            "reference": f"assets/source/endings/ryan/reference/ryan_{route}_reference_v2.png",
+            "reference": f"assets/source/endings/ryan/reference/ryan_{route}_reference_{REFERENCE_VERSION}.png",
             "native": f"assets/source/endings/ryan/ryan_{route}_native.png",
             "runtime": f"assets/textures/endings/ryan/ryan_{route}.png",
             "safe_area": [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]],
@@ -80,7 +81,7 @@ def main() -> None:
     CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
     natives: dict[str, Image.Image] = {}
     for route in ROUTES:
-        reference = REFERENCE / f"ryan_{route}_reference_v2.png"
+        reference = REFERENCE / f"ryan_{route}_reference_{REFERENCE_VERSION}.png"
         if not reference.exists():
             raise FileNotFoundError(f"{reference}: missing approved Ryan ending reference")
         native = load_native(route)

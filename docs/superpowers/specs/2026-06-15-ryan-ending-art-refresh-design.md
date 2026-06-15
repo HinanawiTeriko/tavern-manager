@@ -49,9 +49,9 @@ The stills should use the project's native-pixel language: dark teal dungeon sha
 
 ### `uninformed_fallen`
 
-Ryan is absent. The still shows the cold North Mine aftermath: collapsed stone, a dropped oath tag, a battered pack, and a shield or small travel token on the ground. A weak blue mine light recedes into the tunnel. This route should feel like he disappeared into a trap without understanding it.
+Ryan is absent, but the evidence must clearly belong to him. The still shows the cold North Mine aftermath: collapsed stone around Ryan's dropped oath tag, tiny wax-seal pouch, torn charcoal-brown jerkin cloth, ash-lilac short-braid tie, and battered patched travel pack. A weak blue mine light recedes into the tunnel. This route should feel like Ryan disappeared into a trap without understanding it.
 
-Avoid showing a body or explicit gore.
+Avoid showing a body, explicit gore, generic shields, generic helmets, or anonymous adventurer loot.
 
 ### `drugged_survivor`
 

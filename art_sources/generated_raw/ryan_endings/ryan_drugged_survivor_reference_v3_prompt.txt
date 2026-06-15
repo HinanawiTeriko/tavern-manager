@@ -1,0 +1,13 @@
+Use case: stylized-concept
+Asset type: wide pixel-art fate still for a dungeon tavern management game
+Input images: use the visible Ryan character contact sheet as the identity reference; use the visible older Ryan ending contact sheet only as broad wide-pixel composition reference.
+Primary request: Tavern after closing. Ryan, matching the current character identity, is asleep or slumped at a wooden tavern table because he missed the muster. He has ash-lilac messy hair with a short side braid, small low red-brown horn nubs, patched tan shirt, charcoal-brown jerkin, a visible brass oath tag, and a tiny red wax-seal pouch near his belt or on the table. His battered patched travel pack rests near the chair. Warm candlelight surrounds him, while cold morning doorway light outside suggests the group already left. The mood is survival with resentment and cost, not victory.
+Scene/backdrop: closed dungeon tavern interior after hours, rough stone walls, dark wood table and benches, distant doorway with cold blue morning light.
+Subject: Ryan asleep/slumped at table, visibly identifiable by horns, ash-lilac braid, charcoal jerkin, oath tag, wax-seal pouch, patched travel pack.
+Style/medium: native-pixel-style cinematic still, rough hand-authored pixel clusters, thick dark silhouettes, limited dark teal dungeon palette, warm amber candle accents, no soft painterly blending.
+Composition/framing: 21:9 wide still, readable after downscaling to 320x140 native pixels; Ryan at table in one side or center, travel pack and oath/wax items visible.
+Lighting/mood: warm candlelight near Ryan, cold blue dawn from doorway, uneasy survival, quiet tavern.
+Color palette: dark teal stone, warm amber candle, charcoal-brown jerkin, patched tan cloth, ash-lilac hair, small red wax seal.
+Materials/textures: rough stone, worn wood, leather pack, torn cloth, brass tag, red wax seal, chunky pixel clusters.
+Text: none.
+Constraints: no UI, no readable text, no logo, no watermark, no explicit gore, no generic adventurer, no modern objects.

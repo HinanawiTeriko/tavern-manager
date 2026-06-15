@@ -9,11 +9,13 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "art_sources" / "generated_raw" / "ryan_endings"
+RAW_MANIFEST = RAW / "ryan_ending_reference_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "endings" / "ryan"
 REFERENCE = SOURCE / "reference"
 RUNTIME = ROOT / "assets" / "textures" / "endings" / "ryan"
 MANIFEST = SOURCE / "ryan_ending_manifest.json"
 CONTACT_SHEET = ROOT / "docs" / "art" / "ryan_ending_backgrounds_contact_sheet.png"
+REFERENCE_VERSION = "v3"
 NATIVE_SIZE = (320, 140)
 RUNTIME_SIZE = (1280, 560)
 SCALE = 4
@@ -55,15 +57,28 @@ def edge_change_ratio(image: Image.Image) -> float:
 
 
 class RyanEndingAssetPipelineTest(unittest.TestCase):
-    def test_raw_v2_references_are_retained(self) -> None:
-        for route in ROUTES:
-            path = RAW / f"ryan_{route}_reference_v2.png"
-            self.assertTrue(path.exists(), f"{path}: missing raw V2 reference")
-            self.assertGreater(path.stat().st_size, 0, f"{path}: raw V2 reference is empty")
+    def test_raw_v3_references_are_retained(self) -> None:
+        self.assertTrue(RAW_MANIFEST.exists(), f"{RAW_MANIFEST}: missing raw reference manifest")
+        manifest = json.loads(RAW_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["id"], "ryan_ending_wide_references_v3")
+        self.assertEqual(manifest["target_native_size"], list(NATIVE_SIZE))
+        self.assertEqual(manifest["target_runtime_size"], list(RUNTIME_SIZE))
+        entries = manifest["entries"]
+        self.assertEqual({entry["route"] for entry in entries}, set(ROUTES))
+        for entry in entries:
+            route = entry["route"]
+            self.assertEqual(entry["id"], f"ryan_{route}_reference_{REFERENCE_VERSION}")
+            self.assertEqual(entry["output_file"], f"art_sources/generated_raw/ryan_endings/ryan_{route}_reference_{REFERENCE_VERSION}.png")
+            self.assertIn("prompt_file", entry)
+            path = RAW / f"ryan_{route}_reference_{REFERENCE_VERSION}.png"
+            self.assertTrue(path.exists(), f"{path}: missing raw V3 reference")
+            self.assertGreater(path.stat().st_size, 0, f"{path}: raw V3 reference is empty")
+            prompt_path = RAW / f"ryan_{route}_reference_{REFERENCE_VERSION}_prompt.txt"
+            self.assertTrue(prompt_path.exists(), f"{prompt_path}: missing prompt record")
 
     def test_approved_references_exist(self) -> None:
         for route in ROUTES:
-            path = REFERENCE / f"ryan_{route}_reference_v2.png"
+            path = REFERENCE / f"ryan_{route}_reference_{REFERENCE_VERSION}.png"
             image = load_image(path)
             self.assertGreaterEqual(image.width, RUNTIME_SIZE[0], f"{route}: reference is too narrow")
             self.assertGreaterEqual(image.height, RUNTIME_SIZE[1], f"{route}: reference is too short")
@@ -78,7 +93,7 @@ class RyanEndingAssetPipelineTest(unittest.TestCase):
         self.assertEqual(set(manifest["routes"].keys()), set(ROUTES))
         for route in ROUTES:
             entry = manifest["routes"][route]
-            self.assertEqual(entry["reference"], f"assets/source/endings/ryan/reference/ryan_{route}_reference_v2.png")
+            self.assertEqual(entry["reference"], f"assets/source/endings/ryan/reference/ryan_{route}_reference_{REFERENCE_VERSION}.png")
             self.assertEqual(entry["native"], f"assets/source/endings/ryan/ryan_{route}_native.png")
             self.assertEqual(entry["runtime"], f"assets/textures/endings/ryan/ryan_{route}.png")
             self.assertIn("Future Ryan fate cinematic", entry["intended_godot_use"])

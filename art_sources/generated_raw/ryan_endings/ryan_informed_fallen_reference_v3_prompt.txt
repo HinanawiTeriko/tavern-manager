@@ -1,0 +1,13 @@
+Use case: stylized-concept
+Asset type: wide pixel-art fate still for a dungeon tavern management game
+Input images: use the visible Ryan character contact sheet as the identity reference; use the visible older Ryan ending contact sheet only as broad wide-pixel composition reference.
+Primary request: Ryan stands at the threshold of the North Mine, shown in side-back view with his current outfit readable. He has ash-lilac messy hair with a short side braid, small low red-brown horn nubs, patched tan shirt, charcoal-brown jerkin, visible brass oath tag near his hand, tiny red wax-seal pouch at his belt, plain belt, worn travel trousers, and a battered patched travel pack. His hand is near the oath tag as he chooses to go forward. Lantern light behind him is small and warm; the cold tunnel ahead is heavy and blue. Emphasize informed chosen resolve, not a triumphant heroic pose.
+Scene/backdrop: North Mine entrance threshold, rough stone arch, broken supports, cold tunnel receding ahead, small warm lantern behind Ryan.
+Subject: Ryan from side-back view at the mine threshold, identifiable by horns, ash-lilac braid, charcoal jerkin, oath tag, wax-seal pouch, patched pack.
+Style/medium: native-pixel-style cinematic still, rough hand-authored pixel clusters, thick dark silhouettes, limited dark teal dungeon palette, warm amber lantern accents, no soft painterly blending.
+Composition/framing: 21:9 wide still, readable after downscaling to 320x140 native pixels; Ryan as a small-to-medium figure at the threshold, tunnel depth ahead.
+Lighting/mood: cold blue danger ahead, tiny amber resolve behind him, solemn self-chosen risk.
+Color palette: dark teal, blue-black stone, charcoal-brown clothing, tan shirt, ash-lilac hair, muted brass oath tag, small red wax seal.
+Materials/textures: rough stone, worn leather, torn cloth, brass tag, red wax seal, chunky pixel clusters.
+Text: none.
+Constraints: no UI, no readable text, no logo, no watermark, no explicit gore, no triumphant hero pose, no generic knight armor, no modern objects.
