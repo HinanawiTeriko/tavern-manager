@@ -129,9 +129,9 @@
       "id": "serve_intro",
       "group": "serve",
       "title": "服务客人",
-      "description": "客人头顶会显示订单。把桌面上的正确成品拖到客人区域完成服务。\n\n注意耐心条：等待太久，客人会离开。每晚普通订单数量有限，完成后可以打烊。",
+      "description": "桌面下方的订单槽会显示客人需要的菜品。把桌面上的正确成品拖到客人区域完成服务。\n\n注意耐心条：等待太久，客人会离开。每晚普通订单数量有限，完成后可以打烊。",
       "narrator_lines": [
-        {"expression": "neutral", "text": "客人头顶会显示订单。"},
+        {"expression": "neutral", "text": "桌面下方的订单槽会显示客人需要的菜品。"},
         {"expression": "smirk", "text": "把桌面上的正确成品拖到客人身上，就能完成服务。"},
         {"expression": "concerned", "text": "注意耐心条。等太久，客人会离开。"},
         {"expression": "neutral", "text": "每晚普通订单数量有限，做完后就可以打烊。"}

@@ -6,6 +6,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_day2_investigation_chain()
+	_test_clearing_table_does_not_auto_grant()
 	_test_game_manager_routes_visits()
 	_test_gathering_confirmation_does_not_write_ledger()
 	_test_get_locations_breadcrumb()
@@ -16,6 +17,8 @@ func _ready() -> void:
 	_test_game_manager_consumes_shop_gossip_once()
 	_test_shop_button_checks_gossip_before_opening()
 	_test_reveal_tracking()
+	_test_completed_locations_do_not_reopen_next_day()
+	_test_game_manager_marks_finished_locations_complete()
 	_test_intro_handoff_timing_contract()
 	_test_rare_gathering_rewards_and_pity()
 	_finish()
@@ -40,14 +43,16 @@ func _finish() -> void:
 func _test_day2_investigation_chain() -> void:
 	var map := DayMapSystem.new()
 	_ok(map.load_data(), "locations data loads")
+	map.start_day(1)
+	_ok(map.max_stamina == 5 and map.stamina == 5, "day1 starts with fixed five stamina")
 	map.start_day(2)
 	map.set_lead_flag("ryan_warhammer_lead", true)
-	_ok(map.stamina == 4, "day2 starts with four stamina")
+	_ok(map.max_stamina == 5 and map.stamina == 5, "day2 keeps the fixed five stamina cap")
 	_ok(not map.visit("abandoned_mine").get("success", false), "mine is blocked before board clue")
-	_ok(map.stamina == 4, "blocked visit does not spend stamina")
+	_ok(map.stamina == 5, "blocked visit does not spend stamina")
 	var board := map.visit("mercenary_board")
 	_ok(board.get("success", false), "board visit succeeds")
-	_ok(map.stamina == 3, "board spends one stamina")
+	_ok(map.stamina == 4, "board spends one stamina")
 	# 旧：mine 直接授予 bloodied_contract；新：授予搬进物理场景，visit 不再带 documents
 	var mine := map.visit("abandoned_mine")
 	_ok(mine.get("success", false), "mine is visitable after board clue")
@@ -56,11 +61,26 @@ func _test_day2_investigation_chain() -> void:
 	map.set_document_read("bloodied_contract", true)
 	var counter := map.visit("guild_counter")
 	_ok(counter.get("documents", []).has("alternative_contract"), "counter grants alternative contract")
-	_ok(map.stamina == 0, "positive route spends all day2 stamina")
+	_ok(map.stamina == 1, "positive route spends the expected four stamina")
 
 	map.start_day(2)
 	var forest := map.visit("mushroom_forest")
 	_ok(forest.get("rewards", []).has("sleep_powder"), "day2 mushroom forest grants sleep powder")
+
+
+func _test_clearing_table_does_not_auto_grant() -> void:
+	var map := DayMapSystem.new()
+	_ok(map.load_data(), "grey clearing table locations data loads")
+	map.start_day(14)
+	var ids := _location_ids(map.get_locations())
+	_ok(ids.has("clearing_table"), "Day14 exposes clearing table investigation")
+	var clearing := _find_location(map.get_locations(), "clearing_table")
+	_ok((clearing.get("documents", []) as Array).is_empty(),
+		"clearing table location has no auto-grant documents")
+	var visit: Dictionary = map.visit("clearing_table")
+	_ok(visit.get("success", false), "clearing table location visit succeeds")
+	_ok((visit.get("documents", []) as Array).is_empty(),
+		"clearing table visit does not auto-grant documents")
 
 
 func _test_game_manager_routes_visits() -> void:
@@ -339,6 +359,64 @@ func _test_reveal_tracking() -> void:
 	_ok(not _location_ids(map.get_new_locations()).has("mushroom_forest"), "revealed location not 'new'")
 	map.start_day(3)
 	_ok(map.is_revealed("mushroom_forest"), "reveal persists across start_day")
+
+
+func _test_completed_locations_do_not_reopen_next_day() -> void:
+	var map := DayMapSystem.new()
+	_ok(map.load_data(), "locations data loads for completed-location tracking")
+	map.start_day(7)
+	map.set_lead_flag("toby_identity_known", true)
+	_ok(_location_ids(map.get_locations()).has("toby_lodging"), "Toby lodging is visible before completion")
+	_ok(map.has_method("mark_completed"), "DayMapSystem exposes persistent location completion")
+	_ok(map.has_method("is_completed"), "DayMapSystem exposes completed-location query")
+	if not map.has_method("mark_completed") or not map.has_method("is_completed"):
+		return
+	map.call("mark_completed", "toby_lodging")
+	_ok(bool(map.call("is_completed", "toby_lodging")), "Toby lodging is marked completed")
+	_ok(not _location_ids(map.get_locations()).has("toby_lodging"), "completed Toby lodging hides immediately")
+
+	map.start_day(8)
+	map.set_lead_flag("toby_identity_known", true)
+	_ok(not _location_ids(map.get_locations()).has("toby_lodging"), "completed Toby lodging stays hidden next day")
+
+	var snap: Dictionary = map.capture_state()
+	var restored := DayMapSystem.new()
+	_ok(restored.load_data(), "restored map loads locations data")
+	restored.restore_state(snap)
+	restored.start_day(8)
+	restored.set_lead_flag("toby_identity_known", true)
+	_ok(not _location_ids(restored.get_locations()).has("toby_lodging"),
+		"completed Toby lodging stays hidden after save restore")
+
+
+func _test_game_manager_marks_finished_locations_complete() -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("toby_identity_known", true)
+	gm.start_day_map(7)
+	_ok(_location_ids(gm.day_map.get_locations()).has("toby_lodging"), "GM exposes Toby lodging before contract pickup")
+	_ok(gm.grant_investigation_document("toby_contract"), "test grants completed Toby contract")
+	_ok(gm.day_map.has_method("is_completed"), "GM DayMapSystem can report completed locations")
+	if gm.day_map.has_method("is_completed"):
+		_ok(bool(gm.day_map.call("is_completed", "toby_lodging")),
+			"Toby lodging completes when the contract is collected")
+	gm.start_day_map(8)
+	_ok(not _location_ids(gm.day_map.get_locations()).has("toby_lodging"),
+		"GM hides Toby lodging on later days after contract pickup")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(14)
+	_ok(_location_ids(gm.day_map.get_locations()).has("payout_office"), "payout office is visible before visit")
+	_ok(gm.visit_day_location("payout_office").get("success", false), "payout office visit succeeds")
+	_ok(not _location_ids(gm.day_map.get_locations()).has("payout_office"),
+		"payout office hides after its one-time documents are collected")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(17)
+	_ok(_location_ids(gm.day_map.get_locations()).has("mira_supply_copy"), "Mira supply copy is visible before visit")
+	_ok(gm.visit_day_location("mira_supply_copy").get("success", false), "Mira supply copy visit succeeds")
+	_ok(not _location_ids(gm.day_map.get_locations()).has("mira_supply_copy"),
+		"Mira supply copy hides after its one-time context visit")
 
 
 func _test_intro_handoff_timing_contract() -> void:

@@ -34,6 +34,10 @@ ITEM_IDS = (
     "bread",
     "meat_cooked",
     "herb_broth",
+    "cave_mushroom_stew",
+    "rock_lizard_steak",
+    "old_road_wine",
+    "miner_dark_ale",
     "bloodied_contract",
     "alternative_contract",
     "failed_brew",
@@ -46,6 +50,8 @@ QUALITY_DRINK_IDS = (
     "spiced_wine_good",
 )
 FAILED_PRODUCT_IDS = ("failed_brew", "failed_stew")
+UPGRADED_PRODUCT_IDS = ("cave_mushroom_stew", "rock_lizard_steak", "old_road_wine", "miner_dark_ale")
+UPGRADED_PRODUCT_SHEET = "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png"
 
 
 def pipeline_icons(manifest: dict) -> dict:
@@ -104,12 +110,22 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
             "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png",
         )
         self.assertEqual(failed_generated["grid"], [2, 1])
+        upgraded_generated = manifest["generated_sources"]["rare_upgrade_items_sheet_v1"]
+        self.assertEqual(
+            upgraded_generated["source_file"],
+            "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+        )
+        self.assertEqual(upgraded_generated["production_reference"], UPGRADED_PRODUCT_SHEET)
+        self.assertEqual(upgraded_generated["grid"], [4, 1])
         for icon_id in ITEM_IDS:
             with self.subTest(icon_id=icon_id):
                 spec = manifest["icons"][icon_id]
-                expected_sheet = "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png" \
-                    if icon_id in FAILED_PRODUCT_IDS \
-                    else "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png"
+                if icon_id in FAILED_PRODUCT_IDS:
+                    expected_sheet = "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png"
+                elif icon_id in UPGRADED_PRODUCT_IDS:
+                    expected_sheet = UPGRADED_PRODUCT_SHEET
+                else:
+                    expected_sheet = "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png"
                 self.assertEqual(spec["source_sheet"], expected_sheet)
                 self.assertEqual(spec["native"], f"assets/source/tavern/missing_item_icons/{icon_id}_native.png")
                 self.assertEqual(spec["runtime"], f"assets/textures/tavern/items/{icon_id}.png")
@@ -119,7 +135,12 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
                 left, top, right, bottom = spec["source_rect"]
                 self.assertLess(left, right)
                 self.assertLess(top, bottom)
-                min_source_size = 700 if icon_id in FAILED_PRODUCT_IDS else 280
+                if icon_id in FAILED_PRODUCT_IDS:
+                    min_source_size = 700
+                elif icon_id in UPGRADED_PRODUCT_IDS:
+                    min_source_size = 200
+                else:
+                    min_source_size = 280
                 self.assertGreaterEqual(right - left, min_source_size)
                 self.assertGreaterEqual(bottom - top, min_source_size)
         self.assertEqual(set(manifest["quality_icons"].keys()), set(QUALITY_DRINK_IDS))
@@ -143,7 +164,12 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
 
     def test_sources_references_and_contact_sheet_exist(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        for generated_id in ("missing_item_icons_sheet_v3", "quality_drinks_good_sheet_v1", "failed_products_sheet_v1"):
+        for generated_id in (
+            "missing_item_icons_sheet_v3",
+            "quality_drinks_good_sheet_v1",
+            "failed_products_sheet_v1",
+            "rare_upgrade_items_sheet_v1",
+        ):
             generated = manifest["generated_sources"][generated_id]
             for key in ("source_file", "production_reference"):
                 with self.subTest(generated=generated_id, key=key):

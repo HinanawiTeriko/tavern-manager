@@ -8,6 +8,7 @@ func _ready() -> void:
 	var gm = get_node("/root/GameManager")
 	_test_guest_entries_grow_and_capture_resolution()
 	_test_game_manager_builds_ledger_data_with_guest_entries(gm)
+	_test_game_manager_captures_day3_mercenary_visual_identity(gm)
 
 	var data := LedgerData.new()
 	data.day = 3
@@ -20,7 +21,7 @@ func _ready() -> void:
 	data.orders_failed = 1
 	data.guest_entries = [
 		{"npc_id": "regular_noel", "display_name": "Noel", "result": "success", "gold_delta": 8, "rep_delta": 2, "served_delta": 1, "success_delta": 1, "failed_delta": 0},
-		{"npc_id": "ryan", "display_name": "Ryan", "result": "failed", "gold_delta": 0, "rep_delta": 0, "served_delta": 1, "success_delta": 0, "failed_delta": 1},
+		{"npc_id": "ryan", "portrait_id": "mercenary_a", "display_name": "Ryan", "result": "failed", "gold_delta": 0, "rep_delta": 0, "served_delta": 1, "success_delta": 0, "failed_delta": 1},
 		{"npc_id": "regular_belta", "display_name": "Belta", "result": "success", "gold_delta": 34, "rep_delta": -3, "served_delta": 3, "success_delta": 3, "failed_delta": 0},
 	]
 	data.npc_fates = [
@@ -231,6 +232,35 @@ func _test_game_manager_builds_ledger_data_with_guest_entries(gm: Node) -> void:
 	gm.guests.reset_daily()
 
 
+func _test_game_manager_captures_day3_mercenary_visual_identity(gm: Node) -> void:
+	var original_ledger = gm.current_ledger_data
+	var original_day: int = gm.economy.current_day
+	var original_view = gm._tavern_view
+
+	gm.current_ledger_data = null
+	gm._tavern_view = null
+	gm.economy.current_day = 3
+	gm.guests.reset_daily()
+	gm.guests.spawn_important("ryan", "herb_broth")
+	gm.guests.record_order_failed(0, 0, "failed")
+	gm.guests.record_guest_served()
+	gm.guests.clear_guest()
+
+	var ledger_data = gm._create_ledger_data_for_current_day() if gm.has_method("_create_ledger_data_for_current_day") else null
+	_ok(ledger_data != null, "GameManager can build Day 3 ledger data for visual identity regression")
+	if ledger_data != null:
+		_ok(ledger_data.guest_entries.size() == 1, "Day 3 ledger data receives the Ryan guest entry")
+		if ledger_data.guest_entries.size() > 0:
+			var entry: Dictionary = ledger_data.guest_entries[0]
+			_ok(String(entry.get("npc_id", "")) == "ryan", "Day 3 ledger keeps Ryan as the fate-line npc id")
+			_ok(String(entry.get("portrait_id", "")) == "mercenary_a", "Day 3 ledger captures the mercenary visual identity")
+
+	gm.current_ledger_data = original_ledger
+	gm.economy.current_day = original_day
+	gm._tavern_view = original_view
+	gm.guests.reset_daily()
+
+
 func _test_preserved_nodes(screen: Node) -> void:
 	_ok(screen.get_node_or_null("UI/TitleLabel") is Label, "TitleLabel contract is preserved")
 	_ok(screen.get_node_or_null("UI/StatsList") is VBoxContainer, "StatsList contract is preserved")
@@ -280,6 +310,12 @@ func _test_guest_silhouette_stage(screen: Node) -> void:
 			var figure := child as TextureRect
 			_ok(figure.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "guest silhouette uses nearest filtering")
 			_ok(figure.modulate.a > 0.0 and figure.modulate.a <= 1.0, "guest silhouette is visible")
+	if layer.get_child_count() >= 2:
+		var mercenary := layer.get_child(1) as TextureRect
+		_ok(mercenary != null and mercenary.texture != null
+			and String(mercenary.texture.resource_path).ends_with("assets/textures/characters/mercenary_a.png"),
+			"guest silhouette prefers portrait_id so Day 3 shows the mercenary silhouette")
+
 
 
 func _test_revised_silhouette_queue_motion_contract(screen: Node) -> void:

@@ -6,6 +6,7 @@ var _customer_sprite: TextureRect
 var _customer_name: Label
 var _order_bubble: Label
 var _reaction_bubble: Label
+var _reaction_highlight: RichTextLabel
 var _timer_bar: ProgressBar
 var _patience_fill_clip: Control
 var _patience_fill_art: TextureRect
@@ -41,6 +42,8 @@ var _stage_caption: Label
 var _caption_tween: Tween
 var _inference_ready_notice: Label
 var _inference_ready_notice_tween: Tween
+var _recipe_discovery_notice: Control
+var _recipe_discovery_notice_tween: Tween
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
@@ -73,6 +76,9 @@ const RECIPE_LEFT_COLUMN_WIDTH := 300.0
 const RECIPE_DETAIL_WIDTH := 340.0
 const RECIPE_DETAIL_PANEL_ART := "res://assets/textures/ui/menu_brush_panel.png"
 const RECIPE_DETAIL_BAND_ART := "res://assets/textures/ui/menu_brush_band.png"
+const RECIPE_DISCOVERY_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.png"
+const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
+const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
 
 const NPC_TEXTURE_KEYS: Dictionary = {
@@ -105,6 +111,10 @@ const GREY_LEDGER_LADY_TEXTURE_NEUTRAL := "grey_ledger_lady_neutral"
 const GREY_LEDGER_LADY_TEXTURE_SMILE := "grey_ledger_lady_smile"
 const GREY_LEDGER_LADY_TEXTURE_ASSESSING := "grey_ledger_lady_assessing"
 const GREY_LEDGER_LADY_TEXTURE_CRACKED := "grey_ledger_lady_cracked"
+const GREY_LEDGER_LADY_TEXTURE_WELCOMING := "grey_ledger_lady_welcoming"
+const GREY_LEDGER_LADY_TEXTURE_KNOWING := "grey_ledger_lady_knowing"
+const GREY_LEDGER_LADY_TEXTURE_COLD := "grey_ledger_lady_cold"
+const GREY_LEDGER_LADY_TEXTURE_UNSETTLED := "grey_ledger_lady_unsettled"
 const TOPBAR_LEFT_INSET := Vector2(28, 48)
 const TOPBAR_RIGHT_INSET := Vector2(28, 48)
 const TOPBAR_LABEL_HEIGHT := 48.0
@@ -131,6 +141,7 @@ func _ready() -> void:
 	_customer_name = $CustomerArea/CustomerName
 	_order_bubble = $CustomerArea/OrderBubble
 	_reaction_bubble = $CustomerArea/ReactionBubble
+	_ensure_reaction_highlight()
 	_timer_bar = $CustomerArea/TimerBar
 	_patience_fill_clip = $CustomerArea/PatienceFillClip
 	_patience_fill_art = $CustomerArea/PatienceFillClip/PatienceFillArt
@@ -221,6 +232,7 @@ func _apply_theme() -> void:
 	_reaction_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_reaction_bubble.clip_text = true
 	_reaction_bubble.visible = false
+	_configure_reaction_highlight()
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
@@ -317,6 +329,7 @@ func _configure_customer_input_passthrough() -> void:
 		"CustomerArea/CustomerName",
 		"CustomerArea/OrderBubble",
 		"CustomerArea/ReactionBubble",
+		"CustomerArea/ReactionHighlight",
 		"CustomerArea/PatienceIcon",
 		"CustomerArea/TimerBar",
 		"CustomerArea/PatienceFillClip",
@@ -325,6 +338,41 @@ func _configure_customer_input_passthrough() -> void:
 		var control := get_node_or_null(path) as Control
 		if control != null:
 			control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _ensure_reaction_highlight() -> void:
+	if _reaction_highlight != null and is_instance_valid(_reaction_highlight):
+		return
+	var parent := _reaction_bubble.get_parent() as Control
+	if parent == null:
+		return
+	_reaction_highlight = parent.get_node_or_null("ReactionHighlight") as RichTextLabel
+	if _reaction_highlight == null:
+		_reaction_highlight = RichTextLabel.new()
+		_reaction_highlight.name = "ReactionHighlight"
+		parent.add_child(_reaction_highlight)
+	_configure_reaction_highlight()
+
+
+func _configure_reaction_highlight() -> void:
+	if _reaction_highlight == null or _reaction_bubble == null:
+		return
+	_reaction_highlight.position = _reaction_bubble.position
+	_reaction_highlight.size = _reaction_bubble.size
+	_reaction_highlight.z_index = _reaction_bubble.z_index + 1
+	_reaction_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_reaction_highlight.bbcode_enabled = true
+	_reaction_highlight.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reaction_highlight.scroll_active = false
+	_reaction_highlight.fit_content = false
+	_reaction_highlight.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_reaction_highlight.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var font := ThemeColors.menu_font()
+	if font != null:
+		_reaction_highlight.add_theme_font_override("normal_font", font)
+	_reaction_highlight.add_theme_font_size_override("normal_font_size", 16)
+	_reaction_highlight.add_theme_color_override("default_color", Color.WHITE)
+	_reaction_highlight.visible = false
 
 
 func _configure_topbar_layout() -> void:
@@ -585,8 +633,7 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 	_customer_name.text = customer_name
 	_refresh_order_groove_text()
 	_order_bubble.visible = true
-	_reaction_bubble.text = ""
-	_reaction_bubble.visible = false
+	_clear_customer_reaction_text()
 	_timer_bar.modulate = Color.WHITE
 	if _patience_fill_art != null:
 		_patience_fill_art.modulate = Color.WHITE
@@ -620,6 +667,14 @@ func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
 	_current_customer_npc_id = target_npc_id
 	_current_customer_reaction_outcome = outcome
 	_apply_customer_texture_key(_customer_texture_key(target_npc_id, outcome))
+
+func show_customer_expression(expression: String, npc_id: String = "") -> void:
+	var target_npc_id := npc_id if npc_id != "" else _current_customer_npc_id
+	if target_npc_id == "":
+		return
+	_current_customer_npc_id = target_npc_id
+	_current_customer_reaction_outcome = expression
+	_apply_customer_texture_key(_customer_texture_key(target_npc_id, expression))
 
 func _apply_customer_texture_key(tex_key: String) -> void:
 	var tex = TextureManager.try_load("res://assets/textures/characters/" + tex_key + ".png")
@@ -688,12 +743,20 @@ func _toby_texture_key(outcome: String = "") -> String:
 	return TOBY_TEXTURE_NEUTRAL
 
 func _grey_ledger_lady_texture_key(outcome: String = "") -> String:
-	if outcome == "success":
+	if outcome in ["success", "smile"]:
 		return GREY_LEDGER_LADY_TEXTURE_SMILE
-	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient", "assessing"]:
 		return GREY_LEDGER_LADY_TEXTURE_ASSESSING
 	if outcome in ["cracked", "threat", "revealed"]:
 		return GREY_LEDGER_LADY_TEXTURE_CRACKED
+	if outcome == "welcoming":
+		return GREY_LEDGER_LADY_TEXTURE_WELCOMING
+	if outcome == "knowing":
+		return GREY_LEDGER_LADY_TEXTURE_KNOWING
+	if outcome in ["cold", "sealed"]:
+		return GREY_LEDGER_LADY_TEXTURE_COLD
+	if outcome in ["unsettled", "mask_slipping"]:
+		return GREY_LEDGER_LADY_TEXTURE_UNSETTLED
 	return GREY_LEDGER_LADY_TEXTURE_NEUTRAL
 
 func _story_flag(narrative, key: String) -> bool:
@@ -752,8 +815,7 @@ func hide_customer() -> void:
 	_customer_sprite.visible = false
 	_customer_name.text = "等待中……"
 	_order_bubble.visible = false
-	_reaction_bubble.visible = false
-	_reaction_bubble.text = ""
+	_clear_customer_reaction_text()
 	_timer_bar.modulate = Color.WHITE
 	if _patience_fill_art != null:
 		_patience_fill_art.modulate = Color.WHITE
@@ -940,14 +1002,10 @@ func _activate_reward_ornate(ornate: TextureRect) -> void:
 	ornate.visible = true
 	ornate.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	ornate.scale = Vector2.ONE
+	ornate.pivot_offset = ornate.size * 0.5
 	var tween := create_tween()
-	tween.tween_interval(0.72)
-	tween.tween_property(ornate, "modulate:a", 0.0, 0.32)
-	tween.finished.connect(func():
-		if is_instance_valid(ornate):
-			ornate.visible = false
-			ornate.modulate = Color.WHITE
-	)
+	tween.tween_property(ornate, "scale", Vector2(1.06, 1.06), 0.08)
+	tween.tween_property(ornate, "scale", Vector2.ONE, 0.14)
 
 
 func _pulse_reward_label(label: Label) -> void:
@@ -1014,8 +1072,29 @@ func _refresh_default_daily_menu() -> void:
 
 ## 鍑哄彛鈶狅細瀹汉鍦ㄥ璇濇皵娉￠噷鐢ㄨ嚜宸辩殑鍙ｅ惢鍙嶅簲锛堝彴璇嶅惈銆屻€嶏級銆?
 func customer_say(text: String) -> void:
-	_reaction_bubble.text = text
-	_reaction_bubble.visible = text != ""
+	var uses_highlight := _contains_reaction_bbcode(text)
+	var plain_text := _strip_reaction_bbcode(text) if uses_highlight else text
+	_reaction_bubble.text = plain_text
+	_reaction_bubble.visible = plain_text != "" and not uses_highlight
+	if _reaction_highlight != null:
+		_reaction_highlight.text = text if uses_highlight else ""
+		_reaction_highlight.visible = plain_text != "" and uses_highlight
+
+
+func _clear_customer_reaction_text() -> void:
+	_reaction_bubble.text = ""
+	_reaction_bubble.visible = false
+	if _reaction_highlight != null:
+		_reaction_highlight.text = ""
+		_reaction_highlight.visible = false
+
+
+func _contains_reaction_bbcode(text: String) -> bool:
+	return text.find("[color=") >= 0 or text.find("[/color]") >= 0
+
+
+func _strip_reaction_bbcode(text: String) -> String:
+	return text.replace("[color=#d6a84d]", "").replace("[/color]", "")
 
 ## 鍑哄彛鈶★細鑸炲彴鎻愮ず娴瓧鈥斺€旂涓変汉绉板姩浣滄弿鍐欙紝娣″叆鈫掑仠鐣欌啋娣″嚭銆?
 func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
@@ -1050,8 +1129,113 @@ func show_inference_ready_notice() -> void:
 		_inference_ready_notice.scale = Vector2.ONE
 	)
 
-func show_recipe_discovery_notice(_product_key: String) -> void:
-	return
+func show_recipe_discovery_notice(product_key: String) -> void:
+	var notice := _ensure_recipe_discovery_notice()
+	if notice == null:
+		return
+	var product_name := product_key
+	if _gm != null and _gm.craft != null:
+		var item_data: Dictionary = _gm.craft.get_item(product_key)
+		product_name = String(item_data.get("name", product_key))
+
+	var name_label := notice.get_node_or_null("Name") as Label
+	if name_label != null:
+		name_label.text = product_name
+
+	if _recipe_discovery_notice_tween != null and _recipe_discovery_notice_tween.is_valid():
+		_recipe_discovery_notice_tween.kill()
+	_position_recipe_discovery_notice(notice)
+	notice.visible = true
+	notice.modulate = Color(1, 1, 1, 0)
+	notice.scale = Vector2(0.9, 0.9)
+	notice.pivot_offset = notice.size * 0.5
+	_recipe_discovery_notice_tween = create_tween()
+	_recipe_discovery_notice_tween.tween_property(notice, "modulate:a", 1.0, 0.16)
+	_recipe_discovery_notice_tween.parallel().tween_property(notice, "scale", Vector2(1.04, 1.04), 0.16)
+	_recipe_discovery_notice_tween.tween_interval(2.1)
+	_recipe_discovery_notice_tween.tween_property(notice, "modulate:a", 0.0, 0.35)
+	_recipe_discovery_notice_tween.parallel().tween_property(notice, "scale", Vector2(1.0, 1.0), 0.35)
+	_recipe_discovery_notice_tween.tween_callback(func():
+		notice.visible = false
+		notice.scale = Vector2.ONE
+	)
+
+func _ensure_recipe_discovery_notice() -> Control:
+	if _recipe_discovery_notice != null and is_instance_valid(_recipe_discovery_notice):
+		return _recipe_discovery_notice
+	var existing := get_node_or_null("RecipeDiscoveryNotice") as Control
+	if existing != null:
+		_recipe_discovery_notice = existing
+		return _recipe_discovery_notice
+
+	var notice := Control.new()
+	notice.name = "RecipeDiscoveryNotice"
+	notice.z_index = 92
+	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	notice.position = RECIPE_DISCOVERY_NOTICE_FALLBACK_POS
+	notice.size = RECIPE_DISCOVERY_NOTICE_SIZE
+	notice.visible = false
+	notice.modulate.a = 0.0
+	add_child(notice)
+
+	var brush := Panel.new()
+	brush.name = "BrushBand"
+	brush.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	brush.position = Vector2.ZERO
+	brush.size = notice.size
+	var brush_style := TextureManager.try_load_style_box(RECIPE_DISCOVERY_BRUSH_ART)
+	if brush_style != null:
+		brush.add_theme_stylebox_override("panel", brush_style)
+	notice.add_child(brush)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.position = Vector2(30.0, 12.0)
+	title.size = Vector2(128.0, 28.0)
+	title.text = "新配方"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(title, 18, ThemeColors.AMBER_PRIMARY)
+	notice.add_child(title)
+
+	var name_label := Label.new()
+	name_label.name = "Name"
+	name_label.position = Vector2(30.0, 42.0)
+	name_label.size = Vector2(420.0, 30.0)
+	name_label.text = ""
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(name_label, 20, ThemeColors.TEXT_LIGHT)
+	notice.add_child(name_label)
+
+	var subtitle := Label.new()
+	subtitle.name = "Subtitle"
+	subtitle.position = Vector2(30.0, 74.0)
+	subtitle.size = Vector2(260.0, 22.0)
+	subtitle.text = "已记入配方书"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(subtitle, 14, ThemeColors.TEXT_SUBTITLE)
+	notice.add_child(subtitle)
+
+	_recipe_discovery_notice = notice
+	return _recipe_discovery_notice
+
+func _position_recipe_discovery_notice(notice: Control) -> void:
+	if notice == null:
+		return
+	var customer_sprite := get_node_or_null("CustomerArea/CustomerSprite") as Control
+	if customer_sprite == null:
+		notice.position = RECIPE_DISCOVERY_NOTICE_FALLBACK_POS
+		return
+	var sprite_rect := customer_sprite.get_global_rect()
+	notice.global_position = Vector2(
+		roundf(sprite_rect.position.x + sprite_rect.size.x * 0.5 - notice.size.x * 0.5),
+		roundf(sprite_rect.position.y - notice.size.y)
+	)
 
 ## 出口③：打烊按钮可用状态（有客人/pending/上菜停留中时禁用）。
 func set_close_enabled(enabled: bool) -> void:

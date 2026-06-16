@@ -75,6 +75,10 @@ func _test_clean_table_screen_contract() -> void:
 	_ok(bool(result.get("solved", false)), "placing both identity clues solves identity")
 	_ok(gm.narrative.get_var("toby_identity_known") == true, "identity solve applies to GameManager")
 	_assert_success_feedback_style(screen)
+	_ok(screen.get_node_or_null("ClueArea/Clue_back_alley_boy") == null,
+		"clean-table clue list hides a clue once no unsolved question can use it")
+	_ok(screen.get_node_or_null("ClueArea/Clue_toby_name") is Control,
+		"clean-table clue list keeps a solved-question clue when a future question still uses it")
 	_ok(String(screen.get_current_question_id()) == "toby_commission_risk", "screen advances to the risk question")
 	_assert_blank_inside_book(screen, "Blank_commission")
 	_assert_blank_inside_book(screen, "Blank_risk")

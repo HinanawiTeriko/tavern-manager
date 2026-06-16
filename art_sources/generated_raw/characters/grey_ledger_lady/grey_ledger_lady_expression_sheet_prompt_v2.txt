@@ -1,0 +1,18 @@
+Grey Ledger Lady expression sheet v2.
+
+Use case: stylized-concept.
+Asset type: Grey Ledger Lady expression sheet source for a Godot pixel-art tavern portrait pipeline.
+Input image: use the v1 Grey Ledger Lady sheet as identity and costume reference; preserve the same character, black hair updo, pale porcelain face and hands, subtle gold-and-red ornament, black formal human clothing, normal tailored black dress silhouette, same bust framing and scale.
+
+Primary request: create an eight-expression sheet for Evelyn, the Grey Ledger Lady.
+Layout: 4 columns x 2 rows, equal fixed cells, one bust portrait centered in each cell, same camera distance and approximate body scale in every cell, generous padding for later 128x160 native portrait extraction and 512x640 runtime export.
+
+Expression order, left to right:
+Top row: 1 neutral, calm porcelain auditor neutral; 2 smile, warm false-savior smile; 3 assessing, quietly assessing the player's debt; 4 cracked, porcelain composure cracking into threat.
+Bottom row: 5 welcoming, courteous first-visit welcome; 6 knowing, quietly knowing old-ledger clue; 7 cold, cold sealed-account finality; 8 unsettled, mask slipping before public accounting.
+
+Style/medium: polished 2D character concept sheet that can be downsampled into chunky pixel-art portraits; crisp silhouette, clean opaque figure edges, no painterly blur.
+Color palette: black formal clothing, pale porcelain skin, muted warm amber accents; do not use green anywhere on the character.
+Background: perfectly flat solid #00ff00 chroma-key background in every cell, one uniform color with no shadows, no gradients, no texture, no floor plane, no reflection.
+
+Constraints: no readable text, no labels, no logos, no watermark, no ledger-shaped clothing, no keyhole motif, no extra props, no extra characters. Keep the clothing normal and tailored, not armor and not fantasy robes. Make the eight expressions clearly different while preserving the same identity.

@@ -1262,6 +1262,8 @@ func _is_point_inside_intake(global_pos: Vector2) -> bool:
 
 func _finish_current(product_key: String) -> void:
 	var ingredients := _state.ingredients()
+	if product_key == "":
+		product_key = _single_stir_operation_result(ingredients)
 	if container_key == "pot" and product_key != "":
 		_spawn_pot_ready_burst()
 	_state.clear()
@@ -1276,6 +1278,13 @@ func _finish_current(product_key: String) -> void:
 			_spawn_pot_failure_feedback()
 	_spawn_product(product_key)
 	recipe_consumed.emit(product_key)
+
+
+func _single_stir_operation_result(ingredients: Array) -> String:
+	if container_key != "pot" or ingredients.size() != 1:
+		return ""
+	var ops: Dictionary = GameManager.craft.get_operations(String(ingredients[0]))
+	return String(ops.get("stir", ""))
 
 
 func _burnt_key_for(raw_key: String) -> String:

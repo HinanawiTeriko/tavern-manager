@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: source reference art for a 2D pixel-game investigation background, later downsampled to a 320x180 native pixel grid and exported at 1280x720.
+Primary request: Create a clean guild clearing table background for a dungeon tavern management game. The table is an empty accounting workbench with no interactive objects baked into the art.
+Scene/backdrop: dark teal stone-and-wood guild back room, heavy accounting table, warm candlelight accents, cold stone shadows, rough ink-line historical printmaking influence, paper grain and worn wood texture.
+Composition/framing: 16:9 landscape, slightly top-down orthographic game view. Keep the center and right side clean for separate foreground gameplay components. Include four or five empty rectangular receiving slots across the middle-left and center, a blank empty mounting area on the right where a separate stamp press component can be placed, and a low dark drawer/receiving gap near the bottom center. Leave top-left space for UI labels.
+Lighting/mood: dim dungeon tavern, restrained amber highlights, mostly dark teal/charcoal/brown surfaces, readable silhouettes.
+Color palette: dark teal dungeon palette, muted brass/amber accents only in small areas, low-density chunky pixel clusters suitable for reduction.
+Materials/textures: worn wood, blackened metal trim, cold stone, rough ink edges, paper-grain-like texture in the art style but no loose papers.
+Constraints: no stamp press machine, no hand stamp, no wax seal, no loose papers, no coins, no labels, no readable text, no logos, no UI buttons, no already-stamped marks, no characters. Background only; all interactive papers and stamping machine will be separate runtime sprites.
+Avoid: modern UI, neon glow, gradients, soft blur, realistic photo style, readable letters, branded style names, living artists.

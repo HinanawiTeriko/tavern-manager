@@ -33,6 +33,10 @@ func _test_expression_textures_exist() -> void:
 		"grey_ledger_lady_smile",
 		"grey_ledger_lady_assessing",
 		"grey_ledger_lady_cracked",
+		"grey_ledger_lady_welcoming",
+		"grey_ledger_lady_knowing",
+		"grey_ledger_lady_cold",
+		"grey_ledger_lady_unsettled",
 	]:
 		var path := "res://assets/textures/characters/%s.png" % portrait_id
 		_ok(FileAccess.file_exists(path), portrait_id + " runtime portrait exists")
@@ -69,6 +73,8 @@ func _test_tavern_switches_grey_ledger_lady_expression_portraits() -> void:
 	await get_tree().process_frame
 
 	tavern.show_customer("Grey Ledger Lady", "black_wine", "grey_ledger_lady")
+	_ok(tavern.has_method("show_customer_expression"),
+		"TavernView exposes show_customer_expression for dialogue-driven portrait swaps")
 	tavern.show_customer_reaction("success", "grey_ledger_lady")
 	_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_smile.png"),
 		"Grey Ledger Lady correct serve switches to false-savior smile")
@@ -82,6 +88,21 @@ func _test_tavern_switches_grey_ledger_lady_expression_portraits() -> void:
 	tavern.show_customer_reaction("cracked", "grey_ledger_lady")
 	_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_cracked.png"),
 		"Grey Ledger Lady cracked state switches to porcelain-cracked threat portrait")
+
+	tavern.show_customer("Grey Ledger Lady", "black_wine", "grey_ledger_lady")
+	if tavern.has_method("show_customer_expression"):
+		tavern.show_customer_expression("welcoming", "grey_ledger_lady")
+		_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_welcoming.png"),
+			"Grey Ledger Lady dialogue can switch to courteous welcome portrait")
+		tavern.show_customer_expression("knowing", "grey_ledger_lady")
+		_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_knowing.png"),
+			"Grey Ledger Lady dialogue can switch to knowing clue portrait")
+		tavern.show_customer_expression("cold", "grey_ledger_lady")
+		_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_cold.png"),
+			"Grey Ledger Lady dialogue can switch to cold sealed-account portrait")
+		tavern.show_customer_expression("unsettled", "grey_ledger_lady")
+		_ok(_portrait_path(tavern).ends_with("/grey_ledger_lady_unsettled.png"),
+			"Grey Ledger Lady dialogue can switch to unsettled public-account portrait")
 
 	tavern.queue_free()
 

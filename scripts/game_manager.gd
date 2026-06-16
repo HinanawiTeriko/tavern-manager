@@ -42,6 +42,7 @@ var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
 var _guest_lingering: bool = false
+var _serve_tutorial_pending_after_dialogue: bool = false
 
 # 开场交接：刚看完开场后置位，DayMap 一次性消费以走 match-cut 拉镜
 var _pending_intro_handoff: bool = false
@@ -98,6 +99,14 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"bloodied_contract": "res://assets/textures/tavern/items/bloodied_contract.png",
 	"alternative_contract": "res://assets/textures/tavern/items/alternative_contract.png",
 	"toby_contract": "res://assets/textures/tavern/items/toby_contract.png",
+	"grey_ryan_case_number": "res://assets/ui/generated/investigation/clearing_table/items/clearing_ryan_name.png",
+	"grey_old_payout_register": "res://assets/ui/generated/investigation/clearing_table/items/clearing_payout_slip.png",
+	"grey_missing_page": "res://assets/ui/generated/investigation/clearing_table/items/clearing_unreturned.png",
+	"grey_blacktooth_batch": "res://assets/ui/generated/investigation/clearing_table/items/clearing_blacktooth_batch.png",
+	"grey_closure_method": "res://assets/ui/generated/investigation/clearing_table/items/clearing_grey_stamp.png",
+	"grey_payout_closure": "res://assets/ui/generated/investigation/clearing_table/items/clearing_closure_stamp.png",
+	"grey_renamed_escort": "res://assets/ui/generated/investigation/clearing_table/items/clearing_rename_stamp.png",
+	"grey_supply_stamp": "res://assets/ui/generated/investigation/clearing_table/items/clearing_supply_contract.png",
 }
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
@@ -280,6 +289,7 @@ func start_day_map(day: int) -> void:
 	day_map.set_document_owned("toby_contract", documents.owns_document("toby_contract"))
 	if documents.owns_document("toby_contract"):
 		narrative.set_var("toby_contract_found", true)
+	_sync_day_map_completion_from_story_state()
 	_ensure_fate_tracks_for_day(day)
 	_migrate_missing_day_map_state()
 
@@ -287,6 +297,16 @@ func start_day_map(day: int) -> void:
 func persist_day_map_state() -> void:
 	if save_sys != null:
 		save_sys.write(_capture_save_state())
+
+
+func _sync_day_map_completion_from_story_state() -> void:
+	if day_map == null or documents == null:
+		return
+	if day_map.has_method("mark_completed_by_document"):
+		for document_id in documents.get_owned_documents():
+			day_map.call("mark_completed_by_document", String(document_id))
+	if narrative != null and bool(narrative.get_var("toby_secured_by_fixer")) and day_map.has_method("mark_completed"):
+		day_map.call("mark_completed", "fixer_den")
 
 
 func _migrate_missing_day_map_state() -> void:
@@ -306,6 +326,8 @@ func _migrate_missing_day_map_state() -> void:
 func _mira_day_start_ledger_entries(day: int) -> Array:
 	if day == 6:
 		return ["托比，黑齿矿脉护送委托，未归。"]
+	if day == 13:
+		return ["伊芙琳，灰账清算，第二十日封存。"]
 	return []
 
 
@@ -316,6 +338,8 @@ func _ensure_fate_tracks_for_day(day: int) -> void:
 	if day == 6:
 		added = documents.start_fate_track("toby", "托比", "第十二日。黑齿矿脉护送委托。未归。") or added
 		added = documents.start_fate_track("mira", "米拉", "第十二日。长期供应协议。签署。") or added
+	if day == 13:
+		added = documents.start_fate_track("evelyn", "伊芙琳", "第二十日。灰账清算。封存。") or added
 	if added:
 		play_audio_event("new_document")
 
@@ -477,13 +501,13 @@ func _next_mira_old_ledger_gossip() -> Dictionary:
 	if not inference.has_clue("mira_traveling_mentor"):
 		return {
 			"clue_id": "mira_traveling_mentor",
-			"line": "客人: 以前有个女商人，总带着个半大孩子跑货。",
+			"line": "客人: 以前有个女商人，总带着个[color=#d6a84d]半大孩子跑货[/color]。",
 			"note": "今晚有人提起带孩子跑货的女商人。",
 		}
 	if inference.has_clue("one_person_walk") and not inference.has_clue("child_learned_saying"):
 		return {
 			"clue_id": "child_learned_saying",
-			"line": "客人: 那孩子学她说话，老念叨一个人走才轻快。",
+			"line": "客人: 那孩子[color=#d6a84d]学她说话[/color]，老念叨[color=#d6a84d]一个人走才轻快[/color]。",
 			"note": "今晚有人说，那孩子是从别人那里学会“一个人走”的。",
 		}
 	return {}
@@ -565,6 +589,30 @@ func apply_inference_result(result: Dictionary) -> bool:
 					changed = true
 					if documents.add_fate_note("mira", "托比那句“一个人走”，来自米拉留下的旧办法。"):
 						play_audio_event("new_document")
+			"grey_same_batch_known":
+				if narrative.get_var("grey_same_batch_known") != true:
+					narrative.set_var("grey_same_batch_known", true)
+					changed = true
+					if documents.add_fate_note("evelyn", "莱恩案卷和托比的黑齿批次被对进了同一批灰账。"):
+						play_audio_event("new_document")
+			"grey_payout_method_known":
+				if narrative.get_var("grey_payout_method_known") != true:
+					narrative.set_var("grey_payout_method_known", true)
+					changed = true
+					if documents.add_fate_note("evelyn", "灰账先写赔付，再盖结案。"):
+						play_audio_event("new_document")
+			"mira_grey_ledger_link_known":
+				if narrative.get_var("mira_grey_ledger_link_known") != true:
+					narrative.set_var("mira_grey_ledger_link_known", true)
+					changed = true
+					if documents.add_fate_note("evelyn", "米拉的供应协议背面盖着同一枚灰契印。"):
+						play_audio_event("new_document")
+			"grey_public_account_known":
+				if narrative.get_var("grey_public_account_known") != true:
+					narrative.set_var("grey_public_account_known", true)
+					changed = true
+					if documents.add_fate_note("evelyn", "灰账可以被抄成公开账本，不能只留在公会柜台里。"):
+						play_audio_event("new_document")
 	if changed:
 		_maybe_show_inference_ready_notice(previous_questions)
 	return changed
@@ -572,7 +620,8 @@ func apply_inference_result(result: Dictionary) -> bool:
 
 func visit_day_location(location_id: String) -> Dictionary:
 	day_map.set_document_read("bloodied_contract", documents.is_read("bloodied_contract"))
-	var gold_cost := _day_location_gold_cost(location_id)
+	var location_before := _find_day_map_location(location_id)
+	var gold_cost := int(location_before.get("goldCost", _day_location_gold_cost(location_id)))
 	if gold_cost > 0 and economy.gold < gold_cost:
 		return {
 			"success": false,
@@ -615,6 +664,8 @@ func visit_day_location(location_id: String) -> Dictionary:
 		else:
 			result["blocked_reason"] = "not_enough_gold"
 			narrative.set_var("toby_secured", false)
+	if bool(location_before.get("completeOnVisit", false)) and day_map.has_method("mark_completed"):
+		day_map.call("mark_completed", location_id)
 	# 聚合 rewards 数组为 {item_key: count} 字典，供 UI Toast 展示
 	var reward_counts_toast: Dictionary = {}
 	for key in result.get("rewards", []):
@@ -705,13 +756,65 @@ func grant_investigation_document(document_id: String) -> bool:
 			narrative.set_var("toby_contract_found", true)
 			if documents.add_fate_note("toby", "委托书已拼回。米拉还不知道。"):
 				play_audio_event("new_document")
+		var clue_id := _document_inference_clue(id)
+		if clue_id != "" and inference != null:
+			var previous_questions := _available_inference_question_ids()
+			if inference.add_clue(clue_id):
+				_add_grey_document_fate_note(id)
+				_maybe_show_inference_ready_notice(previous_questions)
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
 			add_to_inventory(id, 1)
 			_ledger_item(id, 1, "剧情获得")
 		# 同步到大世界：拥有文档即视为已获取线索，公会柜台等依赖 requiresRead 的地点可解锁
 		day_map.set_document_owned(id, true)
+	if newly or already_owned:
+		day_map.set_document_owned(id, true)
+		if day_map.has_method("mark_completed_by_document"):
+			day_map.call("mark_completed_by_document", id)
 	return newly
+
+
+func _document_inference_clue(document_id: String) -> String:
+	const GREY_DOCUMENT_CLUES := [
+		"grey_ryan_case_number",
+		"grey_old_payout_register",
+		"grey_missing_page",
+		"grey_blacktooth_batch",
+		"grey_closure_method",
+		"grey_payout_closure",
+		"grey_renamed_escort",
+		"grey_supply_stamp",
+	]
+	if GREY_DOCUMENT_CLUES.has(document_id):
+		return document_id
+	return ""
+
+
+func _add_grey_document_fate_note(document_id: String) -> void:
+	var note := ""
+	match document_id:
+		"grey_ryan_case_number":
+			note = "莱恩的案卷编号被抄进灰账批次。"
+		"grey_old_payout_register":
+			note = "旧赔付登记显示，几份委托先赔付再结案。"
+		"grey_missing_page":
+			note = "失踪名单缺页处压着灰色蜡印。"
+		"grey_blacktooth_batch":
+			note = "托比的黑齿委托被并入同一批清算。"
+		"grey_closure_method":
+			note = "灰契可以把临时人名、事故赔付和保证金合成一笔已结账。"
+		"grey_payout_closure":
+			note = "赔付登记处夹出了莱恩案卷“赔付即结案”的顺序。"
+		"grey_renamed_escort":
+			note = "黑齿转运账把托比的护送委托改进了临时人名栏。"
+		"grey_supply_stamp":
+			note = "米拉旧供应副本背面有同一枚灰契印。"
+	if note == "":
+		return
+	_ensure_fate_track("evelyn")
+	if documents.add_fate_note("evelyn", note):
+		play_audio_event("new_document")
 
 
 func enter_night_from_day_map() -> void:
@@ -780,11 +883,8 @@ func _on_phase_changed(phase: int) -> void:
 			get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/DayMap.tscn")
 
 func _on_guest_arrived(guest: GuestData) -> void:
-	if _tavern_view == null or not is_instance_valid(_tavern_view):
+	if guest == null:
 		return
-	_refresh_close_button()
-
-	var item: Dictionary = craft.get_item(guest.order_key)
 	var display_name = guest.guest_name
 	var portrait_id: String = guest.npc_id if guest.npc_id != "" else "guest"
 	if guest.has_dialogue:
@@ -795,9 +895,17 @@ func _on_guest_arrived(guest: GuestData) -> void:
 		display_name = _important_guest_display_name(guest.npc_id, display_name)
 		portrait_id = ryan_slice.important_portrait_id(economy.current_day, guest.npc_id, portrait_id)
 	guest.set_meta("portrait_id", portrait_id)
+	guests.update_current_guest_entry_identity(display_name, portrait_id)
+
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	_refresh_close_button()
+
+	var item: Dictionary = craft.get_item(guest.order_key)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
 
 	var tm = get_node_or_null("/root/TutorialManager")
+	_queue_first_guest_serve_tutorial(guest.has_dialogue)
 
 	# 重要 NPC 的对话优先于服务教程
 	if guest.has_dialogue:
@@ -812,17 +920,34 @@ func _on_guest_arrived(guest: GuestData) -> void:
 			_dialogue_phase = "pre"
 			_tavern_view.set_dialogue_mode(true)
 			call_deferred("_start_dialogue_deferred", dialogue_path)
-	else:
-		# 服务教程：仅对普通客人触发，不对重要 NPC 触发
-		if tm != null and not tm.first_guest_arrived and not tm._is_active:
-			tm.first_guest_arrived = true
-			tm._save_state()
-			await get_tree().create_timer(0.5).timeout
-			if tm != null and is_instance_valid(tm):
-				var rects := {}
-				if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("get_tutorial_highlight_rects"):
-					rects = _tavern_view.get_tutorial_highlight_rects("serve")
-				tm.start_tutorial("serve", rects)
+
+
+func _queue_first_guest_serve_tutorial(wait_for_dialogue: bool) -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm.first_guest_arrived or tm._is_active:
+		return
+	tm.first_guest_arrived = true
+	tm._save_state()
+	if wait_for_dialogue:
+		_serve_tutorial_pending_after_dialogue = true
+		return
+	_serve_tutorial_pending_after_dialogue = false
+	call_deferred("_start_first_guest_serve_tutorial_after_delay")
+
+
+func _start_first_guest_serve_tutorial_after_delay() -> void:
+	await get_tree().create_timer(0.5).timeout
+	_start_first_guest_serve_tutorial()
+
+
+func _start_first_guest_serve_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active:
+		return
+	var rects := {}
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("get_tutorial_highlight_rects"):
+		rects = _tavern_view.get_tutorial_highlight_rects("serve")
+	tm.start_tutorial("serve", rects)
 
 ## 教程结束后生成重要 NPC（避免教程期间对话冲突）
 func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: String) -> void:
@@ -886,7 +1011,7 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 
 	var is_important = guests.current_guest.has_dialogue
 	var npc_id = guests.current_guest.npc_id
-	var success: bool = (item_key == guests.current_guest.order_key)
+	var success: bool = craft.can_satisfy_order(item_key, guests.current_guest.order_key)
 
 	var item: Dictionary = craft.get_item(item_key)
 	var item_price: int = item.get("price", 0)
@@ -942,6 +1067,10 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 		narrative.finalize_mira_ending()
 		_finish_mira_toby_fate_tracks()
 
+	if is_important and npc_id == "evelyn" and economy.current_day == 20:
+		narrative.finalize_evelyn_ending()
+		_finish_evelyn_fate_track()
+
 	if seasoning_attribute != "":
 		narrative.set_var("seasoning_used", seasoning_attribute)
 
@@ -996,6 +1125,20 @@ func _refresh_current_customer_portrait(outcome: String = "") -> void:
 	_tavern_view.show_customer_reaction(outcome, portrait_id)
 
 
+func set_customer_expression(expression: String, npc_id: String = "") -> void:
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	if not _tavern_view.has_method("show_customer_expression"):
+		return
+	var target_npc_id := npc_id
+	if target_npc_id == "" and guests.current_guest != null:
+		var fallback_id := guests.current_guest.npc_id if guests.current_guest.npc_id != "" else "guest"
+		target_npc_id = String(guests.current_guest.get_meta("portrait_id", fallback_id))
+	if target_npc_id == "":
+		return
+	_tavern_view.show_customer_expression(expression, target_npc_id)
+
+
 func _important_guest_display_name(npc_id: String, fallback: String) -> String:
 	if npc_id == "toby" and narrative.get_var("toby_identity_known") == true:
 		return fallback
@@ -1018,6 +1161,7 @@ func _start_dialogue_deferred(dialogue_path: String, title: String = "start") ->
 func _recover_from_dialogue_failure() -> void:
 	_dialogue_phase = ""
 	_is_dialogue_active = false
+	_serve_tutorial_pending_after_dialogue = false
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.set_dialogue_mode(false)
 	if guests.has_guest and guests.current_guest.has_dialogue:
@@ -1041,6 +1185,9 @@ func _on_dialogue_ended() -> void:
 		_dialogue_phase = ""
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.set_dialogue_mode(false)
+		if _serve_tutorial_pending_after_dialogue:
+			_serve_tutorial_pending_after_dialogue = false
+			_start_first_guest_serve_tutorial()
 		# 注：药酒导致 Ryan 离场现在由 request_narrative_delivery 在动作发生时处理，
 		# 不再依赖 pre 对话结束（拖拽递交发生在 pre 对话之后）。
 
@@ -1164,9 +1311,8 @@ func discover_recipe(product_key: String, notify: bool = true) -> bool:
 	if discovered:
 		craft.mark_recipe_new(product_key)
 	if discovered and notify:
-		var item_data: Dictionary = craft.get_item(product_key)
-		var product_name := String(item_data.get("name", product_key))
-		notify_stage_caption("研制成功：%s" % product_name, ThemeColors.AMBER_PRIMARY)
+		if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("show_recipe_discovery_notice"):
+			_tavern_view.show_recipe_discovery_notice(product_key)
 	return discovered
 
 const ABILITY_TO_CONTAINER := {"slam_pot": "pot", "slam_barrel": "barrel"}
@@ -1442,6 +1588,8 @@ func _ensure_fate_track(track_id: String) -> void:
 			documents.start_fate_track("toby", "托比", "第十二日。黑齿矿脉护送委托。未归。", false)
 		"mira":
 			documents.start_fate_track("mira", "米拉", "第十二日。长期供应协议。签署。", false)
+		"evelyn":
+			documents.start_fate_track("evelyn", "伊芙琳", "第二十日。灰账清算。封存。", false)
 
 
 func _sync_fate_track_results_for_day(day: int) -> void:
@@ -1449,6 +1597,8 @@ func _sync_fate_track_results_for_day(day: int) -> void:
 		_finish_ryan_fate_track()
 	if day == 12:
 		_finish_mira_toby_fate_tracks()
+	if day == 20:
+		_finish_evelyn_fate_track()
 
 
 func _finish_ryan_fate_track() -> void:
@@ -1474,6 +1624,16 @@ func _finish_mira_toby_fate_tracks() -> void:
 	if toby_result != "":
 		changed = documents.finish_fate_track("toby", toby_result) or changed
 	if changed:
+		play_audio_event("new_document")
+
+
+func _finish_evelyn_fate_track() -> void:
+	_ensure_fate_track("evelyn")
+	var route := String(narrative.get_var("evelyn_ending"))
+	if route == "":
+		route = narrative.get_evelyn_route()
+	var result := _evelyn_track_result(route)
+	if result != "" and documents.finish_fate_track("evelyn", result):
 		play_audio_event("new_document")
 
 
@@ -1513,6 +1673,31 @@ func _toby_track_result(route: String, mira_route: String) -> String:
 	return ""
 
 
+func _evelyn_track_result(route: String) -> String:
+	var pressure := ""
+	var raw_pressure = narrative.get_var("evelyn_pressure")
+	if raw_pressure != null:
+		pressure = String(raw_pressure)
+	if pressure == "" and narrative.has_method("get_evelyn_pressure"):
+		pressure = narrative.get_evelyn_pressure(route)
+	match route:
+		"public_account":
+			if pressure == "living_witnesses":
+				return "灰账被抄成公开副本。活人和纸证一起顶住公会封存。"
+			if pressure == "paper_public":
+				return "灰账被抄成公开副本。纸证替未归和沉默的人说话。"
+			return "灰账被抄成公开副本。封存失败。"
+		"amended_account":
+			if pressure == "damaged_amendment":
+				return "承认账面有误。部分改账，活下来的人得到喘息。"
+			if pressure == "cold_amendment":
+				return "承认账面有误。部分改账，但冷账多过活口。"
+			return "承认账面有误。部分改账。"
+		"sealed_account":
+			return "灰账封存。事故照常归档。"
+	return ""
+
+
 func _evidence_links_for(document_id: String) -> Array:
 	match document_id:
 		"bloodied_contract":
@@ -1521,6 +1706,22 @@ func _evidence_links_for(document_id: String) -> Array:
 			return ["莱恩", "公会柜台"]
 		"toby_contract":
 			return ["托比", "米拉"]
+		"grey_ryan_case_number":
+			return ["莱恩", "伊芙琳", "灰账"]
+		"grey_old_payout_register":
+			return ["伊芙琳", "灰账"]
+		"grey_missing_page":
+			return ["伊芙琳", "灰账"]
+		"grey_blacktooth_batch":
+			return ["托比", "伊芙琳", "灰账"]
+		"grey_closure_method":
+			return ["伊芙琳", "灰账"]
+		"grey_payout_closure":
+			return ["莱恩", "伊芙琳", "灰账"]
+		"grey_renamed_escort":
+			return ["托比", "伊芙琳", "灰账"]
+		"grey_supply_stamp":
+			return ["米拉", "伊芙琳", "灰账"]
 	return []
 
 
@@ -1763,7 +1964,7 @@ func _default_new_game_state() -> Dictionary:
 		"documents": {"owned": ["ledger"], "read": {}, "archived": [], "ledger_entries": []},
 		"day_map": {"current_day": 1, "revealed": [], "announced_postings": {}},
 		"inference": {"owned_clues": [], "placements": {}, "solved": []},
-		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5},
+		"narrative": {"dialogue_vars": _fresh_narrative_vars(), "affection": {"ryan": 0, "mira": 5, "toby": 0, "evelyn": 0},
 			"endings": {}, "today_important_npc": ""},
 		"craft": {
 			"unlocked_recipes": [],
@@ -1806,4 +2007,11 @@ func _fresh_narrative_vars() -> Dictionary:
 		"mira_ending": "",
 		"aff_ryan": 0, "aff_mira": 5,
 		"aff_toby": 0,
+		"grey_same_batch_known": false,
+		"grey_payout_method_known": false,
+		"mira_grey_ledger_link_known": false,
+		"grey_public_account_known": false,
+		"evelyn_ending": "",
+		"evelyn_pressure": "",
+		"aff_evelyn": 0,
 	}

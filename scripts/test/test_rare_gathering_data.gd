@@ -17,6 +17,13 @@ const UPGRADE_RECIPES := {
 	"miner_dark_ale": {"name": "矿工黑啤", "container": "barrel", "ingredients": ["black_malt"]},
 }
 
+const UPGRADE_SATISFIES_ORDERS := {
+	"cave_mushroom_stew": ["meat_stew"],
+	"rock_lizard_steak": ["meat_cooked"],
+	"old_road_wine": ["wine"],
+	"miner_dark_ale": ["ale_beer"],
+}
+
 const RARE_LOCATIONS := {
 	"mushroom_forest": {"stable": "herb", "rare": "cave_mushroom"},
 	"dark_river": {"stable": "meat_raw", "rare": "rock_lizard_meat"},
@@ -82,6 +89,7 @@ func _test_recipes_keep_container_limits() -> void:
 		var ingredients: Array = recipe.get("ingredients", [])
 		_ok(String(recipe.get("container", "")) == String(expected["container"]), key + " uses expected container")
 		_ok(ingredients == expected["ingredients"], key + " uses expected ingredients")
+		_ok(recipe.get("satisfies_orders", []) == UPGRADE_SATISFIES_ORDERS[key], key + " declares base orders it satisfies")
 		if String(recipe.get("container", "")) == "grill":
 			_ok(ingredients.size() == 1, key + " keeps grill single-material rule")
 		else:

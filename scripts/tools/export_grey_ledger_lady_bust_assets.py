@@ -22,7 +22,7 @@ RAW_SOURCE = (
     / "generated_raw"
     / "characters"
     / "grey_ledger_lady"
-    / "grey_ledger_lady_expression_sheet_source_v1.png"
+    / "grey_ledger_lady_expression_sheet_source_v2.png"
 )
 PROMPT = (
     ROOT
@@ -30,7 +30,7 @@ PROMPT = (
     / "generated_raw"
     / "characters"
     / "grey_ledger_lady"
-    / "grey_ledger_lady_expression_sheet_prompt_v1.txt"
+    / "grey_ledger_lady_expression_sheet_prompt_v2.txt"
 )
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
 MIRA_REFERENCE = ROOT / "assets" / "textures" / "characters" / "mira_neutral.png"
@@ -42,12 +42,12 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "grey_ledger_lady_contact
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
-EXPRESSION_COLUMNS = 2
+EXPRESSION_COLUMNS = 4
 EXPRESSION_ROWS = 2
 COLOR_LIMIT = 72
 VISIBLE_TARGET = (124, 154)
 BOTTOM_PADDING = 3
-STYLE_PROFILE = "grey_ledger_lady_black_formal_expression_sheet_v1"
+STYLE_PROFILE = "grey_ledger_lady_black_formal_expression_sheet_v2"
 NORMALIZATION_MODE = "fixed_cell_visible_subject_v1"
 
 PORTRAIT_IDS = [
@@ -55,6 +55,10 @@ PORTRAIT_IDS = [
     ("grey_ledger_lady_smile", "warm false-savior smile"),
     ("grey_ledger_lady_assessing", "quietly assessing the player's debt"),
     ("grey_ledger_lady_cracked", "porcelain composure cracking into threat"),
+    ("grey_ledger_lady_welcoming", "courteous first-visit welcome"),
+    ("grey_ledger_lady_knowing", "quietly knowing old-ledger clue"),
+    ("grey_ledger_lady_cold", "cold sealed-account finality"),
+    ("grey_ledger_lady_unsettled", "mask slipping before public accounting"),
 ]
 
 
@@ -207,10 +211,10 @@ def write_manifest(rects: list[list[int]]) -> None:
         "portraits": portraits,
         "character_notes": [
             "mature female antagonist and false-savior contract broker",
-            "v1 black-formal porcelain-auditor expression sheet",
+            "v2 black-formal porcelain-auditor eight-expression sheet",
             "normal human black formal clothing; no keyhole or ledger-shaped outfit",
             "black hair updo, porcelain-pale face and hands with subtle fracture lines",
-            "preview-ready runtime assets; narrative wiring can be added when her encounter is designed",
+            "dialogue-ready runtime assets for Evelyn's Grey Ledger tavern encounters",
         ],
         "bar_occlusion_contract": {
             "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
@@ -228,8 +232,10 @@ def make_contact_sheet(natives: list[tuple[str, Image.Image]]) -> None:
     save_character_contact_sheet(
         CONTACT_SHEET,
         "Grey Ledger Lady character contract sheet",
-        "v1 black formal expression sheet, native 128x160 -> runtime 512x640",
+        "v2 black formal expression sheet, native 128x160 -> runtime 512x640",
         natives,
+        row_count=EXPRESSION_ROWS,
+        column_count=EXPRESSION_COLUMNS,
     )
 
 

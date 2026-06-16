@@ -492,8 +492,10 @@ func _create_guest_silhouettes(entries: Array) -> void:
 
 
 func _load_guest_texture(entry: Dictionary) -> Texture2D:
-	var npc_id := String(entry.get("npc_id", ""))
-	var texture_key := _guest_texture_key(npc_id)
+	var texture_id := String(entry.get("portrait_id", ""))
+	if texture_id == "":
+		texture_id = String(entry.get("npc_id", ""))
+	var texture_key := _guest_texture_key(texture_id)
 	var texture_path := "res://assets/textures/characters/%s.png" % texture_key
 	if ResourceLoader.exists(texture_path):
 		return _load_runtime_texture(texture_path)

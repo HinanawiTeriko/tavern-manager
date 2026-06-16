@@ -13,12 +13,14 @@ func _ready() -> void:
 	_test_barrel_pop_last_ingredient()
 	await _test_barrel_rejects_third_ingredient()
 	await _test_pot_rejects_third_ingredient()
+	await _test_pot_single_stir_operation_outputs_intermediate()
 	_test_pot_intake_requires_center_inside_mouth()
 	_test_grill_continues_searing_cooked_items()
 	_test_mapped_art_can_be_reapplied_after_item_state_changes()
 	_test_grill_timer_changes_item_state_without_heat_color_animation()
 	await _test_grill_auto_sears_and_held_accelerates()
 	await _test_grill_feedback_uses_generated_atlas()
+	await _test_workspace_collision_combines_intermediates()
 	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
 	_test_failure_product_data()
@@ -158,6 +160,28 @@ func _test_pot_rejects_third_ingredient() -> void:
 
 	if is_instance_valid(item):
 		item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_pot_single_stir_operation_outputs_intermediate() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	pot._state.add_item("flour")
+	pot._state.add_stir(pot.required_stir)
+	var before := items.get_child_count()
+	pot._physics_process(0.05)
+	_ok(items.get_child_count() == before + 1,
+		"stirring a single operation ingredient in the pot should spawn an intermediate")
+	var output := items.get_child(items.get_child_count() - 1) as DeskItem \
+			if items.get_child_count() > before else null
+	_ok(output != null and output.item_key == "dough",
+		"stirring flour in the pot should produce dough")
+
 	tavern.queue_free()
 	await get_tree().process_frame
 
@@ -302,6 +326,28 @@ func _test_grill_feedback_uses_generated_atlas() -> void:
 	await get_tree().process_frame
 
 
+func _test_workspace_collision_combines_intermediates() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace")
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var dough := bar._spawn_desk_item_at(Vector2(520.0, 500.0), "dough") as DeskItem
+	var meat := bar._spawn_desk_item_at(Vector2(560.0, 500.0), "meat_raw") as DeskItem
+	dough.linear_velocity = Vector2(280.0, 0.0)
+	meat.linear_velocity = Vector2(-280.0, 0.0)
+	var before := _desk_item_count_with_key(items, "dough_meat")
+	bar._on_item_collision(meat, dough)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_ok(_desk_item_count_with_key(items, "dough_meat") == before + 1,
+		"slamming dough and raw meat on the workspace should make dough_meat")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _test_pot_unfreezes_while_held() -> void:
 	var pot = KITCHEN_CONTAINER_SCRIPT.new()
 	pot.container_key = "pot"
@@ -316,9 +362,11 @@ func _test_pot_unfreezes_while_held() -> void:
 func _test_recipe_data() -> void:
 	var craft := CraftSystem.new()
 	craft.load_data()
-	_ok(craft.query_recipe("grill", ["flour"]) == "bread", "flour on grill should make bread")
+	_ok(craft.query_recipe("grill", ["flour"]) == "", "flour should not grill directly into bread")
+	_ok(craft.query_recipe("grill", ["dough"]) == "bread", "dough on grill should make bread")
 	_ok(craft.query_recipe("grill", ["meat_raw"]) == "meat_cooked", "meat on grill should make cooked meat")
-	_ok(craft.query_recipe("grill", ["meat_raw", "flour"]) == "meat_sand", "grill two ingredient order should not matter")
+	_ok(craft.query_recipe("grill", ["meat_raw", "flour"]) == "", "grill should not expose direct two-raw-ingredient recipes")
+	_ok(craft.query_recipe("grill", ["dough_meat"]) == "meat_sand", "meat sandwich should grill from prepared dough_meat")
 	_ok(craft.query_recipe("pot", ["meat_raw", "ale"]) == "meat_stew", "meat and ale in pot should make stew")
 	_ok(craft.query_recipe("pot", ["ale", "herb"]) == "herb_broth", "herb and ale in pot should make broth")
 	_ok(craft.query_recipe("pot", ["flour", "ale"]) == "malt_porridge", "flour and ale in pot should make porridge")
@@ -458,5 +506,13 @@ func _layer_child_meta_count(owner: Node, layer_name: String, meta_name: String,
 	var count := 0
 	for child in layer.get_children():
 		if String(child.get_meta(meta_name, "")) == expected_value:
+			count += 1
+	return count
+
+
+func _desk_item_count_with_key(parent: Node, item_key: String) -> int:
+	var count := 0
+	for child in parent.get_children():
+		if child is DeskItem and not child.is_queued_for_deletion() and child.item_key == item_key:
 			count += 1
 	return count

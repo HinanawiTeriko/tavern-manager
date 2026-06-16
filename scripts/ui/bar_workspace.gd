@@ -63,7 +63,7 @@ func _ready() -> void:
 func _on_recipe_consumed(product_key: String) -> void:
 	print("[BarWorkspace] 产出 ", product_key)
 	if _gm != null and _gm.has_method("discover_recipe"):
-		_gm.discover_recipe(product_key, false)
+		_gm.discover_recipe(product_key, true)
 
 
 func configure_day(day: int) -> void:
@@ -825,11 +825,27 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 	if force_tier == "none":
 		return
 	var recipe: Dictionary = _gm.craft.find_slam_recipe([key_a, key_b])
-	if recipe.is_empty():
-		return
 	var center: Vector2 = (a.global_position + other.global_position) * 0.5
 	var conserved: Vector2 = (a.linear_velocity + other.linear_velocity) * 0.5
+	if recipe.is_empty():
+		var combined_key: String = _gm.craft.get_combine_result(key_a, key_b)
+		if combined_key == "":
+			return
+		call_deferred("_do_collision_combine", a, other, combined_key, center, conserved)
+		return
 	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _do_collision_combine(a: DeskItem, other: DeskItem, result_key: String, center: Vector2, conserved: Vector2) -> void:
+	if not is_instance_valid(a) or not is_instance_valid(other):
+		return
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	a.queue_free()
+	other.queue_free()
+	var combined := _spawn_desk_item_at(center, result_key)
+	combined.linear_velocity = conserved
+	_gm.play_audio_event("product_ready")
 
 
 func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier: String, center: Vector2, conserved: Vector2) -> void:
@@ -851,7 +867,7 @@ func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier
 		p.linear_velocity = conserved
 	_gm.play_audio_event("product_ready")
 	if _gm != null and _gm.has_method("discover_recipe"):
-		_gm.discover_recipe(product_key, false)
+		_gm.discover_recipe(product_key, true)
 	if quality == "poor":
 		_gm.notify_stage_caption("手重了，砸出了次品", ThemeColors.TEXT_SUBTITLE)
 

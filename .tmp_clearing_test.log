@@ -1,0 +1,70 @@
+Godot Engine v4.6.3.stable.mono.official.7d41c59c4 - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+Unrecognized output string "misc2" in mapping:
+030000008a2e0000dd10000000000000,Hand Held Legend GC Ultimate,a:b0,b:b2,back:b17,dpdown:b5,dpleft:b6,dpright:b7,dpup:b4,guide:b18,leftshoulder:b10,leftstick:b8,lefttrigger:a3,leftx:a0,lefty:a1,misc1:b19,misc2:b24,paddle1:b13,paddle2:b12,rightshoulder:b11,rightstick:b9,righttrigger:a4,rightx:a2,righty:a5,start:b16,x:b1,y:b3,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000000d0f00000202000000000000,Horipad O Nintendo Switch 2 Controller,a:b1,b:b0,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,misc1:b13,misc2:b14,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b3,y:b2,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000000d0f00009601000000000000,Horipad Steam,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,misc2:b2,paddle1:b5,paddle2:b15,paddle3:b18,paddle4:b19,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a3,righty:a4,start:b11,x:b3,y:b4,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
+Using "default" pen tablet driver...
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+.NET: Initializing module...
+Found hostfxr: C:/Program Files/dotnet/host/fxr/10.0.8/hostfxr.dll
+.NET: hostfxr initialized
+.NET: GodotPlugins initialized
+.NET: Failed to load project assembly
+CORE API HASH: 3177001854
+EDITOR API HASH: 3251481983
+SceneTreeFTI: traversal method DEFAULT
+Loading resource: res://scripts/game_manager.gd
+Loading resource: res://addons/dialogue_manager/test_scene.tscn
+Loading resource: res://addons/dialogue_manager/test_scene.gd
+Loading resource: res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf
+Loading resource: res://.godot/imported/fusion-pixel-12px-proportional-zh_hans.ttf-1c76cf48b4a02d38d3f486a1c6e953c4.fontdata
+Loading resource: res://scenes/ui/MineInvestigation.tscn
+Loading resource: res://scripts/ui/mine_investigation.gd
+Loading resource: res://scenes/ui/components/MineItem.tscn
+Loading resource: res://scripts/ui/components/mine_item.gd
+Loading resource: res://assets/ui/generated/investigation/mine_background/mine_background.png
+Loading resource: res://.godot/imported/mine_background.png-08bc3b70fbee22e923a2d281a5f1d9c5.ctex
+Loading resource: res://scenes/ui/TobyLodgingInvestigation.tscn
+Loading resource: res://scripts/ui/toby_lodging_investigation.gd
+Loading resource: res://assets/ui/generated/investigation/toby_lodging/background.png
+Loading resource: res://.godot/imported/background.png-61cb1ed185ced931bf56bba7251cb374.ctex
+Loading resource: res://scenes/ui/ClearingTableInvestigation.tscn
+Loading resource: res://scripts/ui/clearing_table_investigation.gd
+Loading resource: res://assets/ui/generated/investigation/clearing_table/background.png
+Loading resource: res://.godot/imported/background.png-3a1bf537d61b2b7300c1d72ded5bbdf5.ctex
+Loading resource: res://scenes/ui/MiraStallEncounter.tscn
+Loading resource: res://scripts/ui/mira_stall_encounter.gd
+Loading resource: res://scenes/ui/DialogueBalloon.tscn
+Loading resource: res://scripts/ui/dialogue_balloon.gd
+Loading resource: res://addons/dialogue_manager/dialogue_label.tscn
+Loading resource: res://assets/textures/encounters/mira_stall/mira_stall_bg.png
+Loading resource: res://.godot/imported/mira_stall_bg.png-56f81ef0a3c7ea2612d9fbf8bbe1525f.ctex
+Loading resource: res://assets/textures/characters/mira_neutral.png
+Loading resource: res://.godot/imported/mira_neutral.png-b7017fb6d632758a825f86764e740351.ctex
+Loading resource: res://scenes/ui/ShopOverlay.tscn
+Loading resource: res://scripts/ui/shop_overlay.gd
+Loading resource: res://scenes/ui/MapPointMarker.tscn
+Loading resource: res://scripts/ui/map_point_marker.gd
+Loading resource: res://assets/textures/daymap/daymap_full.png
+Loading resource: res://.godot/imported/daymap_full.png-966ca7c1f5fe3e5203e6c5d77a9bed49.ctex
+Loading resource: res://scripts/tutorial/tutorial_manager.gd
+Loaded system CA certificates
+Loading resource: res://scenes/test/test_clearing_table_investigation.tscn
+Loading resource: res://scripts/test/test_clearing_table_investigation.gd
+SCRIPT ERROR: Parse Error: Cannot infer the type of "target" variable because the value doesn't have a set type.
+   at: GDScript::reload (res://scripts/test/test_clearing_table_investigation.gd:201)
+ERROR: Failed to load script "res://scripts/test/test_clearing_table_investigation.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:2907)
+[Craft] 加载 51 种物品, 16 个加工节点, 8 条组合规则, 15 条容器配方
+[Narrative] 加载 4 个 NPC
+[Shop] 加载 5 种材料, 4 种可解锁配方, 2 种技法
+[Seasoning] 加载 4 种香料
+[GuestSystem] 加载 5 组反应台词
+[GuestSystem] loaded 12 named regular customers

@@ -1005,12 +1005,22 @@ func _test_first_crafted_recipe_discovers_recipe() -> void:
 		_ok(GameManager.craft.call("is_recipe_new", "spiced_wine"),
 			"first successful craft marks recipe as new in the recipe book")
 	var notice := tavern.get_node_or_null("RecipeDiscoveryNotice") as Control
-	_ok(notice == null, "first successful craft no longer creates the unpixelated recipe discovery note UI")
+	_ok(notice != null, "first successful craft creates the compact recipe discovery note UI")
 	if notice != null:
 		var brush := notice.get_node_or_null("BrushBand") as Panel
 		var name_label := notice.get_node_or_null("Name") as Label
 		var title_label := notice.get_node_or_null("Title") as Label
 		var subtitle_label := notice.get_node_or_null("Subtitle") as Label
+		var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as Control
+		if customer_sprite != null:
+			var notice_rect := notice.get_global_rect()
+			var sprite_rect := customer_sprite.get_global_rect()
+			var notice_center_x := notice_rect.position.x + notice_rect.size.x * 0.5
+			var sprite_center_x := sprite_rect.position.x + sprite_rect.size.x * 0.5
+			_ok(absf(notice_center_x - sprite_center_x) <= 12.0,
+				"recipe discovery note stays centered over the customer portrait")
+			_ok(notice_rect.position.y + notice_rect.size.y <= sprite_rect.position.y + 12.0,
+				"recipe discovery note sits above the customer portrait head")
 		_ok(notice.visible and notice.modulate.a > 0.1,
 			"recipe discovery note is visible immediately after first craft")
 		_ok(notice.size.x <= 560.0 and notice.size.y <= 160.0,
@@ -1023,6 +1033,8 @@ func _test_first_crafted_recipe_discovers_recipe() -> void:
 			"recipe discovery note title is rendered by Godot text")
 		_ok(name_label != null and name_label.text == product_name,
 			"recipe discovery note names the discovered product")
+		_ok(name_label != null and name_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER,
+			"recipe discovery note centers the discovered product name in the notice panel")
 		_ok(subtitle_label != null and subtitle_label.text == "已记入配方书",
 			"recipe discovery note tells the player where the recipe went")
 

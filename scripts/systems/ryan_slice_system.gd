@@ -1,9 +1,8 @@
 class_name RyanSliceSystem
 extends RefCounted
 
-# [走查脚手架] Mira 线高潮在 Day12，需游戏推进到 Day12 才能走查四结局。
-# 原值为 3（Ryan 切片收尾日）。合入 main 前须决策：正式接 30 天循环，还是回退为 3。
-const LAST_DAY := 12
+# [走查脚手架] 伊芙琳灰账线结算在 Day20；正式 30 天循环接入前，切片先推进到 Day20。
+const LAST_DAY := 20
 const DEFAULT_NORMAL_ORDER_LIMIT := 3
 const DAY_CONFIG := {
 	1: {
@@ -19,8 +18,21 @@ const DAY_CONFIG := {
 		"normal_order_limit": 2,
 		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a"}],
 	},
+	5: {
+		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],
+	},
 	6: {
 		"events": [{"type": "important_npc", "npc_id": "toby", "display_name": "瘦小少年"}],
+	},
+	8: {
+		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],
+	},
+	13: {
+		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],
+		"ledger_entries": ["第二十日。伊芙琳。\n灰账清算。\n封存。"],
+	},
+	20: {
+		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],
 	},
 }
 

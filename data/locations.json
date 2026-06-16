@@ -1,6 +1,6 @@
 {
   "maxStamina": 5,
-  "maxStaminaByDay": { "2": 4 },
+  "maxStaminaByDay": {},
   "regions": [
     { "id": "market",     "origin": [0, 0], "size": [2560, 1440] },
     { "id": "wilds",      "origin": [0, 0], "size": [2560, 1440] },
@@ -10,11 +10,15 @@
   "anchors": [
     { "id": "home_tavern",                 "region": "north_road", "pos": [760, 845],  "kind": "landmark_anchor", "tags": ["home", "town", "intro"] },
     { "id": "market_crossroad_01",         "region": "market",     "pos": [1600, 830], "kind": "route_anchor",    "tags": ["market", "town", "board"] },
+    { "id": "blacktooth_ledger_01",        "region": "market",     "pos": [1510, 910], "kind": "route_anchor",    "tags": ["market", "ledger", "blacktooth"] },
     { "id": "mira_market_stall_01",        "region": "market",     "pos": [1720, 760], "kind": "route_anchor",    "tags": ["market", "stall", "mira"] },
+    { "id": "mira_supply_copy_01",         "region": "market",     "pos": [1880, 755], "kind": "route_anchor",    "tags": ["market", "supply", "mira"] },
     { "id": "fixer_market_den_01",         "region": "market",     "pos": [1775, 875], "kind": "route_anchor",    "tags": ["market", "fixer", "town"] },
     { "id": "toby_lodging_lane_01",        "region": "market",     "pos": [1480, 760], "kind": "route_anchor",    "tags": ["town", "lodging", "toby"] },
     { "id": "market_shop_01",              "region": "market",     "pos": [1745, 640], "kind": "route_anchor",    "tags": ["market", "shop", "town"] },
     { "id": "guild_counter_01",            "region": "north_road", "pos": [1885, 615], "kind": "route_anchor",    "tags": ["guild", "road"] },
+    { "id": "guild_clearing_table_01",     "region": "north_road", "pos": [2000, 720], "kind": "route_anchor",    "tags": ["guild", "clearing", "road"] },
+    { "id": "guild_payout_office_01",      "region": "north_road", "pos": [2115, 600], "kind": "route_anchor",    "tags": ["guild", "payout", "road"] },
     { "id": "mine_road_junction_01",       "region": "north_road", "pos": [430, 1055], "kind": "route_anchor",    "tags": ["mine", "road"] },
     { "id": "wilds_mill_crossroad_01",     "region": "wilds",      "pos": [1980, 535], "kind": "route_anchor",    "tags": ["wilds", "farm", "mill"] },
     { "id": "wilds_mushroom_crossroad_01", "region": "fog",        "pos": [410, 420],  "kind": "route_anchor",    "tags": ["wilds", "mushroom", "forest"] },
@@ -99,6 +103,7 @@
       "description": "北矿道深处散落着战斗痕迹。",
       "dayMin": 2,
       "repeatable": false,
+      "completeWhenDocument": "bloodied_contract",
       "requiresFlag": "mine_clue",
       "result": "你在矿道里找到了一份沾血的委托书。"
     },
@@ -115,8 +120,77 @@
       "description": "公会可以重新安排风险较低的委托。",
       "dayMin": 2,
       "repeatable": false,
+      "completeWhenDocument": "alternative_contract",
       "requiresRead": "bloodied_contract",
       "result": "柜台确认了风险，为莱恩开出了一份替代委托。"
+    },
+    {
+      "id": "clearing_table",
+      "name": "公会清算台",
+      "region": "north_road",
+      "anchor": "guild_clearing_table_01",
+      "pos": [2000, 720],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": [],
+      "description": "公会柜台后方的旧清算台还在运转。案牌、赔付和灰契印会被它压成一张外账。",
+      "dayMin": 14,
+      "repeatable": false,
+      "completeWhenDocument": "grey_supply_stamp",
+      "marker": "clearing_table",
+      "result": "你走到清算台前。线索不会自己跳进账本，得亲手把这一批旧案放进槽位。"
+    },
+    {
+      "id": "payout_office",
+      "name": "赔付登记处",
+      "region": "north_road",
+      "anchor": "guild_payout_office_01",
+      "pos": [2115, 600],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": ["grey_ryan_case_number", "grey_old_payout_register", "grey_missing_page"],
+      "description": "赔付登记处只收盖过章的事故案卷，旧纸边缘有被反复翻过的黑痕。",
+      "dayMin": 14,
+      "repeatable": false,
+      "completeWhenDocument": "grey_ryan_case_number",
+      "marker": "payout_office",
+      "result": "登记册里夹着莱恩案卷编号、旧赔付登记、缺页名单，以及一张写着赔付顺序的窄纸。"
+    },
+    {
+      "id": "blacktooth_ledger",
+      "name": "黑齿转运账",
+      "region": "market",
+      "anchor": "blacktooth_ledger_01",
+      "pos": [1510, 910],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": ["grey_blacktooth_batch", "grey_closure_method"],
+      "description": "公会告示板旁边钉着转运账副本，黑齿矿脉的批次号被写得过分整齐。",
+      "dayMin": 16,
+      "repeatable": false,
+      "completeWhenDocument": "grey_blacktooth_batch",
+      "marker": "blacktooth_ledger",
+      "result": "你抄下了黑齿批次号、封账办法，也看见托比的护送委托被改成了转运清算。"
+    },
+    {
+      "id": "mira_supply_copy",
+      "name": "米拉旧供应副本",
+      "region": "market",
+      "anchor": "mira_supply_copy_01",
+      "pos": [1880, 755],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": [],
+      "description": "米拉货摊后侧压着一份旧供应协议副本，封绳上残留灰色蜡印。",
+      "dayMin": 17,
+      "repeatable": false,
+      "completeOnVisit": true,
+      "marker": "mira_supply_copy",
+      "result": "你从旧供应副本背面看见了同一枚灰契印，保证金被接到旧路赔付栏。"
     },
     {
       "id": "mushroom_forest",
@@ -197,6 +271,7 @@
       "dayMin": 6,
       "requiresFlag": "toby_identity_known",
       "repeatable": false,
+      "completeWhenDocument": "toby_contract",
       "result": "你在后巷找到了告示上的少年。托比说，他要靠这趟委托证明自己一个人也行。"
     },
     {
@@ -232,6 +307,7 @@
       "dayMin": 6,
       "requiresFlag": "toby_commission_lead",
       "repeatable": false,
+      "completeOnVisit": true,
       "result": "掮客点了头：托比那份委托，会被一份安全的活计顶替。"
     }
   ]

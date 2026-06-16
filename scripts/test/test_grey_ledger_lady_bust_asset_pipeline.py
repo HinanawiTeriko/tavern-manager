@@ -6,8 +6,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "grey_ledger_lady" / "grey_ledger_lady_expression_sheet_source_v1.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "grey_ledger_lady" / "grey_ledger_lady_expression_sheet_prompt_v1.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "grey_ledger_lady" / "grey_ledger_lady_expression_sheet_source_v2.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "grey_ledger_lady" / "grey_ledger_lady_expression_sheet_prompt_v2.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "grey_ledger_lady_bust_manifest.json"
 CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "grey_ledger_lady_contact_sheet.png"
@@ -17,25 +17,42 @@ NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
 COLOR_LIMIT = 72
-STYLE_PROFILE = "grey_ledger_lady_black_formal_expression_sheet_v1"
+STYLE_PROFILE = "grey_ledger_lady_black_formal_expression_sheet_v2"
 NORMALIZATION_MODE = "fixed_cell_visible_subject_v1"
-CONTACT_SHEET_SIZE = (1180, 820)
+CONTACT_SHEET_SIZE = (1600, 820)
 CONTACT_SHEET_NATIVE_SCALE = 2
 CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE, NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE)
 CONTACT_SHEET_NATIVE_BG = (24, 20, 16, 255)
-CONTACT_SHEET_NATIVE_POSITIONS = [(44, 92), (462, 92), (880, 92), (44, 452)]
-EXPECTED_SOURCE_SIZE = (1536, 1024)
-EXPECTED_CROPS = {
-    "grey_ledger_lady_neutral": [0, 0, 768, 512],
-    "grey_ledger_lady_smile": [768, 0, 1536, 512],
-    "grey_ledger_lady_assessing": [0, 512, 768, 1024],
-    "grey_ledger_lady_cracked": [768, 512, 1536, 1024],
-}
+CONTACT_SHEET_NATIVE_POSITIONS = [
+    (44, 92),
+    (462, 92),
+    (880, 92),
+    (1298, 92),
+    (44, 452),
+    (462, 452),
+    (880, 452),
+    (1298, 452),
+]
+EXPECTED_GRID = {"columns": 4, "rows": 2}
+EXPECTED_PORTRAIT_IDS = [
+    "grey_ledger_lady_neutral",
+    "grey_ledger_lady_smile",
+    "grey_ledger_lady_assessing",
+    "grey_ledger_lady_cracked",
+    "grey_ledger_lady_welcoming",
+    "grey_ledger_lady_knowing",
+    "grey_ledger_lady_cold",
+    "grey_ledger_lady_unsettled",
+]
 EXPECTED_MOODS = {
     "grey_ledger_lady_neutral": "calm porcelain auditor neutral",
     "grey_ledger_lady_smile": "warm false-savior smile",
     "grey_ledger_lady_assessing": "quietly assessing the player's debt",
     "grey_ledger_lady_cracked": "porcelain composure cracking into threat",
+    "grey_ledger_lady_welcoming": "courteous first-visit welcome",
+    "grey_ledger_lady_knowing": "quietly knowing old-ledger clue",
+    "grey_ledger_lady_cold": "cold sealed-account finality",
+    "grey_ledger_lady_unsettled": "mask slipping before public accounting",
 }
 
 
@@ -80,22 +97,42 @@ def expected_backed_native_preview(native: Image.Image) -> Image.Image:
     return out.convert("RGB")
 
 
+def expected_crops(source_size: tuple[int, int]) -> dict[str, list[int]]:
+    width, height = source_size
+    cell_width = width // EXPECTED_GRID["columns"]
+    cell_height = height // EXPECTED_GRID["rows"]
+    crops = {}
+    for index, portrait_id in enumerate(EXPECTED_PORTRAIT_IDS):
+        column = index % EXPECTED_GRID["columns"]
+        row = index // EXPECTED_GRID["columns"]
+        crops[portrait_id] = [
+            column * cell_width,
+            row * cell_height,
+            (column + 1) * cell_width,
+            (row + 1) * cell_height,
+        ]
+    return crops
+
+
 class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
     def test_source_prompt_and_manifest_exist(self) -> None:
         self.assertTrue(RAW.exists(), "Grey Ledger Lady expression sheet source is missing")
         self.assertTrue(PROMPT.exists(), "Grey Ledger Lady expression prompt record is missing")
         with Image.open(RAW) as source:
-            self.assertEqual(source.size, EXPECTED_SOURCE_SIZE, "Grey Ledger Lady source must remain the approved 2x2 sheet")
+            self.assertEqual(source.width % EXPECTED_GRID["columns"], 0, "Grey Ledger Lady source width must divide into 4 columns")
+            self.assertEqual(source.height % EXPECTED_GRID["rows"], 0, "Grey Ledger Lady source height must divide into 2 rows")
+            crops = expected_crops(source.size)
 
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
             "grey ledger lady expression sheet",
+            "eight-expression sheet",
             "black formal human clothing",
             "normal tailored black dress",
             "porcelain auditor",
             "no keyhole motif",
             "no ledger-shaped clothing",
-            "2 columns x 2 rows",
+            "4 columns x 2 rows",
             "flat solid #00ff00",
             "no readable text",
             "128x160",
@@ -103,6 +140,10 @@ class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
             "warm false-savior smile",
             "quietly assessing",
             "porcelain composure cracking",
+            "courteous first-visit welcome",
+            "quietly knowing old-ledger clue",
+            "cold sealed-account finality",
+            "mask slipping before public accounting",
         ):
             self.assertIn(phrase, prompt)
 
@@ -116,7 +157,7 @@ class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
             RYAN_REFERENCE.relative_to(ROOT).as_posix(),
             MIRA_REFERENCE.relative_to(ROOT).as_posix(),
         ])
-        self.assertEqual(manifest.get("grid"), {"columns": 2, "rows": 2})
+        self.assertEqual(manifest.get("grid"), EXPECTED_GRID)
         self.assertEqual(manifest.get("normalization", {}).get("mode"), NORMALIZATION_MODE)
         self.assertEqual(manifest.get("native_size"), list(NATIVE_SIZE))
         self.assertEqual(manifest.get("runtime_size"), list(RUNTIME_SIZE))
@@ -126,8 +167,8 @@ class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
         self.assertIn("Tavern CustomerSprite", manifest.get("intended_godot_use", ""))
 
         portraits = manifest.get("portraits", {})
-        self.assertEqual(set(EXPECTED_CROPS), set(portraits), "manifest must describe all Grey Ledger Lady expression portraits")
-        for portrait_id, crop_rect in EXPECTED_CROPS.items():
+        self.assertEqual(set(EXPECTED_PORTRAIT_IDS), set(portraits), "manifest must describe all Grey Ledger Lady expression portraits")
+        for portrait_id, crop_rect in crops.items():
             with self.subTest(portrait_id=portrait_id):
                 entry = portraits[portrait_id]
                 self.assertEqual(entry.get("source"), RAW.relative_to(ROOT).as_posix())
@@ -142,7 +183,7 @@ class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
                 self.assertIn("Tavern CustomerSprite", entry.get("intended_godot_use", ""))
 
     def test_native_and_runtime_exports(self) -> None:
-        for portrait_id in EXPECTED_CROPS:
+        for portrait_id in EXPECTED_PORTRAIT_IDS:
             with self.subTest(portrait_id=portrait_id):
                 native_path = SOURCE_DIR / f"{portrait_id}_native.png"
                 runtime_path = ROOT / "assets" / "textures" / "characters" / f"{portrait_id}.png"
@@ -175,7 +216,7 @@ class GreyLedgerLadyBustAssetPipelineTest(unittest.TestCase):
 
     def test_contact_sheet_uses_integer_native_previews(self) -> None:
         contact = load_rgba(CONTACT_SHEET).convert("RGB")
-        for index, portrait_id in enumerate(EXPECTED_CROPS):
+        for index, portrait_id in enumerate(EXPECTED_PORTRAIT_IDS):
             with self.subTest(portrait_id=portrait_id):
                 native = load_rgba(SOURCE_DIR / f"{portrait_id}_native.png")
                 x, y = CONTACT_SHEET_NATIVE_POSITIONS[index]

@@ -5,10 +5,12 @@ signal gathering_confirmed(assignments: Dictionary)
 
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
 const TOBY_SCENE := preload("res://scenes/ui/TobyLodgingInvestigation.tscn")
+const CLEARING_TABLE_SCENE := preload("res://scenes/ui/ClearingTableInvestigation.tscn")
 const MIRA_STALL_SCENE := preload("res://scenes/ui/MiraStallEncounter.tscn")
 const INVESTIGATION_SCENES := {
 	"abandoned_mine": MINE_SCENE,
 	"toby_lodging": TOBY_SCENE,
+	"clearing_table": CLEARING_TABLE_SCENE,
 	"mira_stall": MIRA_STALL_SCENE,
 }
 const SHOP_OVERLAY_SCENE := preload("res://scenes/ui/ShopOverlay.tscn")

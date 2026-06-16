@@ -16,6 +16,7 @@ var _read_documents: Dictionary = {}
 var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
 var _revealed: Dictionary = {}
+var _completed_locations: Dictionary = {}
 var _rare_gather_misses: Dictionary = {}
 var _regions: Array = []
 var _anchors: Array = []
@@ -87,12 +88,18 @@ func capture_state() -> Dictionary:
 		if bool(_revealed[id]):
 			revealed_ids.append(String(id))
 	revealed_ids.sort()
+	var completed_ids := []
+	for id in _completed_locations.keys():
+		if bool(_completed_locations[id]):
+			completed_ids.append(String(id))
+	completed_ids.sort()
 	var announced := {}
 	for id in _announced_postings.keys():
 		announced[String(id)] = String(_announced_postings[id])
 	return {
 		"current_day": current_day,
 		"revealed": revealed_ids,
+		"completed_locations": completed_ids,
 		"rare_gather_misses": _rare_gather_misses.duplicate(),
 		"announced_postings": announced,
 		"camera": _capture_camera_view(),
@@ -101,6 +108,7 @@ func capture_state() -> Dictionary:
 
 func restore_state(state: Dictionary) -> void:
 	_revealed.clear()
+	_completed_locations.clear()
 	_announced_postings.clear()
 	_rare_gather_misses.clear()
 	if state.is_empty():
@@ -108,6 +116,8 @@ func restore_state(state: Dictionary) -> void:
 	current_day = int(state.get("current_day", current_day))
 	for id in state.get("revealed", []):
 		_revealed[String(id)] = true
+	for id in state.get("completed_locations", state.get("completed", [])):
+		_completed_locations[String(id)] = true
 	var rare_misses: Dictionary = state.get("rare_gather_misses", {})
 	for id in rare_misses.keys():
 		_rare_gather_misses[String(id)] = int(rare_misses[id])
@@ -189,6 +199,8 @@ func get_locations() -> Array[Dictionary]:
 
 
 func _passes_filters(location: Dictionary) -> bool:
+	if is_completed(String(location.get("id", ""))):
+		return false
 	if current_day < int(location.get("dayMin", 1)):
 		return false
 	var required_flag := String(location.get("requiresFlag", ""))
@@ -241,7 +253,30 @@ func is_revealed(location_id: String) -> bool:
 	return bool(_revealed.get(location_id, false))
 
 
+func is_completed(location_id: String) -> bool:
+	return bool(_completed_locations.get(location_id, false))
+
+
+func mark_completed(location_id: String) -> void:
+	if location_id == "":
+		return
+	_completed_locations[location_id] = true
+	_revealed.erase(location_id)
+	_announced_postings.erase(location_id)
+
+
+func mark_completed_by_document(document_id: String) -> bool:
+	var matched := false
+	for location in _locations.values():
+		if String(location.get("completeWhenDocument", "")) == document_id:
+			mark_completed(String(location.get("id", "")))
+			matched = true
+	return matched
+
+
 func mark_revealed(location_id: String) -> void:
+	if is_completed(location_id):
+		return
 	_revealed[location_id] = true
 	if _locations.has(location_id):
 		_announced_postings[location_id] = _active_posting_id(_locations[location_id])
@@ -280,6 +315,8 @@ func mark_posting_announced(location_id: String) -> void:
 func visit(location_id: String) -> Dictionary:
 	if not _locations.has(location_id):
 		return _failure("未知地点。")
+	if is_completed(location_id):
+		return _failure("这里已经调查完了。")
 	var location: Dictionary = _locations[location_id]
 	if current_day < int(location.get("dayMin", 1)):
 		return _failure("这个地点尚未开放。")

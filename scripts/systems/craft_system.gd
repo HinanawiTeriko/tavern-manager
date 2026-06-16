@@ -221,6 +221,18 @@ func is_product(key: String) -> bool:
 	var item: Dictionary = items.get(key, {})
 	return item.get("type", "") == "product"
 
+func can_satisfy_order(served_key: String, order_key: String) -> bool:
+	if served_key == "" or order_key == "":
+		return false
+	if served_key == order_key:
+		return true
+	var recipe: Dictionary = recipes.get(served_key, {})
+	var compatible_orders: Array = recipe.get("satisfies_orders", [])
+	for compatible_order in compatible_orders:
+		if String(compatible_order) == order_key:
+			return true
+	return false
+
 func get_memory_for(product_key: String) -> Dictionary:
 	var recipe: Dictionary = recipes.get(product_key, {})
 	return recipe.get("memory_for", {})

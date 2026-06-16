@@ -63,6 +63,16 @@ func get_owned_clues() -> Array[Dictionary]:
 	return result
 
 
+func get_relevant_owned_clues() -> Array[Dictionary]:
+	var fillable_clues := _unsolved_fillable_clue_ids()
+	var result: Array[Dictionary] = []
+	for clue_id in _clues.keys():
+		var normalized_id := String(clue_id)
+		if has_clue(normalized_id) and bool(fillable_clues.get(normalized_id, false)):
+			result.append(get_clue(normalized_id))
+	return result
+
+
 func get_question(question_id: String) -> Dictionary:
 	for question in _questions:
 		if String(question.get("id", "")) == question_id:
@@ -101,11 +111,9 @@ func try_place(question_id: String, blank_id: String, clue_id: String) -> Dictio
 	var blanks: Dictionary = question.get("blanks", {})
 	if not blanks.has(blank_id):
 		return _placement_result(false, false, question_id, blank_id, clue_id, "这不是这句话的空位。")
-	var expected := String(blanks.get(blank_id, ""))
-	if clue_id != expected:
-		return _placement_result(false, false, question_id, blank_id, clue_id, String(question.get("hint", "")))
-
 	var placed: Dictionary = (_placements.get(question_id, {}) as Dictionary).duplicate(true)
+	if not _clue_matches_blank(question, placed, blank_id, clue_id):
+		return _placement_result(false, false, question_id, blank_id, clue_id, String(question.get("hint", "")))
 	placed[blank_id] = clue_id
 	_placements[question_id] = placed
 	var solved := _is_question_solved(question, placed)
@@ -154,12 +162,91 @@ func _requirements_met(question: Dictionary) -> bool:
 	return true
 
 
+func _unsolved_fillable_clue_ids() -> Dictionary:
+	var result := {}
+	for question in _questions:
+		var question_id := String(question.get("id", ""))
+		if bool(_solved.get(question_id, false)):
+			continue
+		var blanks: Dictionary = question.get("blanks", {})
+		for clue_id in blanks.values():
+			result[String(clue_id)] = true
+	return result
+
+
+func _clue_matches_blank(question: Dictionary, placed: Dictionary, blank_id: String, clue_id: String) -> bool:
+	var unordered_group := _unordered_group_for_blank(question, blank_id)
+	if unordered_group.is_empty():
+		var blanks: Dictionary = question.get("blanks", {})
+		return clue_id == String(blanks.get(blank_id, ""))
+	var accepted_clues := _expected_clues_for_blanks(question, unordered_group)
+	if not accepted_clues.has(clue_id):
+		return false
+	for other_blank in unordered_group:
+		var other_blank_id := String(other_blank)
+		if other_blank_id != blank_id and String(placed.get(other_blank_id, "")) == clue_id:
+			return false
+	return true
+
+
 func _is_question_solved(question: Dictionary, placed: Dictionary) -> bool:
 	var blanks: Dictionary = question.get("blanks", {})
+	var checked := {}
+	for group in _unordered_blank_groups(question):
+		var expected_clues := _expected_clues_for_blanks(question, group)
+		var placed_clues: Array[String] = []
+		for blank_id_value in group:
+			var blank_id := String(blank_id_value)
+			if not blanks.has(blank_id):
+				return false
+			var placed_clue := String(placed.get(blank_id, ""))
+			if placed_clue == "":
+				return false
+			placed_clues.append(placed_clue)
+			checked[blank_id] = true
+		expected_clues.sort()
+		placed_clues.sort()
+		if expected_clues != placed_clues:
+			return false
 	for blank_id in blanks.keys():
+		if bool(checked.get(String(blank_id), false)):
+			continue
 		if String(placed.get(String(blank_id), "")) != String(blanks[blank_id]):
 			return false
 	return true
+
+
+func _unordered_blank_groups(question: Dictionary) -> Array:
+	var result: Array = []
+	for raw_group in question.get("unorderedBlankGroups", []):
+		if not raw_group is Array:
+			continue
+		var group: Array[String] = []
+		for blank_id in raw_group:
+			var normalized_id := String(blank_id)
+			if normalized_id != "":
+				group.append(normalized_id)
+		if group.size() > 1:
+			result.append(group)
+	return result
+
+
+func _unordered_group_for_blank(question: Dictionary, blank_id: String) -> Array:
+	for raw_group in _unordered_blank_groups(question):
+		var group: Array = raw_group
+		if group.has(blank_id):
+			return group.duplicate()
+	return []
+
+
+func _expected_clues_for_blanks(question: Dictionary, blank_ids: Array) -> Array[String]:
+	var blanks: Dictionary = question.get("blanks", {})
+	var result: Array[String] = []
+	for blank_id_value in blank_ids:
+		var blank_id := String(blank_id_value)
+		if blanks.has(blank_id):
+			result.append(String(blanks[blank_id]))
+	return result
 
 
 func _placement_result(accepted: bool, solved: bool, question_id: String, blank_id: String, clue_id: String, hint: String) -> Dictionary:

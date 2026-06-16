@@ -487,6 +487,17 @@ func get_guest_entries_today() -> Array[Dictionary]:
 	return guest_entries_today.duplicate(true)
 
 
+func update_current_guest_entry_identity(display_name: String, portrait_id: String) -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	if display_name != "":
+		entry["display_name"] = display_name
+	if portrait_id != "":
+		entry["portrait_id"] = portrait_id
+	guest_entries_today[_current_guest_entry_index] = entry
+
+
 func _record_guest_arrival(guest: GuestData) -> void:
 	if guest == null:
 		_current_guest_entry_index = -1

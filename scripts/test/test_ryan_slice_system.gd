@@ -36,17 +36,19 @@ func _finish() -> void:
 
 func _test_three_day_boundary() -> void:
 	var slice := RyanSliceSystem.new()
-	# [走查脚手架] 收尾日临时延至 Day12 以走查 Mira 线高潮（见 ryan_slice_system.gd LAST_DAY 注释）。
-	_ok(slice.last_day() == 12, "slice ends on Day 12 (走查脚手架)")
+	# [走查脚手架] 收尾日临时延至 Day20 以走查 Evelyn 灰账线高潮。
+	_ok(slice.last_day() == 20, "slice ends on Day 20 (走查脚手架)")
 	_ok(slice.normal_order_limit(1) == 2, "Day 1 has two normal orders")
 	_ok(slice.normal_order_limit(2) == 2, "Day 2 has two normal orders")
 	_ok(slice.normal_order_limit(3) == 2, "Day 3 has two normal orders")
 	_ok(slice.normal_order_limit(4) == 3, "Day 4 opens the mid-slice three-normal-order rhythm")
 	_ok(slice.normal_order_limit(12) == 3, "Day 12 keeps the three-normal-order Mira climax rhythm")
+	_ok(slice.normal_order_limit(20) == 3, "Day 20 keeps the three-normal-order Evelyn climax rhythm")
 	_ok(slice.day_start_ledger_entries(2).has("第三日。莱恩。\n北矿道。\n未归。"), "Day 2 adds Ryan prediction")
+	_ok(slice.day_start_ledger_entries(13).has("第二十日。伊芙琳。\n灰账清算。\n封存。"), "Day 13 adds Evelyn prediction")
 	_ok(not slice.should_finish_after_day(2), "Day 2 continues")
-	_ok(not slice.should_finish_after_day(3), "Day 3 continues (走查脚手架)")
-	_ok(slice.should_finish_after_day(12), "Day 12 finishes the slice")
+	_ok(not slice.should_finish_after_day(12), "Day 12 continues into Evelyn line")
+	_ok(slice.should_finish_after_day(20), "Day 20 finishes the slice")
 
 
 func _test_state_roundtrip() -> void:
@@ -85,6 +87,10 @@ func _test_toby_day6_identity_is_masked_in_tavern() -> void:
 		"Day 6 tavern nameplate describes Toby by appearance before any dialogue clue")
 	_ok(slice.important_display_name(6, "mira", "米拉") == "米拉",
 		"Day 6 display-name masking only applies to Toby")
+	_ok(slice.important_display_name(13, "evelyn", "伊芙琳") == "伊芙琳",
+		"Evelyn uses her own name when she opens the grey-ledger case")
+	_ok(slice.important_portrait_id(13, "evelyn", "evelyn") == "grey_ledger_lady",
+		"Evelyn tavern encounter reuses the approved Grey Ledger Lady portrait pipeline")
 	var pre_dialogue := FileAccess.get_file_as_string("res://dialogue/toby_day6.pre.dialogue")
 	var post_dialogue := FileAccess.get_file_as_string("res://dialogue/toby_day6.post.dialogue")
 	_ok(pre_dialogue.contains("瘦小少年:"),

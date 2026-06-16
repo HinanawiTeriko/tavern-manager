@@ -7,12 +7,21 @@ const TRUST_THRESHOLD := 5
 ## Mira 线信任阀门：告知真相后 aff_mira 达此值她才肯担责。Mira 专属，不复用 Ryan 的 TRUST_THRESHOLD。
 const MIRA_TRUST_THRESHOLD := 10
 
+const EVELYN_ENDING_SEALED := "sealed_account"
+const EVELYN_ENDING_AMENDED := "amended_account"
+const EVELYN_ENDING_PUBLIC := "public_account"
+const EVELYN_PRESSURE_LIVING := "living_witnesses"
+const EVELYN_PRESSURE_PAPER := "paper_public"
+const EVELYN_PRESSURE_DAMAGED := "damaged_amendment"
+const EVELYN_PRESSURE_COLD := "cold_amendment"
+
 const LINKED_FATE_DAYS: Dictionary = {
 	12: ["toby"],
 }
 const FATE_REVEAL_DAYS: Dictionary = {
 	3: ["ryan"],
 	12: ["mira"],
+	20: ["evelyn"],
 }
 
 var all_npcs: Array[NpcData] = []
@@ -107,6 +116,35 @@ func finalize_mira_ending() -> void:
 	set_ending("toby", "saved" if survived else "lost")
 
 
+func get_evelyn_route() -> String:
+	if bool(dialogue_vars.get("grey_public_account_known", false)):
+		return EVELYN_ENDING_PUBLIC
+	if bool(dialogue_vars.get("grey_same_batch_known", false)) \
+		or bool(dialogue_vars.get("grey_payout_method_known", false)) \
+		or bool(dialogue_vars.get("mira_grey_ledger_link_known", false)):
+		return EVELYN_ENDING_AMENDED
+	return EVELYN_ENDING_SEALED
+
+
+func get_evelyn_pressure(route: String = "") -> String:
+	if route == "":
+		route = get_evelyn_route()
+	if route == EVELYN_ENDING_SEALED:
+		return EVELYN_ENDING_SEALED
+	var has_witness_pressure := _has_evelyn_living_pressure()
+	if route == EVELYN_ENDING_PUBLIC:
+		return EVELYN_PRESSURE_LIVING if has_witness_pressure else EVELYN_PRESSURE_PAPER
+	if route == EVELYN_ENDING_AMENDED:
+		return EVELYN_PRESSURE_DAMAGED if has_witness_pressure else EVELYN_PRESSURE_COLD
+	return EVELYN_ENDING_SEALED
+
+
+func finalize_evelyn_ending() -> void:
+	var route := get_evelyn_route()
+	set_ending("evelyn", route)
+	set_var("evelyn_pressure", get_evelyn_pressure(route))
+
+
 func get_ryan_route() -> String:
 	if bool(dialogue_vars.get("ryan_has_alternative", false)):
 		return "alternative_survivor"
@@ -115,6 +153,36 @@ func get_ryan_route() -> String:
 	if bool(dialogue_vars.get("ryan_informed", false)):
 		return "informed_fallen"
 	return "uninformed_fallen"
+
+
+func _has_evelyn_living_pressure() -> bool:
+	return _ryan_is_evelyn_witness(_current_ryan_route()) \
+		or _mira_is_evelyn_witness(_current_mira_route()) \
+		or _toby_is_evelyn_witness()
+
+
+func _current_ryan_route() -> String:
+	var route := String(dialogue_vars.get("ryan_ending", ""))
+	return get_ryan_route() if route == "" else route
+
+
+func _current_mira_route() -> String:
+	var route := String(dialogue_vars.get("mira_ending", ""))
+	return get_mira_route() if route == "" else route
+
+
+func _ryan_is_evelyn_witness(route: String) -> bool:
+	return route in ["alternative_survivor", "drugged_survivor"]
+
+
+func _mira_is_evelyn_witness(route: String) -> bool:
+	return route == "she_finally_stopped"
+
+
+func _toby_is_evelyn_witness() -> bool:
+	if dialogue_vars.has("toby_survived"):
+		return bool(dialogue_vars.get("toby_survived", false))
+	return toby_survived()
 
 
 func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
@@ -219,6 +287,13 @@ func load_npc_data() -> void:
 	dialogue_vars["toby_survived"] = false
 	dialogue_vars["mira_ending"] = ""
 	dialogue_vars["aff_toby"] = 0
+	dialogue_vars["grey_same_batch_known"] = false
+	dialogue_vars["grey_payout_method_known"] = false
+	dialogue_vars["mira_grey_ledger_link_known"] = false
+	dialogue_vars["grey_public_account_known"] = false
+	dialogue_vars["evelyn_ending"] = ""
+	dialogue_vars["evelyn_pressure"] = ""
+	dialogue_vars["aff_evelyn"] = 0
 
 	var file = FileAccess.open("res://data/npcs.json", FileAccess.READ)
 	if file == null:

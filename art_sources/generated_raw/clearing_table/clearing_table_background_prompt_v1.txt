@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: 1280x720 source art for a 2D pixel-art investigation scene background
+Primary request: close-up guild clearing table accounting machine, the machine fills the full screen. This is NOT a tavern room and NOT an empty room background.
+Scene/backdrop: dark guild accounting office, only a thin cold teal stone wall strip in the far back; most of the image is an old walnut tabletop with brass rails and slots.
+Subject: one large institutional clearing machine table: left shallow intake tray, five empty rectangular receiving slots across the upper center, right heavy stamp press, bottom-center output slit, grey wax smears, brass tracks, old paper dust. Slots must be clear placement zones for draggable props.
+Style/medium: original pixel-art concept art, crisp silhouettes, chunky pixel clusters, rough ink-like edges, muted palette, no readable markings.
+Composition/framing: straight-on fixed game camera, tabletop covers lower 80 percent of frame, five empty slots at approximate y=255, left tray around x=200, right press around x=1060, output slit around x=640 y=560.
+Lighting/mood: cold bureaucratic menace; dark teal shadows, restrained amber candle highlights on brass and wood.
+Constraints: no readable text, no letters, no numbers, no logo, no labels, no characters, no modern objects, no UI text, no fake writing.
+Avoid: full room scene, empty floor, big wall, bar counter, people, parchment with writing, photorealism, blur.

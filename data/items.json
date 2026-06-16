@@ -41,5 +41,13 @@
   "sleep_powder":        { "name": "沉睡花粉",   "color": [0.55, 0.4, 0.75], "price": 0, "type": "special", "capabilities": ["story_item"], "physics_profile": "soft_stable", "collision_profile": "seasoning_tiny", "feedback_profile": "powder" },
   "bloodied_contract":   { "name": "染血委托书", "color": [0.55, 0.18, 0.12], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
   "alternative_contract": { "name": "替代委托书", "color": [0.72, 0.62, 0.42], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
-  "toby_contract":        { "name": "托比的委托书", "color": [0.6, 0.5, 0.3], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] }
+  "toby_contract":        { "name": "托比的委托书", "color": [0.6, 0.5, 0.3], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_ryan_case_number": { "name": "莱恩案卷编号", "color": [0.42, 0.46, 0.44], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_old_payout_register": { "name": "旧赔付登记", "color": [0.45, 0.42, 0.36], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_missing_page": { "name": "失踪名单缺页", "color": [0.5, 0.48, 0.42], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_blacktooth_batch": { "name": "黑齿批次号", "color": [0.28, 0.32, 0.33], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_closure_method": { "name": "灰契封账办法", "color": [0.36, 0.34, 0.32], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_payout_closure": { "name": "赔付即结案", "color": [0.48, 0.46, 0.40], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_renamed_escort": { "name": "被改名的护送委托", "color": [0.42, 0.39, 0.34], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] },
+  "grey_supply_stamp": { "name": "供应协议灰印", "color": [0.44, 0.43, 0.38], "price": 0, "type": "special", "capabilities": ["story_item", "readable"] }
 }

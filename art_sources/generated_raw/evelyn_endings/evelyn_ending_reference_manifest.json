@@ -1,0 +1,103 @@
+{
+  "id": "evelyn_ending_wide_references_v1",
+  "target_native_size": [
+    320,
+    140
+  ],
+  "target_runtime_size": [
+    1280,
+    560
+  ],
+  "entries": [
+    {
+      "id": "evelyn_sealed_account_reference_v1",
+      "route": "sealed_account",
+      "source_file": "art_sources/generated_raw/evelyn_endings/recovered_v4/evelyn_v4_raw_20260616T113647Z_ig_093eba59c43e9794016a3134f34f8481919fcc18da9e6a26f0.png",
+      "output_file": "art_sources/generated_raw/evelyn_endings/evelyn_sealed_account_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/evelyn_endings/evelyn_sealed_account_reference_v1_prompt.txt",
+      "size": [
+        1280,
+        560
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        560
+      ],
+      "intended_godot_use": "Evelyn fate cinematic source reference"
+    },
+    {
+      "id": "evelyn_living_witnesses_reference_v1",
+      "route": "living_witnesses",
+      "source_file": "art_sources/generated_raw/evelyn_endings/recovered_v4/evelyn_v4_raw_20260616T113908Z_ig_093eba59c43e9794016a313552d3088191b390c796fe2bd302.png",
+      "output_file": "art_sources/generated_raw/evelyn_endings/evelyn_living_witnesses_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/evelyn_endings/evelyn_living_witnesses_reference_v1_prompt.txt",
+      "size": [
+        1280,
+        560
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        560
+      ],
+      "intended_godot_use": "Evelyn fate cinematic source reference"
+    },
+    {
+      "id": "evelyn_paper_public_reference_v1",
+      "route": "paper_public",
+      "source_file": "art_sources/generated_raw/evelyn_endings/recovered_v4/evelyn_v4_raw_20260616T114117Z_ig_093eba59c43e9794016a3135dec43c8191a48d0ef588878cb3.png",
+      "output_file": "art_sources/generated_raw/evelyn_endings/evelyn_paper_public_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/evelyn_endings/evelyn_paper_public_reference_v1_prompt.txt",
+      "size": [
+        1280,
+        560
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        560
+      ],
+      "intended_godot_use": "Evelyn fate cinematic source reference"
+    },
+    {
+      "id": "evelyn_damaged_amendment_reference_v1",
+      "route": "damaged_amendment",
+      "source_file": "art_sources/generated_raw/evelyn_endings/recovered_v4/evelyn_v4_raw_20260616T114332Z_ig_093eba59c43e9794016a31365fc9c0819191bf467caf392c07.png",
+      "output_file": "art_sources/generated_raw/evelyn_endings/evelyn_damaged_amendment_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/evelyn_endings/evelyn_damaged_amendment_reference_v1_prompt.txt",
+      "size": [
+        1280,
+        560
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        560
+      ],
+      "intended_godot_use": "Evelyn fate cinematic source reference"
+    },
+    {
+      "id": "evelyn_cold_amendment_reference_v1",
+      "route": "cold_amendment",
+      "source_file": "art_sources/generated_raw/evelyn_endings/recovered_v4/evelyn_v4_raw_20260616T114544Z_ig_093eba59c43e9794016a3136e687288191aaddc42d1d437df0.png",
+      "output_file": "art_sources/generated_raw/evelyn_endings/evelyn_cold_amendment_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/evelyn_endings/evelyn_cold_amendment_reference_v1_prompt.txt",
+      "size": [
+        1280,
+        560
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        560
+      ],
+      "intended_godot_use": "Evelyn fate cinematic source reference"
+    }
+  ]
+}

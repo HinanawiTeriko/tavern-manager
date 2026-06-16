@@ -270,6 +270,7 @@ func _test_tavern_patience_ui_contract() -> void:
 	var order_ticket_frame := tavern.get_node_or_null("CustomerArea/OrderTicketFrame") as TextureRect
 	var order_icon := tavern.get_node_or_null("CustomerArea/OrderIcon") as TextureRect
 	var reaction_bubble := tavern.get_node_or_null("CustomerArea/ReactionBubble") as Label
+	var reaction_highlight := tavern.get_node_or_null("CustomerArea/ReactionHighlight") as RichTextLabel
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
@@ -300,6 +301,13 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_bubble.get_theme_font_size("font_size") >= 16, "ReactionBubble remains readable for short customer reactions")
 		_ok(reaction_bubble.get_theme_color("font_color") == Color.WHITE,
 			"ReactionBubble uses white dialogue text so clue highlights can be layered separately")
+	_ok(reaction_highlight != null, "ReactionHighlight renders highlighted clue phrases without replacing ReactionBubble")
+	if reaction_highlight != null:
+		_ok(reaction_highlight.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"ReactionHighlight does not block table item clicks")
+		_ok(reaction_highlight.get_theme_font("normal_font") != null
+				and reaction_highlight.get_theme_font("normal_font").resource_path == PIXEL_FONT_PATH,
+			"ReactionHighlight uses the shared pixel UI font")
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
@@ -310,6 +318,13 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(order_bubble.text.find("order_ale") >= 0, "customer_say does not overwrite the stable order request")
 		_ok(order_bubble.text.find("hurry") == -1, "temporary reaction text stays out of OrderBubble")
 		_ok(reaction_bubble.text == "hurry", "customer_say writes temporary text to ReactionBubble")
+		if reaction_highlight != null:
+			_ok(not reaction_highlight.visible, "plain customer_say keeps the highlight overlay hidden")
+			tavern.customer_say("客人: [color=#d6a84d]线索[/color]")
+			_ok(reaction_bubble.text == "客人: 线索", "highlighted customer_say keeps plain text in ReactionBubble")
+			_ok(reaction_highlight.visible, "highlighted customer_say shows the rich-text clue overlay")
+			_ok(reaction_highlight.text.contains("[color=#d6a84d]线索[/color]"),
+				"ReactionHighlight keeps the BBCode clue color span")
 		if tavern.has_method("show_order_timeout"):
 			tavern.show_order_timeout("timeout")
 			_ok(order_bubble.text.find("order_ale") >= 0, "timeout state keeps the original order readable")
@@ -464,6 +479,10 @@ func _test_tavern_patience_ui_contract() -> void:
 		if bg != null and ornate != null:
 			_ok(ornate.z_index > bg.z_index,
 				"%s milestone overlay draws above the frame" % progress.name)
+			_ok(ornate.position == bg.position,
+				"%s milestone overlay stays aligned to the progress frame art" % progress.name)
+			_ok(ornate.size == bg.size,
+				"%s milestone overlay uses the same frame size as the progress art" % progress.name)
 		if fill != null:
 			_ok(fill.size == REWARD_PROGRESS_FRAME_SIZE,
 				"%s fill art keeps full frame size for texture alignment" % progress.name)
@@ -567,6 +586,18 @@ func _test_tavern_patience_ui_contract() -> void:
 		await get_tree().create_timer(0.78).timeout
 		_ok(gold_ornate != null and gold_ornate.visible,
 			"crossing a gold milestone activates the ornate overlay after collection reaches the UI")
+		await get_tree().create_timer(1.15).timeout
+		_ok(gold_ornate != null and gold_ornate.visible,
+			"gold milestone overlay remains visible as the new permanent progress slot")
+
+		_show_order_reward_feedback_with_max(tavern, 0, 2, 55, 48, 55, 55)
+		await get_tree().process_frame
+		var rep_ornate := tavern.get_node_or_null("TopPanel/ReputationProgress/Ornate") as TextureRect
+		_ok(rep_ornate != null and rep_ornate.visible,
+			"crossing a reputation milestone activates the ornate overlay")
+		await get_tree().create_timer(1.15).timeout
+		_ok(rep_ornate != null and rep_ornate.visible,
+			"reputation milestone overlay remains visible as the new permanent progress slot")
 
 	var shortcut_bg := tavern.get_node_or_null("ShortcutBarBg") as Panel
 	var shortcut_bar := tavern.get_node_or_null("ShortcutBar") as HBoxContainer

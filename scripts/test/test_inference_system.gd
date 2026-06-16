@@ -41,6 +41,7 @@ class TavernFeedbackProbe:
 func _ready() -> void:
 	_test_toby_inference_rules()
 	_test_mira_old_ledger_inference_rules()
+	_test_grey_ledger_inference_rules()
 	_test_toby_dialogue_marks_clues()
 	_test_game_manager_collects_night_clues_without_board()
 	_test_game_manager_collects_board_and_night_clues()
@@ -77,6 +78,13 @@ func _test_toby_inference_rules() -> void:
 	_ok(bool(identity.get("solved", false)), "identity question solves after both blanks are filled")
 	_ok((identity.get("unlockFlags", []) as Array).has("toby_identity_known"), "identity solve unlocks lodging flag")
 	_ok(String(identity.get("conclusion", "")).contains("后巷"), "identity conclusion is readable")
+	_ok(sys.has_method("get_relevant_owned_clues"), "inference system exposes a filtered clue-word list")
+	if sys.has_method("get_relevant_owned_clues"):
+		var relevant_after_identity := _clue_ids(sys.get_relevant_owned_clues())
+		_ok(not relevant_after_identity.has("back_alley_boy"),
+			"identity-only clue is hidden after the identity question is solved")
+		_ok(relevant_after_identity.has("toby_name"),
+			"Toby name stays visible because a later Mira question can still use it")
 	questions = sys.get_available_questions()
 	_ok(questions.size() == 1, "risk question appears after identity")
 	_ok(String(questions[0].get("id", "")) == "toby_commission_risk", "risk question appears second")
@@ -110,6 +118,9 @@ func _test_mira_old_ledger_inference_rules() -> void:
 	sys.add_clue("mira_traveling_mentor")
 	_ok(_has_available_question(sys, "mira_toby_old_relation"),
 		"Mira old-relation question appears after mentor gossip")
+	var old_relation_question: Dictionary = sys.get_question("mira_toby_old_relation")
+	_ok(String(old_relation_question.get("text", "")).begins_with("______。那个孩子"),
+		"Mira old-relation wording compares the old child clue to Toby without an awkward subject")
 	var old_relation_a: Dictionary = sys.try_place("mira_toby_old_relation", "past", "mira_traveling_mentor")
 	_ok(bool(old_relation_a.get("accepted", false)) and not bool(old_relation_a.get("solved", false)),
 		"Mira old-relation first blank accepts mentor clue")
@@ -125,10 +136,96 @@ func _test_mira_old_ledger_inference_rules() -> void:
 	var phrase_a: Dictionary = sys.try_place("mira_phrase_origin", "saying", "one_person_walk")
 	_ok(bool(phrase_a.get("accepted", false)) and not bool(phrase_a.get("solved", false)),
 		"Mira phrase-origin first blank accepts lone-road phrase")
-	var phrase_b: Dictionary = sys.try_place("mira_phrase_origin", "source", "mira_traveling_mentor")
-	_ok(bool(phrase_b.get("solved", false)), "Mira phrase-origin solves after source clue")
+	var phrase_b: Dictionary = sys.try_place("mira_phrase_origin", "learned", "child_learned_saying")
+	_ok(bool(phrase_b.get("solved", false)), "Mira phrase-origin solves by matching the phrase with the learned-saying clue")
 	_ok((phrase_b.get("unlockFlags", []) as Array).has("mira_responsibility_lead"),
 		"Mira phrase-origin unlocks responsibility lead")
+
+
+func _test_grey_ledger_inference_rules() -> void:
+	var sys = INFERENCE_SYSTEM_SCRIPT.new()
+	_ok(sys.load_data(), "inference data loads for grey ledger rules")
+	sys.add_clues(["toby_name", "back_alley_boy", "blacktooth_escort", "high_pay_trap", "one_person_walk"])
+	var identity_a: Dictionary = sys.try_place("toby_identity", "name", "toby_name")
+	_ok(bool(identity_a.get("accepted", false)), "grey route solves Toby identity name blank")
+	var identity_b: Dictionary = sys.try_place("toby_identity", "identity", "back_alley_boy")
+	_ok(bool(identity_b.get("solved", false)), "grey route solves Toby identity prerequisite")
+	var risk_a: Dictionary = sys.try_place("toby_commission_risk", "commission", "blacktooth_escort")
+	_ok(bool(risk_a.get("accepted", false)), "grey route accepts Blacktooth escort prerequisite")
+	var risk_b: Dictionary = sys.try_place("toby_commission_risk", "risk", "high_pay_trap")
+	_ok(bool(risk_b.get("accepted", false)), "grey route accepts suspicious pay prerequisite")
+	var risk_c: Dictionary = sys.try_place("toby_commission_risk", "mindset", "one_person_walk")
+	_ok(bool(risk_c.get("solved", false)), "grey route solves Toby risk prerequisite")
+
+	sys.add_clues(["mira_traveling_mentor", "child_learned_saying", "mira_avoids_old_road"])
+	var relation_a: Dictionary = sys.try_place("mira_toby_old_relation", "past", "mira_traveling_mentor")
+	_ok(bool(relation_a.get("accepted", false)), "grey route accepts Mira relation prerequisite")
+	var relation_b: Dictionary = sys.try_place("mira_toby_old_relation", "name", "toby_name")
+	_ok(bool(relation_b.get("solved", false)), "grey route solves Mira relation prerequisite")
+	var phrase_a: Dictionary = sys.try_place("mira_phrase_origin", "saying", "one_person_walk")
+	_ok(bool(phrase_a.get("accepted", false)), "grey route accepts phrase prerequisite")
+	var phrase_b: Dictionary = sys.try_place("mira_phrase_origin", "learned", "child_learned_saying")
+	_ok(bool(phrase_b.get("solved", false)), "grey route solves phrase prerequisite")
+
+	sys.add_clues([
+		"grey_ryan_case_number",
+		"grey_blacktooth_batch",
+		"grey_payout_closure",
+		"grey_old_payout_register",
+		"grey_missing_page",
+		"grey_renamed_escort",
+		"grey_supply_stamp",
+		"grey_closure_method",
+	])
+	_ok(_has_available_question(sys, "grey_same_batch"),
+		"grey same-batch question appears after Ryan/Toby clearing clues")
+	var batch_question: Dictionary = sys.get_question("grey_same_batch")
+	_ok(not String(batch_question.get("text", "")).contains("都被 ______ 盖进"),
+		"grey same-batch wording does not make the payout-closure clue read like the thing doing the covering")
+	var batch_a: Dictionary = sys.try_place("grey_same_batch", "ryan_case", "grey_ryan_case_number")
+	_ok(bool(batch_a.get("accepted", false)), "grey same-batch accepts Ryan case number")
+	var batch_b: Dictionary = sys.try_place("grey_same_batch", "toby_case", "grey_blacktooth_batch")
+	_ok(bool(batch_b.get("accepted", false)), "grey same-batch accepts Blacktooth batch")
+	var batch_c: Dictionary = sys.try_place("grey_same_batch", "closure", "grey_payout_closure")
+	_ok(bool(batch_c.get("solved", false)), "grey same-batch solves after all blanks")
+	_ok((batch_c.get("unlockFlags", []) as Array).has("grey_same_batch_known"),
+		"grey same-batch unlocks route flag")
+
+	_ok(_has_available_question(sys, "grey_payout_method"),
+		"grey payout-method question appears after same-batch solve")
+	sys.try_place("grey_payout_method", "register", "grey_old_payout_register")
+	sys.try_place("grey_payout_method", "missing", "grey_missing_page")
+	var payout: Dictionary = sys.try_place("grey_payout_method", "closure", "grey_payout_closure")
+	_ok(bool(payout.get("solved", false)), "grey payout-method solves")
+
+	_ok(_has_available_question(sys, "grey_mira_supply_link"),
+		"grey Mira supply-link question appears after payout and Mira prerequisites")
+	var supply_question: Dictionary = sys.get_question("grey_mira_supply_link")
+	_ok(String(supply_question.get("text", "")).contains("托比那份 ______"),
+		"grey Mira supply-link wording fits the renamed escort clue")
+	sys.try_place("grey_mira_supply_link", "supply", "grey_supply_stamp")
+	sys.try_place("grey_mira_supply_link", "escort", "grey_renamed_escort")
+	var supply: Dictionary = sys.try_place("grey_mira_supply_link", "method", "grey_closure_method")
+	_ok(bool(supply.get("solved", false)), "grey Mira supply-link solves")
+
+	_ok(_has_available_question(sys, "grey_public_account"),
+		"grey public-account question appears after all grey subquestions")
+	var public_question: Dictionary = sys.get_question("grey_public_account")
+	_ok(not (public_question.get("requiresClues", []) as Array).has("grey_closure_method"),
+		"grey public-account does not require a method clue that is not fillable in this final question")
+	var public_a: Dictionary = sys.try_place("grey_public_account", "ryan_case", "grey_supply_stamp")
+	_ok(bool(public_a.get("accepted", false)) and not bool(public_a.get("solved", false)),
+		"grey public-account accepts Mira stamp in the first public evidence slot")
+	var duplicate_public: Dictionary = sys.try_place("grey_public_account", "toby_batch", "grey_supply_stamp")
+	_ok(not bool(duplicate_public.get("accepted", true)),
+		"grey public-account does not allow the same evidence clue twice")
+	var public_b: Dictionary = sys.try_place("grey_public_account", "toby_batch", "grey_ryan_case_number")
+	_ok(bool(public_b.get("accepted", false)) and not bool(public_b.get("solved", false)),
+		"grey public-account accepts Ryan case number in a later public evidence slot")
+	var public_result: Dictionary = sys.try_place("grey_public_account", "mira_stamp", "grey_blacktooth_batch")
+	_ok(bool(public_result.get("solved", false)), "grey public-account solves with its three public evidence clues in any order")
+	_ok((public_result.get("unlockFlags", []) as Array).has("grey_public_account_known"),
+		"grey public-account unlocks final route flag")
 
 
 func _test_toby_dialogue_marks_clues() -> void:
@@ -208,6 +305,8 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	_ok(String(first.get("clue_id", "")) == "mira_traveling_mentor", "first Mira gossip grants mentor clue")
 	_ok(gm.inference.has_clue("mira_traveling_mentor"), "mentor clue is owned after gossip")
 	_ok(String(first.get("line", "")) != "", "Mira gossip returns guest-spoken clue text")
+	_ok(String(first.get("line", "")).contains("[color=#d6a84d]") and String(first.get("line", "")).contains("[/color]"),
+		"Mira gossip guest-spoken clue text highlights the clue phrase")
 	_ok(String(first.get("notice", "")) == "",
 		"Mira gossip no longer returns a separate stage-caption clue notice")
 	var second: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
@@ -217,6 +316,8 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	var third: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(bool(third.get("granted", false)), "next night can grant the second Mira old-ledger gossip")
 	_ok(String(third.get("clue_id", "")) == "child_learned_saying", "second Mira gossip grants phrase clue")
+	_ok(String(third.get("line", "")).contains("[color=#d6a84d]") and String(third.get("line", "")).contains("[/color]"),
+		"second Mira gossip guest-spoken clue text highlights the clue phrase")
 
 
 func _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption() -> void:
@@ -246,6 +347,8 @@ func _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption() -> void
 	if probe.customer_lines.size() == 1:
 		_ok(probe.customer_lines[0].contains("客人: 以前有个女商人"),
 			"Mira gossip clue is spoken as part of the guest reaction line")
+		_ok(probe.customer_lines[0].contains("[color=#d6a84d]") and probe.customer_lines[0].contains("[/color]"),
+			"Mira gossip clue reaction line carries BBCode highlight tags")
 	_ok(probe.stage_lines.is_empty(),
 		"Mira gossip clue no longer uses the bottom StageCaption bubble")
 	_ok(gm.inference.has_clue("mira_traveling_mentor"), "serving an ordinary guest still grants the Mira gossip clue")
@@ -292,6 +395,14 @@ func _has_available_question(sys, question_id: String) -> bool:
 		if String(question.get("id", "")) == question_id:
 			return true
 	return false
+
+
+func _clue_ids(clues: Array) -> Array[String]:
+	var result: Array[String] = []
+	for clue in clues:
+		if clue is Dictionary:
+			result.append(String((clue as Dictionary).get("id", "")))
+	return result
 
 
 func _finish() -> void:

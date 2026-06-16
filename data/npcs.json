@@ -54,6 +54,26 @@
         "saved": "托比留了下来，没走上那条委托。",
         "lost": "托比独自上了路，再没回来。"
       }
+    },
+    {
+      "id": "evelyn",
+      "name": "伊芙琳",
+      "title": "灰账清算人",
+      "description": "替公会封存坏账与事故赔付的清算人，温和得像一枚冷印章。",
+      "affectionStart": 0,
+      "preferred_styles": ["温柔"],
+      "disliked_styles": ["粗鲁"],
+      "scenes": [
+        { "day": 5, "dialogue": "evelyn_day5", "order": "wine", "trigger": {"type": "auto"} },
+        { "day": 8, "dialogue": "evelyn_day8", "order": "herb_tea", "trigger": {"type": "auto"} },
+        { "day": 13, "dialogue": "evelyn_day13", "order": "wine", "trigger": {"type": "auto"} },
+        { "day": 20, "dialogue": "evelyn_day20", "order": "spiced_wine", "trigger": {"type": "auto"} }
+      ],
+      "endings": {
+        "sealed_account": "伊芙琳把所有缺页重新封回灰账。莱恩、托比和米拉都成了可归档的名字，公会照常开出下一批委托。",
+        "amended_account": "伊芙琳承认账面有误，替几份委托改了赔付名目。活下来的人得到喘息，真正的账本仍锁在公会深处。",
+        "public_account": "灰账被抄成公开副本，莱恩的北矿道、托比的黑齿矿脉和米拉的供应协议被并到同一张账上。伊芙琳第一次没能替公会合上账页。"
+      }
     }
   ]
 }

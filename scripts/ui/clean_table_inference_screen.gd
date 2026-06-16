@@ -100,7 +100,7 @@ func _refresh() -> void:
 
 func _render_clues() -> void:
 	_clear_children_with_prefix(_clue_area, "Clue_")
-	var owned: Array = _inference.get_owned_clues()
+	var owned: Array = _inference.get_relevant_owned_clues() if _inference.has_method("get_relevant_owned_clues") else _inference.get_owned_clues()
 	var cursor := Vector2(68.0, 76.0)
 	var max_right := 250.0
 	var row_height := 44.0
