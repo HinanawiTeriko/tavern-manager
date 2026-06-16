@@ -245,10 +245,9 @@ func register_view(view: Node) -> void:
 
 				if tutorial_will_start:
 					# 教程结束后再生成重要 NPC（如莱恩）
-					tm.tutorial_sequence_ended.connect(
-						_spawn_npc_after_tutorial.bind(npc.id, order_key),
-						CONNECT_ONE_SHOT
-					)
+					var spawn_after_tutorial := _spawn_npc_after_tutorial.bind(npc.id, order_key)
+					if not tm.tutorial_sequence_ended.is_connected(spawn_after_tutorial):
+						tm.tutorial_sequence_ended.connect(spawn_after_tutorial, CONNECT_ONE_SHOT)
 				elif _tavern_view.daily_menu_confirmed and not guests.has_guest:
 					guests.spawn_important(npc.id, order_key)
 				# 菜单未确认时等待 on_menu_confirmed() 生成

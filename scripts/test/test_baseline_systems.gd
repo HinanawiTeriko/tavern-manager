@@ -104,5 +104,5 @@ func _test_today_important_npc_resets_on_empty_day() -> void:
 
 func _test_material_icons_load() -> void:
 	var gm = get_node("/root/GameManager")
-	for key in ["ale", "grape", "flour", "meat_raw", "herb"]:
+	for key in ["ale", "grape", "flour", "meat_raw", "herb", "cave_mushroom", "rock_lizard_meat", "north_sour_grape", "black_malt"]:
 		_ok(gm.try_load_material_icon(key) != null, "material icon should load: " + key)

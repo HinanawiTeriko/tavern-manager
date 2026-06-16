@@ -1,0 +1,5 @@
+Pixel game item icon sheets for a dungeon tavern management game. Separate readable icons on chroma-key green background, no text, no numbers, no UI frames. Dark teal dungeon tavern palette with amber highlights, crisp silhouettes, rough ink-like outlines, limited palette, readable at small size.
+
+Sheet 1 icons: fat cave mushroom, rugged lizard meat cut, dark sour grape cluster, black malt grain bundle.
+
+Sheet 2 icons: mushroom meat stew bowl, grilled lizard steak, dark red sour grape wine bottle, black miner ale mug.

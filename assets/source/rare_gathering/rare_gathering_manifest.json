@@ -1,0 +1,227 @@
+{
+  "id": "rare_gathering_icons",
+  "source_files": [
+    "art_sources/generated_raw/rare_gathering/rare_material_icons_sheet_v1.png",
+    "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png"
+  ],
+  "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+  "scale": 4,
+  "assets": {
+    "cave_mushroom": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_material_icons_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        36,
+        70,
+        520,
+        633
+      ],
+      "native": "assets/source/rare_gathering/cave_mushroom.png",
+      "runtime": "assets/textures/tavern/icons/cave_mushroom.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        23
+      ],
+      "intended_godot_use": "Tavern material icon for cave_mushroom"
+    },
+    "rock_lizard_meat": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_material_icons_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        620,
+        134,
+        1072,
+        618
+      ],
+      "native": "assets/source/rare_gathering/rock_lizard_meat.png",
+      "runtime": "assets/textures/tavern/icons/rock_lizard_meat.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        2,
+        2,
+        22,
+        22
+      ],
+      "intended_godot_use": "Tavern material icon for rock_lizard_meat"
+    },
+    "north_sour_grape": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_material_icons_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        1142,
+        70,
+        1542,
+        648
+      ],
+      "native": "assets/source/rare_gathering/north_sour_grape.png",
+      "runtime": "assets/textures/tavern/icons/north_sour_grape.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        23
+      ],
+      "intended_godot_use": "Tavern material icon for north_sour_grape"
+    },
+    "black_malt": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_material_icons_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        1684,
+        74,
+        2142,
+        650
+      ],
+      "native": "assets/source/rare_gathering/black_malt.png",
+      "runtime": "assets/textures/tavern/icons/black_malt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        2,
+        1,
+        22,
+        23
+      ],
+      "intended_godot_use": "Tavern material icon for black_malt"
+    },
+    "cave_mushroom_stew": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        38,
+        320,
+        474,
+        674
+      ],
+      "native": "assets/source/rare_gathering/cave_mushroom_stew.png",
+      "runtime": "assets/textures/tavern/items/cave_mushroom_stew.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        1,
+        4,
+        23,
+        21
+      ],
+      "intended_godot_use": "Tavern product icon for cave_mushroom_stew"
+    },
+    "rock_lizard_steak": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        520,
+        338,
+        940,
+        692
+      ],
+      "native": "assets/source/rare_gathering/rock_lizard_steak.png",
+      "runtime": "assets/textures/tavern/items/rock_lizard_steak.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        1,
+        4,
+        23,
+        21
+      ],
+      "intended_godot_use": "Tavern product icon for rock_lizard_steak"
+    },
+    "old_road_wine": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        1076,
+        120,
+        1300,
+        704
+      ],
+      "native": "assets/source/rare_gathering/old_road_wine.png",
+      "runtime": "assets/textures/tavern/items/old_road_wine.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        6,
+        1,
+        18,
+        23
+      ],
+      "intended_godot_use": "Tavern product icon for old_road_wine"
+    },
+    "miner_dark_ale": {
+      "source": "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+      "prompt": "art_sources/generated_raw/rare_gathering/rare_gathering_icon_sheets_prompt_v1.txt",
+      "crop_rect": [
+        1350,
+        286,
+        1718,
+        706
+      ],
+      "native": "assets/source/rare_gathering/miner_dark_ale.png",
+      "runtime": "assets/textures/tavern/items/miner_dark_ale.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "safe_area": [
+        2,
+        3,
+        22,
+        22
+      ],
+      "intended_godot_use": "Tavern product icon for miner_dark_ale"
+    }
+  }
+}
