@@ -17,6 +17,7 @@ func _ready() -> void:
 	_test_shop_button_checks_gossip_before_opening()
 	_test_reveal_tracking()
 	_test_intro_handoff_timing_contract()
+	_test_rare_gathering_rewards_and_pity()
 	_finish()
 
 
@@ -350,3 +351,53 @@ func _test_intro_handoff_timing_contract() -> void:
 	_ok(source.contains("const INTRO_HANDOFF_ZOOM"), "intro handoff uses a named zoom constant")
 	_ok(source.contains("const INTRO_HANDOFF_DURATION"), "intro handoff uses a named duration constant")
 	_ok(not source.contains("_camera.zoom = Vector2(_camera.MAX_ZOOM, _camera.MAX_ZOOM)"), "intro handoff does not start at hard max zoom")
+
+
+func _test_rare_gathering_rewards_and_pity() -> void:
+	var map := DayMapSystem.new()
+	_ok(map.load_data(), "rare gathering locations data loads")
+	map.start_day(3)
+	map.stamina = 10
+	var grape_loc: Dictionary = map._locations.get("grape_trellis", {})
+	grape_loc["rareReward"]["chance"] = 0.0
+	map._locations["grape_trellis"] = grape_loc
+
+	var first := map.visit("grape_trellis")
+	_ok(first.get("success", false), "first grape gathering succeeds")
+	_ok(_count_reward(first, "grape") == 2, "stable grape reward gives two")
+	_ok(_count_reward(first, "north_sour_grape") == 0, "first forced miss gives no rare")
+
+	var second := map.visit("grape_trellis")
+	_ok(_count_reward(second, "grape") == 2, "second grape gathering still gives stable reward")
+	_ok(_count_reward(second, "north_sour_grape") == 0, "second forced miss gives no rare")
+
+	var third := map.visit("grape_trellis")
+	_ok(_count_reward(third, "grape") == 2, "third grape gathering still gives stable reward")
+	_ok(_count_reward(third, "north_sour_grape") == 1, "third gathering triggers rare pity")
+	_ok(int(map.capture_state().get("rare_gather_misses", {}).get("grape_trellis", -1)) == 0,
+		"rare pity resets after award")
+
+	var snap := map.capture_state()
+	map.start_day(3)
+	var restored := DayMapSystem.new()
+	restored.load_data()
+	restored.restore_state(snap)
+	_ok(int(restored.capture_state().get("rare_gather_misses", {}).get("grape_trellis", -1)) == 0,
+		"rare pity state roundtrips through capture/restore")
+
+	var day2 := DayMapSystem.new()
+	day2.load_data()
+	day2.start_day(2)
+	var forest := day2.visit("mushroom_forest")
+	_ok(_count_reward(forest, "sleep_powder") == 1, "day2 forest still grants sleep powder")
+	_ok(_count_reward(forest, "cave_mushroom") == 0, "day2 sleep powder special does not also roll cave mushroom")
+	_ok(not day2.capture_state().get("rare_gather_misses", {}).has("mushroom_forest"),
+		"day2 sleep powder special does not consume rare pity state")
+
+
+func _count_reward(result: Dictionary, item_key: String) -> int:
+	var count := 0
+	for key in result.get("rewards", []):
+		if String(key) == item_key:
+			count += 1
+	return count
