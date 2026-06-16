@@ -13,6 +13,31 @@ class InferenceNoticeProbe:
 		notice_count += 1
 
 
+class TavernFeedbackProbe:
+	extends Node
+	var customer_lines: Array[String] = []
+	var stage_lines: Array[String] = []
+	var reward_calls := 0
+	var reactions: Array[Dictionary] = []
+	var daily_menu: Dictionary = {}
+	var daily_menu_confirmed := true
+
+	func customer_say(text: String) -> void:
+		customer_lines.append(text)
+
+	func show_stage_caption(text: String, _color: Color = Color.WHITE) -> void:
+		stage_lines.append(text)
+
+	func show_order_reward_feedback(_earned_gold: int, _earned_rep: int, _previous_gold: int, _previous_rep: int, _previous_max_gold: int = -1, _new_max_gold: int = -1) -> void:
+		reward_calls += 1
+
+	func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
+		reactions.append({"outcome": outcome, "npc_id": npc_id})
+
+	func update_top_bar(_gold: int, _rep: int, _day: int, _max_day: int, _max_gold_held: int = -1) -> void:
+		pass
+
+
 func _ready() -> void:
 	_test_toby_inference_rules()
 	_test_mira_old_ledger_inference_rules()
@@ -21,6 +46,7 @@ func _ready() -> void:
 	_test_game_manager_collects_board_and_night_clues()
 	_test_game_manager_shows_inference_ready_notice_when_question_unlocks()
 	_test_game_manager_grants_mira_gossip_once_per_night()
+	await _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption()
 	_test_game_manager_applies_mira_inference_flags()
 	_test_mira_stall_collects_old_road_clue()
 	_finish()
@@ -181,8 +207,9 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	_ok(bool(first.get("granted", false)), "Day7 ordinary success can grant first Mira old-ledger gossip")
 	_ok(String(first.get("clue_id", "")) == "mira_traveling_mentor", "first Mira gossip grants mentor clue")
 	_ok(gm.inference.has_clue("mira_traveling_mentor"), "mentor clue is owned after gossip")
-	_ok(String(first.get("notice", "")).contains("推断线索") and String(first.get("notice", "")).contains("米拉"),
-		"Mira gossip returns an explicit inference-clue notice for the tavern feedback layer")
+	_ok(String(first.get("line", "")) != "", "Mira gossip returns guest-spoken clue text")
+	_ok(String(first.get("notice", "")) == "",
+		"Mira gossip no longer returns a separate stage-caption clue notice")
 	var second: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(not bool(second.get("granted", true)), "same night does not grant a second Mira old-ledger gossip")
 	gm.economy.current_day = 8
@@ -190,6 +217,42 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	var third: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(bool(third.get("granted", false)), "next night can grant the second Mira old-ledger gossip")
 	_ok(String(third.get("clue_id", "")) == "child_learned_saying", "second Mira gossip grants phrase clue")
+
+
+func _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption() -> void:
+	var gm = get_node("/root/GameManager")
+	var old_view = gm._tavern_view
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 7
+	gm.start_day_map(7)
+	gm.inference.add_clue("one_person_walk")
+	var probe := TavernFeedbackProbe.new()
+	add_child(probe)
+	gm._tavern_view = probe
+
+	var guest := GuestData.new()
+	guest.guest_name = "Gossip Guest"
+	guest.type = GuestData.GuestType.NORMAL
+	guest.order_key = "ale_beer"
+	guest.npc_id = "regular_belta"
+	guest.has_dialogue = false
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	gm.request_serve("ale_beer", {"quality": "normal"})
+	await get_tree().process_frame
+
+	_ok(probe.customer_lines.size() == 1, "ordinary successful service shows exactly one customer reaction line")
+	if probe.customer_lines.size() == 1:
+		_ok(probe.customer_lines[0].contains("客人: 以前有个女商人"),
+			"Mira gossip clue is spoken as part of the guest reaction line")
+	_ok(probe.stage_lines.is_empty(),
+		"Mira gossip clue no longer uses the bottom StageCaption bubble")
+	_ok(gm.inference.has_clue("mira_traveling_mentor"), "serving an ordinary guest still grants the Mira gossip clue")
+
+	gm._tavern_view = old_view
+	gm.guests.clear_guest()
+	probe.queue_free()
 
 
 func _test_game_manager_applies_mira_inference_flags() -> void:

@@ -298,6 +298,8 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_bubble.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"ReactionBubble does not block table item clicks")
 		_ok(reaction_bubble.get_theme_font_size("font_size") >= 16, "ReactionBubble remains readable for short customer reactions")
+		_ok(reaction_bubble.get_theme_color("font_color") == Color.WHITE,
+			"ReactionBubble uses white dialogue text so clue highlights can be layered separately")
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")

@@ -215,7 +215,7 @@ func _apply_theme() -> void:
 	_order_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_order_bubble.clip_text = true
 	_order_bubble.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ThemeColors.style_brush_label(_reaction_bubble, 16, ThemeColors.AMBER_PRIMARY)
+	ThemeColors.style_brush_label(_reaction_bubble, 16, Color.WHITE)
 	_reaction_bubble.add_theme_constant_override("outline_size", 3)
 	_reaction_bubble.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
 	_reaction_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -456,7 +456,6 @@ func _try_grant_mira_old_ledger_gossip() -> Dictionary:
 		"granted": true,
 		"clue_id": clue_id,
 		"line": String(candidate.get("line", "")),
-		"notice": "获得推断线索：" + _inference_clue_label(clue_id),
 	}
 
 
@@ -979,8 +978,6 @@ func _react_then_clear(outcome: String) -> void:
 			var gossip := _try_grant_mira_old_ledger_gossip()
 			if bool(gossip.get("granted", false)):
 				line += "\n" + String(gossip.get("line", ""))
-				if _tavern_view.has_method("show_stage_caption"):
-					_tavern_view.show_stage_caption(String(gossip.get("notice", "")), ThemeColors.AMBER_PRIMARY)
 		_tavern_view.customer_say(line)
 	_guest_lingering = true
 	await get_tree().create_timer(1.8).timeout
