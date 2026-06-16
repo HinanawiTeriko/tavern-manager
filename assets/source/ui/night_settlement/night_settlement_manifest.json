@@ -1,8 +1,8 @@
 {
   "id": "night_settlement_v1",
   "backdrop": {
-    "source": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v1.png",
-    "prompt": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v1.txt",
+    "source": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v5.png",
+    "prompt": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v5.txt",
     "native": "assets/source/ui/night_settlement/night_settlement_backdrop_native.png",
     "runtime": "assets/textures/ui/night_settlement/night_settlement_backdrop.png",
     "native_size": [
@@ -21,17 +21,17 @@
       232,
       27
     ],
-    "stats": [
+    "guest_lineup": [
+      12,
       34,
-      103,
-      128,
-      160
+      232,
+      104
     ],
-    "fates": [
-      158,
-      103,
-      280,
-      160
+    "score": [
+      96,
+      106,
+      224,
+      164
     ],
     "continue": [
       276,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import deque
 from pathlib import Path
 
 from PIL import Image, ImageOps
@@ -18,10 +19,10 @@ RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "vera"
 REFERENCE_SOURCE = RAW_SOURCE / "reference"
 APPROVED_REFERENCE = REFERENCE_SOURCE / "vera_approved_reference_v2.png"
 APPROVED_PROMPT_RECORD = REFERENCE_SOURCE / "vera_approved_prompt_v2.txt"
-EXPRESSION_SHEET = RAW_SOURCE / "vera_expression_sheet_source_v2.png"
-EXPRESSION_PROMPT = RAW_SOURCE / "vera_expression_sheet_prompt_v2.txt"
-LEDGE_SOURCE = RAW_SOURCE / "vera_ledge_source_v3.png"
-LEDGE_PROMPT = RAW_SOURCE / "vera_ledge_prompt_v3.txt"
+EXPRESSION_SHEET = RAW_SOURCE / "vera_expression_sheet_source_v3.png"
+EXPRESSION_PROMPT = RAW_SOURCE / "vera_expression_sheet_prompt_v3.txt"
+LEDGE_SOURCE = RAW_SOURCE / "vera_ledge_source_v4.png"
+LEDGE_PROMPT = RAW_SOURCE / "vera_ledge_prompt_v4.txt"
 STYLE_REFERENCE = ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_belta_style_reference_v1.png"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "characters" / "vera"
 RUNTIME = ROOT / "assets" / "textures" / "characters" / "vera"
@@ -29,28 +30,39 @@ MANIFEST = SOURCE / "vera_character_manifest.json"
 CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "vera_contact_sheet.png"
 
 ASSET_ID = "vera"
+EXPRESSION_COLUMNS = 4
+EXPRESSION_ROWS = 2
+SOURCE_CROP_BLEED = 48
 VARIANT_CROPS = {
-    "neutral": (104, 20, 570, 620),
-    "smirk": (674, 20, 1138, 620),
-    "concerned": (86, 636, 552, 1236),
-    "surprised": (676, 636, 1142, 1236),
+    "neutral": (0, 0, 432, 512),
+    "smirk": (336, 0, 816, 512),
+    "concerned": (720, 0, 1200, 512),
+    "surprised": (1152, 0, 1536, 512),
+    "warm": (0, 512, 432, 1024),
+    "stern": (336, 512, 816, 1024),
+    "confused": (720, 512, 1200, 1024),
+    "tired": (1152, 512, 1536, 1024),
 }
 EXTRA_VARIANTS = {
     "ledge": {
         "source": LEDGE_SOURCE,
         "prompt": LEDGE_PROMPT,
-        "crop": (183, 168, 903, 1068),
-        "intended_godot_use": "TutorialOverlay Vera character portrait raised dialogue edge pose",
+        "crop": (0, 0, 1024, 1535),
+        "intended_godot_use": "TutorialOverlay Vera full-body hanging ledge pose",
     },
 }
 NATIVE_SIZE = (128, 160)
+LEDGE_NATIVE_SIZE = (128, 320)
 RUNTIME_SCALE = 4
 RUNTIME_SIZE = (NATIVE_SIZE[0] * RUNTIME_SCALE, NATIVE_SIZE[1] * RUNTIME_SCALE)
+LEDGE_RUNTIME_SIZE = (LEDGE_NATIVE_SIZE[0] * RUNTIME_SCALE, LEDGE_NATIVE_SIZE[1] * RUNTIME_SCALE)
 SAFE_AREA = [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]]
+LEDGE_SAFE_AREA = [0, 0, LEDGE_NATIVE_SIZE[0], LEDGE_NATIVE_SIZE[1]]
 VISIBLE_TARGET = (124, 154)
+LEDGE_VISIBLE_TARGET = (124, 314)
 BOTTOM_PADDING = 3
 COLOR_LIMIT = 72
-STYLE_PROFILE = "approved_vera_belta_runtime_matched_character_portrait_v1"
+STYLE_PROFILE = "approved_vera_belta_close_camera_character_portrait_v3"
 EDGE_OFFSETS = [
     (-1, 0),
     (1, 0),
@@ -136,6 +148,42 @@ def remove_green_key(image: Image.Image) -> Image.Image:
     return despill_green_edges(refine_green_matte(image))
 
 
+def keep_largest_alpha_component(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    pixels = alpha.load()
+    width, height = alpha.size
+    seen: set[tuple[int, int]] = set()
+    components: list[list[tuple[int, int]]] = []
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] == 0 or (x, y) in seen:
+                continue
+            queue: deque[tuple[int, int]] = deque([(x, y)])
+            seen.add((x, y))
+            component: list[tuple[int, int]] = []
+            while queue:
+                cx, cy = queue.popleft()
+                component.append((cx, cy))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx = cx + dx
+                    ny = cy + dy
+                    if 0 <= nx < width and 0 <= ny < height and pixels[nx, ny] > 0 and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        queue.append((nx, ny))
+            components.append(component)
+    if not components:
+        return rgba
+    keep = set(max(components, key=len))
+    out = rgba.copy()
+    out_pixels = out.load()
+    for y in range(height):
+        for x in range(width):
+            if out_pixels[x, y][3] > 0 and (x, y) not in keep:
+                out_pixels[x, y] = (0, 0, 0, 0)
+    return out
+
+
 def crop_explicit_source(image: Image.Image, crop: tuple[int, int, int, int], label: str) -> Image.Image:
     x0, y0, x1, y1 = crop
     if x0 < 0 or y0 < 0 or x1 > image.width or y1 > image.height or x1 <= x0 or y1 <= y0:
@@ -173,24 +221,32 @@ def make_native(
     image: Image.Image,
     crop: tuple[int, int, int, int],
     label: str,
+    native_size: tuple[int, int] = NATIVE_SIZE,
+    visible_target: tuple[int, int] = VISIBLE_TARGET,
+    bottom_padding: int = BOTTOM_PADDING,
 ) -> Image.Image:
-    keyed = remove_green_key(crop_explicit_source(image, crop, label))
+    keyed = keep_largest_alpha_component(remove_green_key(crop_explicit_source(image, crop, label)))
     bounds = keyed.getchannel("A").getbbox()
     if bounds is None:
         raise ValueError(f"{label}: source crop has no visible pixels")
     subject = keyed.crop(bounds)
-    fitted = ImageOps.contain(subject, VISIBLE_TARGET, Image.Resampling.NEAREST)
-    native = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
-    x = (NATIVE_SIZE[0] - fitted.width) // 2
-    y = NATIVE_SIZE[1] - BOTTOM_PADDING - fitted.height
-    y = min(max(0, y), max(0, NATIVE_SIZE[1] - fitted.height))
+    fitted = ImageOps.contain(subject, visible_target, Image.Resampling.NEAREST)
+    native = Image.new("RGBA", native_size, (0, 0, 0, 0))
+    x = (native_size[0] - fitted.width) // 2
+    y = native_size[1] - bottom_padding - fitted.height
+    y = min(max(0, y), max(0, native_size[1] - fitted.height))
     native.alpha_composite(fitted, (x, y))
     return quantize_visible(despill_green_edges(native))
 
 
-def validate_native(native: Image.Image, label: str) -> None:
-    if native.size != NATIVE_SIZE:
-        raise ValueError(f"{label}: native must be {NATIVE_SIZE}, got {native.size}")
+def validate_native(
+    native: Image.Image,
+    label: str,
+    expected_size: tuple[int, int] = NATIVE_SIZE,
+    min_visible_ratio: float = 0.38,
+) -> None:
+    if native.size != expected_size:
+        raise ValueError(f"{label}: native must be {expected_size}, got {native.size}")
     pixels = flattened_pixels(native.convert("RGBA"))
     alphas = [a for _r, _g, _b, a in pixels]
     if min(alphas) != 0 or max(alphas) != 255:
@@ -198,7 +254,7 @@ def validate_native(native: Image.Image, label: str) -> None:
     if any(a not in [0, 255] for a in alphas):
         raise ValueError(f"{label}: native alpha must be hard")
     visible = [(r, g, b) for r, g, b, a in pixels if a > 0]
-    if len(visible) <= native.width * native.height * 0.38:
+    if len(visible) <= native.width * native.height * min_visible_ratio:
         raise ValueError(f"{label}: native silhouette is too sparse")
     if len(set(visible)) > COLOR_LIMIT:
         raise ValueError(f"{label}: native palette exceeds {COLOR_LIMIT} colors")
@@ -207,8 +263,8 @@ def validate_native(native: Image.Image, label: str) -> None:
         raise ValueError(f"{label}: native still has visible green key pixels")
 
 
-def nearest_runtime(native: Image.Image) -> Image.Image:
-    return native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
+def nearest_runtime(native: Image.Image, runtime_size: tuple[int, int] = RUNTIME_SIZE) -> Image.Image:
+    return native.resize(runtime_size, Image.Resampling.NEAREST)
 
 
 def write_contact_sheet(outputs: dict[str, tuple[Image.Image, Image.Image]]) -> None:
@@ -217,13 +273,19 @@ def write_contact_sheet(outputs: dict[str, tuple[Image.Image, Image.Image]]) -> 
         f"{ASSET_ID}_smirk",
         f"{ASSET_ID}_concerned",
         f"{ASSET_ID}_surprised",
+        f"{ASSET_ID}_warm",
+        f"{ASSET_ID}_stern",
+        f"{ASSET_ID}_confused",
+        f"{ASSET_ID}_tired",
         f"{ASSET_ID}_ledge",
     ]
     save_character_contact_sheet(
         CONTACT_SHEET,
         "Vera character contract sheet",
-        "expression-sheet neutral plus variants, native 128x160 -> runtime 512x640",
+        "v3 close-camera expressions 128x160 plus full-body ledge 128x320, 4x runtime",
         [(portrait_id, outputs[portrait_id][0]) for portrait_id in ordered_ids],
+        row_count=4,
+        column_count=3,
     )
 
 
@@ -249,8 +311,10 @@ def write_manifest() -> None:
         "contact_sheet": "docs/art/characters/vera_contact_sheet.png",
         "color_limit": COLOR_LIMIT,
         "visible_target": list(VISIBLE_TARGET),
+        "ledge_visible_target": list(LEDGE_VISIBLE_TARGET),
         "bottom_padding": BOTTOM_PADDING,
         "runtime_scale": RUNTIME_SCALE,
+        "source_crop_bleed": SOURCE_CROP_BLEED,
         "assets": {
             ASSET_ID: {
                 "id": ASSET_ID,
@@ -305,10 +369,10 @@ def write_manifest() -> None:
             "prompt": repo_path(spec["prompt"]),
             "native_file": f"assets/source/tavern/characters/vera/{variant_id}_native.png",
             "output_file": f"assets/textures/characters/vera/{variant_id}.png",
-            "native_size": list(NATIVE_SIZE),
-            "runtime_size": list(RUNTIME_SIZE),
+            "native_size": list(LEDGE_NATIVE_SIZE),
+            "runtime_size": list(LEDGE_RUNTIME_SIZE),
             "source_crop": list(spec["crop"]),
-            "safe_area": SAFE_AREA,
+            "safe_area": LEDGE_SAFE_AREA,
             "expression": expression,
             "intended_godot_use": spec["intended_godot_use"],
         }
@@ -366,9 +430,20 @@ def main() -> None:
     for expression, spec in EXTRA_VARIANTS.items():
         variant_id = f"{ASSET_ID}_{expression}"
         with Image.open(spec["source"]) as source_image:
-            variant_native = make_native(source_image, spec["crop"], variant_id)
-        validate_native(variant_native, variant_id)
-        variant_runtime = nearest_runtime(variant_native)
+            variant_native = make_native(
+                source_image,
+                spec["crop"],
+                variant_id,
+                native_size=LEDGE_NATIVE_SIZE,
+                visible_target=LEDGE_VISIBLE_TARGET,
+            )
+        validate_native(
+            variant_native,
+            variant_id,
+            expected_size=LEDGE_NATIVE_SIZE,
+            min_visible_ratio=0.18,
+        )
+        variant_runtime = nearest_runtime(variant_native, LEDGE_RUNTIME_SIZE)
         outputs[variant_id] = (variant_native, variant_runtime)
         variant_native.save(SOURCE / f"{variant_id}_native.png")
         variant_runtime.save(RUNTIME / f"{variant_id}.png")

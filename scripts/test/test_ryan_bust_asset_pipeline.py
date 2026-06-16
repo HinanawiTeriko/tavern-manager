@@ -8,8 +8,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6_prompt.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v8.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v8_prompt.txt"
 MANIFEST = ROOT / "assets" / "source" / "tavern" / "characters" / "ryan_bust_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME = ROOT / "assets" / "textures" / "characters"
@@ -31,22 +31,25 @@ CONTACT_SHEET_NATIVE_POSITIONS = [
     (880, 452),
     (1298, 452),
 ]
-STYLE_PROFILE = "approved_mira_vera_belta_runtime_matched_tiefling_contract_runner_v6"
+STYLE_PROFILE = "important_npc_close_camera_tiefling_contract_runner_v8"
 COLOR_LIMIT = 72
 MIN_VISIBLE_HEIGHT = 150
 MAX_VISIBLE_HEIGHT = 154
+MIN_VISIBLE_WIDTH = 84
+MIN_NEUTRAL_WIDTH = 96
+MAX_VISIBLE_WIDTH = 124
 MIN_BOTTOM_PADDING = 2
 MAX_BOTTOM_PADDING = 5
 
 EXPECTED_CROPS = {
-    "ryan_neutral": [2, 2, 382, 510],
-    "ryan_confident": [386, 2, 766, 510],
-    "ryan_hesitant": [770, 2, 1150, 510],
-    "ryan_alarmed": [1154, 2, 1534, 510],
-    "ryan_resolved": [2, 514, 382, 1022],
-    "ryan_relieved": [386, 514, 766, 1022],
-    "ryan_wary": [770, 514, 1150, 1022],
-    "ryan_broken": [1154, 514, 1534, 1022],
+    "ryan_neutral": [0, 0, 384, 512],
+    "ryan_confident": [384, 0, 768, 512],
+    "ryan_hesitant": [768, 0, 1152, 512],
+    "ryan_alarmed": [1152, 0, 1536, 512],
+    "ryan_resolved": [0, 512, 384, 1024],
+    "ryan_relieved": [384, 512, 768, 1024],
+    "ryan_wary": [768, 512, 1152, 1024],
+    "ryan_broken": [1152, 512, 1536, 1024],
 }
 
 
@@ -75,20 +78,21 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(RAW.exists(), f"{RAW}: missing generated Ryan bust source")
         self.assertGreater(RAW.stat().st_size, 0, "generated Ryan bust source is empty")
         with Image.open(RAW) as source:
-            self.assertEqual(source.size, (1536, 1024), "Ryan v6 source must remain the approved 4x2 sheet")
+            self.assertEqual(source.size, (1536, 1024), "Ryan v8 source must remain the approved 4x2 sheet")
         self.assertTrue(PROMPT.exists(), f"{PROMPT}: missing Ryan bust generation prompt")
         self.assertGreater(PROMPT.stat().st_size, 0, "Ryan bust prompt is empty")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "approved mira/vera/belta",
-            "same artist family",
+            "corrected close-camera expression sheet",
+            "closer than the old ryan sheet",
+            "important npc camera",
+            "not a face close-up",
             "tiefling contract runner",
-            "head including horns",
-            "belt and upper hips",
+            "belt, and upper hips",
             "128x160",
             "512x640",
             "4 columns x 2 rows",
-            "eight expressions",
+            "eight separate expression cells",
             "flat solid #00ff00",
             "no readable text",
         ):
@@ -98,9 +102,9 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(MANIFEST.exists(), f"{MANIFEST}: missing Ryan bust manifest")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest["style_profile"], STYLE_PROFILE)
-        self.assertEqual(manifest["source"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v6.png")
-        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v6_prompt.txt")
-        self.assertEqual(manifest["normalization"]["mode"], "explicit_crop_visible_subject_v6")
+        self.assertEqual(manifest["source"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v8.png")
+        self.assertEqual(manifest["prompt"], "art_sources/generated_raw/characters/ryan/ryan_bust_expression_sheet_v8_prompt.txt")
+        self.assertEqual(manifest["normalization"]["mode"], "fixed_cell_visible_subject_v8")
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
         self.assertEqual(manifest["scale"], SCALE)
@@ -110,7 +114,7 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
             with self.subTest(portrait_id=portrait_id):
                 entry = entries[portrait_id]
                 self.assertEqual(entry["crop_rect"], crop_rect)
-                self.assertEqual(entry["normalization"]["mode"], "explicit_crop_visible_subject_v6")
+                self.assertEqual(entry["normalization"]["mode"], "fixed_cell_visible_subject_v8")
                 self.assertEqual(entry["native"], f"assets/source/tavern/characters/{portrait_id}_native.png")
                 self.assertEqual(entry["runtime"], f"assets/textures/characters/{portrait_id}.png")
                 self.assertIn("Tavern CustomerSprite", entry["intended_godot_use"])
@@ -133,10 +137,17 @@ class RyanBustAssetPipelineTest(unittest.TestCase):
                 self.assertGreaterEqual(bottom, 146, f"{portrait_id}: bust should extend low enough to be hidden by the bar")
                 self.assertGreaterEqual(bottom - top, MIN_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too short")
                 self.assertLessEqual(bottom - top, MAX_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too tall")
+                self.assertLessEqual(right - left, MAX_VISIBLE_WIDTH, f"{portrait_id}: portrait is too wide for the customer slot")
                 bottom_padding = native.height - bottom
                 self.assertGreaterEqual(bottom_padding, MIN_BOTTOM_PADDING, f"{portrait_id}: touches bottom edge")
                 self.assertLessEqual(bottom_padding, MAX_BOTTOM_PADDING, f"{portrait_id}: floats too high")
-                self.assertGreaterEqual(right - left, 64, f"{portrait_id}: portrait is too narrow")
+                self.assertGreaterEqual(right - left, MIN_VISIBLE_WIDTH, f"{portrait_id}: portrait is too narrow")
+                if portrait_id == "ryan_neutral":
+                    self.assertGreaterEqual(
+                        right - left,
+                        MIN_NEUTRAL_WIDTH,
+                        "Ryan's new neutral portrait should read closer than the old regular-customer camera",
+                    )
 
                 raw_pixels = native.tobytes()
                 visible_colors = {

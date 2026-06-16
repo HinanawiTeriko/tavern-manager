@@ -1,13 +1,18 @@
 {
   "id": "mira_bust_portrait",
-  "style_profile": "mira_direction_c1_debt_broker_v1",
-  "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
-  "expression_source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+  "style_profile": "mira_rebalanced_tavern_bust_v4",
+  "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+  "prompt": "art_sources/generated_raw/characters/mira/mira_expression_sheet_prompt_v4.txt",
+  "expression_source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
   "comparison_reference": "assets/textures/characters/ryan_neutral.png",
+  "comparison_references": [
+    "assets/textures/characters/ryan_neutral.png",
+    "assets/textures/characters/toby_neutral.png"
+  ],
   "source_rect": [
     0,
     0,
-    384,
+    432,
     512
   ],
   "grid": {
@@ -15,7 +20,7 @@
     "rows": 2
   },
   "normalization": {
-    "mode": "explicit_rect_visible_subject"
+    "mode": "expanded_cell_visible_subject"
   },
   "native": "assets/source/tavern/characters/mira_neutral_native.png",
   "runtime": "assets/textures/characters/mira_neutral.png",
@@ -40,14 +45,15 @@
     154
   ],
   "bottom_padding": 3,
+  "source_crop_bleed": 48,
   "intended_godot_use": "Tavern CustomerSprite Mira bust portrait behind TabletopArt",
   "portraits": {
     "mira_neutral": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
         0,
         0,
-        384,
+        432,
         512
       ],
       "native": "assets/source/tavern/characters/mira_neutral_native.png",
@@ -74,7 +80,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "guarded professional smile"
@@ -82,11 +88,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_smile": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        384,
+        336,
         0,
-        768,
+        816,
         512
       ],
       "native": "assets/source/tavern/characters/mira_smile_native.png",
@@ -113,7 +119,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "genuine warm smile"
@@ -121,11 +127,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_surprised": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        752,
+        720,
         0,
-        1136,
+        1200,
         512
       ],
       "native": "assets/source/tavern/characters/mira_surprised_native.png",
@@ -152,7 +158,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "surprised raised brows"
@@ -160,11 +166,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_serious": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        1120,
+        1104,
         0,
-        1504,
+        1536,
         512
       ],
       "native": "assets/source/tavern/characters/mira_serious_native.png",
@@ -191,7 +197,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "serious direct gaze"
@@ -199,11 +205,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_guilty": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
         0,
         512,
-        384,
+        432,
         1024
       ],
       "native": "assets/source/tavern/characters/mira_guilty_native.png",
@@ -230,7 +236,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "guilty averted glance"
@@ -238,11 +244,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_conflicted": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        384,
+        336,
         512,
-        768,
+        816,
         1024
       ],
       "native": "assets/source/tavern/characters/mira_conflicted_native.png",
@@ -269,7 +275,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "conflicted hesitation"
@@ -277,11 +283,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_resolved": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        752,
+        720,
         512,
-        1136,
+        1200,
         1024
       ],
       "native": "assets/source/tavern/characters/mira_resolved_native.png",
@@ -308,7 +314,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "resolved accountability"
@@ -316,11 +322,11 @@
       "intended_godot_use": "Tavern CustomerSprite Mira expression portrait"
     },
     "mira_detached": {
-      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v3.png",
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
       "source_rect": [
-        1120,
+        1104,
         512,
-        1504,
+        1536,
         1024
       ],
       "native": "assets/source/tavern/characters/mira_detached_native.png",
@@ -347,7 +353,7 @@
       ],
       "bottom_padding": 3,
       "normalization": {
-        "mode": "explicit_rect_visible_subject"
+        "mode": "expanded_cell_visible_subject"
       },
       "expression_notes": [
         "detached withdrawal"
@@ -357,10 +363,9 @@
   },
   "character_notes": [
     "adult traveling account-merchant and debt broker",
-    "guarded polite cold half-smile",
-    "expression set includes genuine warm smile, surprised raised brows, serious direct gaze, guilty averted glance, conflicted hesitation, resolved accountability, and detached withdrawal",
-    "iron-gray cropped asymmetrical short hair",
-    "large readable debt-broker shapes: dark indigo accounting robe-coat, copper counting chain, clasp motif, narrow side pouch",
+    "rebalanced v4 source approved for Ryan/Toby tavern bust proportions",
+    "silver-gray cropped asymmetrical short hair and simple practical glasses",
+    "dark indigo accounting coat, cream undershirt, and one muted copper accent",
     "nearest-neighbor native pass with a tight palette to avoid high-resolution illustration texture"
   ],
   "bar_occlusion_contract": {

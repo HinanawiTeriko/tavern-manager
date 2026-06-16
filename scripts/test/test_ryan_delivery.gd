@@ -11,6 +11,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_current_order_key()
 	_test_action_feedback_keeps_ryan_story_out_of_customer_bubble()
+	_test_action_feedback_routes_mira_contract_handoff_to_dialogue()
 	_test_ryan_contract_delivery_refreshes_portrait_state()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
@@ -91,6 +92,38 @@ func _test_action_feedback_keeps_ryan_story_out_of_customer_bubble() -> void:
 	gm._show_action_feedback("unsupported_story_product")
 	_ok(fake_view.stage_lines.size() == 1,
 		"non-Ryan mechanical feedback still uses StageCaption")
+
+	gm._tavern_view = original_view
+	fake_view.free()
+
+
+func _test_action_feedback_routes_mira_contract_handoff_to_dialogue() -> void:
+	var gm = _gm()
+	var original_view = gm._tavern_view
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+
+	var mira_feedback_keys := [
+		"mira_informed_trusted",
+		"mira_informed_guarded",
+	]
+	for key in mira_feedback_keys:
+		_ok(not gm.ACTION_FEEDBACK.has(key),
+			"Mira contract handoff feedback text is not kept in mechanical feedback table: " + key)
+		_ok(gm.ACTION_FEEDBACK_DIALOGUE_TITLES.has(key),
+			"Mira contract handoff feedback is routed to dialogue: " + key)
+		_ok(String(gm.ACTION_FEEDBACK_DIALOGUE_TITLES.get(key, "")) == key,
+			"Mira contract handoff dialogue title matches feedback key: " + key)
+
+	var dialogue_text := FileAccess.get_file_as_string("res://dialogue/ryan_action_feedback.dialogue")
+	for key in mira_feedback_keys:
+		_ok(dialogue_text.contains("~ " + key), "action feedback dialogue has Mira title " + key)
+
+	gm._show_action_feedback("mira_informed_trusted")
+	_ok(fake_view.customer_lines.is_empty(),
+		"Mira contract handoff must not use the customer reaction bubble")
+	_ok(fake_view.stage_lines.is_empty(),
+		"Mira contract handoff must not use StageCaption")
 
 	gm._tavern_view = original_view
 	fake_view.free()

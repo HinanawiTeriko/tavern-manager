@@ -1,0 +1,103 @@
+{
+  "clues": {
+    "toby_name": {
+      "label": "托比",
+      "source": "告示板",
+      "text": "黑齿矿脉护送委托的落款，是一个生涩的名字：托比。"
+    },
+    "blacktooth_escort": {
+      "label": "黑齿矿脉护送",
+      "source": "告示板",
+      "text": "委托地点写着黑齿矿脉，任务是护送。"
+    },
+    "high_pay_trap": {
+      "label": "高得像陷阱的报酬",
+      "source": "告示板",
+      "text": "报酬高得不正常，像是拿钱遮住别的东西。"
+    },
+    "back_alley_boy": {
+      "label": "后巷少年",
+      "source": "夜晚客人",
+      "text": "那个来买草药清汤的少年，身上有后巷临时住处的冷潮味。"
+    },
+    "one_person_walk": {
+      "label": "一个人走才轻快",
+      "source": "夜晚客人",
+      "text": "他反复说，一个人走才轻快。"
+    },
+    "mira_traveling_mentor": {
+      "label": "米拉带过一个孩子跑货",
+      "source": "酒馆流言",
+      "text": "以前有个女商人，总带着个半大孩子跑货。"
+    },
+    "child_learned_saying": {
+      "label": "学她说一个人走才轻快",
+      "source": "酒馆流言",
+      "text": "那孩子学她说话，老念叨一个人走才轻快。"
+    },
+    "mira_avoids_old_road": {
+      "label": "米拉避开那条旧路",
+      "source": "米拉货摊",
+      "text": "米拉听见旧路和孩子时，立刻把话题合上。"
+    }
+  },
+  "questions": [
+    {
+      "id": "toby_identity",
+      "title": "托比身份",
+      "requiresClues": ["toby_name", "back_alley_boy"],
+      "requiresSolved": [],
+      "text": "告示上的 ______ ，也许就是 ______ 。",
+      "blanks": {
+        "name": "toby_name",
+        "identity": "back_alley_boy"
+      },
+      "hint": "先把名字和今晚出现过的人对上。",
+      "conclusion": "告示上的托比，就是夜里来买草药清汤的后巷少年。",
+      "unlockFlags": ["toby_identity_known"]
+    },
+    {
+      "id": "toby_commission_risk",
+      "title": "黑齿矿脉委托",
+      "requiresClues": ["blacktooth_escort", "high_pay_trap", "one_person_walk"],
+      "requiresSolved": ["toby_identity"],
+      "text": "他接下的 ______ ，问题在 ______ ，他还信着 ______ 。",
+      "blanks": {
+        "commission": "blacktooth_escort",
+        "risk": "high_pay_trap",
+        "mindset": "one_person_walk"
+      },
+      "hint": "这句要同时说明他接的活，以及为什么这活不对劲。",
+      "conclusion": "托比接下的是黑齿矿脉护送，高得像陷阱的报酬和“一个人走才轻快”都说明这趟路不能让他照走。",
+      "unlockFlags": ["toby_commission_lead"]
+    },
+    {
+      "id": "mira_toby_old_relation",
+      "title": "米拉旧路",
+      "requiresClues": ["mira_traveling_mentor", "toby_name"],
+      "requiresSolved": ["toby_identity"],
+      "text": "______，也许就是告示上的 ______。",
+      "blanks": {
+        "past": "mira_traveling_mentor",
+        "name": "toby_name"
+      },
+      "hint": "先把旧日跑货的孩子和告示上的名字对上。",
+      "conclusion": "夜里的少年不是第一次学着大人赶路。有人曾经带他跑货，又把“一个人走”的道理留给了他。",
+      "unlockFlags": ["mira_toby_link_known"]
+    },
+    {
+      "id": "mira_phrase_origin",
+      "title": "米拉的责任",
+      "requiresClues": ["one_person_walk", "child_learned_saying", "mira_traveling_mentor"],
+      "requiresSolved": ["mira_toby_old_relation"],
+      "text": "托比相信 ______，是因为他曾经跟着 ______ 学会了这句话。",
+      "blanks": {
+        "saying": "one_person_walk",
+        "source": "mira_traveling_mentor"
+      },
+      "hint": "这句话要说明托比的口头禅是从谁那里学来的。",
+      "conclusion": "托比接下黑齿矿脉，不只是为了钱。他是在按米拉当年留下的办法证明自己能一个人走。",
+      "unlockFlags": ["mira_responsibility_lead"]
+    }
+  ]
+}

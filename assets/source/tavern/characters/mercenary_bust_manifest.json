@@ -1,8 +1,8 @@
 {
   "id": "mercenary_bust_portrait",
   "style_profile": "approved_vera_belta_runtime_matched_important_npc_v1",
-  "source": "art_sources/generated_raw/characters/mercenary/mercenary_a_source_v2.png",
-  "prompt": "art_sources/generated_raw/characters/mercenary/mercenary_a_prompt_v2.txt",
+  "source": "art_sources/generated_raw/characters/mercenary/mercenary_a_source_v3.png",
+  "prompt": "art_sources/generated_raw/characters/mercenary/mercenary_a_prompt_v3.txt",
   "comparison_reference": "assets/textures/characters/ryan_neutral.png",
   "source_rect": [
     0,
@@ -32,7 +32,7 @@
     124,
     154
   ],
-  "bottom_padding": 3,
+  "bottom_padding": 0,
   "intended_godot_use": "Tavern CustomerSprite Day 3 mercenary messenger portrait behind TabletopArt",
   "character_notes": [
     "adult mercenary messenger",

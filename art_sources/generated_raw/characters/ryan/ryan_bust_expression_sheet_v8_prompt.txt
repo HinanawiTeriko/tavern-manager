@@ -1,0 +1,59 @@
+Use case: stylized-concept
+Asset type: raw 4x2 expression sheet source for a 128x160 -> 512x640 pixel-art tavern important NPC pipeline
+Primary request: create one corrected close-camera expression sheet for Ryan. This should be closer than the old Ryan v6 sheet, but NOT a headshot. It must sit between old Ryan and Mira: important NPC camera, readable face, still enough torso and belt/upper hips for a tavern bust portrait.
+
+Character identity to preserve:
+- Ryan is a young adult subtle tiefling contract runner / anxious apprentice adventurer for a dungeon tavern management game
+- anxious but trying to be brave, gentle, sincere, not arrogant
+- ash-lilac messy undercut hair with a short side braid
+- small low red-brown horn nubs, mostly human face, no huge horns
+- ears partly hidden by hair
+- simple patched tan shirt, charcoal-brown jerkin, one small oath tag, one tiny wax-seal pouch, plain belt
+- worn practical travel clothing, no noble armor, no cape, no sword hilt clutter, no tail visible
+
+Critical camera and proportion target:
+- important NPC camera, closer than regular customers and closer than the old Ryan sheet
+- NOT a face close-up and NOT a head-and-shoulders crop
+- show head, shoulders, chest, waist, belt, and upper hips in every cell
+- face should be larger and clearer than old Ryan, but smaller than a portrait headshot
+- visible body should extend to the belt/upper hips, with enough torso below the necklace
+- keep Ryan's own slim anxious youth proportions; natural narrow shoulders, not broad, not mature, not muscular
+- same camera distance and same scale in every cell
+- leave generous flat green padding around every figure for fixed cropping
+
+Source sheet format:
+- exactly 4 columns x 2 rows, eight separate expression cells
+- target source sheet should be a regular rectangular game asset sheet, preferably 1536x1024 or similar 4:2 sheet proportions
+- each cell should contain the full bust from head to upper hips, centered, with consistent padding
+- flat solid #00ff00 chroma-key green background in every cell and around the sheet
+- no labels, no readable text, no UI, no frame, no watermark
+
+Style target:
+- game character bust source for pixel-art conversion, crisp anime-fantasy character art with thick dark outlines
+- match the existing tavern important NPC portrait family after downscaling to 128x160 native and exporting to 512x640 runtime
+- large readable silhouette, chunky simple shapes, limited warm dungeon palette
+- low-density clothing detail, few folds, few accessories, no painterly micro-detail
+- not polished high-resolution illustration, not glossy fashion art, not realistic portrait
+- designed to survive downscaling to 128x160 native and 512x640 runtime
+
+Expression order, left to right, top row then bottom row:
+1 neutral - polite uncertain tavern entry
+2 confident - correct order served, trying to act capable
+3 hesitant - warned about danger and unsure what to believe
+4 alarmed - wrong item or weird item, startled and defensive
+5 resolved - chooses the alternative contract route
+6 relieved - survives the Ryan ending, softened expression
+7 wary - pending alternative route, suspicious and guarded
+8 broken - drugged or doomed route, head lowered and defeated
+
+Palette:
+- ash-lilac hair, warm tan skin, muted red-brown small horns, charcoal-brown jerkin, patched tan shirt, dull copper oath tag, tiny dull red wax seal
+
+Hard avoid:
+- no face close-up, no headshot, no huge head filling the cell, no cropped-off torso
+- no full body, no thighs, no knees, no long lower body, no far camera
+- no huge horns, no monster face, no mature broad body, no armor suit, no cape, no sword hilt clutter
+- no dense belts, no many pouches, no many cords, no dense accessory noise
+- no glossy high-resolution illustration texture, no painterly micro-detail, no soft antialiased borders
+- no readable text, no labels, no numbers, no logo, no watermark
+- do not use #00ff00 anywhere on the character

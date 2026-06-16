@@ -2,21 +2,22 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageOps
 
 TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 from character_contact_sheet import save_character_contact_sheet
-from character_green_matte import despill_green_edges
+from character_green_matte import despill_green_edges, source_level_green_matte
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v6_prompt.txt"
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v8.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "ryan" / "ryan_bust_expression_sheet_v8_prompt.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME_DIR = ROOT / "assets" / "textures" / "characters"
 MANIFEST_PATH = SOURCE_DIR / "ryan_bust_manifest.json"
@@ -25,88 +26,49 @@ CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "ryan_contact_sheet.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
-STYLE_PROFILE = "approved_mira_vera_belta_runtime_matched_tiefling_contract_runner_v6"
-NORMALIZATION_MODE = "explicit_crop_visible_subject_v6"
+STYLE_PROFILE = "important_npc_close_camera_tiefling_contract_runner_v8"
+NORMALIZATION_MODE = "fixed_cell_visible_subject_v8"
 EXPRESSION_COLUMNS = 4
 EXPRESSION_ROWS = 2
 COLOR_LIMIT = 72
 UNIFORM_VISIBLE_HEIGHT = 154
 UNIFORM_MAX_VISIBLE_WIDTH = 124
 UNIFORM_BOTTOM_PADDING = 3
-CONTACT_SHEET_NATIVE_SCALE = 2
-CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (
-    NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE,
-    NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE,
-)
-CONTACT_SHEET_NATIVE_Y = 360
-CONTACT_SHEET_NATIVE_BG = (26, 21, 17, 255)
-CONTACT_SHEET_BAR_CROP_TOP = 83
-CONTACT_SHEET_BAR_CROP_HEIGHT = 52
-CONTACT_SHEET_BAR_Y_NATIVE = 121
-CONTACT_SHEET_BAR_SIZE = (
-    NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE,
-    CONTACT_SHEET_BAR_CROP_HEIGHT * CONTACT_SHEET_NATIVE_SCALE,
-)
-CONTACT_SHEET_BAR_Y = 714
-CONTACT_SHEET_BAR_FILL = (58, 35, 22, 255)
-CONTACT_SHEET_BAR_LINE = (205, 132, 58, 255)
 
 PORTRAITS = {
     "ryan_neutral": {
         "expression": "neutral",
-        "crop_rect": [2, 2, 382, 510],
+        "crop_rect": [0, 0, 384, 512],
     },
     "ryan_confident": {
         "expression": "confident",
-        "crop_rect": [386, 2, 766, 510],
+        "crop_rect": [384, 0, 768, 512],
     },
     "ryan_hesitant": {
         "expression": "hesitation",
-        "crop_rect": [770, 2, 1150, 510],
+        "crop_rect": [768, 0, 1152, 512],
     },
     "ryan_alarmed": {
         "expression": "alarmed",
-        "crop_rect": [1154, 2, 1534, 510],
+        "crop_rect": [1152, 0, 1536, 512],
     },
     "ryan_resolved": {
         "expression": "resolved",
-        "crop_rect": [2, 514, 382, 1022],
+        "crop_rect": [0, 512, 384, 1024],
     },
     "ryan_relieved": {
         "expression": "relieved",
-        "crop_rect": [386, 514, 766, 1022],
+        "crop_rect": [384, 512, 768, 1024],
     },
     "ryan_wary": {
         "expression": "wary",
-        "crop_rect": [770, 514, 1150, 1022],
+        "crop_rect": [768, 512, 1152, 1024],
     },
     "ryan_broken": {
         "expression": "broken",
-        "crop_rect": [1154, 514, 1534, 1022],
+        "crop_rect": [1152, 512, 1536, 1024],
     },
 }
-
-
-def remove_chroma_key(image: Image.Image) -> Image.Image:
-    rgba = image.convert("RGBA")
-    pixels = rgba.load()
-    for y in range(rgba.height):
-        for x in range(rgba.width):
-            r, g, b, a = pixels[x, y]
-            is_key = g >= 110 and g > r * 1.45 and g > b * 1.45 and g > max(r, b) + 30
-            is_dark_key = (
-                g >= 12
-                and r <= 96
-                and b <= 96
-                and g > r + 3
-                and g > b + 3
-                and max(r, g, b) <= 140
-            )
-            if is_key or is_dark_key:
-                pixels[x, y] = (0, 0, 0, 0)
-            elif g > max(r, b) + 18:
-                pixels[x, y] = (r, max(r, b) + 4, b, a)
-    return rgba
 
 
 def visible_crop(image: Image.Image) -> Image.Image:
@@ -133,9 +95,45 @@ def unique_visible_color_count(image: Image.Image) -> int:
     })
 
 
+def keep_largest_alpha_component(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    pixels = alpha.load()
+    width, height = alpha.size
+    seen: set[tuple[int, int]] = set()
+    components: list[list[tuple[int, int]]] = []
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] == 0 or (x, y) in seen:
+                continue
+            queue: deque[tuple[int, int]] = deque([(x, y)])
+            seen.add((x, y))
+            component: list[tuple[int, int]] = []
+            while queue:
+                cx, cy = queue.popleft()
+                component.append((cx, cy))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx = cx + dx
+                    ny = cy + dy
+                    if 0 <= nx < width and 0 <= ny < height and pixels[nx, ny] > 0 and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        queue.append((nx, ny))
+            components.append(component)
+    if not components:
+        return rgba
+    keep = set(max(components, key=len))
+    out = rgba.copy()
+    out_pixels = out.load()
+    for y in range(height):
+        for x in range(width):
+            if out_pixels[x, y][3] > 0 and (x, y) not in keep:
+                out_pixels[x, y] = (0, 0, 0, 0)
+    return out
+
+
 def quantize_visible(image: Image.Image, colors: int = COLOR_LIMIT) -> Image.Image:
     rgba = image.convert("RGBA")
-    alpha = rgba.getchannel("A").point(lambda value: 255 if value >= 96 else 0)
+    alpha = rgba.getchannel("A").point(lambda value: 255 if value >= 80 else 0)
     rgb = Image.new("RGB", rgba.size, (0, 0, 0))
     rgb.paste(rgba.convert("RGB"), mask=alpha)
     quantized = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT).convert("RGBA")
@@ -145,12 +143,12 @@ def quantize_visible(image: Image.Image, colors: int = COLOR_LIMIT) -> Image.Ima
         for x in range(quantized.width):
             if pixels[x, y][3] == 0:
                 pixels[x, y] = (0, 0, 0, 0)
-    return despill_green_edges(quantized)
+    return keep_largest_alpha_component(despill_green_edges(quantized))
 
 
 def normalize_portrait(sheet: Image.Image, crop_rect: list[int]) -> Image.Image:
     crop = sheet.crop(tuple(crop_rect))
-    keyed = remove_chroma_key(crop)
+    keyed = keep_largest_alpha_component(source_level_green_matte(crop))
     subject = visible_crop(keyed)
     target_box = (
         min(NATIVE_SIZE[0], UNIFORM_MAX_VISIBLE_WIDTH),
@@ -195,7 +193,7 @@ def write_manifest(natives: dict[str, Image.Image]) -> None:
             "safe_area": [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]],
             "visible_bounds_native": list(visible_bounds(native)),
             "visible_color_count": unique_visible_color_count(native),
-            "intended_godot_use": "Tavern CustomerSprite Ryan bust portrait behind TabletopArt",
+            "intended_godot_use": "Tavern CustomerSprite Ryan important NPC close-camera portrait behind TabletopArt",
         }
     manifest = {
         "id": "ryan_bust_portraits",
@@ -218,10 +216,10 @@ def write_manifest(natives: dict[str, Image.Image]) -> None:
         "color_limit": COLOR_LIMIT,
         "portraits": portraits,
         "character_notes": [
-            "subtle tiefling contract runner approved from the top-left direction",
-            "ash-lilac short braid, small horn nubs, mostly human face",
-            "simple oath tag and wax-seal pouch only, with low accessory density",
-            "source sheet uses a dark-green grid fringe, so each explicit crop is inset by two pixels",
+            "close-camera important NPC refresh approved from v8 source",
+            "preserves Ryan's anxious young tiefling contract-runner proportions",
+            "keeps the old Ryan identity while bringing face and emotion closer to Mira's important NPC camera",
+            "full 384x512 source cells are used because v8 has a clean solid green sheet background",
         ],
         "bar_occlusion_contract": {
             "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
@@ -235,38 +233,14 @@ def write_manifest(natives: dict[str, Image.Image]) -> None:
     MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def backed_exact(image: Image.Image, size: tuple[int, int], bg: tuple[int, int, int, int] = CONTACT_SHEET_NATIVE_BG) -> Image.Image:
-    preview = image.convert("RGBA")
-    if preview.width > size[0] or preview.height > size[1]:
-        raise ValueError(f"contact sheet preview {preview.size} does not fit exact backing {size}")
-    out = Image.new("RGBA", size, bg)
-    out.alpha_composite(preview, ((size[0] - preview.width) // 2, (size[1] - preview.height) // 2))
-    return out
-
-
-def bar_occlusion_preview(native: Image.Image) -> Image.Image:
-    crop = native.crop((
-        0,
-        CONTACT_SHEET_BAR_CROP_TOP,
-        NATIVE_SIZE[0],
-        CONTACT_SHEET_BAR_CROP_TOP + CONTACT_SHEET_BAR_CROP_HEIGHT,
-    ))
-    preview = crop.resize(CONTACT_SHEET_BAR_SIZE, Image.Resampling.NEAREST)
-    out = backed_exact(preview, CONTACT_SHEET_BAR_SIZE)
-    bar_y = (CONTACT_SHEET_BAR_Y_NATIVE - CONTACT_SHEET_BAR_CROP_TOP) * CONTACT_SHEET_NATIVE_SCALE
-    draw = ImageDraw.Draw(out)
-    draw.rectangle((0, bar_y, CONTACT_SHEET_BAR_SIZE[0], CONTACT_SHEET_BAR_SIZE[1]), fill=CONTACT_SHEET_BAR_FILL)
-    draw.line((0, bar_y, CONTACT_SHEET_BAR_SIZE[0], bar_y), fill=CONTACT_SHEET_BAR_LINE, width=1)
-    return out
-
-
 def make_contact_sheet(sheet: Image.Image, natives: dict[str, Image.Image]) -> None:
     del sheet
     save_character_contact_sheet(
         CONTACT_SHEET,
         "Ryan character contract sheet",
-        "8 expressions, native 128x160 -> runtime 512x640, integer preview",
+        "v8 close-camera important NPC refresh, native 128x160 -> runtime 512x640",
         [(portrait_id, natives[portrait_id]) for portrait_id in PORTRAITS],
+        row_count=2,
         column_count=4,
     )
 
@@ -279,11 +253,10 @@ def validate_crop_rect(portrait_id: str, source: Image.Image, crop_rect: list[in
         raise ValueError(f"{portrait_id}: crop_rect {crop_rect} is outside source {source.size}")
     cell_width = source.width // EXPRESSION_COLUMNS
     cell_height = source.height // EXPRESSION_ROWS
-    expected_size = (cell_width - 4, cell_height - 4)
-    if (right - left, bottom - top) != expected_size:
+    if (right - left, bottom - top) != (cell_width, cell_height):
         raise ValueError(
-            f"{portrait_id}: crop_rect {crop_rect} must keep the approved "
-            f"{expected_size[0]}x{expected_size[1]} inset expression-cell size"
+            f"{portrait_id}: crop_rect {crop_rect} must keep the full "
+            f"{cell_width}x{cell_height} expression-cell size"
         )
 
 

@@ -15,8 +15,8 @@ from character_green_matte import despill_green_edges
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_source_v2.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_prompt_v2.txt"
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_source_v3.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_prompt_v3.txt"
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME_DIR = ROOT / "assets" / "textures" / "characters"
@@ -29,7 +29,7 @@ RUNTIME_SIZE = (512, 640)
 SCALE = 4
 COLOR_LIMIT = 72
 VISIBLE_TARGET = (124, 154)
-BOTTOM_PADDING = 3
+BOTTOM_PADDING = 0
 SOURCE_RECT = [0, 0, 1122, 1402]
 STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
 CONTACT_SHEET_NATIVE_SCALE = 2

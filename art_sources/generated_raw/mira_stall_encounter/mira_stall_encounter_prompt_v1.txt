@@ -1,0 +1,13 @@
+Use case: stylized-concept
+Asset type: Godot 4 game encounter background source, project-bound raster image for a native-pixel pipeline
+Source record: built-in image generation result ig_0ec4c13ad32382d2016a30c9a2d22c8191bd054356d9736099, extracted from Codex session JSONL
+Primary request: create a brand-new Mira merchant stall background. The image itself must already contain the complete Mira stall; no later procedural drawing will add the stall.
+Scene/backdrop: an underground market lane beside a dungeon tavern. A traveling merchant stall is the dominant central subject: rough wooden counter, sagging dark cloth awning, hanging rope loops, folded fabric rolls, little bottles, sealed jars, bone buttons, dull metal trinkets, stacked crates, a closed travel chest, and a small ledger cord on the counter. Cold teal stone wall and narrow market passage behind it.
+Subject: the empty merchant stall itself, centered and clearly readable; no characters, no hands, no silhouettes.
+Style/medium: high-resolution painterly pixel-art concept source with crisp chunky silhouettes, readable shapes, limited palette, dark teal dungeon tavern mood, amber candlelight accents, rough ink-like edges, paper grain texture. It should downsample cleanly to 320x180 native-pixel art.
+Composition/framing: 16:9 wide landscape. Stall counter and awning occupy the central half of the image. Keep the lower 25 percent dark and visually simple enough for a dialogue box overlay. No empty tavern bar; this must look like a market stall.
+Lighting/mood: guarded, quiet, late market mood; warm lantern light on the stall against cold stone darkness.
+Color palette: dark teal, charcoal, muted wood brown, old parchment tan, restrained amber highlights.
+Materials/textures: rough stone, aged wood, coarse cloth, waxed rope, dull metal, bone, paper tags with no readable marks.
+Constraints: no people, no text, no readable text, no logos, no numbers, no UI, no speech bubbles, no watermark; do not imitate any named game or living artist.
+Avoid: empty tavern interior, simple bar counter, modern shop, bright daylight, neon fantasy market, blurred atmospheric-only image, decorative gradient orbs.

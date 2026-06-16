@@ -35,6 +35,8 @@ func _ready() -> void:
 	await _test_settings_menu_entry()
 	await _test_overlay_menu_renders_above_workspace()
 	await _test_recipe_menu_uses_split_layout()
+	await _test_recipe_book_hides_undiscovered_entries()
+	await _test_first_crafted_recipe_discovers_recipe()
 	_finish()
 
 
@@ -56,6 +58,14 @@ func _stylebox_texture_path(control: Control, style_name: String) -> String:
 	if stylebox == null:
 		return ""
 	return _texture_path(stylebox.texture)
+
+
+func _reset_game_for_recipe_discovery_test() -> void:
+	GameManager._apply_save_state(GameManager._default_new_game_state())
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.tavern_first_entered = true
+		tm.first_guest_arrived = true
 
 
 func _finish() -> void:
@@ -237,6 +247,23 @@ func _test_side_table_walls_disabled_and_product_falls_back_to_surface() -> void
 			"out-of-bounds product return point is clamped inside the table: got %s" % item.global_position)
 		_ok(item.linear_velocity == Vector2.ZERO and is_zero_approx(item.angular_velocity),
 			"out-of-bounds product returns without leftover fall velocity")
+		var recovered_position := item.global_position
+		for i in range(16):
+			await get_tree().physics_frame
+		await get_tree().process_frame
+		_ok(item.global_position.y <= recovered_position.y + 6.0,
+			"recovered product stays on the table instead of falling again: recovered %s, now %s" % [recovered_position, item.global_position])
+		_ok(item.global_position.y < KILL_Y,
+			"recovered product remains inside the playable area after physics settles: got %s" % item.global_position)
+		_ok(item.linear_velocity.y <= 20.0,
+			"recovered product does not resume downward fall velocity: got %s" % item.linear_velocity)
+		_left_press(bar, item.global_position)
+		await get_tree().process_frame
+		_ok(bar._drag_ctrl.get_body() == item,
+			"recovered product can be picked up again after being stabilized")
+		_ok(not item.freeze,
+			"recovered product unfreezes when the player picks it up again")
+		bar._drag_ctrl.end_drag()
 		item.queue_free()
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -830,6 +857,142 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	await get_tree().process_frame
 
 
+func _test_recipe_book_hides_undiscovered_entries() -> void:
+	_reset_game_for_recipe_discovery_test()
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	var spiced_name := String(GameManager.craft.get_item("spiced_wine").get("name", "spiced_wine"))
+	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var hidden_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+	_ok(hidden_row != null, "recipe book still has a stable row for undiscovered spiced_wine")
+	_ok(hidden_row != null and hidden_row.text.contains("???"),
+		"undiscovered recipe row uses question marks")
+	_ok(hidden_row != null and not hidden_row.text.contains(spiced_name),
+		"undiscovered recipe row does not reveal the product name")
+	if hidden_row != null:
+		hidden_row.pressed.emit()
+		await get_tree().process_frame
+
+	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+	var title := detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+	var ingredient_grid := detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+	_ok(title != null and title.text == "???", "undiscovered recipe detail title is hidden")
+	_ok(ingredient_grid != null and ingredient_grid.get_child_count() == 2,
+		"undiscovered recipe detail keeps ingredient slot count without revealing names")
+	if ingredient_grid != null:
+		for cell in ingredient_grid.get_children():
+			var label := cell.get_node_or_null("Body/Name") as Label
+			_ok(label != null and label.text == "???", "undiscovered ingredient slot hides its name")
+
+	_ok(GameManager.craft.has_method("discover_recipe"), "recipe book can reveal through craft discovery API")
+	if GameManager.craft.has_method("discover_recipe"):
+		GameManager.craft.call("discover_recipe", "spiced_wine")
+		_ok(GameManager.craft.has_method("mark_recipe_new"), "recipe book can mark newly discovered recipes")
+		_ok(GameManager.craft.has_method("is_recipe_new"), "recipe book can query newly discovered recipes")
+		if GameManager.craft.has_method("mark_recipe_new"):
+			GameManager.craft.call("mark_recipe_new", "spiced_wine")
+		tavern._build_recipe_list()
+		await get_tree().process_frame
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		var revealed_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+		_ok(revealed_row != null and revealed_row.text.contains(spiced_name),
+			"discovered recipe row reveals the product name")
+		var new_mark := revealed_row.get_node_or_null("NewMark") as Label if revealed_row != null else null
+		_ok(new_mark != null and new_mark.visible and new_mark.text == "新",
+			"newly discovered recipe row shows a compact new marker")
+		if GameManager.craft.has_method("is_recipe_new"):
+			_ok(GameManager.craft.call("is_recipe_new", "spiced_wine"),
+				"newly discovered recipe is marked unread before opening detail")
+		if revealed_row != null:
+			revealed_row.pressed.emit()
+			await get_tree().process_frame
+		if GameManager.craft.has_method("is_recipe_new"):
+			_ok(not GameManager.craft.call("is_recipe_new", "spiced_wine"),
+				"opening a recipe detail clears the recipe new marker")
+		tavern._build_recipe_list()
+		await get_tree().process_frame
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		revealed_row = rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+		new_mark = revealed_row.get_node_or_null("NewMark") as Label if revealed_row != null else null
+		_ok(new_mark == null or not new_mark.visible,
+			"cleared recipe row no longer shows the new marker")
+		detail = recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+		title = detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+		ingredient_grid = detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+		_ok(title != null and title.text == spiced_name, "discovered recipe detail reveals title")
+		if ingredient_grid != null and ingredient_grid.get_child_count() > 0:
+			var first_label := ingredient_grid.get_child(0).get_node_or_null("Body/Name") as Label
+			_ok(first_label != null and first_label.text != "???",
+				"discovered recipe detail reveals ingredient names")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_first_crafted_recipe_discovers_recipe() -> void:
+	_reset_game_for_recipe_discovery_test()
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	_ok(GameManager.craft.has_method("is_recipe_discovered"), "craft discovery query exists before brewing")
+	if not GameManager.craft.has_method("is_recipe_discovered"):
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	_ok(not GameManager.craft.call("is_recipe_discovered", "spiced_wine"),
+		"spiced_wine starts undiscovered before first craft")
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	brewery._pending_keys = ["grape", "herb"]
+	brewery._shake.shake_count = brewery._shake.min_count
+	brewery._try_brew()
+	await get_tree().process_frame
+
+	_ok(GameManager.craft.call("is_recipe_discovered", "spiced_wine"),
+		"first successful craft discovers spiced_wine")
+	var caption := tavern.get_node("StageCaption") as Label
+	var product_name := String(GameManager.craft.get_item("spiced_wine").get("name", "spiced_wine"))
+	_ok(caption != null and not caption.text.contains("研制成功"),
+		"first successful craft does not show the redundant recipe discovery caption")
+	_ok(caption != null and not caption.text.contains(product_name),
+		"first successful craft does not repeat the discovered recipe name in the stage caption")
+	_ok(GameManager.craft.has_method("is_recipe_new"), "first successful craft can query recipe new marker")
+	if GameManager.craft.has_method("is_recipe_new"):
+		_ok(GameManager.craft.call("is_recipe_new", "spiced_wine"),
+			"first successful craft marks recipe as new in the recipe book")
+	var notice := tavern.get_node_or_null("RecipeDiscoveryNotice") as Control
+	_ok(notice == null, "first successful craft no longer creates the unpixelated recipe discovery note UI")
+	if notice != null:
+		var brush := notice.get_node_or_null("BrushBand") as Panel
+		var name_label := notice.get_node_or_null("Name") as Label
+		var title_label := notice.get_node_or_null("Title") as Label
+		var subtitle_label := notice.get_node_or_null("Subtitle") as Label
+		_ok(notice.visible and notice.modulate.a > 0.1,
+			"recipe discovery note is visible immediately after first craft")
+		_ok(notice.size.x <= 560.0 and notice.size.y <= 160.0,
+			"recipe discovery note stays compact instead of becoming a large banner: size=%s" % notice.size)
+		_ok(brush != null and _stylebox_texture_path(brush, "panel") == "res://assets/textures/ui/menu_brush_band.png",
+			"recipe discovery note uses the existing menu brush band texture")
+		_ok(brush != null and brush.size == notice.size,
+			"recipe discovery brush art matches the compact notice bounds")
+		_ok(title_label != null and title_label.text == "新配方",
+			"recipe discovery note title is rendered by Godot text")
+		_ok(name_label != null and name_label.text == product_name,
+			"recipe discovery note names the discovered product")
+		_ok(subtitle_label != null and subtitle_label.text == "已记入配方书",
+			"recipe discovery note tells the player where the recipe went")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _right_click(bar: BarWorkspace, pos: Vector2) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_RIGHT
@@ -968,14 +1131,12 @@ func _test_seasoning_items_fit_into_shaker_mouth() -> void:
 		_ok(shaker.loaded_key == "spice", "seasoning shaker loads a spice item dropped near the rim")
 		_ok(_intake_vfx_count(shaker, "ghost") >= 1,
 			"seasoning shaker intake shows the absorbed seasoning shrinking into the mouth")
-		_ok(_intake_vfx_count(shaker, "mouth_glow") >= 1,
-			"seasoning shaker intake flashes the mouth opening")
-		_ok(_intake_vfx_count(shaker, "mote") >= 3,
-			"seasoning shaker intake emits small mouth particles")
+		_ok(_intake_vfx_count(shaker, "mouth_glow") == 0,
+			"seasoning shaker intake no longer flashes the mouth opening")
+		_ok(_intake_vfx_count(shaker, "mote") == 0,
+			"seasoning shaker intake no longer emits small mouth particles")
 		_ok(_intake_vfx_elements_render_below_container_art(shaker, "ghost"),
 			"seasoning shaker absorbed seasoning ghost renders below the shaker visual")
-		_ok(_intake_vfx_elements_render_below_container_art(shaker, "mote"),
-			"seasoning shaker absorbed seasoning motes render below the shaker visual")
 
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -1522,14 +1683,12 @@ func _test_grape_desk_item_loads_into_barrel_mouth() -> void:
 			"barrel stores grape as the pending wine ingredient immediately on release: got %s" % [brewery._pending_keys])
 		_ok(_intake_vfx_count(brewery, "ghost") >= 1,
 			"barrel intake shows the absorbed ingredient shrinking into the mouth")
-		_ok(_intake_vfx_count(brewery, "mouth_glow") >= 1,
-			"barrel intake flashes the mouth opening")
-		_ok(_intake_vfx_count(brewery, "mote") >= 3,
-			"barrel intake emits small mouth particles")
+		_ok(_intake_vfx_count(brewery, "mouth_glow") == 0,
+			"barrel intake no longer flashes the mouth opening")
+		_ok(_intake_vfx_count(brewery, "mote") == 0,
+			"barrel intake no longer emits small mouth particles")
 		_ok(_intake_vfx_elements_render_below_container_art(brewery, "ghost"),
 			"barrel absorbed ingredient ghost renders below the barrel visual")
-		_ok(_intake_vfx_elements_render_below_container_art(brewery, "mote"),
-			"barrel absorbed ingredient motes render below the barrel visual")
 		await get_tree().process_frame
 		_ok(items.get_child_count() == 0,
 			"absorbed grape is removed from world items")
@@ -1788,10 +1947,18 @@ func _test_pot_effects_follow_ingredients_and_real_stirring() -> void:
 	_clear_pot_effects(pot)
 
 	pot._state.add_item("herb")
+	if GameManager.craft.has_method("is_recipe_discovered"):
+		_ok(not GameManager.craft.call("is_recipe_discovered", "herb_broth"),
+			"pot test recipe starts undiscovered")
+	else:
+		_ok(false, "craft discovery query exists before pot completion")
 	var item_count_before := items.get_child_count()
 	pot._finish_current(GameManager.craft.query_recipe("pot", pot._state.ingredients()))
 	_ok(items.get_child_count() == item_count_before + 1,
 		"pot ready test produces a crafted item")
+	if GameManager.craft.has_method("is_recipe_discovered"):
+		_ok(GameManager.craft.call("is_recipe_discovered", "herb_broth"),
+			"pot completion discovers herb_broth")
 	_ok(_pot_effect_kind_count(pot, "ready") >= 6,
 		"pot completion emits a warm ready burst")
 	_ok(_pot_effect_elements(pot).has("aroma"),

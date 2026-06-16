@@ -6,8 +6,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_source_v2.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_prompt_v2.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_source_v3.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_prompt_v3.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "mercenary_bust_manifest.json"
 NATIVE = SOURCE_DIR / "mercenary_a_native.png"
@@ -85,14 +85,18 @@ class MercenaryBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(PROMPT.exists(), "Mercenary A prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "approved vera/belta",
-            "same artist family",
-            "flat solid #00ff00",
+            "vera/belta",
+            "hard pixel-game",
+            "stair-stepped silhouette",
+            "posterized flat color blocks",
+            "perfectly flat solid #00ff00",
             "no readable text",
             "mercenary messenger",
             "not ryan",
             "128x160",
             "512x640",
+            "no painterly micro-detail",
+            "no dense chainmail noise",
             "no blue scarf",
         ):
             self.assertIn(phrase, prompt)

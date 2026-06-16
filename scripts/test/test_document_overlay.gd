@@ -10,7 +10,7 @@ func _ready() -> void:
 	add_child(view)
 	await get_tree().process_frame
 	_test_overlay_uses_ledger_art(view.get_node("UILayer/DocumentOverlay"))
-	_test_toby_contract_document_art(view.get_node("UILayer/DocumentOverlay"))
+	_test_toby_contract_uses_standard_ledger_layout(view.get_node("UILayer/DocumentOverlay"))
 	_test_document_buttons(view.get_node("UILayer/DocumentOverlay"))
 	_test_ledger_buttons(view.get_node("UILayer/DocumentOverlay"))
 	view.queue_free()
@@ -111,7 +111,7 @@ func _test_overlay_uses_ledger_art(overlay: DocumentOverlay) -> void:
 	_ok(close.text == "", "ledger close control is icon-only; no baked or mojibake label")
 
 
-func _test_toby_contract_document_art(overlay: DocumentOverlay) -> void:
+func _test_toby_contract_uses_standard_ledger_layout(overlay: DocumentOverlay) -> void:
 	overlay.open_document({
 		"id": "toby_contract",
 		"kind": "evidence",
@@ -119,25 +119,18 @@ func _test_toby_contract_document_art(overlay: DocumentOverlay) -> void:
 		"pages": ["completed contract page"],
 	})
 	var art := overlay.get_node_or_null("DocumentArt") as TextureRect
-	_ok(art != null, "Toby contract overlay creates a dedicated document art layer")
+	_ok(art == null or not art.visible, "Toby contract no longer shows a dedicated document art layer")
 	if art != null:
-		_ok(art.visible, "Toby contract document art is visible for the completed contract")
-		_ok(art.position == Vector2(240, 70) and art.size == Vector2(800, 560),
-			"Toby contract document art is centered as an 800x560 runtime sheet")
-		_ok(art.texture != null and String(art.texture.resource_path).ends_with("assets/textures/tavern/documents/toby_contract_document.png"),
-			"Toby contract document art uses the pixel-pipeline runtime texture")
-		_ok(art.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
-			"Toby contract document art renders with nearest filtering")
 		_ok(art.mouse_filter == Control.MOUSE_FILTER_IGNORE,
-			"Toby contract document art does not block overlay controls")
+			"legacy document art layer, if present, does not block overlay controls")
 
 	var left_body := overlay.get_node("Panel/LeftBody") as Label
 	var right_body := overlay.get_node("Panel/RightBody") as Label
 	var page_label := overlay.get_node("Panel/PageLabel") as Label
-	_ok(left_body.position == Vector2(432, 172) and left_body.size == Vector2(416, 288),
-		"Toby contract text is inset into the authored paper safe area")
+	_ok(left_body.position == Vector2(280, 120) and left_body.size == Vector2(256, 368),
+		"Toby contract uses the normal ledger text layout")
 	_ok(not right_body.visible, "Toby contract stays a single-page document")
-	_ok(not page_label.visible, "Toby contract hides the ledger spread counter")
+	_ok(page_label.visible, "Toby contract keeps the normal page counter")
 
 	overlay.open_document({
 		"id": "bloodied_contract",

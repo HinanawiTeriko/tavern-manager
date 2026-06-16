@@ -7,10 +7,10 @@
     { "key": "herb", "description": "清苦草药，可调出药草类饮品。", "sort": 50 }
   ],
   "recipes": [
-    { "key": "herbal_ale", "description": "解锁草药麦酒的做法。", "usage": "解锁后可制作草药麦酒。", "sort": 10 },
-    { "key": "spiced_wine", "description": "解锁香料红酒的做法。", "usage": "解锁后可制作香料红酒。", "sort": 20 },
-    { "key": "meat_sand", "description": "解锁肉夹面包的做法。", "usage": "解锁后可制作肉夹面包。", "sort": 30 },
-    { "key": "meat_stew", "description": "解锁肉汤的做法。", "usage": "解锁后可制作肉汤。", "sort": 40 }
+    { "key": "herbal_ale", "description": "买下草药麦酒的公开菜谱。", "usage": "购买后配方书会揭示草药麦酒，并可进入普通客人的点单池。", "sort": 10 },
+    { "key": "spiced_wine", "description": "买下香料红酒的公开菜谱。", "usage": "购买后配方书会揭示香料红酒，并可进入普通客人的点单池。", "sort": 20 },
+    { "key": "meat_sand", "description": "买下肉夹面包的公开菜谱。", "usage": "购买后配方书会揭示肉夹面包，并可进入普通客人的点单池。", "sort": 30 },
+    { "key": "meat_stew", "description": "买下肉汤的公开菜谱。", "usage": "购买后配方书会揭示肉汤，并可进入普通客人的点单池。", "sort": 40 }
   ],
   "abilities": [
     { "key": "slam_pot", "description": "掌握后可用冲击方式制作炖锅类配方。", "usage": "允许撞击制作炖锅类配方。", "sort": 10 },

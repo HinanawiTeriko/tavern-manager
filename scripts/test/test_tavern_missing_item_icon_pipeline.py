@@ -36,6 +36,8 @@ ITEM_IDS = (
     "herb_broth",
     "bloodied_contract",
     "alternative_contract",
+    "failed_brew",
+    "failed_stew",
 )
 QUALITY_DRINK_IDS = (
     "ale_beer_good",
@@ -43,6 +45,7 @@ QUALITY_DRINK_IDS = (
     "herbal_ale_good",
     "spiced_wine_good",
 )
+FAILED_PRODUCT_IDS = ("failed_brew", "failed_stew")
 
 
 def pipeline_icons(manifest: dict) -> dict:
@@ -91,13 +94,23 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
             "assets/source/tavern/missing_item_icons/reference/quality_drinks_good_sheet_v1.png",
         )
         self.assertEqual(quality_generated["grid"], [4, 1])
+        failed_generated = manifest["generated_sources"]["failed_products_sheet_v1"]
+        self.assertEqual(
+            failed_generated["source_file"],
+            "art_sources/generated_raw/tavern_missing_item_icons/failed_products_sheet_v1.png",
+        )
+        self.assertEqual(
+            failed_generated["production_reference"],
+            "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png",
+        )
+        self.assertEqual(failed_generated["grid"], [2, 1])
         for icon_id in ITEM_IDS:
             with self.subTest(icon_id=icon_id):
                 spec = manifest["icons"][icon_id]
-                self.assertEqual(
-                    spec["source_sheet"],
-                    "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png",
-                )
+                expected_sheet = "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png" \
+                    if icon_id in FAILED_PRODUCT_IDS \
+                    else "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png"
+                self.assertEqual(spec["source_sheet"], expected_sheet)
                 self.assertEqual(spec["native"], f"assets/source/tavern/missing_item_icons/{icon_id}_native.png")
                 self.assertEqual(spec["runtime"], f"assets/textures/tavern/items/{icon_id}.png")
                 self.assertEqual(spec["native_size"], [24, 24])
@@ -106,8 +119,9 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
                 left, top, right, bottom = spec["source_rect"]
                 self.assertLess(left, right)
                 self.assertLess(top, bottom)
-                self.assertGreaterEqual(right - left, 280)
-                self.assertGreaterEqual(bottom - top, 280)
+                min_source_size = 700 if icon_id in FAILED_PRODUCT_IDS else 280
+                self.assertGreaterEqual(right - left, min_source_size)
+                self.assertGreaterEqual(bottom - top, min_source_size)
         self.assertEqual(set(manifest["quality_icons"].keys()), set(QUALITY_DRINK_IDS))
         for icon_id in QUALITY_DRINK_IDS:
             with self.subTest(icon_id=icon_id):
@@ -129,7 +143,7 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
 
     def test_sources_references_and_contact_sheet_exist(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        for generated_id in ("missing_item_icons_sheet_v3", "quality_drinks_good_sheet_v1"):
+        for generated_id in ("missing_item_icons_sheet_v3", "quality_drinks_good_sheet_v1", "failed_products_sheet_v1"):
             generated = manifest["generated_sources"][generated_id]
             for key in ("source_file", "production_reference"):
                 with self.subTest(generated=generated_id, key=key):
@@ -179,6 +193,20 @@ class TavernMissingItemIconPipelineTest(unittest.TestCase):
             with self.subTest(item_key=item_key):
                 path = ROOT / paths[item_key]
                 self.assertTrue(path.exists(), f"{item_key}: mapped icon missing at {path}")
+
+    def test_failed_products_have_dedicated_item_art(self) -> None:
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        paths = material_icon_paths()
+        for icon_id in ("failed_brew", "failed_stew"):
+            with self.subTest(icon_id=icon_id):
+                spec = manifest["icons"][icon_id]
+                self.assertEqual(spec["native"], f"assets/source/tavern/missing_item_icons/{icon_id}_native.png")
+                self.assertEqual(spec["runtime"], f"assets/textures/tavern/items/{icon_id}.png")
+                self.assertEqual(paths[icon_id], f"assets/textures/tavern/items/{icon_id}.png")
+                native = load_rgba(ROOT / spec["native"])
+                runtime = load_rgba(ROOT / spec["runtime"])
+                expected = native.resize((96, 96), Image.Resampling.NEAREST)
+                self.assertEqual(runtime.tobytes(), expected.tobytes(), "runtime must be exact 4x nearest export")
 
 
 if __name__ == "__main__":

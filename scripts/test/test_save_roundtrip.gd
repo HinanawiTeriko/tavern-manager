@@ -15,6 +15,13 @@ func _ready() -> void:
 	_test_capture_apply_roundtrip()
 	_test_apply_old_save_merges_new_narrative_defaults()
 	_test_reset_tutorial_progress_clears_runtime_and_save_snapshot()
+	_test_recipe_purchase_marks_discovered()
+	_test_recipe_new_marker_roundtrip()
+	_test_max_gold_held_tracks_high_watermark()
+	_test_day_map_reveal_state_roundtrip()
+	_test_old_save_without_day_map_state_does_not_replay_seen_locations()
+	await _test_day_map_reveal_sequence_persists_after_initial_snapshot()
+	await _test_day_map_restores_saved_camera_view_without_new_reveal()
 	_test_new_game_resets()
 	_finish()
 
@@ -36,6 +43,20 @@ func _finish() -> void:
 func _gm():
 	return get_node("/root/GameManager")
 
+
+func _location_ids(locations: Array) -> Array:
+	var result := []
+	for loc in locations:
+		result.append(String(loc.get("id", "")))
+	return result
+
+
+func _optional_int(value, fallback: int = -999999) -> int:
+	if value == null:
+		return fallback
+	return int(value)
+
+
 func _restore_original_save() -> void:
 	var gm = _gm()
 	if _had_original_save:
@@ -47,9 +68,14 @@ func _test_capture_apply_roundtrip() -> void:
 	var gm = _gm()
 	gm.economy.current_day = 2
 	gm.economy.gold = 88
+	gm.economy.set("max_gold_held", 120)
 	gm.economy.reputation = 6
 	gm.inventory_sys.set_initial({"ale": 9, "sleep_powder": 1})
 	gm.craft.unlock_recipe("meat_cooked")
+	if gm.craft.has_method("discover_recipe"):
+		gm.craft.call("discover_recipe", "herb_broth")
+	if gm.craft.has_method("mark_recipe_new"):
+		gm.craft.call("mark_recipe_new", "herb_broth")
 	gm.narrative.set_var("ryan_informed", true)
 	gm.narrative.set_ending("ryan", "informed_fallen")
 	gm.documents.grant_document("bloodied_contract")
@@ -67,19 +93,184 @@ func _test_capture_apply_roundtrip() -> void:
 	gm._apply_save_state(gm.save_sys.read())
 	_ok(gm.economy.current_day == 2, "day restored")
 	_ok(gm.economy.gold == 88, "gold restored")
+	_ok(_optional_int(gm.economy.get("max_gold_held")) == 120, "max held gold restored")
 	_ok(gm.inventory_sys.get_count("ale") == 9, "inventory restored")
 	_ok(gm.inventory_sys.get_count("sleep_powder") == 1, "story item restored")
 	_ok(gm.craft.is_recipe_unlocked("meat_cooked"), "recipe unlock restored")
+	_ok(gm.craft.has_method("is_recipe_discovered"), "recipe discovery API exists after restore")
+	if gm.craft.has_method("is_recipe_discovered"):
+		_ok(gm.craft.call("is_recipe_discovered", "herb_broth"), "recipe discovery restored")
+	_ok(gm.craft.has_method("is_recipe_new"), "recipe new marker API exists after restore")
+	if gm.craft.has_method("is_recipe_new"):
+		_ok(gm.craft.call("is_recipe_new", "herb_broth"), "recipe new marker restored")
 	_ok(bool(gm.narrative.dialogue_vars.get("ryan_informed", false)), "ryan flag restored")
 	_ok(String(gm.narrative.endings.get("ryan", "")) == "informed_fallen", "ending restored")
 	_ok(gm.documents.is_read("bloodied_contract"), "document read restored")
 	_ok(gm.inventory == gm.inventory_sys.materials, "gm.inventory still references system stock after restore")
 	gm.save_sys.clear()
 
+func _test_recipe_purchase_marks_discovered() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.gold = 100
+	var bought: bool = gm.buy_recipe_unlock("herbal_ale")
+	_ok(bought, "recipe purchase succeeds with enough gold")
+	_ok(gm.craft.is_recipe_unlocked("herbal_ale"), "recipe purchase still unlocks ordering")
+	_ok(gm.craft.has_method("is_recipe_discovered"), "recipe discovery API exists after purchase")
+	if gm.craft.has_method("is_recipe_discovered"):
+		_ok(gm.craft.call("is_recipe_discovered", "herbal_ale"), "recipe purchase reveals recipe book entry")
+	_ok(gm.craft.has_method("is_recipe_new"), "recipe new marker API exists after purchase")
+	if gm.craft.has_method("is_recipe_new"):
+		_ok(gm.craft.call("is_recipe_new", "herbal_ale"), "recipe purchase marks recipe book entry as new")
+	gm.save_sys.clear()
+
+func _test_recipe_new_marker_roundtrip() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	_ok(gm.craft.has_method("mark_recipe_new"), "recipe new marker mutation exists before roundtrip")
+	_ok(gm.craft.has_method("is_recipe_new"), "recipe new marker query exists before roundtrip")
+	_ok(gm.craft.has_method("clear_recipe_new"), "recipe new marker clearing exists before roundtrip")
+	if not gm.craft.has_method("mark_recipe_new") or not gm.craft.has_method("is_recipe_new") or not gm.craft.has_method("clear_recipe_new"):
+		return
+	gm.craft.discover_recipe("herb_broth")
+	gm.craft.call("mark_recipe_new", "herb_broth")
+	var snap: Dictionary = gm._capture_save_state()
+	var craft_state: Dictionary = snap.get("craft", {})
+	_ok(Array(craft_state.get("newly_discovered_recipes", [])).has("herb_broth"),
+		"save snapshot includes recipe new markers")
+	gm.craft.call("clear_recipe_new", "herb_broth")
+	_ok(not gm.craft.call("is_recipe_new", "herb_broth"), "test setup clears marker before restore")
+	gm._apply_save_state(snap)
+	_ok(gm.craft.call("is_recipe_new", "herb_broth"), "recipe new marker survives save apply")
+	gm._apply_save_state(gm._default_new_game_state())
+	_ok(not gm.craft.call("is_recipe_new", "herb_broth"), "new game clears recipe new markers")
+	gm.save_sys.clear()
+
+
+func _test_max_gold_held_tracks_high_watermark() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.add_gold(120)
+	_ok(_optional_int(gm.economy.get("max_gold_held")) == 120, "max held gold increases with earned gold")
+	_ok(gm.economy.spend_gold(80), "test setup spends gold")
+	_ok(gm.economy.gold == 40, "current gold decreases after spending")
+	_ok(_optional_int(gm.economy.get("max_gold_held")) == 120, "max held gold does not decrease after spending")
+	gm.save_sys.clear()
+
+
+func _test_day_map_reveal_state_roundtrip() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(2)
+	gm.day_map.mark_revealed("mushroom_forest")
+	gm.day_map.mark_revealed("mercenary_board")
+	gm.day_map.mark_posting_announced("mercenary_board")
+	var snap: Dictionary = gm._capture_save_state()
+	_ok(snap.has("day_map"), "save snapshot includes day map reveal state")
+
+	gm.day_map = DayMapSystem.new()
+	gm.day_map.load_data()
+	gm._apply_save_state(snap)
+	gm.start_day_map(2)
+
+	_ok(gm.day_map.is_revealed("mushroom_forest"), "revealed gathering location survives save apply")
+	_ok(not _location_ids(gm.day_map.get_new_locations()).has("mushroom_forest"),
+		"revealed gathering location does not replay the new-location camera pull after restore")
+	_ok(not _location_ids(gm.day_map.get_updated_locations()).has("mercenary_board"),
+		"announced board posting does not replay the update camera pull after restore")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(2)
+	_ok(not gm.day_map.is_revealed("mushroom_forest"), "new game clears day map reveal state")
+	gm.save_sys.clear()
+
+
+func _test_old_save_without_day_map_state_does_not_replay_seen_locations() -> void:
+	var gm = _gm()
+	var old_save: Dictionary = gm._default_new_game_state()
+	old_save.erase("day_map")
+	old_save["economy"]["current_day"] = 2
+	old_save["tutorial"]["daymap_first_shown"] = true
+	gm._apply_save_state(old_save)
+	gm.start_day_map(2)
+
+	_ok(gm.day_map.is_revealed("mushroom_forest"),
+		"old saves that already showed DayMap seed currently visible locations as revealed")
+	_ok(not _location_ids(gm.day_map.get_new_locations()).has("mushroom_forest"),
+		"old saves without day map state do not replay old visible gathering points as new")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.save_sys.clear()
+
+
+func _test_day_map_reveal_sequence_persists_after_initial_snapshot() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm._pending_intro_handoff = false
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.daymap_first_shown = true
+	var day_map_scene := preload("res://scenes/ui/DayMap.tscn")
+	var view = day_map_scene.instantiate()
+	add_child(view)
+	await get_tree().create_timer(0.85).timeout
+	var saved: Dictionary = gm.save_sys.read()
+	var day_map_state: Dictionary = saved.get("day_map", {})
+	var revealed: Array = day_map_state.get("revealed", [])
+	_ok(revealed.has("mushroom_forest"),
+		"DayMap reveal sequence persists revealed locations after the initial DayMap snapshot")
+	view.queue_free()
+	await get_tree().process_frame
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.save_sys.clear()
+
+
+func _test_day_map_restores_saved_camera_view_without_new_reveal() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm._pending_intro_handoff = false
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.daymap_first_shown = true
+	gm.economy.current_day = 2
+	gm.start_day_map(2)
+	for loc in gm.day_map.get_locations():
+		gm.day_map.mark_revealed(String(loc.get("id", "")))
+		gm.day_map.mark_posting_announced(String(loc.get("id", "")))
+	_ok(gm.day_map.has_method("set_camera_view"), "DayMapSystem can persist the camera view")
+	if not gm.day_map.has_method("set_camera_view"):
+		gm._apply_save_state(gm._default_new_game_state())
+		gm.save_sys.clear()
+		return
+
+	var saved_pos := Vector2(1780.0, 910.0)
+	var saved_zoom := 0.85
+	gm.day_map.call("set_camera_view", saved_pos, saved_zoom)
+	_ok(gm.day_map.get_camera_position().distance_to(saved_pos) <= 0.01,
+		"DayMapSystem stores camera position before save")
+	gm.save_sys.write(gm._capture_save_state())
+
+	var day_map_scene := preload("res://scenes/ui/DayMap.tscn")
+	var view = day_map_scene.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var camera := view.get_node("MapWorld/Camera2D") as Camera2D
+	_ok(camera.position.distance_to(saved_pos) <= 1.0,
+		"DayMap re-entry restores saved camera position instead of snapping to tavern: got %s expected %s zoom=%s stored=%s has_view=%s" %
+		[camera.position, saved_pos, camera.zoom, gm.day_map.get_camera_position(), gm.day_map.has_camera_view()])
+	_ok(absf(camera.zoom.x - saved_zoom) <= 0.01,
+		"DayMap re-entry restores saved camera zoom")
+	view.queue_free()
+	await get_tree().process_frame
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.save_sys.clear()
+
+
 func _test_apply_old_save_merges_new_narrative_defaults() -> void:
 	var gm = _gm()
 	var old_save: Dictionary = gm._default_new_game_state()
 	old_save["economy"]["current_day"] = 4
+	old_save["economy"]["gold"] = 37
+	old_save["economy"].erase("max_gold_held")
 	var old_dialogue_vars := {
 		"has_sleep_powder": false,
 		"ryan_informed": false,
@@ -98,6 +289,7 @@ func _test_apply_old_save_merges_new_narrative_defaults() -> void:
 	gm._apply_save_state(old_save)
 
 	_ok(gm.economy.current_day == 4, "old save day restored")
+	_ok(_optional_int(gm.economy.get("max_gold_held")) == 37, "old save seeds max held gold from current gold")
 	_ok(gm.narrative.dialogue_vars.has("told_mira_truth"),
 		"old save restore fills missing told_mira_truth default")
 	_ok(gm.narrative.dialogue_vars.has("mira_ending"),
@@ -149,6 +341,10 @@ func _test_new_game_resets() -> void:
 	_ok(gm.economy.current_day == 1, "new game day 1")
 	_ok(gm.economy.gold == 0, "new game gold 0")
 	_ok(not gm.craft.is_recipe_unlocked("meat_cooked"), "new game clears recipe unlocks")
+	_ok(gm.craft.has_method("is_recipe_discovered"), "new game exposes recipe discovery API")
+	if gm.craft.has_method("is_recipe_discovered"):
+		_ok(gm.craft.call("is_recipe_discovered", "ale_beer"), "new game keeps starter recipe discovered")
+		_ok(not gm.craft.call("is_recipe_discovered", "herb_broth"), "new game clears non-starter recipe discoveries")
 	_ok(not bool(gm.narrative.dialogue_vars.get("ryan_informed", false)), "new game clears ryan flags")
 	_ok(not gm.documents.is_read("bloodied_contract"), "new game clears document read")
 	_ok(gm.documents.owns_document("ledger"), "new game keeps ledger")

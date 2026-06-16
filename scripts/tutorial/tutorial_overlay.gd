@@ -22,16 +22,22 @@ const NARRATOR_TEXTURES := {
 	"smirk": "res://assets/textures/characters/vera/vera_smirk.png",
 	"concerned": "res://assets/textures/characters/vera/vera_concerned.png",
 	"surprised": "res://assets/textures/characters/vera/vera_surprised.png",
+	"warm": "res://assets/textures/characters/vera/vera_warm.png",
+	"stern": "res://assets/textures/characters/vera/vera_stern.png",
+	"confused": "res://assets/textures/characters/vera/vera_confused.png",
+	"tired": "res://assets/textures/characters/vera/vera_tired.png",
 	"ledge": "res://assets/textures/characters/vera/vera_ledge.png",
 }
 const NARRATOR_DEFAULT_TEXTURE := "res://assets/textures/characters/vera/vera.png"
 const NARRATOR_PORTRAIT_SIZE := Vector2(256.0, 320.0)
+const NARRATOR_LEDGE_PORTRAIT_SIZE := Vector2(256.0, 640.0)
 const NARRATOR_PANEL_HEIGHT := DIALOGUE_PANEL_RUNTIME_SIZE.y
 const NARRATOR_PANEL_MAX_WIDTH := 900.0
 const NARRATOR_PANEL_MIN_WIDTH := 480.0
 const NARRATOR_MARGIN := 24.0
 const NARRATOR_GAP := 20.0
 const NARRATOR_LEDGE_OVERLAP := 20.0
+const NARRATOR_LEDGE_GRIP_OFFSET := 56.0
 const NARRATOR_BODY_FONT_SIZE := 18
 
 var _highlight_panels: Array = [null, null, null, null]
@@ -379,14 +385,14 @@ func _layout_narrator(step: Dictionary, highlight_rect: Array, viewport_size: Ve
 	if anchor == "" or anchor == "auto":
 		anchor = _auto_narrator_anchor(highlight_rect, viewport_size)
 
-	var portrait_size := NARRATOR_PORTRAIT_SIZE
+	_narrator_uses_ledge_pose = anchor == "top"
+	var portrait_size := NARRATOR_LEDGE_PORTRAIT_SIZE if _narrator_uses_ledge_pose else NARRATOR_PORTRAIT_SIZE
 	var panel_w := minf(DIALOGUE_PANEL_RUNTIME_SIZE.x, viewport_size.x)
 	var panel_h := NARRATOR_PANEL_HEIGHT
 
 	var panel_x := floorf((viewport_size.x - panel_w) * 0.5)
 	var panel_y := 0.0 if anchor == "top" else viewport_size.y - panel_h
 	var portrait_y := panel_y - portrait_size.y + NARRATOR_LEDGE_OVERLAP
-	_narrator_uses_ledge_pose = anchor == "top"
 	var portrait_x := _narrator_portrait_x(portrait_size, highlight_rect, viewport_size)
 	if _narrator_uses_ledge_pose:
 		portrait_x = clampf(
@@ -394,7 +400,8 @@ func _layout_narrator(step: Dictionary, highlight_rect: Array, viewport_size: Ve
 			NARRATOR_MARGIN,
 			maxf(NARRATOR_MARGIN, viewport_size.x - portrait_size.x - NARRATOR_MARGIN)
 		)
-		portrait_y = panel_y + panel_h - NARRATOR_LEDGE_OVERLAP
+		portrait_y = panel_y + panel_h - NARRATOR_LEDGE_GRIP_OFFSET
+		portrait_y = maxf(0.0, portrait_y)
 	_narrator_portrait.position = Vector2(portrait_x, portrait_y)
 	_narrator_portrait.size = portrait_size
 	_narrator_panel.position = Vector2(panel_x, panel_y)

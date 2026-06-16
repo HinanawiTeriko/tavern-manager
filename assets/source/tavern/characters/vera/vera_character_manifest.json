@@ -1,19 +1,19 @@
 {
   "character_id": "vera",
   "display_name": "Vera",
-  "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-  "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+  "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+  "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
   "approved_reference": "art_sources/generated_raw/characters/vera/reference/vera_approved_reference_v2.png",
   "approved_reference_prompt": "art_sources/generated_raw/characters/vera/reference/vera_approved_prompt_v2.txt",
-  "expression_sheet": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-  "expression_prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
-  "ledge_source": "art_sources/generated_raw/characters/vera/vera_ledge_source_v3.png",
-  "ledge_prompt": "art_sources/generated_raw/characters/vera/vera_ledge_prompt_v3.txt",
+  "expression_sheet": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+  "expression_prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
+  "ledge_source": "art_sources/generated_raw/characters/vera/vera_ledge_source_v4.png",
+  "ledge_prompt": "art_sources/generated_raw/characters/vera/vera_ledge_prompt_v4.txt",
   "style_references": [
     "art_sources/generated_raw/characters/vera/reference/vera_approved_reference_v2.png",
     "art_sources/generated_raw/characters/regular_customers/regular_belta_style_reference_v1.png"
   ],
-  "style_profile": "approved_vera_belta_runtime_matched_character_portrait_v1",
+  "style_profile": "approved_vera_belta_close_camera_character_portrait_v3",
   "native_dir": "assets/source/tavern/characters/vera",
   "runtime_dir": "assets/textures/characters/vera",
   "contact_sheet": "docs/art/characters/vera_contact_sheet.png",
@@ -22,13 +22,18 @@
     124,
     154
   ],
+  "ledge_visible_target": [
+    124,
+    314
+  ],
   "bottom_padding": 3,
   "runtime_scale": 4,
+  "source_crop_bleed": 48,
   "assets": {
     "vera": {
       "id": "vera",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
       "native_file": "assets/source/tavern/characters/vera/vera_native.png",
       "output_file": "assets/textures/characters/vera/vera.png",
       "native_size": [
@@ -40,10 +45,10 @@
         640
       ],
       "source_crop": [
-        104,
-        20,
-        570,
-        620
+        0,
+        0,
+        432,
+        512
       ],
       "safe_area": [
         0,
@@ -55,8 +60,8 @@
     },
     "vera_neutral": {
       "id": "vera_neutral",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
       "native_file": "assets/source/tavern/characters/vera/vera_neutral_native.png",
       "output_file": "assets/textures/characters/vera/vera_neutral.png",
       "native_size": [
@@ -68,10 +73,10 @@
         640
       ],
       "source_crop": [
-        104,
-        20,
-        570,
-        620
+        0,
+        0,
+        432,
+        512
       ],
       "safe_area": [
         0,
@@ -84,8 +89,8 @@
     },
     "vera_smirk": {
       "id": "vera_smirk",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
       "native_file": "assets/source/tavern/characters/vera/vera_smirk_native.png",
       "output_file": "assets/textures/characters/vera/vera_smirk.png",
       "native_size": [
@@ -97,10 +102,10 @@
         640
       ],
       "source_crop": [
-        674,
-        20,
-        1138,
-        620
+        336,
+        0,
+        816,
+        512
       ],
       "safe_area": [
         0,
@@ -113,8 +118,8 @@
     },
     "vera_concerned": {
       "id": "vera_concerned",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
       "native_file": "assets/source/tavern/characters/vera/vera_concerned_native.png",
       "output_file": "assets/textures/characters/vera/vera_concerned.png",
       "native_size": [
@@ -126,10 +131,10 @@
         640
       ],
       "source_crop": [
-        86,
-        636,
-        552,
-        1236
+        720,
+        0,
+        1200,
+        512
       ],
       "safe_area": [
         0,
@@ -142,8 +147,8 @@
     },
     "vera_surprised": {
       "id": "vera_surprised",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v2.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v2.txt",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
       "native_file": "assets/source/tavern/characters/vera/vera_surprised_native.png",
       "output_file": "assets/textures/characters/vera/vera_surprised.png",
       "native_size": [
@@ -155,10 +160,10 @@
         640
       ],
       "source_crop": [
-        676,
-        636,
-        1142,
-        1236
+        1152,
+        0,
+        1536,
+        512
       ],
       "safe_area": [
         0,
@@ -169,12 +174,12 @@
       "expression": "surprised",
       "intended_godot_use": "TutorialOverlay Vera character portrait expression variant"
     },
-    "vera_ledge": {
-      "id": "vera_ledge",
-      "source_file": "art_sources/generated_raw/characters/vera/vera_ledge_source_v3.png",
-      "prompt": "art_sources/generated_raw/characters/vera/vera_ledge_prompt_v3.txt",
-      "native_file": "assets/source/tavern/characters/vera/vera_ledge_native.png",
-      "output_file": "assets/textures/characters/vera/vera_ledge.png",
+    "vera_warm": {
+      "id": "vera_warm",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
+      "native_file": "assets/source/tavern/characters/vera/vera_warm_native.png",
+      "output_file": "assets/textures/characters/vera/vera_warm.png",
       "native_size": [
         128,
         160
@@ -184,10 +189,10 @@
         640
       ],
       "source_crop": [
-        183,
-        168,
-        903,
-        1068
+        0,
+        512,
+        432,
+        1024
       ],
       "safe_area": [
         0,
@@ -195,8 +200,124 @@
         128,
         160
       ],
+      "expression": "warm",
+      "intended_godot_use": "TutorialOverlay Vera character portrait expression variant"
+    },
+    "vera_stern": {
+      "id": "vera_stern",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
+      "native_file": "assets/source/tavern/characters/vera/vera_stern_native.png",
+      "output_file": "assets/textures/characters/vera/vera_stern.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        336,
+        512,
+        816,
+        1024
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "expression": "stern",
+      "intended_godot_use": "TutorialOverlay Vera character portrait expression variant"
+    },
+    "vera_confused": {
+      "id": "vera_confused",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
+      "native_file": "assets/source/tavern/characters/vera/vera_confused_native.png",
+      "output_file": "assets/textures/characters/vera/vera_confused.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        720,
+        512,
+        1200,
+        1024
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "expression": "confused",
+      "intended_godot_use": "TutorialOverlay Vera character portrait expression variant"
+    },
+    "vera_tired": {
+      "id": "vera_tired",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_expression_sheet_source_v3.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_expression_sheet_prompt_v3.txt",
+      "native_file": "assets/source/tavern/characters/vera/vera_tired_native.png",
+      "output_file": "assets/textures/characters/vera/vera_tired.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "source_crop": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "expression": "tired",
+      "intended_godot_use": "TutorialOverlay Vera character portrait expression variant"
+    },
+    "vera_ledge": {
+      "id": "vera_ledge",
+      "source_file": "art_sources/generated_raw/characters/vera/vera_ledge_source_v4.png",
+      "prompt": "art_sources/generated_raw/characters/vera/vera_ledge_prompt_v4.txt",
+      "native_file": "assets/source/tavern/characters/vera/vera_ledge_native.png",
+      "output_file": "assets/textures/characters/vera/vera_ledge.png",
+      "native_size": [
+        128,
+        320
+      ],
+      "runtime_size": [
+        512,
+        1280
+      ],
+      "source_crop": [
+        0,
+        0,
+        1024,
+        1535
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        320
+      ],
       "expression": "ledge",
-      "intended_godot_use": "TutorialOverlay Vera character portrait raised dialogue edge pose"
+      "intended_godot_use": "TutorialOverlay Vera full-body hanging ledge pose"
     }
   }
 }

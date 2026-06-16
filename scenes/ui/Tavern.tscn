@@ -483,6 +483,19 @@ text = ""
 horizontal_alignment = 1
 modulate = Color(1, 1, 1, 0)
 
+[node name="InferenceReadyNotice" type="Label" parent="."]
+visible = false
+z_index = 90
+offset_left = 580.0
+offset_top = 292.0
+offset_right = 700.0
+offset_bottom = 420.0
+mouse_filter = 2
+text = "?"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(1, 1, 1, 0)
+
 [node name="RewardFeedbackLayer" type="CanvasLayer" parent="."]
 layer = 120
 

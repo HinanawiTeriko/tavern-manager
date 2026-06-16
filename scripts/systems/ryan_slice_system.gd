@@ -19,6 +19,9 @@ const DAY_CONFIG := {
 		"normal_order_limit": 2,
 		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a"}],
 	},
+	6: {
+		"events": [{"type": "important_npc", "npc_id": "toby", "display_name": "瘦小少年"}],
+	},
 }
 
 var total_orders_success: int = 0

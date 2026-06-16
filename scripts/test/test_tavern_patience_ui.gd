@@ -12,6 +12,9 @@ const PATIENCE_BAR_SIZE := Vector2(192, 16)
 const REWARD_PROGRESS_FRAME_SIZE := Vector2(192, 48)
 const REWARD_PROGRESS_FILL_INSET := Vector2(24, 12)
 const REWARD_PROGRESS_FILL_SIZE := Vector2(144, 24)
+const REWARD_REP_PROGRESS_ART_OFFSET := Vector2(0, 4)
+const REWARD_GOLD_FRAME_VISIBLE_HEIGHT := 44.0
+const REWARD_REP_FRAME_VISIBLE_HEIGHT := 36.0
 
 
 func _ready() -> void:
@@ -146,6 +149,27 @@ func _reward_coin_body_count(layer: Node) -> int:
 	return count
 
 
+func _tavern_supports_max_gold_progress() -> bool:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
+	return source.contains("max_gold_held")
+
+
+func _update_top_bar_with_max(tavern: Node, gold: int, rep: int, day: int, max_day: int, max_gold_held: int) -> void:
+	if _tavern_supports_max_gold_progress():
+		tavern.call("update_top_bar", gold, rep, day, max_day, max_gold_held)
+	else:
+		_ok(false, "TavernView.update_top_bar accepts max held gold for permanent gold progress")
+		tavern.call("update_top_bar", gold, rep, day, max_day)
+
+
+func _show_order_reward_feedback_with_max(tavern: Node, earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int, previous_max_gold: int, new_max_gold: int) -> void:
+	if _tavern_supports_max_gold_progress():
+		tavern.call("show_order_reward_feedback", earned_gold, earned_rep, previous_gold, previous_rep, previous_max_gold, new_max_gold)
+	else:
+		_ok(false, "TavernView.show_order_reward_feedback accepts max held gold for permanent gold progress")
+		tavern.call("show_order_reward_feedback", earned_gold, earned_rep, previous_gold, previous_rep)
+
+
 func _test_tavern_patience_ui_contract() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
@@ -278,6 +302,7 @@ func _test_tavern_patience_ui_contract() -> void:
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
 		_ok(order_bubble.visible, "show_customer reveals the table-carved order text")
+		_ok(order_bubble.text.begins_with("需要 · "), "show_customer uses readable Chinese order prefix")
 		_ok(order_bubble.text.find("order_ale") >= 0, "show_customer writes the stable order request to OrderBubble")
 		tavern.customer_say("hurry")
 		_ok(order_bubble.text.find("order_ale") >= 0, "customer_say does not overwrite the stable order request")
@@ -288,11 +313,44 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(order_bubble.text.find("order_ale") >= 0, "timeout state keeps the original order readable")
 			_ok(order_bubble.text.find("timeout") >= 0, "timeout state adds a clear failure reason in the groove label")
 			_ok(order_bubble.text.find("\n") == -1, "groove order text stays on one readable line")
+	var btn_tutorial := tavern.get_node_or_null("OverlayMenu/TabBtns/BtnTutorial") as Button
+	_ok(btn_tutorial != null and btn_tutorial.text == "重置教程", "reset tutorial menu button uses readable Chinese")
+	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
+	_ok(tavern_source.contains('"barrel": "酒桶"') and tavern_source.contains('"grill": "烤架"') and tavern_source.contains('"pot": "炖锅"'),
+		"recipe container names use readable Chinese source strings")
+	_ok(tavern_source.contains('tutorial_btn.text = "重置教程"'),
+		"reset tutorial dynamic button uses readable Chinese source text")
+	_ok(tavern_source.contains('%d金') and not tavern_source.contains('%d閲'),
+		"recipe row price source uses readable Chinese currency text")
+	_ok(tavern_source.contains('"暂无配方"') and not tavern_source.contains("鏆傛棤"),
+		"empty recipe detail source uses readable Chinese")
+	_ok(tavern_source.contains('"IngredientTitle", "材料"') and not tavern_source.contains("鏉愭枡"),
+		"recipe ingredient heading source uses readable Chinese")
 	var stage_caption := tavern.get_node_or_null("StageCaption") as Label
 	_ok(stage_caption != null, "StageCaption remains the public tavern feedback caption path")
 	if stage_caption != null:
 		_ok(stage_caption.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"StageCaption does not block center-table item clicks while faded out")
+	var inference_notice := tavern.get_node_or_null("InferenceReadyNotice") as Label
+	_ok(inference_notice != null, "Tavern exposes a visual-only inference-ready question mark notice")
+	if inference_notice != null:
+		_ok(inference_notice.text == "?", "inference-ready notice uses a question mark, not button text")
+		_ok(inference_notice.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"inference-ready notice never blocks tavern clicks")
+		_ok(not inference_notice.visible and inference_notice.modulate.a <= 0.01,
+			"inference-ready notice starts hidden")
+		_ok(_control_uses_pixel_font(inference_notice),
+			"inference-ready notice uses the shared pixel UI font")
+	_ok(tavern.has_method("show_inference_ready_notice"),
+		"TavernView exposes a transient inference-ready notice method for GameManager")
+	if inference_notice != null and tavern.has_method("show_inference_ready_notice"):
+		tavern.call("show_inference_ready_notice")
+		await get_tree().process_frame
+		_ok(inference_notice.visible and inference_notice.modulate.a > 0.0,
+			"show_inference_ready_notice reveals the question mark immediately")
+		await get_tree().create_timer(1.8).timeout
+		_ok((not inference_notice.visible) or inference_notice.modulate.a <= 0.05,
+			"inference-ready notice fades itself out instead of staying on the tavern screen")
 
 	var top_panel_bg := tavern.get_node_or_null("TopPanelBg") as Panel
 	var top_panel := tavern.get_node_or_null("TopPanel") as HBoxContainer
@@ -394,7 +452,10 @@ func _test_tavern_patience_ui_contract() -> void:
 				"%s draws the progress frame above the fill layer" % progress.name)
 			_ok(bg.size == REWARD_PROGRESS_FRAME_SIZE,
 				"%s frame uses the full progress art size" % progress.name)
-			_ok(progress_fill_clip.position == REWARD_PROGRESS_FILL_INSET,
+			var expected_art_offset := REWARD_REP_PROGRESS_ART_OFFSET if progress.name == "ReputationProgress" else Vector2.ZERO
+			_ok(bg.position == expected_art_offset,
+				"%s frame art is vertically offset to align visible slot centers" % progress.name)
+			_ok(progress_fill_clip.position == expected_art_offset + REWARD_PROGRESS_FILL_INSET,
 				"%s fill clip starts inside the frame window" % progress.name)
 			_ok(progress_fill_clip.size.y == REWARD_PROGRESS_FILL_SIZE.y,
 				"%s fill clip height matches the frame window" % progress.name)
@@ -418,33 +479,43 @@ func _test_tavern_patience_ui_contract() -> void:
 		var gold_fill_layer := gold_progress.get_node_or_null("FillClip") as Control
 		var rep_fill_layer := rep_progress.get_node_or_null("FillClip") as Control
 		if gold_bg != null and rep_bg != null:
-			_ok(abs(gold_bg.global_position.y - rep_bg.global_position.y) <= 0.01,
-				"gold and reputation progress frames share the same top edge")
+			var gold_visual_center_y := gold_bg.global_position.y + REWARD_GOLD_FRAME_VISIBLE_HEIGHT * 0.5
+			var rep_visual_center_y := rep_bg.global_position.y + REWARD_REP_FRAME_VISIBLE_HEIGHT * 0.5
+			_ok(abs(gold_visual_center_y - rep_visual_center_y) <= 0.01,
+				"gold and reputation progress frames share the same visual centerline")
 		if gold_fill_layer != null and rep_fill_layer != null:
-			_ok(abs(gold_fill_layer.global_position.y - rep_fill_layer.global_position.y) <= 0.01,
-				"gold and reputation progress fill layers share the same top edge")
+			_ok(abs((gold_fill_layer.global_position.y + 4.0) - rep_fill_layer.global_position.y) <= 0.01,
+				"gold and reputation progress fill layers are visually centered after reputation art offset")
 
 	_ok(tavern.has_method("show_order_reward_feedback"), "TavernView exposes reward feedback method")
 	if tavern.has_method("show_order_reward_feedback") and coin_layer != null and reward_particles is Node2D:
-		tavern.update_top_bar(13, 8, 1, 30)
+		_update_top_bar_with_max(tavern, 13, 8, 1, 30, 80)
 		var gold_label := tavern.get_node_or_null("TopPanel/GoldLabel") as Label
 		var gold_fill_clip := tavern.get_node_or_null("TopPanel/GoldProgress/FillClip") as Control
 		var rep_fill_clip := tavern.get_node_or_null("TopPanel/ReputationProgress/FillClip") as Control
-		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 37.0) <= 2.0,
-			"GoldProgress fill reflects the visible 13/50 pre-reward progress")
+		_ok(gold_label != null and gold_label.text.find("13") >= 0,
+			"GoldLabel reflects current spendable gold")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 86.0) <= 2.0,
+			"GoldProgress fill reflects historical max held gold, not current spendable gold")
 		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 23.0) <= 2.0,
 			"ReputationProgress fill reflects the visible 8/50 pre-reward progress")
+		_update_top_bar_with_max(tavern, 25, 8, 1, 30, 120)
+		_update_top_bar_with_max(tavern, 5, 8, 1, 30, 120)
+		_ok(gold_label != null and gold_label.text.find("5") >= 0 and gold_label.text.find("25") == -1,
+			"GoldLabel can decrease after spending")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 29.0) <= 2.0,
+			"GoldProgress does not retreat after spending when max held gold is unchanged")
 
 		var coin_count_before := _reward_coin_body_count(coin_layer)
 		var particle_count_before := (reward_particles as Node2D).get_child_count()
-		tavern.update_top_bar(25, 10, 1, 30)
-		tavern.show_order_reward_feedback(12, 2, 13, 8)
-		tavern.update_top_bar(25, 10, 1, 30)
+		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
+		_show_order_reward_feedback_with_max(tavern, 12, 2, 13, 8, 80, 80)
+		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
 		await get_tree().process_frame
 		_ok(gold_label != null and gold_label.text.find("13") >= 0 and gold_label.text.find("25") == -1,
 			"gold label keeps the previous total until tabletop coins are collected")
-		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 37.0) <= 2.0,
-			"GoldProgress fill does not advance before tabletop coins are collected")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 86.0) <= 2.0,
+			"GoldProgress fill keeps historical max while tabletop coins are pending")
 		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 29.0) <= 2.0,
 			"ReputationProgress fill can advance with auto-travel reputation particles")
 		var coin_count_after_spawn := _reward_coin_body_count(coin_layer)
@@ -479,12 +550,12 @@ func _test_tavern_patience_ui_contract() -> void:
 		await get_tree().create_timer(0.78).timeout
 		_ok(gold_label != null and gold_label.text.find("25") >= 0,
 			"gold label advances after collected coins reach the UI")
-		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 72.0) <= 2.0,
-			"GoldProgress fill advances after collected coins reach the UI")
+		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 86.0) <= 2.0,
+			"GoldProgress fill remains on historical max if the reward does not beat it")
 
-		tavern.update_top_bar(45, 10, 1, 30)
-		tavern.update_top_bar(55, 10, 1, 30)
-		tavern.show_order_reward_feedback(10, 0, 45, 10)
+		_update_top_bar_with_max(tavern, 45, 10, 1, 30, 45)
+		_update_top_bar_with_max(tavern, 55, 10, 1, 30, 55)
+		_show_order_reward_feedback_with_max(tavern, 10, 0, 45, 10, 45, 55)
 		await get_tree().process_frame
 		var gold_ornate := tavern.get_node_or_null("TopPanel/GoldProgress/Ornate") as TextureRect
 		_ok(gold_ornate != null and not gold_ornate.visible,

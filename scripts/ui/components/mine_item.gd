@@ -21,6 +21,8 @@ const ITEM_TEXTURES := {
 	"contract_fragment_a": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_a.png",
 	"contract_fragment_b": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_b.png",
 	"contract_fragment_c": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_c.png",
+	"contract_fragment_pair": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_pair.png",
+	"contract_complete": "res://assets/ui/generated/investigation/toby_lodging/items/contract_complete.png",
 }
 const ITEM_COLLISION_PROFILES := {
 	"broken_arrow": {"size": Vector2(108, 24), "offset": Vector2(0, 2)},
@@ -37,6 +39,8 @@ const ITEM_COLLISION_PROFILES := {
 	"contract_fragment_a": {"size": Vector2(48, 34), "offset": Vector2(0, 2)},
 	"contract_fragment_b": {"size": Vector2(46, 36), "offset": Vector2(0, 2)},
 	"contract_fragment_c": {"size": Vector2(52, 32), "offset": Vector2(0, 2)},
+	"contract_fragment_pair": {"size": Vector2(78, 46), "offset": Vector2(0, 2)},
+	"contract_complete": {"size": Vector2(100, 62), "offset": Vector2(0, 2)},
 }
 
 @onready var _shape: CollisionShape2D = $Shape

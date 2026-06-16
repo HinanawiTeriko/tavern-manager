@@ -15,6 +15,8 @@ RAW_ITEMS = RAW_DIR / "toby_lodging_items_source_v1.png"
 RAW_ITEMS_PROMPT = RAW_DIR / "toby_lodging_items_prompt_v1.txt"
 RAW_FRAGMENTS = RAW_DIR / "toby_lodging_contract_fragments_source_v1.png"
 RAW_FRAGMENTS_PROMPT = RAW_DIR / "toby_lodging_contract_fragments_prompt_v1.txt"
+RAW_ASSEMBLED = RAW_DIR / "toby_lodging_contract_assembled_source_v1.png"
+RAW_ASSEMBLED_PROMPT = RAW_DIR / "toby_lodging_contract_assembled_prompt_v1.txt"
 RAW_BUTTON = RAW_DIR / "toby_lodging_leave_button_source_v1.png"
 RAW_BUTTON_PROMPT = RAW_DIR / "toby_lodging_leave_button_prompt_v1.txt"
 SOURCE = ROOT / "assets" / "source" / "investigation" / "toby_lodging"
@@ -34,6 +36,8 @@ EXPECTED_ITEMS = {
     "contract_fragment_a": (17, 13),
     "contract_fragment_b": (16, 14),
     "contract_fragment_c": (19, 12),
+    "contract_fragment_pair": (28, 18),
+    "contract_complete": (36, 24),
 }
 EXPECTED_RUNTIME_ITEMS = {
     item_id: (size[0] * SCALE, size[1] * SCALE)
@@ -80,7 +84,7 @@ def bright_pixel_count(image: Image.Image) -> int:
 
 class TobyLodgingArtPipelineTest(unittest.TestCase):
     def test_ai_sources_and_prompt_records_exist(self) -> None:
-        for path in (RAW_BACKGROUND, RAW_ITEMS, RAW_FRAGMENTS, RAW_BUTTON):
+        for path in (RAW_BACKGROUND, RAW_ITEMS, RAW_FRAGMENTS, RAW_ASSEMBLED, RAW_BUTTON):
             self.assertTrue(path.exists(), f"{path}: missing AI source image")
             self.assertGreater(path.stat().st_size, 10_000, f"{path}: source image is unexpectedly small")
 
@@ -88,6 +92,7 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
             RAW_BACKGROUND_PROMPT: ("toby lodging", "poor rented room", "no readable text", "no labels", "pixel-art"),
             RAW_ITEMS_PROMPT: ("four isolated props", "flat solid #ff00ff", "no labels", "2 columns x 2 rows"),
             RAW_FRAGMENTS_PROMPT: ("three different torn contract fragments", "flat solid #ff00ff", "no labels", "1 row x 3 columns"),
+            RAW_ASSEMBLED_PROMPT: ("two assembled contract objects", "flat solid #ff00ff", "no labels", "1 row x 2 columns"),
             RAW_BUTTON_PROMPT: ("leave button", "blank wooden sign", "no readable text", "flat solid #ff00ff"),
         }
         for prompt_path, phrases in prompts.items():
@@ -116,7 +121,11 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
         self.assertEqual(set(EXPECTED_ITEMS), set(item_entries))
         for item_id, native_size in EXPECTED_ITEMS.items():
             entry = item_entries[item_id]
-            expected_source = "art_sources/generated_raw/toby_lodging/toby_lodging_contract_fragments_source_v1.png" if item_id.startswith("contract_fragment_") else "art_sources/generated_raw/toby_lodging/toby_lodging_items_source_v1.png"
+            expected_source = "art_sources/generated_raw/toby_lodging/toby_lodging_items_source_v1.png"
+            if item_id in {"contract_fragment_a", "contract_fragment_b", "contract_fragment_c"}:
+                expected_source = "art_sources/generated_raw/toby_lodging/toby_lodging_contract_fragments_source_v1.png"
+            elif item_id in {"contract_fragment_pair", "contract_complete"}:
+                expected_source = "art_sources/generated_raw/toby_lodging/toby_lodging_contract_assembled_source_v1.png"
             self.assertEqual(entry["source"], expected_source)
             self.assertEqual(entry["native"], f"assets/source/investigation/toby_lodging/items/{item_id}_native.png")
             self.assertEqual(entry["runtime"], f"assets/ui/generated/investigation/toby_lodging/items/{item_id}.png")
@@ -142,6 +151,7 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
             SOURCE / "reference" / "toby_lodging_background_reference_v1.png",
             SOURCE / "reference" / "toby_lodging_items_reference_v1.png",
             SOURCE / "reference" / "toby_lodging_contract_fragments_reference_v1.png",
+            SOURCE / "reference" / "toby_lodging_contract_assembled_reference_v1.png",
             SOURCE / "reference" / "toby_lodging_leave_button_reference_v1.png",
             SOURCE / "background_native.png",
             RUNTIME / "background.png",
@@ -222,6 +232,7 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
             "assets/source/investigation/toby_lodging/reference",
             "toby_lodging_background_source_v1.png",
             "toby_lodging_items_source_v1.png",
+            "toby_lodging_contract_assembled_source_v1.png",
             "toby_lodging_leave_button_source_v1.png",
         ]
         for root in (ROOT / "scripts" / "ui", ROOT / "scenes" / "ui"):

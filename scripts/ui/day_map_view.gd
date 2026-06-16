@@ -5,9 +5,11 @@ signal gathering_confirmed(assignments: Dictionary)
 
 const MINE_SCENE := preload("res://scenes/ui/MineInvestigation.tscn")
 const TOBY_SCENE := preload("res://scenes/ui/TobyLodgingInvestigation.tscn")
+const MIRA_STALL_SCENE := preload("res://scenes/ui/MiraStallEncounter.tscn")
 const INVESTIGATION_SCENES := {
 	"abandoned_mine": MINE_SCENE,
 	"toby_lodging": TOBY_SCENE,
+	"mira_stall": MIRA_STALL_SCENE,
 }
 const SHOP_OVERLAY_SCENE := preload("res://scenes/ui/ShopOverlay.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
@@ -71,7 +73,7 @@ const DAYMAP_DETAIL_GO_TEXT_MARGIN_LEFT := 20.0
 const DAYMAP_DETAIL_GO_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
-const PINNED_NOTE_NAME_POS := Vector2(112, 72)
+const PINNED_NOTE_NAME_POS := Vector2(76, 72)
 const PINNED_NOTE_NAME_SIZE := Vector2(220, 34)
 const PINNED_NOTE_DESC_POS := Vector2(92, 126)
 const PINNED_NOTE_DESC_SIZE := Vector2(224, 88)
@@ -174,13 +176,13 @@ func _ready() -> void:
 	_setup_detail_panel()
 	_setup_pinned_note_panel()
 	_setup_gathering_toast()
+	_setup_background()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
 
 	_ensure_shop_overlay()
-	_setup_background()
 
 
 func _setup_background() -> void:
@@ -532,7 +534,7 @@ func show_day(day: int, total_days: int) -> void:
 	if gm.consume_intro_handoff():
 		_play_intro_handoff()
 	else:
-		_camera.position = HOME_POS
+		_restore_camera_view(gm)
 		_refresh_map()
 		_maybe_trigger_gather_tutorial()
 
@@ -641,6 +643,7 @@ func _play_reveal_sequence(new_locs: Array) -> void:
 			await get_tree().create_timer(0.3).timeout
 			if not is_instance_valid(self):
 				return
+	_persist_day_map_state(gm)
 	_revealing = false
 	# 亮相期间若有访问/解锁被 _revealing 拦下，这里补刷一次
 	_refresh_map()
@@ -666,10 +669,29 @@ func _play_update_sequence(updated: Array) -> void:
 		await get_tree().create_timer(0.4).timeout
 		if not is_instance_valid(self):
 			return
+	_persist_day_map_state(gm)
 	_revealing = false
 	# 若当前选中的是被更新的地点，刷新其详情描述
 	if _selected_id != "":
 		_show_pinned_detail(_selected_id)
+
+
+func _persist_day_map_state(gm) -> void:
+	_save_camera_view_to_system(gm)
+	if gm != null and gm.has_method("persist_day_map_state"):
+		gm.persist_day_map_state()
+
+
+func _restore_camera_view(gm) -> void:
+	if gm != null and gm.day_map != null and gm.day_map.has_method("has_camera_view") and gm.day_map.has_camera_view():
+		_camera.apply_view(gm.day_map.get_camera_position(), gm.day_map.get_camera_zoom())
+	else:
+		_camera.apply_view(HOME_POS, 1.0)
+
+
+func _save_camera_view_to_system(gm) -> void:
+	if gm != null and gm.day_map != null and gm.day_map.has_method("set_camera_view"):
+		gm.day_map.set_camera_view(_camera.position, _camera.zoom.x)
 
 
 func _fade_in_marker(marker: MapPointMarker) -> void:
@@ -869,6 +891,7 @@ func _on_go_here_pressed() -> void:
 	if _selected_id == HOME_ID:
 		if _revealing:
 			return  # 亮相动画中防误触结束白天
+		_persist_day_map_state(get_node("/root/GameManager"))
 		get_node("/root/GameManager").enter_night_from_day_map()
 		return
 	if _is_shop_location(_selected_id):
@@ -916,6 +939,7 @@ func _try_show_shop_gossip(location_id: String) -> bool:
 func _visit_location(location_id: String) -> void:
 	var gm = get_node("/root/GameManager")
 	var result: Dictionary = gm.visit_day_location(location_id)
+	_update_gold_display()
 	if INVESTIGATION_SCENES.has(location_id) and bool(result.get("success", false)):
 		_stamina_left = gm.day_map.stamina
 		_update_stamina_display()

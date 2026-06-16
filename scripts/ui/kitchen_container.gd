@@ -62,10 +62,21 @@ const POT_EFFECT_KIND_META := "pot_effect_kind"
 const POT_EFFECT_ELEMENT_META := "pot_effect_element"
 const POT_EFFECT_VARIANT_META := "pot_effect_variant"
 const POT_EFFECT_BASE_SCALE_META := "pot_effect_base_scale"
+const POT_FAILURE_FEEDBACK_LAYER_NAME := "PotFailureFeedback"
+const POT_FAILURE_FEEDBACK_LAYER_Z_INDEX := 20
+const POT_FAILURE_FEEDBACK_OFFSCREEN_Y := -10.0
+const POT_FAILURE_FEEDBACK_KIND_META := "pot_failure_feedback_kind"
+const POT_FAILURE_FEEDBACK_VELOCITY_META := "pot_failure_feedback_velocity"
+const POT_FAILURE_FEEDBACK_PHASE_META := "pot_failure_feedback_phase"
+const POT_FAILURE_FEEDBACK_PHASE_SPEED_META := "pot_failure_feedback_phase_speed"
+const POT_FAILURE_FEEDBACK_LIFE_META := "pot_failure_feedback_life"
+const POT_FAILURE_FEEDBACK_MAX_LIFE_META := "pot_failure_feedback_max_life"
+const POT_FAILURE_FEEDBACK_BASE_SCALE_META := "pot_failure_feedback_base_scale"
 const POT_WALL_COLLISION_THICKNESS := 14.0
 const POT_RIM_COLLISION_THICKNESS := 10.0
 const POT_BOTTOM_COLLISION_THICKNESS := 24.0
 const POT_BOTTOM_COLLISION_INSET := 6.0
+const POT_MAX_INGREDIENTS := 2
 
 @export_enum("grill", "pot") var container_key: String = "grill"
 @export var cook_time: float = 2.5
@@ -108,6 +119,8 @@ var _grill_warning_elapsed_by_item: Dictionary = {}
 var _grill_feedback_texture: Texture2D = null
 var _pot_effect_layer: Node2D = null
 var _pot_effects: Array[Node2D] = []
+var _pot_failure_feedback_layer: Node2D = null
+var _pot_failure_feedbacks: Array[Node2D] = []
 var _pot_simmer_elapsed: float = 0.0
 var _pot_effect_texture: Texture2D = null
 var _motion_trail = PHYSICS_MOTION_TRAIL.new()
@@ -153,6 +166,7 @@ func _physics_process(delta: float) -> void:
 		if _state.is_ready():
 			_finish_current(GameManager.craft.query_recipe(container_key, _state.ingredients()))
 		_update_pot_effects(delta)
+		_update_pot_failure_feedbacks(delta)
 		return
 
 	# grill: 按压煎制
@@ -864,6 +878,13 @@ func _spawn_pot_ready_burst() -> void:
 		_spawn_pot_effect("ready", "oil", i, 3, 0.0)
 
 
+func _spawn_pot_failure_feedback() -> void:
+	var sequence := ["steam", "fleck", "bubble", "oil"]
+	for i in range(sequence.size()):
+		_spawn_pot_effect("failed", String(sequence[i]), i, sequence.size(), 0.0)
+	_spawn_pot_failure_word(_pot_surface_origin())
+
+
 func _spawn_pot_effect(kind: String, element: String, burst_index: int, burst_count: int, moved: float) -> void:
 	_prune_invalid_pot_effects()
 	if _pot_effects.size() >= POT_EFFECT_MAX_ACTIVE:
@@ -880,6 +901,8 @@ func _spawn_pot_effect(kind: String, element: String, burst_index: int, burst_co
 		spread = 20.0
 	elif kind == "ready":
 		spread = 32.0
+	elif kind == "failed":
+		spread = 24.0
 	var x_offset := lerpf(-spread, spread, slot_fraction) + randf_range(-5.0, 5.0)
 	var y_offset := randf_range(-8.0, 3.0)
 	if element == "steam" or element == "aroma":
@@ -925,6 +948,8 @@ func _spawn_pot_effect(kind: String, element: String, burst_index: int, burst_co
 		max_life = randf_range(0.88, 1.18)
 	elif element == "aroma":
 		max_life = randf_range(1.05, 1.38)
+	elif kind == "failed":
+		max_life = randf_range(0.62, 0.92)
 	elif kind == "simmer":
 		max_life = randf_range(0.82, 1.12)
 	effect.set_meta(POT_EFFECT_LIFE_META, 0.0)
@@ -961,6 +986,57 @@ func _ensure_pot_effect_layer() -> Node2D:
 	return _pot_effect_layer
 
 
+func _spawn_pot_failure_word(origin: Vector2) -> void:
+	_prune_invalid_pot_failure_feedbacks()
+	if _pot_failure_feedbacks.size() >= 8:
+		return
+	var layer := _ensure_pot_failure_feedback_layer()
+	var effect := Node2D.new()
+	effect.name = "PotFailureWord"
+	effect.z_index = 0
+	effect.scale = Vector2.ONE * randf_range(0.78, 0.9)
+	var word := "废品"
+	effect.set_meta(POT_FAILURE_FEEDBACK_KIND_META, "failed")
+	effect.set_meta(POT_FAILURE_FEEDBACK_VELOCITY_META, Vector2(randf_range(-9.0, 9.0), -randf_range(38.0, 62.0)))
+	effect.set_meta(POT_FAILURE_FEEDBACK_PHASE_META, randf_range(0.0, TAU))
+	effect.set_meta(POT_FAILURE_FEEDBACK_PHASE_SPEED_META, randf_range(0.9, 1.7))
+	effect.set_meta(POT_FAILURE_FEEDBACK_LIFE_META, 0.0)
+	effect.set_meta(POT_FAILURE_FEEDBACK_MAX_LIFE_META, randf_range(0.82, 1.08))
+	effect.set_meta(POT_FAILURE_FEEDBACK_BASE_SCALE_META, effect.scale.x)
+	layer.add_child(effect)
+	effect.global_position = origin + Vector2(randf_range(-10.0, 10.0), randf_range(-40.0, -28.0))
+	var label := Label.new()
+	label.name = "Label"
+	label.text = word
+	label.size = Vector2(76.0, 28.0)
+	label.position = Vector2(-38.0, -14.0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_override("font", GRILL_FEEDBACK_FONT)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.50, 0.42, 0.30, 1.0))
+	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.94))
+	effect.add_child(label)
+	_pot_failure_feedbacks.append(effect)
+
+
+func _ensure_pot_failure_feedback_layer() -> Node2D:
+	if _pot_failure_feedback_layer != null and is_instance_valid(_pot_failure_feedback_layer):
+		return _pot_failure_feedback_layer
+	_pot_failure_feedback_layer = get_node_or_null(POT_FAILURE_FEEDBACK_LAYER_NAME) as Node2D
+	if _pot_failure_feedback_layer == null:
+		_pot_failure_feedback_layer = Node2D.new()
+		_pot_failure_feedback_layer.name = POT_FAILURE_FEEDBACK_LAYER_NAME
+		add_child(_pot_failure_feedback_layer)
+	_pot_failure_feedback_layer.top_level = true
+	_pot_failure_feedback_layer.global_position = Vector2.ZERO
+	_pot_failure_feedback_layer.z_as_relative = false
+	_pot_failure_feedback_layer.z_index = POT_FAILURE_FEEDBACK_LAYER_Z_INDEX
+	return _pot_failure_feedback_layer
+
+
 func _build_pot_effect_sprite(effect: Node2D, element: String, kind: String) -> void:
 	var texture := _load_pot_effect_texture()
 	if texture == null:
@@ -980,6 +1056,12 @@ func _build_pot_effect_sprite(effect: Node2D, element: String, kind: String) -> 
 	sprite.scale = Vector2.ONE * base_scale
 	sprite.flip_h = randf() > 0.5
 	sprite.modulate = Color(1.0, 1.0, 1.0, 0.92)
+	if kind == "failed":
+		sprite.modulate = Color(0.30, 0.26, 0.18, 0.78)
+		if element == "steam":
+			sprite.modulate = Color(0.20, 0.19, 0.17, 0.62)
+		elif element == "fleck":
+			sprite.modulate = Color(0.38, 0.25, 0.12, 0.86)
 	effect.set_meta(POT_EFFECT_VARIANT_META, variant)
 	effect.set_meta(POT_EFFECT_BASE_SCALE_META, base_scale)
 	effect.add_child(sprite)
@@ -1065,6 +1147,40 @@ func _update_pot_effects(delta: float) -> void:
 			effect.queue_free()
 
 
+func _update_pot_failure_feedbacks(delta: float) -> void:
+	if _pot_failure_feedbacks.is_empty():
+		return
+	for i in range(_pot_failure_feedbacks.size() - 1, -1, -1):
+		var effect := _pot_failure_feedbacks[i]
+		if effect == null or not is_instance_valid(effect) or effect.is_queued_for_deletion():
+			_pot_failure_feedbacks.remove_at(i)
+			continue
+		var velocity := effect.get_meta(POT_FAILURE_FEEDBACK_VELOCITY_META, Vector2.ZERO) as Vector2
+		var phase := float(effect.get_meta(POT_FAILURE_FEEDBACK_PHASE_META, 0.0))
+		var phase_speed := float(effect.get_meta(POT_FAILURE_FEEDBACK_PHASE_SPEED_META, 1.0))
+		var life := float(effect.get_meta(POT_FAILURE_FEEDBACK_LIFE_META, 0.0)) + maxf(delta, 0.0)
+		var max_life := float(effect.get_meta(POT_FAILURE_FEEDBACK_MAX_LIFE_META, 0.9))
+		phase += delta * phase_speed
+		effect.set_meta(POT_FAILURE_FEEDBACK_PHASE_META, phase)
+		effect.set_meta(POT_FAILURE_FEEDBACK_LIFE_META, life)
+		effect.global_position += Vector2(velocity.x + sin(phase) * 3.0, velocity.y) * delta
+		var progress := clampf(life / maxf(max_life, 0.01), 0.0, 1.0)
+		var alpha := clampf(1.0 - progress, 0.0, 1.0)
+		var base_scale := float(effect.get_meta(POT_FAILURE_FEEDBACK_BASE_SCALE_META, 0.84))
+		effect.modulate.a = minf(0.92, alpha * 1.12)
+		effect.scale = Vector2.ONE * base_scale * lerpf(0.9, 1.08, sin(progress * PI))
+		if effect.global_position.y <= POT_FAILURE_FEEDBACK_OFFSCREEN_Y or life >= max_life:
+			_pot_failure_feedbacks.remove_at(i)
+			effect.queue_free()
+
+
+func _prune_invalid_pot_failure_feedbacks() -> void:
+	for i in range(_pot_failure_feedbacks.size() - 1, -1, -1):
+		var effect := _pot_failure_feedbacks[i]
+		if effect == null or not is_instance_valid(effect) or effect.is_queued_for_deletion():
+			_pot_failure_feedbacks.remove_at(i)
+
+
 func _prune_invalid_pot_effects() -> void:
 	for i in range(_pot_effects.size() - 1, -1, -1):
 		var effect := _pot_effects[i]
@@ -1110,10 +1226,21 @@ func _try_accept_body(body: Node) -> void:
 		return
 	if not is_item_inside_intake(item):
 		return
+	if container_key == "pot" and _state.ingredients().size() >= POT_MAX_INGREDIENTS:
+		_reject_extra_ingredient(item)
+		return
 	_state.add_item(item.item_key)
 	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
 	print("[KitchenContainer] ", container_key, " accepted ", item.item_key)
+
+
+func _reject_extra_ingredient(item: DeskItem) -> void:
+	var reject_x := randf_range(-intake_inner_half_width * 0.45, intake_inner_half_width * 0.45)
+	item.global_position = to_global(Vector2(reject_x, intake_top_y - 24.0))
+	item.linear_velocity = Vector2(randf_range(-70.0, 70.0), -190.0)
+	item.angular_velocity = randf_range(-7.0, 7.0)
+	item.sleeping = false
 
 
 func is_item_inside_intake(item: Node2D) -> bool:
@@ -1140,8 +1267,13 @@ func _finish_current(product_key: String) -> void:
 	_state.clear()
 	_configure_state()
 	if product_key == "":
-		print("[KitchenContainer] ", container_key, " no recipe for ", ingredients)
-		return
+		product_key = GameManager.craft.failure_product_for_container(container_key)
+		if product_key == "":
+			print("[KitchenContainer] ", container_key, " no recipe for ", ingredients)
+			return
+		print("[KitchenContainer] ", container_key, " no recipe for ", ingredients, ", spawned failure product ", product_key)
+		if container_key == "pot":
+			_spawn_pot_failure_feedback()
 	_spawn_product(product_key)
 	recipe_consumed.emit(product_key)
 

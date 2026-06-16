@@ -5,6 +5,9 @@ const DIALOGUE_PANEL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_
 const NARRATOR_NEUTRAL := "res://assets/textures/characters/vera/vera_neutral.png"
 const NARRATOR_CONCERNED := "res://assets/textures/characters/vera/vera_concerned.png"
 const NARRATOR_LEDGE := "res://assets/textures/characters/vera/vera_ledge.png"
+const NARRATOR_NORMAL_SIZE := Vector2(256.0, 320.0)
+const NARRATOR_LEDGE_SIZE := Vector2(256.0, 640.0)
+const NARRATOR_LEDGE_GRIP_OFFSET := 56.0
 
 var _checks := 0
 var _failures := 0
@@ -132,10 +135,14 @@ func _test_narrator_layout_avoids_bottom_highlight(overlay: TutorialOverlay) -> 
 		"bottom highlight moves the full narrator dialogue bar to the top")
 	_ok(narrator_panel != null and narrator_panel.position.y + narrator_panel.size.y < float(highlight[1]),
 		"top narrator dialogue bar leaves the shortcut highlight visible")
-	_ok(portrait != null and portrait.position.y + portrait.size.y < float(highlight[1]),
-		"narrator portrait moves above a bottom highlight mask")
-	_ok(portrait != null and narrator_panel != null and absf(portrait.position.y - (narrator_panel.position.y + narrator_panel.size.y - 20.0)) <= 1.0,
-		"raised narrator portrait grips the lower edge of the moved dialogue panel")
+	_ok(portrait != null and portrait.size == NARRATOR_LEDGE_SIZE,
+		"raised narrator layout uses the double-height full-body ledge display size")
+	_ok(portrait != null and portrait.size.y >= NARRATOR_NORMAL_SIZE.y * 2.0,
+		"raised narrator ledge pose keeps the upper-body scale and extends downward")
+	_ok(portrait != null and narrator_panel != null and absf((portrait.position.y + NARRATOR_LEDGE_GRIP_OFFSET) - (narrator_panel.position.y + narrator_panel.size.y)) <= 1.0,
+		"raised ledge pose hides the source wood bar behind the top narrator bar edge")
+	_ok(portrait != null and narrator_panel != null and portrait.z_index < narrator_panel.z_index,
+		"raised ledge pose is drawn behind the narrator bar so the frame can cover her hands")
 	_ok(portrait != null and portrait.texture != null and portrait.texture.resource_path == NARRATOR_LEDGE,
 		"raised narrator layout uses the ledge-grip Vera pose")
 
@@ -158,6 +165,9 @@ func _test_narrator_layout_uses_bottom_for_central_highlight(overlay: TutorialOv
 		"central highlight keeps the full narrator dialogue bar at the bottom")
 	_ok(narrator_panel != null and narrator_panel.position.y > float(highlight[1] + highlight[3]),
 		"bottom narrator dialogue bar stays below a central map highlight")
+	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
+	_ok(portrait != null and portrait.size == NARRATOR_NORMAL_SIZE,
+		"bottom narrator layout uses the normal close-camera portrait size")
 
 
 func _test_tutorial_copy_stays_inside_panel(overlay: TutorialOverlay) -> void:

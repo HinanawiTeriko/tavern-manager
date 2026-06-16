@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: Godot pixel-game night settlement background source
+Primary request: empty after-hours dungeon tavern interior background designed for pure black moving guest silhouettes.
+Source basis: night_settlement_backdrop_source_v4.png.
+Local cleanup recipe: keep the v4 removal of left-side dark doorway, shelf, and clutter. Add a broad, soft, non-rectangular cool stone-wall and floor value lift baked into the source art so the left/center-left silhouette route reads behind pure black figures. Do not add a hard-edged color block, flat blue panel, UI rectangle, or exporter-time overlay.
+Composition: left and center-left remain open stone wall and floor for a black silhouette queue; the lower wooden counter edge remains dark and warm; sparse amber candle accents stay at the edges.
+Constraints: no readable text, no numbers, no logos, no watermark, no people, no faces, no human silhouettes, no fake UI, no buttons, no cards, no flat blue patch, no rectangular light band.

@@ -11,6 +11,8 @@ func _ready() -> void:
 	_test_pot_stir_progress()
 	_test_pot_pop_last_item()
 	_test_barrel_pop_last_ingredient()
+	await _test_barrel_rejects_third_ingredient()
+	await _test_pot_rejects_third_ingredient()
 	_test_pot_intake_requires_center_inside_mouth()
 	_test_grill_continues_searing_cooked_items()
 	_test_mapped_art_can_be_reapplied_after_item_state_changes()
@@ -19,6 +21,8 @@ func _ready() -> void:
 	await _test_grill_feedback_uses_generated_atlas()
 	_test_pot_unfreezes_while_held()
 	_test_recipe_data()
+	_test_failure_product_data()
+	await _test_failed_container_outputs_spawn_failure_products()
 	_test_desk_item_split_visuals()
 	_test_tavern_scene_nodes()
 	_finish()
@@ -105,6 +109,57 @@ func _test_barrel_pop_last_ingredient() -> void:
 	_ok(brewery.pop_last_ingredient() == "ale", "barrel pops remaining ingredient")
 	_ok(brewery.pop_last_ingredient() == "", "empty barrel pop is a no-op")
 	tavern.free()
+
+
+func _test_barrel_rejects_third_ingredient() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	brewery._pending_keys = ["ale", "herb"]
+	var item := _spawn_desk_item("grape")
+	item.global_position = brewery._mouth_center_global_position()
+
+	brewery._try_accept_mouth_body(item)
+
+	_ok(brewery._pending_keys == ["ale", "herb"],
+		"full barrel keeps its existing two ingredients and rejects a third")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+		"full barrel does not consume the rejected third ingredient")
+	_ok(is_instance_valid(item) and not brewery.is_item_inside_mouth(item),
+		"full barrel pushes the rejected ingredient back out of the mouth")
+
+	if is_instance_valid(item):
+		item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_pot_rejects_third_ingredient() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	pot._state.add_item("ale")
+	pot._state.add_item("herb")
+	var item := _spawn_desk_item("meat_raw")
+	item.global_position = pot.to_global(Vector2(0.0, -38.0))
+
+	pot._try_accept_body(item)
+
+	_ok(pot._state.ingredients() == ["ale", "herb"],
+		"full pot keeps its existing two ingredients and rejects a third")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+		"full pot does not consume the rejected third ingredient")
+	_ok(is_instance_valid(item) and not pot.is_item_inside_intake(item),
+		"full pot pushes the rejected ingredient back out of the mouth")
+
+	if is_instance_valid(item):
+		item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
 
 
 func _test_pot_intake_requires_center_inside_mouth() -> void:
@@ -269,6 +324,73 @@ func _test_recipe_data() -> void:
 	_ok(craft.query_recipe("pot", ["flour", "ale"]) == "malt_porridge", "flour and ale in pot should make porridge")
 
 
+func _test_failure_product_data() -> void:
+	var craft := CraftSystem.new()
+	craft.load_data()
+	_ok(craft.has_method("failure_product_for_container"),
+		"craft exposes container failure product lookup")
+	if craft.has_method("failure_product_for_container"):
+		_ok(craft.call("failure_product_for_container", "barrel") == "failed_brew",
+			"barrel failures map to failed_brew")
+		_ok(craft.call("failure_product_for_container", "pot") == "failed_stew",
+			"pot failures map to failed_stew")
+	_ok(craft.get_item("failed_brew").get("type", "") == "product",
+		"failed_brew is a desk product so containers reject it")
+	_ok(craft.get_item("failed_stew").get("type", "") == "product",
+		"failed_stew is a desk product so containers reject it")
+	_ok(not craft.recipes.has("failed_brew"), "failed_brew is not a discoverable recipe")
+	_ok(not craft.recipes.has("failed_stew"), "failed_stew is not a discoverable recipe")
+	_ok(craft.get_orderable_products(12).find("failed_brew") == -1,
+		"failed_brew never enters regular orders")
+	_ok(craft.get_orderable_products(12).find("failed_stew") == -1,
+		"failed_stew never enters regular orders")
+	_ok(GameManager.try_load_material_icon("failed_brew") != null,
+		"failed_brew reuses an existing Tavern item icon")
+	_ok(GameManager.try_load_material_icon("failed_stew") != null,
+		"failed_stew reuses an existing Tavern item icon")
+
+
+func _test_failed_container_outputs_spawn_failure_products() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	var items := tavern.get_node("BarWorkspace/World/Items")
+
+	brewery._pending_keys = ["ale", "grape"]
+	brewery._shake.shake_count = brewery._shake.min_count
+	var barrel_before := items.get_child_count()
+	brewery._try_brew()
+	_ok(items.get_child_count() == barrel_before + 1,
+		"failed barrel brew should still spawn a desk product")
+	var brew_failure := items.get_child(items.get_child_count() - 1) as DeskItem \
+			if items.get_child_count() > barrel_before else null
+	_ok(brew_failure != null and brew_failure.item_key == "failed_brew",
+		"invalid barrel recipe creates failed_brew")
+	_ok(_layer_child_meta_count(brewery, "FailedBrewFeedback", "failed_brew_feedback_kind", "failed") >= 1,
+		"failed barrel brew should show a dedicated failure word")
+
+	pot._state.add_item("grape")
+	pot._state.add_item("flour")
+	var pot_before := items.get_child_count()
+	pot._finish_current(GameManager.craft.query_recipe("pot", pot._state.ingredients()))
+	_ok(items.get_child_count() == pot_before + 1,
+		"failed pot mix should still spawn a desk product")
+	var pot_failure := items.get_child(items.get_child_count() - 1) as DeskItem \
+			if items.get_child_count() > pot_before else null
+	_ok(pot_failure != null and pot_failure.item_key == "failed_stew",
+		"invalid pot recipe creates failed_stew")
+	_ok(_layer_child_meta_count(pot, "PotFailureFeedback", "pot_failure_feedback_kind", "failed") >= 1,
+		"failed pot mix should show a dedicated failure word")
+	_ok(_layer_child_meta_count(pot, "PotEffectLayer", "pot_effect_kind", "failed") >= 4,
+		"failed pot mix should throw scorched pot effects")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _test_desk_item_split_visuals() -> void:
 	var scene := load("res://scenes/test/desk_item.tscn") as PackedScene
 	_ok(scene != null, "desk item scene should load")
@@ -327,3 +449,14 @@ func _grill_feedback_uses_runtime_sprite(grill: KitchenContainer, element: Strin
 				and sprite.texture.resource_path == "res://assets/textures/grill_feedback/grill_feedback.png":
 			return true
 	return false
+
+
+func _layer_child_meta_count(owner: Node, layer_name: String, meta_name: String, expected_value: String) -> int:
+	var layer := owner.get_node_or_null(layer_name) as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if String(child.get_meta(meta_name, "")) == expected_value:
+			count += 1
+	return count

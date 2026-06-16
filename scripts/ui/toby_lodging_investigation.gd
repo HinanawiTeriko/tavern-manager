@@ -5,14 +5,13 @@ extends InvestigationScene
 ## 全部靠拢到拼合点即授予 toby_contract。与矿道（扒碎石/倾倒）区分。
 ## 灾前·私密·热：你在翻一个还没上路的绝望孩子的窝。
 
-const ASSEMBLE_POINT := Vector2(640, 490)   # 拼合点（窝里地面中央的矮桌）
-const ASSEMBLE_RADIUS := 80.0               # 碎片全部进入此半径即拼合
-const SNAP_RADIUS := 130.0
-const FRAGMENT_SNAP_SLOTS := {
-	"contract_fragment_a": Vector2(592, 490),
-	"contract_fragment_b": Vector2(640, 490),
-	"contract_fragment_c": Vector2(688, 490),
-}
+const ASSEMBLE_POINT := Vector2(640, 490)   # Legacy center reference; assembly is now fragment-to-fragment.
+const SNAP_RADIUS := 60.0
+const FRAGMENT_ORDER := ["contract_fragment_a", "contract_fragment_b", "contract_fragment_c"]
+const CONTRACT_PAIR_TAG := "contract_fragment_pair"
+const CONTRACT_COMPLETE_TAG := "contract_complete"
+const CONTRACT_PAIR_SIZE := Vector2(112, 72)
+const CONTRACT_COMPLETE_SIZE := Vector2(144, 96)
 const LEAVE_BUTTON_NORMAL := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_normal.png"
 const LEAVE_BUTTON_HOVER := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_hover.png"
 const LEAVE_BUTTON_PRESSED := "res://assets/ui/generated/investigation/toby_lodging/ui/leave_button_pressed.png"
@@ -21,6 +20,9 @@ const LEAVE_BUTTON_BOTTOM_RIGHT := Vector2(1240, 684)
 
 var _fragments: Array[MineItem] = []
 var _snapped_fragments: Dictionary = {}
+var _fragment_pair: MineItem = null
+var _paired_fragment_tags: Array[String] = []
+var _completed_contract: MineItem = null
 var _assembled: bool = false
 
 
@@ -102,73 +104,137 @@ func _spawn_fragments() -> void:
 # ============================================================
 
 func _priority_kinds() -> Array:
-	return ["fragment"]   # 碎片优先于浅层物被抓起
+	return ["assembled_contract", "fragment"]
 
 
 func _can_pickup(item: MineItem) -> bool:
+	if item.item_tag == CONTRACT_COMPLETE_TAG:
+		return true
 	return not _snapped_fragments.has(item.item_tag)
+
+
+func _on_special_pickup(item: MineItem) -> bool:
+	if item.item_tag != CONTRACT_COMPLETE_TAG:
+		return false
+	_grant_document("toby_contract")
+	if is_instance_valid(item):
+		item.queue_free()
+	if item == _completed_contract:
+		_completed_contract = null
+	_obs_label.text = "完整的委托书已经收起。米拉该看到这句话。"
+	return true
 
 
 func _investigation_physics(_delta: float) -> void:
 	if _drag_ctrl.is_dragging():
 		return
-	_snap_nearby_fragments()
+	_join_nearby_fragments()
 	_check_assembly()
 
 
-func _snap_nearby_fragments() -> void:
+func _join_nearby_fragments() -> void:
 	if _assembled:
 		return
-	for frag in _fragments:
+	if is_instance_valid(_fragment_pair):
+		return
+	for i in range(_fragments.size()):
+		var a := _fragments[i]
+		if not is_instance_valid(a):
+			continue
+		for j in range(i + 1, _fragments.size()):
+			var b := _fragments[j]
+			if not is_instance_valid(b):
+				continue
+			if a.global_position.distance_to(b.global_position) <= SNAP_RADIUS:
+				_create_fragment_pair(a, b)
+				return
+
+
+func _create_fragment_pair(a: MineItem, b: MineItem) -> void:
+	var pair_position := (a.global_position + b.global_position) * 0.5
+	_paired_fragment_tags = [a.item_tag, b.item_tag]
+	_remove_fragment_node(a.item_tag)
+	_remove_fragment_node(b.item_tag)
+	_fragment_pair = _spawn_item(CONTRACT_PAIR_TAG, "fragment", CONTRACT_PAIR_SIZE,
+		Color(0.62, 0.54, 0.34), "拼在一起的委托书碎片",
+		"两片纸边咬住了。还缺最后一角。", pair_position)
+	_place_item_for_drag(_fragment_pair, pair_position)
+	_obs_label.text = "两片委托书已经拼成一块。"
+
+
+func _remove_fragment_node(item_tag: String) -> void:
+	for i in range(_fragments.size() - 1, -1, -1):
+		var frag := _fragments[i]
 		if not is_instance_valid(frag):
+			_fragments.remove_at(i)
 			continue
-		if _snapped_fragments.has(frag.item_tag):
-			continue
-		if frag.global_position.distance_to(ASSEMBLE_POINT) > SNAP_RADIUS:
-			continue
-		_snap_fragment(frag)
+		if frag.item_tag == item_tag:
+			_fragments.remove_at(i)
+			frag.queue_free()
+			return
 
 
-func _snap_fragment(frag: MineItem) -> void:
-	var slot: Vector2 = FRAGMENT_SNAP_SLOTS.get(frag.item_tag, ASSEMBLE_POINT)
-	frag.linear_velocity = Vector2.ZERO
-	frag.angular_velocity = 0.0
-	frag.global_position = slot
-	frag.global_rotation = 0.0
-	frag.freeze = true
-	_snapped_fragments[frag.item_tag] = true
-	_obs_label.text = "这片纸边缘对上了。"
+func _place_item_for_drag(item: MineItem, pos: Vector2) -> void:
+	if not is_instance_valid(item):
+		return
+	item.linear_velocity = Vector2.ZERO
+	item.angular_velocity = 0.0
+	item.global_position = pos
+	item.global_rotation = 0.0
+	item.freeze = false
+	item.sleeping = false
+
+
+func _lock_item_at(item: MineItem, pos: Vector2) -> void:
+	if not is_instance_valid(item):
+		return
+	item.linear_velocity = Vector2.ZERO
+	item.angular_velocity = 0.0
+	item.global_position = pos
+	item.global_rotation = 0.0
+	item.freeze = true
 
 
 func _check_assembly() -> void:
 	if _assembled:
 		return
-	for frag in _fragments:
-		if not is_instance_valid(frag):
-			return
-		if not _snapped_fragments.has(frag.item_tag):
-			return
-		if frag.global_position.distance_to(ASSEMBLE_POINT) > ASSEMBLE_RADIUS:
-			return
+	if not is_instance_valid(_fragment_pair):
+		return
+	var remaining := _remaining_fragment()
+	if remaining == null:
+		return
+	if remaining.global_position.distance_to(_fragment_pair.global_position) > SNAP_RADIUS:
+		return
 	_complete_assembly()
+
+
+func _remaining_fragment() -> MineItem:
+	for frag in _fragments:
+		if is_instance_valid(frag):
+			return frag
+	return null
 
 
 func _complete_assembly() -> void:
 	_assembled = true
+	var complete_position := _fragment_pair.global_position if is_instance_valid(_fragment_pair) else ASSEMBLE_POINT
 	for frag in _fragments:
 		if is_instance_valid(frag):
 			frag.queue_free()
 	_fragments.clear()
-	_grant_document("toby_contract")
-	_obs_label.text = "碎片拼回原样——托比的委托书背面，抄着米拉那句“一个人走”。已放入背包。"
+	_snapped_fragments.clear()
+	if is_instance_valid(_fragment_pair):
+		_fragment_pair.queue_free()
+	_fragment_pair = null
+	_completed_contract = _spawn_item(CONTRACT_COMPLETE_TAG, "assembled_contract", CONTRACT_COMPLETE_SIZE,
+		Color(0.62, 0.54, 0.34), "完整的委托书",
+		"委托书拼回去了。背面写着米拉那句“一个人走”。", complete_position)
+	_lock_item_at(_completed_contract, complete_position)
+	_obs_label.text = "委托书拼回去了。点一下，把它收起来。"
 
-
-# ============================================================
-#  离场软提示：没拼全就走 → 先耳语
-# ============================================================
 
 func _has_deep_progress() -> bool:
-	return _assembled or not _snapped_fragments.is_empty()
+	return _assembled or is_instance_valid(_fragment_pair) or is_instance_valid(_completed_contract) or not _snapped_fragments.is_empty()
 
 
 func _leave_hint_text() -> String:

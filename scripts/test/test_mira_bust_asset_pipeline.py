@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import deque
 import json
 import unittest
 
@@ -6,8 +7,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_source_v3.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_prompt_v3.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_source_v4.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mira" / "mira_expression_sheet_prompt_v4.txt"
 EXPRESSION_RAW = RAW
 EXPRESSION_PROMPT = PROMPT
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
@@ -36,8 +37,9 @@ CONTACT_SHEET_NATIVE_POSITIONS = [
 ]
 COLOR_LIMIT = 72
 FIXED_CELL_SIZE = (384, 512)
-NORMALIZATION_MODE = "explicit_rect_visible_subject"
-STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
+NORMALIZATION_MODE = "expanded_cell_visible_subject"
+STYLE_PROFILE = "mira_rebalanced_tavern_bust_v4"
+SOURCE_CROP_BLEED = 48
 MAX_RYAN_MATCHED_WIDTH_DELTA = 18
 MIN_VISIBLE_HEIGHT = 138
 MAX_VISIBLE_HEIGHT = 154
@@ -86,14 +88,14 @@ PORTRAITS = {
     },
 }
 EXPECTED_SOURCE_RECTS = {
-    "mira_neutral": [0, 0, 384, 512],
-    "mira_smile": [384, 0, 768, 512],
-    "mira_surprised": [752, 0, 1136, 512],
-    "mira_serious": [1120, 0, 1504, 512],
-    "mira_guilty": [0, 512, 384, 1024],
-    "mira_conflicted": [384, 512, 768, 1024],
-    "mira_resolved": [752, 512, 1136, 1024],
-    "mira_detached": [1120, 512, 1504, 1024],
+    "mira_neutral": [0, 0, 432, 512],
+    "mira_smile": [336, 0, 816, 512],
+    "mira_surprised": [720, 0, 1200, 512],
+    "mira_serious": [1104, 0, 1536, 512],
+    "mira_guilty": [0, 512, 432, 1024],
+    "mira_conflicted": [336, 512, 816, 1024],
+    "mira_resolved": [720, 512, 1200, 1024],
+    "mira_detached": [1104, 512, 1536, 1024],
 }
 
 
@@ -131,6 +133,33 @@ def visible_size(image: Image.Image) -> tuple[int, int]:
     return (bounds[2] - bounds[0], bounds[3] - bounds[1])
 
 
+def second_largest_alpha_component(image: Image.Image) -> int:
+    alpha = image.getchannel("A")
+    pixels = alpha.load()
+    width, height = alpha.size
+    seen: set[tuple[int, int]] = set()
+    sizes: list[int] = []
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] == 0 or (x, y) in seen:
+                continue
+            queue: deque[tuple[int, int]] = deque([(x, y)])
+            seen.add((x, y))
+            size = 0
+            while queue:
+                cx, cy = queue.popleft()
+                size += 1
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx = cx + dx
+                    ny = cy + dy
+                    if 0 <= nx < width and 0 <= ny < height and pixels[nx, ny] > 0 and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        queue.append((nx, ny))
+            sizes.append(size)
+    sizes.sort(reverse=True)
+    return sizes[1] if len(sizes) > 1 else 0
+
+
 def expected_backed_native_preview(native: Image.Image) -> Image.Image:
     preview = native.resize(CONTACT_SHEET_NATIVE_PREVIEW_SIZE, Image.Resampling.NEAREST)
     out = Image.new("RGBA", CONTACT_SHEET_NATIVE_PREVIEW_SIZE, CONTACT_SHEET_NATIVE_BG)
@@ -146,30 +175,34 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
         self.assertTrue(EXPRESSION_PROMPT.exists(), "Mira expression prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "direction c1",
-            "austere debt broker",
+            "rebalanced expression sheet",
             "flat solid #00ff00",
             "no readable text",
             "traveling account-merchant",
+            "same camera distance as ryan and toby",
+            "fewer fine vertical lines",
+            "not a polished fashion illustration",
             "128x160",
             "512x640",
             "4 columns x 2 rows",
             "genuine warm smile",
-            "surprised raised brows",
-            "serious direct gaze",
-            "guilty averted glance",
-            "conflicted hesitation",
-            "resolved accountability",
-            "detached withdrawal",
+            "surprised - raised brows",
+            "serious - direct assessing gaze",
+            "guilty - averted glance",
+            "conflicted - hesitation",
+            "resolved - accountable",
+            "detached - withdrawn",
         ):
             self.assertIn(phrase, prompt)
 
         self.assertTrue(MANIFEST.exists(), "Mira bust manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest.get("id"), "mira_bust_portrait")
-        self.assertEqual(manifest.get("style_profile"), "mira_direction_c1_debt_broker_v1")
+        self.assertEqual(manifest.get("style_profile"), STYLE_PROFILE)
         self.assertEqual(manifest.get("source"), RAW.relative_to(ROOT).as_posix())
+        self.assertEqual(manifest.get("prompt"), PROMPT.relative_to(ROOT).as_posix())
         self.assertEqual(manifest.get("comparison_reference"), RYAN_REFERENCE.relative_to(ROOT).as_posix())
+        self.assertEqual(manifest.get("source_crop_bleed"), SOURCE_CROP_BLEED)
         self.assertEqual(manifest.get("native_size"), list(NATIVE_SIZE))
         self.assertEqual(manifest.get("runtime_size"), list(RUNTIME_SIZE))
         self.assertEqual(manifest.get("scale"), SCALE)
@@ -194,11 +227,21 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
                 self.assertIsInstance(source_rect, list, f"{portrait_id}: source_rect must be fixed")
                 self.assertEqual(len(source_rect), 4, f"{portrait_id}: source_rect must have four values")
                 self.assertEqual(source_rect, EXPECTED_SOURCE_RECTS[portrait_id])
-                self.assertEqual(
-                    (source_rect[2] - source_rect[0], source_rect[3] - source_rect[1]),
-                    FIXED_CELL_SIZE,
-                    f"{portrait_id}: source_rect must keep the full fixed expression cell",
-                )
+                index = list(PORTRAITS.keys()).index(portrait_id)
+                row = index // 4
+                column = index % 4
+                strict_left = column * FIXED_CELL_SIZE[0]
+                strict_right = (column + 1) * FIXED_CELL_SIZE[0]
+                strict_top = row * FIXED_CELL_SIZE[1]
+                strict_bottom = (row + 1) * FIXED_CELL_SIZE[1]
+                self.assertLessEqual(source_rect[0], strict_left)
+                self.assertGreaterEqual(source_rect[2], strict_right)
+                self.assertEqual(source_rect[1], strict_top)
+                self.assertEqual(source_rect[3], strict_bottom)
+                if column > 0:
+                    self.assertLess(source_rect[0], strict_left)
+                if column < 3:
+                    self.assertGreater(source_rect[2], strict_right)
                 self.assertEqual(entry.get("normalization", {}).get("mode"), NORMALIZATION_MODE)
 
     def test_native_and_runtime_exports(self) -> None:
@@ -217,12 +260,18 @@ class MiraBustAssetPipelineTest(unittest.TestCase):
                 self.assertGreater(visible_pixel_count(native), 3000, f"{portrait_id}: portrait has too few visible pixels")
                 self.assertLessEqual(unique_visible_colors(native), COLOR_LIMIT, f"{portrait_id}: native portrait exceeds the 24-color pixel budget")
                 self.assertEqual(green_key_fringe_pixels(native), 0, f"{portrait_id}: green chroma-key fringe remains")
-                _left, _top, _right, bottom = native.getchannel("A").getbbox()
-                self.assertGreaterEqual(bottom - _top, MIN_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too short")
-                self.assertLessEqual(bottom - _top, MAX_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too tall")
+                self.assertLessEqual(second_largest_alpha_component(native), 16, f"{portrait_id}: detached fragment remains")
+                left, top, right, bottom = native.getchannel("A").getbbox()
+                self.assertGreaterEqual(bottom - top, MIN_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too short")
+                self.assertLessEqual(bottom - top, MAX_VISIBLE_HEIGHT, f"{portrait_id}: visible figure is too tall")
                 bottom_padding = native.height - bottom
                 self.assertGreaterEqual(bottom_padding, MIN_BOTTOM_PADDING, f"{portrait_id}: touches bottom edge")
                 self.assertLessEqual(bottom_padding, MAX_BOTTOM_PADDING, f"{portrait_id}: floats too high")
+                self.assertLessEqual(
+                    abs(left - (native.width - right)),
+                    16,
+                    f"{portrait_id}: portrait is horizontally off-center after normalization",
+                )
 
         ryan_native = load_rgba(RYAN_NATIVE)
         ryan_width, ryan_height = visible_size(ryan_native)

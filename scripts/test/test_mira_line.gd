@@ -9,6 +9,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_parse_and_init()
 	_test_toby_contract_informs_mira()
+	_test_toby_contract_feedback_reflects_mira_trust()
 	_test_route_she_finally_stopped()
 	_test_route_never_turned_back()
 	_test_route_closed_the_door()
@@ -60,6 +61,19 @@ func _test_toby_contract_informs_mira() -> void:
 	var nm2 := _nm()
 	var bad := nm2.resolve_action({"type": "give_story_item", "npc_id": "toby", "item_key": "toby_contract"})
 	_ok(not bad.get("accepted", true), "托比本人不接收真相文档")
+
+
+func _test_toby_contract_feedback_reflects_mira_trust() -> void:
+	var guarded := _nm()
+	var guarded_result := guarded.resolve_action({"type": "give_story_item", "npc_id": "mira", "item_key": "toby_contract"})
+	_ok(String(guarded_result.get("feedback", "")) == "mira_informed_guarded",
+		"low-trust Mira contract handoff uses guarded dialogue feedback")
+
+	var trusted := _nm()
+	trusted.set_affection("mira", trusted.MIRA_TRUST_THRESHOLD)
+	var trusted_result := trusted.resolve_action({"type": "give_story_item", "npc_id": "mira", "item_key": "toby_contract"})
+	_ok(String(trusted_result.get("feedback", "")) == "mira_informed_trusted",
+		"trusted Mira contract handoff uses responsible dialogue feedback")
 
 func _test_route_she_finally_stopped() -> void:
 	var nm := _nm()

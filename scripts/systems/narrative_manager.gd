@@ -10,6 +10,10 @@ const MIRA_TRUST_THRESHOLD := 10
 const LINKED_FATE_DAYS: Dictionary = {
 	12: ["toby"],
 }
+const FATE_REVEAL_DAYS: Dictionary = {
+	3: ["ryan"],
+	12: ["mira"],
+}
 
 var all_npcs: Array[NpcData] = []
 var dialogue_vars: Dictionary = {}
@@ -127,7 +131,9 @@ func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
 		"toby_contract":
 			set_var("toby_contract_found", true)
 			set_var("told_mira_truth", true)
-			return _action_result(true, "mira_informed")
+			if get_affection("mira") >= MIRA_TRUST_THRESHOLD:
+				return _action_result(true, "mira_informed_trusted")
+			return _action_result(true, "mira_informed_guarded")
 	return _action_result(false, "unsupported_story_item")
 
 
@@ -300,11 +306,10 @@ func _check_trigger(trigger, npc_id: String) -> bool:
 
 func get_today_npc_fates(day: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for npc in all_npcs:
-		for scene in npc.scenes:
-			if scene.day == day:
-				_append_npc_fate(result, npc)
-				break
+	for npc_id in FATE_REVEAL_DAYS.get(day, []):
+		var npc := _find_npc(String(npc_id))
+		if npc != null:
+			_append_npc_fate(result, npc)
 	for npc_id in LINKED_FATE_DAYS.get(day, []):
 		if _fate_result_has_npc(result, String(npc_id)):
 			continue

@@ -1,0 +1,38 @@
+{
+  "id": "mira_ending_wide_references_v1",
+  "target_native_size": [
+    320,
+    140
+  ],
+  "target_runtime_size": [
+    1280,
+    560
+  ],
+  "reference_version": "v1",
+  "entries": [
+    {
+      "id": "mira_another_light_out_reference_v1",
+      "route": "another_light_out",
+      "output_file": "art_sources/generated_raw/mira_endings/mira_another_light_out_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/mira_endings/mira_another_light_out_reference_v1_prompt.txt"
+    },
+    {
+      "id": "mira_closed_the_door_reference_v1",
+      "route": "closed_the_door",
+      "output_file": "art_sources/generated_raw/mira_endings/mira_closed_the_door_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/mira_endings/mira_closed_the_door_reference_v1_prompt.txt"
+    },
+    {
+      "id": "mira_never_turned_back_reference_v1",
+      "route": "never_turned_back",
+      "output_file": "art_sources/generated_raw/mira_endings/mira_never_turned_back_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/mira_endings/mira_never_turned_back_reference_v1_prompt.txt"
+    },
+    {
+      "id": "mira_she_finally_stopped_reference_v1",
+      "route": "she_finally_stopped",
+      "output_file": "art_sources/generated_raw/mira_endings/mira_she_finally_stopped_reference_v1.png",
+      "prompt_file": "art_sources/generated_raw/mira_endings/mira_she_finally_stopped_reference_v1_prompt.txt"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ const INGREDIENT_INTAKE_VFX := preload("res://scripts/ui/ingredient_intake_vfx.g
 const BARREL_MASS := 2.5
 const BARREL_LINEAR_DAMP := 0.8
 const BARREL_ANGULAR_DAMP := 4.0
+const MAX_INGREDIENTS := 2
 const MOUTH_INNER_HALF_WIDTH := 24.0
 const MOUTH_TOP_Y := -64.0
 const MOUTH_BOTTOM_Y := -34.0
@@ -82,6 +83,9 @@ const NORMAL_FEEDBACK_MAX_LIFE_META := "normal_brew_feedback_max_life"
 const NORMAL_FEEDBACK_WORD_META := "normal_brew_feedback_word"
 const NORMAL_FEEDBACK_BASE_SCALE_META := "normal_brew_feedback_base_scale"
 const NORMAL_FEEDBACK_WORDS: Array[String] = ["成了", "稳了", "顺口", "够味", "不赖", "过关"]
+const FAILED_FEEDBACK_LAYER_NAME := "FailedBrewFeedback"
+const FAILED_FEEDBACK_KIND_META := "failed_brew_feedback_kind"
+const FAILED_FEEDBACK_WORD_META := "failed_brew_feedback_word"
 const OUTPUT_BURST_LAYER_NAME := "BrewOutputBurst"
 const OUTPUT_BURST_LAYER_Z_INDEX := 21
 const OUTPUT_BURST_MAX_ACTIVE := 96
@@ -137,6 +141,7 @@ var _good_celebration_layer: Node2D = null
 var _good_celebration_effects: Array[Node2D] = []
 var _good_celebration_texture: Texture2D = null
 var _normal_feedback_layer: Node2D = null
+var _failed_feedback_layer: Node2D = null
 var _normal_feedback_effects: Array[Node2D] = []
 var _output_burst_layer: Node2D = null
 var _output_burst_effects: Array[Node2D] = []
@@ -231,10 +236,20 @@ func _try_accept_mouth_body(body: Node) -> void:
 		return
 	if not _is_item_inside_mouth_opening(item):
 		return
+	if _pending_keys.size() >= MAX_INGREDIENTS:
+		_reject_extra_ingredient(item)
+		return
 	_pending_keys.append(item.item_key)
 	INGREDIENT_INTAKE_VFX.spawn(self, item, item.item_key, _mouth_center_global_position(), Color(0.96, 0.62, 0.28, 1.0))
 	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
+
+
+func _reject_extra_ingredient(item: DeskItem) -> void:
+	item.global_position = to_global(Vector2(randf_range(-16.0, 16.0), MOUTH_TOP_Y - 28.0))
+	item.linear_velocity = Vector2(randf_range(-90.0, 90.0), -240.0)
+	item.angular_velocity = randf_range(-8.0, 8.0)
+	item.sleeping = false
 
 
 func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
@@ -282,6 +297,8 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 		_spawn_good_brew_celebration(product.global_position, product.linear_velocity)
 	elif quality == "normal":
 		_spawn_normal_brew_feedback(product.global_position)
+	elif quality == "failed":
+		_spawn_failed_brew_feedback(product.global_position)
 	GameManager.play_audio_event("product_ready")
 
 
@@ -398,6 +415,8 @@ func _product_vfx_color(quality: String, element: String) -> Color:
 		if element == "spark":
 			return Color(1.0, 0.93, 0.42, 0.96)
 		return Color(1.0, 0.76, 0.24, 0.86)
+	if quality == "failed":
+		return Color(0.24, 0.22, 0.16, 0.58)
 	return Color(0.92, 0.90, 0.74, 0.68)
 
 
@@ -536,6 +555,8 @@ func _brew_output_burst_color(quality: String, element: String) -> Color:
 		if element == "flash":
 			return Color(1.0, 0.96, 0.60, 0.88)
 		return Color(1.0, 0.82, 0.28, 0.84)
+	if quality == "failed":
+		return Color(0.28, 0.25, 0.18, 0.68)
 	return Color(0.88, 0.86, 0.72, 0.72)
 
 
@@ -1267,6 +1288,31 @@ func _spawn_normal_brew_feedback(origin: Vector2) -> void:
 	_normal_feedback_effects.append(effect)
 
 
+func _spawn_failed_brew_feedback(origin: Vector2) -> void:
+	_prune_invalid_normal_brew_feedback()
+	if _normal_feedback_effects.size() >= NORMAL_FEEDBACK_MAX_ACTIVE:
+		return
+	var layer := _ensure_failed_feedback_layer()
+	var effect := Node2D.new()
+	effect.name = "FailedWordBurst"
+	effect.z_index = 0
+	effect.scale = Vector2.ONE * randf_range(0.74, 0.86)
+	var word := "废品"
+	effect.set_meta(FAILED_FEEDBACK_KIND_META, "failed")
+	effect.set_meta(FAILED_FEEDBACK_WORD_META, word)
+	effect.set_meta(NORMAL_FEEDBACK_WORD_META, word)
+	effect.set_meta(NORMAL_FEEDBACK_VELOCITY_META, Vector2(randf_range(-8.0, 8.0), -randf_range(38.0, 58.0)))
+	effect.set_meta(NORMAL_FEEDBACK_PHASE_META, randf_range(0.0, TAU))
+	effect.set_meta(NORMAL_FEEDBACK_PHASE_SPEED_META, randf_range(0.8, 1.6))
+	effect.set_meta(NORMAL_FEEDBACK_LIFE_META, 0.0)
+	effect.set_meta(NORMAL_FEEDBACK_MAX_LIFE_META, randf_range(0.78, 1.04))
+	effect.set_meta(NORMAL_FEEDBACK_BASE_SCALE_META, effect.scale.x)
+	layer.add_child(effect)
+	effect.global_position = origin + Vector2(randf_range(-10.0, 10.0), randf_range(-38.0, -28.0))
+	_build_failed_brew_feedback_label(effect, word)
+	_normal_feedback_effects.append(effect)
+
+
 func _ensure_normal_feedback_layer() -> Node2D:
 	if _normal_feedback_layer != null and is_instance_valid(_normal_feedback_layer):
 		return _normal_feedback_layer
@@ -1280,6 +1326,21 @@ func _ensure_normal_feedback_layer() -> Node2D:
 	_normal_feedback_layer.z_as_relative = false
 	_normal_feedback_layer.z_index = NORMAL_FEEDBACK_LAYER_Z_INDEX
 	return _normal_feedback_layer
+
+
+func _ensure_failed_feedback_layer() -> Node2D:
+	if _failed_feedback_layer != null and is_instance_valid(_failed_feedback_layer):
+		return _failed_feedback_layer
+	_failed_feedback_layer = get_node_or_null(FAILED_FEEDBACK_LAYER_NAME) as Node2D
+	if _failed_feedback_layer == null:
+		_failed_feedback_layer = Node2D.new()
+		_failed_feedback_layer.name = FAILED_FEEDBACK_LAYER_NAME
+		add_child(_failed_feedback_layer)
+	_failed_feedback_layer.top_level = true
+	_failed_feedback_layer.global_position = Vector2.ZERO
+	_failed_feedback_layer.z_as_relative = false
+	_failed_feedback_layer.z_index = NORMAL_FEEDBACK_LAYER_Z_INDEX
+	return _failed_feedback_layer
 
 
 func _build_normal_brew_feedback_label(effect: Node2D, word: String) -> void:
@@ -1296,6 +1357,23 @@ func _build_normal_brew_feedback_label(effect: Node2D, word: String) -> void:
 	label.add_theme_color_override("font_color", Color(0.82, 0.82, 0.72, 1.0))
 	label.add_theme_constant_override("outline_size", 2)
 	label.add_theme_color_override("font_outline_color", Color(0.04, 0.06, 0.07, 0.82))
+	effect.add_child(label)
+
+
+func _build_failed_brew_feedback_label(effect: Node2D, word: String) -> void:
+	var label := Label.new()
+	label.name = "Label"
+	label.text = word
+	label.size = Vector2(76.0, 28.0)
+	label.position = Vector2(-38.0, -14.0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_override("font", GOOD_CELEBRATION_FONT)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.48, 0.44, 0.34, 1.0))
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color(0.03, 0.025, 0.02, 0.92))
 	effect.add_child(label)
 
 
@@ -1720,9 +1798,15 @@ func _try_brew() -> void:
 	_shake.reset()
 	_shake_bubble_foam_pressure = 0.0
 	if product_key == "":
+		product_key = GameManager.craft.failure_product_for_container(CONTAINER_KEY)
 		_reset_brew_combo_feedback()
-		print("[Brewery] 摇够了但配方未命中，料已消耗无产出 (摇晃 %d 次)" % shakes)
-		return   # 软兜底：料已消耗、无产出
+		if product_key == "":
+			print("[Brewery] 摇够了但配方未命中，料已消耗无产出 (摇晃 %d 次)" % shakes)
+			return
+		print("[Brewery] 配方未命中，产出失败物 %s (摇晃 %d 次)" % [product_key, shakes])
+		_spawn_product(product_key, "failed")
+		recipe_consumed.emit(product_key)
+		return
 	print("[Brewery] 产出 %s  品质=%s  (摇晃 %d 次)" % [product_key, quality, shakes])
 	_spawn_product(product_key, quality)
 	_reset_brew_combo_feedback()

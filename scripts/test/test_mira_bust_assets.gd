@@ -133,11 +133,11 @@ func _test_tavern_switches_mira_expression_portraits() -> void:
 	await get_tree().process_frame
 	_ok(_portrait_path(tavern).ends_with("/mira_guilty.png"), "Giving Toby contract to active Mira switches to guilty portrait")
 	var overlay := tavern.get_node_or_null("DocumentOverlay") as DocumentOverlay
-	_ok(overlay != null and overlay.visible, "Giving Toby contract to Mira opens the completed contract document")
+	_ok(overlay != null and not overlay.visible, "Giving Toby contract to Mira stays in the tavern instead of opening the contract document")
 	if overlay != null:
 		var art := overlay.get_node_or_null("DocumentArt") as TextureRect
-		_ok(art != null and art.visible,
-			"Giving Toby contract to Mira shows the completed contract document art")
+		_ok(art == null or not art.visible,
+			"Giving Toby contract to Mira does not show obsolete completed contract art")
 
 	gm.economy.current_day = old_day
 	gm.guests.clear_guest()

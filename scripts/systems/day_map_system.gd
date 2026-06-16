@@ -20,6 +20,9 @@ var _regions: Array = []
 var _anchors: Array = []
 var _anchor_by_id: Dictionary = {}
 var _announced_postings: Dictionary = {}
+var _has_camera_view: bool = false
+var _camera_position := Vector2.ZERO
+var _camera_zoom: float = 1.0
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -73,6 +76,80 @@ func start_day(day: int) -> void:
 	stamina = max_stamina
 	_visited.clear()
 	_flags.clear()
+
+
+func capture_state() -> Dictionary:
+	var revealed_ids := []
+	for id in _revealed.keys():
+		if bool(_revealed[id]):
+			revealed_ids.append(String(id))
+	revealed_ids.sort()
+	var announced := {}
+	for id in _announced_postings.keys():
+		announced[String(id)] = String(_announced_postings[id])
+	return {
+		"current_day": current_day,
+		"revealed": revealed_ids,
+		"announced_postings": announced,
+		"camera": _capture_camera_view(),
+	}
+
+
+func restore_state(state: Dictionary) -> void:
+	_revealed.clear()
+	_announced_postings.clear()
+	if state.is_empty():
+		return
+	current_day = int(state.get("current_day", current_day))
+	for id in state.get("revealed", []):
+		_revealed[String(id)] = true
+	var announced: Dictionary = state.get("announced_postings", {})
+	for id in announced.keys():
+		_announced_postings[String(id)] = String(announced[id])
+	_restore_camera_view(state.get("camera", {}))
+
+
+func set_camera_view(world_position: Vector2, zoom_value: float) -> void:
+	_camera_position = world_position
+	_camera_zoom = maxf(zoom_value, 0.001)
+	_has_camera_view = true
+
+
+func has_camera_view() -> bool:
+	return _has_camera_view
+
+
+func get_camera_position() -> Vector2:
+	return _camera_position
+
+
+func get_camera_zoom() -> float:
+	return _camera_zoom
+
+
+func _capture_camera_view() -> Dictionary:
+	if not _has_camera_view:
+		return {}
+	return {
+		"position": [_camera_position.x, _camera_position.y],
+		"zoom": _camera_zoom,
+	}
+
+
+func _restore_camera_view(camera_state) -> void:
+	_has_camera_view = false
+	_camera_position = Vector2.ZERO
+	_camera_zoom = 1.0
+	if not camera_state is Dictionary:
+		return
+	if camera_state.is_empty():
+		return
+	var pos_arr: Array = camera_state.get("position", [])
+	if pos_arr.size() < 2:
+		return
+	_camera_position = Vector2(float(pos_arr[0]), float(pos_arr[1]))
+	_camera_zoom = maxf(float(camera_state.get("zoom", 1.0)), 0.001)
+	_has_camera_view = true
 
 
 func set_document_read(document_id: String, read: bool) -> void:
@@ -179,7 +256,10 @@ func get_updated_locations() -> Array[Dictionary]:
 		var id := String(location.get("id", ""))
 		if not is_revealed(id) or not _passes_filters(location):
 			continue
-		if String(_announced_postings.get(id, "__none__")) != _active_posting_id(location):
+		var active_posting_id := _active_posting_id(location)
+		if active_posting_id == "":
+			continue
+		if String(_announced_postings.get(id, "__none__")) != active_posting_id:
 			result.append(_effective(location))
 	return result
 

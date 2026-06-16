@@ -1,0 +1,36 @@
+{
+  "id": "clean_table_tabletop_background",
+  "scale": 4,
+  "source": "art_sources/generated_raw/clean_table_inference/clean_table_tabletop_reference_v1.png",
+  "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_tabletop_prompt_v1.txt",
+  "assets": {
+    "clean_table_tabletop": {
+      "id": "clean_table_tabletop",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_tabletop_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_tabletop_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/clean_table_tabletop_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/clean_table_tabletop.png",
+      "native_size": [
+        320,
+        180
+      ],
+      "size": [
+        1280,
+        720
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "nine_slice_margins": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen full-screen background candidate; not runtime-wired until accepted."
+    }
+  }
+}

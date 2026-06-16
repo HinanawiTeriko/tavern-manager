@@ -82,8 +82,8 @@
           "id": "toby_commission",
           "dayMin": 6,
           "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
-          "unlocksFlag": "toby_commission_lead",
-          "result": "托比接下了黑齿矿脉的护送委托。报酬高得像是故意写给走投无路的人，得去他落脚的地方看看。"
+          "unlocksFlag": "toby_name_lead",
+          "result": "你记下这个生涩的名字和委托编号。黑齿矿脉的报酬高得像陷阱，得先去打听这个托比是谁。"
         }
       ]
     },
@@ -173,7 +173,7 @@
     },
     {
       "id": "toby_lodging",
-      "name": "托比的落脚处",
+      "name": "后巷临时住处",
       "region": "market",
       "anchor": "toby_lodging_lane_01",
       "pos": [250, 620],
@@ -181,11 +181,11 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "description": "酒馆后巷，托比缩在那儿擦拭一把不合手的短剑。",
+      "description": "告示背面的潦草住址指向市场后巷一处临时住处，门缝里透着一点冷光。",
       "dayMin": 6,
-      "requiresFlag": "toby_commission_lead",
+      "requiresFlag": "toby_identity_known",
       "repeatable": false,
-      "result": "托比说，他要靠这趟委托证明自己一个人也行。"
+      "result": "你在后巷找到了告示上的少年。托比说，他要靠这趟委托证明自己一个人也行。"
     },
     {
       "id": "mira_stall",

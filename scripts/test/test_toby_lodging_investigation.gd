@@ -2,11 +2,9 @@ extends Node
 
 const TOBY_SCENE := preload("res://scenes/ui/TobyLodgingInvestigation.tscn")
 const ASSEMBLE_POINT := Vector2(640, 490)
-const EXPECTED_SNAP_SLOTS := {
-	"contract_fragment_a": Vector2(592, 490),
-	"contract_fragment_b": Vector2(640, 490),
-	"contract_fragment_c": Vector2(688, 490),
-}
+const FREE_ASSEMBLY_POINT := Vector2(820, 350)
+const CONTRACT_PAIR_TAG := "contract_fragment_pair"
+const CONTRACT_COMPLETE_TAG := "contract_complete"
 
 ## 托比落脚处物理调查的 headless 逻辑回归。镜像 test_mine_investigation 的取舍：
 ##   1. locations.json 数据契约——告示板贴文不再授予 toby_contract、改由场景授予；
@@ -58,6 +56,8 @@ func _test_locations_contract() -> void:
 						"toby_commission 贴文不再直接授予委托书（搬进场景）")
 		if String(loc.get("id", "")) == "toby_lodging":
 			lodging_ok = true
+			_ok(String(loc.get("requiresFlag", "")) == "toby_identity_known",
+				"Toby lodging opens from identity inference, not from the board posting")
 			_ok(int(loc.get("dayMin", 0)) == 6, "托比落脚处 day≥6 开放")
 			_ok(not loc.has("documents") or (loc.get("documents", []) as Array).is_empty(),
 				"托比落脚处不走自动授予（场景内拼合授予）")
@@ -87,6 +87,7 @@ func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 	var scene := TOBY_SCENE.instantiate()
 	add_child(scene)
 	await get_tree().process_frame
+	await get_tree().physics_frame
 
 	var frag_a := _toby_fragment(scene, "contract_fragment_a")
 	var frag_b := _toby_fragment(scene, "contract_fragment_b")
@@ -94,24 +95,66 @@ func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 	_ok(frag_a != null and frag_b != null and frag_c != null,
 		"Toby lodging snap test finds all three contract fragments")
 	if frag_a != null and frag_b != null and frag_c != null:
+		_ok(scene._try_pickup(frag_b.global_position),
+			"middle Toby contract fragment can be picked up before snapping")
+		_ok(scene._drag_ctrl.get_body() == frag_b,
+			"middle Toby contract fragment becomes the active dragged body")
+		scene._drag_ctrl.end_drag()
+
 		frag_a.global_position = ASSEMBLE_POINT + Vector2(-22, 6)
 		frag_a.linear_velocity = Vector2(180, -40)
 		frag_a.angular_velocity = 5.0
 		scene._investigation_physics(0.016)
-		_ok(frag_a.global_position == EXPECTED_SNAP_SLOTS["contract_fragment_a"],
-			"first nearby Toby contract fragment snaps into its assembly slot")
-		_ok(frag_a.freeze and frag_a.linear_velocity == Vector2.ZERO and is_zero_approx(frag_a.angular_velocity),
-			"snapped Toby contract fragment freezes without residual physics drift")
+		_ok(frag_a.global_position == ASSEMBLE_POINT + Vector2(-22, 6),
+			"one nearby Toby contract fragment does not snap to a hidden assembly slot by itself")
+		_ok(not frag_a.freeze,
+			"one nearby Toby contract fragment does not freeze before touching another fragment")
 		_ok(not gm.documents.owns_document("toby_contract"),
 			"one snapped Toby contract fragment does not grant the document yet")
 
-		frag_b.global_position = ASSEMBLE_POINT + Vector2(10, -8)
-		frag_c.global_position = ASSEMBLE_POINT + Vector2(24, 4)
+		frag_a.global_position = FREE_ASSEMBLY_POINT
+		frag_b.global_position = FREE_ASSEMBLY_POINT + Vector2(28, -6)
 		scene._investigation_physics(0.016)
-		_ok(gm.documents.owns_document("toby_contract"),
-			"all three snapped Toby contract fragments grant the contract document")
-		_ok(gm.narrative.get_var("toby_contract_found") == true,
-			"completed Toby fragment assembly marks the route proof found")
+		await get_tree().process_frame
+		var pair := _toby_item(scene, CONTRACT_PAIR_TAG)
+		_ok(pair != null, "two nearby Toby contract fragments become one real combined piece away from the old assembly point")
+		_ok(_toby_fragment(scene, "contract_fragment_a") == null and _toby_fragment(scene, "contract_fragment_b") == null,
+			"the two source fragments are removed after the combined piece appears")
+		_ok(not gm.documents.owns_document("toby_contract"),
+			"two-piece combined Toby contract still does not grant the document")
+
+		if pair != null:
+			_ok(pair.global_position.distance_to(FREE_ASSEMBLY_POINT + Vector2(14, -3)) <= 1.0,
+				"two-piece combined Toby contract appears where the player joined the first pieces")
+			_ok(not pair.freeze, "two-piece combined Toby contract remains draggable instead of sticking to the floor")
+			_ok(scene._try_pickup(pair.global_position),
+				"middle two-piece Toby contract can be picked up after it appears")
+			_ok(scene._drag_ctrl.get_body() == pair,
+				"middle two-piece Toby contract becomes the active dragged body")
+			scene._drag_ctrl.end_drag()
+			var pair_test_position := FREE_ASSEMBLY_POINT + Vector2(120, -20)
+			pair.global_position = pair_test_position
+			scene._investigation_physics(0.016)
+			_ok(pair.global_position == pair_test_position,
+				"two-piece combined Toby contract is not pulled back to the original assembly point")
+			frag_c.global_position = pair.global_position + Vector2(24, 4)
+			scene._investigation_physics(0.016)
+			await get_tree().process_frame
+			var complete := _toby_item(scene, CONTRACT_COMPLETE_TAG)
+			_ok(complete != null, "third fragment joins the nearby combined piece into a complete commission")
+			_ok(complete != null and complete.global_position.distance_to(pair_test_position) <= 1.0,
+				"complete commission appears where the player joined the pieces")
+			_ok(not gm.documents.owns_document("toby_contract"),
+				"complete commission stays in the room until the player clicks it")
+			if complete != null:
+				_ok(scene._on_special_pickup(complete), "clicking the complete commission is handled as collection")
+				await get_tree().process_frame
+				_ok(gm.documents.owns_document("toby_contract"),
+					"clicking the complete commission grants the contract document")
+				_ok(gm.narrative.get_var("toby_contract_found") == true,
+					"collecting the completed Toby contract marks the route proof found")
+				_ok(_toby_item(scene, CONTRACT_COMPLETE_TAG) == null,
+					"collected complete commission is removed from the room")
 
 	scene.queue_free()
 	await get_tree().process_frame
@@ -119,6 +162,10 @@ func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 
 
 func _toby_fragment(scene: Node, item_tag: String) -> MineItem:
+	return _toby_item(scene, item_tag)
+
+
+func _toby_item(scene: Node, item_tag: String) -> MineItem:
 	var world := scene.get_node_or_null("World")
 	if world == null:
 		return null

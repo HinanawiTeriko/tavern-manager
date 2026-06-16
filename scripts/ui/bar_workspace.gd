@@ -49,13 +49,21 @@ var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	_shortcut_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_brewery.recipe_consumed.connect(func(k): print("[BarWorkspace] 产出 ", k))
+	_brewery.recipe_consumed.connect(_on_recipe_consumed)
+	_grill.recipe_consumed.connect(_on_recipe_consumed)
+	_pot.recipe_consumed.connect(_on_recipe_consumed)
 	_drag_ctrl.drag_started.connect(_on_drag_started)
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
 	_gm.inventory_changed.connect(_init_material_slots)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
+
+
+func _on_recipe_consumed(product_key: String) -> void:
+	print("[BarWorkspace] 产出 ", product_key)
+	if _gm != null and _gm.has_method("discover_recipe"):
+		_gm.discover_recipe(product_key, false)
 
 
 func configure_day(day: int) -> void:
@@ -249,12 +257,12 @@ func _is_body_usable(body: RigidBody2D) -> bool:
 func _try_pickup(pos: Vector2) -> void:
 	var hit_item: DeskItem = _hit_test_item(pos)
 	if hit_item != null:
-		hit_item.sleeping = false
+		_prepare_body_for_drag(hit_item)
 		_drag_ctrl.start_drag(hit_item, pos)
 		return
 	var readable_item := _hit_test_readable_item(pos)
 	if readable_item != null:
-		readable_item.sleeping = false
+		_prepare_body_for_drag(readable_item)
 		_drag_ctrl.start_drag(readable_item, pos)
 		return
 	if _hit_test_brewery(pos):
@@ -267,7 +275,7 @@ func _try_pickup(pos: Vector2) -> void:
 		return
 	var spoon := _hit_test_spoon(pos)
 	if spoon != null:
-		spoon.sleeping = false
+		_prepare_body_for_drag(spoon)
 		_drag_ctrl.start_drag(spoon, pos)
 		return
 	var kitchen = _hit_test_kitchen_container(pos)
@@ -284,6 +292,11 @@ func _try_pickup(pos: Vector2) -> void:
 				_begin_shortcut_drag_preview(body, pos)
 				_drag_ctrl.start_drag(body, drag_start)
 			return
+
+
+func _prepare_body_for_drag(body: RigidBody2D) -> void:
+	body.freeze = false
+	body.sleeping = false
 
 
 func _update_drag_target(mouse_global_position: Vector2) -> void:
@@ -691,6 +704,7 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 		item.linear_velocity = Vector2.ZERO
 		item.angular_velocity = 0.0
 		item.global_position = _desk_item_return_position(item)
+		item.freeze = true
 		item.sleeping = true
 		item.reset_fall_state()
 	else:
@@ -823,6 +837,8 @@ func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier
 		var p := _spawn_slam_product(center, product_key, quality)
 		p.linear_velocity = conserved
 	_gm.play_audio_event("product_ready")
+	if _gm != null and _gm.has_method("discover_recipe"):
+		_gm.discover_recipe(product_key, false)
 	if quality == "poor":
 		_gm.notify_stage_caption("手重了，砸出了次品", ThemeColors.TEXT_SUBTITLE)
 

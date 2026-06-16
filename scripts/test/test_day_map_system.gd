@@ -109,6 +109,21 @@ func _location_ids(locations: Array) -> Array:
 	return ids
 
 
+func _find_location(locations: Array, location_id: String) -> Dictionary:
+	for loc in locations:
+		if String(loc.get("id", "")) == location_id:
+			return loc
+	return {}
+
+
+func _ledger_text(gm) -> String:
+	var pages: Array = gm.documents.get_document("ledger").get("pages", [])
+	var strings: Array[String] = []
+	for page in pages:
+		strings.append(String(page))
+	return "\n".join(PackedStringArray(strings))
+
+
 func _test_get_locations_breadcrumb() -> void:
 	var map := DayMapSystem.new()
 	map.load_data()
@@ -149,14 +164,25 @@ func _test_day6_toby_choice_chain() -> void:
 	map.start_day(6)
 	var ids_before := _location_ids(map.get_locations())
 	_ok(ids_before.has("mercenary_board"), "Day6 board is visible before Toby lead")
-	_ok(not ids_before.has("toby_lodging"), "Toby lodging is hidden before board lead")
-	_ok(not ids_before.has("fixer_den"), "fixer is hidden before board lead")
+	_ok(not ids_before.has("toby_lodging"), "Toby lodging is hidden before inference")
+	_ok(not ids_before.has("fixer_den"), "fixer is hidden before inference")
 	var board := map.visit("mercenary_board")
 	_ok(board.get("success", false), "Day6 board visit succeeds")
-	_ok(String(board.get("unlockedFlag", "")) == "toby_commission_lead", "board returns Toby lead unlock")
+	_ok(String(board.get("unlockedFlag", "")) == "toby_name_lead", "board returns only Toby name lead unlock")
 	var ids_after := _location_ids(map.get_locations())
-	_ok(ids_after.has("toby_lodging"), "Toby lodging appears after board lead")
-	_ok(ids_after.has("fixer_den"), "fixer appears after board lead")
+	_ok(not ids_after.has("toby_lodging"), "Toby lodging does not appear after only reading the board")
+	_ok(not ids_after.has("fixer_den"), "fixer does not appear after only reading the board")
+	map.set_lead_flag("toby_identity_known", true)
+	var ids_after_identity := _location_ids(map.get_locations())
+	_ok(ids_after_identity.has("toby_lodging"), "Toby lodging appears after identity inference")
+	_ok(not ids_after_identity.has("fixer_den"), "fixer still waits for risk inference")
+	map.set_lead_flag("toby_commission_lead", true)
+	var ids_after_risk := _location_ids(map.get_locations())
+	_ok(ids_after_risk.has("fixer_den"), "fixer appears after commission-risk inference")
+	var lodging := _find_location(map.get_locations(), "toby_lodging")
+	_ok(String(lodging.get("name", "")) != "托比的落脚处", "map marker avoids naming Toby as known before meeting him")
+	_ok(not String(lodging.get("description", "")).begins_with("酒馆后巷，托比"),
+		"map marker description avoids describing Toby before meeting him")
 
 	var gm = get_node("/root/GameManager")
 	gm._apply_save_state(gm._default_new_game_state())
@@ -164,14 +190,31 @@ func _test_day6_toby_choice_chain() -> void:
 	gm.economy.add_gold(50)
 	gm.start_day_map(6)
 	_ok(not _location_ids(gm.day_map.get_locations()).has("toby_lodging"), "GM hides Toby lodging before persistent lead")
-	var ledger_before: int = gm.documents.capture_state().get("ledger_entries", []).size()
 	var gm_board: Dictionary = gm.visit_day_location("mercenary_board")
 	_ok(gm_board.get("success", false), "GM board visit succeeds")
-	_ok(gm.narrative.get_var("toby_danger_known") == true, "GM persists Toby danger after board")
-	var ledger_after_board: int = gm.documents.capture_state().get("ledger_entries", []).size()
-	_ok(ledger_after_board > ledger_before, "board visit writes a ledger pressure beat")
+	_ok(gm.narrative.get_var("toby_name_seen") == true, "GM persists only Toby name after board")
+	_ok(gm.narrative.get_var("toby_danger_known") != true, "GM does not learn Toby danger from the board alone")
+	_ok(_ledger_text(gm).contains("告示板出现黑齿矿脉护送委托"),
+		"board visit writes a fate-track pressure beat")
 	gm.start_day_map(7)
-	_ok(_location_ids(gm.day_map.get_locations()).has("toby_lodging"), "persistent Toby lead unlocks lodging next day")
+	_ok(not _location_ids(gm.day_map.get_locations()).has("toby_lodging"), "name lead alone does not unlock lodging next day")
+	gm._collect_toby_day6_night_clues_for_test()
+	gm.apply_inference_result(gm.inference.try_place("toby_identity", "name", "toby_name"))
+	var identity: Dictionary = gm.inference.try_place("toby_identity", "identity", "back_alley_boy")
+	gm.apply_inference_result(identity)
+	_ok(gm.narrative.get_var("toby_identity_known") == true, "identity inference persists lodging lead")
+	gm.start_day_map(7)
+	_ok(_location_ids(gm.day_map.get_locations()).has("toby_lodging"), "identity inference unlocks lodging next day")
+	_ok(not _location_ids(gm.day_map.get_locations()).has("fixer_den"), "identity inference alone does not unlock fixer")
+	var risk_a: Dictionary = gm.inference.try_place("toby_commission_risk", "commission", "blacktooth_escort")
+	gm.apply_inference_result(risk_a)
+	var risk_b: Dictionary = gm.inference.try_place("toby_commission_risk", "risk", "high_pay_trap")
+	gm.apply_inference_result(risk_b)
+	var risk_c: Dictionary = gm.inference.try_place("toby_commission_risk", "mindset", "one_person_walk")
+	gm.apply_inference_result(risk_c)
+	_ok(gm.narrative.get_var("toby_danger_known") == true, "risk inference persists Toby danger")
+	gm.start_day_map(7)
+	_ok(_location_ids(gm.day_map.get_locations()).has("fixer_den"), "risk inference unlocks fixer route")
 	var aff_before: int = gm.narrative.get_affection("mira")
 	_ok(gm.visit_day_location("mira_stall").get("success", false), "Mira stall visit succeeds")
 	_ok(gm.narrative.get_affection("mira") == aff_before + 3, "Mira stall still grants trust")
@@ -186,6 +229,26 @@ func _test_day6_toby_choice_chain() -> void:
 	_ok(fixer.get("success", false), "fixer visit succeeds with enough gold")
 	_ok(gm.narrative.get_var("toby_secured_by_fixer") == true, "fixer marks Toby secured by fixer")
 	_ok(gm.narrative.get_var("toby_secured") == true, "legacy Toby secured flag remains true")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 6
+	gm.economy.add_gold(10)
+	gm.start_day_map(6)
+	gm.visit_day_location("mercenary_board")
+	gm._collect_toby_day6_night_clues_for_test()
+	gm.apply_inference_result(gm.inference.try_place("toby_identity", "name", "toby_name"))
+	gm.apply_inference_result(gm.inference.try_place("toby_identity", "identity", "back_alley_boy"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "commission", "blacktooth_escort"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "risk", "high_pay_trap"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "mindset", "one_person_walk"))
+	gm.start_day_map(6)
+	var stamina_before_fixer: int = gm.day_map.stamina
+	var poor_fixer: Dictionary = gm.visit_day_location("fixer_den")
+	_ok(not poor_fixer.get("success", true), "fixer visit blocks before spending stamina if gold is short")
+	_ok(String(poor_fixer.get("blocked_reason", "")) == "not_enough_gold", "fixer block reports insufficient gold")
+	_ok(gm.economy.gold == 10, "blocked fixer visit keeps gold unchanged")
+	_ok(gm.day_map.stamina == stamina_before_fixer, "blocked fixer visit keeps stamina unchanged")
+	_ok(gm.narrative.get_var("toby_secured") != true, "blocked fixer visit does not secure Toby")
 
 
 func _test_day2_shop_gossip_points_to_sleep_powder() -> void:

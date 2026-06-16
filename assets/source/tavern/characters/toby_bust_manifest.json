@@ -1,8 +1,9 @@
 {
   "id": "toby_bust_portrait",
-  "style_profile": "approved_vera_belta_runtime_matched_important_npc_v1",
-  "source": "art_sources/generated_raw/characters/toby/toby_neutral_source_v3.png",
-  "prompt": "art_sources/generated_raw/characters/toby/toby_neutral_prompt_v3.txt",
+  "style_profile": "important_npc_close_camera_toby_expression_sheet_v5",
+  "source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
+  "prompt": "art_sources/generated_raw/characters/toby/toby_expression_sheet_prompt_v5.txt",
+  "expression_source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
   "comparison_references": [
     "assets/textures/characters/ryan_neutral.png",
     "assets/textures/characters/mira_neutral.png"
@@ -10,9 +11,16 @@
   "source_rect": [
     0,
     0,
-    1122,
-    1402
+    768,
+    512
   ],
+  "grid": {
+    "columns": 2,
+    "rows": 2
+  },
+  "normalization": {
+    "mode": "fixed_cell_visible_subject_v5"
+  },
   "native": "assets/source/tavern/characters/toby_neutral_native.png",
   "runtime": "assets/textures/characters/toby_neutral.png",
   "native_size": [
@@ -37,12 +45,170 @@
   ],
   "bottom_padding": 3,
   "intended_godot_use": "Tavern CustomerSprite Toby bust portrait behind TabletopArt",
+  "portraits": {
+    "toby_neutral": {
+      "source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
+      "source_rect": [
+        0,
+        0,
+        768,
+        512
+      ],
+      "native": "assets/source/tavern/characters/toby_neutral_native.png",
+      "runtime": "assets/textures/characters/toby_neutral.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v5"
+      },
+      "expression_notes": [
+        "stubborn guarded entry"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Toby expression portrait"
+    },
+    "toby_warmed": {
+      "source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
+      "source_rect": [
+        768,
+        0,
+        1536,
+        512
+      ],
+      "native": "assets/source/tavern/characters/toby_warmed_native.png",
+      "runtime": "assets/textures/characters/toby_warmed.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v5"
+      },
+      "expression_notes": [
+        "softened by a correct hot soup serve"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Toby expression portrait"
+    },
+    "toby_hurt": {
+      "source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
+      "source_rect": [
+        0,
+        512,
+        768,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/toby_hurt_native.png",
+      "runtime": "assets/textures/characters/toby_hurt.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v5"
+      },
+      "expression_notes": [
+        "hurt but pretending it is fine after a failed serve"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Toby expression portrait"
+    },
+    "toby_afraid": {
+      "source": "art_sources/generated_raw/characters/toby/toby_expression_sheet_source_v5.png",
+      "source_rect": [
+        768,
+        512,
+        1536,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/toby_afraid_native.png",
+      "runtime": "assets/textures/characters/toby_afraid.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v5"
+      },
+      "expression_notes": [
+        "fear when the Blacktooth commission danger becomes clear"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Toby expression portrait"
+    }
+  },
   "character_notes": [
     "teenage wandering apprentice",
-    "stubborn tired expression",
+    "v5 important NPC close-camera expression sheet",
     "dirty blond bowl-cut hair and ragged gray-green shoulder cape",
-    "large readable shapes: patched shirt, belt pouch, awkward short sword, contract roll",
-    "nearest-neighbor native pass with a tight palette to avoid high-resolution illustration texture"
+    "large readable shapes: patched shirt, belt pouch, awkward short sword, asymmetrical charm",
+    "hard pixel-game source with low-density detail and exact nearest-neighbor runtime export"
   ],
   "bar_occlusion_contract": {
     "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",

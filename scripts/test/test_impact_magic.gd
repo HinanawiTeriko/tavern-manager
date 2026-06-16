@@ -11,10 +11,10 @@ class RewardFeedbackProbe:
 	var daily_menu := {"ale_beer": {"price": 10}}
 	var reward_calls: Array = []
 
-	func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int) -> void:
-		reward_calls.append([earned_gold, earned_rep, previous_gold, previous_rep])
+	func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int, previous_max_gold: int = -1, new_max_gold: int = -1) -> void:
+		reward_calls.append([earned_gold, earned_rep, previous_gold, previous_rep, previous_max_gold, new_max_gold])
 
-	func update_top_bar(_gold: int, _rep: int, _day: int, _max_day: int) -> void:
+	func update_top_bar(_gold: int, _rep: int, _day: int, _max_day: int, _max_gold_held: int = -1) -> void:
 		pass
 
 	func customer_say(_text: String) -> void:
@@ -153,6 +153,7 @@ func _test_order_reward_feedback_routing() -> void:
 	gm._tavern_view = probe
 	gm._guest_lingering = false
 	gm.economy.gold = 20
+	gm.economy.max_gold_held = 20
 	gm.economy.reputation = 7
 	gm.economy.gold_today = 0
 	var guest := GuestData.new()
@@ -171,7 +172,10 @@ func _test_order_reward_feedback_routing() -> void:
 		_ok(call[1] == 3, "reward feedback receives earned reputation from quality pricing")
 		_ok(call[2] == 20, "reward feedback receives previous gold before economy mutation")
 		_ok(call[3] == 7, "reward feedback receives previous reputation before economy mutation")
+		_ok(call[4] == 20, "reward feedback receives previous max held gold before economy mutation")
+		_ok(call[5] == 35, "reward feedback receives new max held gold after economy mutation")
 	_ok(gm.economy.gold == 35, "serve still mutates economy gold")
+	_ok(gm.economy.max_gold_held == 35, "serve updates max held gold")
 	_ok(gm.economy.reputation == 10, "serve still mutates economy reputation")
 
 	gm.guests.has_guest = false

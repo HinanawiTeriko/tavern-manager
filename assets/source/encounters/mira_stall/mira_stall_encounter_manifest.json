@@ -1,0 +1,30 @@
+{
+  "id": "mira_stall_encounter_background",
+  "source": "art_sources/generated_raw/mira_stall_encounter/mira_stall_encounter_source_v1.png",
+  "native": "assets/source/encounters/mira_stall/mira_stall_bg_native.png",
+  "runtime": "assets/textures/encounters/mira_stall/mira_stall_bg.png",
+  "native_size": [
+    320,
+    180
+  ],
+  "runtime_size": [
+    1280,
+    720
+  ],
+  "scale": 4,
+  "safe_area": [
+    0,
+    0,
+    320,
+    180
+  ],
+  "source_fit": {
+    "method": "ImageOps.fit",
+    "centering": [
+      0.5,
+      0.5
+    ]
+  },
+  "pipeline_note": "Generated Mira stall source normalized only; no procedural geometry is authored by the exporter.",
+  "intended_godot_use": "Mira stall automatic encounter background behind the existing DialogueManager balloon"
+}

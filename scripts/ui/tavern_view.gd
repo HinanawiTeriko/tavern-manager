@@ -1,4 +1,4 @@
-class_name TavernView
+﻿class_name TavernView
 extends Node2D
 
 var _bg_sprite: Sprite2D
@@ -28,14 +28,19 @@ var _reward_rep_texture: Texture2D
 var _reward_spark_texture: Texture2D
 var _pending_reward_coin_bodies: Array[RigidBody2D] = []
 var _displayed_gold_total: int = 0
+var _displayed_gold_progress_total: int = 0
 var _displayed_rep_total: int = 0
 var _deferred_gold_total: int = -1
 var _deferred_gold_previous_total: int = -1
+var _deferred_gold_progress_total: int = -1
+var _deferred_gold_previous_progress_total: int = -1
 var _gold_collection_apply_scheduled: bool = false
 var _menu_panel: Panel
 var _end_night_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
+var _inference_ready_notice: Label
+var _inference_ready_notice_tween: Tween
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
@@ -92,12 +97,21 @@ const MIRA_TEXTURE_GUILTY := "mira_guilty"
 const MIRA_TEXTURE_CONFLICTED := "mira_conflicted"
 const MIRA_TEXTURE_RESOLVED := "mira_resolved"
 const MIRA_TEXTURE_DETACHED := "mira_detached"
+const TOBY_TEXTURE_NEUTRAL := "toby_neutral"
+const TOBY_TEXTURE_WARMED := "toby_warmed"
+const TOBY_TEXTURE_HURT := "toby_hurt"
+const TOBY_TEXTURE_AFRAID := "toby_afraid"
+const GREY_LEDGER_LADY_TEXTURE_NEUTRAL := "grey_ledger_lady_neutral"
+const GREY_LEDGER_LADY_TEXTURE_SMILE := "grey_ledger_lady_smile"
+const GREY_LEDGER_LADY_TEXTURE_ASSESSING := "grey_ledger_lady_assessing"
+const GREY_LEDGER_LADY_TEXTURE_CRACKED := "grey_ledger_lady_cracked"
 const TOPBAR_LEFT_INSET := Vector2(28, 48)
 const TOPBAR_RIGHT_INSET := Vector2(28, 48)
 const TOPBAR_LABEL_HEIGHT := 48.0
 const REWARD_PROGRESS_SIZE := Vector2(192.0, 48.0)
 const REWARD_PROGRESS_FILL_INSET := Vector2(24.0, 12.0)
 const REWARD_PROGRESS_FILL_SIZE := Vector2(144.0, 24.0)
+const REWARD_REP_PROGRESS_ART_OFFSET := Vector2(0.0, 4.0)
 const REWARD_COIN_COLLISION_LAYER := 524288
 const REWARD_TRAVEL_SECONDS := 0.68
 const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
@@ -136,6 +150,7 @@ func _ready() -> void:
 	_reward_coin_layer = $RewardCoinPhysicsLayer
 	_end_night_btn = $TopPanel/EndNightBtn
 	_stage_caption = $StageCaption
+	_inference_ready_notice = get_node_or_null("InferenceReadyNotice") as Label
 	_dialogue_overlay = $DialogueOverlay
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
@@ -226,7 +241,7 @@ func _apply_theme() -> void:
 	ThemeColors.style_topbar_button($TopPanel/MenuButton, "menu", 14)
 	ThemeColors.style_topbar_button(_end_night_btn, "end_night", 14)
 
-	# 添加教程按钮到菜单
+	# 娣诲姞鏁欑▼鎸夐挳鍒拌彍鍗?
 	_add_tutorial_button_to_menu()
 
 	ThemeColors.style_brush_panel(_menu_panel)
@@ -243,7 +258,7 @@ func _apply_theme() -> void:
 	backpack_panel.visible = false
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
 	$OverlayMenu/TabBtns/BtnRecipes.pressed.connect(func(): recipe_panel.visible = true; backpack_panel.visible = false; _select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes))
-	# 「背包」改为打开可拖拽的 InventoryOverlay（与 E 键同一个），不再用菜单内的只读列表，避免两个背包混淆。
+	# 銆岃儗鍖呫€嶆敼涓烘墦寮€鍙嫋鎷界殑 InventoryOverlay锛堜笌 E 閿悓涓€涓級锛屼笉鍐嶇敤鑿滃崟鍐呯殑鍙鍒楄〃锛岄伩鍏嶄袱涓儗鍖呮贩娣嗐€?
 	$OverlayMenu/TabBtns/BtnBackpack.pressed.connect(toggle_inventory_overlay)
 
 	_gm.inventory_changed.connect(_on_inventory_changed)
@@ -286,6 +301,13 @@ func _apply_theme() -> void:
 
 	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
 	_stage_caption.add_theme_font_size_override("font_size", 15)
+	if _inference_ready_notice != null:
+		ThemeColors.style_brush_label(_inference_ready_notice, 72, ThemeColors.AMBER_PRIMARY)
+		_inference_ready_notice.add_theme_constant_override("outline_size", 5)
+		_inference_ready_notice.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
+		_inference_ready_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_inference_ready_notice.visible = false
+		_inference_ready_notice.modulate.a = 0.0
 
 
 func _configure_customer_input_passthrough() -> void:
@@ -370,18 +392,19 @@ func _configure_reward_hud() -> void:
 		_rep_progress,
 		"res://assets/textures/ui/reward_hud/reward_rep_progress_bg.png",
 		"res://assets/textures/ui/reward_hud/reward_rep_progress_fill.png",
-		"res://assets/textures/ui/reward_hud/reward_rep_progress_ornate.png"
+		"res://assets/textures/ui/reward_hud/reward_rep_progress_ornate.png",
+		REWARD_REP_PROGRESS_ART_OFFSET
 	)
 	var coin_ground := get_node_or_null("RewardCoinPhysicsLayer/CoinGround") as StaticBody2D
 	if coin_ground != null:
 		coin_ground.collision_layer = REWARD_COIN_COLLISION_LAYER
 		coin_ground.collision_mask = 0
 	if _gm != null and _gm.economy != null:
-		_set_gold_display(_gm.economy.gold)
+		_set_gold_display(_gm.economy.gold, _gm.economy.max_gold_held)
 		_set_reputation_display(_gm.economy.reputation)
 
 
-func _configure_reward_progress_art(progress: Control, bg_path: String, fill_path: String, ornate_path: String) -> void:
+func _configure_reward_progress_art(progress: Control, bg_path: String, fill_path: String, ornate_path: String, art_offset: Vector2 = Vector2.ZERO) -> void:
 	if progress == null:
 		return
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -394,7 +417,7 @@ func _configure_reward_progress_art(progress: Control, bg_path: String, fill_pat
 	_configure_reward_texture(ornate, ornate_path)
 	if fill_clip != null:
 		fill_clip.z_index = 0
-		fill_clip.position = REWARD_PROGRESS_FILL_INSET
+		fill_clip.position = art_offset + REWARD_PROGRESS_FILL_INSET
 		fill_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		fill_clip.clip_contents = true
 		fill_clip.size = Vector2(0.0, REWARD_PROGRESS_FILL_SIZE.y)
@@ -404,10 +427,12 @@ func _configure_reward_progress_art(progress: Control, bg_path: String, fill_pat
 		fill.position = -REWARD_PROGRESS_FILL_INSET
 	if ornate != null:
 		ornate.z_index = 2
+		ornate.position = art_offset
 		ornate.visible = false
 		ornate.modulate = Color.WHITE
 	if bg != null:
 		bg.z_index = 1
+		bg.position = art_offset
 	if fill_clip != null:
 		progress.move_child(fill_clip, 0)
 	if bg != null:
@@ -428,16 +453,18 @@ func _configure_reward_texture(texture_rect: TextureRect, texture_path: String) 
 	texture_rect.position = Vector2.ZERO
 
 
-func _refresh_reward_progress(gold: int, rep: int) -> void:
-	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(gold))
+func _refresh_reward_progress(gold: int, rep: int, max_gold_held: int = -1) -> void:
+	var progress_gold := _gold_progress_value(gold, max_gold_held)
+	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(progress_gold))
 	_set_reward_progress_fill(_rep_progress_fill_clip, _rep_progress_fill_art, _threshold_progress_ratio(rep, REP_PROGRESS_THRESHOLDS))
 
 
-func _set_gold_display(gold: int) -> void:
+func _set_gold_display(gold: int, max_gold_held: int = -1) -> void:
 	_displayed_gold_total = gold
+	_displayed_gold_progress_total = _gold_progress_value(gold, max_gold_held)
 	if _gold_label != null:
 		_gold_label.text = "金币：" + str(gold)
-	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(gold))
+	_set_reward_progress_fill(_gold_progress_fill_clip, _gold_progress_fill_art, _gold_progress_ratio(_displayed_gold_progress_total))
 
 
 func _set_reputation_display(rep: int) -> void:
@@ -458,16 +485,28 @@ func _has_pending_reward_coins() -> bool:
 	return false
 
 
+func _gold_progress_value(gold: int, max_gold_held: int = -1) -> int:
+	if max_gold_held < 0:
+		return maxi(gold, _displayed_gold_progress_total)
+	return maxi(gold, max_gold_held)
+
+
 func _set_reward_progress_fill(fill_clip: Control, fill_art: TextureRect, ratio: float) -> void:
 	if fill_clip == null:
 		return
 	var clamped := clampf(ratio, 0.0, 1.0)
-	fill_clip.position = REWARD_PROGRESS_FILL_INSET
+	fill_clip.position = _reward_progress_art_offset(fill_clip) + REWARD_PROGRESS_FILL_INSET
 	fill_clip.size = Vector2(floor(REWARD_PROGRESS_FILL_SIZE.x * clamped + 0.5), REWARD_PROGRESS_FILL_SIZE.y)
 	if fill_art != null:
 		fill_art.size = REWARD_PROGRESS_SIZE
 		fill_art.position = -REWARD_PROGRESS_FILL_INSET
 		fill_art.scale = Vector2.ONE
+
+
+func _reward_progress_art_offset(fill_clip: Control) -> Vector2:
+	if fill_clip == _rep_progress_fill_clip:
+		return REWARD_REP_PROGRESS_ART_OFFSET
+	return Vector2.ZERO
 
 
 func _gold_progress_ratio(gold: int) -> float:
@@ -558,7 +597,7 @@ func _refresh_order_groove_text() -> void:
 	if _current_order_text == "":
 		_order_bubble.text = ""
 		return
-	var text := "需求 · " + _current_order_text
+	var text := "需要 · " + _current_order_text
 	if _current_order_status_text != "":
 		text += "  ·  " + _current_order_status_text
 	_order_bubble.text = text
@@ -593,6 +632,10 @@ func _customer_texture_key(npc_id: String, outcome: String = "") -> String:
 		return _ryan_texture_key(outcome)
 	if npc_id == "mira":
 		return _mira_texture_key(outcome)
+	if npc_id == "toby":
+		return _toby_texture_key(outcome)
+	if npc_id == "grey_ledger_lady":
+		return _grey_ledger_lady_texture_key(outcome)
 	if npc_id.begins_with("regular_"):
 		return _regular_customer_texture_key(npc_id, outcome)
 	return NPC_TEXTURE_KEYS.get(npc_id, npc_id)
@@ -633,6 +676,25 @@ func _ryan_story_texture_key() -> String:
 	if _story_flag(narrative, "ryan_informed"):
 		return RYAN_TEXTURE_HESITANT
 	return RYAN_TEXTURE_NEUTRAL
+
+func _toby_texture_key(outcome: String = "") -> String:
+	if outcome == "success":
+		return TOBY_TEXTURE_WARMED
+	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		return TOBY_TEXTURE_HURT
+	var narrative = _gm.narrative if _gm != null else null
+	if _story_flag(narrative, "toby_danger_known") and not _story_flag(narrative, "toby_secured"):
+		return TOBY_TEXTURE_AFRAID
+	return TOBY_TEXTURE_NEUTRAL
+
+func _grey_ledger_lady_texture_key(outcome: String = "") -> String:
+	if outcome == "success":
+		return GREY_LEDGER_LADY_TEXTURE_SMILE
+	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		return GREY_LEDGER_LADY_TEXTURE_ASSESSING
+	if outcome in ["cracked", "threat", "revealed"]:
+		return GREY_LEDGER_LADY_TEXTURE_CRACKED
+	return GREY_LEDGER_LADY_TEXTURE_NEUTRAL
 
 func _story_flag(narrative, key: String) -> bool:
 	return narrative != null and narrative.get_var(key) == true
@@ -712,28 +774,32 @@ func _set_patience_fill_ratio(ratio: float) -> void:
 		_patience_fill_art.position = Vector2.ZERO
 		_patience_fill_art.scale = Vector2.ONE
 
-func update_top_bar(gold: int, rep: int, day: int, max_day: int) -> void:
+func update_top_bar(gold: int, rep: int, day: int, max_day: int, max_gold_held: int = -1) -> void:
 	if _is_gold_display_deferred():
-		_set_gold_display(_displayed_gold_total)
+		_set_gold_display(_displayed_gold_total, _displayed_gold_progress_total)
 	else:
-		_set_gold_display(gold)
+		_set_gold_display(gold, max_gold_held)
 	_set_reputation_display(rep)
 	_day_label.text = "第%d/%d天" % [day, max_day]
 
 
-func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int) -> void:
+func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int, previous_max_gold: int = -1, new_max_gold: int = -1) -> void:
 	var new_gold := previous_gold + earned_gold
 	var new_rep := previous_rep + earned_rep
+	var previous_progress_gold := _gold_progress_value(previous_gold, previous_max_gold)
+	var new_progress_gold := _gold_progress_value(new_gold, new_max_gold)
 	if earned_gold > 0:
 		if _deferred_gold_previous_total < 0:
 			_deferred_gold_previous_total = previous_gold
+			_deferred_gold_previous_progress_total = previous_progress_gold
 		_deferred_gold_total = new_gold
-		_set_gold_display(_displayed_gold_total if _gold_collection_apply_scheduled else previous_gold)
+		_deferred_gold_progress_total = new_progress_gold
+		_set_gold_display(_displayed_gold_total if _gold_collection_apply_scheduled else previous_gold, previous_progress_gold)
 		_spawn_reward_coins(earned_gold)
 		if not _has_pending_reward_coins() and not _gold_collection_apply_scheduled:
 			_apply_deferred_gold_display()
 	elif not _is_gold_display_deferred():
-		_set_gold_display(new_gold)
+		_set_gold_display(new_gold, new_progress_gold)
 	if earned_rep > 0:
 		_set_reputation_display(new_rep)
 		_spawn_reward_reputation_particles(earned_rep)
@@ -820,11 +886,15 @@ func _apply_deferred_gold_display() -> void:
 	var previous_gold := _deferred_gold_previous_total
 	if previous_gold < 0:
 		previous_gold = _displayed_gold_total
+	var final_progress_gold := _gold_progress_value(final_gold, _deferred_gold_progress_total)
+	var previous_progress_gold := _gold_progress_value(previous_gold, _deferred_gold_previous_progress_total)
 	_deferred_gold_total = -1
 	_deferred_gold_previous_total = -1
-	_set_gold_display(final_gold)
+	_deferred_gold_progress_total = -1
+	_deferred_gold_previous_progress_total = -1
+	_set_gold_display(final_gold, final_progress_gold)
 	_pulse_reward_label(_gold_label)
-	if _gold_progress_band(final_gold) > _gold_progress_band(previous_gold):
+	if _gold_progress_band(final_progress_gold) > _gold_progress_band(previous_progress_gold):
 		_activate_reward_ornate(_gold_progress_ornate)
 
 
@@ -942,12 +1012,12 @@ func _refresh_default_daily_menu() -> void:
 			"enabled": true,
 		}
 
-## 出口①：客人在对话气泡里用自己的口吻反应（台词含「」）。
+## 鍑哄彛鈶狅細瀹汉鍦ㄥ璇濇皵娉￠噷鐢ㄨ嚜宸辩殑鍙ｅ惢鍙嶅簲锛堝彴璇嶅惈銆屻€嶏級銆?
 func customer_say(text: String) -> void:
 	_reaction_bubble.text = text
 	_reaction_bubble.visible = text != ""
 
-## 出口②：舞台提示浮字——第三人称动作描写，淡入→停留→淡出。
+## 鍑哄彛鈶★細鑸炲彴鎻愮ず娴瓧鈥斺€旂涓変汉绉板姩浣滄弿鍐欙紝娣″叆鈫掑仠鐣欌啋娣″嚭銆?
 func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
 	_stage_caption.text = text
 	_stage_caption.add_theme_color_override("font_color", color)
@@ -958,6 +1028,30 @@ func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
 	_caption_tween.tween_property(_stage_caption, "modulate:a", 1.0, 0.3)
 	_caption_tween.tween_interval(2.5)
 	_caption_tween.tween_property(_stage_caption, "modulate:a", 0.0, 0.5)
+
+func show_inference_ready_notice() -> void:
+	if _inference_ready_notice == null:
+		return
+	if _inference_ready_notice_tween != null and _inference_ready_notice_tween.is_valid():
+		_inference_ready_notice_tween.kill()
+	_inference_ready_notice.text = "?"
+	_inference_ready_notice.visible = true
+	_inference_ready_notice.modulate = Color(1, 1, 1, 0)
+	_inference_ready_notice.scale = Vector2(0.72, 0.72)
+	_inference_ready_notice.pivot_offset = _inference_ready_notice.size * 0.5
+	_inference_ready_notice_tween = create_tween()
+	_inference_ready_notice_tween.tween_property(_inference_ready_notice, "modulate:a", 1.0, 0.18)
+	_inference_ready_notice_tween.parallel().tween_property(_inference_ready_notice, "scale", Vector2(1.18, 1.18), 0.18)
+	_inference_ready_notice_tween.tween_interval(0.75)
+	_inference_ready_notice_tween.tween_property(_inference_ready_notice, "modulate:a", 0.0, 0.45)
+	_inference_ready_notice_tween.parallel().tween_property(_inference_ready_notice, "scale", Vector2(1.36, 1.36), 0.45)
+	_inference_ready_notice_tween.tween_callback(func():
+		_inference_ready_notice.visible = false
+		_inference_ready_notice.scale = Vector2.ONE
+	)
+
+func show_recipe_discovery_notice(_product_key: String) -> void:
+	return
 
 ## 出口③：打烊按钮可用状态（有客人/pending/上菜停留中时禁用）。
 func set_close_enabled(enabled: bool) -> void:
@@ -1243,8 +1337,8 @@ func _rect_to_array(rect: Rect2) -> Array:
 func _grow_rect(rect: Rect2, padding: Vector2) -> Rect2:
 	return Rect2(rect.position - padding, rect.size + padding * 2.0)
 
-## 配方表：按 recipes.json 显示「产物 价格 ← 配料 [容器]」，让玩家能学会怎么做。
-## 需购买且未解锁的配方标灰并注明（需解锁）。
+## 閰嶆柟琛細鎸?recipes.json 鏄剧ず銆屼骇鐗?浠锋牸 鈫?閰嶆枡 [瀹瑰櫒]銆嶏紝璁╃帺瀹惰兘瀛︿細鎬庝箞鍋氥€?
+## 闇€璐拱涓旀湭瑙ｉ攣鐨勯厤鏂规爣鐏板苟娉ㄦ槑锛堥渶瑙ｉ攣锛夈€?
 func _new_brush_recipe_row() -> Dictionary:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(0.0, 36.0)
@@ -1304,7 +1398,7 @@ func _build_recipe_list() -> void:
 		var product_name: String = product_data.get("name", product_key)
 		var price: int = int(product_data.get("price", 0))
 
-		var text: String = "%s  %d金   ← %s  [%s]" % [product_name, price, "＋".join(ingr_names), container_name]
+		var text: String = "%s  %d金  -> %s  [%s]" % [product_name, price, "、".join(ingr_names), container_name]
 		if locked:
 			text += "  （需解锁）"
 
@@ -1370,6 +1464,7 @@ func _build_split_recipe_list() -> void:
 		row.set_meta("container_key", _recipe_filter_container)
 		ThemeColors.style_brush_button(row, 13)
 		ThemeColors.set_brush_selected(row, product_key == _recipe_selected_product_key)
+		_add_recipe_new_marker(row, product_key)
 		row.pressed.connect(_on_recipe_row_pressed.bind(product_key))
 		rows.add_child(row)
 
@@ -1403,15 +1498,47 @@ func _on_recipe_container_tab_pressed(tab: Button) -> void:
 
 
 func _on_recipe_row_pressed(product_key: String) -> void:
+	var cleared_new_marker := false
+	if _gm != null and _gm.craft != null and _gm.craft.has_method("is_recipe_new") \
+			and _gm.craft.has_method("clear_recipe_new") \
+			and _gm.craft.call("is_recipe_new", product_key):
+		cleared_new_marker = bool(_gm.craft.call("clear_recipe_new", product_key))
 	if product_key == _recipe_selected_product_key:
+		if cleared_new_marker:
+			_build_recipe_list()
 		return
 	_recipe_selected_product_key = product_key
 	_build_recipe_list()
 
 
+func _add_recipe_new_marker(row: Button, product_key: String) -> void:
+	if _gm == null or _gm.craft == null or not _gm.craft.has_method("is_recipe_new"):
+		return
+	if not bool(_gm.craft.call("is_recipe_new", product_key)):
+		return
+	var marker := Label.new()
+	marker.name = "NewMark"
+	marker.text = "新"
+	marker.position = Vector2(RECIPE_LEFT_COLUMN_WIDTH - 42.0, 9.0)
+	marker.size = Vector2(28.0, 22.0)
+	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(marker, 12, ThemeColors.AMBER_PRIMARY)
+	marker.add_theme_constant_override("outline_size", 2)
+	marker.add_theme_color_override("font_outline_color", Color(0.06, 0.035, 0.015, 0.92))
+	row.add_child(marker)
+
+
+func _is_recipe_discovered(product_key: String) -> bool:
+	return _gm != null and _gm.craft != null and _gm.craft.is_recipe_discovered(product_key)
+
+
 func _recipe_row_text(product_key: String) -> String:
 	var recipe: Dictionary = _gm.craft.recipes.get(product_key, {})
 	var product_data: Dictionary = _gm.craft.get_item(product_key)
+	if not _is_recipe_discovered(product_key):
+		return "???  未研制"
 	var product_name := String(product_data.get("name", product_key))
 	var price := int(product_data.get("price", 0))
 	var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
@@ -1428,6 +1555,7 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 	var container_key := String(recipe.get("container", ""))
 	var ingredients: Array = recipe.get("ingredients", [])
 	var product_data: Dictionary = _gm.craft.get_item(product_key)
+	var discovered := _is_recipe_discovered(product_key)
 	detail.set_meta("product_key", product_key)
 	detail.set_meta("container_key", container_key)
 
@@ -1456,9 +1584,16 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 	var product_slot_center := CenterContainer.new()
 	product_slot_center.name = "Center"
 	product_slot.add_child(product_slot_center)
-	var product_icon := _new_recipe_icon(product_key, product_data, Vector2(60.0, 56.0))
-	product_icon.name = "ProductIcon"
-	product_slot_center.add_child(product_icon)
+	if discovered:
+		var product_icon := _new_recipe_icon(product_key, product_data, Vector2(60.0, 56.0))
+		product_icon.name = "ProductIcon"
+		product_slot_center.add_child(product_icon)
+	else:
+		var unknown_icon := _new_recipe_label("ProductIcon", "?", 26, ThemeColors.TEXT_DIM)
+		unknown_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		unknown_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		unknown_icon.custom_minimum_size = Vector2(60.0, 56.0)
+		product_slot_center.add_child(unknown_icon)
 	header.add_child(product_slot)
 
 	var title_box := VBoxContainer.new()
@@ -1468,11 +1603,13 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 	title_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	title_box.add_theme_constant_override("separation", 2)
 	header.add_child(title_box)
-	var title_label := _new_recipe_label("Title", String(product_data.get("name", product_key)), 16, ThemeColors.AMBER_PRIMARY)
+	var title_text := String(product_data.get("name", product_key)) if discovered else "???"
+	var title_label := _new_recipe_label("Title", title_text, 16, ThemeColors.AMBER_PRIMARY)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	title_label.custom_minimum_size = Vector2(180.0, 22.0)
 	title_box.add_child(title_label)
-	title_box.add_child(_new_recipe_label("Meta", "售价 %d金 · %s" % [int(product_data.get("price", 0)), String(CONTAINER_NAMES.get(container_key, container_key))], 12, ThemeColors.TEXT_SUBTITLE))
+	var meta_text := "售价 %d金 · %s" % [int(product_data.get("price", 0)), String(CONTAINER_NAMES.get(container_key, container_key))] if discovered else "%s · 未研制" % String(CONTAINER_NAMES.get(container_key, container_key))
+	title_box.add_child(_new_recipe_label("Meta", meta_text, 12, ThemeColors.TEXT_SUBTITLE))
 	title_box.add_child(_new_recipe_label("Status", _recipe_status_text(product_key, recipe), 12, ThemeColors.TEXT_LIGHT))
 
 	body.add_child(_new_recipe_label("IngredientTitle", "材料", 13, ThemeColors.AMBER_PRIMARY))
@@ -1482,17 +1619,23 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 	ingredient_grid.add_theme_constant_override("h_separation", 6)
 	ingredient_grid.add_theme_constant_override("v_separation", 6)
 	body.add_child(ingredient_grid)
-	for ingredient in ingredients:
-		ingredient_grid.add_child(_new_recipe_ingredient_cell(String(ingredient)))
+	for index in ingredients.size():
+		if discovered:
+			ingredient_grid.add_child(_new_recipe_ingredient_cell(String(ingredients[index])))
+		else:
+			ingredient_grid.add_child(_new_unknown_recipe_ingredient_cell(index))
 
-	body.add_child(_new_recipe_instruction_panel(String(RECIPE_CONTAINER_INSTRUCTIONS.get(container_key, ""))))
+	var instruction := String(RECIPE_CONTAINER_INSTRUCTIONS.get(container_key, "")) if discovered else "继续尝试%s里的材料组合。" % String(CONTAINER_NAMES.get(container_key, container_key))
+	body.add_child(_new_recipe_instruction_panel(instruction))
 
 
 func _recipe_status_text(product_key: String, recipe: Dictionary) -> String:
+	if not _is_recipe_discovered(product_key):
+		return "状态：未研制"
 	var locked: bool = bool(recipe.get("requires_purchase", false)) and not _gm.craft.is_recipe_unlocked(product_key)
 	if locked:
-		return "状态 需商店解锁"
-	return "状态 已掌握"
+		return "状态：需商店解锁"
+	return "状态：已掌握"
 
 
 func _new_recipe_label(label_name: String, text: String, font_size: int, color: Color) -> Label:
@@ -1575,6 +1718,29 @@ func _new_recipe_ingredient_cell(item_key: String) -> PanelContainer:
 	box.add_child(icon)
 
 	var label := _new_recipe_label("Name", String(item_data.get("name", item_key)), 10, ThemeColors.TEXT_LIGHT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(72.0, 24.0)
+	box.add_child(label)
+	return cell
+
+
+func _new_unknown_recipe_ingredient_cell(index: int) -> PanelContainer:
+	var cell := _new_recipe_slot_panel("Ingredient_Unknown_%d" % index, Vector2(88.0, 80.0))
+	cell.set_meta("item_key", "")
+
+	var box := VBoxContainer.new()
+	box.name = "Body"
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 2)
+	cell.add_child(box)
+
+	var icon := _new_recipe_label("Icon", "?", 18, ThemeColors.TEXT_DIM)
+	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	icon.custom_minimum_size = Vector2(32.0, 30.0)
+	box.add_child(icon)
+
+	var label := _new_recipe_label("Name", "???", 10, ThemeColors.TEXT_LIGHT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.custom_minimum_size = Vector2(72.0, 24.0)
 	box.add_child(label)

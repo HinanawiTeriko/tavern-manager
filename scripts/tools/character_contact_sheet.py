@@ -34,8 +34,12 @@ TEXT_COLOR = (180, 168, 144, 255)
 
 
 def backed_native_preview(native: Image.Image) -> Image.Image:
-    preview = native.convert("RGBA").resize(NATIVE_PREVIEW_SIZE, Image.Resampling.NEAREST)
-    out = Image.new("RGBA", NATIVE_PREVIEW_SIZE, PANEL_BG)
+    preview_size = (
+        native.width * NATIVE_PREVIEW_SCALE,
+        native.height * NATIVE_PREVIEW_SCALE,
+    )
+    preview = native.convert("RGBA").resize(preview_size, Image.Resampling.NEAREST)
+    out = Image.new("RGBA", preview_size, PANEL_BG)
     out.alpha_composite(preview, (0, 0))
     return out
 
@@ -63,8 +67,8 @@ def make_character_contact_sheet(
     row_count: int = 2,
     column_count: int = 3,
 ) -> Image.Image:
-    if row_count < 1 or row_count > 2:
-        raise ValueError(f"character contact sheet supports 1 or 2 rows, got {row_count}")
+    if row_count < 1 or row_count > 4:
+        raise ValueError(f"character contact sheet supports 1 to 4 rows, got {row_count}")
     if column_count < 1 or column_count > 4:
         raise ValueError(f"character contact sheet supports 1 to 4 columns, got {column_count}")
     positions = _grid_positions(row_count, column_count)
@@ -86,7 +90,8 @@ def make_character_contact_sheet(
     for index, (label, native) in enumerate(entries):
         x, y = positions[index]
         out.alpha_composite(backed_native_preview(native), (x, y))
-        draw.text((x, y + NATIVE_PREVIEW_SIZE[1] + 6), label, fill=TEXT_COLOR)
+        label_y = y + native.height * NATIVE_PREVIEW_SCALE + 6
+        draw.text((x, label_y), label, fill=TEXT_COLOR)
 
     return out
 

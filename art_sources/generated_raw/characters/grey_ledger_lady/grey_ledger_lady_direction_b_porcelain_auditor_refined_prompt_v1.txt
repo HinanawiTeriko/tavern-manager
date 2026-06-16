@@ -1,0 +1,45 @@
+Use the displayed B porcelain auditor image as a loose visual reference, but redesign it into a stronger main antagonist reference.
+
+Use case: stylized-concept
+Asset type: refined raw character bust reference for a pixel-art tavern NPC antagonist pipeline
+Primary request: create one refined Grey Ledger Lady design based on direction B: a porcelain homunculus audit doll, beautiful, polite, uncanny, and clearly powerful enough to be the story's main boss.
+
+Strict format:
+- one adult female humanoid fantasy character only, centered bust portrait
+- flat solid #00ff00 chroma-key background, perfectly uniform, no texture, no shadow, no floor plane
+- show head, shoulders, chest, waist, and belt/upper hips only
+- same camera distance and body scale as tavern NPC busts like Ryan, Toby, and Mira: readable face and shoulders, not a fashion full-body pose
+- normal natural shoulder width, no oversized shoulder pads, no broad armored silhouette, no giant square shoulders
+- centered with generous padding, no cropping, no frame, no UI, no labels, no readable text, no watermark
+
+Refinement goals from direction B:
+- keep the porcelain homunculus / artificial legal auditor idea
+- keep black lacquer hair and pale porcelain skin, but make the face more mask-like and uncanny
+- reduce ordinary office-lady / black suit feeling
+- make the outfit feel like a custom legal construct uniform: ceremonial audit collar, compact black tabard, brass key-core at the throat, clean geometric seam lines
+- make her boss identity clearer without adding magic effects or floating symbols
+
+Character design:
+- species: adult porcelain homunculus legal auditor, made to record debt and certify contracts
+- skin: smooth ivory porcelain, a few visible gold-filled hairline cracks on cheek and neck, not too many
+- eyes: dark glass or dull amber doll eyes, calm and unreadable
+- mouth: tiny painted professional smile, polite but lifeless
+- hair: glossy black lacquer hair in a compact sculptural bun, straight blunt fringe or asymmetric cheek locks; no short silver hair, no Mira bob
+- clothing: black audit tabard over warm parchment underlayer, natural shoulder line, high collar, small brass key-core at throat, narrow red wax cord, simple belt
+- props: one compact black ledger tablet held low at the waist, one brass seal stamp or key-ring; avoid a huge book blocking the torso
+- silhouette: compact, elegant, controlled, readable at 128x160; more like a legal construct than a fashion portrait
+
+Style target:
+- game character bust source for pixel-art conversion, crisp anime-fantasy character art with thick dark outlines
+- large readable silhouette, chunky simple shapes, limited warm dungeon palette
+- low-density clothing detail, few folds, few accessories, no painterly micro-detail
+- not polished high-resolution illustration, not glossy fashion art, not realistic portrait
+- designed to survive downscaling to 128x160 native and 512x640 runtime
+
+Hard avoid:
+- no short silver hair, no glasses, no blue merchant coat, no Mira-like silhouette
+- no full body, no thighs, no knees, no long coat tails
+- no floating pages, no magical symbols, no glowing runes
+- no dense lace, no many buttons, no many thin chains, no readable text, no logo
+- no oversized shoulders, no giant sleeves, no ordinary modern office suit
+- do not use #00ff00 anywhere on the character
