@@ -1161,6 +1161,9 @@ func _refresh_ledger_hint() -> void:
 
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
 	var bar = get_node_or_null("BarWorkspace")
+	if bar != null and bar.has_method("bind_shortcut_at_position"):
+		if bar.bind_shortcut_at_position(item_key, global_position):
+			return
 	if bar != null and bar.has_method("spawn_inventory_item_at"):
 		bar.spawn_inventory_item_at(item_key, global_position)
 

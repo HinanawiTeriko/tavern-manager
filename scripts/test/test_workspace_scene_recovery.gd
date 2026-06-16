@@ -16,6 +16,7 @@ func _ready() -> void:
 	await _test_desk_items_released_on_open_inventory_overlay_return_only_backpack_items()
 	await _test_material_drop_on_customer_area_stays_on_desk()
 	await _test_inventory_overlay_lists_and_drop()
+	await _test_inventory_drop_binds_shortcut_slot()
 	await _test_shortcut_drag_starts_above_table_baseline()
 	await _test_document_overlay_opens_ledger()
 	await _test_work_surface_ledger_can_be_dragged()
@@ -502,6 +503,42 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 		if textured_item != null:
 			textured_item.queue_free()
 	gm.remove_from_inventory("sleep_powder", 1)
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_inventory_drop_binds_shortcut_slot() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.add_to_inventory("north_sour_grape", 1)
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	bar._init_material_slots()
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var slot7 := tavern.get_node("ShortcutBar/Slot7") as Control
+	var slot_center := slot7.global_position + slot7.size * 0.5
+	var before_items: int = items.get_child_count()
+
+	_ok(bar.has_method("bind_shortcut_at_position"), "BarWorkspace exposes shortcut drop binding")
+	tavern._on_inventory_item_dropped("north_sour_grape", slot_center)
+	await get_tree().process_frame
+
+	var bindings: Array = gm.get_shortcut_bindings()
+	_ok(bindings[7] == "north_sour_grape", "inventory drop on slot7 binds the rare material")
+	_ok(bar._slot_item_keys.size() > 7 and bar._slot_item_keys[7] == "north_sour_grape",
+		"slot7 renders the bound rare material")
+	_ok(gm.inventory_sys.get_count("north_sour_grape") == 1, "binding does not consume inventory")
+	_ok(items.get_child_count() == before_items, "binding does not spawn a desk item")
+
+	var spawned := bar.spawn_inventory_item_at("north_sour_grape", slot_center + Vector2(0.0, -120.0))
+	_ok(spawned != null, "bound rare material can still spawn as a desk item")
+	_ok(gm.inventory_sys.get_count("north_sour_grape") == 0, "spawning consumes inventory, not binding")
+	if spawned != null:
+		spawned.queue_free()
 	tavern.queue_free()
 	await get_tree().process_frame
 

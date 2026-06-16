@@ -154,10 +154,8 @@ func _init_material_slots() -> void:
 	_slot_rects.clear()
 	_slot_item_keys.clear()
 	var keys: Array = []
-	for k in _gm.inventory.keys():
-		if _gm.inventory_sys.is_material(k):
-			keys.append(k)
-	keys.sort()
+	if _gm != null and _gm.has_method("get_shortcut_bindings"):
+		keys = _gm.get_shortcut_bindings()
 	for i in range(MAX_SLOTS):
 		var slot := _shortcut_bar.get_node_or_null("Slot%d" % i) as ColorRect
 		if slot == null:
@@ -190,6 +188,21 @@ func _init_material_slots() -> void:
 			icon.texture = _gm.try_load_material_icon(key)
 		if count != null:
 			count.text = str(_gm.inventory_sys.get_count(key))
+
+
+func bind_shortcut_at_position(item_key: String, global_position: Vector2) -> bool:
+	if _gm == null or not _gm.has_method("bind_shortcut_item"):
+		return false
+	if _slot_rects.is_empty():
+		_init_material_slots()
+	for i in range(_slot_rects.size()):
+		if _slot_rects[i].has_point(global_position):
+			var bound: bool = _gm.bind_shortcut_item(i, item_key)
+			if bound:
+				_init_material_slots()
+				_gm.play_audio_event("drop")
+			return bound
+	return false
 
 
 func _input(event: InputEvent) -> void:
