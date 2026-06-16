@@ -127,8 +127,11 @@
       "cost": 1,
       "materials": ["herb"],
       "rewards": ["herb"],
+      "stableReward": "herb",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "cave_mushroom", "chance": 0.35, "pityAfterMisses": 2 },
       "dayRewards": { "2": ["sleep_powder"] },
-      "description": "潮湿的洞穴林地，生长着各种菌类和草药。",
+      "description": "潮湿的洞穴林地里长着常用草药，腐木背面偶尔能找到肥厚的洞窟菌。",
       "repeatable": true,
       "result": "你从林地带回了可用的植物。"
     },
@@ -141,9 +144,12 @@
       "cost": 2,
       "materials": ["meat_raw"],
       "rewards": ["meat_raw"],
-      "description": "地下暗河旁，小型野兽和鱼类出没。",
+      "stableReward": "meat_raw",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "rock_lizard_meat", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地下暗河旁有小型野兽和鱼类，温热石缝里偶尔能撞见岩蜥。",
       "repeatable": true,
-      "result": "你从暗河沿岸带回了生肉。"
+      "result": "你从暗河沿岸带回了肉食。"
     },
     {
       "id": "grape_trellis",
@@ -154,7 +160,10 @@
       "cost": 1,
       "materials": ["grape"],
       "rewards": ["grape"],
-      "description": "地牢里罕见的天然葡萄藤。",
+      "stableReward": "grape",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "north_sour_grape", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地牢里罕见的葡萄藤架，深处偶尔结着酸涩的北路野葡萄。",
       "repeatable": true,
       "result": "你采到了一篮葡萄。"
     },
@@ -167,7 +176,10 @@
       "cost": 1,
       "materials": ["ale"],
       "rewards": ["ale"],
-      "description": "地牢入口附近的农庄，可以交换麦芽。",
+      "stableReward": "ale",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "black_malt", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地牢入口附近的农庄磨坊能换到麦芽，旧仓里偶尔翻出颜色更深的黑麦芽。",
       "repeatable": true,
       "result": "你从农庄带回了麦芽。"
     },

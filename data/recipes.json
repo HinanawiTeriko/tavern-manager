@@ -15,6 +15,17 @@
     "ingredients": ["herb"],
     "container": "barrel"
   },
+  "old_road_wine": {
+    "name": "旧路酸葡萄酒",
+    "ingredients": ["north_sour_grape"],
+    "container": "barrel",
+    "memory_for": { "mira": "day4_road_story" }
+  },
+  "miner_dark_ale": {
+    "name": "矿工黑啤",
+    "ingredients": ["black_malt"],
+    "container": "barrel"
+  },
   "herbal_ale": {
     "name": "草药麦酒",
     "ingredients": ["ale", "herb"],
@@ -39,6 +50,11 @@
     "container": "grill",
     "unlock_day": 2
   },
+  "rock_lizard_steak": {
+    "name": "岩蜥烤排",
+    "ingredients": ["rock_lizard_meat"],
+    "container": "grill"
+  },
   "meat_sand": {
     "name": "肉夹面包",
     "ingredients": ["flour", "meat_raw"],
@@ -50,6 +66,11 @@
     "ingredients": ["meat_raw", "ale"],
     "container": "pot",
     "requires_purchase": true
+  },
+  "cave_mushroom_stew": {
+    "name": "菌菇肉汤",
+    "ingredients": ["meat_raw", "cave_mushroom"],
+    "container": "pot"
   },
   "herb_broth": {
     "name": "草药清汤",
