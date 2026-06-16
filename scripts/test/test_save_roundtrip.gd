@@ -22,6 +22,7 @@ func _ready() -> void:
 	_test_old_save_without_day_map_state_does_not_replay_seen_locations()
 	await _test_day_map_reveal_sequence_persists_after_initial_snapshot()
 	await _test_day_map_restores_saved_camera_view_without_new_reveal()
+	_test_shortcut_bindings_roundtrip()
 	_test_new_game_resets()
 	_finish()
 
@@ -298,6 +299,26 @@ func _test_apply_old_save_merges_new_narrative_defaults() -> void:
 		"old save restore fills missing toby_secured default")
 	_ok(gm.narrative.dialogue_vars.get("ryan_ending", "") == "uninformed_fallen",
 		"old save restore preserves existing Ryan ending")
+
+
+func _test_shortcut_bindings_roundtrip() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	_ok(gm.bind_shortcut_item(0, "north_sour_grape"), "test setup binds rare grape")
+	_ok(gm.bind_shortcut_item(5, "black_malt"), "test setup binds black malt")
+	var snap: Dictionary = gm._capture_save_state()
+	_ok(snap.has("shortcut_bindings"), "save snapshot includes shortcut bindings")
+	gm.bind_shortcut_item(0, "ale")
+	gm.bind_shortcut_item(5, "grape")
+	gm._apply_save_state(snap)
+	var restored: Array = gm.get_shortcut_bindings()
+	_ok(restored[0] == "north_sour_grape", "slot0 binding restored")
+	_ok(restored[5] == "black_malt", "slot5 binding restored")
+	gm._apply_save_state(gm._default_new_game_state())
+	var defaults: Array = gm.get_shortcut_bindings()
+	_ok(defaults[0] == "ale" and defaults[1] == "grape", "new game restores default shortcut bindings")
+	gm.save_sys.clear()
+
 
 func _test_reset_tutorial_progress_clears_runtime_and_save_snapshot() -> void:
 	var gm = _gm()

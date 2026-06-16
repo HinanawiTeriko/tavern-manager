@@ -24,8 +24,13 @@ var audio: AudioManager
 var settings: SettingsManager
 
 # Inventory
+const DEFAULT_SHORTCUT_BINDINGS: Array[String] = [
+	"ale", "grape", "flour", "meat_raw", "herb", "", "", "", "", ""
+]
+
 var inventory_sys: InventorySystem
 var inventory: Dictionary = {}
+var shortcut_bindings: Array[String] = []
 var current_ledger_data: LedgerData = null
 
 # Dialogue state
@@ -135,6 +140,7 @@ func _ready() -> void:
 	inventory_sys.load_items(craft.items)
 	inventory_sys.set_initial(_load_initial_inventory())
 	inventory = inventory_sys.materials
+	shortcut_bindings = _default_shortcut_bindings()
 	workspace = WorkspaceSystem.new()
 	documents = DocumentSystem.new()
 	documents.load_data()
@@ -1203,6 +1209,57 @@ func notify_inventory_changed() -> void:
 		narrative.set_var("has_sleep_powder", true)
 	inventory_changed.emit()
 
+func _default_shortcut_bindings() -> Array[String]:
+	var result: Array[String] = []
+	for key in DEFAULT_SHORTCUT_BINDINGS:
+		result.append(String(key))
+	return result
+
+func get_shortcut_bindings() -> Array[String]:
+	if shortcut_bindings.size() != 10:
+		shortcut_bindings = _normalized_shortcut_bindings(shortcut_bindings)
+	return shortcut_bindings.duplicate()
+
+func can_bind_shortcut_item(item_key: String) -> bool:
+	if item_key == "" or inventory_sys == null:
+		return false
+	if inventory_sys.is_material(item_key):
+		return true
+	return seasoning != null and seasoning.is_seasoning(item_key)
+
+func bind_shortcut_item(slot_index: int, item_key: String) -> bool:
+	if slot_index < 0 or slot_index >= 10:
+		return false
+	if not can_bind_shortcut_item(item_key):
+		return false
+	shortcut_bindings = _normalized_shortcut_bindings(shortcut_bindings)
+	for i in range(shortcut_bindings.size()):
+		if i != slot_index and shortcut_bindings[i] == item_key:
+			shortcut_bindings[i] = ""
+	shortcut_bindings[slot_index] = item_key
+	notify_inventory_changed()
+	return true
+
+func clear_shortcut_binding(slot_index: int) -> bool:
+	if slot_index < 0 or slot_index >= 10:
+		return false
+	shortcut_bindings = _normalized_shortcut_bindings(shortcut_bindings)
+	shortcut_bindings[slot_index] = ""
+	notify_inventory_changed()
+	return true
+
+func _normalized_shortcut_bindings(raw: Array) -> Array[String]:
+	var result: Array[String] = []
+	for i in range(10):
+		var key := ""
+		if i < raw.size():
+			key = String(raw[i])
+		if key != "" and can_bind_shortcut_item(key):
+			result.append(key)
+		else:
+			result.append("")
+	return result
+
 func play_audio_event(event_key: String) -> bool:
 	if audio == null:
 		return false
@@ -1553,6 +1610,7 @@ func _capture_save_state() -> Dictionary:
 			"tavern_level": economy.tavern_level,
 		},
 		"inventory": inventory_sys.materials.duplicate(),
+		"shortcut_bindings": get_shortcut_bindings(),
 		"documents": documents.capture_state(),
 		"day_map": day_map.capture_state() if day_map != null else {},
 		"inference": inference.capture_state() if inference != null else {},
@@ -1602,6 +1660,7 @@ func _apply_save_state(data: Dictionary) -> void:
 	economy.rep_today = 0
 
 	inventory_sys.set_initial(data.get("inventory", {}))
+	shortcut_bindings = _normalized_shortcut_bindings(data.get("shortcut_bindings", _default_shortcut_bindings()))
 
 	documents.restore_state(data.get("documents", {}))
 	_day_map_state_missing_from_save = not data.has("day_map")
@@ -1704,6 +1763,7 @@ func _default_new_game_state() -> Dictionary:
 	return {
 		"economy": {"current_day": 1, "gold": 0, "max_gold_held": 0, "reputation": 0, "tavern_level": 1},
 		"inventory": _load_initial_inventory(),
+		"shortcut_bindings": _default_shortcut_bindings(),
 		"documents": {"owned": ["ledger"], "read": {}, "archived": [], "ledger_entries": []},
 		"day_map": {"current_day": 1, "revealed": [], "announced_postings": {}},
 		"inference": {"owned_clues": [], "placements": {}, "solved": []},
