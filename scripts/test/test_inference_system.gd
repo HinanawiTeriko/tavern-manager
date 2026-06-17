@@ -180,6 +180,10 @@ func _test_grey_ledger_inference_rules() -> void:
 	_ok(_has_available_question(sys, "grey_same_batch"),
 		"grey same-batch question appears after Ryan/Toby clearing clues")
 	var batch_question: Dictionary = sys.get_question("grey_same_batch")
+	_ok(String(batch_question.get("title", "")).contains("莱恩") and String(batch_question.get("title", "")).contains("托比"),
+		"grey same-batch title names the two cases being joined")
+	_ok(String(batch_question.get("hint", "")).contains("G-17") and String(batch_question.get("hint", "")).contains("结案顺序"),
+		"grey same-batch hint points at batch number and closure order")
 	_ok(not String(batch_question.get("text", "")).contains("都被 ______ 盖进"),
 		"grey same-batch wording does not make the payout-closure clue read like the thing doing the covering")
 	var batch_a: Dictionary = sys.try_place("grey_same_batch", "ryan_case", "grey_ryan_case_number")
@@ -197,10 +201,16 @@ func _test_grey_ledger_inference_rules() -> void:
 	sys.try_place("grey_payout_method", "missing", "grey_missing_page")
 	var payout: Dictionary = sys.try_place("grey_payout_method", "closure", "grey_payout_closure")
 	_ok(bool(payout.get("solved", false)), "grey payout-method solves")
+	_ok(String(payout.get("conclusion", "")).contains("先决定赔付") and String(payout.get("conclusion", "")).contains("再把事故补成已结"),
+		"grey payout-method conclusion explains the order plainly")
 
 	_ok(_has_available_question(sys, "grey_mira_supply_link"),
 		"grey Mira supply-link question appears after payout and Mira prerequisites")
 	var supply_question: Dictionary = sys.get_question("grey_mira_supply_link")
+	_ok(String(supply_question.get("title", "")).contains("米拉") and String(supply_question.get("title", "")).contains("灰账"),
+		"grey Mira supply title names the character and account link")
+	_ok(String(supply_question.get("hint", "")).contains("米拉") and String(supply_question.get("hint", "")).contains("托比"),
+		"grey Mira supply hint tells the player this joins Mira to Toby's case")
 	_ok(String(supply_question.get("text", "")).contains("托比那份 ______"),
 		"grey Mira supply-link wording fits the renamed escort clue")
 	sys.try_place("grey_mira_supply_link", "supply", "grey_supply_stamp")
@@ -211,6 +221,8 @@ func _test_grey_ledger_inference_rules() -> void:
 	_ok(_has_available_question(sys, "grey_public_account"),
 		"grey public-account question appears after all grey subquestions")
 	var public_question: Dictionary = sys.get_question("grey_public_account")
+	_ok(String(public_question.get("hint", "")).contains("莱恩") and String(public_question.get("hint", "")).contains("托比") and String(public_question.get("hint", "")).contains("米拉"),
+		"grey public-account hint names all three lines")
 	_ok(not (public_question.get("requiresClues", []) as Array).has("grey_closure_method"),
 		"grey public-account does not require a method clue that is not fillable in this final question")
 	var public_a: Dictionary = sys.try_place("grey_public_account", "ryan_case", "grey_supply_stamp")
@@ -224,6 +236,8 @@ func _test_grey_ledger_inference_rules() -> void:
 		"grey public-account accepts Ryan case number in a later public evidence slot")
 	var public_result: Dictionary = sys.try_place("grey_public_account", "mira_stamp", "grey_blacktooth_batch")
 	_ok(bool(public_result.get("solved", false)), "grey public-account solves with its three public evidence clues in any order")
+	_ok(String(public_result.get("conclusion", "")).contains("三条线") and String(public_result.get("conclusion", "")).contains("公开账本"),
+		"grey public-account conclusion states why the route can no longer be sealed")
 	_ok((public_result.get("unlockFlags", []) as Array).has("grey_public_account_known"),
 		"grey public-account unlocks final route flag")
 

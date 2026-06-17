@@ -11,6 +11,8 @@ func _ready() -> void:
 	_test_grey_route_endings()
 	_test_previous_line_endings_shape_evelyn_pressure()
 	_test_evelyn_dialogue_expression_cues()
+	_test_evelyn_role_and_dialogue_clarity()
+	_test_grey_evidence_text_clarity()
 	_finish()
 
 
@@ -218,6 +220,72 @@ func _test_evelyn_dialogue_expression_cues() -> void:
 	for pressure in ["living_witnesses", "paper_public", "damaged_amendment", "cold_amendment"]:
 		_ok(day20_post.contains('evelyn_pressure == "' + pressure + '"'),
 			"Day20 Evelyn post dialogue branches on " + pressure)
+
+
+func _test_evelyn_role_and_dialogue_clarity() -> void:
+	var npc_text := FileAccess.get_file_as_string("res://data/npcs.json")
+	_ok(npc_text.contains("封存事故、赔付和失踪记录"),
+		"Evelyn NPC description names what her grey-ledger work does")
+	_ok(npc_text.contains("不是所有清账都等于真相"),
+		"Evelyn NPC description exposes her moral contradiction")
+
+	var day5_pre := FileAccess.get_file_as_string("res://dialogue/evelyn_day5.pre.dialogue")
+	_ok(day5_pre.contains("公会清算人"), "Day5 introduces Evelyn's guild clearer role")
+	_ok(day5_pre.contains("先到的赔付") and day5_pre.contains("活人撑过今晚"),
+		"Day5 explains why Evelyn sees fast settlement as mercy")
+
+	var day8_pre := FileAccess.get_file_as_string("res://dialogue/evelyn_day8.pre.dialogue")
+	_ok(day8_pre.contains("批次号") and day8_pre.contains("旧账"),
+		"Day8 links Blacktooth to old ledger batches")
+
+	var day13_pre := FileAccess.get_file_as_string("res://dialogue/evelyn_day13.pre.dialogue")
+	_ok(day13_pre.contains("莱恩、托比和米拉"),
+		"Day13 explicitly names the three lines in Evelyn's audit")
+	_ok(day13_pre.contains("赔付登记处") and day13_pre.contains("先赔付、后结案"),
+		"Day13 gives the first audit target and the ordering question")
+	_ok(day13_pre.contains("我只能给你入口"),
+		"Day13 explains why Evelyn points without confessing")
+
+	var day20_pre := FileAccess.get_file_as_string("res://dialogue/evelyn_day20.pre.dialogue")
+	_ok(day20_pre.contains("证据不够") and day20_pre.contains("封存"),
+		"Day20 pre-dialogue names the sealed-account condition")
+	_ok(day20_pre.contains("只够证明几处错账") and day20_pre.contains("改账"),
+		"Day20 pre-dialogue names the amended-account condition")
+	_ok(day20_pre.contains("三条线能公开对上") and day20_pre.contains("公开账本"),
+		"Day20 pre-dialogue names the public-account condition")
+
+	var day20_post := FileAccess.get_file_as_string("res://dialogue/evelyn_day20.post.dialogue")
+	_ok(day20_post.contains("莱恩、托比和米拉") and day20_post.contains("同一页"),
+		"Day20 public route explains the three-line proof")
+	_ok(day20_post.contains("只能改几笔") or day20_post.contains("几处账面错误"),
+		"Day20 amended route explains the partial proof")
+	_ok(day20_post.contains("证据不够") and day20_post.contains("照旧封存"),
+		"Day20 sealed route explains the failed proof")
+
+
+func _test_grey_evidence_text_clarity() -> void:
+	var documents_text := FileAccess.get_file_as_string("res://data/documents.json")
+	for phrase in [
+		"这证明莱恩不是单独归档",
+		"这证明灰账会先决定赔付",
+		"这证明缺页不是丢失",
+		"这证明托比被放进同一批",
+		"这证明灰契能把人名、事故赔付和保证金合成已结账",
+		"这证明莱恩案卷按赔付即结案处理",
+		"这证明托比的护送被改名",
+		"这证明米拉的协议也接进灰账",
+	]:
+		_ok(documents_text.contains(phrase), "grey document explains proof: " + phrase)
+
+	var locations_text := FileAccess.get_file_as_string("res://data/locations.json")
+	_ok(locations_text.contains("第一站查顺序"),
+		"payout office location text frames it as the first audit step")
+	_ok(locations_text.contains("亲手压出灰契痕迹"),
+		"clearing table location text frames the physical scene as proof production")
+	_ok(locations_text.contains("托比的名字怎样被改进临时人名栏"),
+		"Blacktooth ledger location text names the renamed-escort question")
+	_ok(locations_text.contains("米拉的旧供应协议是否也接进同一套灰契"),
+		"Mira supply copy location text names the final link question")
 
 
 func _find_by_id(entries: Array, id: String) -> Dictionary:
