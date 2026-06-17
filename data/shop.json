@@ -10,6 +10,7 @@
     { "key": "herbal_ale", "price": 20 },
     { "key": "spiced_wine", "price": 20 },
     { "key": "meat_sand", "price": 30 },
+    { "key": "herb_broth", "price": 20 },
     { "key": "meat_stew", "price": 40 }
   ],
   "abilities": [

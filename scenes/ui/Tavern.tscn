@@ -143,12 +143,13 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="CustomerName" type="Label" parent="CustomerArea"]
+visible = false
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 400.0
 offset_bottom = 24.0
-text = "等待中……"
+text = ""
 horizontal_alignment = 1
 
 [node name="OrderBubble" type="Label" parent="CustomerArea"]

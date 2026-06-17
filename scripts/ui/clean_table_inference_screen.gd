@@ -53,6 +53,7 @@ const INFERENCE_INK_COLOR := Color(0.18, 0.09, 0.035)
 const OBJECTION_INK_COLOR := Color(0.58, 0.08, 0.035)
 const CONCLUSION_NOTE_WIDTH := 276.0
 const CONCLUSION_NOTE_TEXT_WIDTH := 260.0
+const BLANK_DROP_HIT_PADDING := Vector2(24.0, 18.0)
 
 @onready var _background: ColorRect = $Background
 @onready var _tabletop_art: TextureRect = $TabletopArt
@@ -83,6 +84,7 @@ func _ready() -> void:
 	_apply_static_style()
 	_extinguish_btn.pressed.connect(_on_extinguish_pressed)
 	_refresh()
+	call_deferred("_maybe_trigger_inference_tutorial")
 
 
 func get_current_question_id() -> String:
@@ -96,6 +98,7 @@ func place_clue_for_test(blank_id: String, clue_id: String) -> Dictionary:
 func _refresh() -> void:
 	_render_clues()
 	_render_current_question()
+	_refresh_public_account_gap_hint()
 
 
 func _render_clues() -> void:
@@ -195,12 +198,28 @@ func _release_clue_word(global_mouse_position: Vector2) -> Dictionary:
 
 
 func _blank_at_global_position(global_position: Vector2) -> Control:
+	var best_blank: Control = null
+	var best_distance := 1.0e20
 	for child in _book_area.get_children():
 		if String(child.name).begins_with("Blank_") and child is Control:
 			var blank := child as Control
-			if Rect2(blank.global_position, blank.size).has_point(global_position):
-				return blank
-	return null
+			if _blank_drop_hit_rect(blank).has_point(global_position):
+				var blank_rect := blank.get_global_rect()
+				var center := blank_rect.position + blank_rect.size * 0.5
+				var distance := center.distance_squared_to(global_position)
+				if best_blank == null or distance < best_distance:
+					best_blank = blank
+					best_distance = distance
+	return best_blank
+
+
+func _blank_drop_hit_rect(blank: Control) -> Rect2:
+	var visible_rect := blank.get_global_rect()
+	var expanded := Rect2(
+		visible_rect.position - BLANK_DROP_HIT_PADDING,
+		visible_rect.size + BLANK_DROP_HIT_PADDING * 2.0
+	)
+	return expanded.intersection(_book_area.get_global_rect())
 
 
 func _set_clue_word_position(word: Control, target_position: Vector2, store: bool) -> void:
@@ -261,6 +280,41 @@ func _ensure_question_title() -> Label:
 	title.add_theme_constant_override("outline_size", 2)
 	title.add_theme_color_override("font_outline_color", Color(0.95, 0.73, 0.42, 0.35))
 	return title
+
+
+func _refresh_public_account_gap_hint() -> void:
+	var hint := _ensure_public_account_gap_hint()
+	hint.visible = false
+	hint.text = ""
+	if _gm == null or _gm.economy == null:
+		return
+	if int(_gm.economy.current_day) < 20:
+		return
+	if not _gm.has_method("get_evelyn_public_account_gap_summary"):
+		return
+	var text := String(_gm.get_evelyn_public_account_gap_summary())
+	if text == "":
+		return
+	hint.text = text
+	hint.visible = true
+
+
+func _ensure_public_account_gap_hint() -> Label:
+	var hint := _book_area.get_node_or_null("PublicAccountGapHint") as Label
+	if hint == null:
+		hint = Label.new()
+		hint.name = "PublicAccountGapHint"
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_book_area.add_child(hint)
+	hint.position = Vector2(58.0, 436.0)
+	hint.size = Vector2(396.0, 58.0)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.clip_text = true
+	hint.z_index = 4
+	_style_label(hint, 13, ThemeColors.AMBER_PRIMARY)
+	return hint
 
 
 func _merged_render_placements(real_placements: Dictionary) -> Dictionary:
@@ -822,6 +876,32 @@ func _paper_fallback(fill: Color, border: Color) -> StyleBoxFlat:
 	style.border_width_right = 2
 	style.border_width_bottom = 3
 	return style
+
+
+func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
+	if group_key != "inference":
+		return {}
+	return {
+		"ClueArea": _control_screen_rect(_clue_area),
+		"BookArea": _control_screen_rect(_book_area),
+		"ExtinguishBtn": _control_screen_rect(_extinguish_btn),
+	}
+
+
+func _maybe_trigger_inference_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active or tm.first_inference_shown:
+		return
+	tm.first_inference_shown = true
+	tm._save_state()
+	tm.start_tutorial("inference", get_tutorial_highlight_rects("inference"))
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 
 
 func _on_extinguish_pressed() -> void:

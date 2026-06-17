@@ -8,6 +8,7 @@ func _ready() -> void:
 	var gm = get_node("/root/GameManager")
 	_test_guest_entries_grow_and_capture_resolution()
 	_test_game_manager_builds_ledger_data_with_guest_entries(gm)
+	_test_game_manager_builds_rumor_summary_for_settlement(gm)
 	_test_game_manager_captures_day3_mercenary_visual_identity(gm)
 
 	var data := LedgerData.new()
@@ -24,6 +25,18 @@ func _ready() -> void:
 		{"npc_id": "ryan", "portrait_id": "mercenary_a", "display_name": "Ryan", "result": "failed", "gold_delta": 0, "rep_delta": 0, "served_delta": 1, "success_delta": 0, "failed_delta": 1},
 		{"npc_id": "regular_belta", "display_name": "Belta", "result": "success", "gold_delta": 34, "rep_delta": -3, "served_delta": 3, "success_delta": 3, "failed_delta": 0},
 	]
+	data.rumor_summary = {
+		"heard": true,
+		"hit_count": 2,
+		"bonus_gold": 4,
+		"bonus_rep": 2,
+		"tags": ["顶饿", "热食"],
+		"matched_customers": ["贝尔塔", "多林"],
+		"missed_customers": [],
+		"memory_notes": ["贝尔塔记住了肉汤"],
+		"word_of_mouth_labels": ["矿口口碑 +1"],
+		"summary": "矿口加班的消息应验了。",
+	}
 	data.npc_fates = [
 		{"npc_name": "米拉", "npc_title": "行商", "fate_text": "她把今晚的传闻收进了斗篷。"},
 	]
@@ -40,8 +53,10 @@ func _ready() -> void:
 	_test_guest_silhouette_stage(screen)
 	_test_revised_silhouette_queue_motion_contract(screen)
 	_test_counter_board_impact_contract(screen)
+	_test_rumor_summary_reuses_counter_impact(screen)
 	_test_score_counters_can_complete_to_authoritative_totals(screen)
 	_test_dynamic_data(screen)
+	_test_rumor_summary_text(screen)
 	_test_fate_reveal_notice(screen)
 	_test_compact_stats_rows(screen)
 	_test_continue_button_art(screen)
@@ -232,6 +247,87 @@ func _test_game_manager_builds_ledger_data_with_guest_entries(gm: Node) -> void:
 	gm.guests.reset_daily()
 
 
+func _test_game_manager_builds_rumor_summary_for_settlement(gm: Node) -> void:
+	var original_ledger = gm.current_ledger_data
+	var original_day: int = gm.economy.current_day
+	var original_gold_today: int = gm.economy.gold_today
+	var original_rep_today: int = gm.economy.rep_today
+	var original_events: Array = gm.get_current_day_events()
+	var original_rumors: Dictionary = gm.rumors.capture_state() if gm.rumors != null else {}
+
+	gm.economy.current_day = 99
+	gm.economy.gold_today = 9
+	gm.economy.rep_today = 2
+	if gm.rumors != null:
+		gm.rumors.restore_state({
+			"current_day": 99,
+			"heard_ids": ["mercenary_board_mine_shift"],
+			"today_ids": ["mercenary_board_mine_shift"],
+		})
+	gm.clear_current_day_events()
+	gm.add_current_day_event({
+		"type": "serve",
+		"label": "肉汤",
+		"success": true,
+		"npc_id": "regular_belta",
+		"gold_delta": 14,
+		"rep_delta": 2,
+		"appetite": {
+			"tier": "delighted",
+			"bonus_gold": 2,
+			"bonus_rep": 1,
+			"matched_tags": ["顶饿", "热食"],
+		},
+		"memory": {
+			"customer_name": "贝尔塔",
+			"item_name": "肉汤",
+			"note": "贝尔塔记住了肉汤",
+			"word_of_mouth_labels": ["矿口口碑 +1"],
+		},
+	})
+	gm.add_current_day_event({
+		"type": "serve",
+		"label": "草药茶",
+		"success": true,
+		"npc_id": "regular_dorin",
+		"gold_delta": 3,
+		"rep_delta": 0,
+		"appetite": {
+			"tier": "none",
+			"bonus_gold": 0,
+			"bonus_rep": 0,
+			"matched_tags": [],
+		},
+	})
+
+	var ledger_data = gm._create_ledger_data_for_current_day() if gm.has_method("_create_ledger_data_for_current_day") else null
+	_ok(ledger_data != null, "ledger data builder returns data for rumor summary")
+	if ledger_data != null:
+		_ok(ledger_data.rumor_summary is Dictionary, "ledger data exposes rumor_summary")
+		var summary: Dictionary = ledger_data.rumor_summary
+		_ok(bool(summary.get("heard", false)), "rumor summary records that rumors were heard")
+		_ok(int(summary.get("hit_count", 0)) == 1, "rumor summary counts appetite hits")
+		_ok(int(summary.get("bonus_gold", 0)) == 2, "rumor summary totals appetite bonus gold")
+		_ok(int(summary.get("bonus_rep", 0)) == 1, "rumor summary totals appetite bonus reputation")
+		_ok((summary.get("tags", []) as Array).has("顶饿"), "rumor summary preserves matched readable tags")
+		_ok((summary.get("matched_customers", []) as Array).has("贝尔塔"), "rumor summary names matched affected customers")
+		_ok((summary.get("missed_customers", []) as Array).has("多林"), "rumor summary names affected customers who arrived but were not matched")
+		_ok((summary.get("memory_notes", []) as Array).has("贝尔塔记住了肉汤"), "rumor summary exposes remembered customer dish notes")
+		_ok((summary.get("word_of_mouth_labels", []) as Array).has("矿口口碑 +1"), "rumor summary exposes word-of-mouth gains")
+
+	gm.current_ledger_data = original_ledger
+	gm.economy.current_day = original_day
+	gm.economy.gold_today = original_gold_today
+	gm.economy.rep_today = original_rep_today
+	gm.clear_current_day_events()
+	for event in original_events:
+		if event is Dictionary:
+			gm.add_current_day_event(event)
+	if gm.rumors != null:
+		gm.rumors.restore_state(original_rumors)
+	gm.guests.reset_daily()
+
+
 func _test_game_manager_captures_day3_mercenary_visual_identity(gm: Node) -> void:
 	var original_ledger = gm.current_ledger_data
 	var original_day: int = gm.economy.current_day
@@ -365,6 +461,16 @@ func _test_counter_board_impact_contract(screen: Node) -> void:
 	_ok(keys.has("gold") and keys.has("reputation") and keys.has("success"), "counter-board impact records the changed business stats")
 
 
+func _test_rumor_summary_reuses_counter_impact(screen: Node) -> void:
+	_ok(screen.has_method("_apply_rumor_replay_summary"), "settlement screen exposes rumor summary replay step")
+	if not screen.has_method("_apply_rumor_replay_summary"):
+		return
+	screen._apply_rumor_replay_summary()
+	_ok(screen.has_meta("last_counter_impact_keys"), "rumor summary replay uses the counter impact metadata")
+	var keys: Array = screen.get_meta("last_counter_impact_keys", [])
+	_ok(keys.has("rumor"), "rumor summary replay participates in the existing counter impact")
+
+
 func _test_score_counters_can_complete_to_authoritative_totals(screen: Node) -> void:
 	_ok(screen.has_method("_complete_score_replay"), "settlement screen exposes internal score replay completion for deterministic tests")
 	if screen.has_method("_complete_score_replay"):
@@ -388,6 +494,20 @@ func _test_dynamic_data(screen: Node) -> void:
 	_ok(combined.find("5") >= 0, "stats render guests_served")
 	_ok(combined.find("4") >= 0, "stats render orders_success")
 	_ok(combined.find("1") >= 0, "stats render orders_failed")
+
+
+func _test_rumor_summary_text(screen: Node) -> void:
+	if screen.has_method("_complete_score_replay"):
+		screen._complete_score_replay()
+	var combined := _collect_stats_text(screen)
+	_ok(combined.find("今晚传闻影响") >= 0, "settlement renders a rumor impact row")
+	_ok(combined.find("命中 2 次") >= 0, "rumor impact row renders hit count")
+	_ok(combined.find("+4G") >= 0, "rumor impact row renders bonus gold")
+	_ok(combined.find("+2 REP") >= 0, "rumor impact row renders bonus reputation")
+	_ok(combined.find("顶饿") >= 0 and combined.find("热食") >= 0, "rumor impact row renders matched tags")
+	_ok(combined.find("贝尔塔") >= 0 and combined.find("多林") >= 0, "rumor impact row renders affected customer names")
+	_ok(combined.find("记住了肉汤") >= 0, "rumor impact row renders customer memory feedback")
+	_ok(combined.find("矿口口碑 +1") >= 0, "rumor impact row renders word-of-mouth feedback")
 
 
 func _collect_stats_text(screen: Node) -> String:
@@ -711,7 +831,8 @@ func _test_compact_stats_rows(screen: Node) -> void:
 					var label := sub as Label
 					_ok(label.custom_minimum_size.y == 24.0, "stat label is compact")
 					_ok(label.get_theme_font_size("font_size") == 14, "stat label font is compact")
-	_ok(rows == 5, "five stat rows are rendered")
+	var expected_rows := 6 if bool(screen.get("_active_ledger_data") != null and not screen.get("_active_ledger_data").rumor_summary.is_empty()) else 5
+	_ok(rows == expected_rows, "stat rows include rumor impact only when rumor summary exists")
 
 
 func _test_continue_button_art(screen: Node) -> void:

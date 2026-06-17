@@ -21,6 +21,7 @@ var first_guest_arrived: bool = false
 var first_product_seasoned: bool = false
 var first_guest_served: bool = false
 var first_ledger_shown: bool = false
+var first_inference_shown: bool = false
 
 
 func _ready() -> void:
@@ -58,6 +59,7 @@ func _load_state() -> void:
 		first_product_seasoned = data.get("first_product_seasoned", false)
 		first_guest_served = data.get("first_guest_served", false)
 		first_ledger_shown = data.get("first_ledger_shown", false)
+		first_inference_shown = data.get("first_inference_shown", false)
 
 
 func _save_state() -> void:
@@ -70,6 +72,7 @@ func _save_state() -> void:
 		"first_product_seasoned": first_product_seasoned,
 		"first_guest_served": first_guest_served,
 		"first_ledger_shown": first_ledger_shown,
+		"first_inference_shown": first_inference_shown,
 	}
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file != null:
@@ -218,6 +221,7 @@ func replay_all() -> void:
 	first_product_seasoned = false
 	first_guest_served = false
 	first_ledger_shown = false
+	first_inference_shown = false
 	_save_state()
 
 

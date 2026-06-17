@@ -1,5 +1,27 @@
 ~ start
-if evelyn_ending == "public_account"
+if evelyn_resolution_state == "pending"
+    do GameManager.set_customer_expression("cold")
+    伊芙琳: 这杯先记在未清栏。
+    if evelyn_public_gap_primary == "toby_identity"
+        伊芙琳: 托比的名字还没和后巷少年对上。没有人名，纸就只是纸。
+    elif evelyn_public_gap_primary == "toby_risk"
+        伊芙琳: 黑齿矿脉为什么是陷阱还没说清。没有风险的来路，旧账会把它写成普通护送。
+    elif evelyn_public_gap_primary == "mira_old_road"
+        伊芙琳: 米拉和托比的旧路还没对上。少了这条线，供应协议只是旁枝。
+    elif evelyn_public_gap_primary == "mira_responsibility"
+        伊芙琳: “一个人走才轻快”是谁留下的，还没证明。人话没接上，账就只能装作听不见。
+    elif evelyn_public_gap_primary == "grey_same_batch"
+        伊芙琳: 莱恩和托比还没被压进同一批灰账。先把批次对上。
+    elif evelyn_public_gap_primary == "grey_payout_method"
+        伊芙琳: 赔付和结案的顺序还没反过来。灰账最怕顺序被看清。
+    elif evelyn_public_gap_primary == "mira_grey_link"
+        伊芙琳: 米拉供应协议背面的灰印还没接到账上。少了它，三条线还不能公开合成一页。
+    elif evelyn_public_gap_primary == "public_account"
+        伊芙琳: 三条线还没被抄成公开账本。最后那一页没有落笔，我就只能把柜台锁上。
+    else
+        伊芙琳: 你手里还有没抄完的账。等那些名字自己对上，我再决定是封存、改账，还是放它离开公会柜台。
+    => END
+elif evelyn_ending == "public_account"
     if evelyn_pressure == "living_witnesses"
         do GameManager.set_customer_expression("cracked")
         伊芙琳: 原来你真的把莱恩、托比和米拉三条线抄到同一页上了。

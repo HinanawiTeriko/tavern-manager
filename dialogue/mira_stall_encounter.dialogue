@@ -1,16 +1,16 @@
 ~ start
 
 if mira_stall_encounter_state == "after_truth_trusted"
-    旁白: 米拉把一卷货布扎紧。她看见你时，没有再装作不认识那张委托书。
-    米拉: 酒馆里那张纸，我没忘。
+    旁白: 米拉把一卷货布扎紧。她没有再绕开托比那份委托。
+    米拉: 托比那份[color=#d6a84d]黑齿委托[/color]，我没忘。
     米拉: 我去找他，不是为了赎罪。赎罪太干净了。
     米拉: 我只是不能再让他拿[color=#d6a84d]我的话[/color]去送死。[color=#d6a84d]托比现在住哪儿[/color]？
     => END
 
 elif mira_stall_encounter_state == "after_truth_guarded"
     旁白: 货摊前的灯芯短了一截。米拉把一枚骨扣翻到背面。
-    米拉: 酒馆里那张纸，你已经递过了。
-    米拉: 托比的名字别在摊前喊。[color=#d6a84d]黑齿矿脉[/color]是什么地方，我知道，不用你讲。
+    米拉: 托比那份[color=#d6a84d]黑齿委托[/color]，别在摊前再提。
+    米拉: 他的名字也别喊。[color=#d6a84d]黑齿矿脉[/color]是什么地方，我知道，不用你讲。
     米拉: 有些路，回头也是死路。我知道你想问什么，今天别问。
     => END
 

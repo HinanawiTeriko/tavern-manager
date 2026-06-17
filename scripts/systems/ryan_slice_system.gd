@@ -1,8 +1,8 @@
 class_name RyanSliceSystem
 extends RefCounted
 
-# [走查脚手架] 伊芙琳灰账线结算在 Day20；正式 30 天循环接入前，切片先推进到 Day20。
-const LAST_DAY := 20
+# [走查脚手架] 伊芙琳灰账线结算在 Day20；Day21-30 先复用普通经营循环直到正式收束内容接入。
+const LAST_DAY := 30
 const DEFAULT_NORMAL_ORDER_LIMIT := 3
 const DAY_CONFIG := {
 	1: {
@@ -16,7 +16,7 @@ const DAY_CONFIG := {
 	},
 	3: {
 		"normal_order_limit": 2,
-		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a"}],
+		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a", "order": "herb_broth"}],
 	},
 	5: {
 		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],

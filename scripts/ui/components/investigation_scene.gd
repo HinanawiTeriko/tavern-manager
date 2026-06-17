@@ -8,6 +8,14 @@ extends Node2D
 signal finished()
 
 const ITEM_SCENE := preload("res://scenes/ui/components/MineItem.tscn")
+const RECOVERY_MIN_X: float = -160.0
+const RECOVERY_MAX_X: float = 1440.0
+const RECOVERY_MIN_Y: float = -180.0
+const RECOVERY_MAX_Y: float = 900.0
+const SAFE_MIN_X: float = 0.0
+const SAFE_MAX_X: float = 1280.0
+const SAFE_MIN_Y: float = 0.0
+const SAFE_MAX_Y: float = 720.0
 
 @onready var _world: Node2D = $World
 @onready var _drag_ctrl: DragController = $DragCtrl
@@ -16,12 +24,14 @@ const ITEM_SCENE := preload("res://scenes/ui/components/MineItem.tscn")
 @onready var _leave_btn: Button = $UI/LeaveButton
 
 var _leave_hint_shown: bool = false
+var _item_recovery_positions: Dictionary = {}
 
 
 func _ready() -> void:
 	_obs_label.text = ""
 	_hint_label.text = ""
 	_leave_btn.pressed.connect(_on_leave_pressed)
+	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_setup_scene()
 
 
@@ -63,6 +73,7 @@ func _spawn_item(p_tag: String, p_kind: String, p_size: Vector2, p_color: Color,
 	_world.add_child(item)
 	item.setup(p_tag, p_kind, p_size, p_color, p_label, p_obs)
 	item.global_position = p_pos
+	_set_item_recovery_position(item, p_pos)
 	return item
 
 
@@ -122,12 +133,71 @@ func _on_item_grabbed(item: MineItem) -> void:
 		_obs_label.text = item.observation
 
 
+func _on_drag_ended(body: RigidBody2D) -> void:
+	if not body is MineItem:
+		return
+	var item := body as MineItem
+	if _is_inside_safe_view(item.global_position):
+		_set_item_recovery_position(item, item.global_position)
+
+
 # ============================================================
 #  物理帧 / 授予 / 离开
 # ============================================================
 
 func _physics_process(delta: float) -> void:
+	_recover_out_of_bounds_items()
 	_investigation_physics(delta)
+
+
+func _recover_out_of_bounds_items() -> void:
+	var dragged := _drag_ctrl.get_body() if _drag_ctrl.is_dragging() else null
+	for child in _world.get_children():
+		if not child is MineItem:
+			continue
+		var item := child as MineItem
+		if item == dragged or not item.visible or item.is_queued_for_deletion():
+			continue
+		if _is_inside_recovery_bounds(item.global_position):
+			continue
+		_recover_item_to_safe_position(item)
+	_prune_invalid_recovery_positions()
+
+
+func _recover_item_to_safe_position(item: MineItem) -> void:
+	var target: Vector2 = _item_recovery_positions.get(item, Vector2(640.0, 420.0))
+	item.linear_velocity = Vector2.ZERO
+	item.angular_velocity = 0.0
+	item.global_position = target
+	item.global_rotation = 0.0
+	item.freeze = true
+	item.sleeping = true
+
+
+func _set_item_recovery_position(item: MineItem, position: Vector2) -> void:
+	if item == null or not is_instance_valid(item):
+		return
+	_item_recovery_positions[item] = position
+
+
+func _is_inside_recovery_bounds(position: Vector2) -> bool:
+	return position.x >= RECOVERY_MIN_X \
+		and position.x <= RECOVERY_MAX_X \
+		and position.y >= RECOVERY_MIN_Y \
+		and position.y <= RECOVERY_MAX_Y
+
+
+func _is_inside_safe_view(position: Vector2) -> bool:
+	return position.x >= SAFE_MIN_X \
+		and position.x <= SAFE_MAX_X \
+		and position.y >= SAFE_MIN_Y \
+		and position.y <= SAFE_MAX_Y
+
+
+func _prune_invalid_recovery_positions() -> void:
+	for item in _item_recovery_positions.keys():
+		if not is_instance_valid(item) or item.is_queued_for_deletion():
+			_item_recovery_positions.erase(item)
 
 
 func _grant_document(document_id: String) -> void:

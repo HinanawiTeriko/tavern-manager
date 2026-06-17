@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_truth_and_trust_route()
 	_test_truth_without_trust_route()
 	_test_contract_found_without_telling_route()
+	_test_mira_stall_affection_weights_responsibility_inference()
 	_test_mira_stall_does_not_accept_contract()
 	_test_mira_stall_followup_after_tavern_contract()
 	_test_fixer_route()
@@ -90,10 +91,11 @@ func _test_truth_and_trust_route() -> void:
 	var gm = _reset_gm(6, 0)
 	_learn_toby_danger(gm)
 	_find_contract(gm)
+	gm.narrative.set_affection("mira", 7)
+	gm.narrative.set_var("mira_responsibility_lead", true)
 	_visit_mira_on_day(gm, 7)
-	_visit_mira_on_day(gm, 8)
 	_ok(gm.narrative.get_affection("mira") >= gm.narrative.MIRA_TRUST_THRESHOLD,
-		"two Mira visits reach the trust threshold")
+		"Day4 warmth plus responsibility inference stall visit reaches the trust threshold")
 	_tell_mira_truth(gm)
 	_finalize_and_expect(gm, "she_finally_stopped", "saved", "truth plus trust route")
 
@@ -115,6 +117,26 @@ func _test_contract_found_without_telling_route() -> void:
 	_ok(gm.narrative.get_var("told_mira_truth") == false,
 		"finding the contract alone does not tell Mira")
 	_finalize_and_expect(gm, "another_light_out", "lost", "contract found but not shown route")
+
+
+func _test_mira_stall_affection_weights_responsibility_inference() -> void:
+	var gm = _reset_gm(6, 0)
+	_visit_mira_on_day(gm, 7)
+	_ok(gm.narrative.get_affection("mira") == 6,
+		"ordinary Mira stall visit gives only light trust")
+	_visit_mira_on_day(gm, 8)
+	_ok(gm.narrative.get_affection("mira") == 7,
+		"ordinary Mira stall visits do not reach trust quickly")
+	_ok(gm.narrative.get_affection("mira") < gm.narrative.MIRA_TRUST_THRESHOLD,
+		"ordinary Mira stall visits stay below the trust threshold")
+
+	gm.narrative.set_var("mira_responsibility_lead", true)
+	_visit_mira_on_day(gm, 9)
+	_ok(gm.narrative.get_affection("mira") == 10,
+		"responsibility inference Mira stall visit adds the decisive trust bonus")
+	_visit_mira_on_day(gm, 10)
+	_ok(gm.narrative.get_affection("mira") == 11,
+		"responsibility inference stall bonus is one-time, later visits only add ordinary trust")
 
 
 func _test_mira_stall_does_not_accept_contract() -> void:
@@ -144,8 +166,10 @@ func _test_mira_stall_followup_after_tavern_contract() -> void:
 	var message := String(followup.get("message", ""))
 	_ok(message.contains("米拉:") and message.contains("托比"),
 		"Mira stall follow-up after tavern contract can react to Toby")
-	_ok(message.contains("酒馆") or message.contains("那张纸"),
-		"Mira stall follow-up references the tavern handoff instead of a stall handoff")
+	_ok(message.contains("托比那份黑齿委托"),
+		"Mira stall follow-up names Toby's Blacktooth contract directly")
+	_ok(not message.contains("酒馆里那张纸") and not message.contains("已经递过了"),
+		"Mira stall follow-up does not imply a delivery-button interaction")
 
 
 func _test_fixer_route() -> void:

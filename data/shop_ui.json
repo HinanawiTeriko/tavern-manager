@@ -10,6 +10,7 @@
     { "key": "herbal_ale", "description": "买下草药麦酒的公开菜谱。", "usage": "购买后配方书会揭示草药麦酒，并可进入普通客人的点单池。", "sort": 10 },
     { "key": "spiced_wine", "description": "买下香料红酒的公开菜谱。", "usage": "购买后配方书会揭示香料红酒，并可进入普通客人的点单池。", "sort": 20 },
     { "key": "meat_sand", "description": "买下肉夹面包的公开菜谱。", "usage": "先把面粉在锅里搅成面团，再把面团和生肉砸成肉夹生面团，最后上烤架。", "sort": 30 },
+    { "key": "herb_broth", "description": "买下草药清汤的公开菜谱。", "usage": "购买后配方书会揭示草药清汤，并可进入普通客人的点单池。", "sort": 35 },
     { "key": "meat_stew", "description": "买下肉汤的公开菜谱。", "usage": "购买后配方书会揭示肉汤，并可进入普通客人的点单池。", "sort": 40 }
   ],
   "abilities": [

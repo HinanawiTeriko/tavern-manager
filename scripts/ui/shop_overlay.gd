@@ -62,7 +62,6 @@ const SHOP_SCENE_V2_QUANTITY_PLUS_DISABLED := "res://assets/textures/daymap/shop
 const SHOP_SCENE_V2_CLOSE_NORMAL := "res://assets/textures/daymap/shop_scene_v2/shop_scene_close_normal.png"
 const SHOP_SCENE_V2_CLOSE_HOVER := "res://assets/textures/daymap/shop_scene_v2/shop_scene_close_hover.png"
 const SHOP_SCENE_V2_CLOSE_PRESSED := "res://assets/textures/daymap/shop_scene_v2/shop_scene_close_pressed.png"
-const SHOP_SCENE_V2_STATUS_OWNED := "res://assets/textures/daymap/shop_scene_v2/shop_scene_status_owned.png"
 const SHOP_SCENE_V2_STATUS_DISCOUNT := "res://assets/textures/daymap/shop_scene_v2/shop_scene_status_discount.png"
 const SHOP_CLEAN_TEXTURE_DIR := "res://assets/textures/daymap/shop_clean/"
 const SHOP_CLEAN_BACKDROP := "res://assets/textures/daymap/shop_clean/shop_clean_backdrop.png"
@@ -359,7 +358,8 @@ func _build() -> void:
 	_detail_uses.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_detail_state = _add_label(_detail_page, "State", Vector2(36, 324), Vector2(320, 34), 14, ThemeColors.TEXT_DIM)
 	_detail_state.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	_owned_mark = _add_texture(_detail_page, "OwnedMark", SHOP_SCENE_V2_STATUS_OWNED, Vector2(300, 314), Vector2(56, 48))
+	_owned_mark = _add_texture(_detail_page, "OwnedMark", "", Vector2(300, 314), Vector2(56, 48))
+	_owned_mark.visible = false
 	_discount_mark = _add_texture(_detail_page, "DiscountMark", SHOP_SCENE_V2_STATUS_DISCOUNT, Vector2(356, 314), Vector2(56, 52))
 
 	_coin_tray = Control.new()
@@ -448,7 +448,7 @@ func _build() -> void:
 func _add_texture(parent: Node, node_name: String, path: String, pos: Vector2, node_size: Vector2) -> TextureRect:
 	var rect := TextureRect.new()
 	rect.name = node_name
-	rect.texture = _load_texture(path)
+	rect.texture = _load_texture(path) if path != "" else null
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.position = pos
 	rect.size = node_size
@@ -615,7 +615,7 @@ func _sync() -> void:
 	_purchase_btn.disabled = _is_owned(_selected_key) or (material_mode and _quantity < 1)
 	_sync_bookmarks()
 	_sync_rows()
-	_owned_mark.visible = _active_category != "materials" and _is_owned(_selected_key)
+	_owned_mark.visible = false
 	_discount_mark.visible = _active_category == "materials" and _discount() < 1.0
 	_sync_purchase_seal()
 

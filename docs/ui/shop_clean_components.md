@@ -9,6 +9,7 @@ Source rules:
 - Runtime UI references `res://assets/textures/daymap/shop_clean/`.
 - All dynamic text is rendered by Godot labels.
 - Hover/selected/pressed/disabled use full replacement textures, not marker overlays.
+- Owned recipe/ability state is text-only in `DetailPanel/State`; the legacy `DetailPanel/OwnedMark` node remains as an empty hidden compatibility node and must not reference cropped status art.
 
 | id | native_size | runtime_size | runtime_node_path | states | safe_area_native | godot_use | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |

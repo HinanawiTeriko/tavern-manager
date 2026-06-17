@@ -1,0 +1,21 @@
+Recreate Figgy as a strict dialogue-bust raw source portrait, using the same selected direction: cute young adult aqua fae/sylph warning-notice rhetoric specialist with high side ponytail, feather pen, dark teal cape-jacket, cream shirt, parchment sash, and muted red wax-seal brooch.
+
+Asset type: raw AI source portrait for a Godot pixel-game important NPC bust pipeline. This is for later 128x160 native portrait normalization, not final runtime art.
+
+Canvas and format: vertical portrait canvas, about 4:5 aspect ratio like one important NPC portrait cell. One centered character only. Flat chroma-key background.
+
+Critical composition: waist-up dialogue bust crop. The character is visibly cropped by the lower edge immediately at the belt/sash line. The lower edge of the image cuts off the body just below the belt; there must be no complete lower-body silhouette. Do not draw skirt hem, coat hem, trouser legs, thighs, knees, or any long garment continuing below the belt. The belt/sash sits near the bottom of the visible character, and the portrait ends there like a tavern dialogue bust.
+
+Pose: 3/4 front view. One hand holds a feather pen near shoulder height. The other hand is near the lapel or sash, not on the hip. Any blank parchment note is tiny and tucked at the belt edge, not dangling low. No sign board.
+
+Camera target: match raw important NPC reference cells like Ryan v8 and Mira v4: readable face, shoulders, chest, waist, belt, and only a cropped hint below the belt; not a headshot, not half-body, not full body.
+
+Character: cute young adult female fae/sylph, pale moonlit skin, long pointed ears, bright mischievous eyes, no horns, no tail, no purple skin, no green skin. Aqua hair in one high side ponytail curled like folded paper ribbon, large chunky locks, clear silhouette. Funny, polite, absurdly confident.
+
+Outfit and props: dark teal-black cropped cape-jacket with broad simple shapes, cream shirt, parchment-yellow sash, simple belt, one muted red wax-seal brooch, one feather pen. Very low accessory density. No large hanging sign, no sign board, no visible writing, no fake letters, no numbers, no runes.
+
+Style/medium: crisp hand-authored pixel-game/anime-fantasy character source, thick dark outlines, stair-stepped chunky silhouette, posterized flat colors, limited warm dungeon tavern palette with aqua accent. Designed to survive downscaling to 128x160 native. Avoid glossy high-resolution illustration, painterly rendering, airbrush, watercolor, stippling, soft blur, micro-detail, realistic texture, fashion illustration polish.
+
+Background: perfectly flat solid #00ff00 chroma-key background, one uniform color with no shadows, gradients, texture, floor plane, frame, lighting variation, labels, words, UI, watermark, or logo. Do not use #00ff00 anywhere on the character.
+
+Hard avoid: no brown hair, no readable text, no fake letters, no numbers, no logos, no UI frame, no speech bubble, no full-body pose, no half-body pose, no skirt hem, no coat hem, no pants legs, no thighs, no knees, no square canvas, no huge prop board, no dense tool belt, no dangling scrolls, no soft antialiased borders, no painterly micro-detail.

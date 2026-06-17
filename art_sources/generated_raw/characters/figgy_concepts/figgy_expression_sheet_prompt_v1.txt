@@ -1,0 +1,43 @@
+Use the visible Figgy v7 portrait as the character identity and outfit reference. Create one raw 4x2 expression sheet source for a Godot pixel-game important NPC bust pipeline. This is source art for later 128x160 native portrait normalization and 512x640 nearest-neighbor runtime export, not final runtime art.
+
+STRICT FORMAT:
+- exactly 4 columns x 2 rows of bust portraits, eight separate cells
+- same character identity, same outfit, same hair, same camera distance, same scale, same pose family in every cell
+- target sheet should be a regular 4:2 rectangular game asset sheet, preferably 1536x1024 or similar proportions
+- each cell centered with generous padding
+- flat green chroma-style generated background in every cell and around the sheet
+- no labels, no readable text, no letters, no numbers, no UI, no frame, no watermark
+- crop should show head, shoulders, chest, waist, and narrow belt/waistband area only
+- strict dialogue bust crop: no skirt folds, no skirt hem, no trousers, no thighs, no knees, no full lower-body silhouette
+
+Character identity to preserve from reference:
+- cute young adult female aqua fae/sylph important NPC
+- pale moonlit skin, long pointed ears, bright mischievous teal eyes
+- aqua high side ponytail with chunky curled ribbon-like locks, readable silhouette
+- deep teal cropped travel jacket with simple lapels, cream-white open-collar blouse, narrow dark neck tie, plain dark waistband
+- no bag, no satchel, no crossbody strap, no belt pouch, no paper tag, no hanging note, no notebook, no wax seal, no red brooch, no whistle, no symbolic pin, no sign board, no scrolls
+- one feather pen may be held near shoulder height in some cells, but keep it small and do not let it dominate the torso; it may be absent in some cells for expression clarity
+
+Expression order, left to right, top row then bottom row:
+1 neutral - polite cute tavern entry, tiny knowing smile
+2 pleased - cheerful confident grin, she has spotted a loophole
+3 innocent - exaggerated harmless face, eyes wide, pretending she did nothing
+4 shocked - comic surprise, brows high, mouth small open, fate said something stupid
+5 smug - sly sideways smile, one eyebrow raised, about to exploit wording
+6 confused - squinting at a bad prophecy, puzzled but not afraid
+7 serious - focused courtroom-like resolve, calm and sharp, ready to challenge fate
+8 victorious - delighted triumphant grin, fate has been beaten by a technicality
+
+Style target:
+- match Ryan v8 / Mira v4 important NPC raw source family: close tavern NPC bust camera, readable face, enough torso, chunky readable silhouette
+- crisp hand-authored pixel-game/anime-fantasy character source, thick dark outlines, stair-stepped chunky silhouette, posterized flat colors, limited warm dungeon tavern palette with aqua accent
+- large readable clothing blocks, low detail density, few folds, no micro ornaments
+- designed to survive downscaling to 128x160 native
+- avoid glossy high-resolution illustration, painterly rendering, airbrush, watercolor, stippling, soft blur, realistic texture, fashion illustration polish
+
+Hard avoid:
+- no brown hair, no changed hairstyle, no changed outfit, no different characters, no extra characters
+- no readable text, no fake letters, no numbers, no labels, no UI frame, no speech bubble, no logo, no watermark
+- no wax seal, no red circular badge, no paper tag, no hanging paper, no bag, no satchel, no crossbody strap, no belt pouch, no school uniform big bow
+- no full-body pose, no half-body fashion pose, no visible skirt folds, no skirt hem, no coat hem, no pants legs, no thighs, no knees
+- no dense utility belt, no many dangling props, no soft antialiased borders, no painterly micro-detail

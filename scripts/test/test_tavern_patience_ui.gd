@@ -276,6 +276,8 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
 		_ok(customer_name.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"CustomerName does not block table item clicks")
+		_ok(customer_name.text == "", "CustomerName starts blank when no guest is present")
+		_ok(not customer_name.visible, "CustomerName starts hidden when no guest is present")
 	_ok(order_bubble != null, "OrderBubble remains the public Tavern customer request label path")
 	if order_bubble != null:
 		_ok(_control_uses_pixel_font(order_bubble), "OrderBubble uses the shared pixel UI font")
@@ -311,6 +313,9 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
+		if customer_name != null:
+			_ok(customer_name.visible, "show_customer reveals CustomerName for the active guest")
+			_ok(customer_name.text == "Test Guest", "show_customer writes the active guest name")
 		_ok(order_bubble.visible, "show_customer reveals the table-carved order text")
 		_ok(order_bubble.text.begins_with("需要 · "), "show_customer uses readable Chinese order prefix")
 		_ok(order_bubble.text.find("order_ale") >= 0, "show_customer writes the stable order request to OrderBubble")
@@ -330,6 +335,11 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(order_bubble.text.find("order_ale") >= 0, "timeout state keeps the original order readable")
 			_ok(order_bubble.text.find("timeout") >= 0, "timeout state adds a clear failure reason in the groove label")
 			_ok(order_bubble.text.find("\n") == -1, "groove order text stays on one readable line")
+		tavern.hide_customer()
+		if customer_name != null:
+			_ok(customer_name.text == "", "hide_customer clears the idle waiting placeholder text")
+			_ok(not customer_name.visible, "hide_customer hides CustomerName while no guest is present")
+		_ok(not order_bubble.visible, "hide_customer hides the order text while no guest is present")
 	var btn_tutorial := tavern.get_node_or_null("OverlayMenu/TabBtns/BtnTutorial") as Button
 	_ok(btn_tutorial != null and btn_tutorial.text == "重置教程", "reset tutorial menu button uses readable Chinese")
 	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
@@ -346,8 +356,14 @@ func _test_tavern_patience_ui_contract() -> void:
 	var stage_caption := tavern.get_node_or_null("StageCaption") as Label
 	_ok(stage_caption != null, "StageCaption remains the public tavern feedback caption path")
 	if stage_caption != null:
+		_ok(_control_uses_pixel_font(stage_caption), "StageCaption uses the shared pixel UI font")
 		_ok(stage_caption.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"StageCaption does not block center-table item clicks while faded out")
+		tavern.show_stage_caption("今日客流招待完毕，可以打烊了！", ThemeColors.AMBER_PRIMARY)
+		_ok(stage_caption.text == "今日客流招待完毕，可以打烊了！",
+			"show_stage_caption keeps the all-guests-served caption as Godot-rendered text")
+		_ok(_control_uses_pixel_font(stage_caption),
+			"all-guests-served StageCaption remains rendered with the pixel UI font")
 	var inference_notice := tavern.get_node_or_null("InferenceReadyNotice") as Label
 	_ok(inference_notice != null, "Tavern exposes a visual-only inference-ready question mark notice")
 	if inference_notice != null:
@@ -664,6 +680,17 @@ func _test_tavern_patience_ui_contract() -> void:
 			if day3_pot != null:
 				_ok(_rect_contains_point(recovery_rect, day3_pot.global_position),
 					"craft tutorial RecoveryContainer highlight covers the pot when it is unlocked")
+		var seasoning_rects: Dictionary = tavern.get_tutorial_highlight_rects("seasoning")
+		var seasoning_rect := seasoning_rects.get("SeasoningShaker", []) as Array
+		var shaker := tavern.get_node_or_null("BarWorkspace/World/SeasoningShaker") as Node2D
+		_ok(seasoning_rects.has("SeasoningShaker"), "seasoning tutorial provides the SeasoningShaker highlight key")
+		if shaker != null:
+			_ok(_rect_contains_point(seasoning_rect, shaker.global_position),
+				"seasoning tutorial SeasoningShaker highlight contains the live shaker")
+		_ok(seasoning_rects.has("ShortcutBar"), "seasoning tutorial also exposes ShortcutBar as source context")
+		if shortcut_bar != null:
+			_ok(_rect_array_close(seasoning_rects.get("ShortcutBar", []) as Array, _control_screen_rect(shortcut_bar)),
+				"seasoning tutorial ShortcutBar highlight follows the live ShortcutBar rect")
 
 	var ledger := tavern.get_node_or_null("BarWorkspace/World/Ledger") as ReadableDeskItem
 	_ok(ledger != null, "Ledger compatibility node remains at BarWorkspace/World/Ledger")
@@ -702,15 +729,19 @@ func _test_tavern_game_manager_contract() -> void:
 	if has_daily_menu_confirmed:
 		_ok(tavern.daily_menu_confirmed is bool, "TavernView daily_menu_confirmed is a bool")
 	if tavern.has_method("is_menu_config_open"):
-		_ok(tavern.is_menu_config_open() == false, "TavernView menu config reports closed when no config panel exists")
+		_ok(tavern.is_menu_config_open() == true, "TavernView opens menu config when entering tavern")
 	if tavern.has_method("is_preparation_phase"):
-		_ok(tavern.is_preparation_phase() == false, "TavernView defaults to business-compatible phase without the menu config UI")
+		_ok(tavern.is_preparation_phase() == true, "TavernView starts in menu preparation phase")
 	if tavern.has_method("is_business_phase"):
-		_ok(tavern.is_business_phase() == true, "TavernView defaults to business-compatible phase after entering tavern")
+		_ok(tavern.is_business_phase() == false, "TavernView does not enter business phase before menu confirmation")
 
 	if tavern.has_method("get_daily_menu_items"):
 		var menu_items: Array[Dictionary] = tavern.get_daily_menu_items()
-		_ok(menu_items.size() >= 1, "TavernView provides at least one orderable menu item to GuestSystem")
+		_ok(menu_items.is_empty(), "TavernView withholds orderable menu items before menu confirmation")
+		if tavern.has_method("_confirm_menu_preparation"):
+			tavern.call("_confirm_menu_preparation")
+			menu_items = tavern.get_daily_menu_items()
+		_ok(menu_items.size() >= 1, "TavernView provides orderable menu items after menu confirmation")
 		for item in menu_items:
 			_ok(item.has("key"), "TavernView menu item includes key")
 			_ok(item.has("price"), "TavernView menu item includes price")
@@ -719,6 +750,12 @@ func _test_tavern_game_manager_contract() -> void:
 	var gm = get_node("/root/GameManager")
 	_ok(gm.guests._normal_order_limit == gm.ryan_slice.normal_order_limit(gm.economy.current_day),
 		"GameManager configures the Ryan normal order budget when TavernView registers")
+	gm._apply_save_state(gm._default_new_game_state())
+	if gm.rumors != null:
+		gm.rumors.restore_state({"current_day": 1, "heard_ids": [], "today_ids": []})
+	gm.register_view(tavern)
+	await get_tree().process_frame
+	_ok(tavern.is_menu_config_open(), "GameManager opens menu preparation even when no rumor was heard")
 
 	tavern.queue_free()
 	await get_tree().process_frame

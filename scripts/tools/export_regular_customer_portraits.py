@@ -19,6 +19,12 @@ RAW_SOURCE_DIR = ROOT / "art_sources" / "generated_raw" / "characters" / "regula
 RAW_SOURCE_V5_A = RAW_SOURCE_DIR / "regular_customer_expression_sheet_v5_a.png"
 RAW_SOURCE_V5_B = RAW_SOURCE_DIR / "regular_customer_expression_sheet_v5_b.png"
 RAW_SOURCE_V5_C = RAW_SOURCE_DIR / "regular_customer_expression_sheet_v5_c.png"
+RAW_SOURCE_V7_A = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v7_a.png"
+RAW_SOURCE_V7_B = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v7_b.png"
+RAW_SOURCE_V7_C = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v7_c.png"
+RAW_SOURCE_V7_D = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v7_d.png"
+RAW_SOURCE_V7_E = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v7_e.png"
+RAW_SOURCE_V8_A = RAW_SOURCE_DIR / "regular_customer_expansion_sheet_v8_a.png"
 VERA_REFERENCE = ROOT / "art_sources" / "generated_raw" / "characters" / "vera" / "reference" / "vera_approved_reference_v2.png"
 BELTA_STYLE_REFERENCE = RAW_SOURCE_DIR / "regular_belta_style_reference_v1.png"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "regular_customers"
@@ -49,20 +55,59 @@ CUSTOMER_GROUPS = [
         "prompt": RAW_SOURCE_V5_C.with_name("regular_customer_expression_sheet_v5_c_prompt.txt"),
         "customers": ["regular_selene", "regular_gareth", "regular_lyra", "regular_oma"],
     },
+    {
+        "source": RAW_SOURCE_V8_A,
+        "prompt": RAW_SOURCE_V8_A.with_name("regular_customer_expansion_sheet_v8_a_prompt.txt"),
+        "customers": ["regular_ketta", "regular_bram", "regular_sova", "regular_petra"],
+    },
+    {
+        "source": RAW_SOURCE_V7_B,
+        "prompt": RAW_SOURCE_V7_B.with_name("regular_customer_expansion_sheet_v7_b_prompt.txt"),
+        "customers": ["regular_jora", "regular_tamsin", "regular_kael", "regular_mirelle"],
+    },
+    {
+        "source": RAW_SOURCE_V7_C,
+        "prompt": RAW_SOURCE_V7_C.with_name("regular_customer_expansion_sheet_v7_c_prompt.txt"),
+        "customers": ["regular_fenna", "regular_yuval", "regular_nara", "regular_iris"],
+    },
+    {
+        "source": RAW_SOURCE_V7_D,
+        "prompt": RAW_SOURCE_V7_D.with_name("regular_customer_expansion_sheet_v7_d_prompt.txt"),
+        "customers": ["regular_bastian", "regular_qadir", "regular_rowan", "regular_maeve"],
+    },
+    {
+        "source": RAW_SOURCE_V7_E,
+        "prompt": RAW_SOURCE_V7_E.with_name("regular_customer_expansion_sheet_v7_e_prompt.txt"),
+        "customers": ["regular_osric", "regular_lio"],
+        "column_count": 4,
+    },
 ]
 CUSTOMERS = [customer_id for group in CUSTOMER_GROUPS for customer_id in group["customers"]]
 STATES = ["neutral", "satisfied", "dissatisfied"]
 SOURCE_LEVEL_MATTE_PROFILE = "source_flood_fill_green_screen_v1"
 SOURCE_LEVEL_MATTE_CUSTOMERS = list(CUSTOMERS)
+PORTRAIT_OVERRIDES = {
+    "regular_ketta_satisfied": {
+        "fit_mode": "height_locked",
+        "fit_reason": "wide_thumb_pose_keeps_character_scale",
+    },
+}
 
 
 def contact_sheet_path(customer_id: str) -> Path:
     return CONTACT_SHEET_DIR / f"{customer_id}_contact_sheet.png"
 
 
-def fixed_grid_crops(sheet: Image.Image, source_path: Path, customers: list[str]) -> dict[str, dict]:
+def fixed_grid_crops(
+    sheet: Image.Image,
+    source_path: Path,
+    customers: list[str],
+    column_count: int = 0,
+    fit_mode: str = "",
+) -> dict[str, dict]:
     width, height = sheet.size
-    cell_w = width // len(customers)
+    grid_columns = column_count if column_count > 0 else len(customers)
+    cell_w = width // grid_columns
     cell_h = height // len(STATES)
     crops: dict[str, dict] = {}
     pad_x = max(8, cell_w // 40)
@@ -80,6 +125,10 @@ def fixed_grid_crops(sheet: Image.Image, source_path: Path, customers: list[str]
                 "source": source_path.relative_to(ROOT).as_posix(),
                 "crop_rect": [left, top, right, bottom],
             }
+            if fit_mode != "":
+                crops[portrait_id]["fit_mode"] = fit_mode
+            if portrait_id in PORTRAIT_OVERRIDES:
+                crops[portrait_id].update(PORTRAIT_OVERRIDES[portrait_id])
     return crops
 
 
@@ -141,16 +190,25 @@ def normalize_portrait(
     native_size: tuple[int, int] = NATIVE_SIZE,
     colors: int = 64,
     source_level_matte: bool = False,
+    fit_mode: str = "",
 ) -> Image.Image:
     crop = sheet.crop(tuple(crop_rect))
     keyed = source_level_green_matte(crop) if source_level_matte else remove_chroma_key(crop)
     subject = visible_crop(keyed)
-    target_box = (
-        min(native_size[0], UNIFORM_MAX_VISIBLE_WIDTH),
-        min(native_size[1] - UNIFORM_BOTTOM_PADDING, UNIFORM_VISIBLE_HEIGHT),
-    )
-    fitted = ImageOps.contain(subject, target_box, Image.Resampling.NEAREST)
+    if fit_mode == "height_locked":
+        target_height = min(native_size[1] - UNIFORM_BOTTOM_PADDING, UNIFORM_VISIBLE_HEIGHT)
+        fitted_width = max(1, round(subject.width * target_height / max(1, subject.height)))
+        fitted = subject.resize((fitted_width, target_height), Image.Resampling.NEAREST)
+    else:
+        target_box = (
+            min(native_size[0], UNIFORM_MAX_VISIBLE_WIDTH),
+            min(native_size[1] - UNIFORM_BOTTOM_PADDING, UNIFORM_VISIBLE_HEIGHT),
+        )
+        fitted = ImageOps.contain(subject, target_box, Image.Resampling.NEAREST)
     native = Image.new("RGBA", native_size, (0, 0, 0, 0))
+    if fitted.width > native_size[0]:
+        left = (fitted.width - native_size[0]) // 2
+        fitted = fitted.crop((left, 0, left + native_size[0], fitted.height))
     x = (native_size[0] - fitted.width) // 2
     bounds = fitted.getchannel("A").getbbox()
     visible_bottom = bounds[3] if bounds is not None else fitted.height
@@ -195,6 +253,10 @@ def write_manifest(crops: dict[str, dict]) -> None:
             portraits[portrait_id]["prompt"] = spec["prompt"]
         if spec.get("matte"):
             portraits[portrait_id]["matte"] = spec["matte"]
+        if spec.get("fit_mode"):
+            portraits[portrait_id]["fit_mode"] = spec["fit_mode"]
+        if spec.get("fit_reason"):
+            portraits[portrait_id]["fit_reason"] = spec["fit_reason"]
         if native_size != NATIVE_SIZE:
             portraits[portrait_id]["native_size"] = list(native_size)
         if runtime_size != RUNTIME_SIZE:
@@ -254,14 +316,25 @@ def main() -> None:
         sheet = Image.open(source_path).convert("RGBA")
         source_key = source_path.relative_to(ROOT).as_posix()
         sheets[source_key] = sheet
-        crops.update(fixed_grid_crops(sheet, source_path, group["customers"]))
+        crops.update(fixed_grid_crops(
+            sheet,
+            source_path,
+            group["customers"],
+            int(group.get("column_count", 0)),
+            str(group.get("fit_mode", "")),
+        ))
     natives = {}
     for portrait_id, spec in crops.items():
         sheet = sheets[spec["source"]]
         source_level_matte = spec["customer_id"] in SOURCE_LEVEL_MATTE_CUSTOMERS
         if source_level_matte:
             spec["matte"] = SOURCE_LEVEL_MATTE_PROFILE
-        native = normalize_portrait(sheet, spec["crop_rect"], source_level_matte=source_level_matte)
+        native = normalize_portrait(
+            sheet,
+            spec["crop_rect"],
+            source_level_matte=source_level_matte,
+            fit_mode=str(spec.get("fit_mode", "")),
+        )
         save_runtime(native, portrait_id)
         natives[portrait_id] = native
     write_manifest(crops)

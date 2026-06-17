@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_current_order_key()
 	_test_action_feedback_keeps_ryan_story_out_of_customer_bubble()
 	_test_action_feedback_routes_mira_contract_handoff_to_dialogue()
+	_test_day12_mira_contract_delivery_uses_unsettled_feedback()
 	_test_ryan_contract_delivery_refreshes_portrait_state()
 	_test_give_evidence_informs_ryan()
 	_test_alternative_requires_warning()
@@ -21,6 +22,8 @@ func _ready() -> void:
 	_test_informed_refuses_drugged_ale()
 	_test_plain_ale_changes_nothing()
 	_test_formal_order_product_not_handled()
+	_test_day3_fate_reveal_wrong_product_not_handled_as_ryan_action()
+	_test_day3_fate_reveal_correct_order_does_not_resolve_ryan_state()
 	_test_wrong_target_story_item()
 	_finish()
 
@@ -106,6 +109,7 @@ func _test_action_feedback_routes_mira_contract_handoff_to_dialogue() -> void:
 	var mira_feedback_keys := [
 		"mira_informed_trusted",
 		"mira_informed_guarded",
+		"mira_informed_unsettled",
 	]
 	for key in mira_feedback_keys:
 		_ok(not gm.ACTION_FEEDBACK.has(key),
@@ -126,6 +130,29 @@ func _test_action_feedback_routes_mira_contract_handoff_to_dialogue() -> void:
 		"Mira contract handoff must not use StageCaption")
 
 	gm._tavern_view = original_view
+	fake_view.free()
+
+
+func _test_day12_mira_contract_delivery_uses_unsettled_feedback() -> void:
+	var gm = _gm()
+	var old_day: int = gm.economy.current_day
+	var original_view = gm._tavern_view
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+	gm.economy.current_day = 12
+	_reset_ryan("spiced_wine", "mira")
+	gm.narrative.set_affection("mira", gm.narrative.MIRA_TRUST_THRESHOLD - 2)
+
+	var result: Dictionary = gm.request_narrative_delivery("toby_contract", [])
+	_ok(result.get("accepted", false), "Day12 Mira accepts Toby contract through the gameplay delivery route")
+	_ok(String(result.get("feedback", "")) == "mira_informed_unsettled",
+		"Day12 gameplay delivery route returns unsettled feedback before final service")
+	_ok(gm.narrative.get_var("told_mira_truth") == true,
+		"Day12 gameplay delivery route still records that Mira learned the truth")
+
+	gm.economy.current_day = old_day
+	gm._tavern_view = original_view
+	gm.guests.clear_guest()
 	fake_view.free()
 
 
@@ -183,6 +210,7 @@ func _reset_ryan(order_key := "meat_cooked", npc_id := "ryan") -> void:
 
 
 class FakeFeedbackView extends Node:
+	var daily_menu := {}
 	var customer_lines := []
 	var stage_lines := []
 	var dialogue_mode_calls := []
@@ -201,6 +229,9 @@ class FakeFeedbackView extends Node:
 		dialogue_mode_calls.append(active)
 
 	func set_close_enabled(_enabled: bool) -> void:
+		pass
+
+	func update_top_bar(_gold: int, _rep: int, _day: int, _last_day: int, _max_gold: int = 0) -> void:
 		pass
 
 	func show_customer_reaction(outcome: String, npc_id: String = "") -> void:
@@ -293,6 +324,57 @@ func _test_formal_order_product_not_handled() -> void:
 	# 正式订单成品不是叙事载体 → 让视图走正常上菜（request_serve），中介返回 not handled。
 	var r: Dictionary = _gm().request_narrative_delivery("meat_cooked", [])
 	_ok(not r.get("handled", true), "formal-order product falls back to normal serve")
+
+
+func _test_day3_fate_reveal_wrong_product_not_handled_as_ryan_action() -> void:
+	var gm = _gm()
+	var original_day: int = gm.economy.current_day
+	var original_view = gm._tavern_view
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+	gm.economy.current_day = 3
+	_reset_ryan("herb_broth")
+	gm.guests.current_guest.set_meta("portrait_id", "mercenary_a")
+
+	var dialogue_calls_before := fake_view.dialogue_mode_calls.size()
+	var r: Dictionary = gm.request_narrative_delivery("ale_beer", [])
+	_ok(not r.get("handled", true),
+		"Day 3 mercenary messenger wrong product falls back to normal failed serve")
+	_ok(fake_view.dialogue_mode_calls.size() == dialogue_calls_before,
+		"Day 3 mercenary messenger wrong product does not open Ryan action feedback dialogue")
+	_ok(gm.narrative.get_var("ryan_drugged") == false,
+		"Day 3 mercenary messenger wrong product does not mutate Ryan action state")
+
+	gm.economy.current_day = original_day
+	gm._tavern_view = original_view
+	gm.guests.clear_guest()
+	fake_view.free()
+
+
+func _test_day3_fate_reveal_correct_order_does_not_resolve_ryan_state() -> void:
+	var gm = _gm()
+	var original_day: int = gm.economy.current_day
+	var original_view = gm._tavern_view
+	var fake_view := FakeFeedbackView.new()
+	gm._tavern_view = fake_view
+	gm.economy.current_day = 3
+	_reset_ryan("herb_broth")
+	gm.guests.current_guest.set_meta("portrait_id", "mercenary_a")
+	gm.narrative.set_var("ryan_alternative_pending", true)
+	gm.narrative.set_affection("ryan", 0)
+
+	gm.request_serve("herb_broth", {"serve_drop_speed": 700.0, "quality": "normal"}, "")
+	_ok(gm.narrative.get_var("ryan_alternative_pending") == true,
+		"Day 3 mercenary messenger correct order does not resolve Ryan's pending alternative")
+	_ok(gm.narrative.get_var("ryan_interaction_closed") == false,
+		"Day 3 mercenary messenger correct order does not close Ryan interaction state")
+	_ok(gm.narrative.get_affection("ryan") == 0,
+		"Day 3 mercenary messenger correct order does not apply Ryan serve-style affection")
+
+	gm.economy.current_day = original_day
+	gm._tavern_view = original_view
+	gm.guests.clear_guest()
+	fake_view.free()
 
 
 func _test_wrong_target_story_item() -> void:

@@ -1,0 +1,14 @@
+Use case: stylized-concept
+Asset type: production source image for ordinary regular customer portraits in a pixel-art dungeon tavern management game
+Primary request: Generate one raw expression sheet for ordinary regular tavern customers, 4 columns x 3 rows, on flat chroma-key green.
+Reference intent: Match the camera, scale, and texture of the visible existing ordinary regular customer source sheets, especially regular_customer_expression_sheet_v5_a and v5_b. Do not follow the close-up v6 sheets. Do not use important NPC, hero portrait, or cinematic character-poster framing.
+Characters by column, left to right:
+1. Jora: halfling female old-road courier, short and wiry, tan skin, sandy blond pixie cut under a travel hood, patched cloak, message satchel strapped across chest.
+2. Tamsin: human caravan cook, warm brown skin, dark red curly bob, rolled sleeves, practical apron, wooden spoon or folded cloth held safely inside silhouette.
+3. Kael: elf male spice broker, slim build, amber skin, low-tied straight black hair, sharp ears, travel coat, small spice pouch at belt.
+4. Mirelle: gnome female glass trinket vendor, small frame, light skin, wavy teal-green bob, brass goggles resting on head, layered shawl, tiny wrapped parcel at chest.
+Rows top to bottom: neutral, satisfied, dissatisfied. Preserve identity, race, hair style, hair color, outfit, and silhouette for each character across all three rows; only facial expression and small hand gesture changes.
+Composition/framing: ordinary customer source-sheet framing, pulled-back waist-up bar-front portrait, not a close-up bust. Show head, full shoulders, torso, belt, and upper hip area. Subject visible area should occupy about 68-78% of each cell height and 45-68% of each cell width. Leave clear flat green padding: about 10-16% above hair/hood/goggles/ears, 10-18% on both sides, and enough bottom room for belt/upper hip. Keep every hand, prop, ear, hood, and hair shape fully inside its cell. No cropped elbows, no cut-off props, no giant head, no chest-only portrait.
+Background/layout: exactly 4 columns x 3 rows on one image, perfectly flat solid #00ff00 chroma-key background in every cell, no shadows, no gradients, no texture, no floor plane. Clean simple gutters are allowed.
+Style/medium: original game character art, hand-painted pixel-anime tavern portrait source, chunky dark ink outlines, warm dungeon tavern browns, muted teal accents, readable eyes, low-density pixel-like clusters, designed to be downsampled to 128x160 and nearest-neighbor scaled later.
+Constraints: no readable text, no logos, no UI, no watermark, no captions, no labels, no speech bubbles. Race, hair style, and hair color must be visibly different across columns. Ordinary regular customers, not important NPCs.

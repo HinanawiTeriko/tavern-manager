@@ -1,0 +1,230 @@
+{
+  "id": "figgy_concept_directions",
+  "character_working_name": "?? / Figgy",
+  "purpose": "Four raw generated concept directions for choosing a cute female danger-sign rhetoric specialist important NPC.",
+  "runtime_status": "concept_only_not_for_runtime",
+  "production_note": "Selected direction must still go through the native-pixel character portrait pipeline before runtime use.",
+  "assets": [
+    {
+      "id": "figgy_direction_01_mint_goblin_signwright",
+      "description": "mint-green goblin/gnome signwright",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_01_mint_goblin_signwright.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_01_mint_goblin_signwright.png",
+      "size": [
+        1122,
+        1402
+      ],
+      "safe_area": [
+        0,
+        0,
+        1122,
+        1402
+      ],
+      "intended_godot_use": "Concept direction only for Figgy important NPC bust; not a runtime UI texture."
+    },
+    {
+      "id": "figgy_direction_02_lavender_tiefling_clause_duelist",
+      "description": "lavender tiefling clause duelist",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_02_lavender_tiefling_clause_duelist.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_02_lavender_tiefling_clause_duelist.png",
+      "size": [
+        1122,
+        1402
+      ],
+      "safe_area": [
+        0,
+        0,
+        1122,
+        1402
+      ],
+      "intended_godot_use": "Concept direction only for Figgy important NPC bust; not a runtime UI texture."
+    },
+    {
+      "id": "figgy_direction_03_coral_halfling_field_worker_v2",
+      "description": "coral-haired halfling/dwarf field worker",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_03_coral_halfling_field_worker_v2.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_03_coral_halfling_field_worker_v2.png",
+      "size": [
+        1402,
+        1122
+      ],
+      "safe_area": [
+        0,
+        0,
+        1402,
+        1122
+      ],
+      "intended_godot_use": "Concept direction only for Figgy important NPC bust; not a runtime UI texture."
+    },
+    {
+      "id": "figgy_direction_04_aqua_fae_notice_editor_v2",
+      "description": "aqua fae notice editor",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_aqua_fae_notice_editor_v2.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_aqua_fae_notice_editor_v2.png",
+      "size": [
+        1369,
+        1149
+      ],
+      "safe_area": [
+        0,
+        0,
+        1369,
+        1149
+      ],
+      "intended_godot_use": "Concept direction only for Figgy important NPC bust; not a runtime UI texture."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v1",
+      "description": "selected aqua fae notice editor regenerated closer to important NPC bust camera and source texture",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v1.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v1.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v1.txt",
+      "size": [
+        1122,
+        1402
+      ],
+      "safe_area": [
+        0,
+        0,
+        1122,
+        1402
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v2",
+      "description": "selected aqua fae notice editor regenerated against raw important NPC references with lower prop and line density",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v2.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v2.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v2.txt",
+      "size": [
+        1254,
+        1254
+      ],
+      "safe_area": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v3",
+      "description": "selected aqua fae notice editor regenerated against raw important NPC references with vertical source framing and belt/upper-hips crop",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v3.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v3.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v3.txt",
+      "size": [
+        1003,
+        1568
+      ],
+      "safe_area": [
+        0,
+        0,
+        1003,
+        1568
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v4",
+      "description": "selected aqua fae notice editor regenerated as strict dialogue-bust crop against raw important NPC references",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v4.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v4.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v4.txt",
+      "size": [
+        1003,
+        1568
+      ],
+      "safe_area": [
+        0,
+        0,
+        1003,
+        1568
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v5",
+      "description": "selected aqua fae notice editor regenerated with normal wearable travel-clerk clothing and no wax-seal motif",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v5.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v5.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v5.txt",
+      "size": [
+        1001,
+        1572
+      ],
+      "safe_area": [
+        0,
+        0,
+        1001,
+        1572
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v6",
+      "description": "discarded normal-clothes candidate; rejected because the large satchel and lower-body crop drifted away from important NPC bust framing",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v6.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v6.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v6.txt",
+      "size": [
+        1003,
+        1569
+      ],
+      "safe_area": [
+        0,
+        0,
+        1003,
+        1569
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime_discarded_candidate",
+      "intended_godot_use": "Discarded concept source only; not selected for runtime or portrait pipeline input."
+    },
+    {
+      "id": "figgy_direction_04_refined_source_v7",
+      "description": "selected aqua fae notice editor regenerated with normal wearable short jacket outfit, no wax seal, no paper motif, no satchel",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v7.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_source_v7.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_direction_04_refined_prompt_v7.txt",
+      "size": [
+        1024,
+        1536
+      ],
+      "safe_area": [
+        0,
+        0,
+        1024,
+        1536
+      ],
+      "runtime_status": "raw_source_concept_only_not_runtime",
+      "intended_godot_use": "Selected concept source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    },
+    {
+      "id": "figgy_expression_sheet_source_v1",
+      "description": "first raw 4x2 expression sheet candidate for Figgy based on selected v7 normal-clothes portrait",
+      "source_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "output_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt_file": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "size": [
+        1536,
+        1024
+      ],
+      "safe_area": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "runtime_status": "raw_expression_sheet_candidate_not_runtime",
+      "intended_godot_use": "Candidate expression sheet source only; must still go through important NPC native-pixel portrait normalization before runtime use."
+    }
+  ],
+  "selected_direction": "figgy_direction_04_refined_source_v7"
+}

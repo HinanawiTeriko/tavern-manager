@@ -65,6 +65,12 @@ func is_material(key: String) -> bool:
 func is_product(key: String) -> bool:
 	return get_capabilities(key).has("product")
 
+func is_deliverable_product(key: String) -> bool:
+	if not is_product(key):
+		return false
+	var def: Dictionary = _items.get(key, {})
+	return bool(def.get("deliverable", true))
+
 func is_story_item(key: String) -> bool:
 	return get_capabilities(key).has("story_item")
 

@@ -28,6 +28,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_locations_contract()
+	await _test_round_prerequisites_gate_batches()
 	await _test_rounds_grant_documents_once()
 	_finish()
 
@@ -69,6 +70,7 @@ func _test_rounds_grant_documents_once() -> void:
 	var gm = get_node("/root/GameManager")
 	var snapshot: Dictionary = gm._capture_save_state()
 	gm._apply_save_state(gm._default_new_game_state())
+	_prepare_all_clearing_context(gm)
 
 	var scene := CLEARING_TABLE_SCENE.instantiate()
 	add_child(scene)
@@ -119,6 +121,58 @@ func _test_rounds_grant_documents_once() -> void:
 
 	scene.queue_free()
 	await get_tree().process_frame
+	gm._apply_save_state(snapshot)
+
+
+func _test_round_prerequisites_gate_batches() -> void:
+	var gm = get_node("/root/GameManager")
+	var snapshot: Dictionary = gm._capture_save_state()
+	gm._apply_save_state(gm._default_new_game_state())
+
+	var scene := await _spawn_clearing_scene()
+	_ok(scene.current_round_item_tags().is_empty(),
+		"clearing table waits for payout-office context before spawning Ryan batch")
+	_ok(_label_text(scene, "UI/HintLabel").contains("赔付登记处"),
+		"locked clearing table points the player back to the payout office")
+	await _free_clearing_scene(scene)
+
+	_grant_documents(gm, ["grey_ryan_case_number", "grey_old_payout_register", "grey_missing_page"])
+	scene = await _spawn_clearing_scene()
+	_ok(scene.get_current_round_index() == 0, "payout context unlocks the Ryan clearing batch")
+	_ok(scene.is_current_round_item("clearing_ryan_name"),
+		"Ryan batch becomes playable after payout-office context is known")
+	await _free_clearing_scene(scene)
+
+	gm.grant_investigation_document("grey_payout_closure")
+	scene = await _spawn_clearing_scene()
+	_ok(scene.current_round_item_tags().is_empty(),
+		"clearing table does not spawn Toby batch before the Blacktooth ledger is checked")
+	_ok(_label_text(scene, "UI/HintLabel").contains("黑齿转运账"),
+		"Toby locked batch points the player to the Blacktooth ledger")
+	await _free_clearing_scene(scene)
+
+	_grant_documents(gm, ["grey_blacktooth_batch", "grey_closure_method"])
+	scene = await _spawn_clearing_scene()
+	_ok(scene.get_current_round_index() == 1, "Blacktooth context unlocks the Toby clearing batch")
+	_ok(scene.is_current_round_item("clearing_toby_name"),
+		"Toby batch becomes playable after Blacktooth context is known")
+	await _free_clearing_scene(scene)
+
+	gm.grant_investigation_document("grey_renamed_escort")
+	scene = await _spawn_clearing_scene()
+	_ok(scene.current_round_item_tags().is_empty(),
+		"clearing table does not spawn Mira batch before the old supply copy is checked")
+	_ok(_label_text(scene, "UI/HintLabel").contains("米拉旧供应副本"),
+		"Mira locked batch points the player to the old supply copy")
+	await _free_clearing_scene(scene)
+
+	gm.day_map.mark_completed("mira_supply_copy")
+	scene = await _spawn_clearing_scene()
+	_ok(scene.get_current_round_index() == 2, "Mira supply copy context unlocks the Mira clearing batch")
+	_ok(scene.is_current_round_item("clearing_mira_name"),
+		"Mira batch becomes playable after the old supply copy is checked")
+	await _free_clearing_scene(scene)
+
 	gm._apply_save_state(snapshot)
 
 
@@ -435,3 +489,32 @@ func _find_location(locations: Array, location_id: String) -> Dictionary:
 		if String(loc.get("id", "")) == location_id:
 			return loc
 	return {}
+
+
+func _spawn_clearing_scene() -> Node:
+	var scene := CLEARING_TABLE_SCENE.instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	return scene
+
+
+func _free_clearing_scene(scene: Node) -> void:
+	scene.queue_free()
+	await get_tree().process_frame
+
+
+func _grant_documents(gm: Node, document_ids: Array) -> void:
+	for document_id in document_ids:
+		gm.grant_investigation_document(String(document_id))
+
+
+func _prepare_all_clearing_context(gm: Node) -> void:
+	_grant_documents(gm, [
+		"grey_ryan_case_number",
+		"grey_old_payout_register",
+		"grey_missing_page",
+		"grey_blacktooth_batch",
+		"grey_closure_method",
+	])
+	gm.day_map.mark_completed("mira_supply_copy")

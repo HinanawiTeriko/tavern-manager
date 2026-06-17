@@ -156,7 +156,7 @@
       "repeatable": false,
       "completeWhenDocument": "grey_ryan_case_number",
       "marker": "payout_office",
-      "result": "登记册里夹着莱恩案卷编号、旧赔付登记、缺页名单，以及一张写着赔付顺序的窄纸。"
+      "result": "你抄下了莱恩案卷编号、旧赔付登记和缺页名单。赔付顺序有异常，但要回清算台才能压出可用证明。"
     },
     {
       "id": "blacktooth_ledger",
@@ -173,7 +173,7 @@
       "repeatable": false,
       "completeWhenDocument": "grey_blacktooth_batch",
       "marker": "blacktooth_ledger",
-      "result": "你抄下了黑齿批次号、封账办法，也看见托比的护送委托被改成了转运清算。"
+      "result": "你抄下了黑齿批次号和封账办法。托比的名字确实被挪进临时人名栏，但改名证明还要回清算台压出来。"
     },
     {
       "id": "mira_supply_copy",
@@ -190,7 +190,7 @@
       "repeatable": false,
       "completeOnVisit": true,
       "marker": "mira_supply_copy",
-      "result": "你从旧供应副本背面看见了同一枚灰契印，保证金被接到旧路赔付栏。"
+      "result": "你从旧供应副本背面抄下保证金和旧路赔付栏位。它像是接进同一套灰契，但印痕还要回清算台压出来。"
     },
     {
       "id": "mushroom_forest",
@@ -284,7 +284,7 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "affection": { "npc": "mira", "amount": 3 },
+      "affection": { "npc": "mira", "amount": 1 },
       "affectionOncePerDay": true,
       "description": "米拉支起货摊歇脚，似乎并不急着赶路。",
       "dayMin": 6,

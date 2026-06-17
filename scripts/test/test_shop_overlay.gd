@@ -421,6 +421,11 @@ func _test_owned_recipe_state(overlay) -> void:
 	var state := overlay.get_node_or_null("DetailPanel/State") as Label
 	if state != null:
 		_ok(state.text.contains("已拥有"), "owned recipe state is visible")
+	var owned_mark := overlay.get_node_or_null("DetailPanel/OwnedMark") as TextureRect
+	_ok(owned_mark != null, "owned recipe marker compatibility node remains")
+	if owned_mark != null:
+		_ok(not owned_mark.visible, "owned recipe no longer shows cropped marker art")
+		_ok(owned_mark.texture == null, "owned recipe marker no longer references cropped marker texture")
 
 
 func _test_close_signal(overlay) -> void:

@@ -9,7 +9,12 @@ func _ready() -> void:
 	_test_grey_day_locations()
 	_test_grey_documents_grant_inference_clues()
 	_test_grey_route_endings()
+	_test_evelyn_public_account_gap_diagnostics()
+	_test_day20_clean_table_can_update_evelyn_final_ending()
+	_test_evelyn_pending_dialogue_names_public_account_gaps()
 	_test_previous_line_endings_shape_evelyn_pressure()
+	_test_evelyn_living_pressure_explainers()
+	_test_evelyn_day20_pre_dialogue_names_living_pressure()
 	_test_evelyn_dialogue_expression_cues()
 	_test_evelyn_role_and_dialogue_clarity()
 	_test_grey_evidence_text_clarity()
@@ -128,6 +133,136 @@ func _test_grey_route_endings() -> void:
 		"final public-account inference opens the account")
 
 
+func _test_evelyn_public_account_gap_diagnostics() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 20
+	_ok(gm.has_method("get_evelyn_public_account_gap_summary"),
+		"GameManager exposes public-account gap diagnostics for the Day20 route gate")
+	if not gm.has_method("get_evelyn_public_account_gap_summary"):
+		return
+
+	var summary := String(gm.get_evelyn_public_account_gap_summary())
+	_ok(summary.contains("公开账本缺"), "gap summary is framed as a public-account checklist")
+	_ok(summary.contains("托比身份"), "gap summary starts from the missing Toby identity inference")
+
+	gm.narrative.set_var("toby_identity_known", true)
+	gm.narrative.set_var("toby_commission_lead", true)
+	gm.narrative.set_var("mira_toby_link_known", true)
+	gm.narrative.set_var("mira_responsibility_lead", true)
+	gm.narrative.set_var("grey_same_batch_known", true)
+	gm.narrative.set_var("grey_payout_method_known", true)
+	summary = String(gm.get_evelyn_public_account_gap_summary())
+	_ok(summary.contains("米拉供应灰印"),
+		"gap summary names the missing Mira supply stamp link instead of silently hiding the public-account route")
+
+	gm.narrative.set_var("mira_grey_ledger_link_known", true)
+	summary = String(gm.get_evelyn_public_account_gap_summary())
+	_ok(summary.contains("公开抄本"),
+		"gap summary distinguishes an available-but-unsolved final public-account inference")
+
+	gm.narrative.set_var("grey_public_account_known", true)
+	_ok(String(gm.get_evelyn_public_account_gap_summary()) == "",
+		"gap summary clears once the public-account inference is solved")
+
+
+func _test_day20_clean_table_can_update_evelyn_final_ending() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 20
+	_prepare_public_account_question(gm)
+	_ok(gm.inference.has_available_questions(), "Day20 still has a final grey-ledger inference available")
+	gm._finalize_evelyn_ending_for_current_day()
+	_ok(str(gm.narrative.get_var("evelyn_ending")) == "",
+		"Day20 serve does not lock Evelyn's route while clean-table inference is still available")
+	_ok(str(gm.narrative.get_var("evelyn_resolution_state")) == "pending",
+		"Day20 serve marks Evelyn's resolution as pending until the inference screen closes")
+	gm.current_ledger_data = gm._create_ledger_data_for_current_day()
+	_ok(_fate_ending_key(gm.current_ledger_data.npc_fates, "evelyn") == "",
+		"pre-inference Day20 ledger data does not present a provisional Evelyn route")
+	_ok(not _ledger_pages_text(gm).contains("承认账面有误"),
+		"pre-inference Day20 ledger document does not write a provisional Evelyn result")
+
+	_solve_public_account_question(gm)
+	gm.finish_clean_table_inference()
+	_ok(str(gm.narrative.get_var("evelyn_ending")) == "public_account",
+		"Day20 clean-table inference sets Evelyn's final route once")
+	_ok(str(gm.narrative.get_var("evelyn_resolution_state")) == "final",
+		"Day20 clean-table return marks Evelyn's resolution as final")
+	_ok(gm.current_ledger_data != null, "Day20 clean-table return keeps ledger data available")
+	if gm.current_ledger_data != null:
+		_ok(_fate_ending_key(gm.current_ledger_data.npc_fates, "evelyn") == "public_account",
+			"Day20 ledger data is rebuilt with the post-inference Evelyn route")
+	_ok(_ledger_pages_text(gm).contains("灰账公开"),
+		"Day20 ledger document records the final Evelyn result after inference")
+
+
+func _test_evelyn_pending_dialogue_names_public_account_gaps() -> void:
+	var text := FileAccess.get_file_as_string("res://dialogue/evelyn_day20.post.dialogue")
+	_ok(text.contains("evelyn_public_gap_primary"),
+		"Day20 pending dialogue branches on the first missing public-account gap")
+	_ok(text.contains("托比的名字还没和后巷少年对上"),
+		"Day20 pending dialogue can name the missing Toby identity proof")
+	_ok(text.contains("米拉供应协议背面的灰印还没接到账上"),
+		"Day20 pending dialogue can name the missing Mira grey-ledger link")
+
+
+func _prepare_public_account_question(gm) -> void:
+	gm.inference.add_clues([
+		"toby_name",
+		"blacktooth_escort",
+		"high_pay_trap",
+		"back_alley_boy",
+		"one_person_walk",
+		"mira_traveling_mentor",
+		"child_learned_saying",
+		"mira_avoids_old_road",
+		"grey_ryan_case_number",
+		"grey_old_payout_register",
+		"grey_missing_page",
+		"grey_blacktooth_batch",
+		"grey_closure_method",
+		"grey_payout_closure",
+		"grey_renamed_escort",
+		"grey_supply_stamp",
+	])
+	_place_and_apply(gm, "toby_identity", "name", "toby_name")
+	_place_and_apply(gm, "toby_identity", "identity", "back_alley_boy")
+	_place_and_apply(gm, "toby_commission_risk", "commission", "blacktooth_escort")
+	_place_and_apply(gm, "toby_commission_risk", "risk", "high_pay_trap")
+	_place_and_apply(gm, "toby_commission_risk", "mindset", "one_person_walk")
+	_place_and_apply(gm, "mira_toby_old_relation", "past", "mira_traveling_mentor")
+	_place_and_apply(gm, "mira_toby_old_relation", "name", "toby_name")
+	_place_and_apply(gm, "mira_phrase_origin", "saying", "one_person_walk")
+	_place_and_apply(gm, "mira_phrase_origin", "learned", "child_learned_saying")
+	_place_and_apply(gm, "grey_same_batch", "ryan_case", "grey_ryan_case_number")
+	_place_and_apply(gm, "grey_same_batch", "toby_case", "grey_blacktooth_batch")
+	_place_and_apply(gm, "grey_same_batch", "closure", "grey_payout_closure")
+	_place_and_apply(gm, "grey_payout_method", "register", "grey_old_payout_register")
+	_place_and_apply(gm, "grey_payout_method", "missing", "grey_missing_page")
+	_place_and_apply(gm, "grey_payout_method", "closure", "grey_payout_closure")
+	_place_and_apply(gm, "grey_mira_supply_link", "supply", "grey_supply_stamp")
+	_place_and_apply(gm, "grey_mira_supply_link", "escort", "grey_renamed_escort")
+	_place_and_apply(gm, "grey_mira_supply_link", "method", "grey_closure_method")
+
+
+func _solve_public_account_question(gm) -> void:
+	_place_and_apply(gm, "grey_public_account", "ryan_case", "grey_ryan_case_number")
+	_place_and_apply(gm, "grey_public_account", "toby_batch", "grey_blacktooth_batch")
+	_place_and_apply(gm, "grey_public_account", "mira_stamp", "grey_supply_stamp")
+
+
+func _place_and_apply(gm, question_id: String, blank_id: String, clue_id: String) -> Dictionary:
+	var result: Dictionary = gm.inference.try_place(question_id, blank_id, clue_id)
+	gm.apply_inference_result(result)
+	return result
+
+
+func _ledger_pages_text(gm) -> String:
+	var pages: Array = gm.documents.get_document("ledger").get("pages", [])
+	return "\n---\n".join(PackedStringArray(pages))
+
+
 func _test_previous_line_endings_shape_evelyn_pressure() -> void:
 	var gm = _gm()
 	gm._apply_save_state(gm._default_new_game_state())
@@ -177,6 +312,48 @@ func _test_previous_line_endings_shape_evelyn_pressure() -> void:
 		"lost prior lines leave partial grey truth as cold amendment")
 	_ok(gm._evelyn_track_result("amended_account").contains("冷账"),
 		"cold amendment fate track names the colder outcome")
+
+
+func _test_evelyn_living_pressure_explainers() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	_ok(gm.narrative.has_method("get_evelyn_living_pressure_labels"),
+		"NarrativeManager exposes which living witnesses shape Evelyn pressure")
+	if not gm.narrative.has_method("get_evelyn_living_pressure_labels"):
+		return
+
+	gm.narrative.set_var("ryan_ending", "alternative_survivor")
+	gm.narrative.set_var("mira_ending", "she_finally_stopped")
+	gm.narrative.set_var("toby_survived", true)
+	var witnesses: Array = gm.narrative.get_evelyn_living_pressure_labels()
+	_ok(witnesses.has("莱恩") and witnesses.has("米拉") and witnesses.has("托比"),
+		"living pressure labels name Ryan, Mira, and Toby when their prior routes leave witnesses")
+
+	gm.narrative.set_var("grey_public_account_known", true)
+	gm.narrative.finalize_evelyn_ending()
+	var living_result := String(gm._evelyn_track_result("public_account"))
+	_ok(living_result.contains("活人证词：莱恩 / 米拉 / 托比"),
+		"public-account fate track lists living witness pressure")
+	_ok(living_result.contains("纸证：莱恩案卷编号 / 黑齿批次号 / 供应协议灰印"),
+		"public-account fate track lists the paper evidence spine")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("ryan_ending", "uninformed_fallen")
+	gm.narrative.set_var("mira_ending", "never_turned_back")
+	gm.narrative.set_var("toby_survived", false)
+	gm.narrative.set_var("grey_public_account_known", true)
+	gm.narrative.finalize_evelyn_ending()
+	var paper_result := String(gm._evelyn_track_result("public_account"))
+	_ok(paper_result.contains("活人证词：无"),
+		"paper-public fate track makes the missing living pressure explicit")
+	_ok(paper_result.contains("纸证：莱恩案卷编号 / 黑齿批次号 / 供应协议灰印"),
+		"paper-public fate track still lists the evidence spine")
+
+
+func _test_evelyn_day20_pre_dialogue_names_living_pressure() -> void:
+	var text := FileAccess.get_file_as_string("res://dialogue/evelyn_day20.pre.dialogue")
+	_ok(text.contains("亲口作证") and text.contains("账本的重量"),
+		"Day20 pre dialogue tells players that living witnesses change Evelyn's final pressure")
 
 
 func _test_evelyn_dialogue_expression_cues() -> void:
@@ -245,6 +422,10 @@ func _test_evelyn_role_and_dialogue_clarity() -> void:
 		"Day13 gives the first audit target and the ordering question")
 	_ok(day13_pre.contains("我只能给你入口"),
 		"Day13 explains why Evelyn points without confessing")
+	_ok(day13_pre.contains("公会柜台里") and day13_pre.contains("封存") and day13_pre.contains("改账"),
+		"Day13 explains Evelyn's institutional limit inside the guild")
+	_ok(day13_pre.contains("离开公会") and day13_pre.contains("外面的账"),
+		"Day13 explains why the player must create outside evidence")
 
 	var day20_pre := FileAccess.get_file_as_string("res://dialogue/evelyn_day20.pre.dialogue")
 	_ok(day20_pre.contains("证据不够") and day20_pre.contains("封存"),
@@ -286,6 +467,10 @@ func _test_grey_evidence_text_clarity() -> void:
 		"Blacktooth ledger location text names the renamed-escort question")
 	_ok(locations_text.contains("米拉的旧供应协议是否也接进同一套灰契"),
 		"Mira supply copy location text names the final link question")
+	_ok(not locations_text.contains("也看见托比的护送委托被改成了转运清算"),
+		"Blacktooth result text does not claim the clearing-table proof is already produced")
+	_ok(not locations_text.contains("看见了同一枚灰契印"),
+		"Mira supply result text does not claim the clearing-table stamp proof is already produced")
 
 
 func _find_by_id(entries: Array, id: String) -> Dictionary:
@@ -307,3 +492,10 @@ func _find_location(locations: Array, location_id: String) -> Dictionary:
 		if String(loc.get("id", "")) == location_id:
 			return loc
 	return {}
+
+
+func _fate_ending_key(fates: Array, npc_id: String) -> String:
+	for fate in fates:
+		if fate is Dictionary and String(fate.get("npc_id", "")) == npc_id:
+			return String(fate.get("ending_key", ""))
+	return ""

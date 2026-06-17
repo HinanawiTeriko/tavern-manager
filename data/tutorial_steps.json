@@ -109,15 +109,15 @@
     {
       "id": "story_delivery_intro",
       "group": "seasoning",
-      "title": "剧情物品也是动作",
-      "description": "某些证据和特殊材料可以从背包拖到桌面，再直接交给重要客人。你做出的实际动作会改变后续对话。\n\n有些材料还能拖到桌面成品上，例如把花粉加入麦芽酒。",
+      "title": "香料罐",
+      "description": "香料罐用来给成品加味或加入特殊粉末。先把香料、花粉这类材料从快捷栏或背包拖进罐口。\n\n装好后，把成品放在香料罐下方，抓住罐子摇到粉末落下；松手时，罐下方的成品会吃到香料。",
       "narrator_lines": [
-        {"expression": "surprised", "text": "有些特殊材料不是直接卖的，它们会改变成品或剧情。"},
-        {"expression": "neutral", "text": "把成品放到调味区，再把花粉这类材料拖上去。"},
-        {"expression": "concerned", "text": "某些证据也能从背包拖出来，直接交给重要客人。"}
+        {"expression": "surprised", "text": "这个小罐是香料罐。把香料或花粉拖进罐口，它就会先装起来。"},
+        {"expression": "neutral", "text": "把成品放到罐子下方，再抓住香料罐摇一摇，粉末会落到成品上。"},
+        {"expression": "concerned", "text": "装错了就右键香料罐，把里面的材料倒回桌面。"}
       ],
-      "highlight_node": "SeasoningZone",
-      "highlight_rect": [678, 436, 86, 110],
+      "highlight_node": "SeasoningShaker",
+      "highlight_rect": [672, 426, 96, 136],
       "desc_pos_x": 0.82,
       "desc_pos_y": 0.18,
       "desc_width": 390,
@@ -161,6 +161,56 @@
       "desc_pos_y": 0.88,
       "desc_width": 460,
       "desc_height": 145
+    }
+  ],
+  "inference": [
+    {
+      "id": "inference_clues",
+      "group": "inference",
+      "title": "推断 · 摘录",
+      "description": "左侧是今晚收集到的线索词。拖动一个词，或先点选它，再放进中间纸页的空位。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "这里是打烊后的推断页。左边这些词，是你白天和夜里攒下来的摘录。"},
+        {"expression": "smirk", "text": "抓起一个线索词，拖到中间纸页的空位上；也可以先点词，再点空位。"}
+      ],
+      "highlight_node": "ClueArea",
+      "highlight_rect": [52, 76, 304, 568],
+      "desc_pos_x": 0.55,
+      "desc_pos_y": 0.18,
+      "desc_width": 440,
+      "desc_height": 140
+    },
+    {
+      "id": "inference_blanks",
+      "group": "inference",
+      "title": "推断 · 填空",
+      "description": "中间的句子会给出待证的空位。正确的线索会留在空位里；错误的线索会被驳回，并给出提示。",
+      "narrator_lines": [
+        {"expression": "concerned", "text": "中间这页不是背答案的地方，是把证据摆进句子里。"},
+        {"expression": "neutral", "text": "放错了会出现反馈。别怕，线索不会丢，只是这一步不成立。"}
+      ],
+      "highlight_node": "BookArea",
+      "highlight_rect": [400, 76, 512, 568],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.82,
+      "desc_width": 460,
+      "desc_height": 140
+    },
+    {
+      "id": "inference_continue",
+      "group": "inference",
+      "title": "推断 · 合上",
+      "description": "推断成立会记录结论，并可能改变后续剧情。没有可推断的题目时，点击这里继续结算。",
+      "narrator_lines": [
+        {"expression": "surprised", "text": "推断成立后，结论会记在桌面右侧，剧情变量也会立刻更新。"},
+        {"expression": "neutral", "text": "今晚想先到这里，就点这张纸条，回到账本结算。"}
+      ],
+      "highlight_node": "ExtinguishBtn",
+      "highlight_rect": [1010, 592, 176, 60],
+      "desc_pos_x": 0.56,
+      "desc_pos_y": 0.68,
+      "desc_width": 440,
+      "desc_height": 140
     }
   ]
 }

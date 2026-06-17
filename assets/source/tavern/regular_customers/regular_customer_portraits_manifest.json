@@ -9,12 +9,22 @@
   "sources": [
     "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_a.png",
     "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_b.png",
-    "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c.png"
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c.png",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png"
   ],
   "prompt_sources": [
     "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_a_prompt.txt",
     "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_b_prompt.txt",
-    "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c_prompt.txt"
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c_prompt.txt",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a_prompt.txt",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b_prompt.txt",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c_prompt.txt",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d_prompt.txt",
+    "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e_prompt.txt"
   ],
   "native_size": [
     128,
@@ -41,7 +51,25 @@
     "regular_selene",
     "regular_gareth",
     "regular_lyra",
-    "regular_oma"
+    "regular_oma",
+    "regular_ketta",
+    "regular_bram",
+    "regular_sova",
+    "regular_petra",
+    "regular_jora",
+    "regular_tamsin",
+    "regular_kael",
+    "regular_mirelle",
+    "regular_fenna",
+    "regular_yuval",
+    "regular_nara",
+    "regular_iris",
+    "regular_bastian",
+    "regular_qadir",
+    "regular_rowan",
+    "regular_maeve",
+    "regular_osric",
+    "regular_lio"
   ],
   "contact_sheets": {
     "regular_belta": "docs/art/characters/regular_belta_contact_sheet.png",
@@ -55,7 +83,25 @@
     "regular_selene": "docs/art/characters/regular_selene_contact_sheet.png",
     "regular_gareth": "docs/art/characters/regular_gareth_contact_sheet.png",
     "regular_lyra": "docs/art/characters/regular_lyra_contact_sheet.png",
-    "regular_oma": "docs/art/characters/regular_oma_contact_sheet.png"
+    "regular_oma": "docs/art/characters/regular_oma_contact_sheet.png",
+    "regular_ketta": "docs/art/characters/regular_ketta_contact_sheet.png",
+    "regular_bram": "docs/art/characters/regular_bram_contact_sheet.png",
+    "regular_sova": "docs/art/characters/regular_sova_contact_sheet.png",
+    "regular_petra": "docs/art/characters/regular_petra_contact_sheet.png",
+    "regular_jora": "docs/art/characters/regular_jora_contact_sheet.png",
+    "regular_tamsin": "docs/art/characters/regular_tamsin_contact_sheet.png",
+    "regular_kael": "docs/art/characters/regular_kael_contact_sheet.png",
+    "regular_mirelle": "docs/art/characters/regular_mirelle_contact_sheet.png",
+    "regular_fenna": "docs/art/characters/regular_fenna_contact_sheet.png",
+    "regular_yuval": "docs/art/characters/regular_yuval_contact_sheet.png",
+    "regular_nara": "docs/art/characters/regular_nara_contact_sheet.png",
+    "regular_iris": "docs/art/characters/regular_iris_contact_sheet.png",
+    "regular_bastian": "docs/art/characters/regular_bastian_contact_sheet.png",
+    "regular_qadir": "docs/art/characters/regular_qadir_contact_sheet.png",
+    "regular_rowan": "docs/art/characters/regular_rowan_contact_sheet.png",
+    "regular_maeve": "docs/art/characters/regular_maeve_contact_sheet.png",
+    "regular_osric": "docs/art/characters/regular_osric_contact_sheet.png",
+    "regular_lio": "docs/art/characters/regular_lio_contact_sheet.png"
   },
   "portraits": {
     "regular_belta_neutral": {
@@ -805,6 +851,1142 @@
       ],
       "native": "assets/source/tavern/regular_customers/regular_oma_dissatisfied_native.png",
       "runtime": "assets/textures/characters/regular_oma_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_ketta_neutral": {
+      "customer_id": "regular_ketta",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        9,
+        8,
+        353,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_ketta_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_ketta_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_bram_neutral": {
+      "customer_id": "regular_bram",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        371,
+        8,
+        715,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bram_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_bram_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_sova_neutral": {
+      "customer_id": "regular_sova",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        733,
+        8,
+        1077,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_sova_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_sova_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_petra_neutral": {
+      "customer_id": "regular_petra",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        1095,
+        8,
+        1439,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_petra_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_petra_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_ketta_satisfied": {
+      "customer_id": "regular_ketta",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        9,
+        370,
+        353,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_ketta_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_ketta_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1",
+      "fit_mode": "height_locked",
+      "fit_reason": "wide_thumb_pose_keeps_character_scale"
+    },
+    "regular_bram_satisfied": {
+      "customer_id": "regular_bram",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        371,
+        370,
+        715,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bram_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_bram_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_sova_satisfied": {
+      "customer_id": "regular_sova",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        733,
+        370,
+        1077,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_sova_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_sova_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_petra_satisfied": {
+      "customer_id": "regular_petra",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        1095,
+        370,
+        1439,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_petra_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_petra_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_ketta_dissatisfied": {
+      "customer_id": "regular_ketta",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        9,
+        732,
+        353,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_ketta_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_ketta_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_bram_dissatisfied": {
+      "customer_id": "regular_bram",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        371,
+        732,
+        715,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bram_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_bram_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_sova_dissatisfied": {
+      "customer_id": "regular_sova",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        733,
+        732,
+        1077,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_sova_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_sova_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_petra_dissatisfied": {
+      "customer_id": "regular_petra",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v8_a.png",
+      "crop_rect": [
+        1095,
+        732,
+        1439,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_petra_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_petra_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_jora_neutral": {
+      "customer_id": "regular_jora",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        9,
+        8,
+        353,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_jora_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_jora_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_tamsin_neutral": {
+      "customer_id": "regular_tamsin",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        371,
+        8,
+        715,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_tamsin_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_tamsin_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_kael_neutral": {
+      "customer_id": "regular_kael",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        733,
+        8,
+        1077,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_kael_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_kael_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_mirelle_neutral": {
+      "customer_id": "regular_mirelle",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        1095,
+        8,
+        1439,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_mirelle_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_mirelle_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_jora_satisfied": {
+      "customer_id": "regular_jora",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        9,
+        370,
+        353,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_jora_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_jora_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_tamsin_satisfied": {
+      "customer_id": "regular_tamsin",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        371,
+        370,
+        715,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_tamsin_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_tamsin_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_kael_satisfied": {
+      "customer_id": "regular_kael",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        733,
+        370,
+        1077,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_kael_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_kael_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_mirelle_satisfied": {
+      "customer_id": "regular_mirelle",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        1095,
+        370,
+        1439,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_mirelle_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_mirelle_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_jora_dissatisfied": {
+      "customer_id": "regular_jora",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        9,
+        732,
+        353,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_jora_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_jora_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_tamsin_dissatisfied": {
+      "customer_id": "regular_tamsin",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        371,
+        732,
+        715,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_tamsin_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_tamsin_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_kael_dissatisfied": {
+      "customer_id": "regular_kael",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        733,
+        732,
+        1077,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_kael_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_kael_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_mirelle_dissatisfied": {
+      "customer_id": "regular_mirelle",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_b.png",
+      "crop_rect": [
+        1095,
+        732,
+        1439,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_mirelle_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_mirelle_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_fenna_neutral": {
+      "customer_id": "regular_fenna",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        9,
+        8,
+        353,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_fenna_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_fenna_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_yuval_neutral": {
+      "customer_id": "regular_yuval",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        371,
+        8,
+        715,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_yuval_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_yuval_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_nara_neutral": {
+      "customer_id": "regular_nara",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        733,
+        8,
+        1077,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_nara_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_nara_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_iris_neutral": {
+      "customer_id": "regular_iris",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        1095,
+        8,
+        1439,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_iris_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_iris_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_fenna_satisfied": {
+      "customer_id": "regular_fenna",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        9,
+        370,
+        353,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_fenna_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_fenna_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_yuval_satisfied": {
+      "customer_id": "regular_yuval",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        371,
+        370,
+        715,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_yuval_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_yuval_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_nara_satisfied": {
+      "customer_id": "regular_nara",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        733,
+        370,
+        1077,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_nara_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_nara_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_iris_satisfied": {
+      "customer_id": "regular_iris",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        1095,
+        370,
+        1439,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_iris_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_iris_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_fenna_dissatisfied": {
+      "customer_id": "regular_fenna",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        9,
+        732,
+        353,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_fenna_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_fenna_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_yuval_dissatisfied": {
+      "customer_id": "regular_yuval",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        371,
+        732,
+        715,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_yuval_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_yuval_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_nara_dissatisfied": {
+      "customer_id": "regular_nara",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        733,
+        732,
+        1077,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_nara_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_nara_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_iris_dissatisfied": {
+      "customer_id": "regular_iris",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_c.png",
+      "crop_rect": [
+        1095,
+        732,
+        1439,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_iris_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_iris_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_bastian_neutral": {
+      "customer_id": "regular_bastian",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        9,
+        8,
+        353,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bastian_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_bastian_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_qadir_neutral": {
+      "customer_id": "regular_qadir",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        371,
+        8,
+        715,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_qadir_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_qadir_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_rowan_neutral": {
+      "customer_id": "regular_rowan",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        733,
+        8,
+        1077,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_rowan_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_rowan_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_maeve_neutral": {
+      "customer_id": "regular_maeve",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        1095,
+        8,
+        1439,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_maeve_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_maeve_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_bastian_satisfied": {
+      "customer_id": "regular_bastian",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        9,
+        370,
+        353,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bastian_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_bastian_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_qadir_satisfied": {
+      "customer_id": "regular_qadir",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        371,
+        370,
+        715,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_qadir_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_qadir_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_rowan_satisfied": {
+      "customer_id": "regular_rowan",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        733,
+        370,
+        1077,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_rowan_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_rowan_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_maeve_satisfied": {
+      "customer_id": "regular_maeve",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        1095,
+        370,
+        1439,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_maeve_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_maeve_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_bastian_dissatisfied": {
+      "customer_id": "regular_bastian",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        9,
+        732,
+        353,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_bastian_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_bastian_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_qadir_dissatisfied": {
+      "customer_id": "regular_qadir",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        371,
+        732,
+        715,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_qadir_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_qadir_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_rowan_dissatisfied": {
+      "customer_id": "regular_rowan",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        733,
+        732,
+        1077,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_rowan_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_rowan_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_maeve_dissatisfied": {
+      "customer_id": "regular_maeve",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_d.png",
+      "crop_rect": [
+        1095,
+        732,
+        1439,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_maeve_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_maeve_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_osric_neutral": {
+      "customer_id": "regular_osric",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        9,
+        8,
+        353,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_osric_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_osric_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_lio_neutral": {
+      "customer_id": "regular_lio",
+      "state": "neutral",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        371,
+        8,
+        715,
+        354
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_lio_neutral_native.png",
+      "runtime": "assets/textures/characters/regular_lio_neutral.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_osric_satisfied": {
+      "customer_id": "regular_osric",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        9,
+        370,
+        353,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_osric_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_osric_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_lio_satisfied": {
+      "customer_id": "regular_lio",
+      "state": "satisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        371,
+        370,
+        715,
+        716
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_lio_satisfied_native.png",
+      "runtime": "assets/textures/characters/regular_lio_satisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_osric_dissatisfied": {
+      "customer_id": "regular_osric",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        9,
+        732,
+        353,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_osric_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_osric_dissatisfied.png",
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "intended_godot_use": "Tavern CustomerSprite named regular customer bust portrait behind TabletopArt",
+      "matte": "source_flood_fill_green_screen_v1"
+    },
+    "regular_lio_dissatisfied": {
+      "customer_id": "regular_lio",
+      "state": "dissatisfied",
+      "source": "art_sources/generated_raw/characters/regular_customers/regular_customer_expansion_sheet_v7_e.png",
+      "crop_rect": [
+        371,
+        732,
+        715,
+        1078
+      ],
+      "native": "assets/source/tavern/regular_customers/regular_lio_dissatisfied_native.png",
+      "runtime": "assets/textures/characters/regular_lio_dissatisfied.png",
       "safe_area": [
         0,
         0,

@@ -22,7 +22,11 @@ func _ready() -> void:
 	_test_daymap_tutorial_matches_current_continue_flow(parsed)
 	_test_tutorial_data_declares_narrator_lines(parsed)
 	_test_tutorial_highlight_keys_match_trigger_rects(parsed)
+	_test_seasoning_tutorial_current_workspace_trigger()
 	_test_serve_tutorial_matches_table_order_groove(parsed)
+	_test_inference_tutorial_data(parsed)
+	_test_inference_tutorial_reset_contract()
+	_test_inference_tutorial_game_save_contract()
 	_test_ryan_arrival_starts_serve_tutorial_after_pre_dialogue()
 	for required in ["访问", "酒桶", "右键", "整理桌面", "Tab", "E"]:
 		_ok(text.contains(required), "Ryan slice tutorial mentions: " + required)
@@ -73,8 +77,14 @@ func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> vo
 	var seasoning_steps: Array = parsed.get("seasoning", [])
 	_ok(not seasoning_steps.is_empty(), "seasoning tutorial step exists")
 	if not seasoning_steps.is_empty():
-		_ok(String(seasoning_steps[0].get("highlight_node", "")) == "SeasoningZone",
-			"seasoning tutorial highlights the seasoning zone trigger rect")
+		var seasoning_text := JSON.stringify(seasoning_steps)
+		_ok(String(seasoning_steps[0].get("highlight_node", "")) == "SeasoningShaker",
+			"seasoning tutorial highlights the current seasoning shaker")
+		for required in ["香料罐", "罐口", "摇", "右键"]:
+			_ok(seasoning_text.contains(required),
+				"seasoning tutorial explains current shaker use: " + required)
+		_ok(not seasoning_text.contains("调味区") and not seasoning_text.contains("SeasoningZone"),
+			"seasoning tutorial no longer points to the removed seasoning zone flow")
 
 
 func _test_serve_tutorial_matches_table_order_groove(parsed: Dictionary) -> void:
@@ -88,6 +98,76 @@ func _test_serve_tutorial_matches_table_order_groove(parsed: Dictionary) -> void
 		text += "\n" + String(line.get("text", ""))
 	_ok(not text.contains("头顶"), "serve tutorial no longer says orders appear over the customer's head")
 	_ok(text.contains("订单槽"), "serve tutorial points players to the current table order groove")
+
+
+func _test_seasoning_tutorial_current_workspace_trigger() -> void:
+	var workspace_source := FileAccess.get_file_as_string("res://scripts/ui/bar_workspace.gd")
+	_ok(workspace_source.contains("start_tutorial(\"seasoning\""),
+		"current BarWorkspace can start the seasoning tutorial")
+	_ok(workspace_source.contains("is_group_completed(\"craft\")"),
+		"seasoning tutorial waits until the craft tutorial is no longer pending")
+	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
+	_ok(tavern_source.contains("\"seasoning\"") and tavern_source.contains("SeasoningShaker"),
+		"TavernView exposes live SeasoningShaker tutorial highlight rects")
+
+
+func _test_inference_tutorial_data(parsed: Dictionary) -> void:
+	_ok(parsed.has("inference"), "inference tutorial group exists")
+	var inference_steps: Array = parsed.get("inference", [])
+	_ok(inference_steps.size() >= 3, "inference tutorial covers clue words, blanks, and continuing")
+	var keys := {}
+	var text := JSON.stringify(inference_steps)
+	for step in inference_steps:
+		keys[String(step.get("highlight_node", ""))] = true
+	_ok(keys.has("ClueArea"), "inference tutorial highlights the clue notes page")
+	_ok(keys.has("BookArea"), "inference tutorial highlights the inference book page")
+	_ok(keys.has("ExtinguishBtn"), "inference tutorial highlights the continue control")
+	_ok(text.contains("推断"), "inference tutorial copy names the deduction page")
+
+
+func _test_inference_tutorial_reset_contract() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(tm != null, "TutorialManager is available for inference tutorial reset test")
+	if tm == null:
+		return
+	var source := FileAccess.get_file_as_string("res://scripts/tutorial/tutorial_manager.gd")
+	_ok(source.contains("first_inference_shown"),
+		"TutorialManager tracks whether the inference tutorial was shown")
+	if not source.contains("first_inference_shown"):
+		return
+	var old_value = tm.get("first_inference_shown")
+	tm.set("first_inference_shown", true)
+	tm.replay_all()
+	_ok(bool(tm.get("first_inference_shown")) == false,
+		"replay_all resets the inference tutorial first-time flag")
+	tm.set("first_inference_shown", bool(old_value))
+
+
+func _test_inference_tutorial_game_save_contract() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(gm != null and tm != null, "GameManager and TutorialManager are available for inference tutorial save test")
+	if gm == null or tm == null:
+		return
+	var old_value = tm.first_inference_shown
+	tm.first_inference_shown = true
+	var captured: Dictionary = gm._capture_save_state()
+	var captured_tutorial: Dictionary = captured.get("tutorial", {})
+	_ok(captured_tutorial.get("first_inference_shown", null) == true,
+		"GameManager save state captures the inference tutorial first-time flag")
+
+	var default_state: Dictionary = gm._default_new_game_state()
+	var default_tutorial: Dictionary = default_state.get("tutorial", {})
+	_ok(default_tutorial.get("first_inference_shown", null) == false,
+		"new-game tutorial state defaults the inference tutorial flag to false")
+
+	tm.first_inference_shown = false
+	default_tutorial["first_inference_shown"] = true
+	default_state["tutorial"] = default_tutorial
+	gm._apply_save_state(default_state)
+	_ok(tm.first_inference_shown == true,
+		"GameManager restore state restores the inference tutorial first-time flag")
+	tm.first_inference_shown = old_value
 
 
 func _ok(cond: bool, msg: String) -> void:

@@ -7,6 +7,9 @@ const SETTLEMENT_PANEL_FATES := "res://assets/textures/ui/night_settlement/night
 const CONTINUE_NORMAL := "res://assets/textures/ui/night_settlement/night_settlement_continue_normal.png"
 const CONTINUE_HOVER := "res://assets/textures/ui/night_settlement/night_settlement_continue_hover.png"
 const CONTINUE_PRESSED := "res://assets/textures/ui/night_settlement/night_settlement_continue_pressed.png"
+const RESTART_DAY_NORMAL := "res://assets/textures/ui/restart_day/restart_day_button_normal.png"
+const RESTART_DAY_HOVER := "res://assets/textures/ui/restart_day/restart_day_button_hover.png"
+const RESTART_DAY_PRESSED := "res://assets/textures/ui/restart_day/restart_day_button_pressed.png"
 const SILHOUETTE_SIZE := Vector2(144, 208)
 const SILHOUETTE_ENTRY_X := 1368.0
 const SILHOUETTE_QUEUE_X := 72.0
@@ -45,6 +48,7 @@ var _stats_list: VBoxContainer
 var _fate_title: Label
 var _fate_list: VBoxContainer
 var _continue_btn: Button
+var _restart_day_btn: Button
 var _settlement_backdrop: TextureRect
 var _stats_panel_art: TextureRect
 var _fate_panel_art: TextureRect
@@ -52,6 +56,7 @@ var _guest_silhouette_layer: Control
 var _fate_reveal_overlay: Control
 var _fate_cinematic: Control
 var _ryan_fate_cinematic: Control
+var _clock_rewind_overlay: Control
 var _pending_fate_data: LedgerData = null
 var _fate_presentation_shown := false
 var _active_ledger_data: LedgerData = null
@@ -75,14 +80,20 @@ func _ready() -> void:
 	_fate_title = $UI/FateTitle
 	_fate_list = $UI/FateList
 	_continue_btn = $UI/ContinueBtn
+	_restart_day_btn = $UI/RestartDayBtn
 	_settlement_backdrop = get_node_or_null("ArtLayer/SettlementBackdrop") as TextureRect
 	_stats_panel_art = get_node_or_null("ArtLayer/StatsPanelArt") as TextureRect
 	_fate_panel_art = get_node_or_null("ArtLayer/FatePanelArt") as TextureRect
 	_guest_silhouette_layer = get_node_or_null("ArtLayer/GuestSilhouetteLayer") as Control
+	_clock_rewind_overlay = get_node_or_null("ClockRewindOverlay") as Control
 
 	_apply_settlement_art()
 	_style_settlement_button(_continue_btn)
+	_style_restart_day_button(_restart_day_btn)
 	_continue_btn.pressed.connect(_on_continue)
+	_restart_day_btn.pressed.connect(_on_restart_day)
+	if _clock_rewind_overlay != null:
+		_clock_rewind_overlay.connect("rewind_completed", Callable(self, "_on_clock_rewind_completed"))
 
 	var gm = get_node("/root/GameManager")
 	var tm = get_node_or_null("/root/TutorialManager")
@@ -128,6 +139,8 @@ func _render(data: LedgerData) -> void:
 	_add_score_row("guests", "客人", "0 位")
 	_add_score_row("success", "成功", "0 单")
 	_add_score_row("failed", "失败", "0 单")
+	if not data.rumor_summary.is_empty():
+		_add_score_row("rumor", "今晚传闻影响", "待复盘")
 	_create_guest_silhouettes(data.guest_entries)
 
 
@@ -399,7 +412,15 @@ func _on_ryan_fate_cinematic_gui_input(event: InputEvent) -> void:
 
 
 func _load_texture(path: String) -> Texture2D:
-	return load(path) as Texture2D
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	texture.take_over_path(path)
+	return texture
 
 
 func _make_texture_style(path: String) -> StyleBoxTexture:
@@ -539,6 +560,7 @@ func _start_score_replay() -> void:
 			_score_tween.tween_property(figure, "position", _silhouette_target_position(figure), SILHOUETTE_ARRIVAL_DURATION).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 		_score_tween.tween_callback(_apply_guest_replay_step.bind(i, entry))
 		_score_tween.tween_interval(SILHOUETTE_STEP_PAUSE)
+	_score_tween.tween_callback(_apply_rumor_replay_summary)
 	_score_tween.tween_callback(_complete_score_replay)
 
 
@@ -612,6 +634,94 @@ func _refresh_score_labels(changed_keys: Array = []) -> void:
 	_set_score_text("failed", "%d 单" % int(_current_score["failed"]), changed_keys.has("failed"))
 
 
+func _apply_rumor_replay_summary() -> void:
+	if _active_ledger_data == null or _active_ledger_data.rumor_summary.is_empty():
+		return
+	var changed := int(_active_ledger_data.rumor_summary.get("hit_count", 0)) > 0
+	_refresh_rumor_summary_label(changed)
+	if changed:
+		_play_counter_impact(["rumor"])
+
+
+func _refresh_rumor_summary_label(punch: bool = false) -> void:
+	if _active_ledger_data == null:
+		return
+	var label := _score_value_labels.get("rumor", null) as Label
+	if label == null:
+		return
+	label.text = _rumor_summary_text(_active_ledger_data.rumor_summary)
+	if punch:
+		_punch_score_label(label)
+
+
+func _rumor_summary_text(summary: Dictionary) -> String:
+	if summary.is_empty():
+		return ""
+	var hit_count := int(summary.get("hit_count", 0))
+	if hit_count <= 0:
+		var missed := _summary_names_text(summary.get("missed_customers", []))
+		if missed != "":
+			return "未命中 · %s 来了但菜单没对上" % missed
+		if _summary_names_text(summary.get("affected_customers", [])) != "":
+			return "未命中 · 相关客人未到店"
+		return "未命中 · 菜单未贴近"
+	var parts := PackedStringArray()
+	parts.append("命中 %d 次" % hit_count)
+	parts.append("+%dG" % int(summary.get("bonus_gold", 0)))
+	parts.append("%+d REP" % int(summary.get("bonus_rep", 0)))
+	var tags := _summary_tags_text(summary.get("tags", []))
+	if tags != "":
+		parts.append(tags)
+	var matched := _summary_names_text(summary.get("matched_customers", []))
+	if matched != "":
+		parts.append("影响 " + matched)
+	var memory := _summary_first_text(summary.get("memory_notes", []))
+	if memory != "":
+		parts.append(memory)
+	var word_of_mouth := _summary_first_text(summary.get("word_of_mouth_labels", []))
+	if word_of_mouth != "":
+		parts.append(word_of_mouth)
+	return " ".join(parts)
+
+
+func _summary_tags_text(tags) -> String:
+	if not tags is Array:
+		return ""
+	var result := PackedStringArray()
+	for tag in tags:
+		var tag_text := String(tag)
+		if tag_text == "":
+			continue
+		result.append(tag_text)
+		if result.size() >= 3:
+			break
+	return "/".join(result)
+
+
+func _summary_names_text(names) -> String:
+	if not names is Array:
+		return ""
+	var result := PackedStringArray()
+	for name in names:
+		var text := String(name)
+		if text == "":
+			continue
+		result.append(text)
+		if result.size() >= 3:
+			break
+	return "/".join(result)
+
+
+func _summary_first_text(values) -> String:
+	if not values is Array:
+		return ""
+	for value in values:
+		var text := String(value)
+		if text != "":
+			return text
+	return ""
+
+
 func _set_score_text(icon_id: String, text: String, punch: bool) -> void:
 	var label := _score_value_labels.get(icon_id, null) as Label
 	if label == null:
@@ -669,6 +779,7 @@ func _complete_score_replay() -> void:
 		_set_silhouette_final(i)
 	_current_score = _target_score.duplicate()
 	_refresh_score_labels([])
+	_refresh_rumor_summary_label(false)
 	_score_replay_active = false
 	_score_replay_finished = true
 
@@ -711,6 +822,21 @@ func _style_settlement_button(button: Button) -> void:
 	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_LIGHT)
 	button.add_theme_font_override("font", PIXEL_FONT)
 	button.add_theme_font_size_override("font_size", 18)
+	button.focus_mode = Control.FOCUS_ALL
+
+
+func _style_restart_day_button(button: Button) -> void:
+	if button == null:
+		return
+	button.text = "重写今日"
+	button.add_theme_stylebox_override("normal", _make_texture_style(RESTART_DAY_NORMAL))
+	button.add_theme_stylebox_override("hover", _make_texture_style(RESTART_DAY_HOVER))
+	button.add_theme_stylebox_override("pressed", _make_texture_style(RESTART_DAY_PRESSED))
+	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", ThemeColors.TEXT_LIGHT)
+	button.add_theme_font_override("font", PIXEL_FONT)
+	button.add_theme_font_size_override("font_size", 15)
 	button.focus_mode = Control.FOCUS_ALL
 
 
@@ -792,6 +918,20 @@ func _on_continue() -> void:
 		return
 	var gm = get_node("/root/GameManager")
 	gm.day_cycle.next_phase()
+
+
+func _on_restart_day() -> void:
+	if _score_replay_active:
+		_complete_score_replay()
+	if _clock_rewind_overlay == null:
+		return
+	var gm = get_node("/root/GameManager")
+	_clock_rewind_overlay.call("open_with_events", gm.get_current_day_events())
+
+
+func _on_clock_rewind_completed() -> void:
+	var gm = get_node("/root/GameManager")
+	gm.restart_current_day()
 
 
 func _unhandled_input(event: InputEvent) -> void:

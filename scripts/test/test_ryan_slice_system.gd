@@ -14,6 +14,8 @@ func _ready() -> void:
 	_test_game_manager_owns_slice()
 	_test_pending_important_guest_blocks_early_close()
 	await _test_day2_important_npc_spawns_when_menu_already_confirmed()
+	_test_day3_fate_reveal_is_not_a_formal_npc_scene()
+	await _test_day3_fate_reveal_spawns_when_menu_already_confirmed()
 	_test_day1_settlement_warns_about_day2_fate_ledger_entry()
 	_finish()
 
@@ -36,19 +38,21 @@ func _finish() -> void:
 
 func _test_three_day_boundary() -> void:
 	var slice := RyanSliceSystem.new()
-	# [走查脚手架] 收尾日临时延至 Day20 以走查 Evelyn 灰账线高潮。
-	_ok(slice.last_day() == 20, "slice ends on Day 20 (走查脚手架)")
+	# [走查脚手架] Day20 保留 Evelyn 灰账线高潮；正式流程继续到 Day30。
+	_ok(slice.last_day() == 30, "slice ends on Day 30")
 	_ok(slice.normal_order_limit(1) == 2, "Day 1 has two normal orders")
 	_ok(slice.normal_order_limit(2) == 2, "Day 2 has two normal orders")
 	_ok(slice.normal_order_limit(3) == 2, "Day 3 has two normal orders")
 	_ok(slice.normal_order_limit(4) == 3, "Day 4 opens the mid-slice three-normal-order rhythm")
 	_ok(slice.normal_order_limit(12) == 3, "Day 12 keeps the three-normal-order Mira climax rhythm")
 	_ok(slice.normal_order_limit(20) == 3, "Day 20 keeps the three-normal-order Evelyn climax rhythm")
+	_ok(slice.normal_order_limit(30) == 3, "Day 30 keeps the default three-normal-order rhythm")
 	_ok(slice.day_start_ledger_entries(2).has("第三日。莱恩。\n北矿道。\n未归。"), "Day 2 adds Ryan prediction")
 	_ok(slice.day_start_ledger_entries(13).has("第二十日。伊芙琳。\n灰账清算。\n封存。"), "Day 13 adds Evelyn prediction")
 	_ok(not slice.should_finish_after_day(2), "Day 2 continues")
 	_ok(not slice.should_finish_after_day(12), "Day 12 continues into Evelyn line")
-	_ok(slice.should_finish_after_day(20), "Day 20 finishes the slice")
+	_ok(not slice.should_finish_after_day(20), "Day 20 continues into the final ten-day management stretch")
+	_ok(slice.should_finish_after_day(30), "Day 30 finishes the slice")
 
 
 func _test_state_roundtrip() -> void:
@@ -220,16 +224,94 @@ func _test_day2_important_npc_spawns_when_menu_already_confirmed() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	_ok(tavern.daily_menu_confirmed,
-		"Day 2 tavern starts with the default menu already confirmed")
+	_ok(not tavern.daily_menu_confirmed,
+		"Day 2 tavern starts in menu preparation before spawning the important NPC")
 	_ok(gm.narrative.today_important_npc == "ryan",
 		"Day 2 selects Ryan as today's important NPC")
+	_ok(not gm.guests.has_guest,
+		"Day 2 holds the pending important NPC until menu confirmation")
+	if tavern.has_method("_confirm_menu_preparation"):
+		tavern.call("_confirm_menu_preparation")
+		await get_tree().process_frame
 	_ok(gm.guests.has_guest,
-		"Day 2 auto-confirmed tavern spawns the pending important NPC")
+		"Day 2 menu confirmation spawns the pending important NPC")
 	_ok(gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan",
 		"Day 2 important guest is Ryan")
 	_ok(gm.guests.current_guest != null and gm.guests.current_guest.order_key == "meat_cooked",
 		"Day 2 Ryan orders cooked meat")
+
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	gm.guests.reset_daily()
+	tavern.queue_free()
+	await get_tree().process_frame
+	gm.economy.current_day = original_day
+	gm.day_cycle.phase = original_phase
+	gm._important_npc_pending = original_pending
+	gm.narrative.today_important_npc = original_today_npc
+	gm._is_dialogue_active = original_dialogue_active
+	gm._dialogue_phase = original_dialogue_phase
+	if tutorial != null:
+		tutorial.tavern_first_entered = original_tutorial_entered
+		tutorial._is_active = original_tutorial_active
+
+
+func _test_day3_fate_reveal_is_not_a_formal_npc_scene() -> void:
+	var narrative := NarrativeManager.new()
+	narrative.load_npc_data()
+	_ok(narrative.select_today_important_npc(3) == "",
+		"Day 3 Ryan outcome is a slice fate reveal, not a formal Ryan NPC order from npcs.json")
+
+
+func _test_day3_fate_reveal_spawns_when_menu_already_confirmed() -> void:
+	var gm = get_node("/root/GameManager")
+	var tutorial = get_node_or_null("/root/TutorialManager")
+	var original_day: int = gm.economy.current_day
+	var original_phase: int = gm.day_cycle.phase
+	var original_pending: bool = gm._important_npc_pending
+	var original_today_npc: String = gm.narrative.today_important_npc
+	var original_dialogue_active: bool = gm._is_dialogue_active
+	var original_dialogue_phase: String = gm._dialogue_phase
+	var original_tutorial_entered := false
+	var original_tutorial_active := false
+	if tutorial != null:
+		original_tutorial_entered = bool(tutorial.tavern_first_entered)
+		original_tutorial_active = bool(tutorial._is_active)
+
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	gm.guests.reset_daily()
+	gm.economy.current_day = 3
+	gm.day_cycle.phase = DayCycleSystem.DayPhase.NIGHT
+	gm._important_npc_pending = false
+	gm.narrative.today_important_npc = ""
+	gm._is_dialogue_active = false
+	gm._dialogue_phase = ""
+	if tutorial != null:
+		tutorial.tavern_first_entered = true
+		tutorial._is_active = true
+
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	_ok(not tavern.daily_menu_confirmed,
+		"Day 3 tavern starts in menu preparation before the Ryan fate reveal")
+	_ok(not gm.guests.has_guest,
+		"Day 3 holds the fate reveal guest until menu confirmation")
+	if tavern.has_method("_confirm_menu_preparation"):
+		tavern.call("_confirm_menu_preparation")
+		await get_tree().process_frame
+	_ok(gm.guests.has_guest,
+		"Day 3 menu confirmation spawns the Ryan fate reveal guest")
+	_ok(gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan",
+		"Day 3 fate reveal keeps Ryan as the story subject")
+	_ok(gm.guests.current_guest != null and gm.guests.current_guest.order_key == "herb_broth",
+		"Day 3 fate reveal keeps the existing herb broth service contract")
+	if gm.guests.current_guest != null:
+		_ok(String(gm.guests.current_guest.get_meta("portrait_id", "")) == "mercenary_a",
+			"Day 3 fate reveal uses the mercenary messenger portrait")
 
 	if gm.guests.has_guest:
 		gm.guests.clear_guest()

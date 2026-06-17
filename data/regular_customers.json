@@ -5,12 +5,25 @@
       "display_name": "贝尔塔",
       "role": "矿区搬运工",
       "portrait_key": "regular_belta",
-      "favorite_orders": ["meat_cooked", "bread"],
+      "favorite_orders": [
+        "meat_cooked",
+        "bread"
+      ],
       "patience_multiplier": 0.9,
       "tip_multiplier": 1.05,
       "reputation_on_success": 1,
       "unlock_day": 2,
       "spawn_weight": 1.2,
+      "trait": {
+        "id": "hearty_regular",
+        "name": "顶饿熟客",
+        "summary": "吃到顶饿或热食后更容易记住这家店。",
+        "focusTags": [
+          "顶饿",
+          "热食"
+        ],
+        "menuHint": "偏好顶饿/热食，命中后更容易回访。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_belta_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_belta_satisfied.png",
@@ -28,12 +41,25 @@
       "display_name": "诺尔",
       "role": "账房学徒",
       "portrait_key": "regular_noel",
-      "favorite_orders": ["herb_tea", "ale_beer"],
+      "favorite_orders": [
+        "herb_tea",
+        "ale_beer"
+      ],
       "patience_multiplier": 1.15,
       "tip_multiplier": 0.9,
       "reputation_on_success": 1,
       "unlock_day": 1,
-      "spawn_weight": 1.0,
+      "spawn_weight": 1,
+      "trait": {
+        "id": "ledger_source",
+        "name": "账房消息源",
+        "summary": "满意后更容易带来账房和体面客人的动向。",
+        "focusTags": [
+          "体面",
+          "清香"
+        ],
+        "menuHint": "偏好体面/清香，满意后利于账房口碑。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_noel_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_noel_satisfied.png",
@@ -51,12 +77,25 @@
       "display_name": "玛莎",
       "role": "洗衣女工",
       "portrait_key": "regular_masha",
-      "favorite_orders": ["herb_broth", "bread"],
-      "patience_multiplier": 1.0,
-      "tip_multiplier": 1.0,
+      "favorite_orders": [
+        "herb_broth",
+        "bread"
+      ],
+      "patience_multiplier": 1,
+      "tip_multiplier": 1,
       "reputation_on_success": 1,
       "unlock_day": 3,
-      "spawn_weight": 1.0,
+      "spawn_weight": 1,
+      "trait": {
+        "id": "warm_broth_regular",
+        "name": "暖汤熟客",
+        "summary": "记得住能暖身的清香热食。",
+        "focusTags": [
+          "热食",
+          "清香"
+        ],
+        "menuHint": "偏好热食/清香，适合用汤类维系。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_masha_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_masha_satisfied.png",
@@ -74,12 +113,25 @@
       "display_name": "科恩",
       "role": "巡夜人",
       "portrait_key": "regular_coen",
-      "favorite_orders": ["ale_beer", "wine"],
+      "favorite_orders": [
+        "ale_beer",
+        "wine"
+      ],
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.15,
       "reputation_on_success": 1,
       "unlock_day": 1,
       "spawn_weight": 0.9,
+      "trait": {
+        "id": "night_watch_hurry",
+        "name": "夜巡急客",
+        "summary": "巡夜前要快，酒水和有劲的东西更容易留下印象。",
+        "focusTags": [
+          "酒水",
+          "力量"
+        ],
+        "menuHint": "偏好酒水/力量，适合快速满足。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_coen_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_coen_satisfied.png",
@@ -97,12 +149,25 @@
       "display_name": "多林",
       "role": "矿侧退伍兵",
       "portrait_key": "regular_dorin",
-      "favorite_orders": ["meat_cooked", "ale_beer"],
+      "favorite_orders": [
+        "meat_cooked",
+        "ale_beer"
+      ],
       "patience_multiplier": 0.85,
       "tip_multiplier": 1.1,
       "reputation_on_success": 1,
       "unlock_day": 2,
       "spawn_weight": 0.95,
+      "trait": {
+        "id": "picky_veteran",
+        "name": "挑剔老兵",
+        "summary": "只会记住足够扎实、辛辣或咸香的热食。",
+        "focusTags": [
+          "力量",
+          "热食"
+        ],
+        "menuHint": "偏好力量/热食，低匹配不容易打动。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_dorin_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_dorin_satisfied.png",
@@ -120,12 +185,25 @@
       "display_name": "艾莉拉",
       "role": "银叶巡林人",
       "portrait_key": "regular_elira",
-      "favorite_orders": ["herb_tea", "herb_broth"],
+      "favorite_orders": [
+        "herb_tea",
+        "herb_broth"
+      ],
       "patience_multiplier": 1.2,
-      "tip_multiplier": 1.0,
+      "tip_multiplier": 1,
       "reputation_on_success": 1,
       "unlock_day": 3,
       "spawn_weight": 0.85,
+      "trait": {
+        "id": "clear_scent_forager",
+        "name": "清香巡林人",
+        "summary": "会记住草药、清香和轻快的味道。",
+        "focusTags": [
+          "清香",
+          "轻快"
+        ],
+        "menuHint": "偏好清香/轻快，适合草药类菜单。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_elira_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_elira_satisfied.png",
@@ -143,12 +221,25 @@
       "display_name": "马尔科",
       "role": "走货商人",
       "portrait_key": "regular_marco",
-      "favorite_orders": ["wine", "bread"],
+      "favorite_orders": [
+        "wine",
+        "bread"
+      ],
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.2,
       "reputation_on_success": 1,
       "unlock_day": 4,
       "spawn_weight": 0.95,
+      "trait": {
+        "id": "generous_trader",
+        "name": "大方商人",
+        "summary": "愿意为体面、精致的菜单多付钱。",
+        "focusTags": [
+          "体面",
+          "精致"
+        ],
+        "menuHint": "偏好体面/精致，适合高价酒食。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_marco_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_marco_satisfied.png",
@@ -166,12 +257,25 @@
       "display_name": "尼克斯",
       "role": "后巷跑腿人",
       "portrait_key": "regular_nix",
-      "favorite_orders": ["ale_beer", "meat_sand"],
+      "favorite_orders": [
+        "ale_beer",
+        "meat_sand"
+      ],
       "patience_multiplier": 0.9,
       "tip_multiplier": 0.95,
       "reputation_on_success": 1,
       "unlock_day": 5,
       "spawn_weight": 0.8,
+      "trait": {
+        "id": "back_alley_runner",
+        "name": "后巷快嘴",
+        "summary": "满意后更容易把后巷消息带回酒馆。",
+        "focusTags": [
+          "酒水",
+          "力量"
+        ],
+        "menuHint": "偏好酒水/力量，满意后适合扩散口碑。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_nix_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_nix_satisfied.png",
@@ -189,12 +293,25 @@
       "display_name": "塞琳",
       "role": "符文学者",
       "portrait_key": "regular_selene",
-      "favorite_orders": ["herb_tea", "spiced_wine"],
+      "favorite_orders": [
+        "herb_tea",
+        "spiced_wine"
+      ],
       "patience_multiplier": 1.1,
       "tip_multiplier": 1.1,
       "reputation_on_success": 1,
       "unlock_day": 5,
       "spawn_weight": 0.85,
+      "trait": {
+        "id": "rune_scholar",
+        "name": "符文挑味",
+        "summary": "更在意秘香、体面和稳定的清香余味。",
+        "focusTags": [
+          "秘香",
+          "体面"
+        ],
+        "menuHint": "偏好秘香/体面，适合精细酒饮。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_selene_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_selene_satisfied.png",
@@ -212,12 +329,25 @@
       "display_name": "盖瑞斯",
       "role": "流浪骑士",
       "portrait_key": "regular_gareth",
-      "favorite_orders": ["meat_cooked", "meat_stew"],
+      "favorite_orders": [
+        "meat_cooked",
+        "meat_stew"
+      ],
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.15,
       "reputation_on_success": 1,
       "unlock_day": 6,
       "spawn_weight": 0.85,
+      "trait": {
+        "id": "wandering_champion",
+        "name": "骑士大胃",
+        "summary": "会记住力量足、能撑住远路的热食。",
+        "focusTags": [
+          "力量",
+          "顶饿"
+        ],
+        "menuHint": "偏好力量/顶饿，适合肉类和炖食。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_gareth_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_gareth_satisfied.png",
@@ -235,12 +365,25 @@
       "display_name": "莉拉",
       "role": "巡游吟游诗人",
       "portrait_key": "regular_lyra",
-      "favorite_orders": ["wine", "herbal_ale"],
+      "favorite_orders": [
+        "wine",
+        "herbal_ale"
+      ],
       "patience_multiplier": 1.05,
       "tip_multiplier": 1.05,
       "reputation_on_success": 1,
       "unlock_day": 4,
       "spawn_weight": 0.9,
+      "trait": {
+        "id": "bardic_spread",
+        "name": "吟游传唱",
+        "summary": "满意后会把精致和秘香的菜单唱给别人听。",
+        "focusTags": [
+          "精致",
+          "秘香"
+        ],
+        "menuHint": "偏好精致/秘香，满意后更利于传播。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_lyra_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_lyra_satisfied.png",
@@ -258,12 +401,25 @@
       "display_name": "奥玛",
       "role": "苦修僧",
       "portrait_key": "regular_oma",
-      "favorite_orders": ["bread", "malt_porridge"],
+      "favorite_orders": [
+        "bread",
+        "malt_porridge"
+      ],
       "patience_multiplier": 1.25,
       "tip_multiplier": 0.85,
       "reputation_on_success": 1,
       "unlock_day": 6,
       "spawn_weight": 0.75,
+      "trait": {
+        "id": "humble_reputation",
+        "name": "朴素声望客",
+        "summary": "不太给钱，但会记住朴素顶饿的食物并带来声望。",
+        "focusTags": [
+          "顶饿",
+          "体面"
+        ],
+        "menuHint": "偏好顶饿/体面，金币少但声望稳定。"
+      },
       "portraits": {
         "neutral": "res://assets/textures/characters/regular_oma_neutral.png",
         "satisfied": "res://assets/textures/characters/regular_oma_satisfied.png",
@@ -274,6 +430,762 @@
         "fail_wrong": "「错也可受，只是不能称为所求。」",
         "fail_weird": "「苦行也不必如此苦。」",
         "impatient": "「等待也是修行，饥饿不是。」"
+      }
+    },
+    {
+      "id": "regular_ketta",
+      "display_name": "凯塔",
+      "role": "矿镐修补匠",
+      "portrait_key": "regular_ketta",
+      "favorite_orders": [
+        "rock_lizard_steak",
+        "meat_cooked",
+        "miner_dark_ale"
+      ],
+      "patience_multiplier": 0.92,
+      "tip_multiplier": 1.1,
+      "reputation_on_success": 1,
+      "unlock_day": 7,
+      "spawn_weight": 1.05,
+      "appearance": {
+        "race": "dwarf",
+        "hair_style": "twin braids under work cap",
+        "hair_color": "auburn"
+      },
+      "trait": {
+        "id": "pick_mender",
+        "name": "矿镐胃口",
+        "summary": "偏爱有力又咸香的矿区硬菜。",
+        "focusTags": [
+          "力量",
+          "咸香"
+        ],
+        "menuHint": "偏好力量/咸香，适合矿区肉食和黑麦酒。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_ketta_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_ketta_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_ketta_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这口够实在，锤半天镐也撑得住。」",
+        "fail_wrong": "「我记得自己点的不是这份。」",
+        "fail_weird": "「这味道能把镐头都锈住。」",
+        "impatient": "「炉子还没好吗？我的镐还等着回火。」"
+      }
+    },
+    {
+      "id": "regular_bram",
+      "display_name": "布拉姆",
+      "role": "矿车推手",
+      "portrait_key": "regular_bram",
+      "favorite_orders": [
+        "meat_stew",
+        "rock_lizard_steak",
+        "ale_beer"
+      ],
+      "patience_multiplier": 0.85,
+      "tip_multiplier": 1.12,
+      "reputation_on_success": 1,
+      "unlock_day": 8,
+      "spawn_weight": 1,
+      "appearance": {
+        "race": "half-orc",
+        "hair_style": "shaved sides with topknot",
+        "hair_color": "black"
+      },
+      "trait": {
+        "id": "cart_pusher",
+        "name": "推车大口",
+        "summary": "满意于顶饿、有力量的热菜。",
+        "focusTags": [
+          "力量",
+          "顶饿"
+        ],
+        "menuHint": "偏好力量/顶饿，肉炖菜能稳住他。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_bram_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_bram_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_bram_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「嗯，这份有重量。」",
+        "fail_wrong": "「老板，盘子推错轨了。」",
+        "fail_weird": "「这玩意儿连矿车轮都不想碰。」",
+        "impatient": "「我一饿，车都推不稳。」"
+      }
+    },
+    {
+      "id": "regular_sova",
+      "display_name": "索瓦",
+      "role": "晶石分拣人",
+      "portrait_key": "regular_sova",
+      "favorite_orders": [
+        "spiced_wine",
+        "cave_mushroom_stew",
+        "herbal_ale"
+      ],
+      "patience_multiplier": 1.08,
+      "tip_multiplier": 1.02,
+      "reputation_on_success": 1,
+      "unlock_day": 10,
+      "spawn_weight": 0.92,
+      "appearance": {
+        "race": "tiefling",
+        "hair_style": "swept short hair",
+        "hair_color": "violet"
+      },
+      "trait": {
+        "id": "crystal_sorter",
+        "name": "晶味挑剔",
+        "summary": "会记住带秘香和微妙余味的菜单。",
+        "focusTags": [
+          "秘香",
+          "精致"
+        ],
+        "menuHint": "偏好秘香/精致，适合香料酒和洞菇炖菜。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_sova_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_sova_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_sova_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「余味像好晶石，层次清楚。」",
+        "fail_wrong": "「这不是我挑中的那一份。」",
+        "fail_weird": "「杂质太多，舌头都能分出来。」",
+        "impatient": "「热度再掉下去，味道就死了。」"
+      }
+    },
+    {
+      "id": "regular_petra",
+      "display_name": "佩特拉",
+      "role": "采石匠",
+      "portrait_key": "regular_petra",
+      "favorite_orders": [
+        "bread",
+        "meat_stew",
+        "malt_porridge"
+      ],
+      "patience_multiplier": 1,
+      "tip_multiplier": 0.98,
+      "reputation_on_success": 1,
+      "unlock_day": 9,
+      "spawn_weight": 1.02,
+      "appearance": {
+        "race": "human",
+        "hair_style": "close-cropped tousled hair",
+        "hair_color": "silver"
+      },
+      "trait": {
+        "id": "quarry_hand",
+        "name": "采石稳餐",
+        "summary": "朴素、热乎、能压住饥饿就会满意。",
+        "focusTags": [
+          "顶饿",
+          "热食"
+        ],
+        "menuHint": "偏好顶饿/热食，面包、炖菜和麦粥都稳。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_petra_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_petra_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_petra_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「够稳，像好石基。」",
+        "fail_wrong": "「这不是我排到的那盘。」",
+        "fail_weird": "「碎石都比这好嚼。」",
+        "impatient": "「我下一班快到点了。」"
+      }
+    },
+    {
+      "id": "regular_jora",
+      "display_name": "乔拉",
+      "role": "旧路信使",
+      "portrait_key": "regular_jora",
+      "favorite_orders": [
+        "meat_sand",
+        "ale_beer",
+        "bread"
+      ],
+      "patience_multiplier": 0.9,
+      "tip_multiplier": 1.05,
+      "reputation_on_success": 1,
+      "unlock_day": 11,
+      "spawn_weight": 0.95,
+      "appearance": {
+        "race": "halfling",
+        "hair_style": "pixie cut under hood",
+        "hair_color": "sandy blond"
+      },
+      "trait": {
+        "id": "road_runner",
+        "name": "赶路快餐",
+        "summary": "偏爱能拿起就走、补力快的食物。",
+        "focusTags": [
+          "迅捷",
+          "顶饿"
+        ],
+        "menuHint": "偏好迅捷/顶饿，三明治和啤酒适合赶路。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_jora_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_jora_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_jora_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「好，吃完就能上路。」",
+        "fail_wrong": "「这可不是我要带走的那份。」",
+        "fail_weird": "「我宁愿啃路标。」",
+        "impatient": "「信件不会等我，老板。」"
+      }
+    },
+    {
+      "id": "regular_tamsin",
+      "display_name": "塔姆辛",
+      "role": "商队厨娘",
+      "portrait_key": "regular_tamsin",
+      "favorite_orders": [
+        "meat_stew",
+        "herb_broth",
+        "bread"
+      ],
+      "patience_multiplier": 1.12,
+      "tip_multiplier": 1,
+      "reputation_on_success": 1,
+      "unlock_day": 12,
+      "spawn_weight": 0.98,
+      "appearance": {
+        "race": "human",
+        "hair_style": "curly bob",
+        "hair_color": "dark red"
+      },
+      "trait": {
+        "id": "caravan_cook",
+        "name": "懂锅火候",
+        "summary": "对热食、汤底和火候很敏感。",
+        "focusTags": [
+          "热食",
+          "清香"
+        ],
+        "menuHint": "偏好热食/清香，汤和炖菜更容易打动她。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_tamsin_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_tamsin_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_tamsin_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「火候不错，锅边也干净。」",
+        "fail_wrong": "「我点的不是这锅。」",
+        "fail_weird": "「这汤底要被商队笑一年。」",
+        "impatient": "「再久一点，香气就散了。」"
+      }
+    },
+    {
+      "id": "regular_kael",
+      "display_name": "凯尔",
+      "role": "香料掮客",
+      "portrait_key": "regular_kael",
+      "favorite_orders": [
+        "spiced_wine",
+        "old_road_wine",
+        "wine"
+      ],
+      "patience_multiplier": 1.05,
+      "tip_multiplier": 1.18,
+      "reputation_on_success": 1,
+      "unlock_day": 13,
+      "spawn_weight": 0.82,
+      "appearance": {
+        "race": "elf",
+        "hair_style": "low-tied straight hair",
+        "hair_color": "black"
+      },
+      "trait": {
+        "id": "spice_broker",
+        "name": "香料账舌",
+        "summary": "愿意为精致、带秘香的酒多付一点。",
+        "focusTags": [
+          "精致",
+          "秘香"
+        ],
+        "menuHint": "偏好精致/秘香，香料酒和旧路酒收益高。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_kael_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_kael_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_kael_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「香气有层，价格也说得过去。」",
+        "fail_wrong": "「这不是我谈好的味道。」",
+        "fail_weird": "「香料被糟蹋得太贵了。」",
+        "impatient": "「好香气不等懒柜台。」"
+      }
+    },
+    {
+      "id": "regular_mirelle",
+      "display_name": "米蕾尔",
+      "role": "玻璃小贩",
+      "portrait_key": "regular_mirelle",
+      "favorite_orders": [
+        "wine",
+        "herb_tea",
+        "old_road_wine"
+      ],
+      "patience_multiplier": 1.18,
+      "tip_multiplier": 0.96,
+      "reputation_on_success": 1,
+      "unlock_day": 14,
+      "spawn_weight": 0.9,
+      "appearance": {
+        "race": "gnome",
+        "hair_style": "wavy bob",
+        "hair_color": "teal green"
+      },
+      "trait": {
+        "id": "glass_peddler",
+        "name": "玻璃细口",
+        "summary": "喜欢清亮、体面、余味干净的饮品。",
+        "focusTags": [
+          "体面",
+          "清香"
+        ],
+        "menuHint": "偏好体面/清香，茶和酒都要干净。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_mirelle_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_mirelle_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_mirelle_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「像薄玻璃一样清亮。」",
+        "fail_wrong": "「这杯不是我的货号。」",
+        "fail_weird": "「浑得像坏玻璃渣。」",
+        "impatient": "「我摊上的杯子还等人看。」"
+      }
+    },
+    {
+      "id": "regular_fenna",
+      "display_name": "芬娜",
+      "role": "蘑菇采集人",
+      "portrait_key": "regular_fenna",
+      "favorite_orders": [
+        "cave_mushroom_stew",
+        "herb_broth",
+        "herb_tea"
+      ],
+      "patience_multiplier": 1.1,
+      "tip_multiplier": 0.94,
+      "reputation_on_success": 1,
+      "unlock_day": 15,
+      "spawn_weight": 0.96,
+      "appearance": {
+        "race": "faun",
+        "hair_style": "shag haircut",
+        "hair_color": "chestnut"
+      },
+      "trait": {
+        "id": "mushroom_forager",
+        "name": "洞菇熟路",
+        "summary": "对洞菇、草本和秘香格外敏锐。",
+        "focusTags": [
+          "秘香",
+          "清香"
+        ],
+        "menuHint": "偏好秘香/清香，洞菇炖菜最稳。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_fenna_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_fenna_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_fenna_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「有林下湿土的好味道。」",
+        "fail_wrong": "「我闻得出这不是我的。」",
+        "fail_weird": "「这菌味不对，别冒险。」",
+        "impatient": "「汤凉了会苦的。」"
+      }
+    },
+    {
+      "id": "regular_yuval",
+      "display_name": "尤瓦尔",
+      "role": "澡堂药磨工",
+      "portrait_key": "regular_yuval",
+      "favorite_orders": [
+        "herb_tea",
+        "herb_broth",
+        "malt_porridge"
+      ],
+      "patience_multiplier": 1.22,
+      "tip_multiplier": 0.9,
+      "reputation_on_success": 1,
+      "unlock_day": 16,
+      "spawn_weight": 0.88,
+      "appearance": {
+        "race": "human",
+        "hair_style": "shaved with forelock braid",
+        "hair_color": "pale mint"
+      },
+      "trait": {
+        "id": "bathhouse_grinder",
+        "name": "药磨清口",
+        "summary": "偏好温和、清香、能恢复精神的食物。",
+        "focusTags": [
+          "清香",
+          "体面"
+        ],
+        "menuHint": "偏好清香/体面，茶、汤、麦粥都适合。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_yuval_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_yuval_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_yuval_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「喉咙和手腕都松下来了。」",
+        "fail_wrong": "「这不是我报给柜台的。」",
+        "fail_weird": "「药渣都比这顺口。」",
+        "impatient": "「药臼还泡着，别让我等太久。」"
+      }
+    },
+    {
+      "id": "regular_nara",
+      "display_name": "娜拉",
+      "role": "根菜小贩",
+      "portrait_key": "regular_nara",
+      "favorite_orders": [
+        "cave_mushroom_stew",
+        "meat_stew",
+        "bread"
+      ],
+      "patience_multiplier": 0.96,
+      "tip_multiplier": 1.03,
+      "reputation_on_success": 1,
+      "unlock_day": 17,
+      "spawn_weight": 1,
+      "appearance": {
+        "race": "orc",
+        "hair_style": "long dreadlocks",
+        "hair_color": "white"
+      },
+      "trait": {
+        "id": "root_vendor",
+        "name": "根菜厚味",
+        "summary": "喜欢厚实、热乎、带一点地气的食物。",
+        "focusTags": [
+          "热食",
+          "顶饿"
+        ],
+        "menuHint": "偏好热食/顶饿，炖菜和面包稳定。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_nara_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_nara_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_nara_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「厚，热，值这个钱。」",
+        "fail_wrong": "「篮子没拿错，盘子倒拿错了。」",
+        "fail_weird": "「根须泥都没这味儿冲。」",
+        "impatient": "「我摊位不能空太久。」"
+      }
+    },
+    {
+      "id": "regular_iris",
+      "display_name": "伊里斯",
+      "role": "药铺跑腿",
+      "portrait_key": "regular_iris",
+      "favorite_orders": [
+        "herb_tea",
+        "spiced_wine",
+        "herbal_ale"
+      ],
+      "patience_multiplier": 1.15,
+      "tip_multiplier": 0.98,
+      "reputation_on_success": 1,
+      "unlock_day": 18,
+      "spawn_weight": 0.92,
+      "appearance": {
+        "race": "elf",
+        "hair_style": "chin-length straight hair",
+        "hair_color": "rose pink"
+      },
+      "trait": {
+        "id": "apothecary_runner",
+        "name": "药铺灵鼻",
+        "summary": "对草本、秘香和轻快余味反应最好。",
+        "focusTags": [
+          "秘香",
+          "清香"
+        ],
+        "menuHint": "偏好秘香/清香，草本饮品最适合。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_iris_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_iris_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_iris_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这个香气药柜里也少见。」",
+        "fail_wrong": "「我拿错会被药师骂的。」",
+        "fail_weird": "「这味道像贴错标签的药瓶。」",
+        "impatient": "「药铺那边还等回话。」"
+      }
+    },
+    {
+      "id": "regular_bastian",
+      "display_name": "巴斯蒂安",
+      "role": "抄写书记",
+      "portrait_key": "regular_bastian",
+      "favorite_orders": [
+        "wine",
+        "bread",
+        "old_road_wine"
+      ],
+      "patience_multiplier": 1.2,
+      "tip_multiplier": 1,
+      "reputation_on_success": 1,
+      "unlock_day": 19,
+      "spawn_weight": 0.82,
+      "appearance": {
+        "race": "human",
+        "hair_style": "side-parted hair",
+        "hair_color": "ash brown"
+      },
+      "trait": {
+        "id": "copyist_break",
+        "name": "书记体面餐",
+        "summary": "偏爱体面、稳定、不会弄脏账页的食物。",
+        "focusTags": [
+          "体面",
+          "精致"
+        ],
+        "menuHint": "偏好体面/精致，酒和面包能安全招待。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_bastian_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_bastian_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_bastian_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「干净利落，适合夹在账页之间。」",
+        "fail_wrong": "「这和我记下的不同。」",
+        "fail_weird": "「墨水闻着都比它端正。」",
+        "impatient": "「我还剩半页没抄完。」"
+      }
+    },
+    {
+      "id": "regular_qadir",
+      "display_name": "卡迪尔",
+      "role": "称币人",
+      "portrait_key": "regular_qadir",
+      "favorite_orders": [
+        "miner_dark_ale",
+        "ale_beer",
+        "malt_porridge"
+      ],
+      "patience_multiplier": 0.98,
+      "tip_multiplier": 1.16,
+      "reputation_on_success": 1,
+      "unlock_day": 20,
+      "spawn_weight": 0.86,
+      "appearance": {
+        "race": "dwarf",
+        "hair_style": "forked beard with shaved crown",
+        "hair_color": "black"
+      },
+      "trait": {
+        "id": "coin_weigher",
+        "name": "称币厚杯",
+        "summary": "愿意为厚重、顶饿且有回甘的东西给小费。",
+        "focusTags": [
+          "顶饿",
+          "力量"
+        ],
+        "menuHint": "偏好顶饿/力量，黑麦酒和麦粥都合适。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_qadir_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_qadir_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_qadir_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这份称得过秤。」",
+        "fail_wrong": "「账码不对，盘子也不对。」",
+        "fail_weird": "「亏称得太明显了。」",
+        "impatient": "「我手里的币不会自己数。」"
+      }
+    },
+    {
+      "id": "regular_rowan",
+      "display_name": "罗温",
+      "role": "地图抄绘员",
+      "portrait_key": "regular_rowan",
+      "favorite_orders": [
+        "old_road_wine",
+        "meat_sand",
+        "herb_tea"
+      ],
+      "patience_multiplier": 1.08,
+      "tip_multiplier": 1.08,
+      "reputation_on_success": 1,
+      "unlock_day": 22,
+      "spawn_weight": 0.8,
+      "appearance": {
+        "race": "half-elf",
+        "hair_style": "undercut side braid",
+        "hair_color": "copper orange"
+      },
+      "trait": {
+        "id": "map_copyist",
+        "name": "旧路余味",
+        "summary": "偏好能让人想起远路的轻食和酒。",
+        "focusTags": [
+          "迅捷",
+          "精致"
+        ],
+        "menuHint": "偏好迅捷/精致，旧路酒和三明治都能触发。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_rowan_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_rowan_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_rowan_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「像地图边角的一条好路。」",
+        "fail_wrong": "「路线错了，盘子也错了。」",
+        "fail_weird": "「这味道会把路标画歪。」",
+        "impatient": "「墨线干得比菜还快。」"
+      }
+    },
+    {
+      "id": "regular_maeve",
+      "display_name": "梅芙",
+      "role": "贵族随从",
+      "portrait_key": "regular_maeve",
+      "favorite_orders": [
+        "spiced_wine",
+        "wine",
+        "old_road_wine"
+      ],
+      "patience_multiplier": 1.05,
+      "tip_multiplier": 1.22,
+      "reputation_on_success": 1,
+      "unlock_day": 24,
+      "spawn_weight": 0.7,
+      "appearance": {
+        "race": "tiefling",
+        "hair_style": "glossy bob",
+        "hair_color": "dark blue"
+      },
+      "trait": {
+        "id": "retainer_taste",
+        "name": "随从挑杯",
+        "summary": "挑剔但愿意为精致酒品传播口碑。",
+        "focusTags": [
+          "精致",
+          "体面"
+        ],
+        "menuHint": "偏好精致/体面，酒品命中时小费高。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_maeve_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_maeve_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_maeve_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「这杯能端上侧厅。」",
+        "fail_wrong": "「这不是我替主人试的那杯。」",
+        "fail_weird": "「这味道不该见到银盘。」",
+        "impatient": "「侧厅不会等酒香散尽。」"
+      }
+    },
+    {
+      "id": "regular_osric",
+      "display_name": "奥斯里克",
+      "role": "旧路收税守卫",
+      "portrait_key": "regular_osric",
+      "favorite_orders": [
+        "rock_lizard_steak",
+        "miner_dark_ale",
+        "meat_cooked"
+      ],
+      "patience_multiplier": 0.9,
+      "tip_multiplier": 1.14,
+      "reputation_on_success": 1,
+      "unlock_day": 26,
+      "spawn_weight": 0.76,
+      "appearance": {
+        "race": "human",
+        "hair_style": "swept back hair",
+        "hair_color": "iron gray"
+      },
+      "trait": {
+        "id": "road_tax_guard",
+        "name": "守卫硬菜",
+        "summary": "偏好硬、热、有力的肉食和浓酒。",
+        "focusTags": [
+          "力量",
+          "热食"
+        ],
+        "menuHint": "偏好力量/热食，肉排和黑麦酒很稳。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_osric_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_osric_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_osric_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「够硬，够热，路口夜风也挡得住。」",
+        "fail_wrong": "「税牌没错，盘子错了。」",
+        "fail_weird": "「这玩意儿能让关卡暴动。」",
+        "impatient": "「我离岗太久会被记名。」"
+      }
+    },
+    {
+      "id": "regular_lio",
+      "display_name": "利奥",
+      "role": "灯油跑腿",
+      "portrait_key": "regular_lio",
+      "favorite_orders": [
+        "ale_beer",
+        "meat_sand",
+        "bread"
+      ],
+      "patience_multiplier": 0.88,
+      "tip_multiplier": 0.94,
+      "reputation_on_success": 1,
+      "unlock_day": 28,
+      "spawn_weight": 0.78,
+      "appearance": {
+        "race": "goblin",
+        "hair_style": "short spikes",
+        "hair_color": "straw yellow"
+      },
+      "trait": {
+        "id": "lamp_oil_runner",
+        "name": "跑腿快嘴",
+        "summary": "要快、要能吃完就跑，酒和面包都行。",
+        "focusTags": [
+          "迅捷",
+          "顶饿"
+        ],
+        "menuHint": "偏好迅捷/顶饿，别让他等太久。"
+      },
+      "portraits": {
+        "neutral": "res://assets/textures/characters/regular_lio_neutral.png",
+        "satisfied": "res://assets/textures/characters/regular_lio_satisfied.png",
+        "dissatisfied": "res://assets/textures/characters/regular_lio_dissatisfied.png"
+      },
+      "reactions": {
+        "success": "「好！吃完我还能跑两条巷。」",
+        "fail_wrong": "「我拿错灯油都没拿错这么离谱。」",
+        "fail_weird": "「这味儿能把灯芯熏灭。」",
+        "impatient": "「快点快点，灯油桶很沉！」"
       }
     }
   ]

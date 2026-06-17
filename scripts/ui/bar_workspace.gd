@@ -42,6 +42,7 @@ var _dragged_item_surface_z_indices: Dictionary = {}
 var _shortcut_preview_body: DeskItem = null
 var _shortcut_preview_body_layer: int = 0
 var _shortcut_preview_body_mask: int = 0
+var _seasoning_tutorial_retry_armed := false
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -56,8 +57,10 @@ func _ready() -> void:
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
 	_gm.inventory_changed.connect(_init_material_slots)
+	_gm.inventory_changed.connect(_maybe_trigger_seasoning_tutorial)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
+	call_deferred("_maybe_trigger_seasoning_tutorial")
 
 
 func _on_recipe_consumed(product_key: String) -> void:
@@ -71,6 +74,74 @@ func configure_day(day: int) -> void:
 	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
 	_set_body_available(_pot, _gm.workspace.is_container_unlocked("pot", day))
 	_set_body_available(_spoon, _gm.workspace.is_container_unlocked("spoon", day))
+
+
+func _maybe_trigger_seasoning_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm.first_product_seasoned:
+		return
+	if not _has_inventory_seasoning():
+		return
+	if not tm.is_group_completed("craft"):
+		_arm_seasoning_tutorial_retry(tm)
+		return
+	if tm._is_active:
+		_arm_seasoning_tutorial_retry(tm)
+		return
+	tm.first_product_seasoned = true
+	tm._save_state()
+	tm.start_tutorial("seasoning", _seasoning_tutorial_rects())
+
+
+func _has_inventory_seasoning() -> bool:
+	if _gm == null or _gm.seasoning == null or not (_gm.inventory is Dictionary):
+		return false
+	for raw_key in _gm.inventory.keys():
+		var item_key := String(raw_key)
+		if int(_gm.inventory.get(raw_key, 0)) > 0 and _gm.seasoning.is_seasoning(item_key):
+			return true
+	return false
+
+
+func _arm_seasoning_tutorial_retry(tm) -> void:
+	if _seasoning_tutorial_retry_armed:
+		return
+	if tm == null or not tm.has_signal("tutorial_sequence_ended"):
+		return
+	_seasoning_tutorial_retry_armed = true
+	tm.tutorial_sequence_ended.connect(_on_tutorial_sequence_ended_for_seasoning, CONNECT_ONE_SHOT)
+
+
+func _on_tutorial_sequence_ended_for_seasoning(_group_id: String) -> void:
+	_seasoning_tutorial_retry_armed = false
+	call_deferred("_maybe_trigger_seasoning_tutorial")
+
+
+func _seasoning_tutorial_rects() -> Dictionary:
+	var tavern := get_parent()
+	if tavern != null and tavern.has_method("get_tutorial_highlight_rects"):
+		var live_rects: Dictionary = tavern.call("get_tutorial_highlight_rects", "seasoning")
+		if not live_rects.is_empty():
+			return live_rects
+	return {
+		"SeasoningShaker": _node_centered_screen_rect(_shaker, Vector2(74.0, 118.0), Vector2(14.0, 14.0)),
+		"ShortcutBar": _control_screen_rect(_shortcut_bar),
+	}
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+
+func _node_centered_screen_rect(node: Node2D, size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:
+	if node == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := Rect2(node.global_position - size * 0.5, size)
+	rect = Rect2(rect.position - padding, rect.size + padding * 2.0)
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 
 
 func _set_body_available(body: RigidBody2D, available: bool) -> void:
@@ -483,20 +554,21 @@ func _try_deliver(item: DeskItem) -> void:
 	if not _customer_area.get_overlapping_bodies().has(item):
 		return
 	var is_product: bool = _gm.inventory_sys.is_product(item.item_key)
+	var is_deliverable_product: bool = _gm.inventory_sys.is_deliverable_product(item.item_key)
 	var is_story_item: bool = _gm.inventory_sys.is_story_item(item.item_key)
-	if not is_product and not is_story_item:
+	if not is_deliverable_product and not is_story_item:
 		return
 	# 无顾客等待时，普通成品弹回桌面（避免被 _serve_formal 中 queue_free 吞掉）
-	if is_product and item.product_tags.is_empty() and _gm.current_order_key() == "":
+	if is_deliverable_product and item.product_tags.is_empty() and _gm.current_order_key() == "":
 		_on_desk_item_fell(item)
 		return
 	# 带叙事 tag 的成品（如药酒）必须先走叙事中介，不能被订单匹配直接正常上菜吞掉。
-	if is_product and item.product_tags.is_empty() and item.item_key == _gm.current_order_key():
+	if is_deliverable_product and item.product_tags.is_empty() and item.item_key == _gm.current_order_key():
 		_serve_formal(item)
 		return
 	var r: Dictionary = _gm.request_narrative_delivery(item.item_key, item.product_tags)
 	if not r.get("handled", false):
-		if is_product:
+		if is_deliverable_product:
 			_serve_formal(item)   # 普通错单成品：正常上菜（失败反馈）
 		else:
 			_on_desk_item_fell(item)
@@ -799,6 +871,11 @@ func _dock_body(body: RigidBody2D) -> void:
 func _exit_tree() -> void:
 	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
 		_gm.inventory_changed.disconnect(_init_material_slots)
+	if _gm != null and _gm.inventory_changed.is_connected(_maybe_trigger_seasoning_tutorial):
+		_gm.inventory_changed.disconnect(_maybe_trigger_seasoning_tutorial)
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and tm.tutorial_sequence_ended.is_connected(_on_tutorial_sequence_ended_for_seasoning):
+		tm.tutorial_sequence_ended.disconnect(_on_tutorial_sequence_ended_for_seasoning)
 
 
 ## 两个材料 DeskItem 高速对撞 → 按力度窗口砸合成。

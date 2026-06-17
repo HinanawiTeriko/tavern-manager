@@ -10,8 +10,14 @@ func _ready() -> void:
 	_test_parse_and_init()
 	_test_toby_contract_informs_mira()
 	_test_toby_contract_feedback_reflects_mira_trust()
+	_test_day12_contract_feedback_waits_for_final_service()
 	_test_dialogue_text_keeps_mira_route_coherent()
 	_test_dialogue_highlights_mira_route_clues()
+	_test_toby_motive_text_frames_proving_not_rescue()
+	_test_toby_contract_and_inference_frame_the_phrase_as_wound()
+	_test_mira_handoff_feedback_frames_the_phrase_as_her_excuse()
+	_test_mira_stall_followup_names_toby_contract_without_delivery_action()
+	_test_mira_endings_preserve_the_phrase_debt()
 	_test_route_she_finally_stopped()
 	_test_route_never_turned_back()
 	_test_route_closed_the_door()
@@ -78,15 +84,36 @@ func _test_toby_contract_feedback_reflects_mira_trust() -> void:
 		"trusted Mira contract handoff uses responsible dialogue feedback")
 
 
+func _test_day12_contract_feedback_waits_for_final_service() -> void:
+	var nm := _nm()
+	nm.set_affection("mira", nm.MIRA_TRUST_THRESHOLD - 2)
+	var result := nm.resolve_action({
+		"type": "give_story_item",
+		"npc_id": "mira",
+		"item_key": "toby_contract",
+		"day": 12,
+	})
+	_ok(String(result.get("feedback", "")) == "mira_informed_unsettled",
+		"Day12 contract handoff uses unsettled feedback before final service can change trust")
+	nm.resolve_serve_style("mira", "", "温柔")
+	nm.finalize_mira_ending()
+	_ok(String(nm.get_var("mira_ending")) == "she_finally_stopped",
+		"Day12 gentle final service can still carry a borderline Mira route into responsibility")
+
+
 func _test_dialogue_text_keeps_mira_route_coherent() -> void:
 	_ok(_dialogue_contains("res://dialogue/mira_day4.pre.dialogue", "带着人走慢，心里也重"),
 		"Day4 Mira pre-dialogue frames one-person-walk as her old excuse")
-	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "有人教我"),
-		"Day6 Toby repeats the phrase as something learned from another person")
-	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "是我丢给他的"),
-		"trusted contract handoff makes Mira own the phrase")
-	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "不欠每个学我说话的人一条命"),
-		"guarded contract handoff keeps Mira defensive instead of instantly redeemed")
+	_ok(_dialogue_contains("res://dialogue/mira_day4.post.dialogue", "把借口听成道理"),
+		"Day4 Mira post-dialogue keeps her responsibility as subtext instead of confession")
+	_ok(not _dialogue_contains("res://dialogue/mira_day4.post.dialogue", "把他留在半道上"),
+		"Day4 Mira post-dialogue does not reveal the abandonment before Toby appears")
+	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "别问“她”是谁"),
+		"Day6 Toby protects Mira's name while revealing the wound")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "他不该替我的借口去死"),
+		"trusted contract handoff makes Mira own the phrase as her excuse")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "我一回头，当年那条路就又在我脚下"),
+		"guarded contract handoff keeps Mira afraid of responsibility instead of instantly redeemed")
 	_ok(_dialogue_contains("res://dialogue/mira_stall_encounter.dialogue", "那年我说给自己听，他当了真"),
 		"Mira stall responsibility state explicitly links Toby's belief to Mira's old defense")
 	_ok(_dialogue_contains("res://dialogue/mira_day12.pre.dialogue", "签字酒"),
@@ -100,16 +127,71 @@ func _test_dialogue_highlights_mira_route_clues() -> void:
 		"Day4 Mira pre-dialogue highlights her old one-person-walk phrase")
 	_ok(_dialogue_contains("res://dialogue/mira_day4.post.dialogue", "[color=#d6a84d]半大孩子[/color]"),
 		"Day4 Mira post-dialogue highlights the child clue")
-	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "[color=#d6a84d]有人教我[/color]"),
-		"Day6 Toby highlights that the phrase was taught by someone else")
+	_ok(_dialogue_contains("res://dialogue/mira_day4.post.dialogue", "[color=#d6a84d]把借口听成道理[/color]"),
+		"Day4 Mira post-dialogue highlights her excuse without revealing the abandonment")
+	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "[color=#d6a84d]谁也不能说我是被人丢在半道上的那个[/color]"),
+		"Day6 Toby highlights proving he is not the abandoned child")
 	_ok(_dialogue_contains("res://dialogue/toby_day6.post.dialogue", "[color=#d6a84d]丢在半道上[/color]"),
 		"Day6 Toby post-dialogue highlights the abandonment echo")
-	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "[color=#d6a84d]是我丢给他的[/color]"),
-		"trusted contract handoff highlights Mira taking responsibility")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "[color=#d6a84d]他不该替我的借口去死[/color]"),
+		"trusted contract handoff highlights Mira taking responsibility for the phrase")
 	_ok(_dialogue_contains("res://dialogue/mira_stall_encounter.dialogue", "[color=#d6a84d]那年我说给自己听，他当了真[/color]"),
 		"Mira stall responsibility state highlights the link between her phrase and Toby")
 	_ok(_dialogue_contains("res://dialogue/mira_day12.pre.dialogue", "[color=#d6a84d]长期供应协议[/color]"),
 		"Day12 pre-dialogue highlights the supply agreement")
+
+
+func _test_toby_motive_text_frames_proving_not_rescue() -> void:
+	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "报酬够我租下自己的摊位"),
+		"Day6 Toby wants the commission as proof of independence")
+	_ok(_dialogue_contains("res://dialogue/toby_day6.pre.dialogue", "她说得对"),
+		"Day6 Toby repeats Mira's phrase as a wound, not neutral advice")
+	_ok(_dialogue_contains("res://dialogue/toby_day6.post.dialogue", "我不是来找她的"),
+		"Day6 post keeps Toby from becoming a simple rescue request")
+	_ok(_dialogue_contains("res://dialogue/toby_day6.post.dialogue", "我只是想让她知道"),
+		"Day6 post reveals Toby still wants Mira to witness him")
+
+
+func _test_toby_contract_and_inference_frame_the_phrase_as_wound() -> void:
+	_ok(_dialogue_contains("res://data/documents.json", "又被墨团压住"),
+		"Toby contract shows he nearly writes Mira's name but suppresses it")
+	_ok(_dialogue_contains("res://data/inference_puzzles.json", "不是他的信念"),
+		"Mira responsibility inference rejects the phrase as Toby's true belief")
+	_ok(_dialogue_contains("res://data/inference_puzzles.json", "一直没能吐出来的伤口"),
+		"Mira responsibility inference frames the phrase as a wound")
+
+
+func _test_mira_handoff_feedback_frames_the_phrase_as_her_excuse() -> void:
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "这句话不是路上的规矩"),
+		"trusted Mira handoff rejects the phrase as practical road wisdom")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "我逃走时给自己的借口"),
+		"trusted Mira handoff names the phrase as her excuse")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "我知道那句话是谁教他的"),
+		"guarded Mira handoff admits knowledge without redemption")
+	_ok(_dialogue_contains("res://dialogue/ryan_action_feedback.dialogue", "回头就走不动了"),
+		"guarded Mira handoff roots refusal in fear rather than ignorance")
+
+
+func _test_mira_stall_followup_names_toby_contract_without_delivery_action() -> void:
+	_ok(_dialogue_contains("res://dialogue/mira_stall_encounter.dialogue", "托比那份黑齿委托"),
+		"Mira stall follow-up names Toby's Blacktooth contract directly")
+	_ok(not _dialogue_contains("res://dialogue/mira_stall_encounter.dialogue", "酒馆里那张纸"),
+		"Mira stall follow-up does not vaguely refer to a tavern paper")
+	_ok(not _dialogue_contains("res://dialogue/mira_stall_encounter.dialogue", "已经递过了"),
+		"Mira stall follow-up does not imply a delivery-button interaction")
+	_ok(_dialogue_contains("res://scripts/game_manager.gd", "托比那份黑齿委托"),
+		"Mira stall map result names Toby's Blacktooth contract directly")
+	_ok(not _dialogue_contains("res://scripts/game_manager.gd", "酒馆里那张纸"),
+		"Mira stall map result does not vaguely refer to a tavern paper")
+	_ok(not _dialogue_contains("res://scripts/game_manager.gd", "已经递过了"),
+		"Mira stall map result does not imply a delivery-button interaction")
+
+
+func _test_mira_endings_preserve_the_phrase_debt() -> void:
+	_ok(_dialogue_contains("res://data/npcs.json", "不该由他替她背着"),
+		"good Mira ending centers taking back the phrase")
+	_ok(_dialogue_contains("res://data/npcs.json", "差点把他送进黑齿矿脉"),
+		"fixer route ending says Toby lived while the phrase debt stayed hidden")
 
 
 func _dialogue_contains(path: String, text: String) -> bool:

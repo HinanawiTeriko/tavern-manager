@@ -14,10 +14,24 @@ RAW_SOURCES = [
     ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expression_sheet_v5_b.png",
     ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expression_sheet_v5_c.png",
 ]
+EXPANSION_RAW_SOURCES = [
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v8_a.png",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_b.png",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_c.png",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_d.png",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_e.png",
+]
 PROMPTS = [
     ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expression_sheet_v5_a_prompt.txt",
     ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expression_sheet_v5_b_prompt.txt",
     ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expression_sheet_v5_c_prompt.txt",
+]
+EXPANSION_PROMPTS = [
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v8_a_prompt.txt",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_b_prompt.txt",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_c_prompt.txt",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_d_prompt.txt",
+    ROOT / "art_sources" / "generated_raw" / "characters" / "regular_customers" / "regular_customer_expansion_sheet_v7_e_prompt.txt",
 ]
 MANIFEST = ROOT / "assets" / "source" / "tavern" / "regular_customers" / "regular_customer_portraits_manifest.json"
 SOURCE = ROOT / "assets" / "source" / "tavern" / "regular_customers"
@@ -60,6 +74,24 @@ EXPECTED_IDS = [
     "regular_gareth",
     "regular_lyra",
     "regular_oma",
+    "regular_ketta",
+    "regular_bram",
+    "regular_sova",
+    "regular_petra",
+    "regular_jora",
+    "regular_tamsin",
+    "regular_kael",
+    "regular_mirelle",
+    "regular_fenna",
+    "regular_yuval",
+    "regular_nara",
+    "regular_iris",
+    "regular_bastian",
+    "regular_qadir",
+    "regular_rowan",
+    "regular_maeve",
+    "regular_osric",
+    "regular_lio",
 ]
 EXPECTED_STATES = ["neutral", "satisfied", "dissatisfied"]
 
@@ -120,7 +152,7 @@ def marco_hair_near_edge_green_spill_count(native: Image.Image) -> int:
 
 class RegularCustomerPortraitPipelineTest(unittest.TestCase):
     def test_generated_source_and_prompt_are_retained(self) -> None:
-        for source in RAW_SOURCES:
+        for source in RAW_SOURCES + EXPANSION_RAW_SOURCES:
             self.assertTrue(source.exists(), f"{source}: missing generated regular customer source")
             self.assertGreater(source.stat().st_size, 0, f"{source}: generated regular customer source is empty")
         self.assertTrue(BELTA_STYLE_REFERENCE.exists(), f"{BELTA_STYLE_REFERENCE}: missing Belta style reference")
@@ -138,6 +170,21 @@ class RegularCustomerPortraitPipelineTest(unittest.TestCase):
             self.assertIn("do not copy vera", prompt_text)
             self.assertIn("do not copy belta", prompt_text)
             self.assertIn("same artist family", prompt_text)
+        for prompt in EXPANSION_PROMPTS:
+            self.assertTrue(prompt.exists(), f"{prompt}: missing expanded regular customer generation prompt")
+            prompt_text = prompt.read_text(encoding="utf-8").lower()
+            self.assertIn("visible existing ordinary regular customer source sheets", prompt_text)
+            self.assertIn("do not follow the close-up v6 sheets", prompt_text)
+            self.assertIn("ordinary regular customer", prompt_text)
+            self.assertIn("not important npc", prompt_text)
+            self.assertIn("not a close-up bust", prompt_text)
+            self.assertIn("pulled-back waist-up", prompt_text)
+            self.assertIn("race", prompt_text)
+            self.assertIn("hair style", prompt_text)
+            self.assertIn("hair color", prompt_text)
+            self.assertIn("4 columns x 3 rows", prompt_text)
+            self.assertIn("flat solid #00ff00", prompt_text)
+            self.assertIn("no readable text", prompt_text)
         self.assertTrue(VERA_REFERENCE.exists(), f"{VERA_REFERENCE}: missing accepted Vera style reference")
         self.assertTrue(BELTA_STYLE_REFERENCE_PROMPT.exists(), f"{BELTA_STYLE_REFERENCE_PROMPT}: missing Belta style reference prompt")
         reference_prompt = BELTA_STYLE_REFERENCE_PROMPT.read_text(encoding="utf-8").lower()
@@ -161,19 +208,11 @@ class RegularCustomerPortraitPipelineTest(unittest.TestCase):
         )
         self.assertEqual(
             manifest["sources"],
-            [
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_a.png",
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_b.png",
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c.png",
-            ],
+            [source.relative_to(ROOT).as_posix() for source in RAW_SOURCES + EXPANSION_RAW_SOURCES],
         )
         self.assertEqual(
             manifest["prompt_sources"],
-            [
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_a_prompt.txt",
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_b_prompt.txt",
-                "art_sources/generated_raw/characters/regular_customers/regular_customer_expression_sheet_v5_c_prompt.txt",
-            ],
+            [prompt.relative_to(ROOT).as_posix() for prompt in PROMPTS + EXPANSION_PROMPTS],
         )
         self.assertEqual(manifest["native_size"], list(NATIVE_SIZE))
         self.assertEqual(manifest["runtime_size"], list(RUNTIME_SIZE))
@@ -202,6 +241,16 @@ class RegularCustomerPortraitPipelineTest(unittest.TestCase):
                 self.assertIn(entry["source"], manifest["sources"])
                 self.assertEqual(entry["matte"], SOURCE_LEVEL_MATTE_PROFILE)
                 self.assertIn("Tavern CustomerSprite", entry["intended_godot_use"])
+        fit_overrides = {
+            portrait_id: entry["fit_mode"]
+            for portrait_id, entry in entries.items()
+            if "fit_mode" in entry
+        }
+        self.assertEqual(fit_overrides, {"regular_ketta_satisfied": "height_locked"})
+        self.assertEqual(
+            entries["regular_ketta_satisfied"]["fit_reason"],
+            "wide_thumb_pose_keeps_character_scale",
+        )
 
     def test_belta_states_share_one_expression_sheet_source(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))

@@ -14,6 +14,7 @@ const EVELYN_PRESSURE_LIVING := "living_witnesses"
 const EVELYN_PRESSURE_PAPER := "paper_public"
 const EVELYN_PRESSURE_DAMAGED := "damaged_amendment"
 const EVELYN_PRESSURE_COLD := "cold_amendment"
+const EVELYN_PAPER_EVIDENCE_LABELS: Array[String] = ["莱恩案卷编号", "黑齿批次号", "供应协议灰印"]
 
 const LINKED_FATE_DAYS: Dictionary = {
 	12: ["toby"],
@@ -139,6 +140,31 @@ func get_evelyn_pressure(route: String = "") -> String:
 	return EVELYN_ENDING_SEALED
 
 
+func get_evelyn_living_pressure_labels() -> Array[String]:
+	var labels: Array[String] = []
+	if _ryan_is_evelyn_witness(_current_ryan_route()):
+		labels.append("莱恩")
+	if _mira_is_evelyn_witness(_current_mira_route()):
+		labels.append("米拉")
+	if _toby_is_evelyn_witness():
+		labels.append("托比")
+	return labels
+
+
+func get_evelyn_paper_evidence_labels() -> Array[String]:
+	var labels: Array[String] = []
+	for label in EVELYN_PAPER_EVIDENCE_LABELS:
+		labels.append(label)
+	return labels
+
+
+func get_evelyn_pressure_evidence_summary() -> String:
+	var living_labels := get_evelyn_living_pressure_labels()
+	var living_text := "无" if living_labels.is_empty() else " / ".join(PackedStringArray(living_labels))
+	var paper_text := " / ".join(PackedStringArray(get_evelyn_paper_evidence_labels()))
+	return "活人证词：" + living_text + "；纸证：" + paper_text
+
+
 func finalize_evelyn_ending() -> void:
 	var route := get_evelyn_route()
 	set_ending("evelyn", route)
@@ -156,9 +182,7 @@ func get_ryan_route() -> String:
 
 
 func _has_evelyn_living_pressure() -> bool:
-	return _ryan_is_evelyn_witness(_current_ryan_route()) \
-		or _mira_is_evelyn_witness(_current_mira_route()) \
-		or _toby_is_evelyn_witness()
+	return not get_evelyn_living_pressure_labels().is_empty()
 
 
 func _current_ryan_route() -> String:
@@ -199,6 +223,8 @@ func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
 		"toby_contract":
 			set_var("toby_contract_found", true)
 			set_var("told_mira_truth", true)
+			if int(action.get("day", 0)) == 12:
+				return _action_result(true, "mira_informed_unsettled")
 			if get_affection("mira") >= MIRA_TRUST_THRESHOLD:
 				return _action_result(true, "mira_informed_trusted")
 			return _action_result(true, "mira_informed_guarded")
@@ -282,6 +308,7 @@ func load_npc_data() -> void:
 	dialogue_vars["toby_danger_known"] = false
 	dialogue_vars["toby_contract_found"] = false
 	dialogue_vars["mira_contract_aftershock_seen"] = false
+	dialogue_vars["mira_responsibility_stall_bonus_seen"] = false
 	dialogue_vars["toby_secured"] = false
 	dialogue_vars["toby_secured_by_fixer"] = false
 	dialogue_vars["toby_survived"] = false
@@ -293,6 +320,9 @@ func load_npc_data() -> void:
 	dialogue_vars["grey_public_account_known"] = false
 	dialogue_vars["evelyn_ending"] = ""
 	dialogue_vars["evelyn_pressure"] = ""
+	dialogue_vars["evelyn_resolution_state"] = ""
+	dialogue_vars["evelyn_public_gap_summary"] = ""
+	dialogue_vars["evelyn_public_gap_primary"] = ""
 	dialogue_vars["aff_evelyn"] = 0
 
 	var file = FileAccess.open("res://data/npcs.json", FileAccess.READ)

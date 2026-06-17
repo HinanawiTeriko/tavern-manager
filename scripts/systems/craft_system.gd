@@ -5,7 +5,7 @@ var items: Dictionary = {}
 var _ops: Dictionary = {}
 var _combine: Dictionary = {}
 var item_physics_profiles: Dictionary = {}
-const DEFAULT_DISCOVERED_RECIPES := ["ale_beer", "wine", "herb_tea", "bread", "meat_cooked"]
+const DEFAULT_DISCOVERED_RECIPES := ["ale_beer", "wine", "herb_tea", "dough", "bread", "meat_cooked"]
 const FAILURE_PRODUCTS_BY_CONTAINER := {
 	"barrel": "failed_brew",
 	"pot": "failed_stew",

@@ -42,6 +42,8 @@ const ROUND_SPECS := [
 	{
 		"title": "莱恩案卷",
 		"document": "grey_payout_closure",
+		"required_documents": ["grey_ryan_case_number", "grey_old_payout_register", "grey_missing_page"],
+		"locked_hint": "先去赔付登记处抄下莱恩案卷、旧赔付登记和缺页名单，再回来压出赔付顺序。",
 		"intro": "清算台等着第一批旧案：姓名、地点、状态、赔付和结案章。",
 		"complete": "莱恩的案卷先写赔付，再被盖成结案。",
 		"items": [
@@ -54,6 +56,8 @@ const ROUND_SPECS := [
 	{
 		"title": "托比委托",
 		"document": "grey_renamed_escort",
+		"required_documents": ["grey_blacktooth_batch", "grey_closure_method"],
+		"locked_hint": "先查黑齿转运账，拿到批次号和封账办法，再回来压出托比委托的改名证明。",
 		"intro": "第二批账把一个孩子的护送委托改成临时转运。",
 		"complete": "托比的名字被挪进临时人名栏，护送委托被改名。",
 		"items": [
@@ -66,6 +70,8 @@ const ROUND_SPECS := [
 	{
 		"title": "米拉供应",
 		"document": "grey_supply_stamp",
+		"required_locations": ["mira_supply_copy"],
+		"locked_hint": "先查米拉旧供应副本，确认旧协议和押金栏位，再回来压出灰契印。",
 		"intro": "最后一批账把供应协议、押金和灰契印接到旧路赔付栏。",
 		"complete": "米拉的供应协议背面盖着同一枚灰契印。",
 		"items": [
@@ -91,6 +97,7 @@ var _stamped_outputs_by_tag: Dictionary = {}
 var _stamp_press_zone_root: Node2D = null
 var _stamp_press_zones_by_tag: Dictionary = {}
 var _stamp_press_progress_by_tag: Dictionary = {}
+var _round_locked := false
 
 
 func _setup_scene() -> void:
@@ -121,7 +128,7 @@ func is_complete() -> bool:
 
 func current_round_item_tags() -> Array:
 	var tags := []
-	if _complete or _awaiting_next_round or _round_index >= ROUND_SPECS.size():
+	if _complete or _awaiting_next_round or _round_locked or _round_index >= ROUND_SPECS.size():
 		return tags
 	for item in ROUND_SPECS[_round_index]["items"]:
 		tags.append(String(item["tag"]))
@@ -230,14 +237,21 @@ func _spawn_round() -> void:
 	_stamp_press_progress_by_tag.clear()
 	_items_by_tag.clear()
 	_awaiting_next_round = false
+	_round_locked = false
 	if _stamp_station != null and is_instance_valid(_stamp_station):
 		_stamp_station.call("disarm")
+	_round_index = _first_unfinished_round_index()
 	if _round_index >= ROUND_SPECS.size():
 		_complete = true
 		_obs_label.text = "三批灰账都已经从清算台吐出。"
 		_hint_label.text = "带着这些窄纸回到伊芙琳面前，账本就不再只属于公会。"
 		return
 	var round: Dictionary = ROUND_SPECS[_round_index]
+	if not _round_requirements_met(round):
+		_round_locked = true
+		_obs_label.text = String(round["intro"])
+		_hint_label.text = String(round.get("locked_hint", "先把相关旧账查清，再回来使用清算台。"))
+		return
 	_obs_label.text = String(round["intro"])
 	_hint_label.text = "先按槽位放齐证据纸，再把待盖纸送到压章口，按下压杆。"
 	_create_slot_labels(round)
@@ -446,6 +460,38 @@ func _all_non_target_items_locked() -> bool:
 		if not _locked_tags.has(String(item_spec["tag"])):
 			return false
 	return true
+
+
+func _first_unfinished_round_index() -> int:
+	for i in range(ROUND_SPECS.size()):
+		var round: Dictionary = ROUND_SPECS[i]
+		if not _owns_document(String(round["document"])):
+			return i
+	return ROUND_SPECS.size()
+
+
+func _round_requirements_met(round: Dictionary) -> bool:
+	for document_id in round.get("required_documents", []):
+		if not _owns_document(String(document_id)):
+			return false
+	for location_id in round.get("required_locations", []):
+		if not _is_location_completed(String(location_id)):
+			return false
+	return true
+
+
+func _owns_document(document_id: String) -> bool:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm == null or gm.documents == null:
+		return false
+	return gm.documents.owns_document(document_id)
+
+
+func _is_location_completed(location_id: String) -> bool:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm == null or gm.day_map == null:
+		return false
+	return gm.day_map.is_completed(location_id)
 
 
 func _ensure_stamp_station() -> Node:
@@ -786,7 +832,7 @@ func _is_round_advance_event(event: InputEvent) -> bool:
 
 
 func _has_deep_progress() -> bool:
-	return _complete or _awaiting_next_round or _round_index > 0 \
+	return _complete or _awaiting_next_round or _round_locked or _round_index > 0 \
 		or not _locked_tags.is_empty() or not _placed_target_tags.is_empty()
 
 

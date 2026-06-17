@@ -19,6 +19,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_locations_contract()
 	_test_grant_idempotent_and_owned()
+	await _test_mine_items_recover_when_outside_view_bounds()
 	await _test_fragments_snap_near_assembly_and_grant_when_complete()
 	_finish()
 
@@ -74,6 +75,40 @@ func _test_grant_idempotent_and_owned() -> void:
 	_ok(gm.narrative.get_var("toby_contract_found") == true, "granting toby_contract marks route proof found")
 	_ok(gm.inventory_sys.get_count("toby_contract") == 1, "granting adds it to story bag")
 	_ok(not gm.grant_investigation_document("toby_contract"), "second grant is idempotent (not newly)")
+
+
+func _test_mine_items_recover_when_outside_view_bounds() -> void:
+	var scene := TOBY_SCENE.instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+
+	var frag := _toby_fragment(scene, "contract_fragment_a")
+	_ok(frag != null, "out-of-bounds recovery test finds a Toby contract fragment")
+	if frag != null:
+		var safe_position := frag.global_position
+		await get_tree().physics_frame
+		frag.freeze = false
+		frag.sleeping = false
+		frag.global_position = Vector2(-260.0, 420.0)
+		frag.linear_velocity = Vector2(-520.0, -40.0)
+		frag.angular_velocity = -5.0
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		_ok(frag.global_position.distance_to(safe_position) <= 16.0,
+			"out-of-bounds investigation item returns to its safe room position: expected %s, got %s" % [
+				safe_position,
+				frag.global_position,
+			])
+		_ok(frag.linear_velocity == Vector2.ZERO and is_zero_approx(frag.angular_velocity),
+			"out-of-bounds investigation item returns without leftover throw velocity")
+		_ok(scene._try_pickup(frag.global_position),
+			"recovered investigation item can be picked up again")
+		_ok(scene._drag_ctrl.get_body() == frag,
+			"recovered investigation item becomes the active dragged body")
+		scene._drag_ctrl.end_drag()
+
+	scene.queue_free()
+	await get_tree().process_frame
 
 
 func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:

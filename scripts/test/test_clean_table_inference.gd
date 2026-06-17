@@ -17,13 +17,16 @@ var _failures := 0
 func _ready() -> void:
 	await _test_clean_table_screen_contract()
 	await _test_mira_question_title_contract()
+	await _test_public_account_gap_hint_contract()
 	_test_game_manager_clean_table_route_contract()
+	await _test_inference_tutorial_contract()
 	_finish()
 
 
 func _test_clean_table_screen_contract() -> void:
 	var gm = get_node("/root/GameManager")
 	gm._apply_save_state(gm._default_new_game_state())
+	_suppress_inference_tutorial_auto_start()
 	gm.inference.add_clue("toby_name")
 	gm.inference.add_clue("blacktooth_escort")
 	gm.inference.add_clue("high_pay_trap")
@@ -62,10 +65,17 @@ func _test_clean_table_screen_contract() -> void:
 	_ok(feedback != null and feedback.visible and feedback.text != "",
 		"wrong clue placement explains why it bounced back")
 	_assert_wrong_drop_feedback_style(screen)
-	_drag_clue_word_to_global(screen, "toby_name", _control_center_global(screen, "BookArea/Blank_name"))
+	var empty_name_blank := screen.get_node_or_null("BookArea/Blank_name") as Button
+	var near_name_blank := _near_blank_left_edge_global(screen, "BookArea/Blank_name", 14.0)
+	_ok(empty_name_blank != null and not empty_name_blank.get_global_rect().has_point(near_name_blank),
+		"test drop target sits just outside the visible ink-ring blank")
+	var hit_blank := screen.call("_blank_at_global_position", near_name_blank) as Control
+	_ok(hit_blank == empty_name_blank,
+		"expanded blank hit area resolves the nearby drop to Blank_name")
+	_drag_clue_word_to_global(screen, "toby_name", near_name_blank)
 	var name_blank := screen.get_node_or_null("BookArea/Blank_name") as Button
 	_ok(name_blank != null and name_blank.text != "",
-		"dragging a clue word from the notes page into a sentence blank fills that blank")
+		"dragging a clue word near a sentence blank fills that blank without pixel-perfect aiming")
 	_assert_filled_blank_reads_as_inline_ink(screen, "BookArea/Blank_name")
 	_assert_sentence_text_uses_black_ink(screen)
 	var result: Dictionary = {"accepted": name_blank != null and name_blank.text != "", "solved": false}
@@ -105,6 +115,7 @@ func _test_clean_table_screen_contract() -> void:
 func _test_mira_question_title_contract() -> void:
 	var gm = get_node("/root/GameManager")
 	gm._apply_save_state(gm._default_new_game_state())
+	_suppress_inference_tutorial_auto_start()
 	gm.inference.add_clue("toby_name")
 	gm.inference.add_clue("back_alley_boy")
 	gm.inference.add_clue("mira_traveling_mentor")
@@ -117,6 +128,27 @@ func _test_mira_question_title_contract() -> void:
 	_ok(String(screen.get_current_question_id()) == "mira_toby_old_relation",
 		"screen can open directly on the first Mira inference question after Toby identity")
 	_assert_question_title(screen, "米拉旧路")
+	screen.queue_free()
+	await get_tree().process_frame
+
+
+func _test_public_account_gap_hint_contract() -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	_suppress_inference_tutorial_auto_start()
+	gm.economy.current_day = 20
+	gm.inference.add_clue("toby_name")
+	gm.inference.add_clue("back_alley_boy")
+	var scene: PackedScene = preload("res://scenes/ui/CleanTableInferenceScreen.tscn")
+	var screen = scene.instantiate()
+	add_child(screen)
+	await get_tree().process_frame
+	var hint := screen.get_node_or_null("BookArea/PublicAccountGapHint") as Label
+	_ok(hint != null, "Day20 clean-table screen exposes a public-account gap hint label")
+	if hint != null:
+		_ok(hint.visible, "public-account gap hint is visible while the route gate is still incomplete")
+		_ok(hint.text.contains("公开账本缺") and hint.text.contains("托比身份"),
+			"public-account gap hint names the first missing inference instead of hiding the gate")
 	screen.queue_free()
 	await get_tree().process_frame
 
@@ -249,6 +281,14 @@ func _control_center_global(screen: Node, path: String) -> Vector2:
 	if control == null:
 		return Vector2.ZERO
 	return control.global_position + control.size * 0.5
+
+
+func _near_blank_left_edge_global(screen: Node, path: String, distance: float) -> Vector2:
+	var control := screen.get_node_or_null(path) as Control
+	_ok(control != null, path + " exists for generous drag target")
+	if control == null:
+		return Vector2.ZERO
+	return control.global_position + Vector2(-distance, control.size.y * 0.5)
 
 
 func _assert_blank_style(screen: Node, path: String, expected_texture: String) -> void:
@@ -476,6 +516,93 @@ func _test_game_manager_clean_table_route_contract() -> void:
 	_ok(source.contains("CleanTableInferenceScreen.tscn"), "GameManager can route to the clean-table screen")
 	_ok(source.contains("has_available_questions"), "GameManager gates clean-table routing on solvable inference questions")
 	_ok(source.contains("finish_clean_table_inference"), "GameManager exposes a return path from clean-table to ledger")
+
+
+func _test_inference_tutorial_contract() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	var gm = get_node_or_null("/root/GameManager")
+	_ok(tm != null and gm != null, "inference tutorial test can access GameManager and TutorialManager")
+	if tm == null or gm == null:
+		return
+
+	var parsed := _tutorial_data()
+	_ok(parsed.has("inference"), "tutorial data declares an inference group")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.inference.add_clue("toby_name")
+	gm.inference.add_clue("back_alley_boy")
+
+	var old_active: bool = tm._is_active
+	var old_sequence: Array = tm._current_sequence.duplicate(true)
+	var old_step: int = tm._current_step
+	var old_completed: Array = tm._completed_steps.duplicate()
+	var old_overlay = tm._overlay
+	var old_inference_shown = tm.get("first_inference_shown")
+
+	tm._remove_overlay()
+	tm._is_active = false
+	tm._current_sequence.clear()
+	tm._current_step = -1
+	if _tutorial_manager_has_inference_flag():
+		tm.set("first_inference_shown", false)
+	if parsed.has("inference"):
+		for step in parsed.get("inference", []):
+			tm._completed_steps.erase(String(step.get("id", "")))
+
+	var scene: PackedScene = preload("res://scenes/ui/CleanTableInferenceScreen.tscn")
+	var screen = scene.instantiate()
+	add_child(screen)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	_ok(screen.has_method("get_tutorial_highlight_rects"),
+		"CleanTableInferenceScreen exposes tutorial highlight rects")
+	if screen.has_method("get_tutorial_highlight_rects"):
+		var rects: Dictionary = screen.call("get_tutorial_highlight_rects", "inference")
+		for key in ["ClueArea", "BookArea", "ExtinguishBtn"]:
+			_ok(rects.has(key), "inference tutorial exposes highlight rect: " + key)
+			if rects.has(key):
+				var values: Array = rects.get(key, [])
+				_ok(values.size() == 4 and float(values[2]) > 0.0 and float(values[3]) > 0.0,
+					"inference tutorial highlight rect has positive size: " + key)
+
+	_ok(tm.get("first_inference_shown") == true,
+		"opening the clean-table screen marks the inference tutorial as shown")
+	_ok(tm._is_active, "opening the clean-table screen starts the inference tutorial")
+	if tm._is_active and not tm._current_sequence.is_empty():
+		_ok(String(tm._current_sequence[0].get("group", "")) == "inference",
+			"clean-table screen starts the inference tutorial group")
+
+	screen.queue_free()
+	await get_tree().process_frame
+	tm._remove_overlay()
+	tm._is_active = old_active
+	tm._current_sequence = old_sequence
+	tm._current_step = old_step
+	tm._completed_steps = old_completed
+	if _tutorial_manager_has_inference_flag():
+		tm.set("first_inference_shown", old_inference_shown == true)
+	tm._overlay = old_overlay if is_instance_valid(old_overlay) else null
+
+
+func _suppress_inference_tutorial_auto_start() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null and _tutorial_manager_has_inference_flag():
+		tm.set("first_inference_shown", true)
+
+
+func _tutorial_manager_has_inference_flag() -> bool:
+	var source := FileAccess.get_file_as_string("res://scripts/tutorial/tutorial_manager.gd")
+	return source.contains("first_inference_shown")
+
+
+func _tutorial_data() -> Dictionary:
+	var file := FileAccess.open("res://data/tutorial_steps.json", FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	return parsed if parsed is Dictionary else {}
 
 
 func _ok(cond: bool, msg: String) -> void:

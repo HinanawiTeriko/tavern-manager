@@ -40,11 +40,18 @@
     "container": "barrel",
     "requires_purchase": true
   },
+  "dough": {
+    "name": "面团",
+    "ingredients": ["flour"],
+    "container": "pot",
+    "unlock_day": 3,
+    "orderable": false
+  },
   "bread": {
     "name": "面包",
     "ingredients": ["dough"],
     "container": "grill",
-    "unlock_day": 2
+    "unlock_day": 3
   },
   "meat_cooked": {
     "name": "烤肉",
@@ -80,7 +87,8 @@
     "name": "草药清汤",
     "ingredients": ["herb", "ale"],
     "container": "pot",
-    "unlock_day": 3
+    "unlock_day": 3,
+    "requires_purchase": true
   },
   "malt_porridge": {
     "name": "麦芽粥",

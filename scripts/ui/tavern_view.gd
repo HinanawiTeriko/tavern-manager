@@ -59,6 +59,16 @@ var _current_order_text: String = ""
 var _current_order_status_text: String = ""
 var _recipe_filter_container: String = "barrel"
 var _recipe_selected_product_key: String = ""
+var _menu_prep_panel: Panel
+var _menu_prep_rumor_list: VBoxContainer
+var _menu_prep_echo_list: VBoxContainer
+var _menu_prep_product_list: VBoxContainer
+var _menu_prep_slot_label: Label
+var _menu_prep_reason_label: Label
+var _menu_prep_start_btn: Button
+var _menu_prep_selected: Array[String] = []
+var _menu_prep_buttons: Dictionary = {}
+var _menu_prep_focus_product_key: String = ""
 
 var daily_menu: Dictionary = {}
 var daily_menu_confirmed: bool = true
@@ -128,6 +138,7 @@ const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
 const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
 const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
 const SHORTCUT_SEPARATION := 4
+const MAX_DAILY_MENU_ITEMS := 4
 const DIALOGUE_SPEAKER_Z_INDEX := 10
 const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
@@ -311,8 +322,11 @@ func _apply_theme() -> void:
 		else:
 			ThemeColors.style_brush_panel(shortcut_bg)
 
-	_stage_caption.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	_stage_caption.add_theme_font_size_override("font_size", 15)
+	ThemeColors.style_brush_label(_stage_caption, 22, ThemeColors.TEXT_SUBTITLE)
+	_stage_caption.add_theme_constant_override("outline_size", 4)
+	_stage_caption.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
+	_stage_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_stage_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if _inference_ready_notice != null:
 		ThemeColors.style_brush_label(_inference_ready_notice, 72, ThemeColors.AMBER_PRIMARY)
 		_inference_ready_notice.add_theme_constant_override("outline_size", 5)
@@ -631,6 +645,7 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 
 	_customer_sprite.visible = true
 	_customer_name.text = customer_name
+	_customer_name.visible = true
 	_refresh_order_groove_text()
 	_order_bubble.visible = true
 	_clear_customer_reaction_text()
@@ -813,7 +828,9 @@ func hide_customer() -> void:
 	_current_order_text = ""
 	_current_order_status_text = ""
 	_customer_sprite.visible = false
-	_customer_name.text = "等待中……"
+	_customer_name.text = ""
+	_customer_name.visible = false
+	_order_bubble.text = ""
 	_order_bubble.visible = false
 	_clear_customer_reaction_text()
 	_timer_bar.modulate = Color.WHITE
@@ -1029,6 +1046,8 @@ func reset_today_gold() -> void:
 
 
 func get_daily_menu_items() -> Array[Dictionary]:
+	if not daily_menu_confirmed:
+		return []
 	if daily_menu.is_empty():
 		_refresh_default_daily_menu()
 	var result: Array[Dictionary] = []
@@ -1046,15 +1065,356 @@ func get_daily_menu_items() -> Array[Dictionary]:
 
 
 func is_preparation_phase() -> bool:
-	return false
+	return not daily_menu_confirmed
 
 
 func is_business_phase() -> bool:
-	return true
+	return daily_menu_confirmed
 
 
 func is_menu_config_open() -> bool:
-	return false
+	return _menu_prep_panel != null and _menu_prep_panel.visible
+
+
+func configure_menu_preparation(rumors: Array = [], echoes: Array = []) -> void:
+	_ensure_menu_prep_panel()
+	daily_menu.clear()
+	daily_menu_confirmed = false
+	_menu_prep_selected.clear()
+	_menu_prep_buttons.clear()
+	_menu_prep_focus_product_key = ""
+	_rebuild_menu_prep_rumors(rumors)
+	_rebuild_menu_prep_echoes(echoes)
+	_rebuild_menu_prep_products()
+	_refresh_menu_prep_selection()
+	_menu_prep_panel.visible = true
+	if _menu_panel != null:
+		_menu_panel.visible = false
+
+
+func _ensure_menu_prep_panel() -> void:
+	if _menu_prep_panel != null and is_instance_valid(_menu_prep_panel):
+		return
+	_menu_prep_panel = Panel.new()
+	_menu_prep_panel.name = "MenuPrepPanel"
+	_menu_prep_panel.position = Vector2(250, 86)
+	_menu_prep_panel.size = Vector2(780, 548)
+	_menu_prep_panel.z_index = 80
+	_menu_prep_panel.visible = false
+	_menu_prep_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	ThemeColors.style_brush_panel(_menu_prep_panel)
+	add_child(_menu_prep_panel)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.position = Vector2(32, 22)
+	title.size = Vector2(716, 34)
+	title.text = "今日菜单"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ThemeColors.style_brush_label(title, 22, ThemeColors.AMBER_PRIMARY)
+	_menu_prep_panel.add_child(title)
+
+	var rumor_title := Label.new()
+	rumor_title.name = "RumorTitle"
+	rumor_title.position = Vector2(36, 70)
+	rumor_title.size = Vector2(300, 26)
+	rumor_title.text = "听到的传闻"
+	ThemeColors.style_brush_label(rumor_title, 16, ThemeColors.TEXT_SUBTITLE)
+	_menu_prep_panel.add_child(rumor_title)
+
+	_menu_prep_rumor_list = VBoxContainer.new()
+	_menu_prep_rumor_list.name = "RumorList"
+	_menu_prep_rumor_list.position = Vector2(36, 102)
+	_menu_prep_rumor_list.size = Vector2(300, 146)
+	_menu_prep_rumor_list.add_theme_constant_override("separation", 6)
+	_menu_prep_panel.add_child(_menu_prep_rumor_list)
+
+	var echo_title := Label.new()
+	echo_title.name = "YesterdayEchoTitle"
+	echo_title.position = Vector2(36, 258)
+	echo_title.size = Vector2(300, 26)
+	echo_title.text = "昨日回响"
+	ThemeColors.style_brush_label(echo_title, 16, ThemeColors.TEXT_SUBTITLE)
+	_menu_prep_panel.add_child(echo_title)
+
+	_menu_prep_echo_list = VBoxContainer.new()
+	_menu_prep_echo_list.name = "YesterdayEchoList"
+	_menu_prep_echo_list.position = Vector2(36, 288)
+	_menu_prep_echo_list.size = Vector2(300, 92)
+	_menu_prep_echo_list.add_theme_constant_override("separation", 5)
+	_menu_prep_panel.add_child(_menu_prep_echo_list)
+
+	var product_title := Label.new()
+	product_title.name = "ProductTitle"
+	product_title.position = Vector2(384, 70)
+	product_title.size = Vector2(340, 26)
+	product_title.text = "选择今晚供应"
+	ThemeColors.style_brush_label(product_title, 16, ThemeColors.TEXT_SUBTITLE)
+	_menu_prep_panel.add_child(product_title)
+
+	var product_scroll := ScrollContainer.new()
+	product_scroll.name = "ProductScroll"
+	product_scroll.position = Vector2(384, 102)
+	product_scroll.size = Vector2(340, 318)
+	product_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_menu_prep_panel.add_child(product_scroll)
+
+	_menu_prep_product_list = VBoxContainer.new()
+	_menu_prep_product_list.name = "ProductList"
+	_menu_prep_product_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_prep_product_list.add_theme_constant_override("separation", 6)
+	product_scroll.add_child(_menu_prep_product_list)
+
+	_menu_prep_slot_label = Label.new()
+	_menu_prep_slot_label.name = "SlotLabel"
+	_menu_prep_slot_label.position = Vector2(36, 398)
+	_menu_prep_slot_label.size = Vector2(688, 34)
+	ThemeColors.style_brush_label(_menu_prep_slot_label, 16, ThemeColors.TEXT_LIGHT)
+	_menu_prep_panel.add_child(_menu_prep_slot_label)
+
+	_menu_prep_reason_label = Label.new()
+	_menu_prep_reason_label.name = "MenuPrepReasonLabel"
+	_menu_prep_reason_label.position = Vector2(36, 430)
+	_menu_prep_reason_label.size = Vector2(688, 34)
+	_menu_prep_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_menu_prep_reason_label.clip_text = true
+	ThemeColors.style_brush_label(_menu_prep_reason_label, 13, ThemeColors.TEXT_SUBTITLE)
+	_menu_prep_panel.add_child(_menu_prep_reason_label)
+
+	_menu_prep_start_btn = Button.new()
+	_menu_prep_start_btn.name = "StartServiceBtn"
+	_menu_prep_start_btn.position = Vector2(278, 476)
+	_menu_prep_start_btn.size = Vector2(224, 54)
+	_menu_prep_start_btn.text = "开始营业"
+	ThemeColors.style_brush_button(_menu_prep_start_btn, 18)
+	_menu_prep_start_btn.pressed.connect(_confirm_menu_preparation)
+	_menu_prep_panel.add_child(_menu_prep_start_btn)
+
+
+func _rebuild_menu_prep_rumors(rumors: Array) -> void:
+	for child in _menu_prep_rumor_list.get_children():
+		child.queue_free()
+	if rumors.is_empty():
+		var empty := Label.new()
+		empty.text = "今天还没有听到能影响菜单的传闻。"
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.custom_minimum_size = Vector2(286, 48)
+		ThemeColors.style_brush_label(empty, 14, ThemeColors.TEXT_DIM)
+		_menu_prep_rumor_list.add_child(empty)
+		return
+	for rumor in rumors:
+		var label := Label.new()
+		var rumor_data: Dictionary = rumor as Dictionary
+		var menu_hints: Dictionary = rumor_data.get("menuHints", {})
+		var customerGroups := _strings_from_array(menu_hints.get("customerGroups", []), 3)
+		var affectedNames := _customer_names_from_previews(rumor_data.get("affectedCustomers", []), 3)
+		var recommendedTags := _strings_from_array(menu_hints.get("recommendedTags", []), 4)
+		label.text = "· " + String(rumor_data.get("text", ""))
+		var summary := String(menu_hints.get("summary", ""))
+		if summary != "":
+			label.text += "\n" + summary
+		if not customerGroups.is_empty():
+			label.text += "\n客群：" + " / ".join(customerGroups)
+		if not affectedNames.is_empty():
+			label.text += "\n可能来：" + " / ".join(affectedNames)
+		if not recommendedTags.is_empty():
+			label.text += "\n推荐：" + " / ".join(recommendedTags)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size = Vector2(286, 124)
+		ThemeColors.style_brush_label(label, 14, ThemeColors.TEXT_SUBTITLE)
+		_menu_prep_rumor_list.add_child(label)
+
+
+func _rebuild_menu_prep_echoes(echoes: Array) -> void:
+	for child in _menu_prep_echo_list.get_children():
+		child.queue_free()
+	if echoes.is_empty():
+		var empty := Label.new()
+		empty.text = "暂无昨日回响。"
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.custom_minimum_size = Vector2(286, 34)
+		ThemeColors.style_brush_label(empty, 13, ThemeColors.TEXT_DIM)
+		_menu_prep_echo_list.add_child(empty)
+		return
+	var shown := 0
+	for echo in echoes:
+		if shown >= 2:
+			break
+		if not echo is Dictionary:
+			continue
+		var echo_data: Dictionary = echo
+		var label := Label.new()
+		label.text = "· " + String(echo_data.get("title", ""))
+		var detail := String(echo_data.get("detail", ""))
+		if detail != "":
+			label.text += "\n" + detail
+		var tags := _strings_from_array(echo_data.get("tags", []), 3)
+		if not tags.is_empty():
+			label.text += "\n记忆：" + " / ".join(tags)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size = Vector2(286, 58)
+		ThemeColors.style_brush_label(label, 13, ThemeColors.TEXT_LIGHT)
+		_menu_prep_echo_list.add_child(label)
+		shown += 1
+
+
+func _rebuild_menu_prep_products() -> void:
+	for child in _menu_prep_product_list.get_children():
+		child.queue_free()
+	_menu_prep_buttons.clear()
+	if _gm == null or _gm.craft == null:
+		return
+	var products: Array = _gm.craft.get_orderable_products(_gm.economy.current_day)
+	for raw_key in products:
+		var product_key := String(raw_key)
+		var item: Dictionary = _gm.craft.get_item(product_key)
+		var button := Button.new()
+		button.name = "Product_" + product_key
+		var tag_text := _menu_product_tag_text(product_key)
+		var recommendation_text := _menu_product_recommendation_text(product_key)
+		var has_extra_text := tag_text != "" or recommendation_text != ""
+		button.custom_minimum_size = Vector2(310, 74 if has_extra_text else 40)
+		button.toggle_mode = true
+		button.text = "%s  %dG" % [String(item.get("name", product_key)), int(item.get("price", 0))]
+		if tag_text != "":
+			button.text += "\n" + tag_text
+		if recommendation_text != "":
+			button.text += "\n推荐：" + recommendation_text
+		ThemeColors.style_brush_button(button, 14)
+		var key_copy := product_key
+		button.pressed.connect(func(): _toggle_menu_prep_product(key_copy))
+		_menu_prep_product_list.add_child(button)
+		_menu_prep_buttons[product_key] = button
+		if _menu_prep_selected.size() < MAX_DAILY_MENU_ITEMS:
+			_menu_prep_selected.append(product_key)
+
+
+func _menu_product_tag_text(product_key: String) -> String:
+	if _gm == null or _gm.appetite == null or not _gm.appetite.has_method("get_product_tags"):
+		return ""
+	var tags: Array = _gm.appetite.get_product_tags(product_key)
+	var readable := _strings_from_array(tags, 4)
+	if readable.is_empty():
+		return ""
+	return "标签：" + " / ".join(readable)
+
+
+func _menu_product_recommendation_text(product_key: String) -> String:
+	var recommendation := _menu_product_recommendation(product_key)
+	var chips := _strings_from_array(recommendation.get("chips", []), 2)
+	if chips.is_empty():
+		return ""
+	return " / ".join(chips)
+
+
+func _menu_product_reason_text(product_key: String) -> String:
+	var recommendation := _menu_product_recommendation(product_key)
+	var reasons := _strings_from_array(recommendation.get("reasons", []), 2)
+	if reasons.is_empty():
+		return ""
+	return "；".join(reasons)
+
+
+func _menu_product_recommendation(product_key: String) -> Dictionary:
+	if _gm == null or not _gm.has_method("get_menu_product_recommendation"):
+		return {}
+	return _gm.get_menu_product_recommendation(product_key)
+
+
+func _customer_names_from_previews(values, limit: int = 0) -> PackedStringArray:
+	var result := PackedStringArray()
+	if not values is Array:
+		return result
+	for value in values:
+		var name := ""
+		if value is Dictionary:
+			name = String((value as Dictionary).get("name", ""))
+		else:
+			name = String(value)
+		if name == "":
+			continue
+		result.append(name)
+		if limit > 0 and result.size() >= limit:
+			break
+	return result
+
+
+func _strings_from_array(values, limit: int = 0) -> PackedStringArray:
+	var result := PackedStringArray()
+	if not values is Array:
+		return result
+	for value in values:
+		var text := String(value)
+		if text == "":
+			continue
+		result.append(text)
+		if limit > 0 and result.size() >= limit:
+			break
+	return result
+
+
+func _toggle_menu_prep_product(product_key: String) -> void:
+	_menu_prep_focus_product_key = product_key
+	if _menu_prep_selected.has(product_key):
+		_menu_prep_selected.erase(product_key)
+	elif _menu_prep_selected.size() < MAX_DAILY_MENU_ITEMS:
+		_menu_prep_selected.append(product_key)
+	else:
+		show_stage_caption("今晚菜单最多挂 %d 道。" % MAX_DAILY_MENU_ITEMS, ThemeColors.AMBER_PRIMARY)
+	_refresh_menu_prep_selection()
+
+
+func _refresh_menu_prep_selection() -> void:
+	for key in _menu_prep_buttons.keys():
+		var button := _menu_prep_buttons[key] as Button
+		if button != null:
+			button.button_pressed = _menu_prep_selected.has(String(key))
+	var names := PackedStringArray()
+	if _gm != null and _gm.craft != null:
+		for key in _menu_prep_selected:
+			var item: Dictionary = _gm.craft.get_item(key)
+			names.append(String(item.get("name", key)))
+	_menu_prep_slot_label.text = "今晚菜单 %d/%d：%s" % [
+		_menu_prep_selected.size(),
+		MAX_DAILY_MENU_ITEMS,
+		"、".join(names) if not names.is_empty() else "未选择",
+	]
+	if _menu_prep_start_btn != null:
+		_menu_prep_start_btn.disabled = _menu_prep_selected.is_empty()
+	_refresh_menu_prep_reason()
+
+
+func _refresh_menu_prep_reason() -> void:
+	if _menu_prep_reason_label == null:
+		return
+	var focus_key := _menu_prep_focus_product_key
+	if focus_key == "" and not _menu_prep_selected.is_empty():
+		focus_key = _menu_prep_selected[0]
+	if focus_key == "":
+		_menu_prep_reason_label.text = "选择菜品查看推荐理由。"
+		return
+	var reason_text := _menu_product_reason_text(focus_key)
+	if reason_text == "":
+		_menu_prep_reason_label.text = "推荐理由：暂无特别命中，按价格、库存和口味补位。"
+	else:
+		_menu_prep_reason_label.text = "推荐理由：" + reason_text
+
+
+func _confirm_menu_preparation() -> void:
+	if _menu_prep_selected.is_empty():
+		show_stage_caption("至少挂一道菜才能开门。", ThemeColors.AMBER_PRIMARY)
+		return
+	daily_menu.clear()
+	for key in _menu_prep_selected:
+		var item: Dictionary = _gm.craft.get_item(key) if _gm != null and _gm.craft != null else {}
+		daily_menu[key] = {
+			"price": int(item.get("price", 0)),
+			"enabled": true,
+		}
+	daily_menu_confirmed = true
+	_menu_prep_panel.visible = false
+	if _gm != null and _gm.has_method("on_menu_confirmed"):
+		_gm.on_menu_confirmed()
 
 
 func _refresh_default_daily_menu() -> void:
@@ -1403,6 +1763,8 @@ func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 	match group_key:
 		"craft":
 			return _craft_tutorial_rects()
+		"seasoning":
+			return _seasoning_tutorial_rects()
 		"serve":
 			return _serve_tutorial_rects()
 	return {}
@@ -1436,6 +1798,13 @@ func _craft_tutorial_rects() -> Dictionary:
 func _serve_tutorial_rects() -> Dictionary:
 	return {
 		"CustomerNode": _control_screen_rect(get_node_or_null("CustomerArea") as Control),
+	}
+
+
+func _seasoning_tutorial_rects() -> Dictionary:
+	return {
+		"SeasoningShaker": _sprite_screen_rect("BarWorkspace/World/SeasoningShaker/Art", "BarWorkspace/World/SeasoningShaker", Vector2(74.0, 118.0), Vector2(14.0, 14.0)),
+		"ShortcutBar": _control_screen_rect(get_node_or_null("ShortcutBar") as Control),
 	}
 
 

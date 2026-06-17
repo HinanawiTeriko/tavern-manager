@@ -15,6 +15,7 @@ func _ready() -> void:
 	await _test_side_table_walls_disabled_and_product_falls_back_to_surface()
 	await _test_desk_items_released_on_open_inventory_overlay_return_only_backpack_items()
 	await _test_material_drop_on_customer_area_stays_on_desk()
+	await _test_failed_products_drop_on_customer_area_stays_on_desk()
 	await _test_inventory_overlay_lists_and_drop()
 	await _test_inventory_drop_binds_shortcut_slot()
 	await _test_shortcut_drag_starts_above_table_baseline()
@@ -36,6 +37,7 @@ func _ready() -> void:
 	await _test_settings_menu_entry()
 	await _test_overlay_menu_renders_above_workspace()
 	await _test_recipe_menu_uses_split_layout()
+	await _test_recipe_book_shows_dough_operation()
 	await _test_recipe_book_hides_undiscovered_entries()
 	await _test_first_crafted_recipe_discovers_recipe()
 	_finish()
@@ -354,6 +356,63 @@ func _test_material_drop_on_customer_area_stays_on_desk() -> void:
 			"plain material dropped on the customer area is not removed from world items")
 		if is_instance_valid(item):
 			item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_failed_products_drop_on_customer_area_stays_on_desk() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var drop_area := tavern.get_node("BarWorkspace/CustomerDropArea") as Area2D
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var failed_keys := ["failed_brew", "failed_stew"]
+
+	for failed_key in failed_keys:
+		var guest := GuestData.new()
+		guest.type = GuestData.GuestType.NORMAL
+		guest.order_key = "ale_beer"
+		guest.has_dialogue = false
+		guest.npc_id = "failed_product_test"
+		gm.guests.current_guest = guest
+		gm.guests.has_guest = true
+		gm._guest_lingering = false
+
+		var failed_before: int = gm.guests.orders_failed
+		var served_before: int = gm.guests.guests_served_today
+		var before_count := items.get_child_count()
+		var item := bar._spawn_desk_item_at(drop_area.global_position, failed_key)
+		_ok(item != null, "%s customer-area test creates a desk item" % failed_key)
+		if item != null:
+			item.linear_velocity = Vector2.ZERO
+			item.angular_velocity = 0.0
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			_ok(drop_area.get_overlapping_bodies().has(item),
+				"%s overlaps the customer drop area" % failed_key)
+			bar._try_deliver(item)
+			await get_tree().process_frame
+			_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+				"%s is not consumed as a deliverable order item" % failed_key)
+			_ok(items.get_child_count() == before_count + 1,
+				"%s remains on the work surface after customer-area drop" % failed_key)
+			if is_instance_valid(item):
+				item.queue_free()
+				await get_tree().process_frame
+		_ok(gm.guests.orders_failed == failed_before,
+			"%s does not record a failed order when dropped on a customer" % failed_key)
+		_ok(gm.guests.guests_served_today == served_before,
+			"%s does not count the guest as served" % failed_key)
+		_ok(gm.guests.has_guest and gm.guests.current_guest == guest,
+			"%s leaves the waiting guest active" % failed_key)
+		gm.guests.has_guest = false
+		gm.guests.current_guest = null
+		gm._guest_lingering = false
+
 	tavern.queue_free()
 	await get_tree().process_frame
 
@@ -894,6 +953,47 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	await get_tree().process_frame
 
 
+func _test_recipe_book_shows_dough_operation() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
+	var pot_tab := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/ContainerTabs/Tab_pot") as Button
+	_ok(pot_tab != null, "recipe book has a pot filter tab")
+	if pot_tab != null:
+		pot_tab.pressed.emit()
+		await get_tree().process_frame
+
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var dough_row := rows.get_node_or_null("Recipe_dough") as Button if rows != null else null
+	_ok(dough_row != null, "pot recipe book lists dough as a learnable operation recipe")
+	_ok(dough_row != null and dough_row.text.find("???") == -1,
+		"dough operation recipe is visible without prior discovery")
+	if dough_row != null:
+		dough_row.pressed.emit()
+		await get_tree().process_frame
+
+	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+	var title := detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+	var ingredient_grid := detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+	var flour_cell := _find_grid_slot_by_item_key(ingredient_grid, "flour") if ingredient_grid != null else null
+	var instruction := detail.get_node_or_null("Body/InstructionPanel/Instruction") as Label if detail != null else null
+	_ok(detail != null and detail.get_meta("container_key", "") == "pot",
+		"dough detail is filed under the pot container")
+	_ok(title != null and title.text == String(GameManager.craft.get_item("dough").get("name", "dough")),
+		"dough detail reveals the dough item name")
+	_ok(flour_cell != null, "dough detail shows flour as its ingredient")
+	_ok(instruction != null and instruction.text.find("锅") >= 0,
+		"dough detail instructs players to use the pot")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _test_recipe_book_hides_undiscovered_entries() -> void:
 	_reset_game_for_recipe_discovery_test()
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
@@ -1007,6 +1107,10 @@ func _test_first_crafted_recipe_discovers_recipe() -> void:
 	var notice := tavern.get_node_or_null("RecipeDiscoveryNotice") as Control
 	_ok(notice != null, "first successful craft creates the compact recipe discovery note UI")
 	if notice != null:
+		for _i in range(12):
+			if notice.visible and notice.modulate.a > 0.1:
+				break
+			await get_tree().process_frame
 		var brush := notice.get_node_or_null("BrushBand") as Panel
 		var name_label := notice.get_node_or_null("Name") as Label
 		var title_label := notice.get_node_or_null("Title") as Label

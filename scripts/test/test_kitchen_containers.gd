@@ -392,6 +392,35 @@ func _test_failure_product_data() -> void:
 		"failed_brew never enters regular orders")
 	_ok(craft.get_orderable_products(12).find("failed_stew") == -1,
 		"failed_stew never enters regular orders")
+	var inventory := InventorySystem.new()
+	inventory.load_items(craft.items)
+	_ok(not inventory.is_deliverable_product("failed_brew"),
+		"failed_brew is not deliverable to customers")
+	_ok(not inventory.is_deliverable_product("failed_stew"),
+		"failed_stew is not deliverable to customers")
+	_ok(inventory.is_deliverable_product("ale_beer"),
+		"normal products remain deliverable to customers")
+	for failed_key in ["failed_brew", "failed_stew"]:
+		var guest := GuestData.new()
+		guest.type = GuestData.GuestType.NORMAL
+		guest.order_key = "ale_beer"
+		guest.has_dialogue = false
+		guest.npc_id = "failed_product_direct_test"
+		GameManager.guests.current_guest = guest
+		GameManager.guests.has_guest = true
+		GameManager._guest_lingering = false
+		var failed_before: int = GameManager.guests.orders_failed
+		var served_before: int = GameManager.guests.guests_served_today
+		GameManager.request_serve(failed_key, {"quality": "normal"}, "")
+		_ok(GameManager.guests.orders_failed == failed_before,
+			"%s direct request_serve does not record a failed order" % failed_key)
+		_ok(GameManager.guests.guests_served_today == served_before,
+			"%s direct request_serve does not count the guest as served" % failed_key)
+		_ok(GameManager.guests.has_guest and GameManager.guests.current_guest == guest,
+			"%s direct request_serve leaves the waiting guest active" % failed_key)
+		GameManager.guests.has_guest = false
+		GameManager.guests.current_guest = null
+		GameManager._guest_lingering = false
 	_ok(GameManager.try_load_material_icon("failed_brew") != null,
 		"failed_brew reuses an existing Tavern item icon")
 	_ok(GameManager.try_load_material_icon("failed_stew") != null,
@@ -404,7 +433,9 @@ func _test_failed_container_outputs_spawn_failure_products() -> void:
 	await get_tree().process_frame
 
 	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
 	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+	var drop_area := tavern.get_node("BarWorkspace/CustomerDropArea") as Area2D
 	var items := tavern.get_node("BarWorkspace/World/Items")
 
 	brewery._pending_keys = ["ale", "grape"]
@@ -434,6 +465,46 @@ func _test_failed_container_outputs_spawn_failure_products() -> void:
 		"failed pot mix should show a dedicated failure word")
 	_ok(_layer_child_meta_count(pot, "PotEffectLayer", "pot_effect_kind", "failed") >= 4,
 		"failed pot mix should throw scorched pot effects")
+
+	for raw_failure_item in [brew_failure, pot_failure]:
+		var failure_item := raw_failure_item as DeskItem
+		if failure_item == null:
+			continue
+		var failed_key: String = failure_item.item_key
+		var guest := GuestData.new()
+		guest.type = GuestData.GuestType.NORMAL
+		guest.order_key = "ale_beer"
+		guest.has_dialogue = false
+		guest.npc_id = "failed_product_test"
+		GameManager.guests.current_guest = guest
+		GameManager.guests.has_guest = true
+		GameManager._guest_lingering = false
+		var failed_before: int = GameManager.guests.orders_failed
+		var served_before: int = GameManager.guests.guests_served_today
+		var count_before := items.get_child_count()
+		failure_item.global_position = drop_area.global_position
+		failure_item.linear_velocity = Vector2.ZERO
+		failure_item.angular_velocity = 0.0
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		_ok(drop_area.get_overlapping_bodies().has(failure_item),
+			"%s overlaps the customer drop area" % failed_key)
+		bar._try_deliver(failure_item)
+		await get_tree().process_frame
+		_ok(is_instance_valid(failure_item) and not failure_item.is_queued_for_deletion(),
+			"%s is not consumed as a deliverable order item" % failed_key)
+		_ok(items.get_child_count() == count_before,
+			"%s remains on the work surface after customer-area drop" % failed_key)
+		_ok(GameManager.guests.orders_failed == failed_before,
+			"%s does not record a failed order when dropped on a customer" % failed_key)
+		_ok(GameManager.guests.guests_served_today == served_before,
+			"%s does not count the guest as served" % failed_key)
+		_ok(GameManager.guests.has_guest and GameManager.guests.current_guest == guest,
+			"%s leaves the waiting guest active" % failed_key)
+		GameManager.guests.has_guest = false
+		GameManager.guests.current_guest = null
+		GameManager._guest_lingering = false
 
 	tavern.queue_free()
 	await get_tree().process_frame

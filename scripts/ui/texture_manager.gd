@@ -10,6 +10,13 @@ static func try_load(path: String) -> Texture2D:
 		var tex: Texture2D = load(path)
 		_cache[path] = tex
 		return tex
+	var image := Image.new()
+	var err := image.load(path)
+	if err == OK:
+		var tex := ImageTexture.create_from_image(image)
+		tex.take_over_path(path)
+		_cache[path] = tex
+		return tex
 	return null
 
 static func try_load_style_box(path: String) -> StyleBoxTexture:

@@ -1,0 +1,442 @@
+{
+  "id": "figgy_bust_portrait",
+  "style_profile": "figgy_aqua_fae_normal_clothes_expression_sheet_v1",
+  "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+  "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+  "expression_source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+  "comparison_references": [
+    "assets/textures/characters/ryan_neutral.png",
+    "assets/textures/characters/mira_neutral.png"
+  ],
+  "source_rect": [
+    0,
+    0,
+    384,
+    512
+  ],
+  "grid": {
+    "columns": 4,
+    "rows": 2
+  },
+  "normalization": {
+    "mode": "fixed_cell_visible_subject_v1"
+  },
+  "native": "assets/source/tavern/characters/figgy_neutral_native.png",
+  "runtime": "assets/textures/characters/figgy_neutral.png",
+  "native_size": [
+    128,
+    160
+  ],
+  "runtime_size": [
+    512,
+    640
+  ],
+  "safe_area": [
+    0,
+    0,
+    128,
+    160
+  ],
+  "scale": 4,
+  "color_limit": 72,
+  "visible_target": [
+    124,
+    154
+  ],
+  "bottom_padding": 3,
+  "intended_godot_use": "Tavern CustomerSprite Figgy bust portrait behind TabletopArt",
+  "portraits": {
+    "figgy_neutral": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "native": "assets/source/tavern/characters/figgy_neutral_native.png",
+      "runtime": "assets/textures/characters/figgy_neutral.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        4,
+        3,
+        124,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "polite cute tavern entry, tiny knowing smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_pleased": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "native": "assets/source/tavern/characters/figgy_pleased_native.png",
+      "runtime": "assets/textures/characters/figgy_pleased.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        3,
+        3,
+        124,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "cheerful confident grin after spotting a loophole"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_innocent": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "native": "assets/source/tavern/characters/figgy_innocent_native.png",
+      "runtime": "assets/textures/characters/figgy_innocent.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        7,
+        3,
+        121,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "exaggerated harmless face, pretending she did nothing"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_shocked": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "native": "assets/source/tavern/characters/figgy_shocked_native.png",
+      "runtime": "assets/textures/characters/figgy_shocked.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        5,
+        3,
+        123,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "comic surprise when fate says something stupid"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_smug": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/figgy_smug_native.png",
+      "runtime": "assets/textures/characters/figgy_smug.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        3,
+        3,
+        124,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "sly sideways smile before exploiting wording"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_confused": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/figgy_confused_native.png",
+      "runtime": "assets/textures/characters/figgy_confused.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        4,
+        3,
+        123,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "puzzled by a bad prophecy but not afraid"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_serious": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/figgy_serious_native.png",
+      "runtime": "assets/textures/characters/figgy_serious.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        12,
+        3,
+        115,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "calm sharp resolve ready to challenge fate"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    },
+    "figgy_victorious": {
+      "source": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_source_v1.png",
+      "prompt": "art_sources/generated_raw/characters/figgy_concepts/figgy_expression_sheet_prompt_v1.txt",
+      "source_rect": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/figgy_victorious_native.png",
+      "runtime": "assets/textures/characters/figgy_victorious.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "visible_bounds_native": [
+        5,
+        3,
+        122,
+        157
+      ],
+      "visible_color_count": 72,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "delighted triumphant grin after beating fate by technicality"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Figgy expression portrait"
+    }
+  },
+  "character_notes": [
+    "cute aqua fae/sylph important NPC",
+    "normal wearable short jacket, cream blouse, narrow dark tie, no wax-seal or paper motif",
+    "comic wording-loophole performer exploring free will against fate",
+    "v1 expression sheet accepted as a raw candidate with small comic symbols retained"
+  ],
+  "bar_occlusion_contract": {
+    "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
+    "runtime_sprite_size": [
+      512,
+      640
+    ],
+    "tabletop_top_y_runtime": 484,
+    "tabletop_art_z_index": -90,
+    "customer_sprite_z_index": -95
+  }
+}
