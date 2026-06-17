@@ -43,17 +43,17 @@
     "grey_ryan_case_number": {
       "label": "莱恩案卷编号",
       "source": "赔付登记处",
-      "text": "莱恩的北矿道事故案卷被抄进 G-17 批次。"
+      "text": "莱恩的北矿道事故案卷被抄进 G-17 批次，不像单独归档。"
     },
     "grey_old_payout_register": {
       "label": "旧赔付登记",
       "source": "赔付登记处",
-      "text": "登记册里几份委托先写赔付，再写结案。"
+      "text": "登记册里几份委托先写赔付，再补结案。"
     },
     "grey_missing_page": {
       "label": "失踪名单缺页",
       "source": "赔付登记处",
-      "text": "失踪名单缺页处压着灰色蜡印和多个页码。"
+      "text": "失踪名单缺页处压着灰色蜡印和多个能互相对上的页码。"
     },
     "grey_blacktooth_batch": {
       "label": "黑齿批次号",
@@ -141,7 +141,7 @@
     },
     {
       "id": "grey_same_batch",
-      "title": "同一批灰账",
+      "title": "莱恩与托比的同批灰账",
       "requiresClues": ["grey_ryan_case_number", "grey_blacktooth_batch", "grey_payout_closure"],
       "requiresSolved": ["toby_commission_risk"],
       "text": "______ 和 ______ 指向同一批清算；夹页里的 ______ 说明它们按结案账处理。",
@@ -150,13 +150,13 @@
         "toby_case": "grey_blacktooth_batch",
         "closure": "grey_payout_closure"
       },
-      "hint": "先看案卷编号和批次号，再看赔付登记处夹出的结案顺序。",
-      "conclusion": "莱恩的北矿道和托比的黑齿护送不是两笔孤立委托，它们被同一批灰账结算过。",
+      "hint": "先找共同的 G-17 批次，再用结案顺序证明它不是普通归档。",
+      "conclusion": "莱恩的北矿道和托比的黑齿护送不是两笔孤立委托；它们被同一批灰账结算过。",
       "unlockFlags": ["grey_same_batch_known"]
     },
     {
       "id": "grey_payout_method",
-      "title": "赔付顺序",
+      "title": "灰账的赔付顺序",
       "requiresClues": ["grey_old_payout_register", "grey_missing_page", "grey_payout_closure"],
       "requiresSolved": ["grey_same_batch"],
       "text": "登记册里的 ______、名单上的 ______ 和夹页里的 ______ 说明先赔付，后结案。",
@@ -165,13 +165,13 @@
         "missing": "grey_missing_page",
         "closure": "grey_payout_closure"
       },
-      "hint": "这题要说明灰账不是记录事故，而是在制造已结案的事故。",
-      "conclusion": "灰账先把人写进赔付，再把委托盖成已结。事故不是发生后才归档，而是按可结算的方式被整理出来。",
+      "hint": "这题要说明灰账不是被动记录事故，而是先决定赔付，再整理结案。",
+      "conclusion": "灰账会先决定赔付，再把事故补成已结。它不是单纯记录坏事，而是在把坏事整理成公会可以关闭的栏位。",
       "unlockFlags": ["grey_payout_method_known"]
     },
     {
       "id": "grey_mira_supply_link",
-      "title": "米拉供应灰印",
+      "title": "米拉也在灰账里",
       "requiresClues": ["grey_supply_stamp", "grey_renamed_escort", "grey_closure_method", "mira_avoids_old_road"],
       "requiresSolved": ["mira_phrase_origin", "grey_payout_method"],
       "text": "米拉的 ______、托比那份 ______ 和 ______ 指向同一套封账办法。",
@@ -180,13 +180,13 @@
         "escort": "grey_renamed_escort",
         "method": "grey_closure_method"
       },
-      "hint": "米拉不是清算人，但她的供应协议被接进了清算规则。",
-      "conclusion": "米拉的供应协议不是旁枝，它把托比的黑齿委托和旧路赔付接进了同一套灰契封账。",
+      "hint": "米拉不是清算人，但她的供应协议把她和托比的黑齿委托接进同一套灰账。",
+      "conclusion": "米拉的供应协议不是旁枝。它把托比的黑齿委托和旧路赔付接进同一套灰契封账。",
       "unlockFlags": ["mira_grey_ledger_link_known"]
     },
     {
       "id": "grey_public_account",
-      "title": "公开灰账",
+      "title": "把三条线公开",
       "requiresClues": ["grey_ryan_case_number", "grey_blacktooth_batch", "grey_supply_stamp"],
       "requiresSolved": ["grey_same_batch", "grey_payout_method", "grey_mira_supply_link"],
       "text": "只要把 ______、______ 和 ______ 一起公开，灰账就不能只封在公会柜台里。",
@@ -196,8 +196,8 @@
         "mira_stamp": "grey_supply_stamp"
       },
       "unorderedBlankGroups": [["ryan_case", "toby_batch", "mira_stamp"]],
-      "hint": "最终题要把三条人物线放进同一本公开账。",
-      "conclusion": "莱恩、托比和米拉不是各自的意外。把三份编号和灰印公开，伊芙琳就不能再只用一枚印章结束所有账。",
+      "hint": "最终题要把莱恩、托比和米拉三条人物线放进同一本公开账。",
+      "conclusion": "莱恩、托比和米拉不是各自的意外。三条线能合成公开账本，伊芙琳就不能再只用一枚公会印章把它们封回去。",
       "unlockFlags": ["grey_public_account_known"]
     }
   ]

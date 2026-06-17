@@ -593,25 +593,25 @@ func apply_inference_result(result: Dictionary) -> bool:
 				if narrative.get_var("grey_same_batch_known") != true:
 					narrative.set_var("grey_same_batch_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "莱恩案卷和托比的黑齿批次被对进了同一批灰账。"):
+					if documents.add_fate_note("evelyn", "莱恩案卷和托比的黑齿批次被对进同一批灰账。"):
 						play_audio_event("new_document")
 			"grey_payout_method_known":
 				if narrative.get_var("grey_payout_method_known") != true:
 					narrative.set_var("grey_payout_method_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "灰账先写赔付，再盖结案。"):
+					if documents.add_fate_note("evelyn", "灰账先决定赔付，再把事故补成已结案。"):
 						play_audio_event("new_document")
 			"mira_grey_ledger_link_known":
 				if narrative.get_var("mira_grey_ledger_link_known") != true:
 					narrative.set_var("mira_grey_ledger_link_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "米拉的供应协议背面盖着同一枚灰契印。"):
+					if documents.add_fate_note("evelyn", "米拉的供应协议背面盖着同一枚灰契印，协议也接进灰账。"):
 						play_audio_event("new_document")
 			"grey_public_account_known":
 				if narrative.get_var("grey_public_account_known") != true:
 					narrative.set_var("grey_public_account_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "灰账可以被抄成公开账本，不能只留在公会柜台里。"):
+					if documents.add_fate_note("evelyn", "莱恩、托比和米拉能被抄成同一份公开灰账。"):
 						play_audio_event("new_document")
 	if changed:
 		_maybe_show_inference_ready_notice(previous_questions)
@@ -795,21 +795,21 @@ func _add_grey_document_fate_note(document_id: String) -> void:
 	var note := ""
 	match document_id:
 		"grey_ryan_case_number":
-			note = "莱恩的案卷编号被抄进灰账批次。"
+			note = "莱恩的案卷编号被抄进灰账批次；他不是单独归档。"
 		"grey_old_payout_register":
-			note = "旧赔付登记显示，几份委托先赔付再结案。"
+			note = "旧赔付登记显示，几份委托先决定赔付，再补成已结案。"
 		"grey_missing_page":
-			note = "失踪名单缺页处压着灰色蜡印。"
+			note = "失踪名单缺页处压着灰色蜡印，缺走的是能互相对上的名字。"
 		"grey_blacktooth_batch":
-			note = "托比的黑齿委托被并入同一批清算。"
+			note = "托比的黑齿委托被并入 G-17，同莱恩案卷进了同一批清算。"
 		"grey_closure_method":
 			note = "灰契可以把临时人名、事故赔付和保证金合成一笔已结账。"
 		"grey_payout_closure":
-			note = "赔付登记处夹出了莱恩案卷“赔付即结案”的顺序。"
+			note = "赔付登记处夹出了莱恩案卷先赔付、后结案的顺序。"
 		"grey_renamed_escort":
 			note = "黑齿转运账把托比的护送委托改进了临时人名栏。"
 		"grey_supply_stamp":
-			note = "米拉旧供应副本背面有同一枚灰契印。"
+			note = "米拉旧供应副本背面有同一枚灰契印，协议也接进灰账。"
 	if note == "":
 		return
 	_ensure_fate_track("evelyn")
@@ -1683,18 +1683,18 @@ func _evelyn_track_result(route: String) -> String:
 	match route:
 		"public_account":
 			if pressure == "living_witnesses":
-				return "灰账被抄成公开副本。活人和纸证一起顶住公会封存。"
+				return "灰账公开。莱恩、托比和米拉三条线合为一案，活人和纸证一起顶住公会封存。"
 			if pressure == "paper_public":
-				return "灰账被抄成公开副本。纸证替未归和沉默的人说话。"
-			return "灰账被抄成公开副本。封存失败。"
+				return "灰账公开。莱恩、托比和米拉三条线合为一案，纸证替未归和沉默的人说话。"
+			return "灰账公开。三条线合为一案，封存失败。"
 		"amended_account":
 			if pressure == "damaged_amendment":
-				return "承认账面有误。部分改账，活下来的人得到喘息。"
+				return "承认账面有误。部分改账，活下来的人得到喘息，但灰账仍由公会保管。"
 			if pressure == "cold_amendment":
-				return "承认账面有误。部分改账，但冷账多过活口。"
+				return "承认账面有误。部分改账，但冷账多过活口，灰账仍由公会保管。"
 			return "承认账面有误。部分改账。"
 		"sealed_account":
-			return "灰账封存。事故照常归档。"
+			return "灰账封存。证据不足以公开，事故照常归档。"
 	return ""
 
 
