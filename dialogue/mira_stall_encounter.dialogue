@@ -1,0 +1,44 @@
+~ start
+
+if mira_stall_encounter_state == "after_truth_trusted"
+    旁白: 米拉把一卷货布扎紧。她看见你时，没有再装作不认识那张委托书。
+    米拉: 酒馆里那张纸，我没忘。
+    米拉: 我去找他，不是为了赎罪。赎罪太干净了。
+    米拉: 我只是不能再让他拿[color=#d6a84d]我的话[/color]去送死。[color=#d6a84d]托比现在住哪儿[/color]？
+    => END
+
+elif mira_stall_encounter_state == "after_truth_guarded"
+    旁白: 货摊前的灯芯短了一截。米拉把一枚骨扣翻到背面。
+    米拉: 酒馆里那张纸，你已经递过了。
+    米拉: 托比的名字别在摊前喊。[color=#d6a84d]黑齿矿脉[/color]是什么地方，我知道，不用你讲。
+    米拉: 有些路，回头也是死路。我知道你想问什么，今天别问。
+    => END
+
+elif mira_stall_encounter_state == "responsibility"
+    旁白: 米拉把货箱合上，没再装作听不懂。
+    米拉: 你想说托比，对吧？
+    米拉: 那句话是我教坏他的。[color=#d6a84d]那年我说给自己听，他当了真[/color]。
+    => END
+
+elif mira_stall_encounter_state == "old_relation"
+    旁白: 米拉听见你的脚步，手指停在账绳上。
+    米拉: 我以前确实带过一个[color=#d6a84d]孩子跑货[/color]。包比他还高，嘴比我还硬。
+    米拉: 后来我嫌走得太慢。路上没人能一直替别人背包，对吧？
+    => END
+
+elif mira_stall_encounter_state == "phrase"
+    旁白: 米拉正要收起空瓶，听见远处有人念起那句旧话时停了一下。
+    米拉: [color=#d6a84d]旧路上的话[/color]，别拿到今天问。
+    米拉: 谁学去了，谁就拿去活命。别问[color=#d6a84d]是谁教的[/color]。
+    => END
+
+elif mira_stall_encounter_state == "mentor"
+    旁白: 米拉把货箱盖上，像合上一页旧账。
+    米拉: [color=#d6a84d]带过孩子跑货[/color]的人很多。
+    米拉: 别在摊前替旧路算账。
+    => END
+
+else
+    旁白: 米拉把货布一角压平，像是在抹掉某个折痕。
+    米拉: 不买就别挡光。旧货和[color=#d6a84d]旧话[/color]一样，翻多了都掉价。
+    => END

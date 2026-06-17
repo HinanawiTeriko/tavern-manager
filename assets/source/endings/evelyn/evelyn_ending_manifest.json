@@ -1,0 +1,75 @@
+{
+  "id": "evelyn_ending_backgrounds",
+  "source_profile": "native_pixel_wide_reference_v1",
+  "native_size": [
+    320,
+    140
+  ],
+  "runtime_size": [
+    1280,
+    560
+  ],
+  "scale": 4,
+  "routes": {
+    "sealed_account": {
+      "reference": "assets/source/endings/evelyn/reference/evelyn_sealed_account_reference_v1.png",
+      "native": "assets/source/endings/evelyn/evelyn_sealed_account_native.png",
+      "runtime": "assets/textures/endings/evelyn/evelyn_sealed_account.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Evelyn fate cinematic layer before Day 20 ledger settlement"
+    },
+    "living_witnesses": {
+      "reference": "assets/source/endings/evelyn/reference/evelyn_living_witnesses_reference_v1.png",
+      "native": "assets/source/endings/evelyn/evelyn_living_witnesses_native.png",
+      "runtime": "assets/textures/endings/evelyn/evelyn_living_witnesses.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Evelyn fate cinematic layer before Day 20 ledger settlement"
+    },
+    "paper_public": {
+      "reference": "assets/source/endings/evelyn/reference/evelyn_paper_public_reference_v1.png",
+      "native": "assets/source/endings/evelyn/evelyn_paper_public_native.png",
+      "runtime": "assets/textures/endings/evelyn/evelyn_paper_public.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Evelyn fate cinematic layer before Day 20 ledger settlement"
+    },
+    "damaged_amendment": {
+      "reference": "assets/source/endings/evelyn/reference/evelyn_damaged_amendment_reference_v1.png",
+      "native": "assets/source/endings/evelyn/evelyn_damaged_amendment_native.png",
+      "runtime": "assets/textures/endings/evelyn/evelyn_damaged_amendment.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Evelyn fate cinematic layer before Day 20 ledger settlement"
+    },
+    "cold_amendment": {
+      "reference": "assets/source/endings/evelyn/reference/evelyn_cold_amendment_reference_v1.png",
+      "native": "assets/source/endings/evelyn/evelyn_cold_amendment_native.png",
+      "runtime": "assets/textures/endings/evelyn/evelyn_cold_amendment.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Evelyn fate cinematic layer before Day 20 ledger settlement"
+    }
+  }
+}

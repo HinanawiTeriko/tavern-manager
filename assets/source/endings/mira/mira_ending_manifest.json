@@ -1,0 +1,63 @@
+{
+  "id": "mira_ending_backgrounds",
+  "source_profile": "native_pixel_wide_reference_v1",
+  "native_size": [
+    320,
+    140
+  ],
+  "runtime_size": [
+    1280,
+    560
+  ],
+  "scale": 4,
+  "routes": {
+    "another_light_out": {
+      "reference": "assets/source/endings/mira/reference/mira_another_light_out_reference_v1.png",
+      "native": "assets/source/endings/mira/mira_another_light_out_native.png",
+      "runtime": "assets/textures/endings/mira/mira_another_light_out.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Mira fate cinematic layer before Day 12 ledger settlement"
+    },
+    "closed_the_door": {
+      "reference": "assets/source/endings/mira/reference/mira_closed_the_door_reference_v1.png",
+      "native": "assets/source/endings/mira/mira_closed_the_door_native.png",
+      "runtime": "assets/textures/endings/mira/mira_closed_the_door.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Mira fate cinematic layer before Day 12 ledger settlement"
+    },
+    "never_turned_back": {
+      "reference": "assets/source/endings/mira/reference/mira_never_turned_back_reference_v1.png",
+      "native": "assets/source/endings/mira/mira_never_turned_back_native.png",
+      "runtime": "assets/textures/endings/mira/mira_never_turned_back.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Mira fate cinematic layer before Day 12 ledger settlement"
+    },
+    "she_finally_stopped": {
+      "reference": "assets/source/endings/mira/reference/mira_she_finally_stopped_reference_v1.png",
+      "native": "assets/source/endings/mira/mira_she_finally_stopped_native.png",
+      "runtime": "assets/textures/endings/mira/mira_she_finally_stopped.png",
+      "safe_area": [
+        0,
+        0,
+        320,
+        140
+      ],
+      "intended_godot_use": "Mira fate cinematic layer before Day 12 ledger settlement"
+    }
+  }
+}

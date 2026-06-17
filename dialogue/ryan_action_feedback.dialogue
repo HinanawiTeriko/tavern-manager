@@ -1,0 +1,47 @@
+~ ryan_informed
+莱恩: ……这不是普通委托。你从哪儿弄来的？
+=> END
+
+~ ryan_accepts_alternative
+莱恩: 我接下这个。今晚之后，我自己去问个明白。
+=> END
+
+~ ryan_needs_warning_first
+莱恩: 这是什么？我看不出它和我有什么关系。
+=> END
+
+~ ryan_alternative_pending
+莱恩: 我会考虑。先让我看看你今晚怎么待我。
+=> END
+
+~ ryan_accepts_ale
+莱恩: 好酒。今晚就靠这一杯壮胆了。
+=> END
+
+~ ryan_drugged
+莱恩: ……这酒怎么这么沉……
+=> END
+
+~ ryan_refuses_drugged_ale
+莱恩: 不。今晚我必须保持清醒。
+=> END
+
+~ ryan_interaction_closed
+莱恩: 别再说了。今晚我已经决定了。
+=> END
+
+~ mira_informed_trusted
+米拉: ……这纸是哪来的？
+米拉: （她看见背面那句“一个人走”，手指停住了很久。）
+米拉: 这不是他该学会的话。[color=#d6a84d]是我丢给他的[/color]。
+米拉: [color=#d6a84d]托比现在住哪儿[/color]？
+米拉: 别说“谢谢”。我只是回去把当年丢下的东西捡起来。
+=> END
+
+~ mira_informed_guarded
+米拉: ……你不该把这个拿给我看。
+米拉: （她把委托书折回去，像是在合上一道门。）
+米拉: 他已经不是当年那个跟着我跑货的小孩了。我也不欠每个[color=#d6a84d]学我说话[/color]的人一条命。
+米拉: 有些人就是得[color=#d6a84d]一个人走[/color]。早学会，比晚学会少疼一点。
+米拉: 把酒端来吧，老板。今天别再提这件事。
+=> END

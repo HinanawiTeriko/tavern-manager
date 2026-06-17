@@ -1,0 +1,10 @@
+~ start
+if serve_result == "success"
+    do GameManager.set_customer_expression("knowing")
+    伊芙琳: 你会喜欢那些登记册。它们不争辩，只把每个名字放进该去的栏。
+    伊芙琳: 如果你觉得栏位错了，就证明给它看。
+    => END
+else
+    do GameManager.set_customer_expression("cold")
+    伊芙琳: 乱一点也好。人在乱账前，总比在清账前诚实。
+    => END

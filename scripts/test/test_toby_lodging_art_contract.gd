@@ -14,6 +14,8 @@ const EXPECTED_RUNTIME_SIZES := {
 	"contract_fragment_a": Vector2(68, 52),
 	"contract_fragment_b": Vector2(64, 56),
 	"contract_fragment_c": Vector2(76, 48),
+	"contract_fragment_pair": Vector2(112, 72),
+	"contract_complete": Vector2(144, 96),
 }
 const EXPECTED_TEXTURES := {
 	"oil_lamp": "res://assets/ui/generated/investigation/toby_lodging/items/oil_lamp.png",
@@ -22,6 +24,8 @@ const EXPECTED_TEXTURES := {
 	"contract_fragment_a": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_a.png",
 	"contract_fragment_b": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_b.png",
 	"contract_fragment_c": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_c.png",
+	"contract_fragment_pair": "res://assets/ui/generated/investigation/toby_lodging/items/contract_fragment_pair.png",
+	"contract_complete": "res://assets/ui/generated/investigation/toby_lodging/items/contract_complete.png",
 }
 const EXPECTED_COLLISION_PROFILES := {
 	"oil_lamp": {"size": Vector2(44, 70), "offset": Vector2(0, 8)},
@@ -30,6 +34,8 @@ const EXPECTED_COLLISION_PROFILES := {
 	"contract_fragment_a": {"size": Vector2(48, 34), "offset": Vector2(0, 2)},
 	"contract_fragment_b": {"size": Vector2(46, 36), "offset": Vector2(0, 2)},
 	"contract_fragment_c": {"size": Vector2(52, 32), "offset": Vector2(0, 2)},
+	"contract_fragment_pair": {"size": Vector2(78, 46), "offset": Vector2(0, 2)},
+	"contract_complete": {"size": Vector2(100, 62), "offset": Vector2(0, 2)},
 }
 
 var _checks := 0
@@ -118,6 +124,8 @@ func _assert_toby_items(scene: Node) -> void:
 	_ok(int(counts.get("contract_fragment_a", 0)) == 1, "contract fragment A spawned once")
 	_ok(int(counts.get("contract_fragment_b", 0)) == 1, "contract fragment B spawned once")
 	_ok(int(counts.get("contract_fragment_c", 0)) == 1, "contract fragment C spawned once")
+	_ok(int(counts.get("contract_fragment_pair", 0)) == 0, "combined contract piece is spawned only after two fragments snap")
+	_ok(int(counts.get("contract_complete", 0)) == 0, "complete contract is spawned only after final assembly")
 
 
 func _assert_item_art(item: MineItem) -> void:

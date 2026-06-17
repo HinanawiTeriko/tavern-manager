@@ -6,17 +6,22 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_source_v2.png"
-PROMPT = ROOT / "art_sources" / "generated_raw" / "mercenary_bust" / "mercenary_a_prompt_v2.txt"
+RAW = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_source_v3.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "mercenary" / "mercenary_a_prompt_v3.txt"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 MANIFEST = SOURCE_DIR / "mercenary_bust_manifest.json"
 NATIVE = SOURCE_DIR / "mercenary_a_native.png"
 RUNTIME = ROOT / "assets" / "textures" / "characters" / "mercenary_a.png"
-CONTACT_SHEET = ROOT / "docs" / "art" / "mercenary_bust_contact_sheet.png"
+CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "mercenary_contact_sheet.png"
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
 NATIVE_SIZE = (128, 160)
 RUNTIME_SIZE = (512, 640)
 SCALE = 4
+CONTACT_SHEET_SIZE = (1180, 820)
+CONTACT_SHEET_NATIVE_SCALE = 2
+CONTACT_SHEET_NATIVE_PREVIEW_SIZE = (NATIVE_SIZE[0] * CONTACT_SHEET_NATIVE_SCALE, NATIVE_SIZE[1] * CONTACT_SHEET_NATIVE_SCALE)
+CONTACT_SHEET_NATIVE_BG = (24, 20, 16, 255)
+CONTACT_SHEET_NATIVE_POSITIONS = [(44, 92), (462, 92), (880, 92), (44, 452), (462, 452), (880, 452)]
 COLOR_LIMIT = 72
 STYLE_PROFILE = "approved_vera_belta_runtime_matched_important_npc_v1"
 MAX_BLUE_SCARF_RATIO = 0.015
@@ -67,20 +72,31 @@ def blue_scarf_like_ratio(image: Image.Image) -> float:
     return blue_like / max(1, visible)
 
 
+def expected_backed_native_preview(native: Image.Image) -> Image.Image:
+    preview = native.resize(CONTACT_SHEET_NATIVE_PREVIEW_SIZE, Image.Resampling.NEAREST)
+    out = Image.new("RGBA", CONTACT_SHEET_NATIVE_PREVIEW_SIZE, CONTACT_SHEET_NATIVE_BG)
+    out.alpha_composite(preview, (0, 0))
+    return out.convert("RGB")
+
+
 class MercenaryBustAssetPipelineTest(unittest.TestCase):
     def test_ai_source_prompt_and_manifest_exist(self) -> None:
         self.assertTrue(RAW.exists(), "Mercenary A AI source is missing")
         self.assertTrue(PROMPT.exists(), "Mercenary A prompt record is missing")
         prompt = PROMPT.read_text(encoding="utf-8").lower()
         for phrase in (
-            "approved vera/belta",
-            "same artist family",
-            "flat solid #00ff00",
+            "vera/belta",
+            "hard pixel-game",
+            "stair-stepped silhouette",
+            "posterized flat color blocks",
+            "perfectly flat solid #00ff00",
             "no readable text",
             "mercenary messenger",
             "not ryan",
             "128x160",
             "512x640",
+            "no painterly micro-detail",
+            "no dense chainmail noise",
             "no blue scarf",
         ):
             self.assertIn(phrase, prompt)
@@ -127,8 +143,23 @@ class MercenaryBustAssetPipelineTest(unittest.TestCase):
     def test_contact_sheet_exists(self) -> None:
         self.assertTrue(CONTACT_SHEET.exists(), "Mercenary A contact sheet is missing")
         contact = load_rgba(CONTACT_SHEET)
-        self.assertGreaterEqual(contact.width, 800)
-        self.assertGreaterEqual(contact.height, 360)
+        self.assertEqual(contact.size, CONTACT_SHEET_SIZE, "Mercenary A contact sheet must use the official important NPC preview size")
+
+    def test_contact_sheet_uses_integer_native_previews(self) -> None:
+        native = load_rgba(NATIVE)
+        contact = load_rgba(CONTACT_SHEET).convert("RGB")
+        x, y = CONTACT_SHEET_NATIVE_POSITIONS[0]
+        actual_native = contact.crop((
+            x,
+            y,
+            x + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[0],
+            y + CONTACT_SHEET_NATIVE_PREVIEW_SIZE[1],
+        ))
+        self.assertEqual(
+            actual_native.tobytes(),
+            expected_backed_native_preview(native).tobytes(),
+            "Mercenary A contact sheet native preview must be exact 2x native pixels",
+        )
 
 
 if __name__ == "__main__":

@@ -87,6 +87,30 @@
       "runtime_size": [76, 48],
       "safe_area": [1, 1, 17, 10],
       "intended_godot_use": "MineItem TextureVisual for item_tag contract_fragment_c"
+    },
+    {
+      "id": "contract_fragment_pair",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_contract_assembled_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_contract_assembled_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/contract_fragment_pair_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/contract_fragment_pair.png",
+      "source_rect": [0, 0, 887, 887],
+      "native_size": [28, 18],
+      "runtime_size": [112, 72],
+      "safe_area": [1, 1, 26, 16],
+      "intended_godot_use": "MineItem TextureVisual for item_tag contract_fragment_pair"
+    },
+    {
+      "id": "contract_complete",
+      "source": "art_sources/generated_raw/toby_lodging/toby_lodging_contract_assembled_source_v1.png",
+      "reference": "assets/source/investigation/toby_lodging/reference/toby_lodging_contract_assembled_reference_v1.png",
+      "native": "assets/source/investigation/toby_lodging/items/contract_complete_native.png",
+      "runtime": "assets/ui/generated/investigation/toby_lodging/items/contract_complete.png",
+      "source_rect": [887, 0, 887, 887],
+      "native_size": [36, 24],
+      "runtime_size": [144, 96],
+      "safe_area": [1, 1, 34, 22],
+      "intended_godot_use": "MineItem TextureVisual for item_tag contract_complete"
     }
   ],
   "leave_button": {
@@ -138,7 +162,9 @@
       "oversized_coat": [560, 468],
       "contract_fragment_a": [220, 460],
       "contract_fragment_b": [700, 462],
-      "contract_fragment_c": [940, 470]
+      "contract_fragment_c": [940, 470],
+      "contract_fragment_pair": [640, 490],
+      "contract_complete": [640, 490]
     },
     "item_collision_profiles_runtime": {
       "oil_lamp": {"size": [44, 70], "offset": [0, 8]},
@@ -146,7 +172,9 @@
       "oversized_coat": {"size": [140, 76], "offset": [0, 10]},
       "contract_fragment_a": {"size": [48, 34], "offset": [0, 2]},
       "contract_fragment_b": {"size": [46, 36], "offset": [0, 2]},
-      "contract_fragment_c": {"size": [52, 32], "offset": [0, 2]}
+      "contract_fragment_c": {"size": [52, 32], "offset": [0, 2]},
+      "contract_fragment_pair": {"size": [78, 46], "offset": [0, 2]},
+      "contract_complete": {"size": [100, 62], "offset": [0, 2]}
     }
   }
 }

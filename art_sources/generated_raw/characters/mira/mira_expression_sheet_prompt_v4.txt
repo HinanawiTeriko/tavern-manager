@@ -1,0 +1,35 @@
+Use case: stylized-concept
+Asset type: raw 4x2 expression sheet source for a 128x160 -> 512x640 pixel-art tavern NPC bust pipeline
+Primary request: Create one rebalanced expression sheet for MIRA, an important NPC traveling account-merchant / debt broker, redesigned to match the tavern customer bust proportions used by Ryan, Toby, and regular customers. This is a source sheet for a game portrait pipeline, NOT a polished fashion illustration.
+
+STRICT FORMAT:
+- exactly 4 columns x 2 rows of bust portraits, eight separate cells
+- same character identity, same outfit, same camera distance, same scale, same pose family in every cell
+- each cell centered with generous padding
+- flat solid #00ff00 chroma-key green background in every cell and around the sheet
+- no labels, no readable text, no UI, no frame, no watermark
+- crop should show head, shoulders, chest, waist, and belt/upper hips only
+- same camera distance as Ryan and Toby tavern NPC bust source: face and shoulders readable, body is not a full half-body fashion pose
+- stop around belt or upper hips; do not show thighs, knees, long coat length, or full-body silhouette
+
+Mira identity to preserve: mature woman in early-to-mid 30s, lean but not fragile, controlled, tired, guarded, intelligent, professional. Silver-gray short asymmetrical hair remains, but make the hair shape chunkier and less glossy. Small practical glasses remain, but keep them simple and readable, not delicate jewelry.
+
+Rebalanced proportions and style: shoulders slightly wider, torso more solid, head-to-body ratio closer to Ryan/Toby/regular customers, less fashion-model slimness. The figure should feel like a tavern game bust asset: chunky silhouette, clear body mass, strong readable shape at 128x160. Not a high-precision character illustration.
+
+Outfit redesign: keep her as a traveling account-merchant / debt broker, but simplify the old outfit. Use a dark indigo accounting coat with broader shoulder block and fewer fine vertical lines, cream undershirt in one large shape, one visible copper counting chain or clasp motif only, one small waist pouch or ledger clasp. Reduce gold trim, reduce thin chains, reduce tiny buttons. Large readable blocks, low accessory density. No long coat tails, no elegant fashion jacket, no narrow blade-like runway silhouette.
+
+Expression order, left to right, top row then bottom row:
+1 neutral - guarded professional half-smile
+2 smile - genuine warm smile, restrained
+3 surprised - raised brows, face-only surprise
+4 serious - direct assessing gaze
+5 guilty - averted glance, quiet regret
+6 conflicted - hesitation, brows drawn
+7 resolved - accountable and steady
+8 detached - withdrawn, eyes lowered or coldly distant
+
+Style target: crisp hand-authored pixel-art/anime-fantasy character source, thick dark outlines, readable blocky silhouette, restrained chunky pixel clusters, limited warm dungeon palette, low-density clothing detail, suitable to survive downscaling to 128x160 native and 512x640 runtime. Use fewer fine vertical lines than old Mira. Avoid glossy high-resolution portrait rendering, avoid painterly micro-detail.
+
+Palette: silver-gray hair, dark indigo coat, cream undershirt, muted copper accent, tiny dull red wax seal only if needed, warm tavern highlights.
+
+Hard avoid: no brown hair, no long hair, no red hair streak, no teenage look, no cute girl face, no puffy coat, no narrow fashion illustration body, no full-body pose, no thighs, no long coat length, no dense gold chains, no many buttons, no intricate vertical trim, no book held in hand, no loose papers, no contract scroll, no student uniform, no military officer coat, no adventurer cloak, no raised index finger, no floating symbols, no emotion marks, no decorative marks around the head, no readable text, no labels, no watermark, do not use #00ff00 anywhere on the character.

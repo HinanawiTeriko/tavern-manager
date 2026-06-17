@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: game ending cinematic still reference for a pixel-art dungeon tavern management game
+Primary request: create the Mira route ending still for route `another_light_out`.
+Input images in conversation: use the visible Ryan ending contact sheet as the strongest style reference for cinematic density and palette; use the visible Mira character sheet for the character's silver hair, merchant coat, glasses, and restrained posture.
+Scene/backdrop: a cold stone road outside a dungeon tavern at night, deep teal shadows, amber lantern accents. Mira, a silver-haired traveling merchant in a dark coat with small gold trim, walks away with her satchel and a sealed long supply contract, unaware of what happened. Far in the background, the dangerous mine road falls into darkness; a tiny extinguished lantern and a small abandoned apprentice pack imply Toby did not return.
+Style/medium: native-pixel reference art, rough ink lines, hard pixel-like silhouettes, chunky low-density clusters, posterized limited palette, dark teal dungeon tavern palette with small amber highlights.
+Composition/framing: wide 16:7 letterbox cinematic still, 1280x560 feel, no UI area, no text. Mira should be readable but small enough to feel isolated, with the road and dead lantern carrying the story.
+Lighting/mood: cold, final, quiet ignorance; amber is sparse and not dominant.
+Constraints: no readable text, no letters, no logos, no watermark, no UI, no speech bubbles, no signs with writing. Keep all important content within the central wide frame. Avoid painterly softness, glossy rendering, dense noise, photorealism, modern objects, anime splash art.

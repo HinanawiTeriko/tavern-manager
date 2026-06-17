@@ -4,8 +4,9 @@ extends CanvasLayer
 const TUTORIAL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
 const PANEL_TEXTURE_PATH := "res://assets/textures/tutorial/ui/tutorial_panel.png"
 const DIALOGUE_PANEL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_panel.png"
-const DIALOGUE_NAMEPLATE_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_nameplate.png"
-const DIALOGUE_PROGRESS_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_progress_arrow.png"
+const DIALOGUE_PANEL_RUNTIME_SIZE := Vector2(1200.0, 216.0)
+const DIALOGUE_PANEL_TEXTURE_MARGINS := Vector4(96.0, 64.0, 96.0, 52.0)
+const DIALOGUE_PANEL_CONTENT_MARGINS := Vector4(64.0, 32.0, 64.0, 32.0)
 const DEFAULT_NARRATOR_NAME := "薇拉"
 const PANEL_TEXT_MARGIN_X := 56.0
 const PANEL_TITLE_Y := 30.0
@@ -17,20 +18,26 @@ const PANEL_MIN_HEIGHT := 180.0
 const PANEL_BODY_FONT_SIZE := 15
 const PANEL_MEASURE_MAX_HEIGHT := 1200.0
 const NARRATOR_TEXTURES := {
-	"neutral": "res://assets/textures/tutorial/narrator/female_bartender_scribe_neutral.png",
-	"smirk": "res://assets/textures/tutorial/narrator/female_bartender_scribe_smirk.png",
-	"concerned": "res://assets/textures/tutorial/narrator/female_bartender_scribe_concerned.png",
-	"surprised": "res://assets/textures/tutorial/narrator/female_bartender_scribe_surprised.png",
-	"ledge": "res://assets/textures/tutorial/narrator/female_bartender_scribe_ledge.png",
+	"neutral": "res://assets/textures/characters/vera/vera_neutral.png",
+	"smirk": "res://assets/textures/characters/vera/vera_smirk.png",
+	"concerned": "res://assets/textures/characters/vera/vera_concerned.png",
+	"surprised": "res://assets/textures/characters/vera/vera_surprised.png",
+	"warm": "res://assets/textures/characters/vera/vera_warm.png",
+	"stern": "res://assets/textures/characters/vera/vera_stern.png",
+	"confused": "res://assets/textures/characters/vera/vera_confused.png",
+	"tired": "res://assets/textures/characters/vera/vera_tired.png",
+	"ledge": "res://assets/textures/characters/vera/vera_ledge.png",
 }
-const NARRATOR_DEFAULT_TEXTURE := "res://assets/textures/tutorial/narrator/female_bartender_scribe.png"
+const NARRATOR_DEFAULT_TEXTURE := "res://assets/textures/characters/vera/vera.png"
 const NARRATOR_PORTRAIT_SIZE := Vector2(256.0, 320.0)
-const NARRATOR_PANEL_HEIGHT := 160.0
+const NARRATOR_LEDGE_PORTRAIT_SIZE := Vector2(256.0, 640.0)
+const NARRATOR_PANEL_HEIGHT := DIALOGUE_PANEL_RUNTIME_SIZE.y
 const NARRATOR_PANEL_MAX_WIDTH := 900.0
 const NARRATOR_PANEL_MIN_WIDTH := 480.0
 const NARRATOR_MARGIN := 24.0
 const NARRATOR_GAP := 20.0
 const NARRATOR_LEDGE_OVERLAP := 20.0
+const NARRATOR_LEDGE_GRIP_OFFSET := 56.0
 const NARRATOR_BODY_FONT_SIZE := 18
 
 var _highlight_panels: Array = [null, null, null, null]
@@ -144,7 +151,7 @@ func _create_ui() -> void:
 	_narrator_name_label.fit_content = false
 	_narrator_name_label.scroll_active = false
 	_narrator_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_narrator_name_label.add_theme_stylebox_override("normal", _narrator_nameplate_style())
+	_narrator_name_label.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	_narrator_name_label.add_theme_font_override("normal_font", TUTORIAL_FONT)
 	_narrator_name_label.add_theme_font_size_override("normal_font_size", 18)
 	_narrator_name_label.add_theme_color_override("default_color", ThemeColors.AMBER_PRIMARY)
@@ -167,11 +174,12 @@ func _create_ui() -> void:
 
 	_narrator_progress_art = TextureRect.new()
 	_narrator_progress_art.name = "NarratorProgressArt"
-	_narrator_progress_art.texture = _load_texture(DIALOGUE_PROGRESS_TEXTURE)
+	_narrator_progress_art.texture = null
 	_narrator_progress_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_narrator_progress_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_narrator_progress_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_narrator_progress_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_narrator_progress_art.visible = false
 	_narrator_panel.add_child(_narrator_progress_art)
 
 	_next_btn = Button.new()
@@ -229,16 +237,8 @@ func _tutorial_panel_style() -> StyleBox:
 func _narrator_panel_style() -> StyleBox:
 	return _texture_style(
 		DIALOGUE_PANEL_TEXTURE,
-		Vector4(96, 64, 96, 52),
-		Vector4(96, 50, 96, 40)
-	)
-
-
-func _narrator_nameplate_style() -> StyleBox:
-	return _texture_style(
-		DIALOGUE_NAMEPLATE_TEXTURE,
-		Vector4(56, 18, 56, 18),
-		Vector4(28, 9, 28, 9)
+		DIALOGUE_PANEL_TEXTURE_MARGINS,
+		DIALOGUE_PANEL_CONTENT_MARGINS
 	)
 
 
@@ -385,14 +385,14 @@ func _layout_narrator(step: Dictionary, highlight_rect: Array, viewport_size: Ve
 	if anchor == "" or anchor == "auto":
 		anchor = _auto_narrator_anchor(highlight_rect, viewport_size)
 
-	var portrait_size := NARRATOR_PORTRAIT_SIZE
-	var panel_w := viewport_size.x
+	_narrator_uses_ledge_pose = anchor == "top"
+	var portrait_size := NARRATOR_LEDGE_PORTRAIT_SIZE if _narrator_uses_ledge_pose else NARRATOR_PORTRAIT_SIZE
+	var panel_w := minf(DIALOGUE_PANEL_RUNTIME_SIZE.x, viewport_size.x)
 	var panel_h := NARRATOR_PANEL_HEIGHT
 
-	var panel_x := 0.0
+	var panel_x := floorf((viewport_size.x - panel_w) * 0.5)
 	var panel_y := 0.0 if anchor == "top" else viewport_size.y - panel_h
 	var portrait_y := panel_y - portrait_size.y + NARRATOR_LEDGE_OVERLAP
-	_narrator_uses_ledge_pose = anchor == "top"
 	var portrait_x := _narrator_portrait_x(portrait_size, highlight_rect, viewport_size)
 	if _narrator_uses_ledge_pose:
 		portrait_x = clampf(
@@ -400,7 +400,8 @@ func _layout_narrator(step: Dictionary, highlight_rect: Array, viewport_size: Ve
 			NARRATOR_MARGIN,
 			maxf(NARRATOR_MARGIN, viewport_size.x - portrait_size.x - NARRATOR_MARGIN)
 		)
-		portrait_y = panel_y + panel_h - NARRATOR_LEDGE_OVERLAP
+		portrait_y = panel_y + panel_h - NARRATOR_LEDGE_GRIP_OFFSET
+		portrait_y = maxf(0.0, portrait_y)
 	_narrator_portrait.position = Vector2(portrait_x, portrait_y)
 	_narrator_portrait.size = portrait_size
 	_narrator_panel.position = Vector2(panel_x, panel_y)

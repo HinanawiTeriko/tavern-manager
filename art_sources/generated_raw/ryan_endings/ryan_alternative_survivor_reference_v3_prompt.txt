@@ -1,0 +1,13 @@
+Use case: stylized-concept
+Asset type: wide pixel-art fate still for a dungeon tavern management game
+Input images: use the visible Ryan character contact sheet as the identity reference; use the visible older Ryan ending contact sheet only as broad wide-pixel composition reference.
+Primary request: Ryan chooses the slower safer route. Show Ryan walking away with a sealed blank folded parchment representing the alternative contract, no readable text on it. He matches the current identity: ash-lilac messy hair with a short side braid, small low red-brown horn nubs, patched tan shirt, charcoal-brown jerkin, brass oath tag, tiny red wax-seal pouch, plain belt, worn travel trousers, and battered patched travel pack. He walks toward a quieter stone road, guild side gate, or safer side path at muted dawn. The mood is relieved but costly, not cheerful victory.
+Scene/backdrop: quiet stone side road outside a dungeon-town guild side gate, rough masonry, distant tavern or mine-town silhouette, dawn mist.
+Subject: Ryan in current outfit walking away with a sealed blank folded parchment, identifiable by horns, ash-lilac braid, charcoal jerkin, oath tag, wax-seal pouch, patched pack.
+Style/medium: native-pixel-style cinematic still, rough hand-authored pixel clusters, thick dark silhouettes, limited dark teal dungeon palette, muted dawn amber-blue accents, no soft painterly blending.
+Composition/framing: 21:9 wide still, readable after downscaling to 320x140 native pixels; Ryan as a medium back or three-quarter figure moving along a safer side path, with the sealed blank parchment visible.
+Lighting/mood: muted dawn amber-blue, grounded survival, slow safer road, restrained hope.
+Color palette: dark teal stone, dawn blue, soft amber edge light, charcoal-brown clothing, tan shirt, ash-lilac hair, small red wax seal.
+Materials/textures: rough stone, worn leather, folded blank parchment, brass tag, red wax seal, chunky pixel clusters.
+Text: none.
+Constraints: no UI, no readable text, no letters, no logo, no watermark, no explicit gore, no triumphant hero pose, no generic knight armor, no modern objects.

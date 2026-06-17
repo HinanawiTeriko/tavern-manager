@@ -1,16 +1,14 @@
 extends "res://addons/dialogue_manager/example_balloon/example_balloon.gd"
 
 const PANEL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_panel.png"
-const NAMEPLATE_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_nameplate.png"
-const RESPONSE_NORMAL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_response_normal.png"
-const RESPONSE_HOVER_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_response_hover.png"
-const RESPONSE_PRESSED_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_response_pressed.png"
-const PROGRESS_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_progress_arrow.png"
+const PANEL_RUNTIME_SIZE := Vector2(1200.0, 216.0)
+const PANEL_TEXTURE_MARGINS := Vector4(96.0, 64.0, 96.0, 52.0)
+const PANEL_CONTENT_MARGINS := Vector4(64.0, 32.0, 64.0, 32.0)
 
 @onready var _panel_container: PanelContainer = $Balloon/MarginContainer/PanelContainer
 @onready var _outer_margin: MarginContainer = $Balloon/MarginContainer
+@onready var _panel_content_margin: MarginContainer = $Balloon/MarginContainer/PanelContainer/MarginContainer
 @onready var _progress_art: TextureRect = $Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer/Control/ProgressArt
-@onready var _response_example: Button = $Balloon/ResponsesMenu/ResponseExample
 
 
 func _ready() -> void:
@@ -19,16 +17,10 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var should_show_progress := (
-		is_instance_valid(dialogue_line)
-		and not dialogue_label.is_typing
-		and dialogue_line.responses.size() == 0
-		and not dialogue_line.has_tag("voice")
-	)
 	if progress != null:
 		progress.visible = false
 	if _progress_art != null:
-		_progress_art.visible = should_show_progress
+		_progress_art.visible = false
 
 
 func _apply_project_dialogue_style() -> void:
@@ -37,11 +29,15 @@ func _apply_project_dialogue_style() -> void:
 	_outer_margin.offset_right = -40.0
 	_outer_margin.offset_top = -236.0
 	_outer_margin.offset_bottom = -20.0
+	_outer_margin.custom_minimum_size = PANEL_RUNTIME_SIZE
+	_panel_container.custom_minimum_size = PANEL_RUNTIME_SIZE
+	_clear_margin_container(_outer_margin)
+	_clear_margin_container(_panel_content_margin)
 
 	_panel_container.add_theme_stylebox_override("panel", _texture_style(
 		PANEL_TEXTURE,
-		Vector4(96, 64, 96, 52),
-		Vector4(96, 50, 96, 40)
+		PANEL_TEXTURE_MARGINS,
+		PANEL_CONTENT_MARGINS
 	))
 
 	var font := ThemeColors.menu_font()
@@ -58,39 +54,17 @@ func _apply_project_dialogue_style() -> void:
 	character_label.custom_minimum_size = Vector2(360, 36)
 	character_label.add_theme_font_size_override("normal_font_size", 18)
 	character_label.add_theme_color_override("default_color", ThemeColors.AMBER_PRIMARY)
-	character_label.add_theme_stylebox_override("normal", _texture_style(
-		NAMEPLATE_TEXTURE,
-		Vector4(56, 18, 56, 18),
-		Vector4(28, 9, 28, 9)
-	))
+	character_label.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 
 	dialogue_label.custom_minimum_size = Vector2(0, 104)
 	dialogue_label.add_theme_font_size_override("normal_font_size", 20)
 
-	_apply_response_button_style(_response_example)
 	_setup_progress_art()
-
-
-func _apply_response_button_style(button: Button) -> void:
-	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	button.custom_minimum_size = Vector2(620, 56)
-	button.add_theme_stylebox_override("normal", _texture_style(RESPONSE_NORMAL_TEXTURE, Vector4(60, 16, 60, 16), Vector4(34, 8, 34, 8)))
-	button.add_theme_stylebox_override("hover", _texture_style(RESPONSE_HOVER_TEXTURE, Vector4(60, 16, 60, 16), Vector4(34, 8, 34, 8)))
-	button.add_theme_stylebox_override("pressed", _texture_style(RESPONSE_PRESSED_TEXTURE, Vector4(60, 16, 60, 16), Vector4(34, 8, 34, 8)))
-	button.add_theme_stylebox_override("focus", _texture_style(RESPONSE_HOVER_TEXTURE, Vector4(60, 16, 60, 16), Vector4(34, 8, 34, 8)))
-	var font := ThemeColors.menu_font()
-	if font != null:
-		button.add_theme_font_override("font", font)
-	button.add_theme_font_size_override("font_size", 18)
-	button.add_theme_color_override("font_color", ThemeColors.TEXT_LIGHT)
-	button.add_theme_color_override("font_hover_color", ThemeColors.AMBER_PRIMARY)
-	button.add_theme_color_override("font_pressed_color", ThemeColors.AMBER_BRIGHT)
-	button.add_theme_color_override("font_disabled_color", ThemeColors.TEXT_DIM)
 
 
 func _setup_progress_art() -> void:
 	progress.visible = false
-	_progress_art.texture = TextureManager.try_load(PROGRESS_TEXTURE)
+	_progress_art.texture = null
 	_progress_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_progress_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_progress_art.visible = false
@@ -111,3 +85,20 @@ func _texture_style(path: String, texture_margins: Vector4, content_margins: Vec
 	style.set_content_margin(SIDE_RIGHT, content_margins.z)
 	style.set_content_margin(SIDE_BOTTOM, content_margins.w)
 	return style
+
+
+func _clear_margin_container(container: MarginContainer) -> void:
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		container.add_theme_constant_override("margin_" + _side_name(side), 0)
+
+
+func _side_name(side: int) -> String:
+	match side:
+		SIDE_LEFT:
+			return "left"
+		SIDE_TOP:
+			return "top"
+		SIDE_RIGHT:
+			return "right"
+		_:
+			return "bottom"

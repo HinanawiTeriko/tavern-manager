@@ -35,7 +35,11 @@ const ICON_TEXTURES := {
 	"abandoned_mine": "res://assets/textures/daymap/markers/abandoned_mine.png",
 	"market_shop": "res://assets/textures/daymap/markers/market_shop.png",
 	"guild_counter": "res://assets/textures/daymap/markers/guild_counter.png",
+	"clearing_table": "res://assets/textures/daymap/markers/clearing_table.png",
+	"payout_office": "res://assets/textures/daymap/markers/payout_office.png",
+	"blacktooth_ledger": "res://assets/textures/daymap/markers/blacktooth_ledger.png",
 	"mira_stall": "res://assets/textures/daymap/markers/mira_stall.png",
+	"mira_supply_copy": "res://assets/textures/daymap/markers/mira_supply_copy.png",
 	"toby_lodging": "res://assets/textures/daymap/markers/toby_lodging.png",
 	"fixer_den": "res://assets/textures/daymap/markers/fixer_den.png",
 }

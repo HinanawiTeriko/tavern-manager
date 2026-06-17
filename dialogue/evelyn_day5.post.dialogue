@@ -1,0 +1,10 @@
+~ start
+if serve_result == "success"
+    do GameManager.set_customer_expression("smile")
+    伊芙琳: 味道干净，尾味没有拖泥带水。
+    伊芙琳: 好酒和好账一样，入口时不该让人看见沉底的渣。
+    => END
+else
+    do GameManager.set_customer_expression("assessing")
+    伊芙琳: 没关系，错账也常见。只要最后能合上，就没人追问。
+    => END

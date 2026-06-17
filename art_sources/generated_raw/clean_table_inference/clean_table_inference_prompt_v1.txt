@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: raw reference art for a pixel-art Godot game UI screen, later processed through a native pixel pipeline
+Primary request: create a full-screen after-hours tavern inference desk UI reference for a dungeon tavern management game. The screen should show a dark teal stone-and-wood tavern table at night, a central open inference ledger/book for arranging clues, a left-side tray or stack of loose clue papers, and a right-side narrow column for solved conclusion slips. Include warm candlelight accents, rough ink edges, paper grain, worn wood, cold stone, hand-drawn playing-card-like symbols, and historical printmaking-inspired linework.
+Style/medium: painterly game UI concept art with strong pixel-art readability after downsampling; chunky shapes, crisp silhouettes, low-density detail clusters, limited dark teal / amber / parchment palette.
+Composition/framing: 16:9 landscape, orthographic/top-down desk composition, central open book dominant, left clue-paper area, right conclusion area, bottom-right continue-button plaque area. Leave clear clean paper regions for dynamic Godot-rendered Chinese text and draggable blank slots. No modern UI gloss.
+Lighting/mood: closed tavern after dark, quiet detective/inference mood, warm candle glow against cold teal stone.
+Constraints: no readable text, no letters, no numbers, no logos, no watermarks, no completed labels, no fake UI text. Do not include characters. Do not bake interactive clue text or button labels into the image. Keep all areas separable for later cropping into UI assets.
+Avoid: gradients as the main style, soft blurry borders, photorealism, modern app UI, ornate fantasy clutter that would obscure text, any reference to existing games or artists.

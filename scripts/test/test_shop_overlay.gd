@@ -24,6 +24,7 @@ func _ready() -> void:
 	_test_mira_discount_state(overlay)
 	_test_material_quantity_total(overlay)
 	await _test_purchase_updates_inventory_and_gold(overlay)
+	await _test_recipe_copy_describes_shop_as_menu_registration(overlay)
 	await _test_owned_recipe_state(overlay)
 	await _test_close_signal(overlay)
 	overlay.queue_free()
@@ -390,6 +391,22 @@ func _test_purchase_updates_inventory_and_gold(overlay) -> void:
 	_ok(gm.inventory_sys.get_count("ale") == before_count + 2, "buying material adds inventory")
 	_ok(gm.economy.gold == 26, "buying two ale spends 4 gold")
 	_ok(overlay.get_quantity() == 0, "material quantity resets after successful purchase")
+
+
+func _test_recipe_copy_describes_shop_as_menu_registration(overlay) -> void:
+	overlay.select_category("recipes")
+	await get_tree().process_frame
+	overlay.select_item("spiced_wine")
+	await get_tree().process_frame
+	var desc := overlay.get_node_or_null("DetailPanel/Description") as Label
+	var uses := overlay.get_node_or_null("DetailPanel/Uses") as Label
+	if desc != null:
+		_ok(not desc.text.contains("解锁后可制作"), "recipe shop description no longer implies purchase gates crafting")
+		_ok(desc.text.contains("公开菜谱"), "recipe shop description frames purchase as buying a public recipe")
+	if uses != null:
+		_ok(not uses.text.contains("解锁后可制作"), "recipe shop usage no longer says purchase enables crafting")
+		_ok(uses.text.contains("配方书") and uses.text.contains("点单池"),
+			"recipe shop usage explains recipe book reveal and regular order pool")
 
 
 func _test_owned_recipe_state(overlay) -> void:

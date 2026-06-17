@@ -565,9 +565,16 @@ func _trigger_seasoning_tutorial() -> void:
 		return
 
 	var rects = {
-		"SeasoningZone": [821, 556, 114, 75],
+		"SeasoningZone": _control_screen_rect(_seasoning_zone),
 	}
 	tm.start_tutorial("seasoning", rects)
+
+
+func _control_screen_rect(control: Control) -> Array:
+	if control == null:
+		return [0.0, 0.0, 0.0, 0.0]
+	var rect := control.get_global_rect()
+	return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 
 
 func _hit_test(c: Control, p: Vector2) -> bool:

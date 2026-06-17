@@ -1,0 +1,41 @@
+~ start
+if evelyn_ending == "public_account"
+    if evelyn_pressure == "living_witnesses"
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把三条线抄到同一页上了。
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 还有活人会替纸上的名字说话。账本最怕的从来不是墨，是人还没闭嘴。
+        => END
+    elif evelyn_pressure == "paper_public"
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把三条线抄到同一页上了。
+        do GameManager.set_customer_expression("cold")
+        伊芙琳: 可惜来作证的大多只剩纸。纸证也够重，只是压不回已经走远的人。
+        => END
+    else
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把三条线抄到同一页上了。
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 公开账本会很难看。难看，但不能再被我封回去。
+        => END
+elif evelyn_ending == "amended_account"
+    if evelyn_pressure == "damaged_amendment"
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 有人还活着，账页就不能完全按旧办法合上。你给他们争到一点喘息。
+        => END
+    elif evelyn_pressure == "cold_amendment"
+        do GameManager.set_customer_expression("cold")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 但别把冷账看成救赎。能改的是栏位，不是已经空掉的座位。
+        => END
+    else
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 你救下的是几个人，不是整本账。别把这点看轻，也别看重。
+        => END
+else
+    do GameManager.set_customer_expression("cold")
+    伊芙琳: 证据不够，账就照旧封存。
+    伊芙琳: 不是所有名字都能被救出来。有些名字只适合留在纸背。
+    => END

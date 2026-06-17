@@ -69,6 +69,20 @@ func _test_anchor_model(sys: DayMapSystem, by_id: Dictionary) -> void:
 	_ok(String(board.get("anchor", "")) == "market_crossroad_01", "mercenary board references anchor")
 	_ok(_pos(board) == _pos(by_anchor.get("market_crossroad_01", {})), "location pos resolves from its anchor")
 
+	sys.start_day(17)
+	var blacktooth := _find(sys, "blacktooth_ledger")
+	var mira_supply := _find(sys, "mira_supply_copy")
+	var clearing := _find(sys, "clearing_table")
+	var payout := _find(sys, "payout_office")
+	var mira_stall := _find(sys, "mira_stall")
+	_ok(not blacktooth.is_empty(), "finds blacktooth_ledger")
+	_ok(not mira_supply.is_empty(), "finds mira_supply_copy")
+	_ok(not clearing.is_empty(), "finds clearing_table")
+	_ok(not payout.is_empty(), "finds payout_office")
+	_ok(_pos(blacktooth) != _pos(board), "blacktooth ledger has its own map coordinate")
+	_ok(_pos(mira_supply) != _pos(mira_stall), "Mira supply copy has its own map coordinate")
+	_ok(_pos(payout) != _pos(clearing), "payout office and clearing table are separate map points")
+
 
 func _test_shop_location(sys: DayMapSystem) -> void:
 	var shop := _find(sys, "market_shop")

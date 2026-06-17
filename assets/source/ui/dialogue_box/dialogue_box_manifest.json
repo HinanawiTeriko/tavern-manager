@@ -1,80 +1,22 @@
 {
-  "reference": "assets/source/ui/dialogue_box/reference/dialogue_box_sheet_v1_reference.png",
+  "reference": "assets/source/ui/dialogue_box/reference/dialogue_box_sheet_v4_reference.png",
   "scale": 4,
   "style_profile": "dark_teal_tavern_dialogue_v1",
   "background_rgb": [255, 0, 255],
-  "background_tolerance": 58,
+  "background_tolerance": 110,
   "items": [
     {
       "id": "dialogue_panel",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [62, 74, 930, 430],
+      "source": "art_sources/generated_raw/dialogue_box/dialogue_panel_source_v9_minimal.png",
+      "source_rect": [0, 0, 1819, 865],
       "native": "assets/source/ui/dialogue_box/dialogue_panel_native.png",
       "runtime": "assets/textures/ui/dialogue_box/dialogue_panel.png",
       "native_size": [300, 54],
       "runtime_size": [1200, 216],
       "safe_area": [16, 8, 284, 46],
-      "nine_slice_margins": [56, 26, 56, 24],
+      "nine_slice_margins": [24, 16, 24, 13],
+      "palette_colors": 48,
       "intended_godot_use": "Main story dialogue balloon panel StyleBoxTexture"
-    },
-    {
-      "id": "dialogue_nameplate",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [1040, 238, 570, 160],
-      "native": "assets/source/ui/dialogue_box/dialogue_nameplate_native.png",
-      "runtime": "assets/textures/ui/dialogue_box/dialogue_nameplate.png",
-      "native_size": [136, 18],
-      "runtime_size": [544, 72],
-      "safe_area": [8, 3, 128, 15],
-      "nine_slice_margins": [28, 12, 28, 12],
-      "intended_godot_use": "Speaker name RichTextLabel background StyleBoxTexture"
-    },
-    {
-      "id": "dialogue_response_normal",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [130, 642, 260, 116],
-      "native": "assets/source/ui/dialogue_box/dialogue_response_normal_native.png",
-      "runtime": "assets/textures/ui/dialogue_box/dialogue_response_normal.png",
-      "native_size": [172, 18],
-      "runtime_size": [688, 72],
-      "safe_area": [10, 3, 162, 15],
-      "nine_slice_margins": [28, 12, 28, 12],
-      "intended_godot_use": "Dialogue response button normal state"
-    },
-    {
-      "id": "dialogue_response_hover",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [130, 642, 260, 116],
-      "native": "assets/source/ui/dialogue_box/dialogue_response_hover_native.png",
-      "runtime": "assets/textures/ui/dialogue_box/dialogue_response_hover.png",
-      "native_size": [172, 18],
-      "runtime_size": [688, 72],
-      "safe_area": [10, 3, 162, 15],
-      "nine_slice_margins": [28, 12, 28, 12],
-      "intended_godot_use": "Dialogue response button hover state"
-    },
-    {
-      "id": "dialogue_response_pressed",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [130, 642, 260, 116],
-      "native": "assets/source/ui/dialogue_box/dialogue_response_pressed_native.png",
-      "runtime": "assets/textures/ui/dialogue_box/dialogue_response_pressed.png",
-      "native_size": [172, 18],
-      "runtime_size": [688, 72],
-      "safe_area": [10, 3, 162, 15],
-      "nine_slice_margins": [28, 12, 28, 12],
-      "intended_godot_use": "Dialogue response button pressed state"
-    },
-    {
-      "id": "dialogue_progress_arrow",
-      "source": "art_sources/generated_raw/dialogue_box/dialogue_box_sheet_v1.png",
-      "source_rect": [1206, 630, 220, 160],
-      "native": "assets/source/ui/dialogue_box/dialogue_progress_arrow_native.png",
-      "runtime": "assets/textures/ui/dialogue_box/dialogue_progress_arrow.png",
-      "native_size": [16, 14],
-      "runtime_size": [64, 56],
-      "safe_area": [2, 1, 14, 13],
-      "intended_godot_use": "Dialogue continue indicator TextureRect"
     }
   ]
 }

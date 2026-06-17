@@ -1,0 +1,27 @@
+Use case: stylized-concept
+Asset type: raw source for one important NPC portrait, later converted through the official native pixel character pipeline.
+Style anchors: match the visible project source references for Ryan v6, Mira v3, Vera expression sheet, Vera approved reference, and Belta style reference. Use Vera/Belta as the dominant texture target.
+Primary request: Create one single original portrait for Mercenary A, an adult mercenary messenger bringing bad news, in the same hard pixel-game source style as those references.
+
+Hard style target:
+- crisp pixel-game character portrait source, not a high-resolution painting
+- visible stair-stepped silhouette edges like Vera/Belta
+- thick dark ink-pixel outlines and large readable contour shapes
+- posterized flat color blocks with 2-4 shadow bands per material
+- chunky pixel clusters placed only on edges, armor seams, cloak folds, and face accents
+- clean readable tired face at 128x160 native size
+- designed for 128x160 native and 512x640 runtime after exact nearest-neighbor export
+- warm muted dungeon-tavern palette: black-brown cloak, dark iron, leather brown, parchment skin tones, dull amber accents
+
+Character concept:
+Mercenary A is a compact, grim, functional messenger rather than a hero. Adult, tired face with weathered stubble, battered dark iron half-helmet or hood, black-brown travel cloak forming one large readable shape, simple worn leather armor blocks, heavy gloves, old military token or sealed message tube as a small non-text prop. He should feel grounded and fatigued, clearly distinct from Ryan. The portrait must remain readable on a dark tavern background: keep the face, gloves, belt, and leather chest shapes at medium value, with dull amber edge highlights. Dark mood is good; a mostly black silhouette is not.
+
+Composition:
+True tavern half-body bust, head to waist/top of hips, centered, generous padding, front three-quarter stance, head slightly lowered, one hand near the cloak clasp or message tube. Keep the silhouette broad but simple.
+
+Hard avoid:
+No painterly micro-detail, no stippling, no crosshatching, no dirty noise texture, no chainmail texture, no dense chainmail noise, no tiny armor scratches, no mostly black body, no soft airbrush, no glossy rendering, no realistic fabric grain, no high-resolution illustration speckle, no loose sketch lines.
+No readable text, no loose paper, no scrolls, no letters, no labels, no watermark, no blue scarf, not Ryan.
+
+Background:
+Perfectly flat solid #00ff00 chroma-key background only, with no shadow, gradient, texture, floor plane, or lighting variation.

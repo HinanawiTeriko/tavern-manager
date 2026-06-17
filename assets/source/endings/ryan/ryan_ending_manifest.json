@@ -12,7 +12,7 @@
   "scale": 4,
   "routes": {
     "uninformed_fallen": {
-      "reference": "assets/source/endings/ryan/reference/ryan_uninformed_fallen_reference_v2.png",
+      "reference": "assets/source/endings/ryan/reference/ryan_uninformed_fallen_reference_v3.png",
       "native": "assets/source/endings/ryan/ryan_uninformed_fallen_native.png",
       "runtime": "assets/textures/endings/ryan/ryan_uninformed_fallen.png",
       "safe_area": [
@@ -24,7 +24,7 @@
       "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
     },
     "drugged_survivor": {
-      "reference": "assets/source/endings/ryan/reference/ryan_drugged_survivor_reference_v2.png",
+      "reference": "assets/source/endings/ryan/reference/ryan_drugged_survivor_reference_v3.png",
       "native": "assets/source/endings/ryan/ryan_drugged_survivor_native.png",
       "runtime": "assets/textures/endings/ryan/ryan_drugged_survivor.png",
       "safe_area": [
@@ -36,7 +36,7 @@
       "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
     },
     "informed_fallen": {
-      "reference": "assets/source/endings/ryan/reference/ryan_informed_fallen_reference_v2.png",
+      "reference": "assets/source/endings/ryan/reference/ryan_informed_fallen_reference_v3.png",
       "native": "assets/source/endings/ryan/ryan_informed_fallen_native.png",
       "runtime": "assets/textures/endings/ryan/ryan_informed_fallen.png",
       "safe_area": [
@@ -48,7 +48,7 @@
       "intended_godot_use": "Future Ryan fate cinematic layer before Day 3 ledger settlement"
     },
     "alternative_survivor": {
-      "reference": "assets/source/endings/ryan/reference/ryan_alternative_survivor_reference_v2.png",
+      "reference": "assets/source/endings/ryan/reference/ryan_alternative_survivor_reference_v3.png",
       "native": "assets/source/endings/ryan/ryan_alternative_survivor_native.png",
       "runtime": "assets/textures/endings/ryan/ryan_alternative_survivor.png",
       "safe_area": [

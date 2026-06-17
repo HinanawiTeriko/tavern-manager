@@ -53,6 +53,32 @@
         1
       ],
       "intended_use": "source sheet for good-quality drink item icon variants using the tavern item icon pipeline"
+    },
+    "failed_products_sheet_v1": {
+      "source_file": "art_sources/generated_raw/tavern_missing_item_icons/failed_products_sheet_v1.png",
+      "production_reference": "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png",
+      "size": [
+        1774,
+        887
+      ],
+      "grid": [
+        2,
+        1
+      ],
+      "intended_use": "source sheet for failed brew and failed stew item icons using the tavern item icon pipeline"
+    },
+    "rare_upgrade_items_sheet_v1": {
+      "source_file": "art_sources/generated_raw/rare_gathering/rare_upgrade_items_sheet_v1.png",
+      "production_reference": "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png",
+      "size": [
+        1774,
+        887
+      ],
+      "grid": [
+        4,
+        1
+      ],
+      "intended_use": "source sheet for upgraded dish item icons using the tavern item icon pipeline"
     }
   },
   "icons": {
@@ -606,6 +632,106 @@
       ],
       "intended_godot_use": "herb broth product icon for recipe UI and draggable DeskItem art"
     },
+    "cave_mushroom_stew": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png",
+      "source_rect": [
+        38,
+        320,
+        474,
+        674
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/cave_mushroom_stew_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/cave_mushroom_stew_native.png",
+      "runtime": "assets/textures/tavern/items/cave_mushroom_stew.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        4,
+        23,
+        21
+      ],
+      "intended_godot_use": "upgraded mushroom stew product icon for recipe UI and draggable DeskItem art"
+    },
+    "rock_lizard_steak": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png",
+      "source_rect": [
+        520,
+        338,
+        940,
+        692
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/rock_lizard_steak_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/rock_lizard_steak_native.png",
+      "runtime": "assets/textures/tavern/items/rock_lizard_steak.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        4,
+        23,
+        21
+      ],
+      "intended_godot_use": "upgraded lizard steak product icon for recipe UI and draggable DeskItem art"
+    },
+    "old_road_wine": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png",
+      "source_rect": [
+        1076,
+        120,
+        1300,
+        704
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/old_road_wine_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/old_road_wine_native.png",
+      "runtime": "assets/textures/tavern/items/old_road_wine.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        6,
+        1,
+        18,
+        23
+      ],
+      "intended_godot_use": "upgraded old road wine product icon for recipe UI and draggable DeskItem art"
+    },
+    "miner_dark_ale": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/rare_upgrade_items_sheet_v1.png",
+      "source_rect": [
+        1350,
+        286,
+        1718,
+        706
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/miner_dark_ale_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/miner_dark_ale_native.png",
+      "runtime": "assets/textures/tavern/items/miner_dark_ale.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        2,
+        3,
+        22,
+        22
+      ],
+      "intended_godot_use": "upgraded miner dark ale product icon for recipe UI and draggable DeskItem art"
+    },
     "bloodied_contract": {
       "source_sheet": "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png",
       "source_rect": [
@@ -655,6 +781,56 @@
         22
       ],
       "intended_godot_use": "alternative readable story item icon for inventory rows and draggable DeskItem art"
+    },
+    "failed_brew": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png",
+      "source_rect": [
+        0,
+        0,
+        887,
+        887
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/failed_brew_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/failed_brew_native.png",
+      "runtime": "assets/textures/tavern/items/failed_brew.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "failed muddy brew product icon for recipe UI and draggable DeskItem art"
+    },
+    "failed_stew": {
+      "source_sheet": "assets/source/tavern/missing_item_icons/reference/failed_products_sheet_v1.png",
+      "source_rect": [
+        887,
+        0,
+        1774,
+        887
+      ],
+      "reference": "assets/source/tavern/missing_item_icons/reference/failed_stew_reference.png",
+      "native": "assets/source/tavern/missing_item_icons/failed_stew_native.png",
+      "runtime": "assets/textures/tavern/items/failed_stew.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "burnt failed stew product icon for recipe UI and draggable DeskItem art"
     }
   },
   "quality_icons": {

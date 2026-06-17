@@ -4,6 +4,7 @@ extends RefCounted
 signal changed(gold: int, reputation: int, level: int)
 
 var gold: int = 0
+var max_gold_held: int = 0
 var reputation: int = 0
 var tavern_level: int = 1
 var current_day: int = 1
@@ -24,6 +25,7 @@ func get_level_rep_threshold() -> int:
 func add_gold(amount: int) -> void:
 	gold += amount
 	gold_today += amount
+	_update_max_gold_held()
 	changed.emit(gold, reputation, tavern_level)
 
 func spend_gold(amount: int) -> bool:
@@ -32,6 +34,11 @@ func spend_gold(amount: int) -> bool:
 	gold -= amount
 	changed.emit(gold, reputation, tavern_level)
 	return true
+
+
+func _update_max_gold_held() -> void:
+	if gold > max_gold_held:
+		max_gold_held = gold
 
 func add_reputation(amount: int) -> void:
 	reputation += amount

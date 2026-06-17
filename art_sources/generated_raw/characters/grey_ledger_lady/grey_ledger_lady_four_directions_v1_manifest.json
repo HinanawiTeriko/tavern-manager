@@ -1,0 +1,53 @@
+{
+  "id": "grey_ledger_lady_four_directions_v1",
+  "asset_type": "raw character concept references",
+  "status": "concept only; not wired into runtime character data",
+  "contact_sheet": "docs/art/characters/grey_ledger_lady_four_directions_v1.png",
+  "intended_use": "Pick a bold visual direction for the Grey Ledger Lady antagonist before creating a production portrait pipeline.",
+  "shared_constraints": [
+    "single adult female bust reference",
+    "flat solid #00ff00 chroma-key background",
+    "normal natural shoulder width",
+    "same tavern NPC bust camera distance as Ryan, Toby, and Mira",
+    "no short silver hair, no glasses, no blue merchant coat, no Mira-like silhouette",
+    "concept sources only; not final runtime pixel assets"
+  ],
+  "directions": [
+    {
+      "id": "direction_a_horned_magistrate",
+      "label": "A horned magistrate",
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_direction_a_horned_magistrate_source_v1.png",
+      "source_size": [1122, 1402],
+      "safe_area": [0, 0, 1122, 1402],
+      "generated_source": "C:/Users/zzc45/.codex/generated_images/019ec94e-137c-7f72-b192-078b801b75ce/ig_0dc65d45529610c5016a2fcf9d6cd48190a33e91eaa5aee26d.png",
+      "concept": "red-haired horned contract magistrate with legal debt-collector authority"
+    },
+    {
+      "id": "direction_b_porcelain_auditor",
+      "label": "B porcelain auditor",
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_direction_b_porcelain_auditor_source_v1.png",
+      "source_size": [1122, 1402],
+      "safe_area": [0, 0, 1122, 1402],
+      "generated_source": "C:/Users/zzc45/.codex/generated_images/019ec94e-137c-7f72-b192-078b801b75ce/ig_0dc65d45529610c5016a2fcff8051c8190989fe0342288c355.png",
+      "concept": "porcelain homunculus audit doll built to record debts and contracts"
+    },
+    {
+      "id": "direction_c_subterranean_elf",
+      "label": "C subterranean elf",
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_direction_c_subterranean_elf_source_v1.png",
+      "source_size": [1121, 1403],
+      "safe_area": [0, 0, 1121, 1403],
+      "generated_source": "C:/Users/zzc45/.codex/generated_images/019ec94e-137c-7f72-b192-078b801b75ce/ig_0dc65d45529610c5016a2fd04da0c8819093c4b8b4d459156e.png",
+      "concept": "obsidian-skinned subterranean elf debt patron"
+    },
+    {
+      "id": "direction_d_ash_fae_inquisitor",
+      "label": "D ash-fae inquisitor",
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_direction_d_ash_fae_inquisitor_source_v1.png",
+      "source_size": [1122, 1402],
+      "safe_area": [0, 0, 1122, 1402],
+      "generated_source": "C:/Users/zzc45/.codex/generated_images/019ec94e-137c-7f72-b192-078b801b75ce/ig_0dc65d45529610c5016a2fd0b1d4188190a36ebdc6a7019eae.png",
+      "concept": "blindfolded ash-fae tax inquisitor who certifies fate-debts"
+    }
+  ]
+}

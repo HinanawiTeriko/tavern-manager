@@ -174,7 +174,7 @@ def apply_item_grade(image: Image.Image, item_id: str) -> Image.Image:
             red = int(red * 0.58 + 9)
             green = int(green * 0.64 + 13)
             blue = int(blue * 0.70 + 19)
-            if (item_id in {"oil_lamp", "hard_bread"} or item_id.startswith("contract_fragment_")) and red >= green:
+            if (item_id in {"oil_lamp", "hard_bread", "contract_complete"} or item_id.startswith("contract_fragment_")) and red >= green:
                 red += 8
                 green += 3
                 blue = int(blue * 0.90)
@@ -321,7 +321,7 @@ def make_contact_sheet(
     scene_preview: Image.Image,
 ) -> None:
     CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new("RGBA", (1000, 760), (16, 14, 12, 255))
+    sheet = Image.new("RGBA", (1000, 880), (16, 14, 12, 255))
     draw = ImageDraw.Draw(sheet)
     draw.text((18, 14), "Toby lodging investigation AI art pipeline", fill=(226, 210, 178, 255))
     draw.text((18, 42), "background source", fill=(226, 210, 178, 255))
@@ -346,10 +346,10 @@ def make_contact_sheet(
         preview = ImageOps.contain(preview, (220, 72), Image.Resampling.NEAREST)
         sheet.alpha_composite(preview, (x, y + 26))
 
-    draw.text((18, 524), "leave button states", fill=(226, 210, 178, 255))
+    draw.text((18, 648), "leave button states", fill=(226, 210, 178, 255))
     for index, (state, _native, runtime) in enumerate(button_outputs):
         x = 18 + index * 316
-        y = 556
+        y = 680
         draw.text((x, y), state["state"], fill=(226, 210, 178, 255))
         preview = ImageOps.contain(runtime, (280, 100), Image.Resampling.NEAREST)
         sheet.alpha_composite(preview, (x, y + 28))
