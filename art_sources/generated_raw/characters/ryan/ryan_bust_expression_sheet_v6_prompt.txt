@@ -1,0 +1,19 @@
+Create one approved Mira/Vera/Belta same artist family pixel-art character expression sheet for Ryan.
+
+Subject: a subtle tiefling contract runner for a dungeon tavern management game. Young adult, anxious but trying to be brave, ash-lilac messy undercut with a short side braid, small low red-brown horn nubs, mostly human face, ears partly hidden by hair. He wears a simple patched tan shirt, charcoal-brown jerkin, one small oath tag, one tiny wax-seal pouch, plain belt, and worn travel trousers. No tail visible, no large cape, no sword hilt clutter, no extra red cords, no dense accessory noise.
+
+Style target: match the approved Mira/Vera/Belta tavern customer portrait family after downscaling to 128x160 native and exporting to 512x640 runtime. Thick dark outlines, readable blocky silhouettes, limited warm dungeon palette, chunky pixel clusters, low-density clothing detail, no glossy illustration texture, no soft painterly blending, no high-resolution portrait rendering.
+
+Critical proportion target: show the figure from head to belt and upper hips, not a close-up. The head including horns should be restrained and proportional to the visible body, with a longer torso and small hands. Leave green space around the figure in every cell so the exporter can normalize scale consistently.
+
+Sheet layout: 4 columns x 2 rows, eight expressions, flat solid #00ff00 background, no readable text, no labels, no logos, no numbers.
+
+Expression order:
+1. neutral - polite uncertain tavern entry
+2. confident - correct order served, trying to act capable
+3. hesitant - warned about danger and unsure what to believe
+4. alarmed - wrong item or weird item, startled and defensive
+5. resolved - chooses the alternative contract route
+6. relieved - survives the Ryan ending, softened expression
+7. wary - pending alternative route, suspicious and guarded
+8. broken - drugged or doomed route, head lowered and defeated

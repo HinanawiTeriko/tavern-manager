@@ -6,6 +6,23 @@ extends Node
 var _checks := 0
 var _failures := 0
 
+class RewardFeedbackProbe:
+	extends Node
+	var daily_menu := {"ale_beer": {"price": 10}}
+	var reward_calls: Array = []
+
+	func show_order_reward_feedback(earned_gold: int, earned_rep: int, previous_gold: int, previous_rep: int, previous_max_gold: int = -1, new_max_gold: int = -1) -> void:
+		reward_calls.append([earned_gold, earned_rep, previous_gold, previous_rep, previous_max_gold, new_max_gold])
+
+	func update_top_bar(_gold: int, _rep: int, _day: int, _max_day: int, _max_gold_held: int = -1) -> void:
+		pass
+
+	func customer_say(_text: String) -> void:
+		pass
+
+	func show_customer_reaction(_outcome: String, _npc_id: String = "") -> void:
+		pass
+
 
 func _ready() -> void:
 	_test_shop_abilities()
@@ -13,6 +30,8 @@ func _ready() -> void:
 	_test_find_slam_recipe()
 	_test_quality_payoff()
 	_test_buy_and_serve()
+	_test_order_reward_feedback_routing()
+	_test_upgrade_product_satisfies_base_order()
 	_test_save_roundtrip()
 	_finish()
 
@@ -127,6 +146,90 @@ func _test_buy_and_serve() -> void:
 
 	# 未知能力 key 被拒
 	_ok(not gm.buy_ability("nope"), "未知能力购买被拒")
+
+
+func _test_order_reward_feedback_routing() -> void:
+	var gm = _gm()
+	var probe := RewardFeedbackProbe.new()
+	gm._tavern_view = probe
+	gm._guest_lingering = false
+	gm.economy.gold = 20
+	gm.economy.max_gold_held = 20
+	gm.economy.reputation = 7
+	gm.economy.gold_today = 0
+	var guest := GuestData.new()
+	guest.order_key = "ale_beer"
+	guest.has_dialogue = false
+	guest.npc_id = "regular_reward_test"
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	gm.request_serve("ale_beer", {"quality": "good"}, "")
+
+	_ok(probe.reward_calls.size() == 1, "successful serve routes reward feedback to TavernView")
+	if probe.reward_calls.size() == 1:
+		var call: Array = probe.reward_calls[0]
+		_ok(call[0] == 15, "reward feedback receives earned gold from quality pricing")
+		_ok(call[1] == 3, "reward feedback receives earned reputation from quality pricing")
+		_ok(call[2] == 20, "reward feedback receives previous gold before economy mutation")
+		_ok(call[3] == 7, "reward feedback receives previous reputation before economy mutation")
+		_ok(call[4] == 20, "reward feedback receives previous max held gold before economy mutation")
+		_ok(call[5] == 35, "reward feedback receives new max held gold after economy mutation")
+	_ok(gm.economy.gold == 35, "serve still mutates economy gold")
+	_ok(gm.economy.max_gold_held == 35, "serve updates max held gold")
+	_ok(gm.economy.reputation == 10, "serve still mutates economy reputation")
+
+	gm.guests.has_guest = false
+	gm.guests.current_guest = null
+	gm._guest_lingering = false
+	gm._tavern_view = null
+	probe.free()
+
+
+func _test_upgrade_product_satisfies_base_order() -> void:
+	var gm = _gm()
+	var probe := RewardFeedbackProbe.new()
+	probe.daily_menu = {"wine": {"price": 5}}
+	gm._tavern_view = probe
+	gm._guest_lingering = false
+	gm.economy.gold = 0
+	gm.economy.max_gold_held = 0
+	gm.economy.reputation = 0
+	gm.economy.gold_today = 0
+
+	_ok(gm.craft.has_method("can_satisfy_order"), "CraftSystem exposes order compatibility checks")
+	if gm.craft.has_method("can_satisfy_order"):
+		_ok(gm.craft.can_satisfy_order("old_road_wine", "wine"), "old_road_wine satisfies a wine order")
+		_ok(gm.craft.can_satisfy_order("rock_lizard_steak", "meat_cooked"), "rock_lizard_steak satisfies a cooked meat order")
+		_ok(gm.craft.can_satisfy_order("miner_dark_ale", "ale_beer"), "miner_dark_ale satisfies an ale beer order")
+		_ok(gm.craft.can_satisfy_order("cave_mushroom_stew", "meat_stew"), "cave_mushroom_stew satisfies a meat stew order")
+		_ok(not gm.craft.can_satisfy_order("wine", "old_road_wine"), "base product does not satisfy an upgraded order")
+		_ok(not gm.craft.can_satisfy_order("old_road_wine", "ale_beer"), "upgrade product does not satisfy unrelated orders")
+
+	var success_before: int = gm.guests.orders_success
+	var failed_before: int = gm.guests.orders_failed
+	var served_before: int = gm.guests.guests_served_today
+	var guest := GuestData.new()
+	guest.order_key = "wine"
+	guest.has_dialogue = false
+	guest.npc_id = "upgrade_order_test"
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	gm.request_serve("old_road_wine", {"quality": "normal"}, "")
+
+	_ok(gm.guests.orders_success == success_before + 1, "serving an upgrade to its base order records success")
+	_ok(gm.guests.orders_failed == failed_before, "serving an upgrade to its base order does not record failure")
+	_ok(gm.guests.guests_served_today == served_before + 1, "serving an upgrade still counts the guest as served")
+	_ok(gm.economy.gold == 8, "accepted upgrade pays the upgraded product price")
+	_ok(gm.economy.reputation == 2, "accepted upgrade awards normal reputation")
+	_ok(probe.reward_calls.size() == 1, "accepted upgrade routes reward feedback")
+
+	gm.guests.has_guest = false
+	gm.guests.current_guest = null
+	gm._guest_lingering = false
+	gm._tavern_view = null
+	probe.free()
 
 
 func _test_save_roundtrip() -> void:

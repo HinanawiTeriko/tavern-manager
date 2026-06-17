@@ -1,0 +1,10 @@
+Use case: game asset sprite source
+Asset type: pixel-art investigation prop source for a Godot tavern-management game
+Primary request: blacktooth transfer ledger case card, single isolated prop
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background, no shadows, no floor plane, no gradient, no texture in the background
+Subject: one dark slate ledger card or transfer-batch case card for a dangerous black-tooth mine route, rectangular battered document board with jagged worn corners, cold grey-blue paper or slate surface, small abstract route marks and folded paper strips, visual hints of mine rails and a black tooth-shaped seal mark; no readable text, no numbers, no letters, no labels
+Style/medium: crisp low-resolution pixel art source, chunky silhouettes, limited dark teal dungeon palette with muted amber edge wear, rough ink-like outlines, paper grain, hand-made medieval accounting prop
+Composition/framing: centered single object, generous padding, three-quarter top-down readable as a tabletop draggable card, horizontal rectangle matching 224x144 runtime proportions
+Lighting/mood: subdued candlelit edge highlights, cold stone shadows, practical game prop readability
+Constraints: flat solid #ff00ff background only; object fully separated from background; no readable text, no logos, no watermark; do not include any stamp press machine; do not copy existing game styles or living artists
+Avoid: readable writing, UI labels, duplicate objects, full scene background, soft antialias blur, photorealism

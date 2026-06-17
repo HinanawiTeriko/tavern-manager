@@ -29,6 +29,8 @@ var _next_spawn: float = 2.0
 var guests_served_today: int = 0
 var orders_success: int = 0
 var orders_failed: int = 0
+var guest_entries_today: Array[Dictionary] = []
+var _current_guest_entry_index: int = -1
 
 # 客流系统
 var _daily_total_guests: int = 0      # 当日总客人数（含已生成和即将生成）
@@ -312,6 +314,7 @@ func _spawn_regular_customer(entry: Dictionary, menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
@@ -372,6 +375,7 @@ func _spawn_new_customer(menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
@@ -412,6 +416,7 @@ func _spawn_return_customer(rec: CustomerRecord, menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
@@ -441,6 +446,7 @@ func spawn_important(npc_id: String, order_key: String) -> void:
 	current_guest = g
 	has_guest = true
 	_daily_important_spawned = true
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 # ── 客人离场 ──
@@ -460,6 +466,8 @@ func clear_guest() -> void:
 		_emit_normal_orders_completed()
 	if _daily_cleared >= expected_total:
 		_emit_all_guests_served()
+	_mark_current_guest_left_if_pending()
+	_current_guest_entry_index = -1
 
 func _emit_all_guests_served() -> void:
 	if _all_completion_emitted:
@@ -475,19 +483,79 @@ func _emit_normal_orders_completed() -> void:
 
 # ── 统计 ──
 
+func get_guest_entries_today() -> Array[Dictionary]:
+	return guest_entries_today.duplicate(true)
+
+
+func update_current_guest_entry_identity(display_name: String, portrait_id: String) -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	if display_name != "":
+		entry["display_name"] = display_name
+	if portrait_id != "":
+		entry["portrait_id"] = portrait_id
+	guest_entries_today[_current_guest_entry_index] = entry
+
+
+func _record_guest_arrival(guest: GuestData) -> void:
+	if guest == null:
+		_current_guest_entry_index = -1
+		return
+	var npc_id := String(guest.npc_id)
+	var entry := {
+		"npc_id": npc_id,
+		"display_name": String(guest.guest_name),
+		"result": "pending",
+		"gold_delta": 0,
+		"rep_delta": 0,
+		"served_delta": 0,
+		"success_delta": 0,
+		"failed_delta": 0,
+	}
+	guest_entries_today.append(entry)
+	_current_guest_entry_index = guest_entries_today.size() - 1
+
+
+func _resolve_current_guest_entry(result: String, gold_delta: int, rep_delta: int, served_delta: int, success_delta: int, failed_delta: int) -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	entry["result"] = result
+	entry["gold_delta"] = gold_delta
+	entry["rep_delta"] = rep_delta
+	entry["served_delta"] = served_delta
+	entry["success_delta"] = success_delta
+	entry["failed_delta"] = failed_delta
+	guest_entries_today[_current_guest_entry_index] = entry
+
+
+func _mark_current_guest_left_if_pending() -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	if String(entry.get("result", "")) == "pending":
+		entry["result"] = "left"
+		guest_entries_today[_current_guest_entry_index] = entry
+
+
 func record_guest_served() -> void:
 	guests_served_today += 1
 
-func record_order_success() -> void:
+func record_order_success(gold_delta: int = 0, rep_delta: int = 0) -> void:
 	orders_success += 1
+	_resolve_current_guest_entry("success", gold_delta, rep_delta, 1, 1, 0)
 
-func record_order_failed() -> void:
+func record_order_failed(gold_delta: int = 0, rep_delta: int = 0, result: String = "failed") -> void:
 	orders_failed += 1
+	_resolve_current_guest_entry(result, gold_delta, rep_delta, 0, 0, 1)
 
 func reset_daily() -> void:
 	guests_served_today = 0
 	orders_success = 0
 	orders_failed = 0
+	guest_entries_today.clear()
+	_current_guest_entry_index = -1
 	_daily_total_guests = 0
 	_daily_spawned = 0
 	_normal_order_limit = 0

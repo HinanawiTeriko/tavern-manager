@@ -1,0 +1,204 @@
+{
+  "clues": {
+    "toby_name": {
+      "label": "托比",
+      "source": "告示板",
+      "text": "黑齿矿脉护送委托的落款，是一个生涩的名字：托比。"
+    },
+    "blacktooth_escort": {
+      "label": "黑齿矿脉护送",
+      "source": "告示板",
+      "text": "委托地点写着黑齿矿脉，任务是护送。"
+    },
+    "high_pay_trap": {
+      "label": "高得像陷阱的报酬",
+      "source": "告示板",
+      "text": "报酬高得不正常，像是拿钱遮住别的东西。"
+    },
+    "back_alley_boy": {
+      "label": "后巷少年",
+      "source": "夜晚客人",
+      "text": "那个来买草药清汤的少年，身上有后巷临时住处的冷潮味。"
+    },
+    "one_person_walk": {
+      "label": "一个人走才轻快",
+      "source": "夜晚客人",
+      "text": "他反复说，一个人走才轻快。"
+    },
+    "mira_traveling_mentor": {
+      "label": "米拉带过一个孩子跑货",
+      "source": "酒馆流言",
+      "text": "以前有个女商人，总带着个半大孩子跑货。"
+    },
+    "child_learned_saying": {
+      "label": "学她说一个人走才轻快",
+      "source": "酒馆流言",
+      "text": "那孩子学她说话，老念叨一个人走才轻快。"
+    },
+    "mira_avoids_old_road": {
+      "label": "米拉避开那条旧路",
+      "source": "米拉货摊",
+      "text": "米拉听见旧路和孩子时，立刻把话题合上。"
+    },
+    "grey_ryan_case_number": {
+      "label": "莱恩案卷编号",
+      "source": "赔付登记处",
+      "text": "莱恩的北矿道事故案卷被抄进 G-17 批次。"
+    },
+    "grey_old_payout_register": {
+      "label": "旧赔付登记",
+      "source": "赔付登记处",
+      "text": "登记册里几份委托先写赔付，再写结案。"
+    },
+    "grey_missing_page": {
+      "label": "失踪名单缺页",
+      "source": "赔付登记处",
+      "text": "失踪名单缺页处压着灰色蜡印和多个页码。"
+    },
+    "grey_blacktooth_batch": {
+      "label": "黑齿批次号",
+      "source": "黑齿转运账",
+      "text": "托比的黑齿护送被并进 G-17 批次。"
+    },
+    "grey_closure_method": {
+      "label": "灰契封账办法",
+      "source": "黑齿转运账",
+      "text": "临时人名、赔付和保证金可以在灰契下合成一笔已结账。"
+    },
+    "grey_payout_closure": {
+      "label": "赔付即结案",
+      "source": "赔付登记处",
+      "text": "莱恩案卷夹页先写赔付，随后才盖上结案章。"
+    },
+    "grey_renamed_escort": {
+      "label": "被改名的护送委托",
+      "source": "黑齿转运账",
+      "text": "托比的名字被挪到临时人名栏，黑齿护送被改成转运清算。"
+    },
+    "grey_supply_stamp": {
+      "label": "供应协议灰印",
+      "source": "米拉旧供应副本",
+      "text": "米拉长期供应协议背面有同一枚灰契印，保证金接到旧路赔付栏。"
+    }
+  },
+  "questions": [
+    {
+      "id": "toby_identity",
+      "title": "托比身份",
+      "requiresClues": ["toby_name", "back_alley_boy"],
+      "requiresSolved": [],
+      "text": "告示上的 ______ ，也许就是 ______ 。",
+      "blanks": {
+        "name": "toby_name",
+        "identity": "back_alley_boy"
+      },
+      "hint": "先把名字和今晚出现过的人对上。",
+      "conclusion": "告示上的托比，就是夜里来买草药清汤的后巷少年。",
+      "unlockFlags": ["toby_identity_known"]
+    },
+    {
+      "id": "toby_commission_risk",
+      "title": "黑齿矿脉委托",
+      "requiresClues": ["blacktooth_escort", "high_pay_trap", "one_person_walk"],
+      "requiresSolved": ["toby_identity"],
+      "text": "他接下的 ______ ，问题在 ______ ，他还信着 ______ 。",
+      "blanks": {
+        "commission": "blacktooth_escort",
+        "risk": "high_pay_trap",
+        "mindset": "one_person_walk"
+      },
+      "hint": "这句要同时说明他接的活，以及为什么这活不对劲。",
+      "conclusion": "托比接下的是黑齿矿脉护送，高得像陷阱的报酬和“一个人走才轻快”都说明这趟路不能让他照走。",
+      "unlockFlags": ["toby_commission_lead"]
+    },
+    {
+      "id": "mira_toby_old_relation",
+      "title": "米拉旧路",
+      "requiresClues": ["mira_traveling_mentor", "toby_name"],
+      "requiresSolved": ["toby_identity"],
+      "text": "______。那个孩子也许就是告示上的 ______。",
+      "blanks": {
+        "past": "mira_traveling_mentor",
+        "name": "toby_name"
+      },
+      "hint": "先把旧日跑货的孩子和告示上的名字对上。",
+      "conclusion": "夜里的少年不是第一次学着大人赶路。有人曾经带他跑货，又把“一个人走”的道理留给了他。",
+      "unlockFlags": ["mira_toby_link_known"]
+    },
+    {
+      "id": "mira_phrase_origin",
+      "title": "米拉的责任",
+      "requiresClues": ["one_person_walk", "child_learned_saying"],
+      "requiresSolved": ["mira_toby_old_relation"],
+      "text": "托比总说 ______。另一条线索说，那个孩子以前 ______。",
+      "blanks": {
+        "saying": "one_person_walk",
+        "learned": "child_learned_saying"
+      },
+      "hint": "把托比总念的那句话，和孩子学会同一句话的线索对上。",
+      "conclusion": "托比接下黑齿矿脉，不只是为了钱。他是在按米拉当年留下的办法证明自己能一个人走。",
+      "unlockFlags": ["mira_responsibility_lead"]
+    },
+    {
+      "id": "grey_same_batch",
+      "title": "同一批灰账",
+      "requiresClues": ["grey_ryan_case_number", "grey_blacktooth_batch", "grey_payout_closure"],
+      "requiresSolved": ["toby_commission_risk"],
+      "text": "______ 和 ______ 指向同一批清算；夹页里的 ______ 说明它们按结案账处理。",
+      "blanks": {
+        "ryan_case": "grey_ryan_case_number",
+        "toby_case": "grey_blacktooth_batch",
+        "closure": "grey_payout_closure"
+      },
+      "hint": "先看案卷编号和批次号，再看赔付登记处夹出的结案顺序。",
+      "conclusion": "莱恩的北矿道和托比的黑齿护送不是两笔孤立委托，它们被同一批灰账结算过。",
+      "unlockFlags": ["grey_same_batch_known"]
+    },
+    {
+      "id": "grey_payout_method",
+      "title": "赔付顺序",
+      "requiresClues": ["grey_old_payout_register", "grey_missing_page", "grey_payout_closure"],
+      "requiresSolved": ["grey_same_batch"],
+      "text": "登记册里的 ______、名单上的 ______ 和夹页里的 ______ 说明先赔付，后结案。",
+      "blanks": {
+        "register": "grey_old_payout_register",
+        "missing": "grey_missing_page",
+        "closure": "grey_payout_closure"
+      },
+      "hint": "这题要说明灰账不是记录事故，而是在制造已结案的事故。",
+      "conclusion": "灰账先把人写进赔付，再把委托盖成已结。事故不是发生后才归档，而是按可结算的方式被整理出来。",
+      "unlockFlags": ["grey_payout_method_known"]
+    },
+    {
+      "id": "grey_mira_supply_link",
+      "title": "米拉供应灰印",
+      "requiresClues": ["grey_supply_stamp", "grey_renamed_escort", "grey_closure_method", "mira_avoids_old_road"],
+      "requiresSolved": ["mira_phrase_origin", "grey_payout_method"],
+      "text": "米拉的 ______、托比那份 ______ 和 ______ 指向同一套封账办法。",
+      "blanks": {
+        "supply": "grey_supply_stamp",
+        "escort": "grey_renamed_escort",
+        "method": "grey_closure_method"
+      },
+      "hint": "米拉不是清算人，但她的供应协议被接进了清算规则。",
+      "conclusion": "米拉的供应协议不是旁枝，它把托比的黑齿委托和旧路赔付接进了同一套灰契封账。",
+      "unlockFlags": ["mira_grey_ledger_link_known"]
+    },
+    {
+      "id": "grey_public_account",
+      "title": "公开灰账",
+      "requiresClues": ["grey_ryan_case_number", "grey_blacktooth_batch", "grey_supply_stamp"],
+      "requiresSolved": ["grey_same_batch", "grey_payout_method", "grey_mira_supply_link"],
+      "text": "只要把 ______、______ 和 ______ 一起公开，灰账就不能只封在公会柜台里。",
+      "blanks": {
+        "ryan_case": "grey_ryan_case_number",
+        "toby_batch": "grey_blacktooth_batch",
+        "mira_stamp": "grey_supply_stamp"
+      },
+      "unorderedBlankGroups": [["ryan_case", "toby_batch", "mira_stamp"]],
+      "hint": "最终题要把三条人物线放进同一本公开账。",
+      "conclusion": "莱恩、托比和米拉不是各自的意外。把三份编号和灰印公开，伊芙琳就不能再只用一枚印章结束所有账。",
+      "unlockFlags": ["grey_public_account_known"]
+    }
+  ]
+}

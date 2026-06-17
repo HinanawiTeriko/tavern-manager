@@ -1,0 +1,15 @@
+Use case: stylized-concept
+Asset type: source art for one pixel-game tavern regular customer portrait, later normalized to 128x160 native and scaled nearest-neighbor to 512x640 runtime.
+Input images: use the visible reference image of Vera only as the style anchor; use the visible current Belta/miner image only as loose identity reference.
+
+Create one original adult female regular tavern customer named Belta on a perfectly flat solid #00ff00 chroma-key background.
+
+Critical framing: this must be a true bar-front half-body bust. Crop the character naturally at the waist / top of hips, around the apron belt area. Show head, neck, shoulders, chest, arms, and only the upper apron/waist. Do not show thighs, legs, knees, or a long full-body silhouette. The face and upper torso should fill most of the image. The portrait is meant to be placed behind an existing game bar counter, so do not draw any bar counter in the art.
+
+Style target: same artist family as the Vera reference, but a different character. Match Vera's production qualities: crisp anime-like pixel-game face, readable eyes and mouth, sharp dark ink pixel outlines, restrained chunky pixel clusters, low-density detail, dark teal/charcoal shadows, warm amber highlights, burgundy cloth accents, parchment sleeves, candlelit dungeon tavern mood. The face must remain readable after downsampling to 128x160 and scaling to 512x640.
+
+Character identity: practical female mine porter, sturdy and confident without copying Vera's body type. Different proportions are welcome: stronger shoulders, compact working build, grounded customer presence. Brown leather work apron or strap harness, rolled parchment sleeves, small burgundy-red headband or kerchief, one compact shoulder pick or mining tool held close to the body, optional gloved hand. Friendly neutral expression, not a narrator, not glamorous, not full-body pinup.
+
+Composition: vertical transparent cutout, centered, generous padding around hair/tool/hands, clean silhouette, face large, simple upper-body pose, limited small details so it survives pixel export. The lower edge should stop at the waist/apron belt; leave no visible legs.
+
+Constraints: flat solid #00ff00 background only, no shadows, no gradients, no texture in the background, no readable text, no logos, no watermark. Do not copy Vera's face, hair, outfit, cup, ledger, pose, identity, or composition. Do not include a bar counter. Avoid full-body framing, avoid visible legs, avoid tiny face, avoid dense straps/props, avoid soft painterly illustration.

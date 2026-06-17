@@ -1,0 +1,354 @@
+{
+  "id": "clean_table_inference_ui",
+  "scale": 4,
+  "source": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+  "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+  "reference": "assets/source/ui/clean_table_inference/reference/clean_table_inference_reference_v1.png",
+  "runtime_preview": "assets/source/ui/clean_table_inference/reference/clean_table_inference_runtime_preview.png",
+  "assets": {
+    "clean_table_backdrop": {
+      "id": "clean_table_backdrop",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/clean_table_backdrop_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/clean_table_backdrop.png",
+      "native_size": [
+        320,
+        180
+      ],
+      "size": [
+        1280,
+        720
+      ],
+      "safe_area": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "nine_slice_margins": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen full-screen TextureRect backdrop"
+    },
+    "clue_tray_panel": {
+      "id": "clue_tray_panel",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/clue_tray_panel_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/clue_tray_panel.png",
+      "native_size": [
+        76,
+        142
+      ],
+      "size": [
+        304,
+        568
+      ],
+      "safe_area": [
+        28,
+        40,
+        276,
+        528
+      ],
+      "nine_slice_margins": [
+        36,
+        36,
+        36,
+        36
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen panel StyleBoxTexture",
+      "source_rect": [
+        48,
+        145,
+        392,
+        742
+      ]
+    },
+    "inference_book_panel": {
+      "id": "inference_book_panel",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/inference_book_panel_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/inference_book_panel.png",
+      "native_size": [
+        130,
+        142
+      ],
+      "size": [
+        520,
+        568
+      ],
+      "safe_area": [
+        44,
+        68,
+        476,
+        500
+      ],
+      "nine_slice_margins": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen panel StyleBoxTexture",
+      "source_rect": [
+        408,
+        150,
+        1270,
+        742
+      ]
+    },
+    "solved_strip_panel": {
+      "id": "solved_strip_panel",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/solved_strip_panel_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/solved_strip_panel.png",
+      "native_size": [
+        76,
+        116
+      ],
+      "size": [
+        304,
+        464
+      ],
+      "safe_area": [
+        24,
+        28,
+        280,
+        440
+      ],
+      "nine_slice_margins": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen panel StyleBoxTexture",
+      "source_rect": [
+        1326,
+        150,
+        1638,
+        662
+      ]
+    },
+    "clue_paper": {
+      "id": "clue_paper",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/clue_paper_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/clue_paper.png",
+      "native_size": [
+        66,
+        19
+      ],
+      "size": [
+        264,
+        76
+      ],
+      "safe_area": [
+        44,
+        16,
+        244,
+        64
+      ],
+      "nine_slice_margins": [
+        20,
+        16,
+        20,
+        16
+      ],
+      "intended_godot_use": "Dynamic clue scrap Panel StyleBoxTexture",
+      "source_rect": [
+        138,
+        252,
+        356,
+        340
+      ]
+    },
+    "blank_slot_normal": {
+      "id": "blank_slot_normal",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/blank_slot_normal_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/blank_slot_normal.png",
+      "native_size": [
+        44,
+        10
+      ],
+      "size": [
+        176,
+        40
+      ],
+      "safe_area": [
+        18,
+        4,
+        158,
+        34
+      ],
+      "nine_slice_margins": [
+        20,
+        12,
+        20,
+        12
+      ],
+      "intended_godot_use": "InferenceBlank Button StyleBoxTexture state",
+      "source_rect": [
+        528,
+        432,
+        796,
+        512
+      ]
+    },
+    "blank_slot_hover": {
+      "id": "blank_slot_hover",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/blank_slot_hover_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/blank_slot_hover.png",
+      "native_size": [
+        44,
+        10
+      ],
+      "size": [
+        176,
+        40
+      ],
+      "safe_area": [
+        18,
+        4,
+        158,
+        34
+      ],
+      "nine_slice_margins": [
+        20,
+        12,
+        20,
+        12
+      ],
+      "intended_godot_use": "InferenceBlank Button StyleBoxTexture state"
+    },
+    "blank_slot_pressed": {
+      "id": "blank_slot_pressed",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/blank_slot_pressed_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/blank_slot_pressed.png",
+      "native_size": [
+        44,
+        10
+      ],
+      "size": [
+        176,
+        40
+      ],
+      "safe_area": [
+        18,
+        4,
+        158,
+        34
+      ],
+      "nine_slice_margins": [
+        20,
+        12,
+        20,
+        12
+      ],
+      "intended_godot_use": "InferenceBlank Button StyleBoxTexture state"
+    },
+    "continue_button_normal": {
+      "id": "continue_button_normal",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/continue_button_normal_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/continue_button_normal.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        24,
+        16,
+        24,
+        16
+      ],
+      "intended_godot_use": "ExtinguishBtn Button StyleBoxTexture state",
+      "source_rect": [
+        1326,
+        742,
+        1640,
+        884
+      ]
+    },
+    "continue_button_hover": {
+      "id": "continue_button_hover",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/continue_button_hover_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/continue_button_hover.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        24,
+        16,
+        24,
+        16
+      ],
+      "intended_godot_use": "ExtinguishBtn Button StyleBoxTexture state"
+    },
+    "continue_button_pressed": {
+      "id": "continue_button_pressed",
+      "source_file": "art_sources/generated_raw/clean_table_inference/clean_table_inference_reference_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/clean_table_inference_prompt_v1.txt",
+      "native_file": "assets/source/ui/clean_table_inference/continue_button_pressed_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/continue_button_pressed.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        24,
+        16,
+        24,
+        16
+      ],
+      "intended_godot_use": "ExtinguishBtn Button StyleBoxTexture state"
+    }
+  }
+}

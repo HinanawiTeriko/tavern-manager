@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: raw source for important NPC portrait, later converted through a native pixel pipeline.
+Primary request: Create one single clean portrait for Toby, an original important NPC who should clearly read as more important than regular tavern customers.
+Style reference: approved Vera/Belta and current regular customer portrait sheets, same artist family, crisp readable fantasy tavern bust, strong dark linework, warm browns, limited palette, clean face shapes, designed for 128x160 native and 512x640 runtime.
+Character concept: teenage wandering apprentice abandoned on the road but stubborn; oversized patched coat, ragged gray-green short cape, messy dirty blond bowl-cut hair, wrapped wrist bandage, worn travel bundle, small dull utility knife or wooden practice sword. No contracts, no documents, no scrolls, no letters, no plot items, no blue scarf.
+Background: flat solid #00ff00.
+Constraints: no readable text, no plot documents, no contracts, no scrolls, no papers, same artist family, no labels, no watermark, not Ryan silhouette.

@@ -25,8 +25,19 @@ func _ready() -> void:
 			cam._clamp_position()
 			_assert_view_in_bounds(cam, vp, z)
 
+	await _test_fly_to_edge_locations_stays_inside_map(cam, vp)
 	_test_mouse_wheel_zoom_controls(cam)
+	_test_tutorial_blocks_mouse_wheel_zoom(cam)
 	_finish()
+
+
+func _test_fly_to_edge_locations_stays_inside_map(cam: DayMapCamera, vp: Vector2) -> void:
+	for target in [Vector2(250, 620), Vector2(2250, 1160), Vector2(0, 0), Vector2(2560, 1440)]:
+		cam.zoom = Vector2(cam.min_zoom, cam.min_zoom)
+		cam.position = (cam.map_min + cam.map_max) * 0.5
+		await cam.fly_to(target, 1.0, 0.01).finished
+		_assert_view_in_bounds(cam, vp, cam.zoom.x)
+
 
 func _test_mouse_wheel_zoom_controls(cam: DayMapCamera) -> void:
 	cam.active = true
@@ -42,6 +53,22 @@ func _test_mouse_wheel_zoom_controls(cam: DayMapCamera) -> void:
 	wheel_down.pressed = true
 	cam._unhandled_input(wheel_down)
 	_ok(absf(cam.zoom.x - 1.0) < 0.001, "mouse wheel zooms back out one step")
+
+
+func _test_tutorial_blocks_mouse_wheel_zoom(cam: DayMapCamera) -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		return
+	var old_active := bool(tm._is_active)
+	tm._is_active = true
+	cam.active = true
+	cam.zoom = Vector2(1.0, 1.0)
+	var wheel_up := InputEventMouseButton.new()
+	wheel_up.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel_up.pressed = true
+	cam._unhandled_input(wheel_up)
+	_ok(absf(cam.zoom.x - 1.0) < 0.001, "active tutorial blocks DayMap mouse wheel zoom")
+	tm._is_active = old_active
 
 func _assert_view_in_bounds(cam: DayMapCamera, vp: Vector2, z: float) -> void:
 	var half := vp * 0.5 / z

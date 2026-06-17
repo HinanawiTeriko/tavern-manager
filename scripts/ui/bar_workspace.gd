@@ -49,13 +49,21 @@ var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
 	_shortcut_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_brewery.recipe_consumed.connect(func(k): print("[BarWorkspace] 产出 ", k))
+	_brewery.recipe_consumed.connect(_on_recipe_consumed)
+	_grill.recipe_consumed.connect(_on_recipe_consumed)
+	_pot.recipe_consumed.connect(_on_recipe_consumed)
 	_drag_ctrl.drag_started.connect(_on_drag_started)
 	_drag_ctrl.drag_ended.connect(_on_drag_ended)
 	_items_node.child_entered_tree.connect(_on_items_child_added)
 	_gm.inventory_changed.connect(_init_material_slots)
 	call_deferred("_capture_docks")
 	call_deferred("_init_material_slots")   # 等 HBox 布局完成再读 slot 位置
+
+
+func _on_recipe_consumed(product_key: String) -> void:
+	print("[BarWorkspace] 产出 ", product_key)
+	if _gm != null and _gm.has_method("discover_recipe"):
+		_gm.discover_recipe(product_key, true)
 
 
 func configure_day(day: int) -> void:
@@ -146,10 +154,8 @@ func _init_material_slots() -> void:
 	_slot_rects.clear()
 	_slot_item_keys.clear()
 	var keys: Array = []
-	for k in _gm.inventory.keys():
-		if _gm.inventory_sys.is_material(k):
-			keys.append(k)
-	keys.sort()
+	if _gm != null and _gm.has_method("get_shortcut_bindings"):
+		keys = _gm.get_shortcut_bindings()
 	for i in range(MAX_SLOTS):
 		var slot := _shortcut_bar.get_node_or_null("Slot%d" % i) as ColorRect
 		if slot == null:
@@ -182,6 +188,21 @@ func _init_material_slots() -> void:
 			icon.texture = _gm.try_load_material_icon(key)
 		if count != null:
 			count.text = str(_gm.inventory_sys.get_count(key))
+
+
+func bind_shortcut_at_position(item_key: String, global_position: Vector2) -> bool:
+	if _gm == null or not _gm.has_method("bind_shortcut_item"):
+		return false
+	if _slot_rects.is_empty():
+		_init_material_slots()
+	for i in range(_slot_rects.size()):
+		if _slot_rects[i].has_point(global_position):
+			var bound: bool = _gm.bind_shortcut_item(i, item_key)
+			if bound:
+				_init_material_slots()
+				_gm.play_audio_event("drop")
+			return bound
+	return false
 
 
 func _input(event: InputEvent) -> void:
@@ -249,12 +270,12 @@ func _is_body_usable(body: RigidBody2D) -> bool:
 func _try_pickup(pos: Vector2) -> void:
 	var hit_item: DeskItem = _hit_test_item(pos)
 	if hit_item != null:
-		hit_item.sleeping = false
+		_prepare_body_for_drag(hit_item)
 		_drag_ctrl.start_drag(hit_item, pos)
 		return
 	var readable_item := _hit_test_readable_item(pos)
 	if readable_item != null:
-		readable_item.sleeping = false
+		_prepare_body_for_drag(readable_item)
 		_drag_ctrl.start_drag(readable_item, pos)
 		return
 	if _hit_test_brewery(pos):
@@ -267,7 +288,7 @@ func _try_pickup(pos: Vector2) -> void:
 		return
 	var spoon := _hit_test_spoon(pos)
 	if spoon != null:
-		spoon.sleeping = false
+		_prepare_body_for_drag(spoon)
 		_drag_ctrl.start_drag(spoon, pos)
 		return
 	var kitchen = _hit_test_kitchen_container(pos)
@@ -284,6 +305,11 @@ func _try_pickup(pos: Vector2) -> void:
 				_begin_shortcut_drag_preview(body, pos)
 				_drag_ctrl.start_drag(body, drag_start)
 			return
+
+
+func _prepare_body_for_drag(body: RigidBody2D) -> void:
+	body.freeze = false
+	body.sleeping = false
 
 
 func _update_drag_target(mouse_global_position: Vector2) -> void:
@@ -579,12 +605,12 @@ func _is_kitchen_container(node: Node) -> bool:
 
 func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 	var item: DeskItem = DESK_ITEM_SCENE.instantiate()
-	_items_node.add_child(item)
 	var item_data: Dictionary = _gm.craft.get_item(item_key)
 	item.set_item(item_key, item_data, _gm.craft.get_item_physics_profiles())
 	var art_texture := _desk_item_art_texture(item_key)
 	if art_texture != null:
 		item.set_art_texture(art_texture)
+	_items_node.add_child(item)
 	item.global_position = pos
 	# 可阅读物品：设为可拾取输入，双击时打开关联文档
 	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
@@ -691,6 +717,7 @@ func _on_desk_item_fell(item: DeskItem) -> void:
 		item.linear_velocity = Vector2.ZERO
 		item.angular_velocity = 0.0
 		item.global_position = _desk_item_return_position(item)
+		item.freeze = true
 		item.sleeping = true
 		item.reset_fall_state()
 	else:
@@ -751,6 +778,7 @@ func _is_item_inside_any_container(item: DeskItem) -> bool:
 	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
 		return false
 	return _brewery.is_item_inside_mouth(item) \
+		or _shaker.is_item_inside_mouth(item) \
 		or _grill.is_item_inside_intake(item) \
 		or _pot.is_item_inside_intake(item)
 
@@ -797,11 +825,27 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 	if force_tier == "none":
 		return
 	var recipe: Dictionary = _gm.craft.find_slam_recipe([key_a, key_b])
-	if recipe.is_empty():
-		return
 	var center: Vector2 = (a.global_position + other.global_position) * 0.5
 	var conserved: Vector2 = (a.linear_velocity + other.linear_velocity) * 0.5
+	if recipe.is_empty():
+		var combined_key: String = _gm.craft.get_combine_result(key_a, key_b)
+		if combined_key == "":
+			return
+		call_deferred("_do_collision_combine", a, other, combined_key, center, conserved)
+		return
 	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _do_collision_combine(a: DeskItem, other: DeskItem, result_key: String, center: Vector2, conserved: Vector2) -> void:
+	if not is_instance_valid(a) or not is_instance_valid(other):
+		return
+	if a.is_queued_for_deletion() or other.is_queued_for_deletion():
+		return
+	a.queue_free()
+	other.queue_free()
+	var combined := _spawn_desk_item_at(center, result_key)
+	combined.linear_velocity = conserved
+	_gm.play_audio_event("product_ready")
 
 
 func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier: String, center: Vector2, conserved: Vector2) -> void:
@@ -822,6 +866,8 @@ func _do_slam_merge(a: DeskItem, other: DeskItem, recipe: Dictionary, force_tier
 		var p := _spawn_slam_product(center, product_key, quality)
 		p.linear_velocity = conserved
 	_gm.play_audio_event("product_ready")
+	if _gm != null and _gm.has_method("discover_recipe"):
+		_gm.discover_recipe(product_key, true)
 	if quality == "poor":
 		_gm.notify_stage_caption("手重了，砸出了次品", ThemeColors.TEXT_SUBTITLE)
 

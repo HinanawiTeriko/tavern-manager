@@ -51,7 +51,8 @@ func set_active(value: bool) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not active:
+	if not active or _is_tutorial_active():
+		_dragging = false
 		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
@@ -71,6 +72,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_clamp_position()
 
 
+func _is_tutorial_active() -> bool:
+	var tm = get_node_or_null("/root/TutorialManager")
+	return tm != null and bool(tm._is_active)
+
+
 func _apply_zoom(step: float) -> void:
 	var z: float = clampf(zoom.x + step, min_zoom, MAX_ZOOM)
 	zoom = Vector2(z, z)
@@ -78,7 +84,18 @@ func _apply_zoom(step: float) -> void:
 
 
 func _clamp_position() -> void:
-	var half := _viewport_size() * 0.5 / zoom
+	position = _clamped_position_for_zoom(position, zoom.x)
+
+
+func apply_view(world_pos: Vector2, target_zoom: float = 1.0) -> void:
+	var z: float = clampf(target_zoom, min_zoom, MAX_ZOOM)
+	zoom = Vector2(z, z)
+	position = _clamped_position_for_zoom(world_pos, z)
+
+
+func _clamped_position_for_zoom(world_pos: Vector2, target_zoom: float) -> Vector2:
+	var safe_zoom := maxf(target_zoom, 0.001)
+	var half := _viewport_size() * 0.5 / safe_zoom
 	var min_x := map_min.x + half.x
 	var max_x := map_max.x - half.x
 	var min_y := map_min.y + half.y
@@ -90,8 +107,10 @@ func _clamp_position() -> void:
 	if min_y > max_y:
 		min_y = (map_min.y + map_max.y) * 0.5
 		max_y = min_y
-	position.x = clampf(position.x, min_x, max_x)
-	position.y = clampf(position.y, min_y, max_y)
+	return Vector2(
+		clampf(world_pos.x, min_x, max_x),
+		clampf(world_pos.y, min_y, max_y)
+	)
 
 
 ## 平滑飞到目标点（用于新地点亮相）。返回 tween 以便调用方 await 其完成。
@@ -99,10 +118,7 @@ func fly_to(world_pos: Vector2, target_zoom: float = 1.0, duration: float = 0.6)
 	if _fly_tween != null and _fly_tween.is_valid():
 		_fly_tween.kill()
 	var tz: float = clampf(target_zoom, min_zoom, MAX_ZOOM)
-	var dest := Vector2(
-		clampf(world_pos.x, map_min.x, map_max.x),
-		clampf(world_pos.y, map_min.y, map_max.y)
-	)
+	var dest := _clamped_position_for_zoom(world_pos, tz)
 	_fly_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_fly_tween.tween_property(self, "position", dest, duration)
 	_fly_tween.tween_property(self, "zoom", Vector2(tz, tz), duration)

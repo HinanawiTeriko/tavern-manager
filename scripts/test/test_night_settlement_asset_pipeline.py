@@ -66,8 +66,8 @@ def alpha_bbox_size(image: Image.Image) -> tuple[int, int]:
 class NightSettlementAssetPipelineTest(unittest.TestCase):
     def test_raw_ai_sources_and_prompts_are_retained(self) -> None:
         required = [
-            RAW / "night_settlement_backdrop_prompt_v1.txt",
-            RAW / "night_settlement_backdrop_source_v1.png",
+            RAW / "night_settlement_backdrop_prompt_v5.txt",
+            RAW / "night_settlement_backdrop_source_v5.png",
             RAW / "night_settlement_controls_prompt_v1.txt",
             RAW / "night_settlement_controls_source_v1.png",
             RAW / "night_settlement_stats_panel_prompt_v3.txt",
@@ -77,8 +77,8 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
         for path in required:
             self.assertTrue(path.exists(), f"{path}: required source contract missing")
             self.assertGreater(path.stat().st_size, 0, f"{path}: empty source contract")
-        self.assertGreaterEqual(load_rgba(RAW / "night_settlement_backdrop_source_v1.png").width, 1280)
-        self.assertGreaterEqual(load_rgba(RAW / "night_settlement_backdrop_source_v1.png").height, 720)
+        self.assertGreaterEqual(load_rgba(RAW / "night_settlement_backdrop_source_v5.png").width, 1280)
+        self.assertGreaterEqual(load_rgba(RAW / "night_settlement_backdrop_source_v5.png").height, 720)
         self.assertGreaterEqual(load_rgba(RAW / "night_settlement_controls_source_v1.png").width, 1024)
         self.assertGreaterEqual(load_rgba(RAW / "night_settlement_controls_source_v1.png").height, 1024)
         self.assertGreaterEqual(load_rgba(RAW / "night_settlement_stats_panel_source_v3.png").width, 1024)
@@ -87,6 +87,8 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
     def test_manifest_declares_fixed_crops_safe_areas_and_runtime_paths(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(manifest["id"], "night_settlement_v1")
+        self.assertEqual(manifest["backdrop"]["source"], "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v5.png")
+        self.assertEqual(manifest["backdrop"]["prompt"], "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v5.txt")
         self.assertEqual(manifest["backdrop"]["runtime"], "assets/textures/ui/night_settlement/night_settlement_backdrop.png")
         self.assertEqual(manifest["backdrop"]["native_size"], list(BACKDROP_NATIVE_SIZE))
         self.assertEqual(manifest["backdrop"]["runtime_size"], list(BACKDROP_RUNTIME_SIZE))
@@ -94,8 +96,8 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
             manifest["text_safe_zones_native"],
             {
                 "title": [88, 11, 232, 27],
-                "stats": [34, 103, 128, 160],
-                "fates": [158, 103, 280, 160],
+                "guest_lineup": [12, 34, 232, 104],
+                "score": [96, 106, 224, 164],
                 "continue": [276, 152, 314, 174],
             },
         )
@@ -118,7 +120,7 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
 
     def test_exporter_derives_from_ai_sources_not_procedural_decoration(self) -> None:
         source = EXPORTER.read_text(encoding="utf-8")
-        self.assertIn("night_settlement_backdrop_source_v1.png", source)
+        self.assertIn("night_settlement_backdrop_source_v5.png", source)
         self.assertIn("night_settlement_controls_source_v1.png", source)
         self.assertIn("night_settlement_stats_panel_source_v3.png", source)
         self.assertIn("night_settlement_manifest.json", source)
@@ -126,6 +128,8 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
         self.assertNotIn("ImageEnhance", source)
         self.assertNotIn("fill_rect", source)
         self.assertNotIn("set_pixel", source)
+        self.assertNotIn("lift_silhouette_stage_band", source)
+        self.assertNotIn("SILHOUETTE_STAGE_BAND_NATIVE", source)
 
     def test_backdrop_is_exact_native_export_and_has_readable_value_range(self) -> None:
         native = assert_exact_native_export(
@@ -137,9 +141,21 @@ class NightSettlementAssetPipelineTest(unittest.TestCase):
         )
         pixels = list(native.getdata())
         dark_pixels = sum(1 for r, g, b, a in pixels if a >= 220 and r <= 55 and g <= 75 and b <= 80)
-        amber_pixels = sum(1 for r, g, b, a in pixels if a >= 220 and r >= 135 and 65 <= g <= 170 and b <= 95)
+        amber_pixels = sum(1 for r, g, b, a in pixels if a >= 220 and r >= 54 and 30 <= g <= 70 and b <= 40 and r > g > b)
         self.assertGreaterEqual(dark_pixels, 18000, "settlement backdrop needs mostly dark closing-tavern values")
         self.assertGreaterEqual(amber_pixels, 90, "settlement backdrop needs sparse candle amber accents")
+        queue_backdrop = native.crop((12, 38, 132, 104))
+        queue_pixels = [pixel for pixel in queue_backdrop.getdata() if pixel[3] >= 220]
+        queue_dark_pixels = sum(1 for r, g, b, _a in queue_pixels if r <= 20 and g <= 28 and b <= 30)
+        queue_cool_pixels = sum(
+            1
+            for r, g, b, _a in queue_pixels
+            if 18 <= r <= 70 and 24 <= g <= 90 and 28 <= b <= 98 and b >= r and g >= r
+        )
+        queue_avg = sum((r + g + b) / 3 for r, g, b, _a in queue_pixels) / len(queue_pixels)
+        self.assertGreaterEqual(queue_avg, 22.0, "guest silhouette queue backdrop must not collapse into near-black values")
+        self.assertLessEqual(queue_dark_pixels, 4400, "guest silhouette queue backdrop must avoid dark doorway-like masses")
+        self.assertGreaterEqual(queue_cool_pixels, 1500, "guest silhouette queue backdrop needs authored cool stone texture behind black figures")
 
     def test_panels_buttons_and_icons_are_exact_native_exports(self) -> None:
         assert_exact_native_export(

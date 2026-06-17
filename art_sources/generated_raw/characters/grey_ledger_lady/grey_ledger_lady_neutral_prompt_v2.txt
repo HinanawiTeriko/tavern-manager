@@ -1,0 +1,28 @@
+Use case: stylized-concept
+Asset type: single-expression raw character bust source for a 128x160 -> 512x640 pixel-art tavern customer portrait pipeline
+Primary request: create ONE neutral expression bust source for a mature female antagonist called the Grey Ledger Lady. This must match the camera distance and framing of a game character bust source sheet, NOT a full character illustration.
+
+STRICT FORMAT:
+- single character only
+- flat solid #00ff00 chroma-key green background across the whole image
+- no labels, no text, no UI, no border, no frame
+- centered with generous green padding
+- portrait crop must show HEAD, SHOULDERS, CHEST, WAIST, and BELT/UPPER HIPS ONLY
+- the image must stop around the belt or upper hips
+- DO NOT show thighs, knees, long skirt length, full robe length, or full-body silhouette
+- face and shoulders must be large and readable, similar to a tavern NPC bust source, with head height around one fifth to one quarter of visible character height
+- hands should stay near chest/waist, not extend far downward
+
+Character: woman around 38-45, mature and quietly beautiful, visibly tired, kind grey-green eyes, slender mature face, soft listening expression, faint sympathetic smile. She looks trustworthy at first glance and morally dangerous only after a second look. Not seductive, not theatrical.
+
+Hair: deep ink-black hair with two narrow ash-white streaks, parted cleanly and gathered into a low braided loop behind the neck; a few neat loose strands. No short hair, no silver bob, no glasses, no monocle.
+
+Simplified clothing for small pixel portrait: asymmetrical ash-linen ledger vestment, NOT a fitted jacket. Short sleeveless front apron-tabard shaped like overlapping parchment sheets, ending at the belt/upper hips; broad soft charcoal shoulder mantle; loose bone-ivory under-sleeves gathered at wrists; low square neckline with a small old-silver clasp. Keep the shapes bold and simple enough for 128x160 pixel art.
+
+Props: only two readable props: a small flat black ledger tablet at the waist and a short abacus-bead loop in one gloved hand near the chest/waist. No long hanging book, no long rosary, no long dangling tassels, no long parchment veil. Abstract ink marks only, no readable text.
+
+Style target: crisp hand-authored pixel-art/anime-fantasy character source, thick dark outlines, readable blocky silhouette, restrained chunky pixel clusters, limited warm dungeon palette, low-density clothing detail, suitable to survive downscaling to 128x160 native and 512x640 runtime. Avoid glossy high-resolution portrait rendering, avoid painterly micro-detail.
+
+Palette: charcoal black, ash linen grey, bone ivory sleeves, old silver hardware, tiny dried-wine clasp accent, warm candle highlights.
+
+Hard avoid: no readable text, no logos, no watermark, no modern clothing, no armor, no adventurer cloak, no fitted merchant coat, no high-collar dark jacket, no star/astrology props, no red glowing eyes, no horns, no exaggerated villain grin, no cleavage focus, no seductive pose, no long full-body dress, no long skirt visible, do not resemble a short silver-haired glasses merchant woman, do not use #00ff00 anywhere on the character.

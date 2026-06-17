@@ -11,6 +11,7 @@ RAW = ROOT / "art_sources" / "generated_raw" / "ryan_endings"
 SOURCE = ROOT / "assets" / "source" / "endings" / "ryan"
 REFERENCE = SOURCE / "reference"
 NATIVE_SIZE = (320, 140)
+REFERENCE_VERSION = "v3"
 ROUTES = [
     "uninformed_fallen",
     "drugged_survivor",
@@ -49,9 +50,9 @@ def main() -> None:
     REFERENCE.mkdir(parents=True, exist_ok=True)
     natives: dict[str, Image.Image] = {}
     for route in ROUTES:
-        raw_path = RAW / f"ryan_{route}_reference_v2.png"
+        raw_path = RAW / f"ryan_{route}_reference_{REFERENCE_VERSION}.png"
         if not raw_path.exists():
-            raise FileNotFoundError(f"{raw_path}: missing V2 Ryan ending reference")
+            raise FileNotFoundError(f"{raw_path}: missing {REFERENCE_VERSION.upper()} Ryan ending reference")
         approved_path = REFERENCE / raw_path.name
         shutil.copy2(raw_path, approved_path)
         with Image.open(approved_path) as reference:

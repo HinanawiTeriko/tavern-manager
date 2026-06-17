@@ -1,0 +1,27 @@
+Use case: stylized-concept
+Asset type: raw source for one important NPC portrait, later converted through the official native pixel character pipeline.
+Style anchors: match the visible project source references for Ryan v6, Mira v3, Vera expression sheet, Vera approved reference, and Belta style reference. Use Vera/Belta as the dominant texture target.
+Primary request: Create one single original portrait for Toby, a distinctive teenage wandering apprentice, in the same hard pixel-game source style as those references.
+
+Hard style target:
+- crisp pixel-game character portrait source, not a high-resolution painting
+- visible stair-stepped silhouette edges like Vera/Belta
+- thick dark ink-pixel outlines and large readable contour shapes
+- posterized flat color blocks with 2-4 shadow bands per material
+- chunky pixel clusters placed only on edges, hair clumps, seams, and key folds
+- clean anime-like face with readable eyes and mouth at 128x160 native size
+- designed for 128x160 native and 512x640 runtime after exact nearest-neighbor export
+- warm muted dungeon-tavern palette: dark charcoal, gray-green, leather brown, parchment tan, dull amber
+
+Character concept:
+Toby is small, stubborn, road-worn, and abandoned but not helpless. He has messy dirty blond bowl-cut hair with uneven edges, sharp tired eyes, a narrow frame, an oversized patched gray-green short cloak sitting too large on his shoulders, one rolled sleeve with a bandaged wrist, a patched tunic, a belt pouch, and a small dull utility knife or short wooden practice sword held close to the body. Give him one memorable asymmetrical read, such as a patched shoulder, mismatched strap, or small tin charm.
+
+Composition:
+True tavern half-body bust, head to waist/top of hips, centered, generous padding, front three-quarter stance, one hand gripping a strap or cloak edge. Face and upper torso should fill most of the image while leaving green around hair and hands.
+
+Hard avoid:
+No painterly micro-detail, no stippling, no crosshatching, no dirty noise texture, no dense cloth scratches, no soft airbrush, no glossy rendering, no realistic fabric grain, no high-resolution illustration speckle, no loose sketch lines.
+No readable text, no plot documents, no contracts, no scrolls, no papers, no letters, no labels, no watermark, no blue scarf, not Ryan silhouette.
+
+Background:
+Perfectly flat solid #00ff00 chroma-key background only, with no shadow, gradient, texture, floor plane, or lighting variation.

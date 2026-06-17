@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/test/test_mira_stall_encounter_scene.gd" id="1"]
+
+[node name="TestMiraStallEncounterScene" type="Node"]
+script = ExtResource("1")

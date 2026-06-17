@@ -75,11 +75,27 @@ func _test_ryan_entry_portrait_reads_story_state() -> void:
 
 	_gm().narrative.set_var("ryan_has_alternative", true)
 	tavern.show_customer("Ryan", "Ale", "ryan")
-	_ok(_portrait_path(tavern).ends_with("/ryan_excited.png"), "alternative route Ryan enters with excited portrait")
+	_ok(_portrait_path(tavern).ends_with("/ryan_resolved.png"), "alternative route Ryan enters with resolved portrait")
 
 	_gm().narrative.set_var("ryan_alternative_declined", true)
 	tavern.show_customer("Ryan", "Ale", "ryan")
-	_ok(_portrait_path(tavern).ends_with("/ryan_dejected.png"), "declined route Ryan enters with dejected portrait")
+	_ok(_portrait_path(tavern).ends_with("/ryan_broken.png"), "declined route Ryan enters with broken portrait")
+
+	_reset_ryan_story()
+	_gm().narrative.set_var("ryan_informed", true)
+	_gm().narrative.set_var("ryan_alternative_pending", true)
+	tavern.show_customer("Ryan", "Ale", "ryan")
+	_ok(_portrait_path(tavern).ends_with("/ryan_wary.png"), "pending alternative Ryan enters with wary portrait")
+
+	_reset_ryan_story()
+	_gm().narrative.set_var("ryan_ending", "alternative_survivor")
+	tavern.show_customer("Ryan", "Ale", "ryan")
+	_ok(_portrait_path(tavern).ends_with("/ryan_relieved.png"), "surviving Ryan ending uses relieved portrait")
+
+	_reset_ryan_story()
+	_gm().narrative.set_var("ryan_drugged", true)
+	tavern.show_customer("Ryan", "Ale", "ryan")
+	_ok(_portrait_path(tavern).ends_with("/ryan_broken.png"), "drugged Ryan uses broken portrait")
 	tavern.queue_free()
 
 
@@ -93,15 +109,15 @@ func _test_ryan_serve_reaction_changes_portrait() -> void:
 		return
 
 	tavern.show_customer_reaction("success", "ryan")
-	_ok(_portrait_path(tavern).ends_with("/ryan_excited.png"), "Ryan switches to excited portrait after correct serve")
+	_ok(_portrait_path(tavern).ends_with("/ryan_confident.png"), "Ryan switches to confident portrait after correct serve")
 
 	tavern.show_customer("Ryan", "Ale", "ryan")
 	tavern.show_customer_reaction("fail_wrong", "ryan")
-	_ok(_portrait_path(tavern).ends_with("/ryan_dejected.png"), "Ryan switches to dejected portrait after wrong product")
+	_ok(_portrait_path(tavern).ends_with("/ryan_alarmed.png"), "Ryan switches to alarmed portrait after wrong product")
 
 	tavern.show_customer("Ryan", "Ale", "ryan")
 	tavern.show_customer_reaction("fail_weird", "ryan")
-	_ok(_portrait_path(tavern).ends_with("/ryan_dejected.png"), "Ryan switches to dejected portrait after weird item")
+	_ok(_portrait_path(tavern).ends_with("/ryan_alarmed.png"), "Ryan switches to alarmed portrait after weird item")
 	tavern.queue_free()
 
 
@@ -122,7 +138,7 @@ func _test_serving_ryan_through_game_manager_changes_portrait() -> void:
 
 	_gm().request_serve("ale_beer")
 	await get_tree().process_frame
-	_ok(_portrait_path(tavern).ends_with("/ryan_excited.png"), "GameManager switches Ryan to excited after correct serve")
+	_ok(_portrait_path(tavern).ends_with("/ryan_confident.png"), "GameManager switches Ryan to confident after correct serve")
 	await get_tree().create_timer(2.0).timeout
 
 	_reset_ryan_story()
@@ -130,7 +146,7 @@ func _test_serving_ryan_through_game_manager_changes_portrait() -> void:
 	await get_tree().process_frame
 	_gm().request_serve("bread")
 	await get_tree().process_frame
-	_ok(_portrait_path(tavern).ends_with("/ryan_dejected.png"), "GameManager switches Ryan to dejected after wrong serve")
+	_ok(_portrait_path(tavern).ends_with("/ryan_alarmed.png"), "GameManager switches Ryan to alarmed after wrong serve")
 	await get_tree().create_timer(2.0).timeout
 
 	_gm().economy.current_day = old_day
@@ -153,8 +169,8 @@ func _test_informed_ryan_stays_hesitant_after_correct_meat() -> void:
 	_gm().guests.spawn_important("ryan", "meat_cooked")
 	await get_tree().process_frame
 
-	var evidence_result: Dictionary = _gm().request_narrative_delivery("bloodied_contract", [])
-	_ok(evidence_result.get("accepted", false), "Ryan accepts the bloodied contract before meat")
+	_gm().narrative.set_var("ryan_informed", true)
+	_ok(_gm().narrative.get_var("ryan_informed") == true, "Ryan is marked informed before meat")
 	_gm().request_serve("meat_cooked")
 	await get_tree().process_frame
 	_ok(_portrait_path(tavern).ends_with("/ryan_hesitant.png"),

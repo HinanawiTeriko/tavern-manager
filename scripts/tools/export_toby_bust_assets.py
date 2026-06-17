@@ -1,50 +1,105 @@
 from __future__ import annotations
 
 import json
+import sys
+from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageOps
+
+TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from character_contact_sheet import save_character_contact_sheet
+from character_green_matte import despill_green_edges, source_level_green_matte
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "toby_bust" / "toby_neutral_source_v2.png"
+RAW_SOURCE = ROOT / "art_sources" / "generated_raw" / "characters" / "toby" / "toby_expression_sheet_source_v5.png"
+PROMPT = ROOT / "art_sources" / "generated_raw" / "characters" / "toby" / "toby_expression_sheet_prompt_v5.txt"
 RYAN_REFERENCE = ROOT / "assets" / "textures" / "characters" / "ryan_neutral.png"
 MIRA_REFERENCE = ROOT / "assets" / "textures" / "characters" / "mira_neutral.png"
 SOURCE_DIR = ROOT / "assets" / "source" / "tavern" / "characters"
 RUNTIME_DIR = ROOT / "assets" / "textures" / "characters"
 MANIFEST_PATH = SOURCE_DIR / "toby_bust_manifest.json"
-CONTACT_SHEET = ROOT / "docs" / "art" / "toby_bust_contact_sheet.png"
+CONTACT_SHEET = ROOT / "docs" / "art" / "characters" / "toby_contact_sheet.png"
 
-PORTRAIT_ID = "toby_neutral"
-NATIVE_SIZE = (70, 90)
-RUNTIME_SIZE = (280, 360)
+NATIVE_SIZE = (128, 160)
+RUNTIME_SIZE = (512, 640)
 SCALE = 4
-SOURCE_RECT = [0, 0, 1106, 1422]
-COLOR_LIMIT = 20
-TARGET_VISIBLE_WIDTH = 54
+EXPRESSION_COLUMNS = 2
+EXPRESSION_ROWS = 2
+COLOR_LIMIT = 72
+VISIBLE_TARGET = (124, 154)
+BOTTOM_PADDING = 3
+STYLE_PROFILE = "important_npc_close_camera_toby_expression_sheet_v5"
+NORMALIZATION_MODE = "fixed_cell_visible_subject_v5"
 
-
-def remove_chroma_key(image: Image.Image) -> Image.Image:
-    rgba = image.convert("RGBA")
-    pixels = rgba.load()
-    for y in range(rgba.height):
-        for x in range(rgba.width):
-            red, green, blue, alpha = pixels[x, y]
-            is_key = green >= 110 and green > red * 1.55 and green > blue * 1.55
-            is_edge_key = green >= 85 and green > red * 1.25 and green > blue * 1.25 and red < 90 and blue < 90
-            if is_key or is_edge_key:
-                pixels[x, y] = (0, 0, 0, 0)
-            elif green > max(red, blue) + 18:
-                pixels[x, y] = (red, max(red, blue) + 4, blue, alpha)
-    return rgba
+PORTRAIT_IDS = [
+    ("toby_neutral", "stubborn guarded entry"),
+    ("toby_warmed", "softened by a correct hot soup serve"),
+    ("toby_hurt", "hurt but pretending it is fine after a failed serve"),
+    ("toby_afraid", "fear when the Blacktooth commission danger becomes clear"),
+]
 
 
 def visible_bounds(image: Image.Image) -> tuple[int, int, int, int]:
-    alpha = image.getchannel("A")
-    bounds = alpha.getbbox()
-    if bounds == None:
+    bounds = image.getchannel("A").getbbox()
+    if bounds is None:
         return (0, 0, image.width, image.height)
     return bounds
+
+
+def cell_rects(source: Image.Image) -> list[list[int]]:
+    cell_width = source.width // EXPRESSION_COLUMNS
+    cell_height = source.height // EXPRESSION_ROWS
+    rects: list[list[int]] = []
+    for row in range(EXPRESSION_ROWS):
+        for column in range(EXPRESSION_COLUMNS):
+            rects.append([
+                column * cell_width,
+                row * cell_height,
+                (column + 1) * cell_width,
+                (row + 1) * cell_height,
+            ])
+    return rects
+
+
+def keep_largest_alpha_component(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    pixels = alpha.load()
+    width, height = alpha.size
+    seen: set[tuple[int, int]] = set()
+    components: list[list[tuple[int, int]]] = []
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] == 0 or (x, y) in seen:
+                continue
+            queue: deque[tuple[int, int]] = deque([(x, y)])
+            seen.add((x, y))
+            component: list[tuple[int, int]] = []
+            while queue:
+                cx, cy = queue.popleft()
+                component.append((cx, cy))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx = cx + dx
+                    ny = cy + dy
+                    if 0 <= nx < width and 0 <= ny < height and pixels[nx, ny] > 0 and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        queue.append((nx, ny))
+            components.append(component)
+    if not components:
+        return rgba
+    keep = set(max(components, key=len))
+    out = rgba.copy()
+    out_pixels = out.load()
+    for y in range(height):
+        for x in range(width):
+            if out_pixels[x, y][3] > 0 and (x, y) not in keep:
+                out_pixels[x, y] = (0, 0, 0, 0)
+    return out
 
 
 def quantize_visible(image: Image.Image, colors: int = COLOR_LIMIT) -> Image.Image:
@@ -59,60 +114,89 @@ def quantize_visible(image: Image.Image, colors: int = COLOR_LIMIT) -> Image.Ima
         for x in range(quantized.width):
             if pixels[x, y][3] == 0:
                 pixels[x, y] = (0, 0, 0, 0)
-    return quantized
+    return keep_largest_alpha_component(despill_green_edges(quantized))
 
 
-def normalize_portrait(source: Image.Image) -> Image.Image:
-    crop = source.crop(tuple(SOURCE_RECT))
-    keyed = remove_chroma_key(crop)
-    bounds = visible_bounds(keyed)
-    subject = keyed.crop(bounds)
-    fitted = ImageOps.contain(subject, (62, 88), Image.Resampling.NEAREST)
-    if fitted.width > TARGET_VISIBLE_WIDTH:
-        fitted = fitted.resize((TARGET_VISIBLE_WIDTH, fitted.height), Image.Resampling.NEAREST)
+def normalize_portrait(source: Image.Image, source_rect: list[int]) -> Image.Image:
+    crop = source.crop(tuple(source_rect))
+    keyed = keep_largest_alpha_component(source_level_green_matte(crop))
+    subject = keyed.crop(visible_bounds(keyed))
+    fitted = ImageOps.contain(subject, VISIBLE_TARGET, Image.Resampling.NEAREST)
     native = Image.new("RGBA", NATIVE_SIZE, (0, 0, 0, 0))
     x = (NATIVE_SIZE[0] - fitted.width) // 2
-    y = max(0, NATIVE_SIZE[1] - fitted.height)
+    y = NATIVE_SIZE[1] - BOTTOM_PADDING - fitted.height
+    y = min(max(0, y), max(0, NATIVE_SIZE[1] - fitted.height))
     native.alpha_composite(fitted, (x, y))
     return quantize_visible(native)
 
 
-def save_exports(native: Image.Image) -> Image.Image:
+def save_exports(portrait_id: str, native: Image.Image) -> Image.Image:
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
-    native_path = SOURCE_DIR / f"{PORTRAIT_ID}_native.png"
-    runtime_path = RUNTIME_DIR / f"{PORTRAIT_ID}.png"
+    native_path = SOURCE_DIR / f"{portrait_id}_native.png"
+    runtime_path = RUNTIME_DIR / f"{portrait_id}.png"
     native.save(native_path)
     runtime = native.resize(RUNTIME_SIZE, Image.Resampling.NEAREST)
     runtime.save(runtime_path)
     return runtime
 
 
-def write_manifest() -> None:
+def write_manifest(rects: list[list[int]]) -> None:
+    portraits = {}
+    for index, (portrait_id, expression_note) in enumerate(PORTRAIT_IDS):
+        portraits[portrait_id] = {
+            "source": RAW_SOURCE.relative_to(ROOT).as_posix(),
+            "source_rect": rects[index],
+            "native": (SOURCE_DIR / f"{portrait_id}_native.png").relative_to(ROOT).as_posix(),
+            "runtime": (RUNTIME_DIR / f"{portrait_id}.png").relative_to(ROOT).as_posix(),
+            "native_size": list(NATIVE_SIZE),
+            "runtime_size": list(RUNTIME_SIZE),
+            "safe_area": [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]],
+            "scale": SCALE,
+            "color_limit": COLOR_LIMIT,
+            "visible_target": list(VISIBLE_TARGET),
+            "bottom_padding": BOTTOM_PADDING,
+            "normalization": {
+                "mode": NORMALIZATION_MODE,
+            },
+            "expression_notes": [expression_note],
+            "intended_godot_use": "Tavern CustomerSprite Toby expression portrait",
+        }
     manifest = {
         "id": "toby_bust_portrait",
-        "style_profile": "ryan_mira_distinct_low_detail_pixel_v2",
+        "style_profile": STYLE_PROFILE,
         "source": RAW_SOURCE.relative_to(ROOT).as_posix(),
+        "prompt": PROMPT.relative_to(ROOT).as_posix(),
+        "expression_source": RAW_SOURCE.relative_to(ROOT).as_posix(),
         "comparison_references": [
             RYAN_REFERENCE.relative_to(ROOT).as_posix(),
             MIRA_REFERENCE.relative_to(ROOT).as_posix(),
         ],
-        "source_rect": SOURCE_RECT,
-        "native": (SOURCE_DIR / f"{PORTRAIT_ID}_native.png").relative_to(ROOT).as_posix(),
-        "runtime": (RUNTIME_DIR / f"{PORTRAIT_ID}.png").relative_to(ROOT).as_posix(),
+        "source_rect": rects[0],
+        "grid": {
+            "columns": EXPRESSION_COLUMNS,
+            "rows": EXPRESSION_ROWS,
+        },
+        "normalization": {
+            "mode": NORMALIZATION_MODE,
+        },
+        "native": (SOURCE_DIR / "toby_neutral_native.png").relative_to(ROOT).as_posix(),
+        "runtime": (RUNTIME_DIR / "toby_neutral.png").relative_to(ROOT).as_posix(),
         "native_size": list(NATIVE_SIZE),
         "runtime_size": list(RUNTIME_SIZE),
         "safe_area": [0, 0, NATIVE_SIZE[0], NATIVE_SIZE[1]],
         "scale": SCALE,
         "color_limit": COLOR_LIMIT,
-        "target_visible_width": TARGET_VISIBLE_WIDTH,
+        "visible_target": list(VISIBLE_TARGET),
+        "bottom_padding": BOTTOM_PADDING,
         "intended_godot_use": "Tavern CustomerSprite Toby bust portrait behind TabletopArt",
+        "portraits": portraits,
         "character_notes": [
             "teenage wandering apprentice",
-            "stubborn tired expression",
+            "v5 important NPC close-camera expression sheet",
             "dirty blond bowl-cut hair and ragged gray-green shoulder cape",
-            "large readable shapes: patched shirt, belt pouch, awkward short sword, contract roll",
-            "nearest-neighbor native pass with a tight palette to avoid high-resolution illustration texture",
+            "large readable shapes: patched shirt, belt pouch, awkward short sword, asymmetrical charm",
+            "hard pixel-game source with low-density detail and exact nearest-neighbor runtime export",
         ],
         "bar_occlusion_contract": {
             "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
@@ -126,65 +210,48 @@ def write_manifest() -> None:
     MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def backed(image: Image.Image, size: tuple[int, int]) -> Image.Image:
-    preview = ImageOps.contain(image.convert("RGBA"), size, Image.Resampling.NEAREST)
-    out = Image.new("RGBA", size, (24, 20, 16, 255))
-    out.alpha_composite(preview, ((size[0] - preview.width) // 2, (size[1] - preview.height) // 2))
-    return out
+def make_contact_sheet(natives: list[tuple[str, Image.Image]]) -> None:
+    save_character_contact_sheet(
+        CONTACT_SHEET,
+        "Toby character contract sheet",
+        "v5 expression sheet, native 128x160 -> runtime 512x640",
+        natives,
+    )
 
 
-def load_reference(path: Path) -> Image.Image:
-    if path.exists():
-        return Image.open(path).convert("RGBA")
-    return Image.new("RGBA", RUNTIME_SIZE, (0, 0, 0, 0))
-
-
-def make_contact_sheet(source: Image.Image, native: Image.Image, runtime: Image.Image) -> None:
-    CONTACT_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    out = Image.new("RGBA", (1180, 500), (18, 14, 11, 255))
-    draw = ImageDraw.Draw(out)
-    draw.text((20, 18), "Toby bust portrait pipeline", fill=(222, 204, 176, 255))
-    draw.text((20, 46), "v2 distinct low-detail native pass: Ryan and Mira comparison, native 70x90, runtime 280x360", fill=(180, 168, 144, 255))
-    source_preview = ImageOps.contain(source.convert("RGBA"), (190, 250), Image.Resampling.LANCZOS)
-    out.alpha_composite(source_preview, (24, 88))
-    draw.text((24, 352), "raw v2 source", fill=(180, 168, 144, 255))
-
-    ryan_preview = ImageOps.contain(load_reference(RYAN_REFERENCE), (170, 250), Image.Resampling.NEAREST)
-    ryan_backed = Image.new("RGBA", (190, 270), (24, 20, 16, 255))
-    ryan_backed.alpha_composite(ryan_preview, ((190 - ryan_preview.width) // 2, 8))
-    out.alpha_composite(ryan_backed, (236, 96))
-    draw.text((236, 392), "Ryan neutral reference", fill=(180, 168, 144, 255))
-
-    mira_preview = ImageOps.contain(load_reference(MIRA_REFERENCE), (170, 250), Image.Resampling.NEAREST)
-    mira_backed = Image.new("RGBA", (190, 270), (24, 20, 16, 255))
-    mira_backed.alpha_composite(mira_preview, ((190 - mira_preview.width) // 2, 8))
-    out.alpha_composite(mira_backed, (444, 96))
-    draw.text((444, 392), "Mira neutral reference", fill=(180, 168, 144, 255))
-
-    native_preview = native.resize((NATIVE_SIZE[0] * 4, NATIVE_SIZE[1] * 4), Image.Resampling.NEAREST)
-    out.alpha_composite(backed(native_preview, (300, 370)), (650, 82))
-    draw.text((650, 462), "Toby native 4x preview", fill=(180, 168, 144, 255))
-
-    runtime_preview = ImageOps.contain(runtime, (150, 220), Image.Resampling.NEAREST)
-    backed_runtime = Image.new("RGBA", (160, 220), (24, 20, 16, 255))
-    backed_runtime.alpha_composite(runtime_preview, ((160 - runtime_preview.width) // 2, 0))
-    ImageDraw.Draw(backed_runtime).rectangle((0, 164, 160, 220), fill=(58, 35, 22, 240))
-    ImageDraw.Draw(backed_runtime).line((0, 164, 160, 164), fill=(205, 132, 58, 255), width=1)
-    out.alpha_composite(backed_runtime, (980, 132))
-    draw.text((980, 392), "bar occlusion preview", fill=(180, 168, 144, 255))
-    out.convert("RGB").save(CONTACT_SHEET)
+def validate_source_rect(portrait_id: str, source: Image.Image, source_rect: list[int]) -> None:
+    if len(source_rect) != 4:
+        raise ValueError(f"{portrait_id}: source_rect must have four values")
+    left, top, right, bottom = source_rect
+    if left < 0 or top < 0 or right > source.width or bottom > source.height:
+        raise ValueError(f"{portrait_id}: source_rect {source_rect} is outside source {source.size}")
 
 
 def main() -> None:
     if not RAW_SOURCE.exists():
         raise FileNotFoundError(f"missing Toby bust source: {RAW_SOURCE}")
+    if not PROMPT.exists():
+        raise FileNotFoundError(f"missing Toby prompt record: {PROMPT}")
+
     source = Image.open(RAW_SOURCE).convert("RGBA")
-    native = normalize_portrait(source)
-    runtime = save_exports(native)
-    write_manifest()
-    make_contact_sheet(source, native, runtime)
-    print("exported Toby bust portrait: " + PORTRAIT_ID)
-    print("contact sheet: docs/art/toby_bust_contact_sheet.png")
+    if source.width % EXPRESSION_COLUMNS != 0 or source.height % EXPRESSION_ROWS != 0:
+        raise ValueError(
+            f"Toby expression source {source.size} must divide into "
+            f"{EXPRESSION_COLUMNS}x{EXPRESSION_ROWS} fixed cells"
+        )
+
+    rects = cell_rects(source)
+    natives: list[tuple[str, Image.Image]] = []
+    for index, (portrait_id, _note) in enumerate(PORTRAIT_IDS):
+        validate_source_rect(portrait_id, source, rects[index])
+        native = normalize_portrait(source, rects[index])
+        save_exports(portrait_id, native)
+        natives.append((portrait_id, native))
+        print("exported Toby bust portrait: " + portrait_id)
+
+    write_manifest(rects)
+    make_contact_sheet(natives)
+    print("contact sheet: docs/art/characters/toby_contact_sheet.png")
 
 
 if __name__ == "__main__":

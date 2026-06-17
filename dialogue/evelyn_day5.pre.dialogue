@@ -1,0 +1,7 @@
+~ start
+do GameManager.set_customer_expression("welcoming")
+伊芙琳: 老板，一杯葡萄酒。账面上写普通款就好。
+伊芙琳: 我只是路过。镇上最近的委托结得很快，[color=#d6a84d]赔付单比讣告先到[/color]。
+do GameManager.set_customer_expression("neutral")
+伊芙琳: 这不是坏事。对活人来说，账结得快，痛就短一点。
+=> END

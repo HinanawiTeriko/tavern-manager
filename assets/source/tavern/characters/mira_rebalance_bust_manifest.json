@@ -1,0 +1,334 @@
+{
+  "id": "mira_rebalance_bust_portraits",
+  "style_profile": "mira_rebalanced_tavern_bust_v4_preview",
+  "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+  "prompt": "art_sources/generated_raw/characters/mira/mira_expression_sheet_prompt_v4.txt",
+  "comparison_references": [
+    "assets/textures/characters/ryan_neutral.png",
+    "assets/textures/characters/toby_neutral.png",
+    "assets/textures/characters/mira_neutral.png"
+  ],
+  "grid": {
+    "columns": 4,
+    "rows": 2
+  },
+  "native_size": [
+    128,
+    160
+  ],
+  "runtime_size": [
+    512,
+    640
+  ],
+  "safe_area": [
+    0,
+    0,
+    128,
+    160
+  ],
+  "scale": 4,
+  "color_limit": 72,
+  "visible_target": [
+    124,
+    154
+  ],
+  "bottom_padding": 3,
+  "source_crop_bleed": 48,
+  "intended_godot_use": "Mira tavern customer bust rebalance preview; not wired into runtime data",
+  "portraits": {
+    "mira_rebalance_neutral": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        0,
+        0,
+        432,
+        512
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_neutral_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_neutral.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "guarded professional half-smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_smile": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        336,
+        0,
+        816,
+        512
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_smile_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_smile.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "genuine warm smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_surprised": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        720,
+        0,
+        1200,
+        512
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_surprised_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_surprised.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "surprised raised brows"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_serious": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        1104,
+        0,
+        1536,
+        512
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_serious_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_serious.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "serious direct gaze"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_guilty": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        0,
+        512,
+        432,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_guilty_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_guilty.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "guilty averted glance"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_conflicted": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        336,
+        512,
+        816,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_conflicted_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_conflicted.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "conflicted hesitation"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_resolved": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        720,
+        512,
+        1200,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_resolved_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_resolved.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "resolved accountability"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    },
+    "mira_rebalance_detached": {
+      "source": "art_sources/generated_raw/characters/mira/mira_expression_sheet_source_v4.png",
+      "source_rect": [
+        1104,
+        512,
+        1536,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/mira_rebalance_detached_native.png",
+      "runtime": "assets/textures/characters/mira_rebalance_detached.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "expression_notes": [
+        "detached withdrawal"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Mira rebalance preview expression portrait"
+    }
+  },
+  "character_notes": [
+    "preview-only rebalanced Mira source",
+    "keeps silver-gray short hair, glasses, mature account-merchant identity",
+    "targets Ryan/Toby/regular customer tavern bust proportions",
+    "broader shoulder block, fewer fine vertical coat lines, lower accessory density"
+  ]
+}

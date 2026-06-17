@@ -1,0 +1,19 @@
+Use case: stylized-concept
+Asset type: single-expression raw character bust reference for a future pixel-art portrait pipeline, preview only
+Primary request: create ONE neutral expression bust reference for a mature female antagonist called "the Grey Ledger Lady", a charismatic contract broker and false savior in a dungeon tavern management game.
+
+Format requirements: single character only, waist-up bust from head to belt and upper hips, centered with generous padding, flat solid #00ff00 chroma-key green background, no labels, no text, no UI, no frame. Same kind of source reference as a pixel-art character portrait pipeline input, not a cinematic illustration.
+
+Subject: woman around 38-45, quietly beautiful but visibly tired, kind grey-green eyes, slender mature face, soft listening expression, faint sympathetic smile. She should look trustworthy at first glance and morally dangerous only after a second look. Not seductive, not theatrical.
+
+Hair and face: deep ink-black hair with two narrow ash-white streaks, parted cleanly and gathered into a low braided loop behind the neck; a few neat loose strands. No short hair, no silver bob, no glasses, no monocle.
+
+Clothing silhouette: asymmetrical ash-linen ledger vestment, NOT a fitted jacket. Sleeveless front apron-tabard shaped like overlapping parchment sheets, broad soft charcoal shoulder mantle, loose bone-ivory under-sleeves gathered at the wrists, low square neckline with a small old-silver clasp, split lower hem like stacked documents. It should feel like a contract notary, relief-house matron, and debt registrar blended together, not a merchant traveler and not an adventurer.
+
+Signature readable props: one flat black ledger tablet hanging at her waist by a cord, a small abacus-bead rosary looped around one gloved hand, thin parchment strips tucked under the clasp; abstract ink marks only, no readable text.
+
+Style target: crisp hand-authored pixel-art bust source / anime-fantasy character sheet source, thick dark outlines, readable blocky silhouette, restrained chunky pixel clusters, limited warm dungeon palette, low-density clothing detail, suitable to survive downscaling to 128x160 native and 512x640 runtime. Avoid glossy high-resolution portrait rendering.
+
+Color palette: charcoal black, ash linen grey, bone ivory sleeves, old silver hardware, tiny dried-wine accent at the clasp, warm candle highlights.
+
+Hard avoid: no readable text, no logos, no watermark, no modern clothing, no armor, no adventurer cloak, no fitted merchant coat, no high-collar dark jacket, no star or astrology props, no red glowing eyes, no horns, no exaggerated villain grin, no cleavage focus, no seductive pose, do not resemble a short silver-haired glasses merchant woman, do not use #00ff00 anywhere on the character.

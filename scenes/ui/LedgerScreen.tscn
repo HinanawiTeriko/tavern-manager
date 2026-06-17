@@ -25,14 +25,15 @@ stretch_mode = 5
 
 [node name="StatsPanelArt" type="TextureRect" parent="ArtLayer"]
 layout_mode = 0
-offset_left = 112.0
-offset_top = 392.0
-offset_right = 592.0
+offset_left = 376.0
+offset_top = 424.0
+offset_right = 904.0
 offset_bottom = 656.0
 mouse_filter = 2
 stretch_mode = 5
 
 [node name="FatePanelArt" type="TextureRect" parent="ArtLayer"]
+visible = false
 layout_mode = 0
 offset_left = 632.0
 offset_top = 392.0
@@ -40,6 +41,13 @@ offset_right = 1112.0
 offset_bottom = 656.0
 mouse_filter = 2
 stretch_mode = 5
+
+[node name="GuestSilhouetteLayer" type="Control" parent="ArtLayer"]
+layout_mode = 0
+offset_top = 84.0
+offset_right = 1280.0
+offset_bottom = 390.0
+mouse_filter = 2
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 0
@@ -57,12 +65,13 @@ horizontal_alignment = 1
 
 [node name="StatsList" type="VBoxContainer" parent="UI"]
 layout_mode = 0
-offset_left = 160.0
-offset_top = 456.0
-offset_right = 520.0
-offset_bottom = 576.0
+offset_left = 506.0
+offset_top = 470.0
+offset_right = 846.0
+offset_bottom = 620.0
 
 [node name="FateTitle" type="Label" parent="UI"]
+visible = false
 layout_mode = 0
 offset_left = 676.0
 offset_top = 420.0
@@ -72,6 +81,7 @@ text = "今晚余波"
 horizontal_alignment = 1
 
 [node name="FateList" type="VBoxContainer" parent="UI"]
+visible = false
 layout_mode = 0
 offset_left = 676.0
 offset_top = 464.0

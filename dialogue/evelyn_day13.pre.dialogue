@@ -1,0 +1,6 @@
+~ start
+do GameManager.set_customer_expression("assessing")
+伊芙琳: 葡萄酒。今天按公会清算价记账。
+伊芙琳: 你已经听过莱恩、托比和米拉的名字。先去看[color=#d6a84d]赔付登记处[/color]。
+伊芙琳: 别急着找机器。旧账最先露出来的，通常是顺序。
+=> END

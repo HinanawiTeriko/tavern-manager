@@ -1,0 +1,6 @@
+~ start
+do GameManager.set_customer_expression("knowing")
+伊芙琳: 草药茶。今天不喝酒，清醒一点好。
+伊芙琳: 告示板上那个[color=#d6a84d]黑齿矿脉[/color]，名字写得很新，批次号倒是很旧。
+伊芙琳: 有些孩子以为自己接到第一份委托，其实只是被放进一张旧表格。
+=> END

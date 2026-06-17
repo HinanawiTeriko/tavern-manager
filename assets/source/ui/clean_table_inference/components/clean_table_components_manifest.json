@@ -1,0 +1,314 @@
+{
+  "id": "clean_table_component_assets",
+  "scale": 4,
+  "style_reference": "art_sources/generated_raw/clean_table_inference/clean_table_components_style_reference_v1.png",
+  "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+  "assets": {
+    "clue_scrap": {
+      "id": "clue_scrap",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/clue_scrap_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        245,
+        235,
+        1290,
+        790
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/clue_scrap_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/clue_scrap.png",
+      "native_size": [
+        66,
+        19
+      ],
+      "size": [
+        264,
+        76
+      ],
+      "safe_area": [
+        24,
+        12,
+        240,
+        64
+      ],
+      "nine_slice_margins": [
+        36,
+        28,
+        36,
+        28
+      ],
+      "intended_godot_use": "Dynamic clue scrap Panel StyleBoxTexture and filled blank paper."
+    },
+    "inference_note": {
+      "id": "inference_note",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/inference_note_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        120,
+        50,
+        1130,
+        1200
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/inference_note_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/inference_note.png",
+      "native_size": [
+        128,
+        142
+      ],
+      "size": [
+        512,
+        568
+      ],
+      "safe_area": [
+        42,
+        54,
+        470,
+        520
+      ],
+      "nine_slice_margins": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen BookArea inference paper StyleBoxTexture."
+    },
+    "ink_ring_slot": {
+      "id": "ink_ring_slot",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/ink_ring_slot_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        130,
+        80,
+        1120,
+        1080
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/ink_ring_slot_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/ink_ring_slot.png",
+      "native_size": [
+        12,
+        12
+      ],
+      "size": [
+        48,
+        48
+      ],
+      "safe_area": [
+        8,
+        8,
+        40,
+        40
+      ],
+      "nine_slice_margins": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "intended_godot_use": "Empty InferenceBlank Button StyleBoxTexture drop target."
+    },
+    "conclusion_strip": {
+      "id": "conclusion_strip",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/conclusion_strip_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        180,
+        230,
+        1995,
+        500
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/conclusion_strip_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/conclusion_strip.png",
+      "native_size": [
+        70,
+        16
+      ],
+      "size": [
+        280,
+        64
+      ],
+      "safe_area": [
+        24,
+        12,
+        256,
+        52
+      ],
+      "nine_slice_margins": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "intended_godot_use": "Solved conclusion paper strip Panel StyleBoxTexture."
+    },
+    "keyword_notes_panel": {
+      "id": "keyword_notes_panel",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/keyword_notes_panel_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        0,
+        0,
+        917,
+        1715
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/keyword_notes_panel_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/keyword_notes_panel.png",
+      "native_size": [
+        76,
+        142
+      ],
+      "size": [
+        304,
+        568
+      ],
+      "safe_area": [
+        34,
+        52,
+        270,
+        522
+      ],
+      "nine_slice_margins": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "intended_godot_use": "CleanTableInferenceScreen ClueArea keyword notes page TextureRect."
+    },
+    "paper_tag_button": {
+      "id": "paper_tag_button",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/paper_tag_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        190,
+        90,
+        1080,
+        393
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/paper_tag_button_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/paper_tag_button.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "intended_godot_use": "Legacy normal ExtinguishBtn paper tag Button StyleBoxTexture alias."
+    },
+    "paper_tag_button_normal": {
+      "id": "paper_tag_button_normal",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/paper_tag_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        190,
+        90,
+        1080,
+        393
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/paper_tag_button_normal_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/paper_tag_button_normal.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "intended_godot_use": "ExtinguishBtn normal paper tag Button StyleBoxTexture."
+    },
+    "paper_tag_button_hover": {
+      "id": "paper_tag_button_hover",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/paper_tag_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        190,
+        480,
+        1080,
+        783
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/paper_tag_button_hover_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/paper_tag_button_hover.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "intended_godot_use": "ExtinguishBtn hover paper tag Button StyleBoxTexture."
+    },
+    "paper_tag_button_pressed": {
+      "id": "paper_tag_button_pressed",
+      "source_file": "art_sources/generated_raw/clean_table_inference/components/paper_tag_button_states_source_v1.png",
+      "prompt": "art_sources/generated_raw/clean_table_inference/components/component_prompts_v1.txt",
+      "source_rect": [
+        190,
+        870,
+        1080,
+        1173
+      ],
+      "native_file": "assets/source/ui/clean_table_inference/components/paper_tag_button_pressed_native.png",
+      "output_file": "assets/textures/ui/clean_table_inference/components/paper_tag_button_pressed.png",
+      "native_size": [
+        44,
+        15
+      ],
+      "size": [
+        176,
+        60
+      ],
+      "safe_area": [
+        28,
+        10,
+        148,
+        50
+      ],
+      "nine_slice_margins": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "intended_godot_use": "ExtinguishBtn pressed paper tag Button StyleBoxTexture."
+    }
+  }
+}

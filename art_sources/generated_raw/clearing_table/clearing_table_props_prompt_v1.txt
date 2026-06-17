@@ -1,0 +1,7 @@
+Use case: stylized-concept
+Asset type: 1536x1536 pixel-art sprite sheet source for a game, flat chroma key background
+Primary request: a strict 4 by 4 grid of sixteen separate small accounting props. One object centered in each cell. Keep all props small with wide empty magenta padding.
+Objects by cell order: wooden nameplate, folded route card, blank status card, brass payout weight, heavy wax stamp, wooden nameplate variant, dark route card, blank reward marker, blank temporary worker card, heavy rename stamp, wooden nameplate variant, folded supply contract, brass deposit token, grey contract stamp, grey wax chip, brass paper clip.
+Style: original chunky pixel-art props, crisp black-brown outlines, old wood, brass, grey wax, muted candle highlights.
+Background: perfectly flat solid #ff00ff over the entire image, no shadows, no texture, no gradient.
+Constraints: no readable text, no letters, no numbers, no labels, no logos, no characters, no overlap, no giant parchment sheets, no UI.
