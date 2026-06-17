@@ -1,0 +1,19 @@
+Edit/recreate the previous Figgy portrait direction, keeping the same cute aqua fae/sylph identity, high side ponytail, feather pen, dark teal cape-jacket, cream shirt, parchment sash, and muted red wax-seal brooch, but fix the crop and important-NPC camera.
+
+Asset type: single raw AI source portrait for a Godot pixel-game important NPC bust pipeline, intended for later 128x160 native normalization and 512x640 runtime export.
+
+Canvas and format: vertical portrait canvas, about 4:5 aspect ratio like one important NPC portrait cell. One centered bust portrait only. Flat chroma-key background.
+
+Critical crop correction: this is a bust, not a half-body. Show head, shoulders, chest, waist, belt, and only the very top of the upper hips. The bottom edge of the character must stop immediately below the belt/sash area. Do not show skirt length, trouser legs, thighs, knees, or any long lower-body silhouette. Put the belt and sash close to the lower third/bottom edge of the character. If there is a pouch or blank note, it must be small and partly at belt level, not hanging low.
+
+Camera target: match the raw important NPC reference family of Ryan v8 and Mira v4 neutral cells: readable face, enough torso for costume identity, clean stop at belt/upper hips, not a headshot, not full body, not fashion illustration.
+
+Character: cute young adult female fae/sylph, pale moonlit skin, long pointed ears, bright mischievous eyes, no horns, no tail, no purple skin, no green skin. Aqua hair in one high side ponytail curled like folded paper ribbon, large chunky locks, clear silhouette. Funny, polite, absurdly confident warning-notice rhetoric specialist.
+
+Props and outfit: one feather pen held upright, one tiny blank parchment note tucked at the belt, dark teal-black cropped cape-jacket, cream shirt, parchment-yellow sash, simple belt pouch, one muted red wax-seal brooch. Low accessory density. No large hanging sign, no sign board, no visible writing, no fake letters, no numbers, no runes.
+
+Style/medium: crisp hand-authored pixel-game/anime-fantasy character source, thick dark outlines, stair-stepped chunky silhouette, posterized flat colors, limited warm dungeon tavern palette with aqua accent. Designed to survive downscaling to 128x160 native. Avoid glossy high-resolution illustration, painterly rendering, airbrush, watercolor, stippling, soft blur, micro-detail, realistic texture, fashion illustration polish.
+
+Background: perfectly flat solid #00ff00 chroma-key background, one uniform color with no shadows, gradients, texture, floor plane, frame, lighting variation, labels, words, UI, watermark, or logo. Do not use #00ff00 anywhere on the character.
+
+Hard avoid: no brown hair, no default human girl, no readable text, no fake letters, no numbers, no logos, no UI frame, no speech bubble, no full-body pose, no skirt length, no pants legs, no thighs, no knees, no square canvas, no huge prop board, no dense tool belt, no many dangling scrolls, no soft antialiased borders, no painterly micro-detail.

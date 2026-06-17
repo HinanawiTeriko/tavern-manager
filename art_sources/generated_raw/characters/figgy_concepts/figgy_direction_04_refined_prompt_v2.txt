@@ -1,0 +1,18 @@
+Use case: stylized-concept
+Asset type: single raw AI source portrait for a Godot pixel-game important NPC bust pipeline; this is raw source art for later 128x160 native pixel normalization and 512x640 nearest-neighbor runtime export, not final runtime art.
+
+Primary request: Regenerate Figgy direction 04 as a cute young adult female fae/sylph danger-warning-sign rhetoric specialist. She is funny, polite, absurdly confident, and visually able to out-argue fate by exploiting wording loopholes. Make her feel like an important NPC in the same raw source family as Ryan v8, Mira v4, and Toby v5: close tavern NPC bust camera, chunky silhouette, limited detail density, thick dark outlines, posterized flat color blocks.
+
+Character: tiny young adult female fae/sylph, pale moonlit skin, long pointed ears, bright mischievous eyes, no horns, no tail, no purple skin, no green skin. Translucent aqua hair in one high side ponytail shaped like a curled paper ribbon, but drawn as large readable hair chunks, not wispy strands. Cute face, comic confidence, not sexy, not childlike.
+
+Profession cues: warning-sign rhetoric specialist / notice editor. Keep props sparse and readable: one small blank parchment notice clipped to her belt, one feather pen held upright, one compact stamp hammer or wax-seal brooch. No large hanging sign board, no readable text, no letters, no numbers, no runes, no symbols that look like writing.
+
+Outfit: dark teal-black cropped cape-jacket with broad simple shapes, cream shirt, parchment-yellow sash, one muted red wax-seal brooch, simple belt pouch. Low accessory density. Avoid many pouches, many straps, tiny buckles, dense trim, and thin jewelry.
+
+Camera and framing: important NPC close-camera bust, 3/4 front view. Show head, shoulders, chest, waist, belt, and upper hips only. Similar raw source camera distance to Ryan v8 and Mira v4 neutral cells: readable face, still enough torso and belt/upper hips, not a headshot, not full body. Center the character with generous flat green padding. Keep shoulders and hair safely inside the image.
+
+Style/medium: crisp hand-authored pixel-game/anime-fantasy character source, thick dark ink-like outlines, stair-stepped chunky silhouette, posterized flat colors, limited warm dungeon tavern palette with aqua accent. Designed to survive downscaling to 128x160 native. Avoid glossy high-resolution illustration, painterly rendering, airbrush, watercolor, stippling, soft blur, micro-detail, realistic texture, fashion illustration polish.
+
+Background: perfectly flat solid #00ff00 chroma-key background, one uniform color with no shadows, gradients, texture, floor plane, frame, lighting variation, labels, words, UI, watermark, or logo. Do not use #00ff00 anywhere on the character.
+
+Hard avoid: no brown hair, no default human girl, no readable text, no fake letters, no numbers, no logos, no UI frame, no speech bubble, no full-body pose, no thighs, no knees, no huge prop board, no dense tool belt, no many dangling scrolls, no soft antialiased borders, no painterly micro-detail.

@@ -1,126 +1,77 @@
-# 地下城酒馆 (Tavern Manager)
+# Dungeon Tavern
 
-> Godot 4.6 标准版 / GDScript / 2D GL Compatibility 的吧台物理经营原型。
+Godot 4.6.3 pixel-art dungeon tavern management game. The current build is no longer a simple crafting prototype: it combines DayMap preparation, rumor-driven menu planning, physics-based tavern service, regular customer memory, important NPC story routes, and nightly settlement replay.
 
-## 项目现状
-
-当前主线已经从旧的“固定合成槽 + 按钮手势 + SeasoningZone”改为“物理吧台工作面 + 三容器加工 + 拖拽上菜”。
-
-- 主场景：`res://scenes/ui/TitleScreen.tscn`
-- 夜晚营业：`res://scenes/ui/Tavern.tscn`
-- 核心工作面：`scripts/ui/bar_workspace.gd`
-- 三个 Day 1 容器：酒桶 `barrel`、烤架 `grill`、炖锅 `pot`
-- 物理物品：`scenes/test/desk_item.tscn` + `scripts/test/desk_item.gd`
-- 配方查询：`CraftSystem.query_recipe(container, ingredients)`
-
-## 游戏简介
-
-玩家经营一间地下城酒馆。白天在 DayMap 选择目的地、采集材料、触发 NPC 对话；夜晚在吧台后从快捷栏取材，把材料作为物理物体拖到桌面，通过酒桶、烤架和炖锅制作订单，再把成品拖到客人投放区完成上菜。上菜时的力度会进入 L3 动作风格系统，影响重要 NPC 的信任与反馈。
-
-### 当前可玩循环
-
-1. `TitleScreen` 点击开始进入 `DayMap`。
-2. 选择或跳过白天准备，进入 `Tavern`。
-3. 从底部 `ShortcutBar` 点取材料，生成可拖拽的 `DeskItem`。
-4. 把材料投入酒桶、烤架或炖锅，容器产出物理成品。
-5. 将成品拖到 `CustomerDropArea` 松手，上菜并结算金币、声望和叙事变量。
-6. 打烊后进入 `LedgerScreen`，继续下一天；第 30 天后进入 `EndingScreen`。
-
-## 当前内容
-
-| 内容 | 当前状态 |
-|------|----------|
-| 基础材料 | 5 种：麦芽、葡萄、面粉、生肉、草药 |
-| 可上菜成品 | 11 种：酒桶 5、烤架 3、炖锅 3 |
-| 容器 | 酒桶、烤架、炖锅已接入 Tavern |
-| 物理手感 | RigidBody2D + PinJoint 拖拽，物品 profile 可配置 |
-| 酒桶 | 投料、摇晃计数、品质 normal/good、物理产出 |
-| 烤架 | 单面按压煎制，熟/焦定稿 |
-| 炖锅 | 投料后用物理勺搅拌，进度满足后产出 |
-| L3 风格 | 上菜速度分为温柔、平静、粗鲁，接入 Mira/Day4/wine 竖切片 |
-| NPC 叙事 | Ryan Day 1-3、Mira Day 4/12 |
-
-## 快速开始
-
-### 环境要求
-
-- Godot 4.6.x standard，非 .NET/Mono 版
-- Windows / macOS / Linux
-
-### 运行
-
-用 Godot 4.6.x 标准版编辑器打开项目目录，运行主场景即可。项目没有额外编译、打包脚本、linter 或 CI。
-
-Godot MCP 环境可能启动 Mono 并输出 `.NET: Assemblies not found`，只要标准编辑器不复现，按环境噪声处理。
-
-### 基本操作
-
-| 操作 | 方式 |
-|------|------|
-| 取材料 | 鼠标左键点击底部快捷栏槽位 |
-| 拖动物品/容器/勺子 | 鼠标左键按住并移动 |
-| 投入酒桶 | 把材料丢入桶口，速度足够才会接收 |
-| 摇酒桶 | 抓住酒桶左右晃动，摇够后产出 |
-| 烤制 | 抓着可烤材料按在烤架热区，离开热区时定稿 |
-| 炖煮 | 把材料放进锅，再用勺尖在锅内搅动 |
-| 上菜 | 把成品拖进客人投放区松手 |
-| 菜单 | `E` 打开/关闭配方与背包面板 |
-
-## 项目结构
+## Current Loop
 
 ```text
-tavern-manager/
-├── project.godot                  # Godot 配置，主场景为 TitleScreen
-├── assets/                        # 纹理、图标、导入资源
-├── data/                          # JSON 玩法数据
-│   ├── items.json                 # 物品、价格、颜色、profile 引用
-│   ├── recipes.json               # container + ingredients 配方表
-│   ├── item_physics_profiles.json # 物理/碰撞/反馈 profile
-│   ├── barrel.json                # 酒桶摇晃阈值
-│   └── craft_style_thresholds.json# L3 风格阈值
-├── dialogue/                      # Dialogue Manager 对话
-├── scenes/
-│   ├── ui/                        # TitleScreen / DayMap / Tavern / Ledger / Ending
-│   └── test/                      # 物理沙盘和无 runner 的测试场景
-├── scripts/
-│   ├── game_manager.gd            # Autoload 顶层协调器
-│   ├── systems/                   # RefCounted 子系统
-│   ├── ui/                        # 正式 UI 与吧台工作面
-│   └── test/                      # 沙盘脚本与手动测试脚本
-├── docs/                          # 项目文档
-└── addons/                        # vendored 插件，不随意修改
+TitleScreen
+  -> DayMap: visit locations, gather resources, hear rumors, shop, investigate
+  -> Tavern: choose the daily menu, serve guests on the physics bar
+  -> LedgerScreen: replay results, story/fate notices, restart-current-day option
+  -> next DayMap or EndingScreen
 ```
 
-## 重要文档
+The authoritative runtime coordinator is `GameManager` (`res://scripts/game_manager.gd`). It owns the system instances, scene handoffs, save/load, day restart snapshots, rumor/menu preparation, guest spawning, service resolution, story item delivery, and settlement data.
 
-| 文档 | 用途 |
-|------|------|
-| [docs/01_AI开发规范.md](docs/01_AI开发规范.md) | 目录与代码约定 |
-| [docs/02_AI项目速查.md](docs/02_AI项目速查.md) | 当前系统速查 |
-| [docs/03_资源清单.md](docs/03_资源清单.md) | 文件、场景、数据、测试资源清单 |
-| [docs/04_游戏总览.md](docs/04_游戏总览.md) | 当前游戏定位与体验目标 |
-| [docs/05_核心机制.md](docs/05_核心机制.md) | 当前已实现规则 |
-| [docs/13_合成系统物理重设计需求文档.md](docs/13_合成系统物理重设计需求文档.md) | 物理工作面设计与落地状态 |
-| [docs/16_物品物理手感Profile接口设计.md](docs/16_物品物理手感Profile接口设计.md) | 物品 profile 接口 |
-| [docs/17_Day1三容器配方与解锁设计.md](docs/17_Day1三容器配方与解锁设计.md) | Day 1 三容器配方设计 |
+## Key Systems
 
-`docs/10_酿造系统需求文档.md` 和 `docs/14_吧台交互系统重设计_legacy.md` 是历史/废弃文档，不作为新开发依据。
+| Area | Main Files |
+|---|---|
+| Day/night flow | `scripts/game_manager.gd`, `scripts/systems/day_cycle_system.gd` |
+| DayMap | `scenes/ui/DayMap.tscn`, `scripts/ui/day_map_view.gd`, `scripts/systems/day_map_system.gd`, `data/locations.json` |
+| Rumors and menu planning | `scripts/systems/rumor_system.gd`, `scripts/systems/appetite_system.gd`, `data/rumors.json`, `data/guest_appetites.json`, `data/guest_group_profiles.json` |
+| Guests | `scripts/systems/guest_system.gd`, `data/regular_customers.json`, `data/guest_reactions.json` |
+| Tavern physics | `scenes/ui/Tavern.tscn`, `scripts/ui/bar_workspace.gd`, `scripts/test/desk_item.gd`, `scripts/ui/kitchen_container.gd` |
+| Recipes and inventory | `scripts/systems/craft_system.gd`, `scripts/systems/inventory_system.gd`, `data/items.json`, `data/recipes.json` |
+| Story and inference | `scripts/systems/narrative_manager.gd`, `scripts/systems/inference_system.gd`, `data/npcs.json`, `data/inference_puzzles.json`, `dialogue/` |
+| Settlement | `scenes/ui/LedgerScreen.tscn`, `scripts/ui/ledger_screen.gd`, `scripts/ledger_data.gd` |
+| Save/restart | `scripts/systems/save_system.gd`, `GameManager.capture_day_start_snapshot()`, `GameManager.restart_current_day()` |
 
-## 开发约定
+## Playable Content Snapshot
 
-- GDScript 使用 tabs，文件/变量/函数用 `snake_case`。
-- 场景和脚本分树存放：`.tscn` 在 `scenes/`，`.gd` 在 `scripts/`。
-- 子系统放 `scripts/systems/`，尽量保持 `RefCounted`，跨系统行为通过 `GameManager` 路由。
-- 使用绝对 `res://` 路径。
-- 不修改 `addons/`，除非明确更新依赖。
-- 提交前至少检查 `git status` 和冲突标记。
+- 30-day structure target, with currently implemented Ryan, Mira, Toby, Evelyn/grey-ledger routes.
+- 30 named regular customers with neutral/satisfied/dissatisfied portraits.
+- Anonymous guest groups driven by DayMap rumors, each with reusable regular-customer portrait pools.
+- Menu preparation before service, using current-day rumors and previous-night echoes.
+- Food appetite tags and customer memory affect feedback and word-of-mouth.
+- Tavern service uses physical dragging, barrel/grill/pot processing, seasoning, quality, and customer drop-off.
+- Ledger settlement shows guest entries, rumor summary, score impact, fate notices, and restart-current-day flow.
 
-## 验证建议
+## Run
 
-项目没有自动测试 runner。改 gameplay/UI 后优先走标准编辑器手测：
+Open the repository in Godot 4.6.3 standard and run the main scene:
 
 ```text
-TitleScreen -> DayMap -> Tavern -> LedgerScreen -> DayMap
+res://scenes/ui/TitleScreen.tscn
 ```
 
-三容器相关改动还应在 Tavern 中逐个验证酒桶、烤架、炖锅的主要配方，并确认上菜结算无错误/警告。需要跑测试场景时可用 `scenes/test/test_l3.tscn`、`test_barrel_shake.tscn`、`test_kitchen_containers.tscn` 等 headless 场景辅助验证。
+The project is GDScript-only for gameplay. The Godot MCP/editor environment may print `.NET` noise; treat that as environmental unless the standard editor reproduces it.
+
+## Targeted Verification
+
+Use the Godot console binary in this workspace:
+
+```powershell
+& 'D:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'D:\game\tavern-manager' 'res://scenes/test/test_rumor_appetite_system.tscn'
+```
+
+High-value smoke tests:
+
+| Purpose | Scene |
+|---|---|
+| Baseline systems | `res://scenes/test/test_baseline_systems.tscn` |
+| DayMap logic | `res://scenes/test/test_day_map_system.tscn` |
+| DayMap UI contracts | `res://scenes/test/test_day_map_scrollbars.tscn` |
+| Rumors/appetite/menu prep | `res://scenes/test/test_rumor_appetite_system.tscn` |
+| Regular customers | `res://scenes/test/test_regular_customers.tscn` |
+| Tavern UI contracts | `res://scenes/test/test_tavern_patience_ui.tscn` |
+| Settlement | `res://scenes/test/test_night_settlement_screen.tscn` |
+| Restart current day | `res://scenes/test/test_restart_current_day.tscn` |
+| Save roundtrip | `res://scenes/test/test_save_roundtrip.tscn` |
+
+Some headless tests can emit `ObjectDB instances leaked at exit`; use the process exit code and test failure count as the primary signal unless the leak is the subject of the change.
+
+## Documentation
+
+Start with [docs/00_文档索引.md](docs/00_文档索引.md). The old numbered planning documents were moved under `docs/archive/legacy-numbered/` and are historical reference only.

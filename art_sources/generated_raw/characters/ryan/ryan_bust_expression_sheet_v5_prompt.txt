@@ -1,0 +1,25 @@
+Use case: stylized-concept
+Asset type: raw source sheet for an important NPC portrait, later converted through a native pixel pipeline to 128x160 native and 512x640 runtime.
+Primary request: Create one 4 columns x 2 rows expression sheet for Ryan, an original important NPC in a pixel-art dungeon tavern management game. The sheet must contain eight expressions of the same character, left to right, top row then bottom row: neutral, confident, hesitant, alarmed, resolved, relieved, wary, broken.
+
+Important NPC rule: Ryan should read as important because he has consistent identity, strong readable expressions, and a few memorable silhouette markers. Do not make him important by adding heavy armor, excessive ornament, heroic battle posing, or dense details.
+
+Style target: same artist family as crisp readable tavern character portraits like approved Vera/Belta, Mira, and Toby: anime-like but hard pixel-game shapes after downscaling, sharp dark ink outlines, warm tavern browns, dark teal or charcoal shadows, amber highlights, restrained chunky pixel clusters, clean face shapes, low-density costume detail, readable eyes and mouth. Designed to survive downscaling to 128x160 native pixels.
+
+Character identity: Ryan is a young adult apprentice adventurer who wants to look like a knight before he is ready. Messy chestnut-brown hair, earnest expressive face, worn leather tavern-road gear, patched brown vest or jerkin, cream shirt, small dull oath badge at chest, short muted charcoal-blue shoulder cape or scarf pinned close to the body, simple practice sword hilt partly visible near the hip. Keep the cape small and close; no large blue cloak. Light armor only as tiny worn leather or dull metal accents, not a metal hero suit.
+
+Expression details:
+1 neutral: guarded hopeful half-smile, hands relaxed near vest.
+2 confident: bright but still humble smile, one hand near the small badge.
+3 hesitant: worried eyes, shoulders slightly drawn inward, hand touching cape clasp.
+4 alarmed: surprised eyes, mouth slightly open, hands raised close to chest.
+5 resolved: quiet determination, steady gaze, one fist held low near heart.
+6 relieved: softened smile, shoulders dropping, hand open.
+7 wary: suspicious side glance, brows tense, body turned slightly guarded.
+8 broken: exhausted and ashamed, head lowered, eyes shadowed, posture collapsed but still readable.
+
+Composition: eight equal slots in a clean 4 columns x 2 rows grid, same character identity and outfit in every slot, bar-front half-body bust cropped around waist/top of hips, face and upper torso fill most of each cell, centered and bottom-aligned consistently, generous padding around hair and hands. No legs, no full-body poses.
+
+Background: perfectly flat solid #00ff00 chroma-key background across the entire sheet, with no shadows, gradients, texture, floor plane, or lighting variation.
+
+Constraints: eight expressions, approved Vera/Belta same artist family, no readable text, no labels, no watermark, no speech bubbles, no fake UI, no plot documents, no contracts, no scrolls, no papers, no floating symbols. Avoid heavy armor, big shoulder plates, large blue cloak, shiny silver hero armor, dense belts, tiny face, full-body framing, painterly softness, antialiased blur, and green pixels in the subject.

@@ -1,0 +1,16 @@
+Use case: stylized-concept
+Asset type: regular customer portrait source sheet for a pixel-art tavern management game, source art for later cropping and scaling
+Primary request: Create one expression sheet with exactly 4 columns x 3 rows on a perfectly flat solid #00ff00 chroma-key background. This is a SOURCE SHEET, so characters must be deliberately smaller with generous green margin for safe cropping. Ordinary regular customers only, not important NPC portraits.
+Input image role: Use the visible existing ordinary regular customer source sheets only for style language and ordinary-customer camera, but make this new sheet more safely padded than the reference. Do not follow the close-up v6 sheets. Do not use close-up bust framing.
+Canvas/layout: One clean sheet, 4 equal columns and 3 equal rows. Visible clean green gutters between panels. In every panel, the entire character plus any tool/prop must fit inside a central safe area occupying no more than about 70% of the panel width and no more than about 78% of the panel height. Leave a large flat green border around the whole silhouette: at least 15% panel height above the highest hair/horn/hat/weapon, at least 10% panel width on both left and right, and clear green space below the belt/torso. Nothing touches panel edges.
+Rows: row 1 neutral expression, row 2 satisfied/happy expression, row 3 dissatisfied/annoyed expression.
+Columns/characters:
+1. Ketta: dwarf woman, auburn twin braids, green miner cap, leather mining apron, compact sturdy build, small hammer/pick held close to the body and fully inside the panel.
+2. Bram: half-orc man, olive green skin, black shaved-sides topknot, rugged sleeveless leather work clothes, muscular but ordinary customer framing, elbows and crossed arms fully inside the panel.
+3. Sova: tiefling crystal sorter, violet swept short hair, small curved horns, dark practical clothes with a crystal pouch, horns and arms fully inside the panel.
+4. Petra: human quarry worker, silver close-cropped tousled hair, tan skin, rope coil/work shirt, hair and elbows fully inside the panel.
+Style/medium: Match the existing ordinary regular customer sheet: crisp chunky pixel-art clusters after downscaling, inked fantasy customer portraits, warm amber highlights, dark teal-brown dungeon tavern palette, restrained linework. Production asset tone, not concept poster art.
+Composition/framing: pulled-back waist-up from head through belt/upper hips, centered in each panel, face readable, not close-up, not a close-up bust. Characters should look slightly smaller than final in-game portraits because the pipeline will crop and scale them later. Preserve clear race, hair style, and hair color variation across the four ordinary regular customer columns.
+Background: perfectly flat uniform #00ff00 only, no shadows, no gradients, no texture, no floor plane.
+Text: no readable text, no labels, no logos, no watermark.
+Hard constraints: no edge cropping, no clipped hair, no clipped horns, no clipped tools, no clipped arms, no body or prop touches panel boundaries, no important NPC close-up camera, no extra characters, no scenery, no fake UI, no subject uses #00ff00.

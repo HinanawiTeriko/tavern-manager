@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_add_remove_real_deduction()
 	_test_capability_queries()
 	_test_game_manager_routes_through_system()
+	_test_shortcut_bindings_are_item_key_references()
 	_finish()
 
 
@@ -82,3 +83,25 @@ func _test_game_manager_routes_through_system() -> void:
 	gm.add_to_inventory("sleep_powder", 1)
 	_ok(gm.narrative.dialogue_vars.get("has_sleep_powder", false) == true, "adding sleep_powder should set has_sleep_powder narrative flag")
 	gm.remove_from_inventory("sleep_powder", 1)
+
+
+func _test_shortcut_bindings_are_item_key_references() -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	_ok(gm.has_method("get_shortcut_bindings"), "GameManager exposes shortcut binding snapshot")
+	_ok(gm.has_method("bind_shortcut_item"), "GameManager exposes shortcut bind API")
+	_ok(gm.has_method("can_bind_shortcut_item"), "GameManager exposes shortcut bind validation")
+	var defaults: Array = gm.get_shortcut_bindings()
+	_ok(defaults.size() == 10, "shortcut binding array has ten slots")
+	_ok(defaults[0] == "ale", "default slot0 is ale")
+	_ok(defaults[1] == "grape", "default slot1 is grape")
+	_ok(gm.can_bind_shortcut_item("north_sour_grape"), "rare material can bind to shortcut")
+	_ok(not gm.can_bind_shortcut_item("toby_contract"), "story item cannot bind to shortcut")
+	_ok(not gm.can_bind_shortcut_item("wine"), "product cannot bind to shortcut")
+	_ok(gm.bind_shortcut_item(0, "north_sour_grape"), "binding rare material succeeds")
+	_ok(gm.get_shortcut_bindings()[0] == "north_sour_grape", "slot0 stores rare material key")
+	_ok(gm.bind_shortcut_item(1, "north_sour_grape"), "rebinding same key to another slot succeeds")
+	var moved: Array = gm.get_shortcut_bindings()
+	_ok(moved[0] == "", "old duplicate binding is cleared")
+	_ok(moved[1] == "north_sour_grape", "new duplicate binding is kept")
+	_ok(not gm.bind_shortcut_item(2, "wine"), "binding product fails")

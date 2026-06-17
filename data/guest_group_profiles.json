@@ -1,0 +1,84 @@
+{
+  "groups": {
+    "mine": {
+      "displayName": "矿口客",
+      "namePrefixes": ["矿口", "石粉", "黑掌", "夜班"],
+      "nameSuffixes": ["搬运工", "采石工", "退伍兵", "领班"],
+      "preferredTags": ["顶饿", "热食", "力量"],
+      "fallbackOrders": ["meat_stew", "meat_cooked", "rock_lizard_steak", "malt_porridge"],
+      "portraitPool": ["regular_belta", "regular_dorin", "regular_gareth", "regular_bram"],
+      "patienceMultiplier": 0.92,
+      "tipMultiplier": 1.08,
+      "reputationOnSuccess": 1,
+      "matchLines": [
+        "这口正适合矿口夜班。",
+        "够热，也够顶饿，矿口的人会记住。",
+        "这份力道能撑到换班。"
+      ]
+    },
+    "trade": {
+      "displayName": "商路客",
+      "namePrefixes": ["南路", "账袋", "葡萄酒", "远行"],
+      "nameSuffixes": ["商人", "走货客", "吟游客", "车队伙计"],
+      "preferredTags": ["酒水", "体面", "精致"],
+      "fallbackOrders": ["wine", "old_road_wine", "spiced_wine", "herbal_ale"],
+      "portraitPool": ["regular_marco", "regular_lyra", "regular_qadir", "regular_maeve"],
+      "patienceMultiplier": 0.98,
+      "tipMultiplier": 1.16,
+      "reputationOnSuccess": 1,
+      "matchLines": [
+        "这份体面菜拿得出手。",
+        "商路上的人会喜欢这口酒香。",
+        "价钱配得上这份讲究。"
+      ]
+    },
+    "herbal": {
+      "displayName": "草药客",
+      "namePrefixes": ["银叶", "草篓", "露水", "林边"],
+      "nameSuffixes": ["巡林人", "采药人", "药客", "洗衣女工"],
+      "preferredTags": ["清香", "秘香", "轻快"],
+      "fallbackOrders": ["herb_tea", "herb_broth", "herbal_ale", "cave_mushroom_stew"],
+      "portraitPool": ["regular_elira", "regular_masha", "regular_fenna", "regular_nara"],
+      "patienceMultiplier": 1.12,
+      "tipMultiplier": 0.98,
+      "reputationOnSuccess": 1,
+      "matchLines": [
+        "草药味还在，清得出来。",
+        "这股清香像刚从林地回来。",
+        "轻快，不压胃。"
+      ]
+    },
+    "ledger": {
+      "displayName": "账房客",
+      "namePrefixes": ["账页", "墨手", "细算", "铜扣"],
+      "nameSuffixes": ["学徒", "书记", "符文学者", "审账人"],
+      "preferredTags": ["体面", "精致", "清香"],
+      "fallbackOrders": ["herb_tea", "wine", "spiced_wine", "old_road_wine"],
+      "portraitPool": ["regular_noel", "regular_selene", "regular_iris", "regular_yuval"],
+      "patienceMultiplier": 1.08,
+      "tipMultiplier": 1.0,
+      "reputationOnSuccess": 2,
+      "matchLines": [
+        "账房那边会喜欢这种清淡劲儿。",
+        "稳妥，体面，也方便谈话。",
+        "这味道不会搅乱一桌账。"
+      ]
+    },
+    "old_road": {
+      "displayName": "旧路客",
+      "namePrefixes": ["旧路", "灰披肩", "北风", "沉默"],
+      "nameSuffixes": ["熟人", "苦修僧", "车夫", "安静客"],
+      "preferredTags": ["清香", "热食", "顶饿"],
+      "fallbackOrders": ["old_road_wine", "herb_broth", "malt_porridge", "cave_mushroom_stew"],
+      "portraitPool": ["regular_jora", "regular_osric", "regular_oma", "regular_lio"],
+      "patienceMultiplier": 1.18,
+      "tipMultiplier": 0.9,
+      "reputationOnSuccess": 1,
+      "matchLines": [
+        "旧路人今晚会认这个味。",
+        "热气够安静，话也容易出口。",
+        "这份朴素劲儿合旧路胃口。"
+      ]
+    }
+  }
+}

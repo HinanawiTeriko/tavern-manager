@@ -22,6 +22,12 @@ func _ready() -> void:
 	_test_daymap_tutorial_matches_current_continue_flow(parsed)
 	_test_tutorial_data_declares_narrator_lines(parsed)
 	_test_tutorial_highlight_keys_match_trigger_rects(parsed)
+	_test_seasoning_tutorial_current_workspace_trigger()
+	_test_serve_tutorial_matches_table_order_groove(parsed)
+	_test_inference_tutorial_data(parsed)
+	_test_inference_tutorial_reset_contract()
+	_test_inference_tutorial_game_save_contract()
+	_test_ryan_arrival_starts_serve_tutorial_after_pre_dialogue()
 	for required in ["访问", "酒桶", "右键", "整理桌面", "Tab", "E"]:
 		_ok(text.contains(required), "Ryan slice tutorial mentions: " + required)
 	_finish()
@@ -71,8 +77,97 @@ func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> vo
 	var seasoning_steps: Array = parsed.get("seasoning", [])
 	_ok(not seasoning_steps.is_empty(), "seasoning tutorial step exists")
 	if not seasoning_steps.is_empty():
-		_ok(String(seasoning_steps[0].get("highlight_node", "")) == "SeasoningZone",
-			"seasoning tutorial highlights the seasoning zone trigger rect")
+		var seasoning_text := JSON.stringify(seasoning_steps)
+		_ok(String(seasoning_steps[0].get("highlight_node", "")) == "SeasoningShaker",
+			"seasoning tutorial highlights the current seasoning shaker")
+		for required in ["香料罐", "罐口", "摇", "右键"]:
+			_ok(seasoning_text.contains(required),
+				"seasoning tutorial explains current shaker use: " + required)
+		_ok(not seasoning_text.contains("调味区") and not seasoning_text.contains("SeasoningZone"),
+			"seasoning tutorial no longer points to the removed seasoning zone flow")
+
+
+func _test_serve_tutorial_matches_table_order_groove(parsed: Dictionary) -> void:
+	var serve_steps: Array = parsed.get("serve", [])
+	_ok(not serve_steps.is_empty(), "serve tutorial step exists")
+	if serve_steps.is_empty():
+		return
+	var serve_intro: Dictionary = serve_steps[0]
+	var text := String(serve_intro.get("description", ""))
+	for line in serve_intro.get("narrator_lines", []):
+		text += "\n" + String(line.get("text", ""))
+	_ok(not text.contains("头顶"), "serve tutorial no longer says orders appear over the customer's head")
+	_ok(text.contains("订单槽"), "serve tutorial points players to the current table order groove")
+
+
+func _test_seasoning_tutorial_current_workspace_trigger() -> void:
+	var workspace_source := FileAccess.get_file_as_string("res://scripts/ui/bar_workspace.gd")
+	_ok(workspace_source.contains("start_tutorial(\"seasoning\""),
+		"current BarWorkspace can start the seasoning tutorial")
+	_ok(workspace_source.contains("is_group_completed(\"craft\")"),
+		"seasoning tutorial waits until the craft tutorial is no longer pending")
+	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
+	_ok(tavern_source.contains("\"seasoning\"") and tavern_source.contains("SeasoningShaker"),
+		"TavernView exposes live SeasoningShaker tutorial highlight rects")
+
+
+func _test_inference_tutorial_data(parsed: Dictionary) -> void:
+	_ok(parsed.has("inference"), "inference tutorial group exists")
+	var inference_steps: Array = parsed.get("inference", [])
+	_ok(inference_steps.size() >= 3, "inference tutorial covers clue words, blanks, and continuing")
+	var keys := {}
+	var text := JSON.stringify(inference_steps)
+	for step in inference_steps:
+		keys[String(step.get("highlight_node", ""))] = true
+	_ok(keys.has("ClueArea"), "inference tutorial highlights the clue notes page")
+	_ok(keys.has("BookArea"), "inference tutorial highlights the inference book page")
+	_ok(keys.has("ExtinguishBtn"), "inference tutorial highlights the continue control")
+	_ok(text.contains("推断"), "inference tutorial copy names the deduction page")
+
+
+func _test_inference_tutorial_reset_contract() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(tm != null, "TutorialManager is available for inference tutorial reset test")
+	if tm == null:
+		return
+	var source := FileAccess.get_file_as_string("res://scripts/tutorial/tutorial_manager.gd")
+	_ok(source.contains("first_inference_shown"),
+		"TutorialManager tracks whether the inference tutorial was shown")
+	if not source.contains("first_inference_shown"):
+		return
+	var old_value = tm.get("first_inference_shown")
+	tm.set("first_inference_shown", true)
+	tm.replay_all()
+	_ok(bool(tm.get("first_inference_shown")) == false,
+		"replay_all resets the inference tutorial first-time flag")
+	tm.set("first_inference_shown", bool(old_value))
+
+
+func _test_inference_tutorial_game_save_contract() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(gm != null and tm != null, "GameManager and TutorialManager are available for inference tutorial save test")
+	if gm == null or tm == null:
+		return
+	var old_value = tm.first_inference_shown
+	tm.first_inference_shown = true
+	var captured: Dictionary = gm._capture_save_state()
+	var captured_tutorial: Dictionary = captured.get("tutorial", {})
+	_ok(captured_tutorial.get("first_inference_shown", null) == true,
+		"GameManager save state captures the inference tutorial first-time flag")
+
+	var default_state: Dictionary = gm._default_new_game_state()
+	var default_tutorial: Dictionary = default_state.get("tutorial", {})
+	_ok(default_tutorial.get("first_inference_shown", null) == false,
+		"new-game tutorial state defaults the inference tutorial flag to false")
+
+	tm.first_inference_shown = false
+	default_tutorial["first_inference_shown"] = true
+	default_state["tutorial"] = default_tutorial
+	gm._apply_save_state(default_state)
+	_ok(tm.first_inference_shown == true,
+		"GameManager restore state restores the inference tutorial first-time flag")
+	tm.first_inference_shown = old_value
 
 
 func _ok(cond: bool, msg: String) -> void:
@@ -89,3 +184,107 @@ func _finish() -> void:
 	else:
 		push_error("[TEST-RYAN-TUTORIAL] FAILURES: %d / %d checks" % [_failures, _checks])
 		get_tree().quit(1)
+
+
+func _test_ryan_arrival_starts_serve_tutorial_after_pre_dialogue() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(gm != null and tm != null, "GameManager and TutorialManager are available for Ryan serve tutorial timing")
+	if gm == null or tm == null:
+		return
+
+	var old_view = gm._tavern_view
+	var old_guest = gm.guests.current_guest
+	var old_has_guest: bool = gm.guests.has_guest
+	var old_dialogue_phase: String = gm._dialogue_phase
+	var old_dialogue_active: bool = gm._is_dialogue_active
+	var old_first_guest_arrived: bool = tm.first_guest_arrived
+	var old_completed_steps: Array = tm._completed_steps.duplicate()
+	var old_active: bool = tm._is_active
+	var old_sequence: Array = tm._current_sequence.duplicate(true)
+	var old_step: int = tm._current_step
+	var old_overlay = tm._overlay
+
+	tm._remove_overlay()
+	tm._is_active = false
+	tm._current_sequence.clear()
+	tm._current_step = -1
+	tm.first_guest_arrived = false
+	tm._completed_steps.erase("serve_intro")
+	var fake_overlay := Node.new()
+	add_child(fake_overlay)
+	tm._overlay = fake_overlay
+
+	var fake_view := ServeTutorialTestView.new()
+	add_child(fake_view)
+	gm._tavern_view = fake_view
+
+	var guest := GuestData.new()
+	guest.guest_name = "ryan"
+	guest.type = GuestData.GuestType.IMPORTANT
+	guest.order_key = "ale_beer"
+	guest.npc_id = "ryan"
+	guest.has_dialogue = true
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	var gm_source := FileAccess.get_file_as_string("res://scripts/game_manager.gd")
+	_ok(gm_source.contains("_queue_first_guest_serve_tutorial(guest.has_dialogue)"),
+		"guest arrival routes Ryan through the first-guest serve tutorial trigger")
+
+	gm._queue_first_guest_serve_tutorial(true)
+	_ok(tm.first_guest_arrived, "Ryan arrival marks the first service guest instead of waiting for a regular customer")
+	_ok(not tm._is_active, "Ryan pre-dialogue keeps serve tutorial from overlapping the dialogue layer")
+
+	gm._dialogue_phase = "pre"
+	gm._on_dialogue_ended()
+	_ok(tm._is_active, "serve tutorial starts as soon as Ryan's pre-service dialogue ends")
+	_ok(not tm._current_sequence.is_empty() and String(tm._current_sequence[0].get("group", "")) == "serve",
+		"Ryan-triggered tutorial uses the serve tutorial group")
+
+	tm._remove_overlay()
+	tm._is_active = old_active
+	tm._current_sequence = old_sequence
+	tm._current_step = old_step
+	tm._completed_steps = old_completed_steps
+	tm.first_guest_arrived = old_first_guest_arrived
+	tm._overlay = old_overlay
+	tm._save_state()
+	gm._tavern_view = old_view
+	gm.guests.current_guest = old_guest
+	gm.guests.has_guest = old_has_guest
+	gm._dialogue_phase = old_dialogue_phase
+	gm._is_dialogue_active = old_dialogue_active
+	if is_instance_valid(fake_view):
+		remove_child(fake_view)
+		fake_view.free()
+	if is_instance_valid(fake_overlay):
+		remove_child(fake_overlay)
+		fake_overlay.free()
+
+
+class ServeTutorialTestView:
+	extends Node
+
+	var daily_menu_confirmed := true
+	var shown_customers := []
+	var dialogue_mode_calls := []
+
+	func show_customer(display_name: String, item_name: String, portrait_id: String, order_key: String = "") -> void:
+		shown_customers.append({
+			"display_name": display_name,
+			"item_name": item_name,
+			"portrait_id": portrait_id,
+			"order_key": order_key,
+		})
+
+	func set_dialogue_mode(active: bool) -> void:
+		dialogue_mode_calls.append(active)
+
+	func set_close_enabled(_enabled: bool) -> void:
+		pass
+
+	func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
+		if group_key == "serve":
+			return {"CustomerNode": [440, 80, 400, 360]}
+		return {}

@@ -8,9 +8,12 @@ signal recipe_consumed(product_key: String)
 const CONTAINER_KEY := "barrel"
 const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
 const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
+const PHYSICS_MOTION_TRAIL := preload("res://scripts/ui/physics_motion_trail.gd")
+const INGREDIENT_INTAKE_VFX := preload("res://scripts/ui/ingredient_intake_vfx.gd")
 const BARREL_MASS := 2.5
 const BARREL_LINEAR_DAMP := 0.8
 const BARREL_ANGULAR_DAMP := 4.0
+const MAX_INGREDIENTS := 2
 const MOUTH_INNER_HALF_WIDTH := 24.0
 const MOUTH_TOP_Y := -64.0
 const MOUTH_BOTTOM_Y := -34.0
@@ -23,6 +26,18 @@ const SHAKE_BUBBLE_LAYER_NAME := "ShakeBubbles"
 const SHAKE_BUBBLE_LAYER_Z_INDEX := 18
 const SHAKE_BUBBLE_SPAWN_INTERVAL := 0.018
 const SHAKE_BUBBLE_MAX_ACTIVE := 220
+const SHAKE_BUBBLE_FOAM_MAX_ACTIVE := 680
+const SHAKE_BUBBLE_MOUTH_SPAWN_HALF_WIDTH := MOUTH_INNER_HALF_WIDTH + 14.0
+const SHAKE_BUBBLE_FOAM_PRESSURE_GAIN := 1.05
+const SHAKE_BUBBLE_FOAM_PRESSURE_DECAY := 0.7
+const SHAKE_BUBBLE_FOAM_SPEED_START_MULT := 2.8
+const SHAKE_BUBBLE_FOAM_SPEED_FULL_MULT := 4.8
+const SHAKE_BUBBLE_FOAM_OVER_GOOD_FULL_COUNT := 28.0
+const SHAKE_BUBBLE_FOAM_BURST_BONUS := 42
+const SHAKE_BUBBLE_FOAM_SIDE_SPEED_BONUS := 88.0
+const SHAKE_BUBBLE_FOAM_OUTWARD_SPEED_BONUS := 152.0
+const SHAKE_BUBBLE_FOAM_WANDER_BONUS := 18.0
+const SHAKE_BUBBLE_EMISSION_RESERVE := 6
 const SHAKE_BUBBLE_MOVEMENT_MIN_SPEED_MULT := 0.45
 const SHAKE_BUBBLE_SPEED_BONUS_START_MULT := 1.4
 const SHAKE_BUBBLE_SPEED_BONUS_FULL_MULT := 4.8
@@ -36,6 +51,8 @@ const SHAKE_BUBBLE_PHASE_META := "barrel_bubble_phase"
 const SHAKE_BUBBLE_PHASE_SPEED_META := "barrel_bubble_phase_speed"
 const SHAKE_BUBBLE_QUALITY_META := "barrel_bubble_quality"
 const SHAKE_BUBBLE_VARIANT_META := "barrel_bubble_variant"
+const SHAKE_BUBBLE_FOAM_PRESSURE_META := "barrel_bubble_foam_pressure"
+const SHAKE_BUBBLE_LATERAL_INFLUENCE_META := "barrel_bubble_lateral_influence"
 const GOOD_CELEBRATION_LAYER_NAME := "GoodBrewCelebration"
 const GOOD_CELEBRATION_LAYER_Z_INDEX := 22
 const GOOD_CELEBRATION_TEXTURE_PATH := "res://assets/textures/barrel_celebration/barrel_celebration.png"
@@ -66,6 +83,9 @@ const NORMAL_FEEDBACK_MAX_LIFE_META := "normal_brew_feedback_max_life"
 const NORMAL_FEEDBACK_WORD_META := "normal_brew_feedback_word"
 const NORMAL_FEEDBACK_BASE_SCALE_META := "normal_brew_feedback_base_scale"
 const NORMAL_FEEDBACK_WORDS: Array[String] = ["成了", "稳了", "顺口", "够味", "不赖", "过关"]
+const FAILED_FEEDBACK_LAYER_NAME := "FailedBrewFeedback"
+const FAILED_FEEDBACK_KIND_META := "failed_brew_feedback_kind"
+const FAILED_FEEDBACK_WORD_META := "failed_brew_feedback_word"
 const OUTPUT_BURST_LAYER_NAME := "BrewOutputBurst"
 const OUTPUT_BURST_LAYER_Z_INDEX := 21
 const OUTPUT_BURST_MAX_ACTIVE := 96
@@ -115,11 +135,13 @@ var _shake_bubbles: Array[Node2D] = []
 var _shake_bubble_spawn_elapsed: float = 0.0
 var _shake_bubble_texture: Texture2D = null
 var _last_shake_bubble_quality_tier: String = ""
+var _shake_bubble_foam_pressure: float = 0.0
 var _quality_drink_textures: Dictionary = {}
 var _good_celebration_layer: Node2D = null
 var _good_celebration_effects: Array[Node2D] = []
 var _good_celebration_texture: Texture2D = null
 var _normal_feedback_layer: Node2D = null
+var _failed_feedback_layer: Node2D = null
 var _normal_feedback_effects: Array[Node2D] = []
 var _output_burst_layer: Node2D = null
 var _output_burst_effects: Array[Node2D] = []
@@ -136,6 +158,7 @@ var _brew_combo_vfx_effects: Array[Node2D] = []
 var _screen_shake_amount: float = 0.0
 var _screen_shake_phase: float = 0.0
 var _brew_shake_camera: Camera2D = null
+var _motion_trail = PHYSICS_MOTION_TRAIL.new()
 
 
 func _ready() -> void:
@@ -160,10 +183,13 @@ func _physics_process(delta: float) -> void:
 		_shake.add_sample(linear_velocity)
 		counted_shake = _shake.shake_count > shake_count_before
 		_update_brew_combo(delta, counted_shake)
-		_try_spawn_shake_bubble(delta)
 	else:
 		_update_brew_combo(delta, false)
+	_update_container_motion_trail(delta)
+	_update_shake_bubble_foam_pressure(delta)
 	_update_shake_bubbles(delta)
+	if _session_active:
+		_try_spawn_shake_bubble(delta)
 	_update_brew_output_burst(delta)
 	_update_product_output_vfx(delta)
 	_update_normal_brew_feedback(delta)
@@ -179,6 +205,25 @@ func _on_mouth_body_entered(body: Node) -> void:
 	_try_accept_mouth_body(body)
 
 
+func _update_container_motion_trail(delta: float) -> void:
+	_motion_trail.update(
+		self,
+		delta,
+		_art,
+		_container_motion_trail_fallback_polygon(),
+		Color(0.72, 0.42, 0.20, 1.0)
+	)
+
+
+func _container_motion_trail_fallback_polygon() -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(-50.0, 40.0),
+		Vector2(-40.0, -40.0),
+		Vector2(40.0, -40.0),
+		Vector2(50.0, 40.0),
+	])
+
+
 func _try_accept_mouth_body(body: Node) -> void:
 	if not body is DeskItem:
 		return
@@ -191,9 +236,20 @@ func _try_accept_mouth_body(body: Node) -> void:
 		return
 	if not _is_item_inside_mouth_opening(item):
 		return
+	if _pending_keys.size() >= MAX_INGREDIENTS:
+		_reject_extra_ingredient(item)
+		return
 	_pending_keys.append(item.item_key)
+	INGREDIENT_INTAKE_VFX.spawn(self, item, item.item_key, _mouth_center_global_position(), Color(0.96, 0.62, 0.28, 1.0))
 	GameManager.play_audio_event("ingredient_drop")
 	item.queue_free()
+
+
+func _reject_extra_ingredient(item: DeskItem) -> void:
+	item.global_position = to_global(Vector2(randf_range(-16.0, 16.0), MOUTH_TOP_Y - 28.0))
+	item.linear_velocity = Vector2(randf_range(-90.0, 90.0), -240.0)
+	item.angular_velocity = randf_range(-8.0, 8.0)
+	item.sleeping = false
 
 
 func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
@@ -202,6 +258,10 @@ func _is_item_inside_mouth_opening(item: DeskItem) -> bool:
 
 func is_item_inside_mouth(item: Node2D) -> bool:
 	return item != null and _is_point_inside_mouth_opening(item.global_position)
+
+
+func _mouth_center_global_position() -> Vector2:
+	return to_global(Vector2(0.0, (MOUTH_TOP_Y + MOUTH_BOTTOM_Y) * 0.5))
 
 
 func is_spoon_inside(spoon: StirSpoon) -> bool:
@@ -237,6 +297,8 @@ func _spawn_product(product_key: String, quality: String = "normal") -> void:
 		_spawn_good_brew_celebration(product.global_position, product.linear_velocity)
 	elif quality == "normal":
 		_spawn_normal_brew_feedback(product.global_position)
+	elif quality == "failed":
+		_spawn_failed_brew_feedback(product.global_position)
 	GameManager.play_audio_event("product_ready")
 
 
@@ -353,6 +415,8 @@ func _product_vfx_color(quality: String, element: String) -> Color:
 		if element == "spark":
 			return Color(1.0, 0.93, 0.42, 0.96)
 		return Color(1.0, 0.76, 0.24, 0.86)
+	if quality == "failed":
+		return Color(0.24, 0.22, 0.16, 0.58)
 	return Color(0.92, 0.90, 0.74, 0.68)
 
 
@@ -491,6 +555,8 @@ func _brew_output_burst_color(quality: String, element: String) -> Color:
 		if element == "flash":
 			return Color(1.0, 0.96, 0.60, 0.88)
 		return Color(1.0, 0.82, 0.28, 0.84)
+	if quality == "failed":
+		return Color(0.28, 0.25, 0.18, 0.68)
 	return Color(0.88, 0.86, 0.72, 0.72)
 
 
@@ -550,20 +616,19 @@ func _try_spawn_shake_bubble(delta: float) -> void:
 
 func _spawn_shake_bubble_burst(quality: String) -> void:
 	var burst_count := _shake_bubble_burst_count(quality)
-	_make_room_for_shake_bubble_burst(quality, burst_count)
+	var active_cap := _shake_bubble_active_cap()
+	_make_room_for_shake_bubble_burst(quality, burst_count, active_cap)
 	for i in range(burst_count):
-		if _shake_bubbles.size() >= SHAKE_BUBBLE_MAX_ACTIVE:
+		if _shake_bubbles.size() >= active_cap:
 			return
 		_spawn_shake_bubble(quality, i, burst_count)
 
 
-func _make_room_for_shake_bubble_burst(quality: String, burst_count: int) -> void:
-	var needed := maxi(0, _shake_bubbles.size() + maxi(burst_count, 0) - SHAKE_BUBBLE_MAX_ACTIVE)
+func _make_room_for_shake_bubble_burst(quality: String, burst_count: int, active_cap: int) -> void:
+	var needed := maxi(0, _shake_bubbles.size() + maxi(burst_count, 0) - active_cap)
 	if needed <= 0:
 		return
 	var target_rank := _shake_bubble_quality_rank(quality)
-	if target_rank <= 0:
-		return
 	for rank in range(target_rank):
 		var index := 0
 		while index < _shake_bubbles.size() and needed > 0:
@@ -577,6 +642,16 @@ func _make_room_for_shake_bubble_burst(quality: String, burst_count: int) -> voi
 				needed -= 1
 				continue
 			index += 1
+	var reserve_needed := mini(needed, SHAKE_BUBBLE_EMISSION_RESERVE)
+	var index := 0
+	while index < _shake_bubbles.size() and reserve_needed > 0:
+		var bubble := _shake_bubbles[index]
+		if bubble == null or not is_instance_valid(bubble) or bubble.is_queued_for_deletion():
+			_shake_bubbles.remove_at(index)
+			continue
+		bubble.queue_free()
+		_shake_bubbles.remove_at(index)
+		reserve_needed -= 1
 
 
 func _shake_bubble_quality_rank(quality: String) -> int:
@@ -594,7 +669,11 @@ func _spawn_shake_bubble(quality: String, burst_index: int, burst_count: int) ->
 	bubble.z_index = 0
 	bubble.set_meta(SHAKE_BUBBLE_QUALITY_META, quality)
 	var slot_fraction := (float(burst_index) + randf_range(0.15, 0.85)) / float(maxi(burst_count, 1))
-	var mouth_x := lerpf(-MOUTH_INNER_HALF_WIDTH - 14.0, MOUTH_INNER_HALF_WIDTH + 14.0, slot_fraction)
+	var spawn_half_width := _shake_bubble_spawn_half_width(quality)
+	var foam_pressure := _shake_bubble_pressure_for_quality(quality)
+	var horizontal_motion_ratio := _shake_bubble_horizontal_motion_ratio()
+	var lateral_foam_pressure := foam_pressure * horizontal_motion_ratio
+	var mouth_x := lerpf(-spawn_half_width, spawn_half_width, slot_fraction)
 	var mouth_local := Vector2(
 		mouth_x + randf_range(-5.0, 5.0),
 		MOUTH_TOP_Y - randf_range(2.0, 16.0)
@@ -608,11 +687,18 @@ func _spawn_shake_bubble(quality: String, burst_index: int, burst_count: int) ->
 		side_speed += minf(10.0, float(maxi(_shake.shake_count - _shake.min_count, 0)) * 1.2)
 		rise_speed = randf_range(102.0, 152.0) + float(_brew_combo_stage()) * 4.0
 	elif quality == "good":
-		side_speed += float(_brew_combo_stage()) * 4.0 + minf(38.0, float(over_good_count) * 0.72)
+		var good_side_speed := float(_brew_combo_stage()) * 4.0 + minf(38.0, float(over_good_count) * 0.72)
+		side_speed += good_side_speed * lerpf(0.25, 1.0, horizontal_motion_ratio)
 		rise_speed = randf_range(118.0, 176.0) + float(_brew_combo_stage()) * 7.0 + minf(72.0, float(over_good_count) * 1.15)
-	bubble.set_meta(SHAKE_BUBBLE_VELOCITY_META, Vector2(randf_range(-side_speed, side_speed), -rise_speed))
+		side_speed += lateral_foam_pressure * SHAKE_BUBBLE_FOAM_SIDE_SPEED_BONUS
+		var floating_rise_speed := randf_range(54.0, 96.0) + float(_brew_combo_stage()) * 3.0
+		rise_speed = lerpf(rise_speed, floating_rise_speed, foam_pressure * 0.72)
+	var outward_bias := (slot_fraction - 0.5) * 2.0 * lateral_foam_pressure * SHAKE_BUBBLE_FOAM_OUTWARD_SPEED_BONUS
+	bubble.set_meta(SHAKE_BUBBLE_VELOCITY_META, Vector2(randf_range(-side_speed, side_speed) + outward_bias, -rise_speed))
 	bubble.set_meta(SHAKE_BUBBLE_PHASE_META, randf_range(0.0, TAU))
 	bubble.set_meta(SHAKE_BUBBLE_PHASE_SPEED_META, randf_range(1.5, 3.4))
+	bubble.set_meta(SHAKE_BUBBLE_FOAM_PRESSURE_META, foam_pressure)
+	bubble.set_meta(SHAKE_BUBBLE_LATERAL_INFLUENCE_META, lateral_foam_pressure)
 	_build_bubble_sprite(bubble, quality)
 	_shake_bubbles.append(bubble)
 
@@ -629,7 +715,8 @@ func _shake_bubble_burst_count(quality: String) -> int:
 	var full_count := 3
 	if quality == "good":
 		var over_good_bonus := mini(56, int(float(_shake_bubble_over_good_count()) * 0.8))
-		full_count = clampi(16 + over_good_bonus, 16, 72)
+		var foam_bonus := int(round(_shake_bubble_pressure_for_quality(quality) * float(SHAKE_BUBBLE_FOAM_BURST_BONUS)))
+		full_count = clampi(16 + over_good_bonus + foam_bonus, 16, 114)
 	elif quality == "normal":
 		var normal_bonus := int(float(maxi(_shake.shake_count - _shake.min_count, 0)) * 1.1)
 		full_count = clampi(8 + normal_bonus, 8, 22)
@@ -637,6 +724,62 @@ func _shake_bubble_burst_count(quality: String) -> int:
 		full_count = 2
 	full_count = maxi(1, int(round(float(full_count) * _shake_bubble_speed_multiplier())))
 	return full_count
+
+
+func _update_shake_bubble_foam_pressure(delta: float) -> void:
+	var target_pressure := 0.0
+	if _session_active and not _pending_keys.is_empty() and _shake.shake_count > _shake.good_count:
+		var speed := linear_velocity.length()
+		var start_speed := _shake.min_speed * SHAKE_BUBBLE_FOAM_SPEED_START_MULT
+		var full_speed := _shake.min_speed * SHAKE_BUBBLE_FOAM_SPEED_FULL_MULT
+		var speed_pressure := clampf(inverse_lerp(start_speed, full_speed, speed), 0.0, 1.0)
+		var over_good_pressure := clampf(
+			float(_shake_bubble_over_good_count()) / SHAKE_BUBBLE_FOAM_OVER_GOOD_FULL_COUNT,
+			0.0,
+			1.0
+		)
+		target_pressure = maxf(speed_pressure, over_good_pressure)
+	if target_pressure > 0.0:
+		_shake_bubble_foam_pressure = minf(
+			1.0,
+			_shake_bubble_foam_pressure + delta * SHAKE_BUBBLE_FOAM_PRESSURE_GAIN * target_pressure
+		)
+	else:
+		_shake_bubble_foam_pressure = maxf(
+			0.0,
+			_shake_bubble_foam_pressure - delta * SHAKE_BUBBLE_FOAM_PRESSURE_DECAY
+		)
+
+
+func _shake_bubble_active_cap() -> int:
+	return clampi(
+		int(round(lerpf(
+			float(SHAKE_BUBBLE_MAX_ACTIVE),
+			float(SHAKE_BUBBLE_FOAM_MAX_ACTIVE),
+			_shake_bubble_foam_pressure
+		))),
+		SHAKE_BUBBLE_MAX_ACTIVE,
+		SHAKE_BUBBLE_FOAM_MAX_ACTIVE
+	)
+
+
+func _shake_bubble_pressure_for_quality(quality: String) -> float:
+	if quality != "good":
+		return 0.0
+	return _shake_bubble_foam_pressure
+
+
+func _shake_bubble_horizontal_motion_ratio() -> float:
+	var speed := linear_velocity.length()
+	if speed <= 0.001:
+		return 0.0
+	return clampf(absf(linear_velocity.x) / speed, 0.0, 1.0)
+
+
+func _shake_bubble_spawn_half_width(quality: String) -> float:
+	if quality == "pending":
+		return MOUTH_INNER_HALF_WIDTH + 14.0
+	return SHAKE_BUBBLE_MOUTH_SPAWN_HALF_WIDTH
 
 
 func _shake_bubble_movement_min_speed() -> float:
@@ -740,9 +883,10 @@ func _update_shake_bubbles(delta: float) -> void:
 		var velocity := bubble.get_meta(SHAKE_BUBBLE_VELOCITY_META) as Vector2
 		var phase := float(bubble.get_meta(SHAKE_BUBBLE_PHASE_META))
 		var phase_speed := float(bubble.get_meta(SHAKE_BUBBLE_PHASE_SPEED_META))
+		var lateral_influence := float(bubble.get_meta(SHAKE_BUBBLE_LATERAL_INFLUENCE_META, 0.0))
 		phase += delta * phase_speed
 		bubble.set_meta(SHAKE_BUBBLE_PHASE_META, phase)
-		var wander := sin(phase) * 9.0
+		var wander := sin(phase) * (9.0 + lateral_influence * SHAKE_BUBBLE_FOAM_WANDER_BONUS)
 		bubble.global_position += Vector2(velocity.x + wander, velocity.y) * delta
 		if bubble.global_position.y <= SHAKE_BUBBLE_OFFSCREEN_Y:
 			_shake_bubbles.remove_at(i)
@@ -1144,6 +1288,31 @@ func _spawn_normal_brew_feedback(origin: Vector2) -> void:
 	_normal_feedback_effects.append(effect)
 
 
+func _spawn_failed_brew_feedback(origin: Vector2) -> void:
+	_prune_invalid_normal_brew_feedback()
+	if _normal_feedback_effects.size() >= NORMAL_FEEDBACK_MAX_ACTIVE:
+		return
+	var layer := _ensure_failed_feedback_layer()
+	var effect := Node2D.new()
+	effect.name = "FailedWordBurst"
+	effect.z_index = 0
+	effect.scale = Vector2.ONE * randf_range(0.74, 0.86)
+	var word := "废品"
+	effect.set_meta(FAILED_FEEDBACK_KIND_META, "failed")
+	effect.set_meta(FAILED_FEEDBACK_WORD_META, word)
+	effect.set_meta(NORMAL_FEEDBACK_WORD_META, word)
+	effect.set_meta(NORMAL_FEEDBACK_VELOCITY_META, Vector2(randf_range(-8.0, 8.0), -randf_range(38.0, 58.0)))
+	effect.set_meta(NORMAL_FEEDBACK_PHASE_META, randf_range(0.0, TAU))
+	effect.set_meta(NORMAL_FEEDBACK_PHASE_SPEED_META, randf_range(0.8, 1.6))
+	effect.set_meta(NORMAL_FEEDBACK_LIFE_META, 0.0)
+	effect.set_meta(NORMAL_FEEDBACK_MAX_LIFE_META, randf_range(0.78, 1.04))
+	effect.set_meta(NORMAL_FEEDBACK_BASE_SCALE_META, effect.scale.x)
+	layer.add_child(effect)
+	effect.global_position = origin + Vector2(randf_range(-10.0, 10.0), randf_range(-38.0, -28.0))
+	_build_failed_brew_feedback_label(effect, word)
+	_normal_feedback_effects.append(effect)
+
+
 func _ensure_normal_feedback_layer() -> Node2D:
 	if _normal_feedback_layer != null and is_instance_valid(_normal_feedback_layer):
 		return _normal_feedback_layer
@@ -1157,6 +1326,21 @@ func _ensure_normal_feedback_layer() -> Node2D:
 	_normal_feedback_layer.z_as_relative = false
 	_normal_feedback_layer.z_index = NORMAL_FEEDBACK_LAYER_Z_INDEX
 	return _normal_feedback_layer
+
+
+func _ensure_failed_feedback_layer() -> Node2D:
+	if _failed_feedback_layer != null and is_instance_valid(_failed_feedback_layer):
+		return _failed_feedback_layer
+	_failed_feedback_layer = get_node_or_null(FAILED_FEEDBACK_LAYER_NAME) as Node2D
+	if _failed_feedback_layer == null:
+		_failed_feedback_layer = Node2D.new()
+		_failed_feedback_layer.name = FAILED_FEEDBACK_LAYER_NAME
+		add_child(_failed_feedback_layer)
+	_failed_feedback_layer.top_level = true
+	_failed_feedback_layer.global_position = Vector2.ZERO
+	_failed_feedback_layer.z_as_relative = false
+	_failed_feedback_layer.z_index = NORMAL_FEEDBACK_LAYER_Z_INDEX
+	return _failed_feedback_layer
 
 
 func _build_normal_brew_feedback_label(effect: Node2D, word: String) -> void:
@@ -1173,6 +1357,23 @@ func _build_normal_brew_feedback_label(effect: Node2D, word: String) -> void:
 	label.add_theme_color_override("font_color", Color(0.82, 0.82, 0.72, 1.0))
 	label.add_theme_constant_override("outline_size", 2)
 	label.add_theme_color_override("font_outline_color", Color(0.04, 0.06, 0.07, 0.82))
+	effect.add_child(label)
+
+
+func _build_failed_brew_feedback_label(effect: Node2D, word: String) -> void:
+	var label := Label.new()
+	label.name = "Label"
+	label.text = word
+	label.size = Vector2(76.0, 28.0)
+	label.position = Vector2(-38.0, -14.0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_override("font", GOOD_CELEBRATION_FONT)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.48, 0.44, 0.34, 1.0))
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color(0.03, 0.025, 0.02, 0.92))
 	effect.add_child(label)
 
 
@@ -1595,10 +1796,17 @@ func _try_brew() -> void:
 	var shakes: int = _shake.shake_count
 	_pending_keys.clear()
 	_shake.reset()
+	_shake_bubble_foam_pressure = 0.0
 	if product_key == "":
+		product_key = GameManager.craft.failure_product_for_container(CONTAINER_KEY)
 		_reset_brew_combo_feedback()
-		print("[Brewery] 摇够了但配方未命中，料已消耗无产出 (摇晃 %d 次)" % shakes)
-		return   # 软兜底：料已消耗、无产出
+		if product_key == "":
+			print("[Brewery] 摇够了但配方未命中，料已消耗无产出 (摇晃 %d 次)" % shakes)
+			return
+		print("[Brewery] 配方未命中，产出失败物 %s (摇晃 %d 次)" % [product_key, shakes])
+		_spawn_product(product_key, "failed")
+		recipe_consumed.emit(product_key)
+		return
 	print("[Brewery] 产出 %s  品质=%s  (摇晃 %d 次)" % [product_key, quality, shakes])
 	_spawn_product(product_key, quality)
 	_reset_brew_combo_feedback()
@@ -1610,6 +1818,7 @@ func pop_last_ingredient() -> String:
 		return ""
 	var item_key: String = _pending_keys.pop_back()
 	_shake.reset()
+	_shake_bubble_foam_pressure = 0.0
 	_reset_brew_combo_feedback()
 	return item_key
 

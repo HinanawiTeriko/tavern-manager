@@ -1,13 +1,17 @@
 {
   "bread":         { "vitality": 2 },
   "meat_cooked":   { "might": 3, "vitality": 1 },
+  "rock_lizard_steak": { "might": 4, "vitality": 1 },
   "ale_beer":      { "might": 1, "fortune": 1 },
+  "miner_dark_ale": { "might": 2, "fortune": 1 },
   "wine":          { "charm": 2, "fortune": 1 },
+  "old_road_wine": { "charm": 1, "fortune": 2 },
   "herb_tea":      { "vitality": 2, "alacrity": 1 },
   "meat_sand":     { "might": 2, "vitality": 3 },
   "herbal_ale":    { "arcana": 2, "vitality": 1, "might": 1 },
   "spiced_wine":   { "charm": 1, "arcana": 2, "fortune": 1 },
   "meat_stew":     { "might": 3, "vitality": 3, "fortune": 1 },
+  "cave_mushroom_stew": { "vitality": 2, "arcana": 1, "alacrity": 1 },
   "herb_broth":    { "arcana": 2, "alacrity": 2 },
   "malt_porridge": { "vitality": 2, "fortune": 2 }
 }

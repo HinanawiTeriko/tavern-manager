@@ -1,0 +1,19 @@
+Create a new corrected Figgy raw source portrait. Do not use the previous large satchel version.
+
+Asset type: single raw AI source portrait for a Godot pixel-game important NPC bust pipeline. This is raw source art for later 128x160 native portrait normalization and 512x640 nearest-neighbor runtime export, not final runtime art.
+
+Character identity: cute young adult female aqua fae/sylph, pale moonlit skin, long pointed ears, bright mischievous eyes, no horns, no tail, no purple skin, no green skin. Aqua high side ponytail with chunky curled ribbon-like locks, readable silhouette. Funny, polite, absurdly confident.
+
+Normal wearable clothing: deep teal cropped travel jacket with simple lapels, cream-white open-collar blouse, narrow dark neck tie or simple collar detail, plain dark high-waist waistband just visible. Clothing should look like a normal fantasy-town clerk/courier outfit, clean and cute, not conceptual, not ceremonial, not school uniform.
+
+No special props except one feather pen held near shoulder height. No bag, no satchel, no crossbody strap, no belt pouch, no paper tag, no hanging note, no notebook, no wax seal, no red circular brooch, no whistle, no symbolic collar pin, no stamp hammer, no sign board, no scrolls, no dense utility belt.
+
+Critical camera and crop: strict dialogue bust, closer crop. Show head, shoulders, chest, waist, and a narrow belt/waistband area only. The bottom of the character is cut immediately at the waist or just below the belt. Do not show skirt folds, skirt hem, trousers, thighs, knees, hip-length bag, or any lower-body silhouette. The portrait should feel like Ryan v8 / Mira v4 important NPC raw reference: face readable, torso visible, not headshot, not half-body fashion pose.
+
+Canvas: vertical portrait canvas, about 4:5 aspect ratio like one important NPC portrait cell. One centered character only. 3/4 front view. Keep hair and shoulders inside the image with generous green padding.
+
+Style/medium: crisp hand-authored pixel-game/anime-fantasy character source, thick dark outlines, stair-stepped chunky silhouette, posterized flat colors, limited warm dungeon tavern palette with aqua accent. Large readable clothing blocks, low detail density, no micro ornaments. Designed to survive downscaling to 128x160 native. Avoid glossy high-resolution illustration, painterly rendering, airbrush, watercolor, stippling, soft blur, realistic texture, fashion illustration polish.
+
+Background: flat green chroma-style generated background, intended as raw source reference. No shadows, gradients, texture, floor plane, frame, lighting variation, labels, words, UI, watermark, or logo. Do not use green background color in the character.
+
+Hard avoid: no brown hair, no readable text, no fake letters, no numbers, no logos, no UI frame, no speech bubble, no wax seal, no red wax brooch, no red circular badge, no whistle, no paper collar pin, no conceptual symbols, no paper tag, no hanging paper, no bag, no satchel, no crossbody strap, no belt pouch, no big bow, no school uniform, no full-body pose, no half-body pose, no visible skirt folds, no skirt hem, no coat hem, no pants legs, no thighs, no knees, no huge prop board, no dense tool belt, no many dangling scrolls, no soft antialiased borders, no painterly micro-detail.

@@ -1,0 +1,7 @@
+Use case: ui-mockup
+Asset type: single game dialogue panel source art for a pixel-art tavern management game
+Primary request: Create one simple, refined horizontal dialogue box panel on a perfectly flat solid #ff00ff chroma-key background for later background removal.
+Composition: one complete object only, centered, straight-on orthographic view, level horizontal, generous empty padding around it. The visible object should be a long low panel with an approximate 5.6:1 width-to-height ratio.
+Design: minimal dark teal recessed writing field, thin blackened tavern wood top and bottom rails, very small muted brass nail heads, sparse warm amber scratches. Ends should be plain and low-profile, with only a subtle bevel. No bulky corner caps, no four-corner blocks, no vertical end pillars, no curled ornaments, no medallions, no badges, no mugs, no separate nameplate, no arrow, no buttons. Keep the center completely clear for Godot text.
+Style/medium: hand-painted source art with crisp hard silhouettes, limited palette, rough ink line character, chunky detail suitable for later pixel downsampling. It should feel like original pixel dungeon tavern UI source art, not a modern glossy frame.
+Constraints: no readable text, letters, logos, numbers, watermark, character, scene, shadow, glow, fake pixel grid, soft blurry airbrush, green, or #ff00ff inside the object. The background must be one uniform #ff00ff with no lighting variation.

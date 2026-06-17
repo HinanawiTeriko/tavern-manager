@@ -1,0 +1,12 @@
+Project: Last Call Below / DayMap grey ledger marker icons
+Recovered source: tmp/imagegen/daymap_marker_recovered_20260616222356/daymap_marker_probe_20260616T142125Z_ig_0735c45fea9e50b3016a315bc1e99081918e4e83ba81d9e23b.png
+
+Generation prompt:
+Game asset source sheet for a Godot pixel-art dungeon tavern management UI. Create exactly four distinct small DayMap marker icon subjects arranged left to right in a single horizontal row, four equal cells, on a perfectly flat solid #ff00ff chroma-key background. Subject 1: guild clearing table marker, a small ledger tray/table silhouette with a wax stamp and account slip. Subject 2: payout office marker, stacked payout slips with a coin seal and small clerk-window plaque shape, no text. Subject 3: Blacktooth transfer ledger marker, dark closed ledger book with a simple tooth/mining notch symbol, no text. Subject 4: Mira old supply copy marker, rolled supply contract bundle with grey wax seal and supply tag shape, no text. Style: chunky native-pixel concept art source, crisp silhouettes, limited dark teal/grey dungeon palette with restrained amber candlelit accents, rough ink-like pixel edges, readable when reduced to 24x24, visually compatible with existing map marker icons. Composition: each subject centered in its own cell with generous padding; no overlapping between cells; no extra objects. Strict constraints: solid #ff00ff background only; do not use #ff00ff in the icons; no readable words, no letters, no numbers, no logos, no watermark, no UI labels; no shadows, no floor, no gradients, no background texture.
+
+Pipeline notes:
+- Target layout: 4 columns x 1 row.
+- The retained source sheet is grey ledger DayMap marker art.
+- Runtime icons must match the existing DayMap marker icons.
+- Image generation source art is only a reference/source sheet; Godot runtime uses exported nearest-neighbor marker PNGs.
+- No readable text is allowed in the source art or runtime marker icons.

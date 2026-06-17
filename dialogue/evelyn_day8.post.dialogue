@@ -1,0 +1,10 @@
+~ start
+if serve_result == "success"
+    do GameManager.set_customer_expression("knowing")
+    伊芙琳: 多谢。热的东西能让人愿意多说一句实话。
+    伊芙琳: 比如，黑齿的账不是从黑齿开始的。先找批次，再看谁把护送改成了清算。
+    => END
+else
+    do GameManager.set_customer_expression("assessing")
+    伊芙琳: 味道偏了。偏差本身不麻烦，麻烦的是有人替它盖章，然后说它本来就该偏。
+    => END

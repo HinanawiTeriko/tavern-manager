@@ -8,6 +8,9 @@ signal normal_orders_completed()
 signal guest_abandoned()
 signal all_guests_served()
 
+const APPETITE_SYSTEM_SCRIPT := preload("res://scripts/systems/appetite_system.gd")
+const GUEST_GROUP_PROFILE_PATH := "res://data/guest_group_profiles.json"
+
 class CustomerRecord extends RefCounted:
 	var customer_id: String        # 唯一ID
 	var display_name: String       # 显示名称
@@ -17,6 +20,9 @@ class CustomerRecord extends RefCounted:
 	var last_seen_day: int         # 最后一次光顾天数
 	var visit_count: int           # 光顾次数
 	var favorite_order: String     # 最爱点的菜（key）
+	var remembered_tags: Dictionary = {}
+	var remembered_orders: Dictionary = {}
+	var memory_notes: Array[String] = []
 
 var current_guest: GuestData = null
 var has_guest: bool = false
@@ -29,6 +35,8 @@ var _next_spawn: float = 2.0
 var guests_served_today: int = 0
 var orders_success: int = 0
 var orders_failed: int = 0
+var guest_entries_today: Array[Dictionary] = []
+var _current_guest_entry_index: int = -1
 
 # 客流系统
 var _daily_total_guests: int = 0      # 当日总客人数（含已生成和即将生成）
@@ -39,12 +47,15 @@ var _normal_orders_spawned: int = 0
 var _daily_important_spawned: bool = false
 var _all_completion_emitted: bool = false
 var _normal_completion_emitted: bool = false
+var _night_guest_bias: Dictionary = {}
 
 # 客户持久化
 var _customer_db: Dictionary = {}     # customer_id -> CustomerRecord
 var _customer_pool: Array = []        # 模板池（加载自 npc_pool.json）
 var _customer_by_id: Dictionary = {}
 var _reaction_pools: Dictionary = {}
+var _guest_group_profiles: Dictionary = {}
+var _group_appetite: AppetiteSystem = null
 var _next_customer_seq: int = 1
 
 # 回头客追踪（每天用完刷新）
@@ -66,6 +77,9 @@ func _init(menu_items_callable: Callable) -> void:
 	_rng.randomize()
 	_load_reaction_pools()
 	_load_regular_customer_roster()
+	_load_guest_group_profiles()
+	_group_appetite = APPETITE_SYSTEM_SCRIPT.new()
+	_group_appetite.load_data()
 
 func _load_reaction_pools() -> void:
 	var file = FileAccess.open("res://data/guest_reactions.json", FileAccess.READ)
@@ -100,6 +114,67 @@ func _load_regular_customer_roster() -> void:
 			_customer_by_id[String(entry.get("id", ""))] = entry
 	print("[GuestSystem] loaded ", _customer_pool.size(), " named regular customers")
 
+func _load_guest_group_profiles(path: String = GUEST_GROUP_PROFILE_PATH) -> void:
+	_guest_group_profiles.clear()
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_warning("[GuestSystem] guest_group_profiles.json missing; anonymous groups disabled")
+		return
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		push_error("[GuestSystem] guest_group_profiles.json parse failed")
+		return
+	var groups: Dictionary = (parsed as Dictionary).get("groups", {})
+	for key in groups.keys():
+		var group_key := String(key)
+		var profile: Dictionary = groups[key]
+		if group_key == "" or profile.is_empty():
+			continue
+		_guest_group_profiles[group_key] = profile.duplicate(true)
+
+
+func get_guest_group_profile(group_key: String) -> Dictionary:
+	var profile: Dictionary = _guest_group_profiles.get(group_key, {})
+	if profile.is_empty():
+		return {}
+	return profile.duplicate(true)
+
+
+func choose_guest_group_order(group_key: String, menu_items: Array) -> String:
+	var profile := get_guest_group_profile(group_key)
+	if profile.is_empty() or menu_items.is_empty():
+		return ""
+	var preferred_tags := _strings_from_values(profile.get("preferredTags", []))
+	var tagged_options := _menu_orders_matching_tags(menu_items, preferred_tags)
+	if not tagged_options.is_empty():
+		return tagged_options[_rng.randi() % tagged_options.size()]
+	var fallback_orders := _strings_from_values(profile.get("fallbackOrders", []))
+	for order_key in fallback_orders:
+		if _menu_contains_order(menu_items, order_key):
+			return order_key
+	return _menu_item_key(menu_items[_rng.randi() % menu_items.size()])
+
+
+func get_group_match_feedback(group_key: String, product_tags: Array) -> String:
+	var profile := get_guest_group_profile(group_key)
+	if profile.is_empty():
+		return ""
+	var preferred_tags := _strings_from_values(profile.get("preferredTags", []))
+	var served_tags := _strings_from_values(product_tags)
+	var matched := false
+	for tag in served_tags:
+		if preferred_tags.has(tag):
+			matched = true
+			break
+	if not matched:
+		return ""
+	var lines: Array = profile.get("matchLines", [])
+	if lines.is_empty():
+		return ""
+	return String(lines[_rng.randi() % lines.size()])
+
+
 func _load_npc_pool() -> void:
 	var file = FileAccess.open("res://data/npc_pool.json", FileAccess.READ)
 	if file == null:
@@ -120,10 +195,11 @@ func _load_npc_pool() -> void:
 
 # ── 每日配置 ──
 
-func configure_night(normal_order_limit: int, day: int = 0) -> void:
+func configure_night(normal_order_limit: int, day: int = 0, guest_bias: Dictionary = {}) -> void:
 	if day <= 0:
 		day = _get_current_day()
 	var base_count: int = maxi(normal_order_limit, 0)
+	_night_guest_bias = guest_bias.duplicate(true)
 
 	# 回头客：从已有顾客库中按概率选取
 	_return_candidates = _build_return_list(day)
@@ -141,6 +217,139 @@ func configure_night(normal_order_limit: int, day: int = 0) -> void:
 	_next_spawn = 2.0
 
 	print("[GuestSystem] Day%d 客流配置: 基础%d + 回头客%d = 共%d人" % [day, base_count, return_count, _daily_total_guests])
+
+
+func get_regular_customer_preview(customer_id: String) -> Dictionary:
+	var entry: Dictionary = _customer_by_id.get(customer_id, {})
+	if entry.is_empty():
+		return {
+			"id": customer_id,
+			"name": customer_id,
+			"role": "",
+			"favorite_orders": [],
+		}
+	return {
+		"id": customer_id,
+		"name": String(entry.get("display_name", customer_id)),
+		"role": String(entry.get("role", "")),
+		"favorite_orders": (entry.get("favorite_orders", []) as Array).duplicate(),
+		"trait": (entry.get("trait", {}) as Dictionary).duplicate(true),
+	}
+
+
+func record_customer_memory(customer_id: String, item_key: String, item_name: String, tags: Array, day: int, reason: String = "") -> Dictionary:
+	if customer_id == "" or not customer_id.begins_with("regular_") or item_key == "":
+		return {}
+	var clean_tags := _memory_strings_from_array(tags)
+	if clean_tags.is_empty():
+		return {}
+	var rec := _ensure_customer_record(customer_id, day)
+	var display_item := item_name if item_name != "" else item_key
+	rec.remembered_orders[item_key] = int(rec.remembered_orders.get(item_key, 0)) + 1
+	for tag in clean_tags:
+		rec.remembered_tags[tag] = int(rec.remembered_tags.get(tag, 0)) + 1
+	if rec.favorite_order == "":
+		rec.favorite_order = item_key
+	var note := "%s记住了%s" % [rec.display_name if rec.display_name != "" else customer_id, display_item]
+	if not rec.memory_notes.has(note):
+		rec.memory_notes.append(note)
+	while rec.memory_notes.size() > 5:
+		rec.memory_notes.pop_front()
+	var result := {
+		"customer_id": customer_id,
+		"customer_name": rec.display_name if rec.display_name != "" else customer_id,
+		"item_key": item_key,
+		"item_name": display_item,
+		"tags": clean_tags,
+		"note": note,
+		"reason": reason,
+	}
+	var trait_info := _triggered_trait_for_tags(customer_id, clean_tags)
+	if not trait_info.is_empty():
+		result["trait"] = trait_info
+		result["trait_note"] = "%s：%s" % [String(trait_info.get("name", "")), String(trait_info.get("summary", ""))]
+	return result
+
+
+func get_customer_memory_summary(customer_id: String) -> Dictionary:
+	var rec: CustomerRecord = _customer_db.get(customer_id, null)
+	if rec == null:
+		return {}
+	var preview := get_regular_customer_preview(customer_id)
+	return {
+		"customer_id": rec.customer_id,
+		"customer_name": rec.display_name,
+		"remembered_tags": _sorted_memory_keys(rec.remembered_tags),
+		"remembered_orders": _sorted_memory_keys(rec.remembered_orders),
+		"notes": rec.memory_notes.duplicate(),
+		"trait": (preview.get("trait", {}) as Dictionary).duplicate(true),
+	}
+
+
+func get_customer_memory_summaries(limit: int = 5) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var ids := _sorted_memory_keys(_customer_db)
+	for customer_id in ids:
+		var summary := get_customer_memory_summary(customer_id)
+		if summary.is_empty():
+			continue
+		if (summary.get("notes", []) as Array).is_empty() and (summary.get("remembered_tags", []) as Array).is_empty():
+			continue
+		result.append(summary)
+		if limit > 0 and result.size() >= limit:
+			break
+	return result
+
+
+func _ensure_customer_record(customer_id: String, day: int) -> CustomerRecord:
+	var rec: CustomerRecord = _customer_db.get(customer_id, null)
+	if rec != null:
+		return rec
+	var preview := get_regular_customer_preview(customer_id)
+	rec = CustomerRecord.new()
+	rec.customer_id = customer_id
+	rec.display_name = String(preview.get("name", customer_id))
+	rec.template_id = customer_id
+	rec.attributes = {}
+	rec.first_seen_day = day
+	rec.last_seen_day = 0
+	rec.visit_count = 0
+	rec.favorite_order = ""
+	_customer_db[customer_id] = rec
+	return rec
+
+
+func _triggered_trait_for_tags(customer_id: String, tags: Array[String]) -> Dictionary:
+	var preview := get_regular_customer_preview(customer_id)
+	var trait_info: Dictionary = preview.get("trait", {})
+	if trait_info.is_empty():
+		return {}
+	var focus_tags = trait_info.get("focusTags", [])
+	if not focus_tags is Array:
+		return {}
+	for tag in tags:
+		if (focus_tags as Array).has(tag):
+			return trait_info.duplicate(true)
+	return {}
+
+
+func _memory_strings_from_array(values: Array) -> Array[String]:
+	var result: Array[String] = []
+	for value in values:
+		var text := String(value)
+		if text == "":
+			continue
+		if not result.has(text):
+			result.append(text)
+	return result
+
+
+func _sorted_memory_keys(values: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	for key in values.keys():
+		result.append(String(key))
+	result.sort()
+	return result
 
 func _get_current_day() -> int:
 	# 通过 Engine.get_main_loop() 获取 SceneTree 以访问 GameManager
@@ -244,15 +453,30 @@ func _pick_regular_customer(day: int) -> Dictionary:
 		return {}
 	var total_weight := 0.0
 	for entry in candidates:
-		total_weight += maxf(float(entry.get("spawn_weight", 1.0)), 0.0)
+		total_weight += maxf(float(entry.get("spawn_weight", 1.0)), 0.0) * _entry_bias_multiplier(entry)
 	if total_weight <= 0.0:
 		return candidates[_rng.randi() % candidates.size()]
 	var roll := _rng.randf() * total_weight
 	for entry in candidates:
-		roll -= maxf(float(entry.get("spawn_weight", 1.0)), 0.0)
+		roll -= maxf(float(entry.get("spawn_weight", 1.0)), 0.0) * _entry_bias_multiplier(entry)
 		if roll <= 0.0:
 			return entry
 	return candidates.back()
+
+
+func _entry_bias_multiplier(entry: Dictionary) -> float:
+	var customer_id := String(entry.get("id", ""))
+	var multiplier := float(_night_guest_bias.get(customer_id, 1.0))
+	var role := String(entry.get("role", ""))
+	if role.contains("矿") or role.contains("搬运") or role.contains("退伍"):
+		multiplier *= float(_night_guest_bias.get("mine", 1.0))
+	if role.contains("账") or role.contains("符文"):
+		multiplier *= float(_night_guest_bias.get("ledger", 1.0))
+	if role.contains("商人") or role.contains("吟游"):
+		multiplier *= float(_night_guest_bias.get("trade", 1.0))
+	if role.contains("巡林") or role.contains("洗衣"):
+		multiplier *= float(_night_guest_bias.get("herbal", 1.0))
+	return maxf(multiplier, 0.0)
 
 
 func _menu_contains_order(menu_items: Array, order_key: String) -> bool:
@@ -260,6 +484,48 @@ func _menu_contains_order(menu_items: Array, order_key: String) -> bool:
 		if _menu_item_key(item) == order_key:
 			return true
 	return false
+
+
+func _menu_orders_matching_tags(menu_items: Array, tags: Array[String]) -> Array[String]:
+	var result: Array[String] = []
+	if tags.is_empty():
+		return result
+	var best_score := 0
+	for item in menu_items:
+		var order_key := _menu_item_key(item)
+		if order_key == "":
+			continue
+		var product_tags := _product_tags(order_key)
+		var score := 0
+		for tag in tags:
+			if product_tags.has(tag):
+				score += 1
+		if score <= 0:
+			continue
+		if score > best_score:
+			best_score = score
+			result.clear()
+		if score == best_score and not result.has(order_key):
+			result.append(order_key)
+	return result
+
+
+func _product_tags(product_key: String) -> Array[String]:
+	if _group_appetite == null or not _group_appetite.has_method("get_product_tags"):
+		return []
+	return _strings_from_values(_group_appetite.get_product_tags(product_key))
+
+
+func _strings_from_values(values) -> Array[String]:
+	var result: Array[String] = []
+	if not values is Array:
+		return result
+	for value in values:
+		var text := String(value)
+		if text == "" or result.has(text):
+			continue
+		result.append(text)
+	return result
 
 
 func _choose_regular_order(entry: Dictionary, menu_items: Array) -> String:
@@ -312,10 +578,93 @@ func _spawn_regular_customer(entry: Dictionary, menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
+	guest_arrived.emit(g)
+
+
+func _active_group_bias_exists() -> bool:
+	for key in _guest_group_profiles.keys():
+		if float(_night_guest_bias.get(String(key), 1.0)) > 1.0:
+			return true
+	return false
+
+
+func _group_bias_multiplier(group_key: String) -> float:
+	return maxf(float(_night_guest_bias.get(group_key, 1.0)), 0.0)
+
+
+func _pick_guest_group_key() -> String:
+	if _guest_group_profiles.is_empty():
+		return ""
+	var total_weight := 0.0
+	for key in _guest_group_profiles.keys():
+		total_weight += _group_bias_multiplier(String(key))
+	if total_weight <= 0.0:
+		return ""
+	var roll := _rng.randf() * total_weight
+	for key in _guest_group_profiles.keys():
+		var group_key := String(key)
+		roll -= _group_bias_multiplier(group_key)
+		if roll <= 0.0:
+			return group_key
+	return String(_guest_group_profiles.keys().back())
+
+
+func _group_guest_name(profile: Dictionary) -> String:
+	var prefixes: Array = profile.get("namePrefixes", [])
+	var suffixes: Array = profile.get("nameSuffixes", [])
+	if prefixes.is_empty() or suffixes.is_empty():
+		return String(profile.get("displayName", "旅人"))
+	return String(prefixes[_rng.randi() % prefixes.size()]) + String(suffixes[_rng.randi() % suffixes.size()])
+
+
+func _group_portrait_id(profile: Dictionary) -> String:
+	var portrait_pool := _strings_from_values(profile.get("portraitPool", []))
+	if portrait_pool.is_empty():
+		return ""
+	return portrait_pool[_rng.randi() % portrait_pool.size()]
+
+
+func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
+	var profile := get_guest_group_profile(group_key)
+	if profile.is_empty() or menu_items.is_empty():
+		return
+	var g := GuestData.new()
+	g.guest_name = _group_guest_name(profile)
+	g.type = GuestData.GuestType.NORMAL
+	g.order_key = choose_guest_group_order(group_key, menu_items)
+	if g.order_key == "":
+		return
+	g.npc_id = ""
+	g.patience = GuestData.BASE_PATIENCE * maxf(float(profile.get("patienceMultiplier", 1.0)), 0.1)
+	g.has_dialogue = false
+	g.set_meta("customer_id", "")
+	g.set_meta("guest_group", group_key)
+	g.set_meta("template_id", "group_" + group_key)
+	var portrait_id := _group_portrait_id(profile)
+	if portrait_id != "":
+		g.set_meta("portrait_id", portrait_id)
+	g.set_meta("preferred_tags", _strings_from_values(profile.get("preferredTags", [])))
+	g.set_meta("tip_multiplier", float(profile.get("tipMultiplier", 1.0)))
+	g.set_meta("reputation_on_success", int(profile.get("reputationOnSuccess", 0)))
+
+	current_guest = g
+	has_guest = true
+	_daily_spawned += 1
+	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
 func _spawn_new_customer(menu_items: Array) -> void:
+	var group_key := _pick_guest_group_key()
+	if group_key != "":
+		var group_chance := 0.65 if _active_group_bias_exists() else 0.28
+		if _rng.randf() < group_chance:
+			_spawn_group_guest(group_key, menu_items)
+			if has_guest:
+				return
+
 	var regular := _pick_regular_customer(_get_current_day())
 	if not regular.is_empty():
 		_spawn_regular_customer(regular, menu_items)
@@ -372,6 +721,7 @@ func _spawn_new_customer(menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
@@ -412,6 +762,7 @@ func _spawn_return_customer(rec: CustomerRecord, menu_items: Array) -> void:
 	has_guest = true
 	_daily_spawned += 1
 	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 
@@ -441,6 +792,7 @@ func spawn_important(npc_id: String, order_key: String) -> void:
 	current_guest = g
 	has_guest = true
 	_daily_important_spawned = true
+	_record_guest_arrival(g)
 	guest_arrived.emit(g)
 
 # ── 客人离场 ──
@@ -460,6 +812,8 @@ func clear_guest() -> void:
 		_emit_normal_orders_completed()
 	if _daily_cleared >= expected_total:
 		_emit_all_guests_served()
+	_mark_current_guest_left_if_pending()
+	_current_guest_entry_index = -1
 
 func _emit_all_guests_served() -> void:
 	if _all_completion_emitted:
@@ -475,19 +829,81 @@ func _emit_normal_orders_completed() -> void:
 
 # ── 统计 ──
 
+func get_guest_entries_today() -> Array[Dictionary]:
+	return guest_entries_today.duplicate(true)
+
+
+func update_current_guest_entry_identity(display_name: String, portrait_id: String) -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	if display_name != "":
+		entry["display_name"] = display_name
+	if portrait_id != "":
+		entry["portrait_id"] = portrait_id
+	guest_entries_today[_current_guest_entry_index] = entry
+
+
+func _record_guest_arrival(guest: GuestData) -> void:
+	if guest == null:
+		_current_guest_entry_index = -1
+		return
+	var npc_id := String(guest.npc_id)
+	var entry := {
+		"npc_id": npc_id,
+		"display_name": String(guest.guest_name),
+		"guest_group": String(guest.get_meta("guest_group", "")),
+		"order_key": String(guest.order_key),
+		"result": "pending",
+		"gold_delta": 0,
+		"rep_delta": 0,
+		"served_delta": 0,
+		"success_delta": 0,
+		"failed_delta": 0,
+	}
+	guest_entries_today.append(entry)
+	_current_guest_entry_index = guest_entries_today.size() - 1
+
+
+func _resolve_current_guest_entry(result: String, gold_delta: int, rep_delta: int, served_delta: int, success_delta: int, failed_delta: int) -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	entry["result"] = result
+	entry["gold_delta"] = gold_delta
+	entry["rep_delta"] = rep_delta
+	entry["served_delta"] = served_delta
+	entry["success_delta"] = success_delta
+	entry["failed_delta"] = failed_delta
+	guest_entries_today[_current_guest_entry_index] = entry
+
+
+func _mark_current_guest_left_if_pending() -> void:
+	if _current_guest_entry_index < 0 or _current_guest_entry_index >= guest_entries_today.size():
+		return
+	var entry: Dictionary = guest_entries_today[_current_guest_entry_index]
+	if String(entry.get("result", "")) == "pending":
+		entry["result"] = "left"
+		guest_entries_today[_current_guest_entry_index] = entry
+
+
 func record_guest_served() -> void:
 	guests_served_today += 1
 
-func record_order_success() -> void:
+func record_order_success(gold_delta: int = 0, rep_delta: int = 0) -> void:
 	orders_success += 1
+	_resolve_current_guest_entry("success", gold_delta, rep_delta, 1, 1, 0)
 
-func record_order_failed() -> void:
+func record_order_failed(gold_delta: int = 0, rep_delta: int = 0, result: String = "failed") -> void:
 	orders_failed += 1
+	_resolve_current_guest_entry(result, gold_delta, rep_delta, 0, 0, 1)
 
 func reset_daily() -> void:
 	guests_served_today = 0
 	orders_success = 0
 	orders_failed = 0
+	guest_entries_today.clear()
+	_current_guest_entry_index = -1
 	_daily_total_guests = 0
 	_daily_spawned = 0
 	_normal_order_limit = 0
@@ -495,6 +911,7 @@ func reset_daily() -> void:
 	_daily_important_spawned = false
 	_all_completion_emitted = false
 	_normal_completion_emitted = false
+	_night_guest_bias.clear()
 
 # ── 反应台词 ──
 
@@ -557,6 +974,9 @@ func capture_state() -> Dictionary:
 			"last_seen_day": rec.last_seen_day,
 			"visit_count": rec.visit_count,
 			"favorite_order": rec.favorite_order,
+			"remembered_tags": rec.remembered_tags.duplicate(),
+			"remembered_orders": rec.remembered_orders.duplicate(),
+			"memory_notes": rec.memory_notes.duplicate(),
 		})
 	return {
 		"customers": customers,
@@ -575,5 +995,8 @@ func restore_state(data: Dictionary) -> void:
 		rec.last_seen_day = int(entry.get("last_seen_day", 0))
 		rec.visit_count = int(entry.get("visit_count", 0))
 		rec.favorite_order = String(entry.get("favorite_order", ""))
+		rec.remembered_tags = (entry.get("remembered_tags", {}) as Dictionary).duplicate()
+		rec.remembered_orders = (entry.get("remembered_orders", {}) as Dictionary).duplicate()
+		rec.memory_notes = _memory_strings_from_array(entry.get("memory_notes", []) as Array)
 		_customer_db[rec.customer_id] = rec
 	_next_customer_seq = max(int(data.get("next_seq", 1)), 1)

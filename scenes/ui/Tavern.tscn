@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3]
+[gd_scene load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/tavern_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="settingspanel"]
@@ -95,6 +95,10 @@ size = Vector2(410, 328)
 radius = 8.0
 height = 88.0
 
+[sub_resource type="SegmentShape2D" id="tv_reward_coin_ground"]
+a = Vector2(360, 548)
+b = Vector2(920, 548)
+
 [node name="Tavern" type="Node2D"]
 script = ExtResource("1")
 
@@ -111,6 +115,14 @@ z_index = -90
 texture_filter = 1
 texture = ExtResource("tavern_tabletop")
 centered = true
+
+[node name="RewardCoinPhysicsLayer" type="Node2D" parent="."]
+z_index = 45
+
+[node name="CoinGround" type="StaticBody2D" parent="RewardCoinPhysicsLayer"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RewardCoinPhysicsLayer/CoinGround"]
+shape = SubResource("tv_reward_coin_ground")
 
 [node name="CustomerArea" type="Control" parent="."]
 layout_mode = 0
@@ -131,12 +143,13 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="CustomerName" type="Label" parent="CustomerArea"]
+visible = false
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 400.0
 offset_bottom = 24.0
-text = "等待中……"
+text = ""
 horizontal_alignment = 1
 
 [node name="OrderBubble" type="Label" parent="CustomerArea"]
@@ -362,10 +375,90 @@ layout_mode = 0
 custom_minimum_size = Vector2(200, 0)
 text = "金币：0"
 
+[node name="GoldProgress" type="Control" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(192, 48)
+mouse_filter = 2
+
+[node name="Bg" type="TextureRect" parent="TopPanel/GoldProgress"]
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FillClip" type="Control" parent="TopPanel/GoldProgress"]
+clip_contents = true
+layout_mode = 0
+offset_right = 0.0
+offset_bottom = 48.0
+mouse_filter = 2
+
+[node name="Fill" type="TextureRect" parent="TopPanel/GoldProgress/FillClip"]
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Ornate" type="TextureRect" parent="TopPanel/GoldProgress"]
+visible = false
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
 [node name="ReputationLabel" type="Label" parent="TopPanel"]
 layout_mode = 0
 custom_minimum_size = Vector2(200, 0)
 text = "声望：0"
+
+[node name="ReputationProgress" type="Control" parent="TopPanel"]
+layout_mode = 0
+custom_minimum_size = Vector2(192, 48)
+mouse_filter = 2
+
+[node name="Bg" type="TextureRect" parent="TopPanel/ReputationProgress"]
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FillClip" type="Control" parent="TopPanel/ReputationProgress"]
+clip_contents = true
+layout_mode = 0
+offset_right = 0.0
+offset_bottom = 48.0
+mouse_filter = 2
+
+[node name="Fill" type="TextureRect" parent="TopPanel/ReputationProgress/FillClip"]
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Ornate" type="TextureRect" parent="TopPanel/ReputationProgress"]
+visible = false
+texture_filter = 1
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="DayLabel" type="Label" parent="TopPanel"]
 layout_mode = 0
@@ -390,6 +483,24 @@ offset_bottom = 510.0
 text = ""
 horizontal_alignment = 1
 modulate = Color(1, 1, 1, 0)
+
+[node name="InferenceReadyNotice" type="Label" parent="."]
+visible = false
+z_index = 90
+offset_left = 580.0
+offset_top = 292.0
+offset_right = 700.0
+offset_bottom = 420.0
+mouse_filter = 2
+text = "?"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(1, 1, 1, 0)
+
+[node name="RewardFeedbackLayer" type="CanvasLayer" parent="."]
+layer = 120
+
+[node name="Particles" type="Node2D" parent="RewardFeedbackLayer"]
 
 [node name="DialogueOverlay" type="ColorRect" parent="."]
 visible = false

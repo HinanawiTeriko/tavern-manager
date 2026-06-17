@@ -7,8 +7,22 @@ const TRUST_THRESHOLD := 5
 ## Mira 线信任阀门：告知真相后 aff_mira 达此值她才肯担责。Mira 专属，不复用 Ryan 的 TRUST_THRESHOLD。
 const MIRA_TRUST_THRESHOLD := 10
 
+const EVELYN_ENDING_SEALED := "sealed_account"
+const EVELYN_ENDING_AMENDED := "amended_account"
+const EVELYN_ENDING_PUBLIC := "public_account"
+const EVELYN_PRESSURE_LIVING := "living_witnesses"
+const EVELYN_PRESSURE_PAPER := "paper_public"
+const EVELYN_PRESSURE_DAMAGED := "damaged_amendment"
+const EVELYN_PRESSURE_COLD := "cold_amendment"
+const EVELYN_PAPER_EVIDENCE_LABELS: Array[String] = ["莱恩案卷编号", "黑齿批次号", "供应协议灰印"]
+
 const LINKED_FATE_DAYS: Dictionary = {
 	12: ["toby"],
+}
+const FATE_REVEAL_DAYS: Dictionary = {
+	3: ["ryan"],
+	12: ["mira"],
+	20: ["evelyn"],
 }
 
 var all_npcs: Array[NpcData] = []
@@ -88,7 +102,7 @@ func get_mira_route() -> String:
 		or bool(dialogue_vars.get("toby_secured", false))
 	if told and contract_found and trust_ok:
 		return "she_finally_stopped"
-	if told or contract_found:
+	if told:
 		return "never_turned_back"
 	if secured:
 		return "closed_the_door"
@@ -103,6 +117,60 @@ func finalize_mira_ending() -> void:
 	set_ending("toby", "saved" if survived else "lost")
 
 
+func get_evelyn_route() -> String:
+	if bool(dialogue_vars.get("grey_public_account_known", false)):
+		return EVELYN_ENDING_PUBLIC
+	if bool(dialogue_vars.get("grey_same_batch_known", false)) \
+		or bool(dialogue_vars.get("grey_payout_method_known", false)) \
+		or bool(dialogue_vars.get("mira_grey_ledger_link_known", false)):
+		return EVELYN_ENDING_AMENDED
+	return EVELYN_ENDING_SEALED
+
+
+func get_evelyn_pressure(route: String = "") -> String:
+	if route == "":
+		route = get_evelyn_route()
+	if route == EVELYN_ENDING_SEALED:
+		return EVELYN_ENDING_SEALED
+	var has_witness_pressure := _has_evelyn_living_pressure()
+	if route == EVELYN_ENDING_PUBLIC:
+		return EVELYN_PRESSURE_LIVING if has_witness_pressure else EVELYN_PRESSURE_PAPER
+	if route == EVELYN_ENDING_AMENDED:
+		return EVELYN_PRESSURE_DAMAGED if has_witness_pressure else EVELYN_PRESSURE_COLD
+	return EVELYN_ENDING_SEALED
+
+
+func get_evelyn_living_pressure_labels() -> Array[String]:
+	var labels: Array[String] = []
+	if _ryan_is_evelyn_witness(_current_ryan_route()):
+		labels.append("莱恩")
+	if _mira_is_evelyn_witness(_current_mira_route()):
+		labels.append("米拉")
+	if _toby_is_evelyn_witness():
+		labels.append("托比")
+	return labels
+
+
+func get_evelyn_paper_evidence_labels() -> Array[String]:
+	var labels: Array[String] = []
+	for label in EVELYN_PAPER_EVIDENCE_LABELS:
+		labels.append(label)
+	return labels
+
+
+func get_evelyn_pressure_evidence_summary() -> String:
+	var living_labels := get_evelyn_living_pressure_labels()
+	var living_text := "无" if living_labels.is_empty() else " / ".join(PackedStringArray(living_labels))
+	var paper_text := " / ".join(PackedStringArray(get_evelyn_paper_evidence_labels()))
+	return "活人证词：" + living_text + "；纸证：" + paper_text
+
+
+func finalize_evelyn_ending() -> void:
+	var route := get_evelyn_route()
+	set_ending("evelyn", route)
+	set_var("evelyn_pressure", get_evelyn_pressure(route))
+
+
 func get_ryan_route() -> String:
 	if bool(dialogue_vars.get("ryan_has_alternative", false)):
 		return "alternative_survivor"
@@ -111,6 +179,34 @@ func get_ryan_route() -> String:
 	if bool(dialogue_vars.get("ryan_informed", false)):
 		return "informed_fallen"
 	return "uninformed_fallen"
+
+
+func _has_evelyn_living_pressure() -> bool:
+	return not get_evelyn_living_pressure_labels().is_empty()
+
+
+func _current_ryan_route() -> String:
+	var route := String(dialogue_vars.get("ryan_ending", ""))
+	return get_ryan_route() if route == "" else route
+
+
+func _current_mira_route() -> String:
+	var route := String(dialogue_vars.get("mira_ending", ""))
+	return get_mira_route() if route == "" else route
+
+
+func _ryan_is_evelyn_witness(route: String) -> bool:
+	return route in ["alternative_survivor", "drugged_survivor"]
+
+
+func _mira_is_evelyn_witness(route: String) -> bool:
+	return route == "she_finally_stopped"
+
+
+func _toby_is_evelyn_witness() -> bool:
+	if dialogue_vars.has("toby_survived"):
+		return bool(dialogue_vars.get("toby_survived", false))
+	return toby_survived()
 
 
 func _resolve_story_item_product_action(action: Dictionary) -> Dictionary:
@@ -127,7 +223,11 @@ func _resolve_mira_story_item_action(action: Dictionary) -> Dictionary:
 		"toby_contract":
 			set_var("toby_contract_found", true)
 			set_var("told_mira_truth", true)
-			return _action_result(true, "mira_informed")
+			if int(action.get("day", 0)) == 12:
+				return _action_result(true, "mira_informed_unsettled")
+			if get_affection("mira") >= MIRA_TRUST_THRESHOLD:
+				return _action_result(true, "mira_informed_trusted")
+			return _action_result(true, "mira_informed_guarded")
 	return _action_result(false, "unsupported_story_item")
 
 
@@ -207,11 +307,23 @@ func load_npc_data() -> void:
 	dialogue_vars["told_mira_truth"] = false
 	dialogue_vars["toby_danger_known"] = false
 	dialogue_vars["toby_contract_found"] = false
+	dialogue_vars["mira_contract_aftershock_seen"] = false
+	dialogue_vars["mira_responsibility_stall_bonus_seen"] = false
 	dialogue_vars["toby_secured"] = false
 	dialogue_vars["toby_secured_by_fixer"] = false
 	dialogue_vars["toby_survived"] = false
 	dialogue_vars["mira_ending"] = ""
 	dialogue_vars["aff_toby"] = 0
+	dialogue_vars["grey_same_batch_known"] = false
+	dialogue_vars["grey_payout_method_known"] = false
+	dialogue_vars["mira_grey_ledger_link_known"] = false
+	dialogue_vars["grey_public_account_known"] = false
+	dialogue_vars["evelyn_ending"] = ""
+	dialogue_vars["evelyn_pressure"] = ""
+	dialogue_vars["evelyn_resolution_state"] = ""
+	dialogue_vars["evelyn_public_gap_summary"] = ""
+	dialogue_vars["evelyn_public_gap_primary"] = ""
+	dialogue_vars["aff_evelyn"] = 0
 
 	var file = FileAccess.open("res://data/npcs.json", FileAccess.READ)
 	if file == null:
@@ -299,11 +411,10 @@ func _check_trigger(trigger, npc_id: String) -> bool:
 
 func get_today_npc_fates(day: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for npc in all_npcs:
-		for scene in npc.scenes:
-			if scene.day == day:
-				_append_npc_fate(result, npc)
-				break
+	for npc_id in FATE_REVEAL_DAYS.get(day, []):
+		var npc := _find_npc(String(npc_id))
+		if npc != null:
+			_append_npc_fate(result, npc)
 	for npc_id in LINKED_FATE_DAYS.get(day, []):
 		if _fate_result_has_npc(result, String(npc_id)):
 			continue

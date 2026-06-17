@@ -18,6 +18,9 @@ export_presets.cfg
 *.tmp.*
 ~*.dll
 tmp/
+tmp_tests/
+tmp_*.log
+tmp_*.png
 
 # Python (asset-pipeline tooling cache)
 __pycache__/
@@ -40,6 +43,7 @@ AGENTS.md
 # Codex/OpenAI agents (AI-only, local)
 AGENTS.md
 .codex/
+.worktrees/
 
 # VS Code (keep shared settings, ignore local)
 .vscode/

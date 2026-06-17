@@ -1,0 +1,439 @@
+{
+  "regular_belta": {
+    "preferred": {
+      "might": 1.2,
+      "vitality": 1
+    },
+    "seasoning": {
+      "咸香": 0.8,
+      "辛辣": 0.6
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 6,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "她记下了这份顶饿的味道。"
+  },
+  "regular_noel": {
+    "preferred": {
+      "fortune": 1.2,
+      "charm": 1
+    },
+    "seasoning": {
+      "清香": 0.5
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "他愿意多聊几句账房里的事。"
+  },
+  "regular_masha": {
+    "preferred": {
+      "vitality": 1.1,
+      "arcana": 0.8
+    },
+    "seasoning": {
+      "清香": 0.7,
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她说这碗热东西能撑过后半夜。"
+  },
+  "regular_coen": {
+    "preferred": {
+      "fortune": 1,
+      "might": 0.8
+    },
+    "seasoning": {
+      "辛辣": 0.5
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 2,
+    "bonusRep": 0,
+    "reaction": "巡夜人的话匣子松了一点。"
+  },
+  "regular_dorin": {
+    "preferred": {
+      "might": 1.2,
+      "vitality": 0.8
+    },
+    "seasoning": {
+      "辛辣": 0.7,
+      "咸香": 0.6
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "他承认这口劲道够老兵记住。"
+  },
+  "regular_elira": {
+    "preferred": {
+      "alacrity": 1.1,
+      "arcana": 1,
+      "vitality": 0.4
+    },
+    "seasoning": {
+      "清香": 1.2
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她认出了林地里的清香。"
+  },
+  "regular_marco": {
+    "preferred": {
+      "charm": 1,
+      "fortune": 1
+    },
+    "seasoning": {
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 3,
+    "bonusRep": 0,
+    "reaction": "商人觉得这份菜单有利可图。"
+  },
+  "regular_nix": {
+    "preferred": {
+      "might": 0.8,
+      "alacrity": 1.1
+    },
+    "seasoning": {
+      "辛辣": 0.9
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "他把后巷听来的话压低声音说了。"
+  },
+  "regular_selene": {
+    "preferred": {
+      "arcana": 1.2,
+      "fortune": 0.8,
+      "charm": 0.6
+    },
+    "seasoning": {
+      "清香": 0.7
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "她把味道和符文笔记对上了。"
+  },
+  "regular_gareth": {
+    "preferred": {
+      "might": 1.1,
+      "vitality": 1
+    },
+    "seasoning": {
+      "咸香": 0.6,
+      "辛辣": 0.5
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "骑士为这份扎实的热食多留了一枚钱。"
+  },
+  "regular_lyra": {
+    "preferred": {
+      "charm": 1.1,
+      "arcana": 0.8,
+      "fortune": 0.6
+    },
+    "seasoning": {
+      "清香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她说这味道能写进副歌。"
+  },
+  "regular_oma": {
+    "preferred": {
+      "vitality": 1.1,
+      "fortune": 0.7
+    },
+    "seasoning": {
+      "清香": 0.5,
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 0,
+    "bonusRep": 2,
+    "reaction": "他安静地点头，像是认可了这份朴素。"
+  },
+  "regular_ketta": {
+    "preferred": {
+      "might": 1.2,
+      "vitality": 0.8
+    },
+    "seasoning": {
+      "咸香": 0.7,
+      "辛辣": 0.4
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "她把这份矿区硬菜记在镐柄旁。"
+  },
+  "regular_bram": {
+    "preferred": {
+      "might": 1.3,
+      "vitality": 1
+    },
+    "seasoning": {
+      "咸香": 0.7,
+      "辛辣": 0.5
+    },
+    "satisfyThreshold": 3.5,
+    "delightThreshold": 6,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "他满意地点头，像推车压过直轨。"
+  },
+  "regular_sova": {
+    "preferred": {
+      "arcana": 1.2,
+      "charm": 0.8
+    },
+    "seasoning": {
+      "秘香": 0.8,
+      "清香": 0.3
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "她愿意多说几句晶石摊上的传闻。"
+  },
+  "regular_petra": {
+    "preferred": {
+      "vitality": 1.2,
+      "might": 0.8
+    },
+    "seasoning": {
+      "咸香": 0.5
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她说这顿能顶住下一班采石。"
+  },
+  "regular_jora": {
+    "preferred": {
+      "alacrity": 1.2,
+      "vitality": 0.8
+    },
+    "seasoning": {
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "他边吃边把旧路消息压低了声音。"
+  },
+  "regular_tamsin": {
+    "preferred": {
+      "vitality": 1,
+      "arcana": 0.9
+    },
+    "seasoning": {
+      "清香": 0.7,
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她认可了这锅火候。"
+  },
+  "regular_kael": {
+    "preferred": {
+      "charm": 1.1,
+      "arcana": 1
+    },
+    "seasoning": {
+      "秘香": 0.9,
+      "辛辣": 0.4
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 3,
+    "bonusRep": 0,
+    "reaction": "他开始谈起香料行最近的价码。"
+  },
+  "regular_mirelle": {
+    "preferred": {
+      "charm": 1,
+      "vitality": 0.8
+    },
+    "seasoning": {
+      "清香": 0.8
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她说这杯清亮得适合摆进玻璃柜。"
+  },
+  "regular_fenna": {
+    "preferred": {
+      "arcana": 1.2,
+      "alacrity": 0.8
+    },
+    "seasoning": {
+      "秘香": 0.7,
+      "清香": 0.5
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她愿意透露哪批洞菇最近更鲜。"
+  },
+  "regular_yuval": {
+    "preferred": {
+      "vitality": 1.1,
+      "alacrity": 0.9
+    },
+    "seasoning": {
+      "清香": 0.8
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "他把药磨房的闲话讲得更顺。"
+  },
+  "regular_nara": {
+    "preferred": {
+      "vitality": 1.2,
+      "might": 0.8
+    },
+    "seasoning": {
+      "咸香": 0.6
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "她承认这份厚味能压住市集寒气。"
+  },
+  "regular_iris": {
+    "preferred": {
+      "arcana": 1.1,
+      "vitality": 0.8
+    },
+    "seasoning": {
+      "清香": 0.7,
+      "秘香": 0.5
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "她愿意多带一句药铺里的消息。"
+  },
+  "regular_bastian": {
+    "preferred": {
+      "charm": 1,
+      "fortune": 0.9
+    },
+    "seasoning": {
+      "清香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 2,
+    "bonusRep": 0,
+    "reaction": "他把这顿记成一笔体面的开销。"
+  },
+  "regular_qadir": {
+    "preferred": {
+      "fortune": 1.1,
+      "might": 0.9
+    },
+    "seasoning": {
+      "咸香": 0.6
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 3,
+    "bonusRep": 0,
+    "reaction": "他把几枚小费推到杯旁。"
+  },
+  "regular_rowan": {
+    "preferred": {
+      "fortune": 1,
+      "alacrity": 0.9
+    },
+    "seasoning": {
+      "清香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "他在地图角落标了一个新酒馆记号。"
+  },
+  "regular_maeve": {
+    "preferred": {
+      "charm": 1.2,
+      "fortune": 0.8
+    },
+    "seasoning": {
+      "秘香": 0.7,
+      "清香": 0.3
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 3,
+    "bonusRep": 1,
+    "reaction": "她承认这杯足够拿去侧厅试口。"
+  },
+  "regular_osric": {
+    "preferred": {
+      "might": 1.2,
+      "fortune": 0.8
+    },
+    "seasoning": {
+      "咸香": 0.7,
+      "辛辣": 0.4
+    },
+    "satisfyThreshold": 3,
+    "delightThreshold": 5.5,
+    "bonusGold": 2,
+    "bonusRep": 1,
+    "reaction": "他把旧路关卡的换岗时间说漏了一句。"
+  },
+  "regular_lio": {
+    "preferred": {
+      "alacrity": 1.2,
+      "vitality": 0.7
+    },
+    "seasoning": {
+      "咸香": 0.4
+    },
+    "satisfyThreshold": 2.5,
+    "delightThreshold": 4,
+    "bonusGold": 1,
+    "bonusRep": 1,
+    "reaction": "他吃完就跑，却记得下次还来。"
+  }
+}

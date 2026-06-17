@@ -1,9 +1,0 @@
-Use case: stylized-concept
-Asset type: pixel-game tavern customer bust portrait source for a Godot game asset pipeline
-Primary request: Create one distinctive portrait of Mira, an adult female traveling merchant, for a dark fantasy dungeon tavern management game.
-Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for background removal. The background must be one uniform color with no shadows, gradients, texture, reflections, floor plane, or lighting variation.
-Subject: Mira is 25-30, sharp amber eyes, dark brown hair in a high ponytail, poised professional smile that feels polite but guarded. She wears a cream linen shirt, dark brown leather vest, asymmetric travel shawl with muted teal lining, broad belt with many pouches, a small brass merchant scale charm, wax-sealed scroll tube, folded contracts, and a large worn leather shoulder bag. She looks clever, controlled, and slightly emotionally distant, not cute and not anime.
-Style/medium: chunky pixel-game character concept art, rough ink-like outline, low-density pixel clusters, limited dark teal dungeon tavern palette with old leather browns and restrained amber highlights. Match the mood of a hand-authored pixel bust portrait, not a smooth digital painting.
-Composition/framing: centered isolated half-body bust, waist-up, slight 3/4 front view facing the viewer, full head and shoulders visible with generous padding, no legs. Strong readable silhouette: high ponytail, shoulder bag, pouches, scroll tube.
-Lighting/mood: warm tavern candle edge-light on face and leather, cool teal shadows, grounded and mature.
-Constraints: no readable text, no letters, no numbers, no logo, no watermark, no extra characters, no hands holding readable paper, no cast shadow, no contact shadow, no #00ff00 anywhere in the subject. Keep all important details large enough to survive downscaling to a 70x90 native pixel source.

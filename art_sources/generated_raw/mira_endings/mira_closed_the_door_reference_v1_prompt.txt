@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: game ending cinematic still reference for a pixel-art dungeon tavern management game
+Primary request: create the Mira route ending still for route `closed_the_door`.
+Input images in conversation: use the visible Ryan ending contact sheet as the strongest style reference for cinematic density and palette; use the visible Mira character sheet for the character's silver hair, merchant coat, glasses, and restrained posture.
+Scene/backdrop: a quiet tavern back room at night, viewed through a partly closing heavy wooden door. Inside the warm room, a small apprentice bundle, boots, and a safe job token rest near an amber lamp, implying Toby is safe. Beyond a window or narrow doorway, Mira's merchant silhouette and cart tracks recede down a cold blue road; she never sees that someone protected him.
+Style/medium: native-pixel reference art, rough ink lines, hard pixel-like silhouettes, chunky low-density clusters, posterized limited palette, dark teal dungeon tavern palette with small amber highlights.
+Composition/framing: wide 16:7 letterbox cinematic still, 1280x560 feel, no UI area, no text. The door edge should divide warm hidden safety from the cold departing road. Avoid showing the player's face; use environment and props to tell the story.
+Lighting/mood: hushed, secret mercy, bittersweet distance; amber warm room against cold teal outside.
+Constraints: no readable text, no letters, no logos, no watermark, no UI, no speech bubbles, no signs with writing. Keep all important content within the central wide frame. Avoid painterly softness, glossy rendering, dense noise, photorealism, modern objects, anime splash art.

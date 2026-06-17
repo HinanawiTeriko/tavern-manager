@@ -6,6 +6,9 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_orderable_products_respect_purchase_unlock()
+	_test_orderable_products_wait_for_production_chain()
+	_test_recipe_discovery_controls_recipe_visibility()
+	_test_recipe_discovery_new_marker_can_be_cleared()
 	_test_shop_unlock_keys_exist_in_recipes()
 	_test_today_important_npc_resets_on_empty_day()
 	_test_material_icons_load()
@@ -37,6 +40,56 @@ func _test_orderable_products_respect_purchase_unlock() -> void:
 	craft.unlock_recipe("herbal_ale")
 	var after := craft.get_orderable_products(1)
 	_ok(after.has("herbal_ale"), "shop recipe should become orderable after unlock")
+	_ok(not craft.get_orderable_products(3).has("herb_broth"), "hidden pot recipe should not be orderable before shop unlock")
+	craft.unlock_recipe("herb_broth")
+	_ok(craft.get_orderable_products(3).has("herb_broth"), "newly unlocked pot recipe should enter regular orders")
+
+
+func _test_orderable_products_wait_for_production_chain() -> void:
+	var craft := CraftSystem.new()
+	craft.load_data()
+	var day2 := craft.get_orderable_products(2)
+	_ok(day2.has("meat_cooked"), "day2 should offer grill recipes that can be made directly")
+	_ok(not day2.has("bread"), "day2 should not offer bread before the dough-making pot is available")
+	var day3 := craft.get_orderable_products(3)
+	_ok(day3.has("bread"), "bread should enter regular orders once the pot unlocks the dough chain")
+
+
+func _test_recipe_discovery_controls_recipe_visibility() -> void:
+	var craft = CraftSystem.new()
+	craft.load_data()
+	_ok(craft.has_method("is_recipe_discovered"), "craft exposes recipe discovery query")
+	_ok(craft.has_method("discover_recipe"), "craft exposes recipe discovery mutation")
+	if not craft.has_method("is_recipe_discovered") or not craft.has_method("discover_recipe"):
+		return
+	_ok(craft.call("is_recipe_discovered", "ale_beer"), "basic ale_beer starts discovered")
+	_ok(craft.call("is_recipe_discovered", "wine"), "basic wine starts discovered")
+	_ok(craft.call("is_recipe_discovered", "herb_tea"), "basic herb_tea starts discovered")
+	_ok(craft.call("is_recipe_discovered", "bread"), "basic bread starts discovered")
+	_ok(craft.call("is_recipe_discovered", "meat_cooked"), "basic meat_cooked starts discovered")
+	_ok(not craft.call("is_recipe_discovered", "malt_porridge"), "advanced pot recipe starts hidden")
+	_ok(not craft.get_orderable_products(3).has("malt_porridge"), "hidden recipe is not offered by regular customers")
+	_ok(craft.call("discover_recipe", "malt_porridge"), "discover_recipe returns true the first time")
+	_ok(craft.call("is_recipe_discovered", "malt_porridge"), "discovered recipe becomes visible")
+	_ok(craft.get_orderable_products(3).has("malt_porridge"), "discovered non-shop recipe can enter regular orders")
+
+
+func _test_recipe_discovery_new_marker_can_be_cleared() -> void:
+	var craft = CraftSystem.new()
+	craft.load_data()
+	_ok(craft.has_method("is_recipe_new"), "craft exposes recipe new marker query")
+	_ok(craft.has_method("mark_recipe_new"), "craft exposes recipe new marker mutation")
+	_ok(craft.has_method("clear_recipe_new"), "craft exposes recipe new marker clearing")
+	if not craft.has_method("is_recipe_new") or not craft.has_method("mark_recipe_new") or not craft.has_method("clear_recipe_new"):
+		return
+	_ok(not craft.call("is_recipe_new", "herb_broth"), "advanced recipe does not start as a new marker")
+	_ok(not craft.call("mark_recipe_new", "herb_broth"), "undiscovered recipe cannot be marked new")
+	craft.call("discover_recipe", "herb_broth")
+	_ok(craft.call("mark_recipe_new", "herb_broth"), "discovered recipe can be marked new")
+	_ok(craft.call("is_recipe_new", "herb_broth"), "marked recipe reports as new")
+	_ok(not craft.call("mark_recipe_new", "herb_broth"), "marking an already-new recipe is a no-op")
+	_ok(craft.call("clear_recipe_new", "herb_broth"), "new recipe marker can be cleared")
+	_ok(not craft.call("is_recipe_new", "herb_broth"), "cleared recipe no longer reports as new")
 
 
 func _test_shop_unlock_keys_exist_in_recipes() -> void:
@@ -51,19 +104,31 @@ func _test_shop_unlock_keys_exist_in_recipes() -> void:
 	_ok(data is Dictionary, "shop.json should parse")
 	if not data is Dictionary:
 		return
+	var shop_recipe_keys: Array[String] = []
 	for unlock in data.get("recipeUnlocks", []):
-		_ok(craft.recipes.has(unlock["key"]), "shop recipe key should exist: " + unlock["key"])
+		var key := String(unlock["key"])
+		shop_recipe_keys.append(key)
+		_ok(craft.recipes.has(key), "shop recipe key should exist: " + key)
+		if craft.recipes.has(key):
+			_ok(bool(craft.recipes[key].get("requires_purchase", false)),
+				"shop recipe should be marked requires_purchase: " + key)
+	_ok(shop_recipe_keys.has("herb_broth"), "hidden herb_broth recipe should be sold in the shop")
+	for product_key in craft.recipes.keys():
+		var recipe: Dictionary = craft.recipes[product_key]
+		if bool(recipe.get("requires_purchase", false)):
+			_ok(shop_recipe_keys.has(String(product_key)),
+				"requires_purchase recipe should have a shop unlock: " + String(product_key))
 
 
 func _test_today_important_npc_resets_on_empty_day() -> void:
 	var narrative := NarrativeManager.new()
 	narrative.load_npc_data()
 	_ok(narrative.select_today_important_npc(1) == "ryan", "Day 1 should select ryan")
-	_ok(narrative.select_today_important_npc(5) == "", "empty day should clear stale NPC")
+	_ok(narrative.select_today_important_npc(7) == "", "empty day should clear stale NPC")
 	_ok(narrative.today_important_npc == "", "stored NPC id should also be cleared")
 
 
 func _test_material_icons_load() -> void:
 	var gm = get_node("/root/GameManager")
-	for key in ["ale", "grape", "flour", "meat_raw", "herb"]:
+	for key in ["ale", "grape", "flour", "meat_raw", "herb", "cave_mushroom", "rock_lizard_meat", "north_sour_grape", "black_malt"]:
 		_ok(gm.try_load_material_icon(key) != null, "material icon should load: " + key)

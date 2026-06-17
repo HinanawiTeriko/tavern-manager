@@ -66,6 +66,9 @@ func show_rewards(rewards: Dictionary, message: String) -> void:
 	else:
 		_label.text = "采集获得：" + "、".join(PackedStringArray(parts))
 
+	if not parts.is_empty() and message.contains("传闻"):
+		_label.text += " / 听到传闻"
+
 	visible = true
 	_timer.start(DISPLAY_DURATION)
 

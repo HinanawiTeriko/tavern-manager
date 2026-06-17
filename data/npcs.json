@@ -10,8 +10,7 @@
       "disliked_styles": ["温柔"],
       "scenes": [
         { "day": 1, "dialogue": "ryan_day1", "order": "ale_beer", "trigger": {"type": "auto"} },
-        { "day": 2, "dialogue": "ryan_day2", "order": "meat_cooked", "trigger": {"type": "auto"} },
-        { "day": 3, "dialogue": "ryan_day3", "order": "herb_broth", "trigger": {"type": "auto"} }
+        { "day": 2, "dialogue": "ryan_day2", "order": "meat_cooked", "trigger": {"type": "auto"} }
       ],
       "endings": {
         "uninformed_fallen": "莱恩毫不知情地奔赴北矿道。血斧小队全军覆没，他到死都不知道那份委托从一开始就是陷阱。",
@@ -33,9 +32,9 @@
         { "day": 12, "dialogue": "mira_day12", "order": "spiced_wine", "trigger": {"type": "auto"} }
       ],
       "endings": {
-        "she_finally_stopped": "米拉撕掉了那份长期供应协议，转身带走了托比。她放弃了无牵挂的生意，却第一次不再逃。",
+        "she_finally_stopped": "米拉撕掉了那份长期供应协议，回头去找托比。她没有说赎罪，只是第一次承认：那句“一个人走才轻快”，不该由他替她背着。",
         "never_turned_back": "米拉读完那份委托，沉默良久，仍在协议上签了字。她清醒地，第二次把托比留在了身后。",
-        "closed_the_door": "托比被一份不知从何而来的安全委托接走，活了下来。米拉始终做着她无牵挂的生意，从不知道有人替她合上了那扇门。",
+        "closed_the_door": "托比被一份不知从何而来的安全委托接走，活了下来。米拉仍不知道那句话差点把他送进黑齿矿脉，也不知道有人替她合上了那扇门。",
         "another_light_out": "米拉签下协议，照常上路。她始终不知道，那个曾跟她赶路的孩子，最终没能从那条路上回来。"
       }
     },
@@ -53,6 +52,26 @@
       "endings": {
         "saved": "托比留了下来，没走上那条委托。",
         "lost": "托比独自上了路，再没回来。"
+      }
+    },
+    {
+      "id": "evelyn",
+      "name": "伊芙琳",
+      "title": "灰账清算人",
+      "description": "替公会封存事故、赔付和失踪记录的灰账清算人，礼貌得像一枚冷印章。她相信清账能让活人继续过日子，却也知道不是所有清账都等于真相。",
+      "affectionStart": 0,
+      "preferred_styles": ["温柔"],
+      "disliked_styles": ["粗鲁"],
+      "scenes": [
+        { "day": 5, "dialogue": "evelyn_day5", "order": "wine", "trigger": {"type": "auto"} },
+        { "day": 8, "dialogue": "evelyn_day8", "order": "herb_tea", "trigger": {"type": "auto"} },
+        { "day": 13, "dialogue": "evelyn_day13", "order": "wine", "trigger": {"type": "auto"} },
+        { "day": 20, "dialogue": "evelyn_day20", "order": "spiced_wine", "trigger": {"type": "auto"} }
+      ],
+      "endings": {
+        "sealed_account": "伊芙琳把缺页重新封回灰账。玩家没能把莱恩、托比和米拉合成可公开的证据，公会照常把下一批事故写成已结。",
+        "amended_account": "伊芙琳承认账面有误，替几份委托改了赔付名目。玩家证明了灰账会伤人，但证据仍被留在公会可以控制的栏位里。",
+        "public_account": "灰账被抄成公开副本，莱恩的北矿道、托比的黑齿矿脉和米拉的供应协议被并到同一张账上。伊芙琳第一次没能替公会合上账页。"
       }
     }
   ]

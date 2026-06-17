@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: source sprite sheet for a pixel dungeon tavern investigation scene, later downsampled to tiny native item sprites and scaled 4x in Godot.
+Primary request: two assembled contract objects on one sprite sheet.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background, no shadow, no floor, no texture.
+Subject: two assembled contract objects, 1 row x 2 columns with wide empty padding. Left cell: two torn parchment commission fragments physically joined into one larger irregular piece, visible seam and rough stitches, still clearly incomplete with one missing corner. Right cell: compact complete commission sheet assembled from three torn fragments, rough stitched seams, small dark red wax smear, worn corners, dirty edges. Both are small tabletop investigation props, not UI panels.
+Style/medium: chunky native-pixel game asset source, limited dark teal dungeon tavern palette with muted parchment amber, rough ink contour lines, crisp silhouettes, low-density pixel clusters.
+Composition/framing: each object centered in its own half of the image, generous padding, distinct silhouettes, readable at small size after downsampling.
+Lighting/mood: subtle warm candlelit parchment tones, cold dark outlines, grim tavern lodging mood.
+Text: none.
+Constraints: flat solid #ff00ff background, no readable text, no letters, no numbers, no labels, no UI, no logos, no watermark, no cast shadow, no glow, no realistic paper photo, no named game or artist imitation.
+Avoid: anti-aliased soft borders, blurry painterly texture, extra props, hands, tables, frames, seals with symbols, fake glyphs that look readable.

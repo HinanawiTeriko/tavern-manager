@@ -1,0 +1,11 @@
+figgy_direction_01_mint_goblin_signwright:
+Cute female goblin/gnome danger-sign rhetoric specialist with mint-green asymmetrical short hair, small pointed ears, oversized round inspection goggles, sign-maker kit, blank wooden plaques, feather pens, red wax seals, native-pixel important NPC bust style, flat #ff00ff background, no readable text.
+
+figgy_direction_02_lavender_tiefling_clause_duelist:
+Cute female tiefling/impish danger-sign rhetoric specialist with pale lavender skin, tiny curled punctuation-like horns, icy white-blue bob, half-moon spectacles, correction ribbons, compact signboard case, native-pixel important NPC bust style, flat #ff00ff background, no readable text.
+
+figgy_direction_03_coral_deep_gnome_field_worker:
+Cute female deep-gnome/halfling danger-sign rhetoric specialist with warm slate skin, vivid coral-pink twin puff buns, dark teal cave-worker coat, parchment apron straps, mini signpost and wax stamps, native-pixel important NPC bust style, flat #ff00ff background, no readable text.
+
+figgy_direction_04_aqua_fae_notice_editor:
+Cute female fae/sylph danger-sign rhetoric specialist with pale moonlit skin, long pointed ears, aqua side ponytail shaped like curled paper ribbon, reading goggles, dark teal cape, signwriting kit, native-pixel important NPC bust style, flat #ff00ff background, no readable text.

@@ -1,0 +1,12 @@
+Use case: stylized-concept
+Asset type: pixel-game UI source sheet for a Godot tavern management game
+Primary request: Create one clean UI asset source sheet on a perfectly flat solid #00ff00 chroma-key background. The sheet must contain separate isolated UI parts with generous padding: three blank rectangular button states in a row (normal, hover, pressed), one large round clock face with no readable text or numbers, one long ornate clock hand pointer, and one parchment-and-dark-stone event panel frame. No words, no letters, no numerals, no logos, no watermark.
+Scene/backdrop: no scene, only isolated UI parts on flat #00ff00.
+Subject: dungeon tavern restart-day rewind controls: old wooden sign buttons, candle-warmed brass clock, rough ink edgework, cold stone/paper event frame.
+Style/medium: original pixel-game UI source art with historical printmaking influence, rough black ink lines, paper grain, warm amber candle accents, dark teal stone shadows, crisp silhouettes suitable for downsampling to chunky pixel art.
+Composition/framing: orthographic sprite sheet, each part fully visible, separated, centered in its own area, no overlap. Top row: three equal blank button states. Middle left: large circular clock face. Middle right: tall pointer hand. Bottom right: empty event panel frame with clear interior safe area.
+Lighting/mood: restrained candlelit amber on dark teal stone and aged wood.
+Color palette: dark teal, near-black ink, muted parchment, worn wood brown, tarnished brass, sparse amber highlights. Do not use #00ff00 in any UI part.
+Materials/textures: rough carved wood, aged brass, cold stone, parchment paper, hand-inked borders.
+Text (verbatim): none.
+Constraints: no readable text, no numbers, no icons that imply copyrighted logos, no characters, no UI labels, no fake writing, no gradients outside the assets, no cast shadows on the chroma background. Keep edges clean enough for chroma-key extraction and fixed-rectangle cropping.

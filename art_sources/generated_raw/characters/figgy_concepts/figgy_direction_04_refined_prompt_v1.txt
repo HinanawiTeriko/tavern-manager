@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: single raw AI source portrait for a 128x160 native -> 512x640 Godot pixel-game important NPC bust pipeline
+Primary request: Regenerate Direction 4 as the selected character concept for Figgy, a cute female fae/sylph danger-sign rhetoric specialist. Match the approved important NPC tavern bust camera and texture family used by Ryan, Mira, and Toby. This is source art for later pixel normalization, NOT a polished anime illustration.
+Subject identity: tiny young adult female fae/sylph warning-sign rhetoric specialist; pale moonlit skin, long pointed ears, no horns; translucent aqua high side ponytail curling like a paper ribbon; sweet, polite, intensely focused expression; narrow practical reading lenses as headband.
+Outfit and props: dark teal-black travel cape and short work jacket, parchment-yellow sash and tool straps, one muted red wax seal brooch; one blank hanging wooden warning plaque, blank notices, feather pens, tiny stamp hammer, compact signwriting kit.
+Critical camera: important NPC close-camera bust, 3/4 front view, head through belt and upper hips visible, same tavern portrait distance as Ryan/Mira/Toby sources, not headshot and not full-body.
+Style: hard pixel-game source art, crisp stair-stepped silhouette, thick dark pixel outlines, posterized flat color blocks, chunky readable shapes, restrained pixel clusters, limited muted dungeon tavern palette; suitable for 128x160 native normalization and 512x640 nearest-neighbor runtime export.
+Background: flat solid #00ff00 chroma-key, no texture or shadows. No readable text, letters, numbers, logo, watermark, speech bubble, UI frame, labels, or runtime use yet.

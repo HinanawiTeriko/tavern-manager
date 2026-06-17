@@ -16,10 +16,16 @@ var _read_documents: Dictionary = {}
 var _owned_documents: Dictionary = {}
 var _lead_flags: Dictionary = {}
 var _revealed: Dictionary = {}
+var _completed_locations: Dictionary = {}
+var _rare_gather_misses: Dictionary = {}
 var _regions: Array = []
 var _anchors: Array = []
 var _anchor_by_id: Dictionary = {}
 var _announced_postings: Dictionary = {}
+var _has_camera_view: bool = false
+var _camera_position := Vector2.ZERO
+var _camera_zoom: float = 1.0
+var _rare_rng := RandomNumberGenerator.new()
 
 
 func load_data(path: String = DEFAULT_PATH) -> bool:
@@ -32,6 +38,7 @@ func load_data(path: String = DEFAULT_PATH) -> bool:
 	if not parsed is Dictionary:
 		push_error("[DayMapSystem] 地点数据格式无效: " + path)
 		return false
+	_rare_rng.randomize()
 	_default_stamina = int(parsed.get("maxStamina", 5))
 	_stamina_by_day = parsed.get("maxStaminaByDay", {})
 	_regions = parsed.get("regions", [])
@@ -75,6 +82,94 @@ func start_day(day: int) -> void:
 	_flags.clear()
 
 
+func capture_state() -> Dictionary:
+	var revealed_ids := []
+	for id in _revealed.keys():
+		if bool(_revealed[id]):
+			revealed_ids.append(String(id))
+	revealed_ids.sort()
+	var completed_ids := []
+	for id in _completed_locations.keys():
+		if bool(_completed_locations[id]):
+			completed_ids.append(String(id))
+	completed_ids.sort()
+	var announced := {}
+	for id in _announced_postings.keys():
+		announced[String(id)] = String(_announced_postings[id])
+	return {
+		"current_day": current_day,
+		"revealed": revealed_ids,
+		"completed_locations": completed_ids,
+		"rare_gather_misses": _rare_gather_misses.duplicate(),
+		"announced_postings": announced,
+		"camera": _capture_camera_view(),
+	}
+
+
+func restore_state(state: Dictionary) -> void:
+	_revealed.clear()
+	_completed_locations.clear()
+	_announced_postings.clear()
+	_rare_gather_misses.clear()
+	if state.is_empty():
+		return
+	current_day = int(state.get("current_day", current_day))
+	for id in state.get("revealed", []):
+		_revealed[String(id)] = true
+	for id in state.get("completed_locations", state.get("completed", [])):
+		_completed_locations[String(id)] = true
+	var rare_misses: Dictionary = state.get("rare_gather_misses", {})
+	for id in rare_misses.keys():
+		_rare_gather_misses[String(id)] = int(rare_misses[id])
+	var announced: Dictionary = state.get("announced_postings", {})
+	for id in announced.keys():
+		_announced_postings[String(id)] = String(announced[id])
+	_restore_camera_view(state.get("camera", {}))
+
+
+func set_camera_view(world_position: Vector2, zoom_value: float) -> void:
+	_camera_position = world_position
+	_camera_zoom = maxf(zoom_value, 0.001)
+	_has_camera_view = true
+
+
+func has_camera_view() -> bool:
+	return _has_camera_view
+
+
+func get_camera_position() -> Vector2:
+	return _camera_position
+
+
+func get_camera_zoom() -> float:
+	return _camera_zoom
+
+
+func _capture_camera_view() -> Dictionary:
+	if not _has_camera_view:
+		return {}
+	return {
+		"position": [_camera_position.x, _camera_position.y],
+		"zoom": _camera_zoom,
+	}
+
+
+func _restore_camera_view(camera_state) -> void:
+	_has_camera_view = false
+	_camera_position = Vector2.ZERO
+	_camera_zoom = 1.0
+	if not camera_state is Dictionary:
+		return
+	if camera_state.is_empty():
+		return
+	var pos_arr: Array = camera_state.get("position", [])
+	if pos_arr.size() < 2:
+		return
+	_camera_position = Vector2(float(pos_arr[0]), float(pos_arr[1]))
+	_camera_zoom = maxf(float(camera_state.get("zoom", 1.0)), 0.001)
+	_has_camera_view = true
+
+
 func set_document_read(document_id: String, read: bool) -> void:
 	_read_documents[document_id] = read
 
@@ -104,6 +199,8 @@ func get_locations() -> Array[Dictionary]:
 
 
 func _passes_filters(location: Dictionary) -> bool:
+	if is_completed(String(location.get("id", ""))):
+		return false
 	if current_day < int(location.get("dayMin", 1)):
 		return false
 	var required_flag := String(location.get("requiresFlag", ""))
@@ -120,6 +217,9 @@ func _active_posting(location: Dictionary) -> Dictionary:
 	var best := {}
 	for p in location.get("postings", []):
 		if current_day < int(p.get("dayMin", 1)):
+			continue
+		var day_max := int(p.get("dayMax", 0))
+		if day_max > 0 and current_day > day_max:
 			continue
 		var rf := String(p.get("requiresFlag", ""))
 		if rf != "" and not _flag_satisfied(rf):
@@ -153,7 +253,30 @@ func is_revealed(location_id: String) -> bool:
 	return bool(_revealed.get(location_id, false))
 
 
+func is_completed(location_id: String) -> bool:
+	return bool(_completed_locations.get(location_id, false))
+
+
+func mark_completed(location_id: String) -> void:
+	if location_id == "":
+		return
+	_completed_locations[location_id] = true
+	_revealed.erase(location_id)
+	_announced_postings.erase(location_id)
+
+
+func mark_completed_by_document(document_id: String) -> bool:
+	var matched := false
+	for location in _locations.values():
+		if String(location.get("completeWhenDocument", "")) == document_id:
+			mark_completed(String(location.get("id", "")))
+			matched = true
+	return matched
+
+
 func mark_revealed(location_id: String) -> void:
+	if is_completed(location_id):
+		return
 	_revealed[location_id] = true
 	if _locations.has(location_id):
 		_announced_postings[location_id] = _active_posting_id(_locations[location_id])
@@ -176,7 +299,10 @@ func get_updated_locations() -> Array[Dictionary]:
 		var id := String(location.get("id", ""))
 		if not is_revealed(id) or not _passes_filters(location):
 			continue
-		if String(_announced_postings.get(id, "__none__")) != _active_posting_id(location):
+		var active_posting_id := _active_posting_id(location)
+		if active_posting_id == "":
+			continue
+		if String(_announced_postings.get(id, "__none__")) != active_posting_id:
 			result.append(_effective(location))
 	return result
 
@@ -189,6 +315,8 @@ func mark_posting_announced(location_id: String) -> void:
 func visit(location_id: String) -> Dictionary:
 	if not _locations.has(location_id):
 		return _failure("未知地点。")
+	if is_completed(location_id):
+		return _failure("这里已经调查完了。")
 	var location: Dictionary = _locations[location_id]
 	if current_day < int(location.get("dayMin", 1)):
 		return _failure("这个地点尚未开放。")
@@ -224,10 +352,7 @@ func visit(location_id: String) -> Dictionary:
 			message = String(ap.get("result", location.get("result", "访问完成。")))
 	if unlocked_flag != "":
 		_flags[unlocked_flag] = true
-	var rewards: Array = location.get("rewards", []).duplicate()
-	var day_rewards: Dictionary = location.get("dayRewards", {})
-	if day_rewards.has(str(current_day)):
-		rewards = day_rewards[str(current_day)].duplicate()
+	var rewards: Array = _resolve_rewards(location_id, location)
 	var affection = location.get("affection", null)
 	if bool(location.get("affectionOncePerDay", false)) and previous_visits > 0:
 		affection = null
@@ -248,6 +373,38 @@ func visit(location_id: String) -> Dictionary:
 
 func _failure(message: String) -> Dictionary:
 	return {"success": false, "message": message, "stamina": stamina}
+
+
+func _resolve_rewards(location_id: String, location: Dictionary) -> Array:
+	var day_rewards: Dictionary = location.get("dayRewards", {})
+	if day_rewards.has(str(current_day)):
+		return day_rewards[str(current_day)].duplicate()
+	var rewards: Array = []
+	var stable_key := String(location.get("stableReward", ""))
+	if stable_key != "":
+		var stable_count := maxi(1, int(location.get("stableRewardCount", 1)))
+		for _i in range(stable_count):
+			rewards.append(stable_key)
+	else:
+		rewards = location.get("rewards", []).duplicate()
+	var rare: Dictionary = location.get("rareReward", {})
+	var rare_key := String(rare.get("key", ""))
+	if rare_key != "":
+		if _should_award_rare(location_id, rare):
+			rewards.append(rare_key)
+			_rare_gather_misses[location_id] = 0
+		else:
+			_rare_gather_misses[location_id] = int(_rare_gather_misses.get(location_id, 0)) + 1
+	return rewards
+
+
+func _should_award_rare(location_id: String, rare: Dictionary) -> bool:
+	var pity_after := int(rare.get("pityAfterMisses", 0))
+	var misses := int(_rare_gather_misses.get(location_id, 0))
+	if pity_after > 0 and misses >= pity_after:
+		return true
+	var chance := clampf(float(rare.get("chance", 0.0)), 0.0, 1.0)
+	return _rare_rng.randf() < chance
 
 
 func get_regions() -> Array:

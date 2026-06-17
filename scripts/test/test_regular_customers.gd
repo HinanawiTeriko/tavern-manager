@@ -13,17 +13,59 @@ const EXPECTED_IDS: Array[String] = [
 	"regular_gareth",
 	"regular_lyra",
 	"regular_oma",
+	"regular_ketta",
+	"regular_bram",
+	"regular_sova",
+	"regular_petra",
+	"regular_jora",
+	"regular_tamsin",
+	"regular_kael",
+	"regular_mirelle",
+	"regular_fenna",
+	"regular_yuval",
+	"regular_nara",
+	"regular_iris",
+	"regular_bastian",
+	"regular_qadir",
+	"regular_rowan",
+	"regular_maeve",
+	"regular_osric",
+	"regular_lio",
+]
+const NEW_EXPECTED_IDS: Array[String] = [
+	"regular_ketta",
+	"regular_bram",
+	"regular_sova",
+	"regular_petra",
+	"regular_jora",
+	"regular_tamsin",
+	"regular_kael",
+	"regular_mirelle",
+	"regular_fenna",
+	"regular_yuval",
+	"regular_nara",
+	"regular_iris",
+	"regular_bastian",
+	"regular_qadir",
+	"regular_rowan",
+	"regular_maeve",
+	"regular_osric",
+	"regular_lio",
 ]
 const PORTRAIT_STATES: Array[String] = ["neutral", "satisfied", "dissatisfied"]
 
 var _checks := 0
 var _failures := 0
 var _roster: Dictionary = {}
+var _appetites: Dictionary = {}
 
 
 func _ready() -> void:
 	_load_roster()
+	_load_appetites()
 	_test_regular_customer_data_contract()
+	_test_new_regular_customer_appearance_variety()
+	_test_regular_customer_appetite_contract()
 	if _roster.is_empty():
 		_finish()
 		return
@@ -67,7 +109,21 @@ func _load_roster() -> void:
 			_roster[String(entry.get("id", ""))] = entry
 
 
+func _load_appetites() -> void:
+	var file := FileAccess.open("res://data/guest_appetites.json", FileAccess.READ)
+	if file == null:
+		_ok(false, "guest_appetites.json exists")
+		return
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		_ok(false, "guest_appetites.json parses as Dictionary")
+		return
+	_appetites = parsed
+
+
 func _test_regular_customer_data_contract() -> void:
+	_ok(_roster.size() >= 30, "roster has at least 30 named regular customer archetypes")
 	_ok(_roster.size() >= EXPECTED_IDS.size(), "roster has all named regular customer archetypes")
 	for customer_id in EXPECTED_IDS:
 		_ok(_roster.has(customer_id), "roster includes " + customer_id)
@@ -93,6 +149,50 @@ func _test_regular_customer_data_contract() -> void:
 		for state in PORTRAIT_STATES:
 			_ok(String(portraits.get(state, "")) == "res://assets/textures/characters/%s_%s.png" % [customer_id, state],
 				customer_id + " has runtime portrait path for " + state)
+
+
+func _test_new_regular_customer_appearance_variety() -> void:
+	var races: Dictionary = {}
+	var hair_styles: Dictionary = {}
+	var hair_colors: Dictionary = {}
+	for customer_id in NEW_EXPECTED_IDS:
+		_ok(_roster.has(customer_id), "new roster includes " + customer_id)
+		if not _roster.has(customer_id):
+			continue
+		var entry: Dictionary = _roster[customer_id]
+		var appearance_value = entry.get("appearance", {})
+		var appearance: Dictionary = appearance_value if appearance_value is Dictionary else {}
+		var race := String(appearance.get("race", ""))
+		var hair_style := String(appearance.get("hair_style", ""))
+		var hair_color := String(appearance.get("hair_color", ""))
+		_ok(race != "", customer_id + " records race for portrait generation")
+		_ok(hair_style != "", customer_id + " records hair_style for portrait generation")
+		_ok(hair_color != "", customer_id + " records hair_color for portrait generation")
+		if race != "":
+			races[race] = true
+		if hair_style != "":
+			hair_styles[hair_style] = true
+		if hair_color != "":
+			hair_colors[hair_color] = true
+	_ok(races.size() >= 6, "new regular customers vary race across the batch")
+	_ok(hair_styles.size() >= 10, "new regular customers vary hair styles across the batch")
+	_ok(hair_colors.size() >= 10, "new regular customers vary hair colors across the batch")
+
+
+func _test_regular_customer_appetite_contract() -> void:
+	for customer_id in EXPECTED_IDS:
+		_ok(_appetites.has(customer_id), customer_id + " has appetite profile")
+		if not _appetites.has(customer_id):
+			continue
+		var appetite_value = _appetites[customer_id]
+		var appetite: Dictionary = appetite_value if appetite_value is Dictionary else {}
+		var preferred_value = appetite.get("preferred", {})
+		var preferred: Dictionary = preferred_value if preferred_value is Dictionary else {}
+		_ok(preferred.size() >= 2, customer_id + " has at least two preferred appetite attributes")
+		_ok(float(appetite.get("satisfyThreshold", 0.0)) > 0.0, customer_id + " has satisfyThreshold")
+		_ok(float(appetite.get("delightThreshold", 0.0)) > float(appetite.get("satisfyThreshold", 0.0)),
+			customer_id + " has delightThreshold above satisfyThreshold")
+		_ok(String(appetite.get("reaction", "")) != "", customer_id + " has appetite reaction")
 
 
 func _test_guest_system_spawns_named_regular_customer() -> void:

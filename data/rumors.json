@@ -1,0 +1,253 @@
+{
+  "rumors": [
+    {
+      "id": "mercenary_board_mine_shift",
+      "location": "mercenary_board",
+      "dayMin": 2,
+      "requiresFlag": "ryan_warhammer_lead",
+      "text": "矿口今晚加班，搬运工和退伍兵会找更顶饿的东西。",
+      "menuHints": {
+        "customerGroups": ["矿口搬运工", "退伍兵"],
+        "recommendedTags": ["顶饿", "热食", "力量"],
+        "summary": "今晚可以多挂肉、炖菜和扎实主食。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.35,
+          "regular_belta": 1.5,
+          "regular_dorin": 1.35,
+          "regular_gareth": 1.2
+        }
+      }
+    },
+    {
+      "id": "mira_stall_old_road",
+      "location": "mira_stall",
+      "dayMin": 6,
+      "text": "米拉今天绕开了旧路的话题，清淡的热汤可能比追问更有用。",
+      "menuHints": {
+        "customerGroups": ["旧路熟人", "安静客人"],
+        "recommendedTags": ["清香", "热食", "顶饿"],
+        "summary": "清淡热汤和朴素主食更容易让人开口。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.25,
+          "regular_elira": 1.25,
+          "regular_oma": 1.15
+        }
+      }
+    },
+    {
+      "id": "payout_office_accounting",
+      "location": "payout_office",
+      "dayMin": 14,
+      "text": "账房的人在核对旧赔付顺序，今晚愿意开口的人会更看重稳妥和体面。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "符文学者", "体面客人"],
+        "recommendedTags": ["体面", "精致", "清香"],
+        "summary": "酒、茶和精致菜品更容易换来好话。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.45,
+          "regular_noel": 1.55,
+          "regular_selene": 1.25,
+          "regular_marco": 1.15
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_clear_scent",
+      "location": "mushroom_forest",
+      "dayMin": 1,
+      "text": "菌菇林地潮气重，懂草药的人今晚会认得清香味。",
+      "menuHints": {
+        "customerGroups": ["巡林人", "草药客"],
+        "recommendedTags": ["清香", "秘香", "轻快"],
+        "summary": "草药茶、草药汤和带清香的调味更值得准备。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.25,
+          "regular_elira": 1.35,
+          "regular_masha": 1.15,
+          "regular_selene": 1.15
+        }
+      }
+    },
+    {
+      "id": "market_shop_trade_talk",
+      "location": "market_shop",
+      "dayMin": 1,
+      "text": "市场今天酒商多，葡萄酒和体面的热菜更容易换到好话。",
+      "menuHints": {
+        "customerGroups": ["走货商人", "吟游诗人"],
+        "recommendedTags": ["酒水", "体面", "精致"],
+        "summary": "酒水和体面菜能提高商旅客人的满意度。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.25,
+          "regular_marco": 1.4,
+          "regular_lyra": 1.25,
+          "regular_noel": 1.15
+        }
+      }
+    },
+    {
+      "id": "mercenary_board_quarry_breakfast",
+      "location": "mercenary_board",
+      "dayMin": 4,
+      "text": "采石队天没亮就出发，今晚会找能压住空肚子的热食。",
+      "menuHints": {
+        "customerGroups": ["采石工", "早班矿工"],
+        "recommendedTags": ["顶饿", "热食", "力量"],
+        "summary": "烤肉、肉汤、麦芽粥和扎实面包都能接住这批客人。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.25,
+          "regular_belta": 1.25,
+          "regular_gareth": 1.2
+        }
+      }
+    },
+    {
+      "id": "mercenary_board_black_malt_shift",
+      "location": "mercenary_board",
+      "dayMin": 7,
+      "text": "告示板旁有人问黑麦芽酒，巡夜前想喝点有劲又不失体面的。",
+      "menuHints": {
+        "customerGroups": ["巡夜人", "退伍兵"],
+        "recommendedTags": ["酒水", "力量", "体面"],
+        "summary": "黑啤、麦酒和带劲的肉菜都能吸引夜班客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.2,
+          "regular_coen": 1.25,
+          "regular_dorin": 1.2,
+          "regular_nix": 1.15
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_ranger_dawn",
+      "location": "mushroom_forest",
+      "dayMin": 4,
+      "text": "巡林人清晨回来，身上都是冷露，想要清香但不能太轻的热东西。",
+      "menuHints": {
+        "customerGroups": ["巡林人", "洗衣女工"],
+        "recommendedTags": ["清香", "热食", "轻快"],
+        "summary": "草药汤、菌菇肉汤和清香饮品能照顾疲惫客人。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.25,
+          "old_road": 1.1,
+          "regular_elira": 1.25,
+          "regular_masha": 1.2
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_spore_market",
+      "location": "mushroom_forest",
+      "dayMin": 8,
+      "text": "林地边的孢子样本被送去账房，符文学者今晚会追问秘香和清香的区别。",
+      "menuHints": {
+        "customerGroups": ["符文学者", "草药客"],
+        "recommendedTags": ["秘香", "清香", "体面"],
+        "summary": "带草药、菌菇或细致酒香的菜单更容易让学者停留。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.2,
+          "ledger": 1.15,
+          "regular_selene": 1.25,
+          "regular_elira": 1.15
+        }
+      }
+    },
+    {
+      "id": "market_shop_wine_caravan",
+      "location": "market_shop",
+      "dayMin": 4,
+      "text": "南边酒车进了市场，走货商和吟游客今晚会拿酒菜互相比较。",
+      "menuHints": {
+        "customerGroups": ["走货商人", "吟游诗人"],
+        "recommendedTags": ["酒水", "精致", "体面"],
+        "summary": "葡萄酒、香料红酒和体面小菜适合今晚的商路客。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.3,
+          "regular_marco": 1.3,
+          "regular_lyra": 1.2,
+          "regular_noel": 1.1
+        }
+      }
+    },
+    {
+      "id": "market_shop_street_porters",
+      "location": "market_shop",
+      "dayMin": 8,
+      "text": "市场收摊晚，搬货的人会跟跑腿人一起找顶饿又快的东西。",
+      "menuHints": {
+        "customerGroups": ["搬货人", "后巷跑腿人"],
+        "recommendedTags": ["顶饿", "酒水", "力量"],
+        "summary": "肉夹面包、黑啤和烤排能同时照顾饥饿和速度。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.15,
+          "mine": 1.15,
+          "regular_nix": 1.25,
+          "regular_belta": 1.1,
+          "regular_coen": 1.1
+        }
+      }
+    },
+    {
+      "id": "market_shop_quiet_audit",
+      "location": "market_shop",
+      "dayMin": 10,
+      "text": "市场里传到账房今晚会有静审，愿意多说的人不想闻到太冲的油烟。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "安静客人"],
+        "recommendedTags": ["体面", "清香", "精致"],
+        "summary": "茶、葡萄酒、旧路酒和清香汤更适合安静交谈。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.3,
+          "old_road": 1.1,
+          "regular_noel": 1.3,
+          "regular_selene": 1.15,
+          "regular_oma": 1.1
+        }
+      }
+    },
+    {
+      "id": "mira_stall_sour_grape_news",
+      "location": "mira_stall",
+      "dayMin": 8,
+      "text": "米拉听见旧路酸葡萄酒又进城，熟人们今晚可能会借酒说些不肯直说的话。",
+      "menuHints": {
+        "customerGroups": ["旧路熟人", "吟游诗人"],
+        "recommendedTags": ["酒水", "清香", "体面"],
+        "summary": "旧路酸葡萄酒、草药饮品和体面酒菜都能让旧路客靠近。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.25,
+          "trade": 1.1,
+          "regular_lyra": 1.2,
+          "regular_oma": 1.15,
+          "regular_elira": 1.1
+        }
+      }
+    }
+  ]
+}

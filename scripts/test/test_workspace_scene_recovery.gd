@@ -10,10 +10,14 @@ var _failures := 0
 func _ready() -> void:
 	await _test_docked_body_recovers_when_out_of_bounds()
 	await _test_inventory_spawn_deducts_and_recovers()
+	await _test_fast_desk_items_emit_motion_trails()
+	await _test_fast_containers_emit_motion_trails()
 	await _test_side_table_walls_disabled_and_product_falls_back_to_surface()
 	await _test_desk_items_released_on_open_inventory_overlay_return_only_backpack_items()
 	await _test_material_drop_on_customer_area_stays_on_desk()
+	await _test_failed_products_drop_on_customer_area_stays_on_desk()
 	await _test_inventory_overlay_lists_and_drop()
+	await _test_inventory_drop_binds_shortcut_slot()
 	await _test_shortcut_drag_starts_above_table_baseline()
 	await _test_document_overlay_opens_ledger()
 	await _test_work_surface_ledger_can_be_dragged()
@@ -33,6 +37,9 @@ func _ready() -> void:
 	await _test_settings_menu_entry()
 	await _test_overlay_menu_renders_above_workspace()
 	await _test_recipe_menu_uses_split_layout()
+	await _test_recipe_book_shows_dough_operation()
+	await _test_recipe_book_hides_undiscovered_entries()
+	await _test_first_crafted_recipe_discovers_recipe()
 	_finish()
 
 
@@ -54,6 +61,14 @@ func _stylebox_texture_path(control: Control, style_name: String) -> String:
 	if stylebox == null:
 		return ""
 	return _texture_path(stylebox.texture)
+
+
+func _reset_game_for_recipe_discovery_test() -> void:
+	GameManager._apply_save_state(GameManager._default_new_game_state())
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm != null:
+		tm.tavern_first_entered = true
+		tm.first_guest_arrived = true
 
 
 func _finish() -> void:
@@ -118,6 +133,92 @@ func _test_inventory_spawn_deducts_and_recovers() -> void:
 	await get_tree().process_frame
 
 
+func _test_fast_desk_items_emit_motion_trails() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var slow_item := bar._spawn_desk_item_at(Vector2(520.0, 360.0), "ale")
+	slow_item.sleeping = false
+	slow_item.linear_velocity = Vector2(40.0, 0.0)
+	for i in range(4):
+		await get_tree().physics_frame
+		await get_tree().process_frame
+	_ok(_desk_item_motion_trail_count(slow_item) == 0,
+		"slow desk item stays visually quiet below the trail threshold")
+	slow_item.queue_free()
+
+	var fast_item := bar._spawn_desk_item_at(Vector2(620.0, 360.0), "grape")
+	fast_item.sleeping = false
+	fast_item.linear_velocity = Vector2(520.0, -90.0)
+	for i in range(6):
+		await get_tree().physics_frame
+		await get_tree().process_frame
+	_ok(fast_item.get_node_or_null("MotionTrail") is Node2D,
+		"fast desk item creates a dedicated motion trail layer")
+	_ok(_desk_item_motion_trail_count(fast_item) >= 2,
+		"fast desk item emits visible speed-driven trail sprites")
+	_ok(_desk_item_motion_trail_count(fast_item) <= 12,
+		"fast desk item trail keeps a strict active sprite cap")
+
+	fast_item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_fast_containers_emit_motion_trails() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	bar.configure_day(3)
+	await get_tree().process_frame
+
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var grill := tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
+
+	brewery.sleeping = false
+	brewery.linear_velocity = Vector2(54.0, 0.0)
+	for i in range(4):
+		await get_tree().physics_frame
+		await get_tree().process_frame
+	_ok(_physics_body_motion_trail_count(brewery) == 0,
+		"slow brewery movement stays visually quiet below the trail threshold")
+
+	for body in [brewery, grill, pot]:
+		var rigid_body := body as RigidBody2D
+		rigid_body.freeze = false
+		rigid_body.sleeping = false
+		for i in range(6):
+			rigid_body.global_position += Vector2(34.0, -7.0)
+			rigid_body.linear_velocity = Vector2.ZERO
+			await get_tree().physics_frame
+			await get_tree().process_frame
+		_ok(rigid_body.get_node_or_null("MotionTrail") is Node2D,
+			"%s creates a motion trail layer when moved quickly" % rigid_body.name)
+		_ok(_physics_body_motion_trail_count(rigid_body) >= 2,
+			"%s emits visible speed-driven trail sprites" % rigid_body.name)
+		_ok(_physics_body_motion_trail_count(rigid_body) <= 12,
+			"%s motion trail keeps a strict active sprite cap" % rigid_body.name)
+
+	for body in [brewery, grill, pot]:
+		var rigid_body := body as RigidBody2D
+		rigid_body.linear_velocity = Vector2.ZERO
+		rigid_body.angular_velocity = 0.0
+		if bar._docks.has(rigid_body):
+			rigid_body.global_position = bar._docks[rigid_body]
+		rigid_body.sleeping = true
+	await get_tree().physics_frame
+	await get_tree().process_frame
+
+	tavern.queue_free()
+	await get_tree().physics_frame
+	await get_tree().process_frame
+
+
 func _test_side_table_walls_disabled_and_product_falls_back_to_surface() -> void:
 	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
 	add_child(tavern)
@@ -149,6 +250,23 @@ func _test_side_table_walls_disabled_and_product_falls_back_to_surface() -> void
 			"out-of-bounds product return point is clamped inside the table: got %s" % item.global_position)
 		_ok(item.linear_velocity == Vector2.ZERO and is_zero_approx(item.angular_velocity),
 			"out-of-bounds product returns without leftover fall velocity")
+		var recovered_position := item.global_position
+		for i in range(16):
+			await get_tree().physics_frame
+		await get_tree().process_frame
+		_ok(item.global_position.y <= recovered_position.y + 6.0,
+			"recovered product stays on the table instead of falling again: recovered %s, now %s" % [recovered_position, item.global_position])
+		_ok(item.global_position.y < KILL_Y,
+			"recovered product remains inside the playable area after physics settles: got %s" % item.global_position)
+		_ok(item.linear_velocity.y <= 20.0,
+			"recovered product does not resume downward fall velocity: got %s" % item.linear_velocity)
+		_left_press(bar, item.global_position)
+		await get_tree().process_frame
+		_ok(bar._drag_ctrl.get_body() == item,
+			"recovered product can be picked up again after being stabilized")
+		_ok(not item.freeze,
+			"recovered product unfreezes when the player picks it up again")
+		bar._drag_ctrl.end_drag()
 		item.queue_free()
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -238,6 +356,63 @@ func _test_material_drop_on_customer_area_stays_on_desk() -> void:
 			"plain material dropped on the customer area is not removed from world items")
 		if is_instance_valid(item):
 			item.queue_free()
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_failed_products_drop_on_customer_area_stays_on_desk() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var drop_area := tavern.get_node("BarWorkspace/CustomerDropArea") as Area2D
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var failed_keys := ["failed_brew", "failed_stew"]
+
+	for failed_key in failed_keys:
+		var guest := GuestData.new()
+		guest.type = GuestData.GuestType.NORMAL
+		guest.order_key = "ale_beer"
+		guest.has_dialogue = false
+		guest.npc_id = "failed_product_test"
+		gm.guests.current_guest = guest
+		gm.guests.has_guest = true
+		gm._guest_lingering = false
+
+		var failed_before: int = gm.guests.orders_failed
+		var served_before: int = gm.guests.guests_served_today
+		var before_count := items.get_child_count()
+		var item := bar._spawn_desk_item_at(drop_area.global_position, failed_key)
+		_ok(item != null, "%s customer-area test creates a desk item" % failed_key)
+		if item != null:
+			item.linear_velocity = Vector2.ZERO
+			item.angular_velocity = 0.0
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			_ok(drop_area.get_overlapping_bodies().has(item),
+				"%s overlaps the customer drop area" % failed_key)
+			bar._try_deliver(item)
+			await get_tree().process_frame
+			_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+				"%s is not consumed as a deliverable order item" % failed_key)
+			_ok(items.get_child_count() == before_count + 1,
+				"%s remains on the work surface after customer-area drop" % failed_key)
+			if is_instance_valid(item):
+				item.queue_free()
+				await get_tree().process_frame
+		_ok(gm.guests.orders_failed == failed_before,
+			"%s does not record a failed order when dropped on a customer" % failed_key)
+		_ok(gm.guests.guests_served_today == served_before,
+			"%s does not count the guest as served" % failed_key)
+		_ok(gm.guests.has_guest and gm.guests.current_guest == guest,
+			"%s leaves the waiting guest active" % failed_key)
+		gm.guests.has_guest = false
+		gm.guests.current_guest = null
+		gm._guest_lingering = false
+
 	tavern.queue_free()
 	await get_tree().process_frame
 
@@ -387,6 +562,42 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 		if textured_item != null:
 			textured_item.queue_free()
 	gm.remove_from_inventory("sleep_powder", 1)
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_inventory_drop_binds_shortcut_slot() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.add_to_inventory("north_sour_grape", 1)
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	bar._init_material_slots()
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	var slot7 := tavern.get_node("ShortcutBar/Slot7") as Control
+	var slot_center := slot7.global_position + slot7.size * 0.5
+	var before_items: int = items.get_child_count()
+
+	_ok(bar.has_method("bind_shortcut_at_position"), "BarWorkspace exposes shortcut drop binding")
+	tavern._on_inventory_item_dropped("north_sour_grape", slot_center)
+	await get_tree().process_frame
+
+	var bindings: Array = gm.get_shortcut_bindings()
+	_ok(bindings[7] == "north_sour_grape", "inventory drop on slot7 binds the rare material")
+	_ok(bar._slot_item_keys.size() > 7 and bar._slot_item_keys[7] == "north_sour_grape",
+		"slot7 renders the bound rare material")
+	_ok(gm.inventory_sys.get_count("north_sour_grape") == 1, "binding does not consume inventory")
+	_ok(items.get_child_count() == before_items, "binding does not spawn a desk item")
+
+	var spawned := bar.spawn_inventory_item_at("north_sour_grape", slot_center + Vector2(0.0, -120.0))
+	_ok(spawned != null, "bound rare material can still spawn as a desk item")
+	_ok(gm.inventory_sys.get_count("north_sour_grape") == 0, "spawning consumes inventory, not binding")
+	if spawned != null:
+		spawned.queue_free()
 	tavern.queue_free()
 	await get_tree().process_frame
 
@@ -742,6 +953,199 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	await get_tree().process_frame
 
 
+func _test_recipe_book_shows_dough_operation() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
+	var pot_tab := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/ContainerTabs/Tab_pot") as Button
+	_ok(pot_tab != null, "recipe book has a pot filter tab")
+	if pot_tab != null:
+		pot_tab.pressed.emit()
+		await get_tree().process_frame
+
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var dough_row := rows.get_node_or_null("Recipe_dough") as Button if rows != null else null
+	_ok(dough_row != null, "pot recipe book lists dough as a learnable operation recipe")
+	_ok(dough_row != null and dough_row.text.find("???") == -1,
+		"dough operation recipe is visible without prior discovery")
+	if dough_row != null:
+		dough_row.pressed.emit()
+		await get_tree().process_frame
+
+	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+	var title := detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+	var ingredient_grid := detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+	var flour_cell := _find_grid_slot_by_item_key(ingredient_grid, "flour") if ingredient_grid != null else null
+	var instruction := detail.get_node_or_null("Body/InstructionPanel/Instruction") as Label if detail != null else null
+	_ok(detail != null and detail.get_meta("container_key", "") == "pot",
+		"dough detail is filed under the pot container")
+	_ok(title != null and title.text == String(GameManager.craft.get_item("dough").get("name", "dough")),
+		"dough detail reveals the dough item name")
+	_ok(flour_cell != null, "dough detail shows flour as its ingredient")
+	_ok(instruction != null and instruction.text.find("锅") >= 0,
+		"dough detail instructs players to use the pot")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_recipe_book_hides_undiscovered_entries() -> void:
+	_reset_game_for_recipe_discovery_test()
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	var spiced_name := String(GameManager.craft.get_item("spiced_wine").get("name", "spiced_wine"))
+	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var hidden_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+	_ok(hidden_row != null, "recipe book still has a stable row for undiscovered spiced_wine")
+	_ok(hidden_row != null and hidden_row.text.contains("???"),
+		"undiscovered recipe row uses question marks")
+	_ok(hidden_row != null and not hidden_row.text.contains(spiced_name),
+		"undiscovered recipe row does not reveal the product name")
+	if hidden_row != null:
+		hidden_row.pressed.emit()
+		await get_tree().process_frame
+
+	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+	var title := detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+	var ingredient_grid := detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+	_ok(title != null and title.text == "???", "undiscovered recipe detail title is hidden")
+	_ok(ingredient_grid != null and ingredient_grid.get_child_count() == 2,
+		"undiscovered recipe detail keeps ingredient slot count without revealing names")
+	if ingredient_grid != null:
+		for cell in ingredient_grid.get_children():
+			var label := cell.get_node_or_null("Body/Name") as Label
+			_ok(label != null and label.text == "???", "undiscovered ingredient slot hides its name")
+
+	_ok(GameManager.craft.has_method("discover_recipe"), "recipe book can reveal through craft discovery API")
+	if GameManager.craft.has_method("discover_recipe"):
+		GameManager.craft.call("discover_recipe", "spiced_wine")
+		_ok(GameManager.craft.has_method("mark_recipe_new"), "recipe book can mark newly discovered recipes")
+		_ok(GameManager.craft.has_method("is_recipe_new"), "recipe book can query newly discovered recipes")
+		if GameManager.craft.has_method("mark_recipe_new"):
+			GameManager.craft.call("mark_recipe_new", "spiced_wine")
+		tavern._build_recipe_list()
+		await get_tree().process_frame
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		var revealed_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+		_ok(revealed_row != null and revealed_row.text.contains(spiced_name),
+			"discovered recipe row reveals the product name")
+		var new_mark := revealed_row.get_node_or_null("NewMark") as Label if revealed_row != null else null
+		_ok(new_mark != null and new_mark.visible and new_mark.text == "新",
+			"newly discovered recipe row shows a compact new marker")
+		if GameManager.craft.has_method("is_recipe_new"):
+			_ok(GameManager.craft.call("is_recipe_new", "spiced_wine"),
+				"newly discovered recipe is marked unread before opening detail")
+		if revealed_row != null:
+			revealed_row.pressed.emit()
+			await get_tree().process_frame
+		if GameManager.craft.has_method("is_recipe_new"):
+			_ok(not GameManager.craft.call("is_recipe_new", "spiced_wine"),
+				"opening a recipe detail clears the recipe new marker")
+		tavern._build_recipe_list()
+		await get_tree().process_frame
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		revealed_row = rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
+		new_mark = revealed_row.get_node_or_null("NewMark") as Label if revealed_row != null else null
+		_ok(new_mark == null or not new_mark.visible,
+			"cleared recipe row no longer shows the new marker")
+		detail = recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+		title = detail.get_node_or_null("Body/HeaderFrame/Header/TitleBox/Title") as Label if detail != null else null
+		ingredient_grid = detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
+		_ok(title != null and title.text == spiced_name, "discovered recipe detail reveals title")
+		if ingredient_grid != null and ingredient_grid.get_child_count() > 0:
+			var first_label := ingredient_grid.get_child(0).get_node_or_null("Body/Name") as Label
+			_ok(first_label != null and first_label.text != "???",
+				"discovered recipe detail reveals ingredient names")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_first_crafted_recipe_discovers_recipe() -> void:
+	_reset_game_for_recipe_discovery_test()
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	_ok(GameManager.craft.has_method("is_recipe_discovered"), "craft discovery query exists before brewing")
+	if not GameManager.craft.has_method("is_recipe_discovered"):
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	_ok(not GameManager.craft.call("is_recipe_discovered", "spiced_wine"),
+		"spiced_wine starts undiscovered before first craft")
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	brewery._pending_keys = ["grape", "herb"]
+	brewery._shake.shake_count = brewery._shake.min_count
+	brewery._try_brew()
+	await get_tree().process_frame
+
+	_ok(GameManager.craft.call("is_recipe_discovered", "spiced_wine"),
+		"first successful craft discovers spiced_wine")
+	var caption := tavern.get_node("StageCaption") as Label
+	var product_name := String(GameManager.craft.get_item("spiced_wine").get("name", "spiced_wine"))
+	_ok(caption != null and not caption.text.contains("研制成功"),
+		"first successful craft does not show the redundant recipe discovery caption")
+	_ok(caption != null and not caption.text.contains(product_name),
+		"first successful craft does not repeat the discovered recipe name in the stage caption")
+	_ok(GameManager.craft.has_method("is_recipe_new"), "first successful craft can query recipe new marker")
+	if GameManager.craft.has_method("is_recipe_new"):
+		_ok(GameManager.craft.call("is_recipe_new", "spiced_wine"),
+			"first successful craft marks recipe as new in the recipe book")
+	var notice := tavern.get_node_or_null("RecipeDiscoveryNotice") as Control
+	_ok(notice != null, "first successful craft creates the compact recipe discovery note UI")
+	if notice != null:
+		for _i in range(12):
+			if notice.visible and notice.modulate.a > 0.1:
+				break
+			await get_tree().process_frame
+		var brush := notice.get_node_or_null("BrushBand") as Panel
+		var name_label := notice.get_node_or_null("Name") as Label
+		var title_label := notice.get_node_or_null("Title") as Label
+		var subtitle_label := notice.get_node_or_null("Subtitle") as Label
+		var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as Control
+		if customer_sprite != null:
+			var notice_rect := notice.get_global_rect()
+			var sprite_rect := customer_sprite.get_global_rect()
+			var notice_center_x := notice_rect.position.x + notice_rect.size.x * 0.5
+			var sprite_center_x := sprite_rect.position.x + sprite_rect.size.x * 0.5
+			_ok(absf(notice_center_x - sprite_center_x) <= 12.0,
+				"recipe discovery note stays centered over the customer portrait")
+			_ok(notice_rect.position.y + notice_rect.size.y <= sprite_rect.position.y + 12.0,
+				"recipe discovery note sits above the customer portrait head")
+		_ok(notice.visible and notice.modulate.a > 0.1,
+			"recipe discovery note is visible immediately after first craft")
+		_ok(notice.size.x <= 560.0 and notice.size.y <= 160.0,
+			"recipe discovery note stays compact instead of becoming a large banner: size=%s" % notice.size)
+		_ok(brush != null and _stylebox_texture_path(brush, "panel") == "res://assets/textures/ui/menu_brush_band.png",
+			"recipe discovery note uses the existing menu brush band texture")
+		_ok(brush != null and brush.size == notice.size,
+			"recipe discovery brush art matches the compact notice bounds")
+		_ok(title_label != null and title_label.text == "新配方",
+			"recipe discovery note title is rendered by Godot text")
+		_ok(name_label != null and name_label.text == product_name,
+			"recipe discovery note names the discovered product")
+		_ok(name_label != null and name_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER,
+			"recipe discovery note centers the discovered product name in the notice panel")
+		_ok(subtitle_label != null and subtitle_label.text == "已记入配方书",
+			"recipe discovery note tells the player where the recipe went")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
 func _right_click(bar: BarWorkspace, pos: Vector2) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_RIGHT
@@ -878,6 +1282,14 @@ func _test_seasoning_items_fit_into_shaker_mouth() -> void:
 	if spice != null:
 		shaker._try_accept_mouth_body(spice)
 		_ok(shaker.loaded_key == "spice", "seasoning shaker loads a spice item dropped near the rim")
+		_ok(_intake_vfx_count(shaker, "ghost") >= 1,
+			"seasoning shaker intake shows the absorbed seasoning shrinking into the mouth")
+		_ok(_intake_vfx_count(shaker, "mouth_glow") == 0,
+			"seasoning shaker intake no longer flashes the mouth opening")
+		_ok(_intake_vfx_count(shaker, "mote") == 0,
+			"seasoning shaker intake no longer emits small mouth particles")
+		_ok(_intake_vfx_elements_render_below_container_art(shaker, "ghost"),
+			"seasoning shaker absorbed seasoning ghost renders below the shaker visual")
 
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -1128,6 +1540,74 @@ func _test_barrel_shake_spawns_persistent_upward_bubbles() -> void:
 				])
 			_ok(_barrel_bubble_layer_count(brewery) <= 220,
 				"making room for good bubbles still respects the barrel bubble performance cap")
+			var visible_peak := _barrel_bubble_layer_count(brewery)
+			var visible_min_after_peak := visible_peak
+			for i in range(64):
+				brewery.linear_velocity = Vector2(720.0 * fast_direction, 0.0)
+				brewery._physics_process(0.05)
+				fast_direction *= -1.0
+				var visible_now := _barrel_bubble_layer_count(brewery)
+				if visible_now > visible_peak:
+					visible_peak = visible_now
+					visible_min_after_peak = visible_now
+				else:
+					visible_min_after_peak = mini(visible_min_after_peak, visible_now)
+			_ok(visible_min_after_peak >= visible_peak - 12,
+				"continued fast shaking keeps visible barrel foam from thinning mid-shake: peak=%d min_after_peak=%d" % [
+					visible_peak,
+					visible_min_after_peak,
+				])
+			var full_screen_foam_count := _barrel_bubble_layer_count(brewery)
+			var full_screen_foam_span := _barrel_bubble_horizontal_span(brewery)
+			_ok(full_screen_foam_count >= 420,
+				"sustained over-good shaking can build far past the old plume cap: got %d" % full_screen_foam_count)
+			_ok(full_screen_foam_span >= 760.0,
+				"sustained over-good shaking spreads barrel bubbles across the screen: span=%.1f" % full_screen_foam_span)
+			_ok(full_screen_foam_count <= 720,
+				"sustained over-good shaking still keeps bubble nodes capped for performance: got %d" % full_screen_foam_count)
+			var full_screen_pressure := brewery._shake_bubble_foam_pressure
+			_clear_barrel_test_bubbles(brewery, false)
+			brewery._shake_bubble_foam_pressure = full_screen_pressure
+			brewery._spawn_shake_bubble_burst("good")
+			var birth_max_local_x := _barrel_bubble_max_abs_local_x(brewery)
+			var birth_min_local_y := _barrel_bubble_min_local_y(brewery)
+			_ok(birth_max_local_x <= 48.0,
+				"high-pressure barrel bubbles still originate from the mouth: max local x=%.1f" % birth_max_local_x)
+			_ok(birth_min_local_y >= -88.0,
+				"high-pressure barrel bubbles do not appear far above the mouth at birth: min local y=%.1f" % birth_min_local_y)
+			_clear_barrel_test_bubbles(brewery, false)
+			brewery._shake_bubble_foam_pressure = 1.0
+			brewery._shake.shake_count = brewery._shake.good_count + 48
+			brewery.linear_velocity = Vector2(720.0, 0.0)
+			_fill_barrel_test_bubbles(brewery, "good", 680, Vector2(280.0, -180.0))
+			brewery._spawn_shake_bubble_burst("good")
+			var capped_mouth_birth_count := _barrel_bubble_mouth_origin_count(brewery)
+			_ok(capped_mouth_birth_count >= 4,
+				"capped high-pressure foam still emits fresh bubbles at the mouth between stage bursts: got %d" % capped_mouth_birth_count)
+			_ok(_barrel_bubble_layer_count(brewery) <= 680,
+				"capped high-pressure mouth emission keeps the dynamic bubble cap")
+			_clear_barrel_test_bubbles(brewery)
+			brewery._shake.reset()
+			brewery._pending_keys = ["ale"]
+			brewery._last_shake_bubble_quality_tier = ""
+			brewery._shake_bubble_spawn_elapsed = 99.0
+			var vertical_direction := 1.0
+			var vertical_guard := 0
+			while brewery._shake.shake_count < brewery._shake.good_count and vertical_guard < 40:
+				brewery.linear_velocity = Vector2(0.0, 720.0 * vertical_direction)
+				brewery._physics_process(0.05)
+				vertical_direction *= -1.0
+				vertical_guard += 1
+			for i in range(64):
+				brewery.linear_velocity = Vector2(0.0, 720.0 * vertical_direction)
+				brewery._physics_process(0.05)
+				vertical_direction *= -1.0
+			var vertical_foam_count := _barrel_bubble_layer_count(brewery)
+			var vertical_foam_span := _barrel_bubble_horizontal_span(brewery)
+			_ok(vertical_foam_count >= 420,
+				"sustained vertical over-good shaking still builds dense foam: got %d" % vertical_foam_count)
+			_ok(vertical_foam_span <= 420.0,
+				"sustained vertical over-good shaking keeps foam as an upward plume, not a sideways spread: span=%.1f" % vertical_foam_span)
 			var normal_bubble := _spawn_barrel_test_bubble(brewery, brewery._shake.min_count)
 			_ok(_barrel_bubble_quality(normal_bubble) == "normal",
 				"barrel bubble shows normal quality once minimum shakes are reached")
@@ -1209,8 +1689,9 @@ func _test_barrel_shake_spawns_persistent_upward_bubbles() -> void:
 			var shake_camera := brewery.get_node_or_null("BrewShakeCamera") as Camera2D
 			_ok(shake_camera != null and shake_camera.offset.length() > 0.0,
 				"high barrel combo drives visible screen shake through a camera offset")
-			_ok(_barrel_bubble_layer_count(brewery) <= 220,
-				"uncapped barrel combo still keeps bubble nodes capped for performance")
+			var high_combo_bubble_count := _barrel_bubble_layer_count(brewery)
+			_ok(high_combo_bubble_count <= 720,
+				"uncapped barrel combo still keeps bubble nodes capped for performance: got %d" % high_combo_bubble_count)
 			brewery._pending_keys.clear()
 			if brewery._session_active:
 				brewery.end_shake_session()
@@ -1353,6 +1834,14 @@ func _test_grape_desk_item_loads_into_barrel_mouth() -> void:
 			"grape desk item is absorbed by the barrel mouth on release")
 		_ok(brewery._pending_keys == ["grape"],
 			"barrel stores grape as the pending wine ingredient immediately on release: got %s" % [brewery._pending_keys])
+		_ok(_intake_vfx_count(brewery, "ghost") >= 1,
+			"barrel intake shows the absorbed ingredient shrinking into the mouth")
+		_ok(_intake_vfx_count(brewery, "mouth_glow") == 0,
+			"barrel intake no longer flashes the mouth opening")
+		_ok(_intake_vfx_count(brewery, "mote") == 0,
+			"barrel intake no longer emits small mouth particles")
+		_ok(_intake_vfx_elements_render_below_container_art(brewery, "ghost"),
+			"barrel absorbed ingredient ghost renders below the barrel visual")
 		await get_tree().process_frame
 		_ok(items.get_child_count() == 0,
 			"absorbed grape is removed from world items")
@@ -1611,10 +2100,18 @@ func _test_pot_effects_follow_ingredients_and_real_stirring() -> void:
 	_clear_pot_effects(pot)
 
 	pot._state.add_item("herb")
+	if GameManager.craft.has_method("is_recipe_discovered"):
+		_ok(not GameManager.craft.call("is_recipe_discovered", "herb_broth"),
+			"pot test recipe starts undiscovered")
+	else:
+		_ok(false, "craft discovery query exists before pot completion")
 	var item_count_before := items.get_child_count()
 	pot._finish_current(GameManager.craft.query_recipe("pot", pot._state.ingredients()))
 	_ok(items.get_child_count() == item_count_before + 1,
 		"pot ready test produces a crafted item")
+	if GameManager.craft.has_method("is_recipe_discovered"):
+		_ok(GameManager.craft.call("is_recipe_discovered", "herb_broth"),
+			"pot completion discovers herb_broth")
 	_ok(_pot_effect_kind_count(pot, "ready") >= 6,
 		"pot completion emits a warm ready burst")
 	_ok(_pot_effect_elements(pot).has("aroma"),
@@ -1671,12 +2168,25 @@ func _brewery_combo_value(brewery: Brewery) -> int:
 	return int(value)
 
 
-func _clear_barrel_test_bubbles(brewery: Brewery) -> void:
+func _clear_barrel_test_bubbles(brewery: Brewery, reset_foam_pressure: bool = true) -> void:
 	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
 	if layer != null:
 		for child in layer.get_children():
 			child.free()
 	brewery._shake_bubbles.clear()
+	if reset_foam_pressure:
+		brewery._shake_bubble_foam_pressure = 0.0
+
+
+func _fill_barrel_test_bubbles(brewery: Brewery, quality: String, count: int, local_position: Vector2) -> void:
+	var layer := brewery._ensure_shake_bubble_layer() as Node2D
+	for i in range(count):
+		var bubble := Node2D.new()
+		bubble.name = "Bubble"
+		bubble.set_meta("barrel_bubble_quality", quality)
+		layer.add_child(bubble)
+		bubble.global_position = brewery.to_global(local_position)
+		brewery._shake_bubbles.append(bubble)
 
 
 func _barrel_bubble_quality(bubble: Node2D) -> String:
@@ -1708,6 +2218,76 @@ func _barrel_bubble_layer_count(brewery: Brewery) -> int:
 	var count := 0
 	for child in layer.get_children():
 		if not child.is_queued_for_deletion():
+			count += 1
+	return count
+
+
+func _barrel_bubble_horizontal_span(brewery: Brewery) -> float:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0.0
+	var has_bubble := false
+	var min_x := 0.0
+	var max_x := 0.0
+	for child in layer.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var bubble := child as Node2D
+		if not has_bubble:
+			min_x = bubble.global_position.x
+			max_x = bubble.global_position.x
+			has_bubble = true
+		else:
+			min_x = minf(min_x, bubble.global_position.x)
+			max_x = maxf(max_x, bubble.global_position.x)
+	if not has_bubble:
+		return 0.0
+	return max_x - min_x
+
+
+func _barrel_bubble_max_abs_local_x(brewery: Brewery) -> float:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0.0
+	var max_local_x := 0.0
+	for child in layer.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var bubble := child as Node2D
+		max_local_x = maxf(max_local_x, absf(brewery.to_local(bubble.global_position).x))
+	return max_local_x
+
+
+func _barrel_bubble_min_local_y(brewery: Brewery) -> float:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0.0
+	var has_bubble := false
+	var min_local_y := 0.0
+	for child in layer.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var bubble := child as Node2D
+		var local_y := brewery.to_local(bubble.global_position).y
+		if not has_bubble:
+			min_local_y = local_y
+			has_bubble = true
+		else:
+			min_local_y = minf(min_local_y, local_y)
+	return min_local_y if has_bubble else 0.0
+
+
+func _barrel_bubble_mouth_origin_count(brewery: Brewery) -> int:
+	var layer := brewery.get_node_or_null("ShakeBubbles") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var bubble := child as Node2D
+		var local_position := brewery.to_local(bubble.global_position)
+		if absf(local_position.x) <= 48.0 and local_position.y >= -88.0 and local_position.y <= -48.0:
 			count += 1
 	return count
 
@@ -1801,6 +2381,32 @@ func _product_output_vfx_count(product: DeskItem, element: String) -> int:
 	return count
 
 
+func _desk_item_motion_trail_count(item: DeskItem) -> int:
+	if item == null or not is_instance_valid(item):
+		return 0
+	var layer := item.get_node_or_null("MotionTrail") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child is Node2D and bool(child.get_meta("desk_item_motion_trail", false)):
+			count += 1
+	return count
+
+
+func _physics_body_motion_trail_count(body: Node2D) -> int:
+	if body == null or not is_instance_valid(body):
+		return 0
+	var layer := body.get_node_or_null("MotionTrail") as Node2D
+	if layer == null:
+		return 0
+	var count := 0
+	for child in layer.get_children():
+		if child is Node2D and bool(child.get_meta("physics_motion_trail", false)):
+			count += 1
+	return count
+
+
 func _brew_output_burst_count(brewery: Brewery, quality: String, element: String) -> int:
 	var layer := brewery.get_node_or_null("BrewOutputBurst") as Node2D
 	if layer == null:
@@ -1887,6 +2493,49 @@ func _seasoning_powder_count(shaker: SeasoningShaker) -> int:
 		if not child.is_queued_for_deletion():
 			count += 1
 	return count
+
+
+func _intake_vfx_count(container: Node, element: String) -> int:
+	return _intake_vfx_nodes(container, element).size()
+
+
+func _intake_vfx_elements_render_below_container_art(container: Node, element: String) -> bool:
+	var art := container.get_node_or_null("Art") as CanvasItem
+	if art == null:
+		return false
+	var art_z := _canvas_absolute_z(art)
+	var nodes := _intake_vfx_nodes(container, element)
+	if nodes.is_empty():
+		return false
+	for node in nodes:
+		if _canvas_absolute_z(node) >= art_z:
+			return false
+	return true
+
+
+func _intake_vfx_nodes(container: Node, element: String) -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	var layer := container.get_node_or_null("IngredientIntakeVfx") as Node2D
+	if layer == null:
+		return result
+	for child in layer.get_children():
+		if child is Node2D \
+				and not child.is_queued_for_deletion() \
+				and String((child as Node2D).get_meta("ingredient_intake_vfx_element", "")) == element:
+			result.append(child as Node2D)
+	return result
+
+
+func _canvas_absolute_z(item: CanvasItem) -> int:
+	var total := item.z_index
+	var cursor := item
+	while cursor.z_as_relative:
+		var parent := cursor.get_parent()
+		if not parent is CanvasItem:
+			break
+		cursor = parent as CanvasItem
+		total += cursor.z_index
+	return total
 
 
 func _first_seasoning_powder(shaker: SeasoningShaker) -> Node2D:
@@ -2139,20 +2788,31 @@ func _test_held_items_render_below_container_visuals() -> void:
 	var item := bar._spawn_desk_item_at(Vector2(120.0, 120.0), "ale")
 	item.freeze = true
 	var surface_z_index := item.z_index
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var shaker := tavern.get_node("BarWorkspace/World/SeasoningShaker") as SeasoningShaker
+	var grill := tavern.get_node("BarWorkspace/World/Grill") as KitchenContainer
+	var pot := tavern.get_node("BarWorkspace/World/Pot") as KitchenContainer
 	var containers: Array = [
-		[tavern.get_node("BarWorkspace/World/Brewery"), tavern.get_node("BarWorkspace/World/Brewery/Mouth")],
-		[tavern.get_node("BarWorkspace/World/Grill"), tavern.get_node("BarWorkspace/World/Grill/Intake")],
-		[tavern.get_node("BarWorkspace/World/Pot"), tavern.get_node("BarWorkspace/World/Pot/Intake")],
+		[brewery, brewery._mouth_center_global_position()],
+		[shaker, shaker._mouth_center_global_position()],
+		[grill, (grill.get_node("Intake") as Area2D).global_position],
+		[pot, (pot.get_node("Intake") as Area2D).global_position],
 	]
 	bar._drag_ctrl.start_drag(item, item.global_position)
 	for pair in containers:
 		var container: Node2D = pair[0]
-		var area: Area2D = pair[1]
+		var target_global: Vector2 = pair[1]
 		var art := container.get_node("Art") as Sprite2D
-		item.global_position = area.global_position
+		item.global_position = target_global
 		bar._physics_process(0.0)
 		_ok(item.z_index < art.z_index + container.z_index,
 			"held item renders below %s visual while inside: item %d, art %d" % [container.name, item.z_index, art.z_index + container.z_index])
+		_ok(item.z_index == BarWorkspace.SUBMERGED_ITEM_Z_INDEX,
+			"held item switches to submerged z inside %s: expected %d, got %d" % [
+				container.name,
+				BarWorkspace.SUBMERGED_ITEM_Z_INDEX,
+				item.z_index,
+			])
 
 	item.global_position = Vector2(120.0, 120.0)
 	bar._physics_process(0.0)

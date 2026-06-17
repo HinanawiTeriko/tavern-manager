@@ -1,8 +1,0 @@
-Use case: stylized-concept
-Asset type: corrected game tutorial narrator portrait variant for a pixel-art tavern management game
-Primary request: create a corrected Vera ledge-grip narrator pose. Same character as the approved Vera narrator: auburn-brown side ponytail with a red streak, gold hair clips, teal vest, cream sleeves, dark capelet, red neck scarf, leather belt, small red book and scholar-bartender details. She is below a raised dialogue panel and grips its lower edge while explaining.
-Scene/backdrop: perfectly flat solid #00ff00 chroma-key background, no shadows or gradients.
-Subject: Vera, waist-up portrait, lively teaching expression, mouth open mid-explanation. Both arms are raised, both hands fully visible and gripping a thin dark wooden/ink-rim horizontal ledge near the top. IMPORTANT: both hands, all fingers, both elbows, and the full head must stay well inside the central safe area, with generous green padding on the left and right. Do not let either hand touch or leave the image edge.
-Style/medium: polished 2D game character portrait, same artist family as the approved Vera and Belta pixel pipeline references, crisp ink-like outlines, warm tavern palette, chunky readable pixel-art clusters in the source, not a blurry filter.
-Composition/framing: single centered character, slightly smaller than the previous attempt so both hands fit comfortably; body cropped around waist/upper hips; the character must fit inside a 4:5 portrait crop centered in the square image. The ledge can span horizontally but the hands must be inside the crop-safe zone.
-Constraints: no readable text, no logo, no watermark, no complete dialogue box, no UI labels, no scenery. Do not copy Belta; keep Vera's design. Do not use #00ff00 in the character or ledge.

@@ -1,0 +1,12 @@
+Use case: stylized-concept
+Asset type: Godot pixel-game night settlement background source
+Primary request: an empty after-hours dungeon tavern interior background for a settlement score screen
+Scene/backdrop: closed tavern after service, stone wall, wooden counter edge, extinguished room with one or two low amber candle accents
+Subject: no people and no character shadows; the room is empty and staged for runtime guest silhouettes
+Style/medium: chunky low-density pixel-game concept art, rough ink-like silhouettes, dark teal stone, worn wood, warm amber highlights, historical printmaking influence without copying any named artist
+Composition/framing: 16:9 landscape, clear open stage across the upper and middle area, quieter lower center area for Godot-rendered counters, no UI panels baked into the image
+Lighting/mood: quiet closing time, warm candlelight against cold stone, readable dark values
+Color palette: dark teal, charcoal, muted wood brown, sparse amber; limited palette
+Materials/textures: stone blocks, old wood, paper grain texture only as subtle environmental detail
+Constraints: no readable text, no numbers, no logos, no watermark, no people, no faces, no silhouettes shaped like people, no fake UI, no buttons, no cards, no signs with lettering, no baked-in score areas
+Avoid: soft blur, gradients, photorealism, high-density noisy pixel art, modern UI, recognizable references to existing games

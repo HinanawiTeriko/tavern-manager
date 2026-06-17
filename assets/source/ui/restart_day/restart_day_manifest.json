@@ -1,0 +1,175 @@
+{
+  "id": "restart_day_clock_rewind_v1",
+  "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+  "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+  "assets": {
+    "restart_day_button_normal": {
+      "id": "restart_day_button_normal",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        54,
+        62,
+        508,
+        274
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_button_normal_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_button_normal.png",
+      "native_size": [
+        42,
+        18
+      ],
+      "runtime_size": [
+        168,
+        72
+      ],
+      "safe_area_native": [
+        6,
+        4,
+        36,
+        14
+      ],
+      "intended_godot_use": "LedgerScreen/UI/RestartDayBtn normal StyleBoxTexture and ClockRewindOverlay/CancelBtn"
+    },
+    "restart_day_button_hover": {
+      "id": "restart_day_button_hover",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        555,
+        62,
+        990,
+        274
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_button_hover_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_button_hover.png",
+      "native_size": [
+        42,
+        18
+      ],
+      "runtime_size": [
+        168,
+        72
+      ],
+      "safe_area_native": [
+        6,
+        4,
+        36,
+        14
+      ],
+      "intended_godot_use": "LedgerScreen/UI/RestartDayBtn hover StyleBoxTexture and ClockRewindOverlay/CancelBtn"
+    },
+    "restart_day_button_pressed": {
+      "id": "restart_day_button_pressed",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        1046,
+        62,
+        1470,
+        274
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_button_pressed_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_button_pressed.png",
+      "native_size": [
+        42,
+        18
+      ],
+      "runtime_size": [
+        168,
+        72
+      ],
+      "safe_area_native": [
+        6,
+        5,
+        36,
+        15
+      ],
+      "intended_godot_use": "LedgerScreen/UI/RestartDayBtn pressed StyleBoxTexture and ClockRewindOverlay/CancelBtn"
+    },
+    "restart_day_clock_face": {
+      "id": "restart_day_clock_face",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        16,
+        294,
+        638,
+        916
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_clock_face_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_clock_face.png",
+      "native_size": [
+        104,
+        104
+      ],
+      "runtime_size": [
+        416,
+        416
+      ],
+      "safe_area_native": [
+        17,
+        17,
+        87,
+        87
+      ],
+      "intended_godot_use": "ClockRewindOverlay/ClockRoot/ClockFace"
+    },
+    "restart_day_clock_hand": {
+      "id": "restart_day_clock_hand",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        650,
+        336,
+        760,
+        878
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_clock_hand_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_clock_hand.png",
+      "native_size": [
+        16,
+        62
+      ],
+      "runtime_size": [
+        64,
+        248
+      ],
+      "safe_area_native": [
+        5,
+        4,
+        11,
+        57
+      ],
+      "intended_godot_use": "ClockRewindOverlay/ClockRoot/ClockHand"
+    },
+    "restart_day_event_panel": {
+      "id": "restart_day_event_panel",
+      "source": "art_sources/generated_raw/restart_day/restart_day_controls_source_v1.png",
+      "prompt": "art_sources/generated_raw/restart_day/restart_day_controls_prompt_v1.txt",
+      "source_rect": [
+        808,
+        334,
+        1466,
+        936
+      ],
+      "native": "assets/source/ui/restart_day/restart_day_event_panel_native.png",
+      "runtime": "assets/textures/ui/restart_day/restart_day_event_panel.png",
+      "native_size": [
+        112,
+        104
+      ],
+      "runtime_size": [
+        448,
+        416
+      ],
+      "safe_area_native": [
+        17,
+        16,
+        95,
+        88
+      ],
+      "intended_godot_use": "ClockRewindOverlay/EventPanel/EventPanelArt"
+    }
+  }
+}

@@ -1,0 +1,379 @@
+{
+  "id": "grey_ledger_lady_bust_portrait",
+  "style_profile": "grey_ledger_lady_black_formal_expression_sheet_v2",
+  "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+  "prompt": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_prompt_v2.txt",
+  "expression_source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+  "comparison_references": [
+    "assets/textures/characters/ryan_neutral.png",
+    "assets/textures/characters/mira_neutral.png"
+  ],
+  "source_rect": [
+    0,
+    0,
+    384,
+    512
+  ],
+  "grid": {
+    "columns": 4,
+    "rows": 2
+  },
+  "normalization": {
+    "mode": "fixed_cell_visible_subject_v1"
+  },
+  "native": "assets/source/tavern/characters/grey_ledger_lady_neutral_native.png",
+  "runtime": "assets/textures/characters/grey_ledger_lady_neutral.png",
+  "native_size": [
+    128,
+    160
+  ],
+  "runtime_size": [
+    512,
+    640
+  ],
+  "safe_area": [
+    0,
+    0,
+    128,
+    160
+  ],
+  "scale": 4,
+  "color_limit": 72,
+  "visible_target": [
+    124,
+    154
+  ],
+  "bottom_padding": 3,
+  "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady bust portrait behind TabletopArt",
+  "portraits": {
+    "grey_ledger_lady_neutral": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_neutral_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_neutral.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "calm porcelain auditor neutral"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_smile": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_smile_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_smile.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "warm false-savior smile"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_assessing": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_assessing_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_assessing.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "quietly assessing the player's debt"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_cracked": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_cracked_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_cracked.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "porcelain composure cracking into threat"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_welcoming": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_welcoming_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_welcoming.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "courteous first-visit welcome"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_knowing": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_knowing_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_knowing.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "quietly knowing old-ledger clue"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_cold": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_cold_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_cold.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "cold sealed-account finality"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    },
+    "grey_ledger_lady_unsettled": {
+      "source": "art_sources/generated_raw/characters/grey_ledger_lady/grey_ledger_lady_expression_sheet_source_v2.png",
+      "source_rect": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "native": "assets/source/tavern/characters/grey_ledger_lady_unsettled_native.png",
+      "runtime": "assets/textures/characters/grey_ledger_lady_unsettled.png",
+      "native_size": [
+        128,
+        160
+      ],
+      "runtime_size": [
+        512,
+        640
+      ],
+      "safe_area": [
+        0,
+        0,
+        128,
+        160
+      ],
+      "scale": 4,
+      "color_limit": 72,
+      "visible_target": [
+        124,
+        154
+      ],
+      "bottom_padding": 3,
+      "normalization": {
+        "mode": "fixed_cell_visible_subject_v1"
+      },
+      "expression_notes": [
+        "mask slipping before public accounting"
+      ],
+      "intended_godot_use": "Tavern CustomerSprite Grey Ledger Lady expression portrait"
+    }
+  },
+  "character_notes": [
+    "mature female antagonist and false-savior contract broker",
+    "v2 black-formal porcelain-auditor eight-expression sheet",
+    "normal human black formal clothing; no keyhole or ledger-shaped outfit",
+    "black hair updo, porcelain-pale face and hands with subtle fracture lines",
+    "dialogue-ready runtime assets for Evelyn's Grey Ledger tavern encounters"
+  ],
+  "bar_occlusion_contract": {
+    "customer_sprite_path": "res://scenes/ui/Tavern.tscn:CustomerArea/CustomerSprite",
+    "runtime_sprite_size": [
+      512,
+      640
+    ],
+    "tabletop_top_y_runtime": 484,
+    "tabletop_art_z_index": -90,
+    "customer_sprite_z_index": -95
+  }
+}

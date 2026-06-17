@@ -8,8 +8,8 @@ from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "art_sources" / "generated_raw" / "night_settlement"
-BACKDROP_SOURCE = RAW / "night_settlement_backdrop_source_v1.png"
-BACKDROP_PROMPT = RAW / "night_settlement_backdrop_prompt_v1.txt"
+BACKDROP_SOURCE = RAW / "night_settlement_backdrop_source_v5.png"
+BACKDROP_PROMPT = RAW / "night_settlement_backdrop_prompt_v5.txt"
 CONTROLS_SOURCE = RAW / "night_settlement_controls_source_v1.png"
 CONTROLS_PROMPT = RAW / "night_settlement_controls_prompt_v1.txt"
 STATS_PANEL_SOURCE = RAW / "night_settlement_stats_panel_source_v3.png"
@@ -54,8 +54,8 @@ ICON_NATIVE_SIZE = (14, 14)
 ICON_RUNTIME_SIZE = (56, 56)
 TEXT_SAFE_ZONES_NATIVE = {
     "title": (88, 11, 232, 27),
-    "stats": (34, 103, 128, 160),
-    "fates": (158, 103, 280, 160),
+    "guest_lineup": (12, 34, 232, 104),
+    "score": (96, 106, 224, 164),
     "continue": (276, 152, 314, 174),
 }
 
@@ -226,8 +226,8 @@ def write_manifest(panels: dict, continue_button: dict, icons: dict) -> None:
     manifest = {
         "id": "night_settlement_v1",
         "backdrop": {
-            "source": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v1.png",
-            "prompt": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v1.txt",
+            "source": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_source_v5.png",
+            "prompt": "art_sources/generated_raw/night_settlement/night_settlement_backdrop_prompt_v5.txt",
             "native": "assets/source/ui/night_settlement/night_settlement_backdrop_native.png",
             "runtime": "assets/textures/ui/night_settlement/night_settlement_backdrop.png",
             "native_size": list(BACKDROP_NATIVE_SIZE),

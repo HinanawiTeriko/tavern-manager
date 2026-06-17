@@ -1,0 +1,44 @@
+{
+  "source_image": "art_sources/generated_raw/daymap_markers/grey_ledger_markers_source_v1.png",
+  "reference_copy": "assets/source/daymap/markers/reference/grey_ledger_markers_reference_v1.png",
+  "native_size": [24, 24],
+  "runtime_scale": 4,
+  "assets": {
+    "clearing_table": {
+      "source_file": "art_sources/generated_raw/daymap_markers/grey_ledger_markers_source_v1.png",
+      "native_file": "assets/source/daymap/markers/clearing_table_native.png",
+      "output_file": "assets/textures/daymap/markers/clearing_table.png",
+      "size": [96, 96],
+      "safe_area": [8, 8, 80, 80],
+      "source_crop": [0, 0, 496, 793],
+      "intended_godot_use": "DayMap marker icon for guild clearing table"
+    },
+    "payout_office": {
+      "source_file": "art_sources/generated_raw/daymap_markers/grey_ledger_markers_source_v1.png",
+      "native_file": "assets/source/daymap/markers/payout_office_native.png",
+      "output_file": "assets/textures/daymap/markers/payout_office.png",
+      "size": [96, 96],
+      "safe_area": [8, 8, 80, 80],
+      "source_crop": [496, 0, 992, 793],
+      "intended_godot_use": "DayMap marker icon for guild payout office"
+    },
+    "blacktooth_ledger": {
+      "source_file": "art_sources/generated_raw/daymap_markers/grey_ledger_markers_source_v1.png",
+      "native_file": "assets/source/daymap/markers/blacktooth_ledger_native.png",
+      "output_file": "assets/textures/daymap/markers/blacktooth_ledger.png",
+      "size": [96, 96],
+      "safe_area": [8, 8, 80, 80],
+      "source_crop": [992, 0, 1487, 793],
+      "intended_godot_use": "DayMap marker icon for Blacktooth transfer ledger"
+    },
+    "mira_supply_copy": {
+      "source_file": "art_sources/generated_raw/daymap_markers/grey_ledger_markers_source_v1.png",
+      "native_file": "assets/source/daymap/markers/mira_supply_copy_native.png",
+      "output_file": "assets/textures/daymap/markers/mira_supply_copy.png",
+      "size": [96, 96],
+      "safe_area": [8, 8, 80, 80],
+      "source_crop": [1487, 0, 1983, 793],
+      "intended_godot_use": "DayMap marker icon for Mira old supply copy"
+    }
+  }
+}

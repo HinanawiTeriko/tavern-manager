@@ -1,0 +1,12 @@
+Use case: stylized-concept
+Asset type: source reference sheet for separate 2D pixel-game stamp press component sprites, later cropped by explicit manifest rectangles and downsampled to native pixel assets.
+Primary request: Create isolated parts for a manual accounting stamp press machine as a clean component sheet.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background only.
+Subject: eight isolated stamp-station component sprites in a strict 4 columns by 2 rows grid: row 1 column 1 heavy metal-and-wood stamp press base with paper socket, row 1 column 2 vertical handle and lever assembly, row 1 column 3 rectangular stamp head/press block, row 1 column 4 dark ink imprint mark suitable for appearing on paper; row 2 column 1 inactive paper socket highlight frame, row 2 column 2 amber ready socket highlight frame, row 2 column 3 red blocked socket highlight frame, row 2 column 4 tiny brass press pin/hinge detail.
+Style/medium: hand-authored pixel-game UI asset reference, historical printmaking influence, rough ink lines, dark teal dungeon tavern, worn metal and wood, chunky low-density pixel clusters.
+Composition/framing: strict evenly spaced 4 columns by 2 rows grid, each component centered in its cell with generous padding and no overlap. Orthographic/front-top view compatible with a tabletop UI scene.
+Lighting/mood: dim candlelit amber highlights, cold dark metal shadows.
+Color palette: dark teal-black metal, aged wood, muted brass, small amber highlights. Do not use #ff00ff anywhere in the components.
+Materials/textures: worn iron, aged wood, brass rivets, inked stamp mark.
+Constraints: background must be one uniform flat solid #ff00ff with no shadows, gradients, texture, floor plane, reflections, or lighting variation. No readable text, no labels, no numbers, no logos, no UI words. Components only; no complete background scene, no loose papers except the socket silhouette/frame.
+Avoid: modern office stamp, photorealism, neon, soft blur, readable letters, branded style names, living artists.

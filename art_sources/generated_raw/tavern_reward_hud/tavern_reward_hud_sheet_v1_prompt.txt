@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: pixel-game UI source sheet for a Godot tavern management game
+Primary request: Create a clean source sheet on a perfectly flat solid #ff00ff chroma-key background with separate UI reward HUD assets and no readable text.
+Subject: two very plain narrow horizontal milestone progress grooves, two matching low-brightness filled bar strips, two separate milestone-only thin ornate rim overlays, a small gold coin sprite that can read as a physical coin, a small cool silver-blue reputation sigil particle, and a tiny amber spark.
+Style/medium: understated authored pixel-game UI source art, historical printmaking influence, rough ink silhouettes, dark teal dungeon tavern material, muted warm amber for gold, cool stone-blue accent for reputation.
+Composition/framing: all assets separated with generous padding, no overlap, arranged in a clean grid, front-facing orthographic UI sprites, crisp silhouettes.
+Color palette: dark teal and near-black wood/stone bodies; low-brightness amber/gold fills; cool blue-gray reputation fills; sparse bright pixels only for reward glints.
+Materials/textures: chunky low-density pixel clusters, rough ink edges, no soft blur.
+Constraints: no text, no numbers, no logos, no characters, no UI labels, no large medallions, no candles, no oversized clasps, no ornate default frames, no gradients that would blur after pixel normalization, no shadows on the chroma-key background, no antialiased soft borders. Default progress grooves must be simple and quiet. Ornate overlays must be separate thin milestone-flash pieces, not part of the default bars.
+Avoid: default-state luxury, big ceremonial frames, large icons attached to bars, references to existing games, living artists, readable writing, fake interface text, modern flat vector style, smooth glossy mobile-game icons.

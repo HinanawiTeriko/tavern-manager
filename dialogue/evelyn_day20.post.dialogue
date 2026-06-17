@@ -1,0 +1,63 @@
+~ start
+if evelyn_resolution_state == "pending"
+    do GameManager.set_customer_expression("cold")
+    伊芙琳: 这杯先记在未清栏。
+    if evelyn_public_gap_primary == "toby_identity"
+        伊芙琳: 托比的名字还没和后巷少年对上。没有人名，纸就只是纸。
+    elif evelyn_public_gap_primary == "toby_risk"
+        伊芙琳: 黑齿矿脉为什么是陷阱还没说清。没有风险的来路，旧账会把它写成普通护送。
+    elif evelyn_public_gap_primary == "mira_old_road"
+        伊芙琳: 米拉和托比的旧路还没对上。少了这条线，供应协议只是旁枝。
+    elif evelyn_public_gap_primary == "mira_responsibility"
+        伊芙琳: “一个人走才轻快”是谁留下的，还没证明。人话没接上，账就只能装作听不见。
+    elif evelyn_public_gap_primary == "grey_same_batch"
+        伊芙琳: 莱恩和托比还没被压进同一批灰账。先把批次对上。
+    elif evelyn_public_gap_primary == "grey_payout_method"
+        伊芙琳: 赔付和结案的顺序还没反过来。灰账最怕顺序被看清。
+    elif evelyn_public_gap_primary == "mira_grey_link"
+        伊芙琳: 米拉供应协议背面的灰印还没接到账上。少了它，三条线还不能公开合成一页。
+    elif evelyn_public_gap_primary == "public_account"
+        伊芙琳: 三条线还没被抄成公开账本。最后那一页没有落笔，我就只能把柜台锁上。
+    else
+        伊芙琳: 你手里还有没抄完的账。等那些名字自己对上，我再决定是封存、改账，还是放它离开公会柜台。
+    => END
+elif evelyn_ending == "public_account"
+    if evelyn_pressure == "living_witnesses"
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把莱恩、托比和米拉三条线抄到同一页上了。
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 还有活人会替纸上的名字说话。公开账本离开公会柜台后，我就不能再说这只是几笔错账。
+        => END
+    elif evelyn_pressure == "paper_public"
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把莱恩、托比和米拉三条线抄到同一页上了。
+        do GameManager.set_customer_expression("cold")
+        伊芙琳: 可惜来作证的大多只剩纸。纸证也够重，足够让这本账不能照旧封回去。
+        => END
+    else
+        do GameManager.set_customer_expression("cracked")
+        伊芙琳: 原来你真的把莱恩、托比和米拉三条线抄到同一页上了。
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 公开账本会很难看。难看，但不能再被我封回去。
+        => END
+elif evelyn_ending == "amended_account"
+    if evelyn_pressure == "damaged_amendment"
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 你证明了灰账伤到活人，但还没把三条线公开合成一案。我能改账，不能拆掉整本账。
+        => END
+    elif evelyn_pressure == "cold_amendment"
+        do GameManager.set_customer_expression("cold")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 但别把冷账看成救赎。你证明了栏位有错，没能让已经空掉的座位回来作证。
+        => END
+    else
+        do GameManager.set_customer_expression("unsettled")
+        伊芙琳: 够了。至少够我承认几处账面错误。
+        伊芙琳: 你救下的是几个人，不是整本账。别把这点看轻，也别看重。
+        => END
+else
+    do GameManager.set_customer_expression("cold")
+    伊芙琳: 证据不够，账就照旧封存。
+    伊芙琳: 你听见了疑点，却没把它们合成能公开的账。没有证据，名字只能继续留在纸背。
+    => END

@@ -1,6 +1,6 @@
 {
   "maxStamina": 5,
-  "maxStaminaByDay": { "2": 4 },
+  "maxStaminaByDay": {},
   "regions": [
     { "id": "market",     "origin": [0, 0], "size": [2560, 1440] },
     { "id": "wilds",      "origin": [0, 0], "size": [2560, 1440] },
@@ -10,11 +10,15 @@
   "anchors": [
     { "id": "home_tavern",                 "region": "north_road", "pos": [760, 845],  "kind": "landmark_anchor", "tags": ["home", "town", "intro"] },
     { "id": "market_crossroad_01",         "region": "market",     "pos": [1600, 830], "kind": "route_anchor",    "tags": ["market", "town", "board"] },
+    { "id": "blacktooth_ledger_01",        "region": "market",     "pos": [1510, 910], "kind": "route_anchor",    "tags": ["market", "ledger", "blacktooth"] },
     { "id": "mira_market_stall_01",        "region": "market",     "pos": [1720, 760], "kind": "route_anchor",    "tags": ["market", "stall", "mira"] },
+    { "id": "mira_supply_copy_01",         "region": "market",     "pos": [1880, 755], "kind": "route_anchor",    "tags": ["market", "supply", "mira"] },
     { "id": "fixer_market_den_01",         "region": "market",     "pos": [1775, 875], "kind": "route_anchor",    "tags": ["market", "fixer", "town"] },
     { "id": "toby_lodging_lane_01",        "region": "market",     "pos": [1480, 760], "kind": "route_anchor",    "tags": ["town", "lodging", "toby"] },
     { "id": "market_shop_01",              "region": "market",     "pos": [1745, 640], "kind": "route_anchor",    "tags": ["market", "shop", "town"] },
     { "id": "guild_counter_01",            "region": "north_road", "pos": [1885, 615], "kind": "route_anchor",    "tags": ["guild", "road"] },
+    { "id": "guild_clearing_table_01",     "region": "north_road", "pos": [2000, 720], "kind": "route_anchor",    "tags": ["guild", "clearing", "road"] },
+    { "id": "guild_payout_office_01",      "region": "north_road", "pos": [2115, 600], "kind": "route_anchor",    "tags": ["guild", "payout", "road"] },
     { "id": "mine_road_junction_01",       "region": "north_road", "pos": [430, 1055], "kind": "route_anchor",    "tags": ["mine", "road"] },
     { "id": "wilds_mill_crossroad_01",     "region": "wilds",      "pos": [1980, 535], "kind": "route_anchor",    "tags": ["wilds", "farm", "mill"] },
     { "id": "wilds_mushroom_crossroad_01", "region": "fog",        "pos": [410, 420],  "kind": "route_anchor",    "tags": ["wilds", "mushroom", "forest"] },
@@ -72,6 +76,7 @@
         {
           "id": "ryan_warhammer",
           "dayMin": 2,
+          "dayMax": 2,
           "requiresFlag": "ryan_warhammer_lead",
           "description": "血斧小队正在招募北矿道护送任务。",
           "unlocksFlag": "mine_clue",
@@ -81,8 +86,8 @@
           "id": "toby_commission",
           "dayMin": 6,
           "description": "告示板角落新贴了一份黑齿矿脉的护送委托，落款是个生涩的名字：托比。报酬高得不正常。",
-          "unlocksFlag": "toby_commission_lead",
-          "result": "托比……那个被米拉撇下的学徒，接了这趟送命的活。得去他落脚的地方看看。"
+          "unlocksFlag": "toby_name_lead",
+          "result": "你记下这个生涩的名字和委托编号。黑齿矿脉的报酬高得像陷阱，得先去打听这个托比是谁。"
         }
       ]
     },
@@ -98,6 +103,7 @@
       "description": "北矿道深处散落着战斗痕迹。",
       "dayMin": 2,
       "repeatable": false,
+      "completeWhenDocument": "bloodied_contract",
       "requiresFlag": "mine_clue",
       "result": "你在矿道里找到了一份沾血的委托书。"
     },
@@ -114,8 +120,77 @@
       "description": "公会可以重新安排风险较低的委托。",
       "dayMin": 2,
       "repeatable": false,
+      "completeWhenDocument": "alternative_contract",
       "requiresRead": "bloodied_contract",
       "result": "柜台确认了风险，为莱恩开出了一份替代委托。"
+    },
+    {
+      "id": "clearing_table",
+      "name": "公会清算台",
+      "region": "north_road",
+      "anchor": "guild_clearing_table_01",
+      "pos": [2000, 720],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": [],
+      "description": "公会柜台后方的旧清算台还在运转。第一站查顺序之后，得在这里亲手压出灰契痕迹，看看哪些纸会被合成同一张外账。",
+      "dayMin": 14,
+      "repeatable": false,
+      "completeWhenDocument": "grey_supply_stamp",
+      "marker": "clearing_table",
+      "result": "你走到清算台前。线索不会自己跳进账本，得亲手把赔付、临时人名和灰契印放进槽位。"
+    },
+    {
+      "id": "payout_office",
+      "name": "赔付登记处",
+      "region": "north_road",
+      "anchor": "guild_payout_office_01",
+      "pos": [2115, 600],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": ["grey_ryan_case_number", "grey_old_payout_register", "grey_missing_page"],
+      "description": "赔付登记处只收盖过章的事故案卷。第一站查顺序：莱恩的案卷是先赔付、后结案，还是事故后才正常归档。",
+      "dayMin": 14,
+      "repeatable": false,
+      "completeWhenDocument": "grey_ryan_case_number",
+      "marker": "payout_office",
+      "result": "你抄下了莱恩案卷编号、旧赔付登记和缺页名单。赔付顺序有异常，但要回清算台才能压出可用证明。"
+    },
+    {
+      "id": "blacktooth_ledger",
+      "name": "黑齿转运账",
+      "region": "market",
+      "anchor": "blacktooth_ledger_01",
+      "pos": [1510, 910],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": ["grey_blacktooth_batch", "grey_closure_method"],
+      "description": "公会告示板旁边钉着转运账副本。这里能看见托比的名字怎样被改进临时人名栏，又怎样被并入旧批次。",
+      "dayMin": 16,
+      "repeatable": false,
+      "completeWhenDocument": "grey_blacktooth_batch",
+      "marker": "blacktooth_ledger",
+      "result": "你抄下了黑齿批次号和封账办法。托比的名字确实被挪进临时人名栏，但改名证明还要回清算台压出来。"
+    },
+    {
+      "id": "mira_supply_copy",
+      "name": "米拉旧供应副本",
+      "region": "market",
+      "anchor": "mira_supply_copy_01",
+      "pos": [1880, 755],
+      "cost": 1,
+      "materials": [],
+      "rewards": [],
+      "documents": [],
+      "description": "米拉货摊后侧压着一份旧供应协议副本。最后要查的是：米拉的旧供应协议是否也接进同一套灰契。",
+      "dayMin": 17,
+      "repeatable": false,
+      "completeOnVisit": true,
+      "marker": "mira_supply_copy",
+      "result": "你从旧供应副本背面抄下保证金和旧路赔付栏位。它像是接进同一套灰契，但印痕还要回清算台压出来。"
     },
     {
       "id": "mushroom_forest",
@@ -126,8 +201,11 @@
       "cost": 1,
       "materials": ["herb"],
       "rewards": ["herb"],
+      "stableReward": "herb",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "cave_mushroom", "chance": 0.35, "pityAfterMisses": 2 },
       "dayRewards": { "2": ["sleep_powder"] },
-      "description": "潮湿的洞穴林地，生长着各种菌类和草药。",
+      "description": "潮湿的洞穴林地里长着常用草药，腐木背面偶尔能找到肥厚的洞窟菌。",
       "repeatable": true,
       "result": "你从林地带回了可用的植物。"
     },
@@ -140,9 +218,12 @@
       "cost": 2,
       "materials": ["meat_raw"],
       "rewards": ["meat_raw"],
-      "description": "地下暗河旁，小型野兽和鱼类出没。",
+      "stableReward": "meat_raw",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "rock_lizard_meat", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地下暗河旁有小型野兽和鱼类，温热石缝里偶尔能撞见岩蜥。",
       "repeatable": true,
-      "result": "你从暗河沿岸带回了生肉。"
+      "result": "你从暗河沿岸带回了肉食。"
     },
     {
       "id": "grape_trellis",
@@ -153,7 +234,10 @@
       "cost": 1,
       "materials": ["grape"],
       "rewards": ["grape"],
-      "description": "地牢里罕见的天然葡萄藤。",
+      "stableReward": "grape",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "north_sour_grape", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地牢里罕见的葡萄藤架，深处偶尔结着酸涩的北路野葡萄。",
       "repeatable": true,
       "result": "你采到了一篮葡萄。"
     },
@@ -166,13 +250,16 @@
       "cost": 1,
       "materials": ["ale"],
       "rewards": ["ale"],
-      "description": "地牢入口附近的农庄，可以交换麦芽。",
+      "stableReward": "ale",
+      "stableRewardCount": 2,
+      "rareReward": { "key": "black_malt", "chance": 0.35, "pityAfterMisses": 2 },
+      "description": "地牢入口附近的农庄磨坊能换到麦芽，旧仓里偶尔翻出颜色更深的黑麦芽。",
       "repeatable": true,
       "result": "你从农庄带回了麦芽。"
     },
     {
       "id": "toby_lodging",
-      "name": "托比的落脚处",
+      "name": "后巷临时住处",
       "region": "market",
       "anchor": "toby_lodging_lane_01",
       "pos": [250, 620],
@@ -180,11 +267,12 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "description": "酒馆后巷，托比缩在那儿擦拭一把不合手的短剑。",
+      "description": "告示背面的潦草住址指向市场后巷一处临时住处，门缝里透着一点冷光。",
       "dayMin": 6,
-      "requiresFlag": "toby_commission_lead",
+      "requiresFlag": "toby_identity_known",
       "repeatable": false,
-      "result": "托比说，他要靠这趟委托证明自己一个人也行。"
+      "completeWhenDocument": "toby_contract",
+      "result": "你在后巷找到了告示上的少年。托比说，他要靠这趟委托证明自己一个人也行。"
     },
     {
       "id": "mira_stall",
@@ -196,7 +284,7 @@
       "cost": 1,
       "materials": [],
       "rewards": [],
-      "affection": { "npc": "mira", "amount": 3 },
+      "affection": { "npc": "mira", "amount": 1 },
       "affectionOncePerDay": true,
       "description": "米拉支起货摊歇脚，似乎并不急着赶路。",
       "dayMin": 6,
@@ -219,6 +307,7 @@
       "dayMin": 6,
       "requiresFlag": "toby_commission_lead",
       "repeatable": false,
+      "completeOnVisit": true,
       "result": "掮客点了头：托比那份委托，会被一份安全的活计顶替。"
     }
   ]

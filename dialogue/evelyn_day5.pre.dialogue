@@ -1,0 +1,7 @@
+~ start
+do GameManager.set_customer_expression("welcoming")
+伊芙琳: 老板，一杯葡萄酒。账面上写普通款就好。
+伊芙琳: 我是公会清算人。事故、赔付、失踪记录，最后都要有人合成一页能收起来的账。
+do GameManager.set_customer_expression("neutral")
+伊芙琳: 镇上最近的委托结得很快，[color=#d6a84d]先到的赔付[/color]有时比讣告更早。别急着皱眉，对活人来说，钱先到，活人撑过今晚。
+=> END

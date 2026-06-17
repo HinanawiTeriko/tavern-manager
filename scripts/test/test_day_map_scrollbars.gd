@@ -26,11 +26,13 @@ func _ready() -> void:
 	_test_daymap_primary_button_style(view)
 	_test_panel_styles(view)
 	await _test_gathering_toast_replaces_normal_gather_result(view)
+	await _test_rumor_visit_shows_top_toast(view)
 	view._open_shop()
 	await get_tree().process_frame
 	_test_shop_overlay_integration(view)
 	view._close_shop()
 	await get_tree().process_frame
+	await _test_fixer_visit_refreshes_gold_label(view)
 	view.queue_free()
 	await get_tree().process_frame
 	_finish()
@@ -162,6 +164,10 @@ func _test_gathering_toast_contract(view) -> void:
 		var font := content.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"gathering toast content uses Fusion Pixel font")
+		toast.show_rewards({"herb": 1}, "听到传闻：今晚菜单有新线索")
+		_ok(content.text.contains("传闻"),
+			"gathering toast can mention a rumor alongside gathered rewards")
+		toast.visible = false
 	var style := toast.get_theme_stylebox("panel") as StyleBoxTexture
 	_ok(style != null and style.texture != null, "gathering toast uses texture panel art")
 	if style != null and style.texture != null:
@@ -187,6 +193,49 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 		"gathering toast includes the collected item count")
 
 
+func _test_rumor_visit_shows_top_toast(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 2
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	gm.start_day_map(2)
+	view.show_day(2, EconomySystem.MAX_DAYS)
+	await get_tree().process_frame
+	view._visit_location("mercenary_board")
+	await get_tree().process_frame
+	var result := view.get_node_or_null("UILayer/ResultPanel") as Panel
+	_ok(result != null and not result.visible,
+		"rumor visit does not rely on the blocking result panel for feedback")
+	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
+	_ok(toast != null and toast.visible,
+		"rumor visit shows the top DayMap toast")
+	if toast == null:
+		return
+	var content := toast.get_node_or_null("Content") as Label
+	_ok(content != null and content.text.contains("传闻"),
+		"rumor toast explicitly says a rumor was heard")
+
+
+func _test_fixer_visit_refreshes_gold_label(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 6
+	gm.economy.add_gold(50)
+	gm.narrative.set_var("toby_identity_known", true)
+	gm.narrative.set_var("toby_danger_known", true)
+	gm.narrative.set_var("toby_commission_lead", true)
+	gm.start_day_map(6)
+	view.show_day(6, EconomySystem.MAX_DAYS)
+	await get_tree().process_frame
+	var gold_label := view.get_node_or_null("UILayer/TopBar/GoldLabel") as Label
+	_ok(gold_label != null and gold_label.text.contains("50"), "DayMap gold label starts from current economy gold")
+	view._visit_location("fixer_den")
+	await get_tree().process_frame
+	_ok(gm.economy.gold == 10, "fixer visit spends 40 gold through GameManager")
+	_ok(gold_label != null and gold_label.text.contains("10") and not gold_label.text.contains("50"),
+		"DayMap gold label refreshes after fixer spending")
+
+
 func _test_pinned_note_contract(view) -> void:
 	var legacy := view.get_node_or_null("UILayer/DetailPanel") as Panel
 	_ok(legacy != null, "legacy detail panel remains available")
@@ -210,8 +259,8 @@ func _test_pinned_note_contract(view) -> void:
 	var desc_label := note.get_node_or_null("Desc") as Label
 	var cost_label := note.get_node_or_null("Cost") as Label
 	var yield_label := note.get_node_or_null("Yield") as Label
-	_ok(name_label != null and name_label.position == Vector2(112, 72) and name_label.size == Vector2(220, 34),
-		"pinned note title avoids the knife and stays inside the top title safe area")
+	_ok(name_label != null and name_label.position == Vector2(76, 72) and name_label.size == Vector2(220, 34),
+		"pinned note title is shifted two title characters left inside the top title safe area")
 	_ok(desc_label != null and desc_label.position == Vector2(92, 126) and desc_label.size == Vector2(224, 88),
 		"pinned note description uses the central paper text safe area")
 	_ok(cost_label != null and cost_label.position == Vector2(92, 224) and cost_label.size == Vector2(224, 26),
@@ -219,8 +268,8 @@ func _test_pinned_note_contract(view) -> void:
 	_ok(yield_label != null and yield_label.position == Vector2(92, 254) and yield_label.size == Vector2(224, 40),
 		"pinned note yield text ends above the lower action button")
 	if name_label != null:
-		_ok(is_equal_approx(name_label.position.x + name_label.size.x * 0.5, 222.0),
-			"pinned note title center aligns with the note centerline")
+		_ok(is_equal_approx(name_label.position.x + name_label.size.x * 0.5, 186.0),
+			"pinned note title center is shifted two title characters left of the old centerline")
 	if name_label != null:
 		_ok(_color_close(name_label.get_theme_color("font_color"), Color(0.36, 0.20, 0.10)),
 			"pinned note title uses dark paper-ink color instead of bright UI amber")

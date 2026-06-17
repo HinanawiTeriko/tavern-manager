@@ -2,11 +2,12 @@ extends Node
 
 const PANEL_TEXTURE := "res://assets/textures/tutorial/ui/tutorial_panel.png"
 const DIALOGUE_PANEL_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_panel.png"
-const DIALOGUE_NAMEPLATE_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_nameplate.png"
-const DIALOGUE_PROGRESS_TEXTURE := "res://assets/textures/ui/dialogue_box/dialogue_progress_arrow.png"
-const NARRATOR_NEUTRAL := "res://assets/textures/tutorial/narrator/female_bartender_scribe_neutral.png"
-const NARRATOR_CONCERNED := "res://assets/textures/tutorial/narrator/female_bartender_scribe_concerned.png"
-const NARRATOR_LEDGE := "res://assets/textures/tutorial/narrator/female_bartender_scribe_ledge.png"
+const NARRATOR_NEUTRAL := "res://assets/textures/characters/vera/vera_neutral.png"
+const NARRATOR_CONCERNED := "res://assets/textures/characters/vera/vera_concerned.png"
+const NARRATOR_LEDGE := "res://assets/textures/characters/vera/vera_ledge.png"
+const NARRATOR_NORMAL_SIZE := Vector2(256.0, 320.0)
+const NARRATOR_LEDGE_SIZE := Vector2(256.0, 640.0)
+const NARRATOR_LEDGE_GRIP_OFFSET := 56.0
 
 var _checks := 0
 var _failures := 0
@@ -85,14 +86,17 @@ func _test_narrator_lines_use_portrait_and_advance(overlay: TutorialOverlay) -> 
 		"tutorial overlay exposes a narrator text panel")
 	_ok(narrator_panel != null and _style_texture_path(narrator_panel.get_theme_stylebox("panel")) == DIALOGUE_PANEL_TEXTURE,
 		"tutorial narrator reuses the shipped dialogue panel art")
+	_assert_narrator_panel_uses_runtime_texture_size(narrator_panel)
 	var name_label := overlay.get_node_or_null("NarratorPanel/NarratorNameLabel") as RichTextLabel
 	_ok(name_label != null and name_label.text.contains("薇拉"),
-		"tutorial narrator reuses the dialogue nameplate for the speaker")
-	_ok(name_label != null and _style_texture_path(name_label.get_theme_stylebox("normal")) == DIALOGUE_NAMEPLATE_TEXTURE,
-		"tutorial narrator nameplate uses dialogue nameplate art")
+		"tutorial narrator renders the speaker name")
+	_ok(name_label != null and _style_texture_path(name_label.get_theme_stylebox("normal")) == "",
+		"tutorial narrator speaker name renders without nameplate art")
 	var progress_art := overlay.get_node_or_null("NarratorPanel/NarratorProgressArt") as TextureRect
-	_ok(progress_art != null and progress_art.texture != null and progress_art.texture.resource_path == DIALOGUE_PROGRESS_TEXTURE,
-		"tutorial narrator reuses the dialogue progress arrow art")
+	_ok(progress_art != null and progress_art.texture == null,
+		"tutorial narrator keeps progress node without arrow art")
+	_ok(progress_art != null and not progress_art.visible,
+		"tutorial narrator progress art stays hidden after arrow removal")
 	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
 	_ok(portrait != null and portrait.visible,
 		"tutorial overlay exposes a narrator portrait")
@@ -126,15 +130,19 @@ func _test_narrator_layout_avoids_bottom_highlight(overlay: TutorialOverlay) -> 
 
 	var narrator_panel := overlay.get_node_or_null("NarratorPanel") as Panel
 	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
-	_assert_narrator_panel_spans_screen(narrator_panel)
+	_assert_narrator_panel_uses_runtime_texture_size(narrator_panel)
 	_ok(narrator_panel != null and narrator_panel.position.y == 0.0,
 		"bottom highlight moves the full narrator dialogue bar to the top")
 	_ok(narrator_panel != null and narrator_panel.position.y + narrator_panel.size.y < float(highlight[1]),
 		"top narrator dialogue bar leaves the shortcut highlight visible")
-	_ok(portrait != null and portrait.position.y + portrait.size.y < float(highlight[1]),
-		"narrator portrait moves above a bottom highlight mask")
-	_ok(portrait != null and narrator_panel != null and absf(portrait.position.y - (narrator_panel.position.y + narrator_panel.size.y - 20.0)) <= 1.0,
-		"raised narrator portrait grips the lower edge of the moved dialogue panel")
+	_ok(portrait != null and portrait.size == NARRATOR_LEDGE_SIZE,
+		"raised narrator layout uses the double-height full-body ledge display size")
+	_ok(portrait != null and portrait.size.y >= NARRATOR_NORMAL_SIZE.y * 2.0,
+		"raised narrator ledge pose keeps the upper-body scale and extends downward")
+	_ok(portrait != null and narrator_panel != null and absf((portrait.position.y + NARRATOR_LEDGE_GRIP_OFFSET) - (narrator_panel.position.y + narrator_panel.size.y)) <= 1.0,
+		"raised ledge pose hides the source wood bar behind the top narrator bar edge")
+	_ok(portrait != null and narrator_panel != null and portrait.z_index < narrator_panel.z_index,
+		"raised ledge pose is drawn behind the narrator bar so the frame can cover her hands")
 	_ok(portrait != null and portrait.texture != null and portrait.texture.resource_path == NARRATOR_LEDGE,
 		"raised narrator layout uses the ledge-grip Vera pose")
 
@@ -152,11 +160,14 @@ func _test_narrator_layout_uses_bottom_for_central_highlight(overlay: TutorialOv
 
 	var narrator_panel := overlay.get_node_or_null("NarratorPanel") as Panel
 	var viewport_size := get_viewport().get_visible_rect().size
-	_assert_narrator_panel_spans_screen(narrator_panel)
+	_assert_narrator_panel_uses_runtime_texture_size(narrator_panel)
 	_ok(narrator_panel != null and narrator_panel.position.y == viewport_size.y - narrator_panel.size.y,
 		"central highlight keeps the full narrator dialogue bar at the bottom")
 	_ok(narrator_panel != null and narrator_panel.position.y > float(highlight[1] + highlight[3]),
 		"bottom narrator dialogue bar stays below a central map highlight")
+	var portrait := overlay.get_node_or_null("NarratorPortrait") as TextureRect
+	_ok(portrait != null and portrait.size == NARRATOR_NORMAL_SIZE,
+		"bottom narrator layout uses the normal close-camera portrait size")
 
 
 func _test_tutorial_copy_stays_inside_panel(overlay: TutorialOverlay) -> void:
@@ -258,12 +269,24 @@ func _style_texture_path(style: StyleBox) -> String:
 	return String(texture_style.texture.resource_path)
 
 
-func _assert_narrator_panel_spans_screen(panel: Panel) -> void:
+func _assert_narrator_panel_uses_runtime_texture_size(panel: Panel) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
-	_ok(panel != null and panel.position.x == 0.0,
-		"narrator dialogue bar starts at the screen edge")
-	_ok(panel != null and panel.size.x == viewport_size.x,
-		"narrator dialogue bar spans the full screen width")
+	_ok(panel != null, "narrator dialogue panel exists for texture-size check")
+	if panel == null:
+		return
+	var style := panel.get_theme_stylebox("panel") as StyleBoxTexture
+	_ok(style != null and style.texture != null, "narrator dialogue panel has texture art for size check")
+	if style == null or style.texture == null:
+		return
+	var texture_size := Vector2(style.texture.get_width(), style.texture.get_height())
+	_ok(_size_matches(panel.size, texture_size),
+		"narrator dialogue panel renders at exact runtime texture size without stretching")
+	_ok(is_equal_approx(panel.position.x, floorf((viewport_size.x - texture_size.x) * 0.5)),
+		"narrator dialogue panel is centered after preserving texture size")
+
+
+func _size_matches(actual: Vector2, expected: Vector2) -> bool:
+	return is_equal_approx(actual.x, expected.x) and is_equal_approx(actual.y, expected.y)
 
 
 func _finish() -> void:

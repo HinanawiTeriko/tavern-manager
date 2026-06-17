@@ -1,6 +1,8 @@
 class_name SeasoningShaker
 extends RigidBody2D
 
+const INGREDIENT_INTAKE_VFX := preload("res://scripts/ui/ingredient_intake_vfx.gd")
+
 ## 香料罐：常驻吧台工具。
 ##   装填：拖香料 DeskItem 从上方丢进罐口 → Mouth Area2D 自动吸收（仿 Brewery 吸入式）。
 ##   使用：抓起摇够次数 → 给罐正下方成品写 L1 属性（覆盖式）+ 效果类透传 tag，撒完即空。
@@ -75,6 +77,7 @@ var _powder_layer: Node2D = null
 var _powder_particles: Array[Node2D] = []
 var _powder_spawn_elapsed: float = 0.0
 var _powder_emit_index: int = 0
+var _stuck_powder_product: DeskItem = null
 var _seasoning_combo: int = 0
 var _seasoning_combo_idle_time: float = 0.0
 var _seasoning_combo_pulse: float = 0.0
@@ -152,6 +155,7 @@ func _try_accept_mouth_body(body: Node) -> void:
 		return
 	if not _is_point_inside_mouth_opening(item.global_position):
 		return
+	INGREDIENT_INTAKE_VFX.spawn(self, item, item.item_key, _mouth_center_global_position(), _seasoning_intake_color(item.item_key))
 	load_seasoning(item.item_key)
 	item.queue_free()
 
@@ -163,6 +167,22 @@ func _is_point_inside_mouth_opening(global_pos: Vector2) -> bool:
 		and local.y <= MOUTH_BOTTOM_Y
 
 
+func is_item_inside_mouth(item: Node2D) -> bool:
+	return item != null and _is_point_inside_mouth_opening(item.global_position)
+
+
+func _mouth_center_global_position() -> Vector2:
+	return to_global(Vector2(0.0, (MOUTH_TOP_Y + MOUTH_BOTTOM_Y) * 0.5))
+
+
+func _seasoning_intake_color(key: String) -> Color:
+	var data := GameManager.seasoning.get_seasoning(key)
+	var raw_color = data.get("color", [])
+	if raw_color is Array and raw_color.size() >= 3:
+		return Color(float(raw_color[0]), float(raw_color[1]), float(raw_color[2]), 1.0)
+	return Color(0.92, 0.76, 0.36, 1.0)
+
+
 # ── 装填 / 状态 ──
 
 ## 装填：消耗调用方已扣库存的香料 DeskItem，罐进入已装填态并染色。已装填时替换（旧料废弃）。
@@ -170,6 +190,7 @@ func load_seasoning(key: String) -> void:
 	loaded_key = key
 	_shake.reset()
 	_powder_emit_index = 0
+	_stuck_powder_product = null
 	_reset_seasoning_combo_feedback()
 	_refresh_visual()
 	GameManager.play_audio_event("ingredient_drop")
@@ -185,6 +206,7 @@ func pop_last_ingredient() -> String:
 	var item_key := loaded_key
 	loaded_key = ""
 	_shake.reset()
+	_stuck_powder_product = null
 	_reset_seasoning_combo_feedback()
 	_refresh_visual()
 	return item_key
@@ -235,18 +257,22 @@ func end_shake_session() -> void:
 	lock_rotation = false
 	if loaded_key == "" or not _shake.has_enough():
 		return
-	var prod := _find_product_under()
+	var prod := _find_stuck_powder_product()
 	if prod == null:
-		return
+		prod = _find_product_under()
+		if prod == null:
+			return
 	var r: Dictionary = GameManager.resolve_seasoning_application(loaded_key, prod.item_key)
 	if not bool(r.get("accepted", false)):
 		return
-	prod.set_attribute(String(r.get("attribute", "")))
+	var applied_attribute := String(r.get("attribute", ""))
+	prod.set_attribute(applied_attribute)
 	for t in r.get("product_tags", []):
 		prod.add_product_tag(String(t))
 	_spawn_spice_settle_burst(prod.global_position + Vector2(0.0, -28.0), _seasoning_combo)
 	loaded_key = ""
 	_shake.reset()
+	_stuck_powder_product = null
 	_reset_seasoning_combo_feedback(true)
 	_refresh_visual()
 	GameManager.play_audio_event("product_ready")
@@ -269,6 +295,18 @@ func _find_product_under() -> DeskItem:
 		if c is DeskItem and GameManager.craft.is_product(c.item_key):
 			return c
 	return null
+
+
+func _find_stuck_powder_product() -> DeskItem:
+	if _stuck_powder_product == null:
+		return null
+	if not is_instance_valid(_stuck_powder_product) or _stuck_powder_product.is_queued_for_deletion():
+		_stuck_powder_product = null
+		return null
+	if not GameManager.craft.is_product(_stuck_powder_product.item_key):
+		_stuck_powder_product = null
+		return null
+	return _stuck_powder_product
 
 
 func _update_seasoning_combo(delta: float, counted_shake: bool) -> void:
@@ -784,7 +822,7 @@ func _spawn_powder_particle(burst_index: int, burst_count: int) -> void:
 	layer.add_child(powder)
 	powder.global_position = to_global(emit_local)
 	var speed_scale := clampf(inverse_lerp(POWDER_MOVEMENT_MIN_SPEED, POWDER_FULL_SPEED, linear_velocity.length()), 0.0, 1.0)
-	var side_speed := lerpf(10.0, 30.0, speed_scale)
+	var side_speed := lerpf(4.0, 14.0, speed_scale)
 	var fall_speed := lerpf(34.0, 72.0, speed_scale)
 	var fan_x := lerpf(-side_speed, side_speed, slot_fraction) + randf_range(-side_speed * 0.45, side_speed * 0.45)
 	if kind == "mist":
@@ -796,11 +834,11 @@ func _spawn_powder_particle(burst_index: int, burst_count: int) -> void:
 	powder.set_meta(POWDER_PHASE_META, randf_range(0.0, TAU))
 	powder.set_meta(POWDER_PHASE_SPEED_META, randf_range(2.8, 5.8))
 	powder.set_meta(POWDER_LIFE_META, 0.0)
-	var max_life := randf_range(0.48, 0.72)
+	var max_life := randf_range(1.45, 1.85)
 	if kind == "mist":
-		max_life = randf_range(0.34, 0.52)
+		max_life = randf_range(1.5, 2.05)
 	elif kind == "flake":
-		max_life = randf_range(0.62, 0.86)
+		max_life = randf_range(1.5, 2.0)
 	powder.set_meta(POWDER_MAX_LIFE_META, max_life)
 	var rotation_speed := randf_range(-1.2, 1.2)
 	if kind == "flake":
@@ -885,7 +923,7 @@ func _update_powder_particles(delta: float) -> void:
 		phase += delta * phase_speed
 		powder.set_meta(POWDER_PHASE_META, phase)
 		powder.set_meta(POWDER_LIFE_META, life)
-		var drift := sin(phase) * 5.0
+		var drift := sin(phase) * 2.5
 		powder.global_position += Vector2(velocity.x + drift, velocity.y) * delta
 		powder.rotation += float(powder.get_meta(POWDER_ROTATION_SPEED_META, 0.0)) * delta
 		var visual := powder.get_node_or_null("Sprite") as CanvasItem
@@ -902,9 +940,36 @@ func _update_powder_particles(delta: float) -> void:
 				var base_scale := float(powder.get_meta(POWDER_BASE_SCALE_META, 1.0))
 				var progress := clampf(life / maxf(max_life, 0.01), 0.0, 1.0)
 				powder.scale = Vector2.ONE * base_scale * lerpf(0.75, 1.35, progress)
+		if _try_stick_powder_to_product(powder):
+			_powder_particles.remove_at(i)
+			powder.queue_free()
+			continue
 		if life >= max_life:
 			_powder_particles.remove_at(i)
 			powder.queue_free()
+
+
+func _try_stick_powder_to_product(powder: Node2D) -> bool:
+	var product := _find_product_under()
+	if product == null or not product.can_accept_seasoning_particle(powder.global_position):
+		return false
+	var sprite := powder.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return false
+	var seasoning_key := String(powder.get_meta(POWDER_KEY_META, loaded_key))
+	var kind := String(powder.get_meta(POWDER_KIND_META, "dust"))
+	var stuck := product.stick_seasoning_particle(
+		powder.global_position,
+		seasoning_key,
+		kind,
+		sprite.region_rect,
+		sprite.modulate,
+		powder.scale,
+		powder.rotation
+	)
+	if stuck:
+		_stuck_powder_product = product
+	return stuck
 
 
 func _prune_invalid_powder() -> void:

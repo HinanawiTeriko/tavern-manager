@@ -1,9 +1,0 @@
-Use case: stylized-concept
-Asset type: source sheet for a pixel-art tavern management game character portrait pipeline
-Primary request: Create one clean expression sheet with 4 named regular tavern customers in 4 columns and 3 rows. No text or labels in the image.
-Layout: strict 4-column by 3-row grid, one character per column. Row 1 neutral, row 2 satisfied/happy after correct service, row 3 dissatisfied/upset after wrong service. Keep the same character identity, clothing, silhouette, and pose within each column; change only facial expression and small gesture.
-Characters by column: 1) Belta, stocky middle-aged mine porter woman, rolled sleeves, patched work apron, practical scarf, strong arms, warm but blunt. 2) Noel, young bookkeeper apprentice man, ink-stained fingers, small ledger pouch, nervous posture, modest vest. 3) Masha, sturdy laundress woman, head kerchief, soap-stained apron, tired kind eyes, grounded local worker. 4) Coen, weathered night watchman man, dark cloak, simple guard badge, lantern hook, wary eyes.
-Framing: bust portraits from head to lower torso, front-facing three-quarter view, enough lower torso so the tavern bar can occlude the bottom. Center each bust inside its grid cell with generous padding.
-Style/medium: authored pixel-game production source, chunky low-density pixel clusters, rough ink silhouette, limited palette, dark teal dungeon-tavern colors with warm amber accents, crisp readable shapes, not a high-resolution painting with a pixel filter.
-Background: perfectly flat solid #00ff00 chroma-key background filling every cell; no shadows, gradients, texture, floor plane, or lighting variation. Do not use #00ff00 anywhere in the characters.
-Constraints: no readable text, no signs, no logos, no watermark, no UI, no extra people, no props floating outside the busts, no realistic photo rendering, no soft antialiased border haze.

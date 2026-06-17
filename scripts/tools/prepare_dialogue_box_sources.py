@@ -4,13 +4,12 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "art_sources" / "generated_raw" / "dialogue_box" / "dialogue_box_sheet_v1.png"
-REFERENCE = ROOT / "assets" / "source" / "ui" / "dialogue_box" / "reference" / "dialogue_box_sheet_v1_reference.png"
-REFERENCE_SIZE = (1664, 928)
+RAW = ROOT / "art_sources" / "generated_raw" / "dialogue_box" / "dialogue_box_sheet_v4.png"
+REFERENCE = ROOT / "assets" / "source" / "ui" / "dialogue_box" / "reference" / "dialogue_box_sheet_v4_reference.png"
 
 
 def build_reference(raw: Image.Image) -> Image.Image:
-    return raw.convert("RGBA").resize(REFERENCE_SIZE, Image.Resampling.LANCZOS)
+    return raw.convert("RGBA")
 
 
 def main() -> None:
