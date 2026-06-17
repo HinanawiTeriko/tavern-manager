@@ -950,9 +950,9 @@ func _visit_location(location_id: String) -> void:
 		_enter_investigation(INVESTIGATION_SCENES[location_id])
 		return
 	var reward_counts: Dictionary = result.get("reward_counts", {})
-	if bool(result.get("success", false)) and not reward_counts.is_empty():
+	if bool(result.get("success", false)) and (not reward_counts.is_empty() or result.has("rumor")):
 		if _gathering_toast != null:
-			_gathering_toast.show_rewards(reward_counts, String(result.get("message", "")))
+			_gathering_toast.show_rewards(reward_counts, _visit_toast_message(result))
 		_result_panel.visible = false
 		_stamina_left = gm.day_map.stamina
 		_update_stamina_display()
@@ -970,6 +970,27 @@ func _visit_location(location_id: String) -> void:
 	_detail_panel.visible = false
 	_clear_selection()
 	_refresh_map()
+
+
+func _visit_toast_message(result: Dictionary) -> String:
+	var raw_rumor = result.get("rumor", {})
+	if raw_rumor is Dictionary:
+		var rumor: Dictionary = raw_rumor
+		var menu_hints: Dictionary = rumor.get("menuHints", {})
+		var summary := String(menu_hints.get("summary", ""))
+		if summary != "":
+			return "听到传闻：" + _compact_toast_text(summary)
+		var rumor_text := String(rumor.get("text", ""))
+		if rumor_text != "":
+			return "听到传闻：" + _compact_toast_text(rumor_text)
+	return String(result.get("message", ""))
+
+
+func _compact_toast_text(text: String, max_chars: int = 18) -> String:
+	var clean := text.replace("\n", " ").strip_edges()
+	if clean.length() <= max_chars:
+		return clean
+	return clean.substr(0, max_chars) + "..."
 
 
 func _enter_investigation(scene: PackedScene) -> void:

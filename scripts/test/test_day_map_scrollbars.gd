@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_daymap_primary_button_style(view)
 	_test_panel_styles(view)
 	await _test_gathering_toast_replaces_normal_gather_result(view)
+	await _test_rumor_visit_shows_top_toast(view)
 	view._open_shop()
 	await get_tree().process_frame
 	_test_shop_overlay_integration(view)
@@ -163,6 +164,10 @@ func _test_gathering_toast_contract(view) -> void:
 		var font := content.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"gathering toast content uses Fusion Pixel font")
+		toast.show_rewards({"herb": 1}, "听到传闻：今晚菜单有新线索")
+		_ok(content.text.contains("传闻"),
+			"gathering toast can mention a rumor alongside gathered rewards")
+		toast.visible = false
 	var style := toast.get_theme_stylebox("panel") as StyleBoxTexture
 	_ok(style != null and style.texture != null, "gathering toast uses texture panel art")
 	if style != null and style.texture != null:
@@ -186,6 +191,29 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 		"gathering toast announces collected rewards")
 	_ok(content != null and content.text.contains("×1"),
 		"gathering toast includes the collected item count")
+
+
+func _test_rumor_visit_shows_top_toast(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 2
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	gm.start_day_map(2)
+	view.show_day(2, EconomySystem.MAX_DAYS)
+	await get_tree().process_frame
+	view._visit_location("mercenary_board")
+	await get_tree().process_frame
+	var result := view.get_node_or_null("UILayer/ResultPanel") as Panel
+	_ok(result != null and not result.visible,
+		"rumor visit does not rely on the blocking result panel for feedback")
+	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
+	_ok(toast != null and toast.visible,
+		"rumor visit shows the top DayMap toast")
+	if toast == null:
+		return
+	var content := toast.get_node_or_null("Content") as Label
+	_ok(content != null and content.text.contains("传闻"),
+		"rumor toast explicitly says a rumor was heard")
 
 
 func _test_fixer_visit_refreshes_gold_label(view) -> void:

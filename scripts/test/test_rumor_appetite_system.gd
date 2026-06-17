@@ -12,6 +12,7 @@ func _ready() -> void:
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
 		_test_guest_group_profiles_drive_orders()
+		_test_game_manager_preserves_group_guest_portrait_id()
 		_test_regular_customer_traits_are_exposed()
 		_test_regular_customer_memory_persists()
 		_test_game_manager_grants_location_rumors()
@@ -214,6 +215,13 @@ func _test_guest_group_profiles_drive_orders() -> void:
 		_ok(String(profile.get("displayName", "")) != "", "guest group has display name: " + group_key)
 		_ok((profile.get("preferredTags", []) as Array).size() >= 2, "guest group has preferred tags: " + group_key)
 		_ok((profile.get("fallbackOrders", []) as Array).size() >= 2, "guest group has fallback orders: " + group_key)
+		var portrait_pool: Array = profile.get("portraitPool", [])
+		_ok(portrait_pool.size() >= 2, "guest group has a portrait pool: " + group_key)
+		for portrait_id in portrait_pool:
+			var portrait_key := String(portrait_id)
+			_ok(portrait_key.begins_with("regular_"), "guest group portrait uses regular customer art: " + group_key)
+			_ok(ResourceLoader.exists("res://assets/textures/characters/%s_neutral.png" % portrait_key),
+				"guest group portrait exists: " + portrait_key)
 		_ok((profile.get("matchLines", []) as Array).size() >= 1, "guest group has match feedback: " + group_key)
 	var menu_items := [
 		{"key": "herb_tea"},
@@ -238,10 +246,30 @@ func _test_guest_group_profiles_drive_orders() -> void:
 	_ok(guest_system.has_guest, "group guest spawn creates current guest")
 	_ok(String(guest_system.current_guest.get_meta("guest_group", "")) == "mine", "group guest carries guest_group metadata")
 	_ok(String(guest_system.current_guest.get_meta("template_id", "")) == "group_mine", "group guest carries a stable template id")
+	var portrait_id := String(guest_system.current_guest.get_meta("portrait_id", ""))
+	_ok(portrait_id != "" and portrait_id != "guest", "group guest carries a non-placeholder portrait id")
+	_ok(ResourceLoader.exists("res://assets/textures/characters/%s_neutral.png" % portrait_id),
+		"group guest portrait id resolves to runtime art")
 	var line := String(guest_system.get_group_match_feedback("mine", ["顶饿", "热食"]))
 	_ok(line != "", "group match feedback returns a line for preferred tags")
 	var miss := String(guest_system.get_group_match_feedback("mine", ["清香"]))
 	_ok(miss == "", "group match feedback stays quiet for unrelated tags")
+
+
+func _test_game_manager_preserves_group_guest_portrait_id() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm != null and gm.has_method("_on_guest_arrived"), "GameManager exposes guest arrival handler")
+	if gm == null or not gm.has_method("_on_guest_arrived"):
+		return
+	var guest := GuestData.new()
+	guest.guest_name = "Group Guest"
+	guest.order_key = "herb_tea"
+	guest.npc_id = ""
+	guest.has_dialogue = false
+	guest.set_meta("portrait_id", "regular_jora")
+	gm._on_guest_arrived(guest)
+	_ok(String(guest.get_meta("portrait_id", "")) == "regular_jora",
+		"GameManager preserves anonymous group guest portrait identity")
 
 
 func _test_regular_customer_traits_are_exposed() -> void:

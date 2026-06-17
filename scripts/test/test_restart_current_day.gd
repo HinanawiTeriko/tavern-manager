@@ -17,9 +17,11 @@ func _ready() -> void:
 	_ok(gm.has_method("capture_day_start_snapshot"), "GameManager exposes capture_day_start_snapshot")
 	_ok(gm.has_method("add_current_day_event"), "GameManager exposes add_current_day_event")
 	_ok(gm.has_method("get_current_day_events"), "GameManager exposes get_current_day_events")
+	_ok(gm.has_method("get_today_rumors"), "GameManager exposes today rumor lookup")
 	if not gm.has_method("capture_day_start_snapshot") \
 		or not gm.has_method("add_current_day_event") \
-		or not gm.has_method("get_current_day_events"):
+		or not gm.has_method("get_current_day_events") \
+		or not gm.has_method("get_today_rumors"):
 		_finish()
 		return
 	var initial_ale_count: int = gm.inventory_sys.get_count("ale")
@@ -29,6 +31,11 @@ func _ready() -> void:
 	_ok(gm.buy_ability("slam_pot"), "buying ability succeeds")
 	var visit_result: Dictionary = gm.visit_day_location("mushroom_forest")
 	_ok(bool(visit_result.get("success", false)), "visiting day location succeeds")
+	gm.narrative.set_var("ryan_warhammer_lead", true)
+	var rumor_result: Dictionary = gm.visit_day_location("mercenary_board")
+	_ok(bool(rumor_result.get("success", false)), "visiting rumor location succeeds")
+	_ok(rumor_result.has("rumor"), "day visit can grant a rumor after checkpoint")
+	_ok(gm.get_today_rumors().size() > 0, "rumor is active before restart")
 	gm.economy.add_gold(12)
 	gm.narrative.set_var("ryan_informed", true)
 	var event_types := _event_types(gm.get_current_day_events())
@@ -47,6 +54,7 @@ func _ready() -> void:
 	_ok(gm.inventory_sys.get_count("ale") == initial_ale_count, "restart restores purchased materials from morning checkpoint")
 	_ok(gm.inventory_sys.get_count("sleep_powder") == 0, "restart restores inventory from morning checkpoint")
 	_ok(gm.narrative.get_var("ryan_informed") == false, "restart restores narrative vars from morning checkpoint")
+	_ok(gm.get_today_rumors().is_empty(), "restart restores rumors from morning checkpoint")
 	_ok(gm.get_current_day_events().is_empty(), "restart clears event log")
 	_finish()
 

@@ -618,6 +618,13 @@ func _group_guest_name(profile: Dictionary) -> String:
 	return String(prefixes[_rng.randi() % prefixes.size()]) + String(suffixes[_rng.randi() % suffixes.size()])
 
 
+func _group_portrait_id(profile: Dictionary) -> String:
+	var portrait_pool := _strings_from_values(profile.get("portraitPool", []))
+	if portrait_pool.is_empty():
+		return ""
+	return portrait_pool[_rng.randi() % portrait_pool.size()]
+
+
 func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
 	var profile := get_guest_group_profile(group_key)
 	if profile.is_empty() or menu_items.is_empty():
@@ -634,6 +641,9 @@ func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
 	g.set_meta("customer_id", "")
 	g.set_meta("guest_group", group_key)
 	g.set_meta("template_id", "group_" + group_key)
+	var portrait_id := _group_portrait_id(profile)
+	if portrait_id != "":
+		g.set_meta("portrait_id", portrait_id)
 	g.set_meta("preferred_tags", _strings_from_values(profile.get("preferredTags", [])))
 	g.set_meta("tip_multiplier", float(profile.get("tipMultiplier", 1.0)))
 	g.set_meta("reputation_on_success", int(profile.get("reputationOnSuccess", 0)))

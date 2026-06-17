@@ -1435,7 +1435,10 @@ func _on_guest_arrived(guest: GuestData) -> void:
 	if guest == null:
 		return
 	var display_name = guest.guest_name
-	var portrait_id: String = guest.npc_id if guest.npc_id != "" else "guest"
+	var default_portrait_id: String = guest.npc_id if guest.npc_id != "" else "guest"
+	var portrait_id: String = String(guest.get_meta("portrait_id", default_portrait_id))
+	if portrait_id == "":
+		portrait_id = default_portrait_id
 	if guest.has_dialogue:
 		for npc in narrative.all_npcs:
 			if npc.id == guest.npc_id:
