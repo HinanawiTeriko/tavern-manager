@@ -90,6 +90,9 @@ const RECIPE_DISCOVERY_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.pn
 const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
 const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
+const MENU_PREP_LEFT_TEXT_WIDTH := 286.0
+const MENU_PREP_RUMOR_CARD_HEIGHT := 176.0
+const MENU_PREP_ECHO_CARD_HEIGHT := 78.0
 
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
@@ -1124,10 +1127,12 @@ func _ensure_menu_prep_panel() -> void:
 
 	_menu_prep_rumor_list = VBoxContainer.new()
 	_menu_prep_rumor_list.name = "RumorList"
-	_menu_prep_rumor_list.position = Vector2(36, 102)
-	_menu_prep_rumor_list.size = Vector2(300, 146)
-	_menu_prep_rumor_list.add_theme_constant_override("separation", 6)
-	_menu_prep_panel.add_child(_menu_prep_rumor_list)
+	_menu_prep_rumor_list.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 0.0)
+	_menu_prep_rumor_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_prep_rumor_list.add_theme_constant_override("separation", 12)
+	var rumor_scroll := _make_menu_prep_scroll("RumorScroll", Vector2(36, 102), Vector2(300, 146))
+	rumor_scroll.add_child(_menu_prep_rumor_list)
+	_menu_prep_panel.add_child(rumor_scroll)
 
 	var echo_title := Label.new()
 	echo_title.name = "YesterdayEchoTitle"
@@ -1139,10 +1144,12 @@ func _ensure_menu_prep_panel() -> void:
 
 	_menu_prep_echo_list = VBoxContainer.new()
 	_menu_prep_echo_list.name = "YesterdayEchoList"
-	_menu_prep_echo_list.position = Vector2(36, 288)
-	_menu_prep_echo_list.size = Vector2(300, 92)
-	_menu_prep_echo_list.add_theme_constant_override("separation", 5)
-	_menu_prep_panel.add_child(_menu_prep_echo_list)
+	_menu_prep_echo_list.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 0.0)
+	_menu_prep_echo_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_prep_echo_list.add_theme_constant_override("separation", 8)
+	var echo_scroll := _make_menu_prep_scroll("YesterdayEchoScroll", Vector2(36, 288), Vector2(300, 92))
+	echo_scroll.add_child(_menu_prep_echo_list)
+	_menu_prep_panel.add_child(echo_scroll)
 
 	var product_title := Label.new()
 	product_title.name = "ProductTitle"
@@ -1191,6 +1198,16 @@ func _ensure_menu_prep_panel() -> void:
 	_menu_prep_panel.add_child(_menu_prep_start_btn)
 
 
+func _make_menu_prep_scroll(node_name: String, node_position: Vector2, node_size: Vector2) -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = node_name
+	scroll.position = node_position
+	scroll.size = node_size
+	scroll.clip_contents = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	return scroll
+
+
 func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 	for child in _menu_prep_rumor_list.get_children():
 		child.queue_free()
@@ -1198,7 +1215,7 @@ func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 		var empty := Label.new()
 		empty.text = "今天还没有听到能影响菜单的传闻。"
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.custom_minimum_size = Vector2(286, 48)
+		empty.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 48)
 		ThemeColors.style_brush_label(empty, 14, ThemeColors.TEXT_DIM)
 		_menu_prep_rumor_list.add_child(empty)
 		return
@@ -1220,7 +1237,7 @@ func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 		if not recommendedTags.is_empty():
 			label.text += "\n推荐：" + " / ".join(recommendedTags)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.custom_minimum_size = Vector2(286, 124)
+		label.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, MENU_PREP_RUMOR_CARD_HEIGHT)
 		ThemeColors.style_brush_label(label, 14, ThemeColors.TEXT_SUBTITLE)
 		_menu_prep_rumor_list.add_child(label)
 
@@ -1232,7 +1249,7 @@ func _rebuild_menu_prep_echoes(echoes: Array) -> void:
 		var empty := Label.new()
 		empty.text = "暂无昨日回响。"
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.custom_minimum_size = Vector2(286, 34)
+		empty.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 34)
 		ThemeColors.style_brush_label(empty, 13, ThemeColors.TEXT_DIM)
 		_menu_prep_echo_list.add_child(empty)
 		return
@@ -1252,7 +1269,7 @@ func _rebuild_menu_prep_echoes(echoes: Array) -> void:
 		if not tags.is_empty():
 			label.text += "\n记忆：" + " / ".join(tags)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.custom_minimum_size = Vector2(286, 58)
+		label.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, MENU_PREP_ECHO_CARD_HEIGHT)
 		ThemeColors.style_brush_label(label, 13, ThemeColors.TEXT_LIGHT)
 		_menu_prep_echo_list.add_child(label)
 		shown += 1

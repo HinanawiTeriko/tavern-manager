@@ -250,6 +250,13 @@ func _test_guest_group_profiles_drive_orders() -> void:
 	_ok(portrait_id != "" and portrait_id != "guest", "group guest carries a non-placeholder portrait id")
 	_ok(ResourceLoader.exists("res://assets/textures/characters/%s_neutral.png" % portrait_id),
 		"group guest portrait id resolves to runtime art")
+	var portrait_preview: Dictionary = guest_system.get_regular_customer_preview(portrait_id)
+	var portrait_name := String(portrait_preview.get("name", ""))
+	var group_display_name := String(mine.get("displayName", ""))
+	_ok(portrait_name != "" and String(guest_system.current_guest.guest_name).contains(portrait_name),
+		"group guest display name includes the selected portrait character name")
+	_ok(group_display_name != "" and String(guest_system.current_guest.guest_name).contains(group_display_name),
+		"group guest display name keeps the group context as secondary information")
 	var line := String(guest_system.get_group_match_feedback("mine", ["顶饿", "热食"]))
 	_ok(line != "", "group match feedback returns a line for preferred tags")
 	var miss := String(guest_system.get_group_match_feedback("mine", ["清香"]))
@@ -447,6 +454,8 @@ func _test_tavern_view_exposes_menu_preparation_contract() -> void:
 	_ok(source.contains("affectedCustomers"), "TavernView renders affected named customers from rumors")
 	_ok(source.contains("可能来"), "TavernView labels likely arriving customers")
 	_ok(source.contains("recommendedTags"), "TavernView renders recommended tags from rumors")
+	_ok(source.contains("RumorScroll"), "TavernView contains long rumor planning copy inside a scrollable clipped region")
+	_ok(source.contains("YesterdayEchoScroll"), "TavernView contains yesterday echo copy inside a scrollable clipped region")
 	_ok(source.contains("YesterdayEchoList"), "TavernView has a bounded yesterday echo list")
 	_ok(source.contains("昨日回响"), "TavernView labels previous-night planning feedback")
 	_ok(source.contains("get_product_tags"), "TavernView labels menu products with readable food tags")

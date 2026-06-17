@@ -610,12 +610,27 @@ func _pick_guest_group_key() -> String:
 	return String(_guest_group_profiles.keys().back())
 
 
-func _group_guest_name(profile: Dictionary) -> String:
+func _group_guest_name(profile: Dictionary, portrait_id: String = "") -> String:
+	var personal_name := _regular_customer_display_name(portrait_id)
+	var group_name := String(profile.get("displayName", ""))
+	if personal_name != "":
+		if group_name != "":
+			return "%s · %s" % [personal_name, group_name]
+		return personal_name
 	var prefixes: Array = profile.get("namePrefixes", [])
 	var suffixes: Array = profile.get("nameSuffixes", [])
 	if prefixes.is_empty() or suffixes.is_empty():
-		return String(profile.get("displayName", "旅人"))
+		return group_name if group_name != "" else "旅人"
 	return String(prefixes[_rng.randi() % prefixes.size()]) + String(suffixes[_rng.randi() % suffixes.size()])
+
+
+func _regular_customer_display_name(customer_id: String) -> String:
+	if customer_id == "":
+		return ""
+	var entry: Dictionary = _customer_by_id.get(customer_id, {})
+	if entry.is_empty():
+		return ""
+	return String(entry.get("display_name", customer_id))
 
 
 func _group_portrait_id(profile: Dictionary) -> String:
@@ -629,8 +644,9 @@ func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
 	var profile := get_guest_group_profile(group_key)
 	if profile.is_empty() or menu_items.is_empty():
 		return
+	var portrait_id := _group_portrait_id(profile)
 	var g := GuestData.new()
-	g.guest_name = _group_guest_name(profile)
+	g.guest_name = _group_guest_name(profile, portrait_id)
 	g.type = GuestData.GuestType.NORMAL
 	g.order_key = choose_guest_group_order(group_key, menu_items)
 	if g.order_key == "":
@@ -641,7 +657,6 @@ func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
 	g.set_meta("customer_id", "")
 	g.set_meta("guest_group", group_key)
 	g.set_meta("template_id", "group_" + group_key)
-	var portrait_id := _group_portrait_id(profile)
 	if portrait_id != "":
 		g.set_meta("portrait_id", portrait_id)
 	g.set_meta("preferred_tags", _strings_from_values(profile.get("preferredTags", [])))
