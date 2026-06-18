@@ -21,6 +21,10 @@ const DEFAULT_DRAG_ITEM_CLEARANCE := 34.0
 const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
 const DESK_RETURN_MIN_X := 260.0
 const DESK_RETURN_MAX_X := 1020.0
+const PHYSICS_LAW_META_BASE_GRAVITY := "base_gravity_scale"
+const PHYSICS_LAW_META_APPLIED_ID := "applied_physics_law_id"
+const PHYSICS_LAW_MIN_GRAVITY := 0.2
+const PHYSICS_LAW_MAX_GRAVITY := 2.0
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
@@ -43,6 +47,7 @@ var _shortcut_preview_body: DeskItem = null
 var _shortcut_preview_body_layer: int = 0
 var _shortcut_preview_body_mask: int = 0
 var _seasoning_tutorial_retry_armed := false
+var _active_physics_law: Dictionary = {}
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -74,6 +79,20 @@ func configure_day(day: int) -> void:
 	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
 	_set_body_available(_pot, _gm.workspace.is_container_unlocked("pot", day))
 	_set_body_available(_spoon, _gm.workspace.is_container_unlocked("spoon", day))
+
+
+func apply_physics_law(law: Dictionary) -> void:
+	if String(law.get("scope", "desk_items")) != "desk_items":
+		return
+	_active_physics_law = law.duplicate(true)
+	for child in _items_node.get_children():
+		_apply_active_physics_law_to_body(child)
+
+
+func clear_physics_law() -> void:
+	for child in _items_node.get_children():
+		_restore_body_physics_law(child)
+	_active_physics_law.clear()
 
 
 func _maybe_trigger_seasoning_tutorial() -> void:
@@ -684,6 +703,7 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 		item.set_art_texture(art_texture)
 	_items_node.add_child(item)
 	item.global_position = pos
+	_apply_active_physics_law_to_body(item)
 	# 可阅读物品：设为可拾取输入，双击时打开关联文档
 	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
 	if capabilities.has("readable"):
@@ -766,6 +786,30 @@ func _on_items_child_added(child: Node) -> void:
 			child.fell_out_of_bounds.connect(_on_desk_item_fell)
 		if not child.body_entered.is_connected(_on_item_collision.bind(child)):
 			child.body_entered.connect(_on_item_collision.bind(child))
+		_apply_active_physics_law_to_body(child)
+
+
+func _apply_active_physics_law_to_body(body: Node) -> void:
+	if _active_physics_law.is_empty():
+		return
+	if not is_instance_valid(body) or not body is DeskItem:
+		return
+	if not body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
+		body.set_meta(PHYSICS_LAW_META_BASE_GRAVITY, float(body.gravity_scale))
+	var multiplier := float(_active_physics_law.get("gravity_scale_multiplier", 1.0))
+	var base_gravity := float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
+	body.gravity_scale = clampf(base_gravity * multiplier, PHYSICS_LAW_MIN_GRAVITY, PHYSICS_LAW_MAX_GRAVITY)
+	body.set_meta(PHYSICS_LAW_META_APPLIED_ID, String(_active_physics_law.get("id", "")))
+
+
+func _restore_body_physics_law(body: Node) -> void:
+	if not is_instance_valid(body) or not body is DeskItem:
+		return
+	if body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
+		body.gravity_scale = float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
+		body.remove_meta(PHYSICS_LAW_META_BASE_GRAVITY)
+	if body.has_meta(PHYSICS_LAW_META_APPLIED_ID):
+		body.remove_meta(PHYSICS_LAW_META_APPLIED_ID)
 
 
 ## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
@@ -869,6 +913,7 @@ func _dock_body(body: RigidBody2D) -> void:
 
 
 func _exit_tree() -> void:
+	clear_physics_law()
 	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
 		_gm.inventory_changed.disconnect(_init_material_slots)
 	if _gm != null and _gm.inventory_changed.is_connected(_maybe_trigger_seasoning_tutorial):
