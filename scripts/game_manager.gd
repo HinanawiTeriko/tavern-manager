@@ -452,6 +452,7 @@ func start_day_map(day: int) -> void:
 	_sync_day_map_completion_from_story_state()
 	_ensure_fate_tracks_for_day(day)
 	_add_mira_old_road_menu_hint_for_day(day)
+	_add_evelyn_public_gap_hint_for_day(day)
 	_migrate_missing_day_map_state()
 
 
@@ -529,6 +530,20 @@ func _add_mira_old_road_menu_hint_for_day(day: int) -> void:
 		[day, " / ".join(PackedStringArray(missing))]
 	)
 	if documents.add_fate_note("mira", note):
+		play_audio_event("new_document")
+
+
+func _add_evelyn_public_gap_hint_for_day(day: int) -> void:
+	if day < 18 or day > 19:
+		return
+	var summary := get_evelyn_public_account_gap_summary()
+	if summary == "":
+		return
+	_ensure_fate_track("evelyn")
+	var note := _source_note("fact",
+		"第 %d 天，%s。第二十日封存前，先回推断桌补齐这些事实。" % [day, summary]
+	)
+	if documents.add_fate_note("evelyn", note):
 		play_audio_event("new_document")
 
 

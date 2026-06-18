@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_grey_documents_grant_inference_clues()
 	_test_grey_route_endings()
 	_test_evelyn_public_account_gap_diagnostics()
+	_test_day18_day19_public_account_gap_writes_ledger_hint()
 	_test_day20_clean_table_can_update_evelyn_final_ending()
 	_test_evelyn_pending_dialogue_names_public_account_gaps()
 	_test_previous_line_endings_shape_evelyn_pressure()
@@ -189,6 +190,22 @@ func _test_evelyn_public_account_gap_diagnostics() -> void:
 	gm.narrative.set_var("grey_public_account_known", true)
 	_ok(String(gm.get_evelyn_public_account_gap_summary()) == "",
 		"gap summary clears once the public-account inference is solved")
+
+
+func _test_day18_day19_public_account_gap_writes_ledger_hint() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(18)
+	var ledger_text := _ledger_pages_text(gm)
+	_ok(ledger_text.contains("第 18 天") and ledger_text.contains("公开账本缺"),
+		"Day18 Evelyn fate track writes the public-account gap checklist")
+	_ok(ledger_text.contains("托比身份"),
+		"Day18 public-account gap hint names the first missing route proof")
+
+	gm.start_day_map(19)
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("第 19 天") and ledger_text.contains("公开账本缺"),
+		"Day19 Evelyn fate track repeats the gap checklist as the final prep day")
 
 
 func _test_day20_clean_table_can_update_evelyn_final_ending() -> void:
