@@ -4,6 +4,21 @@ var _checks := 0
 var _failures := 0
 
 
+class HeartFeedbackView extends Node:
+	var stage_lines := []
+	var dialogue_mode_calls := []
+	var hide_calls := 0
+
+	func show_stage_caption(text, color = Color.WHITE) -> void:
+		stage_lines.append({"text": String(text), "color": color})
+
+	func set_dialogue_mode(active: bool) -> void:
+		dialogue_mode_calls.append(active)
+
+	func hide_customer() -> void:
+		hide_calls += 1
+
+
 func _ready() -> void:
 	_test_three_day_boundary()
 	_test_state_roundtrip()
@@ -16,6 +31,8 @@ func _ready() -> void:
 	_test_important_arrival_timing_rules()
 	await _test_day2_important_npc_waits_for_one_normal_guest()
 	_test_ryan_day2_dialogue_matches_single_order()
+	_test_all_important_post_dialogues_have_heart_feedback_copy()
+	_test_post_dialogue_shows_heart_feedback()
 	_test_day3_fate_reveal_is_not_a_formal_npc_scene()
 	await _test_day3_fate_reveal_spawns_when_menu_already_confirmed()
 	_test_day1_settlement_warns_about_day2_fate_ledger_entry()
@@ -184,6 +201,80 @@ func _test_ryan_day2_dialogue_matches_single_order() -> void:
 	var pre_dialogue := FileAccess.get_file_as_string("res://dialogue/ryan_day2.pre.dialogue")
 	_ok(pre_dialogue.contains("烤肉"), "Day 2 Ryan pre-dialogue still asks for cooked meat")
 	_ok(not pre_dialogue.contains("麦芽酒"), "Day 2 Ryan pre-dialogue no longer implies a second ale order")
+
+
+func _test_all_important_post_dialogues_have_heart_feedback_copy() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm.has_method("_important_post_dialogue_heart_feedback"),
+		"GameManager owns important NPC post-dialogue heart feedback copy")
+	if not gm.has_method("_important_post_dialogue_heart_feedback"):
+		return
+	var cases := [
+		{"npc_id": "ryan", "day": 1},
+		{"npc_id": "ryan", "day": 2},
+		{"npc_id": "ryan", "day": 3},
+		{"npc_id": "toby", "day": 6},
+		{"npc_id": "mira", "day": 4},
+		{"npc_id": "mira", "day": 12},
+		{"npc_id": "evelyn", "day": 5},
+		{"npc_id": "evelyn", "day": 8},
+		{"npc_id": "evelyn", "day": 13},
+		{"npc_id": "evelyn", "day": 20},
+	]
+	for item in cases:
+		var text := String(gm.call(
+			"_important_post_dialogue_heart_feedback",
+			String(item.get("npc_id", "")),
+			int(item.get("day", 0))
+		))
+		_ok(text != "", "important NPC post-dialogue heart feedback exists for %s day %d" % [
+			String(item.get("npc_id", "")),
+			int(item.get("day", 0)),
+		])
+
+
+func _test_post_dialogue_shows_heart_feedback() -> void:
+	var gm = get_node("/root/GameManager")
+	var original_day: int = gm.economy.current_day
+	var original_view = gm._tavern_view
+	var original_phase: String = gm._dialogue_phase
+	var original_dialogue_active: bool = gm._is_dialogue_active
+	var original_guest = gm.guests.current_guest
+	var original_has_guest: bool = gm.guests.has_guest
+
+	var view := HeartFeedbackView.new()
+	gm._tavern_view = view
+	gm.economy.current_day = 2
+	gm._dialogue_phase = "post"
+	gm._is_dialogue_active = true
+
+	var guest := GuestData.new()
+	guest.guest_name = "莱恩"
+	guest.npc_id = "ryan"
+	guest.order_key = "meat_cooked"
+	guest.type = GuestData.GuestType.IMPORTANT
+	guest.has_dialogue = true
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
+
+	gm._on_dialogue_ended()
+
+	_ok(view.stage_lines.size() >= 1, "post-dialogue important NPC shows source-labeled feedback caption")
+	if view.stage_lines.size() > 0:
+		var text := String(view.stage_lines[view.stage_lines.size() - 1].get("text", ""))
+		_ok(text.begins_with("人心 · "), "important NPC post feedback is labeled as heart source")
+		_ok(text.contains("莱恩"), "Ryan post feedback names the affected NPC line")
+	_ok(view.dialogue_mode_calls.has(false), "post-dialogue feedback closes dialogue mode")
+	_ok(view.hide_calls == 1, "post-dialogue flow still clears the customer")
+	_ok(not gm.guests.has_guest, "post-dialogue flow leaves no guest in service")
+
+	gm.guests.current_guest = original_guest
+	gm.guests.has_guest = original_has_guest
+	gm._tavern_view = original_view
+	gm.economy.current_day = original_day
+	gm._dialogue_phase = original_phase
+	gm._is_dialogue_active = original_dialogue_active
+	view.queue_free()
 
 
 func _test_day1_settlement_warns_about_day2_fate_ledger_entry() -> void:

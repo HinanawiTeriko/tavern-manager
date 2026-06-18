@@ -1877,6 +1877,54 @@ func _important_guest_display_name(npc_id: String, fallback: String) -> String:
 	return ryan_slice.important_display_name(economy.current_day, npc_id, fallback)
 
 
+func _important_post_dialogue_heart_feedback(npc_id: String, day: int) -> String:
+	match npc_id:
+		"ryan":
+			match day:
+				1:
+					return "莱恩把北矿道当成机会。"
+				2:
+					return "莱恩仍想抓住血斧委托。"
+				3:
+					return "莱恩的北矿道结局已经落账。"
+		"toby":
+			if day == 6:
+				return "瘦小少年把孤身上路当成证明。"
+		"mira":
+			match day:
+				4:
+					return "米拉避开了旧路和那个孩子。"
+				12:
+					return "米拉被旧路和托比的委托拦住了。"
+		"evelyn":
+			match day:
+				5:
+					return "伊芙琳把赔付顺序藏在礼貌里。"
+				8:
+					return "伊芙琳开始怀疑灰账批次。"
+				13:
+					return "伊芙琳把调查入口交给了你。"
+				20:
+					return "伊芙琳被公开账本逼到抉择前。"
+	if npc_id == "":
+		return ""
+	var display_name := _important_guest_display_name(npc_id, npc_id)
+	if display_name == "":
+		return ""
+	return "%s的反应已记入账本。" % display_name
+
+
+func _show_important_post_dialogue_heart_feedback(npc_id: String, day: int) -> void:
+	var feedback := _important_post_dialogue_heart_feedback(npc_id, day)
+	if feedback == "":
+		return
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	if not _tavern_view.has_method("show_stage_caption"):
+		return
+	_tavern_view.show_stage_caption(_source_note("heart", feedback), ThemeColors.AMBER_PRIMARY)
+
+
 func _current_guest_allows_narrative_actions() -> bool:
 	if guests == null or guests.current_guest == null:
 		return false
@@ -1955,10 +2003,15 @@ func _on_dialogue_ended() -> void:
 		# 不再依赖 pre 对话结束（拖拽递交发生在 pre 对话之后）。
 
 	elif _dialogue_phase == "post":
+		var feedback_npc_id := ""
+		var feedback_day := economy.current_day
+		if guests.current_guest != null and guests.current_guest.has_dialogue:
+			feedback_npc_id = String(guests.current_guest.npc_id)
 		_dialogue_phase = ""
 		guests.clear_guest()
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.set_dialogue_mode(false)
+		_show_important_post_dialogue_heart_feedback(feedback_npc_id, feedback_day)
 
 	elif _dialogue_phase == "action_feedback":
 		_dialogue_phase = ""
