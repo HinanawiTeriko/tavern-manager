@@ -200,9 +200,23 @@ func _prune_invalid_recovery_positions() -> void:
 			_item_recovery_positions.erase(item)
 
 
-func _grant_document(document_id: String) -> void:
+func _grant_document(document_id: String) -> String:
 	var gm = get_node("/root/GameManager")
-	gm.grant_investigation_document(document_id)
+	var newly: bool = gm.grant_investigation_document(document_id)
+	var feedback := _evidence_feedback_text(gm, document_id, newly)
+	if feedback != "":
+		_hint_label.text = feedback
+	return feedback
+
+
+func _evidence_feedback_text(gm, document_id: String, newly: bool) -> String:
+	var title := document_id
+	if gm != null and gm.documents != null:
+		var document: Dictionary = gm.documents.get_document(document_id)
+		title = String(document.get("title", document_id))
+	if newly:
+		return "证据 · %s已收入账本。" % title
+	return "证据 · %s已在账本中。" % title
 
 
 func _on_leave_pressed() -> void:

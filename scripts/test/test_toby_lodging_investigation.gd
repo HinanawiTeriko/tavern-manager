@@ -188,6 +188,11 @@ func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 					"clicking the complete commission grants the contract document")
 				_ok(gm.narrative.get_var("toby_contract_found") == true,
 					"collecting the completed Toby contract marks the route proof found")
+				var hint_text := _label_text(scene, "UI/HintLabel")
+				_ok(hint_text.contains("证据 · 托比的委托书"),
+					"collecting the completed Toby contract labels the immediate feedback as evidence")
+				_ok(hint_text.contains("收入账本"),
+					"collecting the completed Toby contract tells the player the evidence went into the ledger")
 				_ok(_toby_item(scene, CONTRACT_COMPLETE_TAG) == null,
 					"collected complete commission is removed from the room")
 
@@ -208,3 +213,9 @@ func _toby_item(scene: Node, item_tag: String) -> MineItem:
 		if child is MineItem and child.item_tag == item_tag:
 			return child
 	return null
+
+
+func _label_text(scene: Node, path: String) -> String:
+	var label := scene.get_node_or_null(path) as Label
+	_ok(label != null, path + " exists")
+	return label.text if label != null else ""

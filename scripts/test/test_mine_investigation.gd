@@ -13,6 +13,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_locations_no_auto_grant()
 	_test_grant_idempotent_and_owned()
+	await _test_scene_collect_feedback_is_labeled_evidence()
 	_finish()
 
 
@@ -58,3 +59,27 @@ func _test_grant_idempotent_and_owned() -> void:
 	_ok(newly, "first grant_investigation_document returns newly-granted")
 	_ok(gm.documents.owns_document("bloodied_contract"), "contract owned after grant")
 	_ok(not gm.grant_investigation_document("bloodied_contract"), "second grant is idempotent (not newly)")
+
+
+func _test_scene_collect_feedback_is_labeled_evidence() -> void:
+	var gm = get_node("/root/GameManager")
+	var snapshot: Dictionary = gm._capture_save_state()
+	gm._apply_save_state(gm._default_new_game_state())
+	var scene: MineInvestigation = preload("res://scenes/ui/MineInvestigation.tscn").instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+	scene._take_contract()
+	var hint := _label_text(scene, "UI/HintLabel")
+	_ok(hint.contains("证据 · 染血委托书"),
+		"collecting the mine contract labels the immediate feedback as evidence")
+	_ok(hint.contains("收入账本"),
+		"collecting the mine contract tells the player the evidence went into the ledger")
+	scene.queue_free()
+	await get_tree().process_frame
+	gm._apply_save_state(snapshot)
+
+
+func _label_text(scene: Node, path: String) -> String:
+	var label := scene.get_node_or_null(path) as Label
+	_ok(label != null, path + " exists")
+	return label.text if label != null else ""

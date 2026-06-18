@@ -802,15 +802,27 @@ func _complete_round() -> void:
 		return
 	var round: Dictionary = ROUND_SPECS[_round_index]
 	var document_id := String(round["document"])
-	_grant_document(document_id)
+	var evidence_feedback := _grant_document(document_id)
 	_obs_label.text = String(round["complete"])
 	if _round_index >= ROUND_SPECS.size() - 1:
 		_complete = true
 		_round_index = ROUND_SPECS.size()
-		_hint_label.text = "最后一张盖好的窄纸已经从清算台弹出。带着这些证据回到伊芙琳面前。"
+		_hint_label.text = _with_evidence_feedback(
+			evidence_feedback,
+			"最后一张盖好的窄纸已经从清算台弹出。带着这些证据回到伊芙琳面前。"
+		)
 		return
 	_awaiting_next_round = true
-	_hint_label.text = "盖好的窄纸弹到出纸口。点一下清算台，继续下一批旧账。"
+	_hint_label.text = _with_evidence_feedback(
+		evidence_feedback,
+		"盖好的窄纸弹到出纸口。点一下清算台，继续下一批旧账。"
+	)
+
+
+func _with_evidence_feedback(feedback: String, instruction: String) -> String:
+	if feedback == "":
+		return instruction
+	return feedback + "\n" + instruction
 
 
 func _advance_to_next_round() -> void:
