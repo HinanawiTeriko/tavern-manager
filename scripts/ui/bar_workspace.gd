@@ -69,6 +69,12 @@ func _on_recipe_consumed(product_key: String) -> void:
 		_gm.discover_recipe(product_key, true)
 
 
+func _on_recipe_consumed(product_key: String) -> void:
+	print("[BarWorkspace] 产出 ", product_key)
+	if _gm != null and _gm.has_method("discover_recipe"):
+		_gm.discover_recipe(product_key, true)
+
+
 func configure_day(day: int) -> void:
 	_set_body_available(_brewery, _gm.workspace.is_container_unlocked("barrel", day))
 	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
