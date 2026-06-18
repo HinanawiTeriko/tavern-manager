@@ -7,7 +7,7 @@ var _failures := 0
 
 
 func _ready() -> void:
-	await _test_hidden_chaos_summons_ghost_that_displaces_item()
+	await _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item()
 	await _test_ghost_ignores_held_and_story_items()
 	await _test_fast_releases_feed_hidden_chaos()
 	await _test_waiting_guest_feeds_hidden_chaos_without_visible_meter()
@@ -21,7 +21,11 @@ func _ok(condition: bool, message: String) -> void:
 		push_error("[TEST-CHAOS-GHOST-THIEF] FAIL: " + message)
 
 
-func _test_hidden_chaos_summons_ghost_that_displaces_item() -> void:
+func _is_offscreen(position: Vector2) -> bool:
+	return position.x < -40.0 or position.x > 1320.0 or position.y < -40.0 or position.y > 760.0
+
+
+func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void:
 	var tavern := TAVERN_SCENE.instantiate()
 	add_child(tavern)
 	await get_tree().process_frame
@@ -47,12 +51,20 @@ func _test_hidden_chaos_summons_ghost_that_displaces_item() -> void:
 
 	_ok(triggered, "high hidden chaos should start a ghost thief event when an item is stealable")
 	_ok(item.has_meta("chaos_ghost_target"), "target item should be visibly warned before being stolen")
-	for _i in range(50):
+	var ghost := bar.get_node_or_null("ChaosGhost") as Node2D
+	_ok(ghost != null and ghost.visible, "ghost should become visible when the thief event starts")
+	if ghost != null:
+		_ok(_is_offscreen(ghost.global_position), "ghost should enter from a random screen edge, not pop above the item")
+		_ok(ghost.global_position.distance_to(item.global_position) > 180.0, "ghost should need to fly toward the target")
+
+	for _i in range(20):
+		bar._process(0.1)
 		await get_tree().process_frame
 
-	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(), "ghost should not permanently delete the stolen item")
-	_ok(bool(item.get_meta("chaos_ghost_stolen_once", false)), "ghost should mark that the item was displaced")
-	_ok(item.global_position.x <= 330.0 or item.global_position.x >= 950.0, "stolen item should be displaced to a desk edge")
+	_ok(not is_instance_valid(item) or item.is_queued_for_deletion(), "ghost should carry the stolen item offscreen instead of dropping it on the desk edge")
+	_ok(not bar.call("is_chaos_ghost_active"), "ghost thief event should end after the escape")
+	if ghost != null and is_instance_valid(ghost):
+		_ok(not ghost.visible, "ghost should vanish after escaping offscreen")
 
 	tavern.queue_free()
 	await get_tree().process_frame

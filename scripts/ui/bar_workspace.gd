@@ -45,12 +45,15 @@ const CHAOS_GHOST_STOLEN_META := "chaos_ghost_stolen_once"
 const CHAOS_GHOST_BASE_MODULATE_META := "chaos_ghost_base_modulate"
 const CHAOS_LEVEL_MAX := 4.0
 const CHAOS_GHOST_TRIGGER_LEVEL := 1.0
-const CHAOS_GHOST_WARNING_SECONDS := 0.12
-const CHAOS_GHOST_WARNING_FRAMES := 10
+const CHAOS_GHOST_APPROACH_SECONDS := 0.58
+const CHAOS_GHOST_ESCAPE_SECONDS := 0.48
+const CHAOS_GHOST_EDGE_MARGIN := 96.0
 const CHAOS_GHOST_COOLDOWN_SECONDS := 6.0
 const CHAOS_GHOST_Z_INDEX := 360
 const CHAOS_GHOST_SPRITE_SCALE := 0.42
 const CHAOS_GHOST_TARGET_TINT := Color(0.7, 0.9, 1.0, 1.0)
+const CHAOS_GHOST_HOVER_OFFSET := Vector2(0.0, -58.0)
+const CHAOS_GHOST_CARRY_OFFSET := Vector2(0.0, 34.0)
 const CHAOS_GUEST_WAIT_PATIENCE_RATIO := 0.28
 const CHAOS_GUEST_WAIT_PER_SECOND := 0.13
 const CHAOS_CROWDED_DESK_MIN_ITEMS := 4
@@ -92,6 +95,9 @@ var _chaos_ghost_elapsed := 0.0
 var _chaos_ghost_frames := 0
 var _chaos_ghost_target: DeskItem = null
 var _chaos_ghost_node: Node2D = null
+var _chaos_ghost_entry_position := Vector2.ZERO
+var _chaos_ghost_capture_position := Vector2.ZERO
+var _chaos_ghost_escape_position := Vector2.ZERO
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -156,7 +162,7 @@ func try_trigger_chaos_event() -> bool:
 	var target := _find_chaos_ghost_target()
 	if target == null:
 		return false
-	_start_chaos_ghost_warning(target)
+	_start_chaos_ghost_approach(target)
 	return true
 
 
@@ -254,8 +260,10 @@ func _update_chaos_director(delta: float) -> void:
 	if _chaos_ghost_phase == "":
 		try_trigger_chaos_event()
 		return
-	if _chaos_ghost_phase == "warning":
-		_update_chaos_ghost_warning(delta)
+	if _chaos_ghost_phase == "approach":
+		_update_chaos_ghost_approach(dt)
+	elif _chaos_ghost_phase == "escape":
+		_update_chaos_ghost_escape(dt)
 
 
 func _feed_ambient_chaos(delta: float) -> void:
@@ -291,16 +299,27 @@ func _stealable_chaos_item_count() -> int:
 	return count
 
 
-func _update_chaos_ghost_warning(delta: float) -> void:
+func _update_chaos_ghost_approach(delta: float) -> void:
 	if not _is_chaos_ghost_targetable(_chaos_ghost_target):
 		_cancel_chaos_ghost_event()
 		return
-	_chaos_ghost_elapsed += maxf(delta, 0.0)
+	_chaos_ghost_elapsed += delta
 	_chaos_ghost_frames += 1
-	_update_chaos_ghost_visual()
 	_pulse_chaos_ghost_target()
-	if _chaos_ghost_elapsed >= CHAOS_GHOST_WARNING_SECONDS or _chaos_ghost_frames >= CHAOS_GHOST_WARNING_FRAMES:
-		_finish_chaos_ghost_steal()
+	_update_chaos_ghost_approach_visual()
+	if _chaos_ghost_elapsed >= CHAOS_GHOST_APPROACH_SECONDS:
+		_start_chaos_ghost_escape()
+
+
+func _update_chaos_ghost_escape(delta: float) -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target) or _chaos_ghost_target.is_queued_for_deletion():
+		_complete_chaos_ghost_escape()
+		return
+	_chaos_ghost_elapsed += delta
+	_chaos_ghost_frames += 1
+	_update_chaos_ghost_escape_visual()
+	if _chaos_ghost_elapsed >= CHAOS_GHOST_ESCAPE_SECONDS:
+		_complete_chaos_ghost_escape()
 
 
 func _find_chaos_ghost_target() -> DeskItem:
@@ -328,17 +347,23 @@ func _is_chaos_ghost_targetable(item: DeskItem) -> bool:
 	return true
 
 
-func _start_chaos_ghost_warning(target: DeskItem) -> void:
+func _start_chaos_ghost_approach(target: DeskItem) -> void:
 	_chaos_ghost_target = target
-	_chaos_ghost_phase = "warning"
+	_chaos_ghost_phase = "approach"
 	_chaos_ghost_elapsed = 0.0
 	_chaos_ghost_frames = 0
 	_chaos_level = maxf(0.0, _chaos_level - CHAOS_GHOST_TRIGGER_LEVEL)
+	_chaos_ghost_entry_position = _random_chaos_ghost_edge_position()
+	_chaos_ghost_escape_position = _chaos_ghost_entry_position
 	target.set_meta(CHAOS_GHOST_TARGET_META, true)
 	if not target.has_meta(CHAOS_GHOST_BASE_MODULATE_META):
 		target.set_meta(CHAOS_GHOST_BASE_MODULATE_META, target.modulate)
 	_pulse_chaos_ghost_target()
-	_update_chaos_ghost_visual()
+	var ghost := _ensure_chaos_ghost_node()
+	ghost.visible = true
+	ghost.global_position = _chaos_ghost_entry_position
+	ghost.scale = Vector2.ONE * 0.78
+	ghost.modulate = Color(1.0, 1.0, 1.0, 0.18)
 
 
 func _pulse_chaos_ghost_target() -> void:
@@ -349,7 +374,7 @@ func _pulse_chaos_ghost_target() -> void:
 	_chaos_ghost_target.modulate = base.lerp(CHAOS_GHOST_TARGET_TINT, pulse)
 
 
-func _finish_chaos_ghost_steal() -> void:
+func _start_chaos_ghost_escape() -> void:
 	var target := _chaos_ghost_target
 	if not _is_chaos_ghost_targetable(target):
 		_cancel_chaos_ghost_event()
@@ -359,16 +384,17 @@ func _finish_chaos_ghost_steal() -> void:
 	target.set_meta(CHAOS_GHOST_STOLEN_META, true)
 	target.freeze = true
 	target.sleeping = true
-	var left_edge := target.global_position.x < (DESK_RETURN_MIN_X + DESK_RETURN_MAX_X) * 0.5
-	var edge_x := DESK_RETURN_MIN_X if left_edge else DESK_RETURN_MAX_X
-	target.global_position = _chaos_ghost_drop_position(target, edge_x)
 	target.linear_velocity = Vector2.ZERO
 	target.angular_velocity = 0.0
-	target.reset_fall_state()
-	_hide_chaos_ghost_visual()
-	_chaos_ghost_target = null
-	_chaos_ghost_phase = ""
-	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS
+	target.collision_layer = 0
+	target.collision_mask = 0
+	target.set_physics_process(false)
+	_chaos_ghost_phase = "escape"
+	_chaos_ghost_elapsed = 0.0
+	_chaos_ghost_frames = 0
+	var ghost := _ensure_chaos_ghost_node()
+	_chaos_ghost_capture_position = ghost.global_position
+	_update_carried_chaos_ghost_target(ghost.global_position)
 	if _gm != null and _gm.has_method("play_audio_event"):
 		_gm.play_audio_event("drop")
 
@@ -392,27 +418,77 @@ func _restore_chaos_ghost_target_visual(target: DeskItem) -> void:
 		target.remove_meta(CHAOS_GHOST_BASE_MODULATE_META)
 
 
-func _chaos_ghost_drop_position(item: DeskItem, edge_x: float) -> Vector2:
-	var old_x := item.global_position.x
-	item.global_position.x = edge_x
-	var result := _desk_item_return_position(item)
-	item.global_position.x = old_x
-	return result
+func _complete_chaos_ghost_escape() -> void:
+	if _chaos_ghost_target != null and is_instance_valid(_chaos_ghost_target) and not _chaos_ghost_target.is_queued_for_deletion():
+		_chaos_ghost_target.queue_free()
+	_hide_chaos_ghost_visual()
+	_chaos_ghost_target = null
+	_chaos_ghost_phase = ""
+	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS
 
 
-func _update_chaos_ghost_visual() -> void:
+func _update_chaos_ghost_approach_visual() -> void:
 	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target):
 		return
 	var ghost := _ensure_chaos_ghost_node()
 	ghost.visible = true
-	var hover := Vector2(0.0, -72.0 + sin(float(_chaos_ghost_frames) * 0.75) * 5.0)
-	ghost.global_position = _chaos_ghost_target.global_position + hover
-	ghost.scale = Vector2.ONE * (0.92 + 0.04 * sin(float(_chaos_ghost_frames) * 0.6))
+	var target_position := _chaos_ghost_target.global_position + CHAOS_GHOST_HOVER_OFFSET
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_APPROACH_SECONDS, 0.0, 1.0)
+	var eased := _ease_in_out_chaos(ratio)
+	var wobble := Vector2(0.0, sin(float(_chaos_ghost_frames) * 0.85) * 7.0)
+	ghost.global_position = _chaos_ghost_entry_position.lerp(target_position, eased) + wobble
+	ghost.scale = Vector2.ONE * (lerpf(0.78, 0.98, ratio) + 0.04 * sin(float(_chaos_ghost_frames) * 0.6))
+	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.18, 0.92, ratio))
+
+
+func _update_chaos_ghost_escape_visual() -> void:
+	var ghost := _ensure_chaos_ghost_node()
+	ghost.visible = true
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_ESCAPE_SECONDS, 0.0, 1.0)
+	var eased := ratio * ratio
+	var arc := Vector2(0.0, -36.0 * sin(ratio * PI))
+	ghost.global_position = _chaos_ghost_capture_position.lerp(_chaos_ghost_escape_position, eased) + arc
+	ghost.scale = Vector2.ONE * (0.98 + 0.08 * ratio)
+	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.92, 0.1, ratio))
+	_update_carried_chaos_ghost_target(ghost.global_position)
+
+
+func _update_carried_chaos_ghost_target(ghost_position: Vector2) -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target) or _chaos_ghost_target.is_queued_for_deletion():
+		return
+	_chaos_ghost_target.global_position = ghost_position + CHAOS_GHOST_CARRY_OFFSET
+	_chaos_ghost_target.linear_velocity = Vector2.ZERO
+	_chaos_ghost_target.angular_velocity = 0.0
+
+
+func _random_chaos_ghost_edge_position() -> Vector2:
+	var rect := get_viewport().get_visible_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+	var min_x := rect.position.x
+	var max_x := rect.position.x + rect.size.x
+	var min_y := rect.position.y
+	var max_y := rect.position.y + rect.size.y
+	match randi() % 4:
+		0:
+			return Vector2(min_x - CHAOS_GHOST_EDGE_MARGIN, randf_range(min_y + 90.0, max_y - 90.0))
+		1:
+			return Vector2(max_x + CHAOS_GHOST_EDGE_MARGIN, randf_range(min_y + 90.0, max_y - 90.0))
+		2:
+			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), min_y - CHAOS_GHOST_EDGE_MARGIN)
+		_:
+			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), max_y + CHAOS_GHOST_EDGE_MARGIN)
+
+
+func _ease_in_out_chaos(value: float) -> float:
+	var t := clampf(value, 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
 
 
 func _hide_chaos_ghost_visual() -> void:
 	if _chaos_ghost_node != null and is_instance_valid(_chaos_ghost_node):
 		_chaos_ghost_node.visible = false
+		_chaos_ghost_node.modulate = Color.WHITE
 
 
 func _ensure_chaos_ghost_node() -> Node2D:
