@@ -6,6 +6,7 @@ signal inventory_changed()
 const INFERENCE_SYSTEM_SCRIPT := preload("res://scripts/systems/inference_system.gd")
 const RUMOR_SYSTEM_SCRIPT := preload("res://scripts/systems/rumor_system.gd")
 const APPETITE_SYSTEM_SCRIPT := preload("res://scripts/systems/appetite_system.gd")
+const PHYSICS_LAW_SYSTEM_SCRIPT := preload("res://scripts/systems/physics_law_system.gd")
 
 # Subsystems
 var economy: EconomySystem
@@ -22,6 +23,7 @@ var day_map: DayMapSystem
 var rumors
 var appetite
 var inference
+var physics_laws
 var save_sys: SaveSystem
 var ryan_slice: RyanSliceSystem
 var audio: AudioManager
@@ -249,6 +251,7 @@ func _ready() -> void:
 	appetite.load_data()
 	inference = INFERENCE_SYSTEM_SCRIPT.new()
 	inference.load_data()
+	physics_laws = PHYSICS_LAW_SYSTEM_SCRIPT.new()
 	save_sys = SaveSystem.new()
 	settings = SettingsManager.new()
 	settings.load_and_apply()
@@ -1613,6 +1616,29 @@ func _on_phase_changed(phase: int) -> void:
 			economy.current_day += 1
 			get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/DayMap.tscn")
 
+
+func _activate_guest_physics_law(guest: GuestData) -> void:
+	if physics_laws == null or guest == null:
+		return
+	var law_id := String(guest.get_meta("physics_law_id", ""))
+	if law_id == "":
+		return
+	if not physics_laws.try_activate_for_night(law_id):
+		return
+	var law: Dictionary = physics_laws.get_active_law()
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("apply_physics_law"):
+		_tavern_view.apply_physics_law(law)
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("show_stage_caption"):
+		_tavern_view.show_stage_caption(String(law.get("stage_caption", "")), ThemeColors.AMBER_PRIMARY)
+
+
+func _clear_active_physics_law() -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("clear_physics_law"):
+		_tavern_view.clear_physics_law()
+	if physics_laws != null:
+		physics_laws.clear_active_law()
+
+
 func _on_guest_arrived(guest: GuestData) -> void:
 	if guest == null:
 		return
@@ -1637,6 +1663,7 @@ func _on_guest_arrived(guest: GuestData) -> void:
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
+	_activate_guest_physics_law(guest)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	_queue_first_guest_serve_tutorial(guest.has_dialogue)
@@ -2185,6 +2212,7 @@ func end_night() -> void:
 			_tavern_view.show_stage_caption("今晚还有要紧的客人没露面……", Color.ORANGE)
 		return
 
+	_clear_active_physics_law()
 	current_ledger_data = _create_ledger_data_for_current_day()
 	add_current_day_event({
 		"type": "settlement",
@@ -3192,6 +3220,7 @@ func continue_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
 
 func restart_current_day() -> void:
+	_clear_active_physics_law()
 	if not _day_start_snapshot.is_empty():
 		var snapshot := _day_start_snapshot.duplicate(true)
 		_apply_save_state(snapshot)

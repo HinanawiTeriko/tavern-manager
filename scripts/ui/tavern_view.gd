@@ -711,6 +711,8 @@ func _customer_texture_key(npc_id: String, outcome: String = "") -> String:
 		return _grey_ledger_lady_texture_key(outcome)
 	if npc_id.begins_with("regular_"):
 		return _regular_customer_texture_key(npc_id, outcome)
+	if npc_id.begins_with("meme_"):
+		return _meme_guest_texture_key(npc_id, outcome)
 	return NPC_TEXTURE_KEYS.get(npc_id, npc_id)
 
 func _regular_customer_texture_key(customer_id: String, outcome: String = "") -> String:
@@ -720,6 +722,14 @@ func _regular_customer_texture_key(customer_id: String, outcome: String = "") ->
 	elif outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
 		state = "dissatisfied"
 	return "%s_%s" % [customer_id, state]
+
+func _meme_guest_texture_key(guest_id: String, outcome: String = "") -> String:
+	var state := "neutral"
+	if outcome == "success":
+		state = "satisfied"
+	elif outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		state = "dissatisfied"
+	return "%s_%s" % [guest_id, state]
 
 func _ryan_texture_key(outcome: String = "") -> String:
 	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
@@ -1647,6 +1657,7 @@ func _set_customer_dialogue_highlight(active: bool) -> void:
 		_customer_dialogue_highlight_active = false
 
 func _exit_tree() -> void:
+	clear_physics_law()
 	if _gm != null and _gm.inventory_changed.is_connected(_on_inventory_changed):
 		_gm.inventory_changed.disconnect(_on_inventory_changed)
 
@@ -1718,6 +1729,22 @@ func _refresh_ledger_hint() -> void:
 	if _gm != null and _gm.documents != null and _gm.documents.has_method("has_unread_ledger_entries"):
 		unread = _gm.documents.has_unread_ledger_entries()
 	ledger.set_unread_hint_visible(unread)
+
+
+func _get_bar_workspace() -> Node:
+	return get_node_or_null("BarWorkspace")
+
+
+func apply_physics_law(law: Dictionary) -> void:
+	var bar := _get_bar_workspace()
+	if bar != null and bar.has_method("apply_physics_law"):
+		bar.call("apply_physics_law", law)
+
+
+func clear_physics_law() -> void:
+	var bar := _get_bar_workspace()
+	if bar != null and bar.has_method("clear_physics_law"):
+		bar.call("clear_physics_law")
 
 
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
