@@ -1,0 +1,64 @@
+{
+  "assets": [
+    {
+      "id": "meme_doge_neutral",
+      "source": "art_sources/generated_raw/characters/meme_guests/doge_neutral_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_doge_neutral.png",
+      "runtime_output": "assets/textures/characters/meme_doge_neutral.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    },
+    {
+      "id": "meme_doge_satisfied",
+      "source": "art_sources/generated_raw/characters/meme_guests/doge_satisfied_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_doge_satisfied.png",
+      "runtime_output": "assets/textures/characters/meme_doge_satisfied.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    },
+    {
+      "id": "meme_doge_dissatisfied",
+      "source": "art_sources/generated_raw/characters/meme_guests/doge_dissatisfied_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_doge_dissatisfied.png",
+      "runtime_output": "assets/textures/characters/meme_doge_dissatisfied.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    },
+    {
+      "id": "meme_snack_cat_neutral",
+      "source": "art_sources/generated_raw/characters/meme_guests/snack_cat_neutral_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_snack_cat_neutral.png",
+      "runtime_output": "assets/textures/characters/meme_snack_cat_neutral.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    },
+    {
+      "id": "meme_snack_cat_satisfied",
+      "source": "art_sources/generated_raw/characters/meme_guests/snack_cat_satisfied_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_snack_cat_satisfied.png",
+      "runtime_output": "assets/textures/characters/meme_snack_cat_satisfied.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    },
+    {
+      "id": "meme_snack_cat_dissatisfied",
+      "source": "art_sources/generated_raw/characters/meme_guests/snack_cat_dissatisfied_raw.png",
+      "native_output": "assets/source/characters/meme_guests/meme_snack_cat_dissatisfied.png",
+      "runtime_output": "assets/textures/characters/meme_snack_cat_dissatisfied.png",
+      "native_size": [96, 96],
+      "runtime_scale": 4,
+      "safe_area": [0, 0, 1254, 1254],
+      "godot_use": "TavernView customer portrait"
+    }
+  ]
+}
