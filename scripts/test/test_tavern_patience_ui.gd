@@ -739,6 +739,7 @@ func _test_tavern_game_manager_contract() -> void:
 		var menu_items: Array[Dictionary] = tavern.get_daily_menu_items()
 		_ok(menu_items.is_empty(), "TavernView withholds orderable menu items before menu confirmation")
 		if tavern.has_method("_confirm_menu_preparation"):
+			_select_first_menu_prep_product(tavern)
 			tavern.call("_confirm_menu_preparation")
 			menu_items = tavern.get_daily_menu_items()
 		_ok(menu_items.size() >= 1, "TavernView provides orderable menu items after menu confirmation")
@@ -759,6 +760,18 @@ func _test_tavern_game_manager_contract() -> void:
 
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _select_first_menu_prep_product(tavern: Node) -> void:
+	if not tavern.has_method("_toggle_menu_prep_product"):
+		return
+	var gm = get_node("/root/GameManager")
+	if gm == null or gm.craft == null:
+		return
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	if products.is_empty():
+		return
+	tavern.call("_toggle_menu_prep_product", products[0])
 
 
 func _test_important_guest_patience_ratio_uses_important_guest_max() -> void:

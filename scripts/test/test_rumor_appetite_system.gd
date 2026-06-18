@@ -26,6 +26,7 @@ func _ready() -> void:
 		_test_game_manager_recommends_menu_products()
 		_test_tavern_view_exposes_menu_preparation_contract()
 		await _test_tavern_view_menu_prep_tutorial_rects_are_live()
+		await _test_tavern_menu_prep_starts_with_no_default_selection()
 		_test_game_manager_exposes_rumor_match_feedback()
 	_finish()
 
@@ -661,6 +662,41 @@ func _assert_menu_prep_scrollbar_hidden(scroll: ScrollContainer, scroll_name: St
 		scroll_name + " hides the vertical scrollbar control")
 	_ok(scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
 		scroll_name + " keeps horizontal scrolling disabled")
+
+
+func _test_tavern_menu_prep_starts_with_no_default_selection() -> void:
+	var gm = get_node("/root/GameManager")
+	var old_view = gm._tavern_view
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate() as TavernView
+	add_child(tavern)
+	await get_tree().process_frame
+	tavern.configure_menu_preparation(gm.get_today_rumors(), gm.get_menu_preparation_echoes())
+	await get_tree().process_frame
+
+	var panel := tavern.get_node_or_null("MenuPrepPanel") as Control
+	_ok(panel != null and panel.visible, "runtime menu preparation panel opens for empty default selection")
+	if panel != null:
+		var slot_label := panel.get_node_or_null("SlotLabel") as Label
+		_ok(slot_label != null, "runtime menu preparation exposes the selected slot label")
+		if slot_label != null:
+			_ok(slot_label.text.contains("今晚菜单 0/4") and slot_label.text.contains("未选择"),
+				"menu preparation starts with no selected products")
+		var start_button := panel.get_node_or_null("StartServiceBtn") as Button
+		_ok(start_button != null and start_button.disabled,
+			"start service button stays disabled until the player chooses a product")
+		var product_list := panel.get_node_or_null("ProductScroll/ProductList") as VBoxContainer
+		_ok(product_list != null and product_list.get_child_count() > 0,
+			"runtime menu preparation renders selectable products")
+		if product_list != null:
+			var pressed_count := 0
+			for child in product_list.get_children():
+				if child is Button and (child as Button).button_pressed:
+					pressed_count += 1
+			_ok(pressed_count == 0, "no menu product button is preselected")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+	gm._tavern_view = old_view
 
 
 func _test_game_manager_exposes_rumor_match_feedback() -> void:

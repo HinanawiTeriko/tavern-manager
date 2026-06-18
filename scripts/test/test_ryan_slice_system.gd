@@ -354,6 +354,7 @@ func _test_day2_important_npc_waits_for_one_normal_guest() -> void:
 	_ok(not gm.guests.has_guest,
 		"Day 2 holds the pending important NPC until menu confirmation")
 	if tavern.has_method("_confirm_menu_preparation"):
+		_select_first_menu_prep_product(tavern)
 		tavern.call("_confirm_menu_preparation")
 		await get_tree().process_frame
 	_ok(not gm.guests.has_guest,
@@ -402,6 +403,18 @@ func _wait_until(condition: Callable, max_frames: int) -> bool:
 	return bool(condition.call())
 
 
+func _select_first_menu_prep_product(tavern: Node) -> void:
+	if not tavern.has_method("_toggle_menu_prep_product"):
+		return
+	var gm = get_node("/root/GameManager")
+	if gm == null or gm.craft == null:
+		return
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	if products.is_empty():
+		return
+	tavern.call("_toggle_menu_prep_product", products[0])
+
+
 func _test_day3_fate_reveal_is_not_a_formal_npc_scene() -> void:
 	var narrative := NarrativeManager.new()
 	narrative.load_npc_data()
@@ -447,6 +460,7 @@ func _test_day3_fate_reveal_spawns_when_menu_already_confirmed() -> void:
 	_ok(not gm.guests.has_guest,
 		"Day 3 holds the fate reveal guest until menu confirmation")
 	if tavern.has_method("_confirm_menu_preparation"):
+		_select_first_menu_prep_product(tavern)
 		tavern.call("_confirm_menu_preparation")
 		await get_tree().process_frame
 	_ok(gm.guests.has_guest,

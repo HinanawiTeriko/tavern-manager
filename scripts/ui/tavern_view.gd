@@ -1312,8 +1312,6 @@ func _rebuild_menu_prep_products() -> void:
 		button.pressed.connect(func(): _toggle_menu_prep_product(key_copy))
 		_menu_prep_product_list.add_child(button)
 		_menu_prep_buttons[product_key] = button
-		if _menu_prep_selected.size() < MAX_DAILY_MENU_ITEMS:
-			_menu_prep_selected.append(product_key)
 
 
 func _menu_product_tag_text(product_key: String) -> String:

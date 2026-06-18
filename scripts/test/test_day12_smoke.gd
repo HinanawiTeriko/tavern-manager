@@ -102,6 +102,7 @@ func _smoke_day(day: int) -> void:
 	await get_tree().process_frame
 	_ok(tavern is TavernView, "Day %d Tavern scene instantiates" % day)
 	if tavern is TavernView and not tavern.daily_menu_confirmed and tavern.has_method("_confirm_menu_preparation"):
+		_select_first_menu_prep_product(tavern)
 		tavern.call("_confirm_menu_preparation")
 		await get_tree().process_frame
 	_ok(gm.guests._normal_order_limit == gm.ryan_slice.normal_order_limit(day),
@@ -233,6 +234,18 @@ func _wait_until(condition: Callable, max_frames: int) -> bool:
 			return true
 		await get_tree().process_frame
 	return bool(condition.call())
+
+
+func _select_first_menu_prep_product(tavern: Node) -> void:
+	if not tavern.has_method("_toggle_menu_prep_product"):
+		return
+	var gm = _gm()
+	if gm == null or gm.craft == null:
+		return
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	if products.is_empty():
+		return
+	tavern.call("_toggle_menu_prep_product", products[0])
 
 
 func _capture_ledger_data(day: int) -> LedgerData:
