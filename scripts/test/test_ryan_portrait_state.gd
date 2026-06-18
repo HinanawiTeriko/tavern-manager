@@ -194,7 +194,7 @@ func _test_day3_fate_reveal_uses_mercenary_portrait() -> void:
 		tutorial._is_active = true
 	_gm().economy.current_day = 3
 	_gm().guests.clear_guest()
-	_gm().guests.spawn_important("ryan", "herb_broth")
+	_gm().guests.spawn_important("ryan", "meat_cooked")
 	await get_tree().process_frame
 
 	_ok(_portrait_path(tavern).ends_with("/mercenary_a.png"),

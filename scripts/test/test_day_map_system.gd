@@ -341,8 +341,8 @@ func _test_shop_button_enters_shop_without_gossip_gate() -> void:
 	_ok(not source.contains("action_text = \"听传闻\""), "DayMap shop action stays as direct shop entry")
 	_ok(not source.contains("_try_show_shop_gossip"), "DayMap shop no longer opens a blocking gossip panel")
 	_ok(not source.contains("_pending_shop_after_gossip"), "DayMap shop no longer needs a pending gossip continuation")
-	_ok(not source.contains("_compact_toast_text(summary)") and not source.contains("_compact_toast_text(rumor_text)"),
-		"DayMap location toast uses actual rumor copy instead of a compact summary")
+	_ok(source.contains("_compact_toast_text(rumor_text"),
+		"DayMap location toast compacts long rumor copy for the small top banner")
 	_ok(not source.contains("菜单提示："), "DayMap top toast keeps menu advice out of the reward banner")
 
 

@@ -337,7 +337,7 @@ func _test_game_manager_captures_day3_mercenary_visual_identity(gm: Node) -> voi
 	gm._tavern_view = null
 	gm.economy.current_day = 3
 	gm.guests.reset_daily()
-	gm.guests.spawn_important("ryan", "herb_broth")
+	gm.guests.spawn_important("ryan", "meat_cooked")
 	gm.guests.record_order_failed(0, 0, "failed")
 	gm.guests.record_guest_served()
 	gm.guests.clear_guest()

@@ -333,7 +333,7 @@ func _test_day3_fate_reveal_wrong_product_not_handled_as_ryan_action() -> void:
 	var fake_view := FakeFeedbackView.new()
 	gm._tavern_view = fake_view
 	gm.economy.current_day = 3
-	_reset_ryan("herb_broth")
+	_reset_ryan("meat_cooked")
 	gm.guests.current_guest.set_meta("portrait_id", "mercenary_a")
 
 	var dialogue_calls_before := fake_view.dialogue_mode_calls.size()
@@ -358,12 +358,12 @@ func _test_day3_fate_reveal_correct_order_does_not_resolve_ryan_state() -> void:
 	var fake_view := FakeFeedbackView.new()
 	gm._tavern_view = fake_view
 	gm.economy.current_day = 3
-	_reset_ryan("herb_broth")
+	_reset_ryan("meat_cooked")
 	gm.guests.current_guest.set_meta("portrait_id", "mercenary_a")
 	gm.narrative.set_var("ryan_alternative_pending", true)
 	gm.narrative.set_affection("ryan", 0)
 
-	gm.request_serve("herb_broth", {"serve_drop_speed": 700.0, "quality": "normal"}, "")
+	gm.request_serve("meat_cooked", {"serve_drop_speed": 700.0, "quality": "normal"}, "")
 	_ok(gm.narrative.get_var("ryan_alternative_pending") == true,
 		"Day 3 mercenary messenger correct order does not resolve Ryan's pending alternative")
 	_ok(gm.narrative.get_var("ryan_interaction_closed") == false,

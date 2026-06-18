@@ -92,7 +92,7 @@ func _test_pre_toby_window_can_reach_fixer_price() -> void:
 	const IMPORTANT_ORDER_NET := {
 		1: 3, # ale_beer 5 - ale 2
 		2: 1, # meat_cooked 4 - meat_raw 3
-		3: 4, # herb_broth 8 - herb 2 - ale 2
+		3: 1, # meat_cooked 4 - meat_raw 3
 		4: 3, # wine 5 - grape 2
 		6: 4, # herb_broth 8 - herb 2 - ale 2
 	}
@@ -231,6 +231,14 @@ func _test_all_important_post_dialogues_have_heart_feedback_copy() -> void:
 			String(item.get("npc_id", "")),
 			int(item.get("day", 0)),
 		])
+	var original_alternative_pending = gm.narrative.get_var("ryan_alternative_pending")
+	gm.narrative.set_var("ryan_alternative_pending", true)
+	var pending_text := String(gm.call("_important_post_dialogue_heart_feedback", "ryan", 2))
+	_ok(pending_text.contains("替代委托"),
+		"Day 2 Ryan heart feedback reacts after the alternative contract was handed over")
+	_ok(not pending_text.contains("血斧委托"),
+		"Day 2 Ryan heart feedback no longer says he is still chasing Bloodaxe after alternative handoff")
+	gm.narrative.set_var("ryan_alternative_pending", original_alternative_pending)
 
 
 func _test_post_dialogue_shows_heart_feedback() -> void:
@@ -445,8 +453,8 @@ func _test_day3_fate_reveal_spawns_when_menu_already_confirmed() -> void:
 		"Day 3 menu confirmation spawns the Ryan fate reveal guest")
 	_ok(gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan",
 		"Day 3 fate reveal keeps Ryan as the story subject")
-	_ok(gm.guests.current_guest != null and gm.guests.current_guest.order_key == "herb_broth",
-		"Day 3 fate reveal keeps the existing herb broth service contract")
+	_ok(gm.guests.current_guest != null and gm.guests.current_guest.order_key == "meat_cooked",
+		"Day 3 fate reveal asks for a stable cooked meat order")
 	if gm.guests.current_guest != null:
 		_ok(String(gm.guests.current_guest.get_meta("portrait_id", "")) == "mercenary_a",
 			"Day 3 fate reveal uses the mercenary messenger portrait")

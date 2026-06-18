@@ -156,7 +156,7 @@ func _test_gathering_toast_contract(view) -> void:
 	if toast == null:
 		return
 	_ok(toast.position == Vector2(430, 68), "gathering toast sits at the top center of the screen")
-	_ok(toast.size == Vector2(420, 56), "gathering toast uses the DayMap art panel size")
+	_ok(toast.size == Vector2(480, 78), "gathering toast uses the DayMap art panel size")
 	_ok(toast.mouse_filter == Control.MOUSE_FILTER_IGNORE, "gathering toast never blocks map clicks")
 	var content := toast.get_node_or_null("Content") as Label
 	_ok(content != null, "gathering toast keeps a content label")
@@ -164,9 +164,11 @@ func _test_gathering_toast_contract(view) -> void:
 		var font := content.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"gathering toast content uses Fusion Pixel font")
-		toast.show_rewards({"herb": 1}, "听到传闻：今晚菜单有新线索")
-		_ok(content.text.contains("传闻"),
-			"gathering toast can mention a rumor alongside gathered rewards")
+		toast.show_rewards({"herb": 1}, "风声 · 今晚菜单有新线索")
+		_ok(content.text.contains("风声"),
+			"gathering toast can mention compact wind alongside gathered rewards")
+		_ok(content.text.split("\n").size() <= 2,
+			"gathering toast keeps rewards and wind within two compact lines")
 		toast.visible = false
 	var style := toast.get_theme_stylebox("panel") as StyleBoxTexture
 	_ok(style != null and style.texture != null, "gathering toast uses texture panel art")
@@ -212,8 +214,10 @@ func _test_rumor_visit_shows_top_toast(view) -> void:
 	if toast == null:
 		return
 	var content := toast.get_node_or_null("Content") as Label
-	_ok(content != null and content.text.contains("传闻"),
-		"rumor toast explicitly says a rumor was heard")
+	_ok(content != null and content.text.contains("风声 · "),
+		"rumor toast explicitly labels heard information as compact wind")
+	_ok(content != null and content.text.split("\n").size() <= 2,
+		"rumor toast keeps the top banner to at most two compact lines")
 
 
 func _test_fixer_visit_refreshes_gold_label(view) -> void:

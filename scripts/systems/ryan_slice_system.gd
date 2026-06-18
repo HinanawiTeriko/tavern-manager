@@ -17,7 +17,7 @@ const DAY_CONFIG := {
 	},
 	3: {
 		"normal_order_limit": 2,
-		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a", "order": "herb_broth"}],
+		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a", "order": "meat_cooked"}],
 	},
 	5: {
 		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],

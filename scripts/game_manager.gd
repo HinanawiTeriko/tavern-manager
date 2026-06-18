@@ -1884,6 +1884,14 @@ func _important_post_dialogue_heart_feedback(npc_id: String, day: int) -> String
 				1:
 					return "莱恩把北矿道当成机会。"
 				2:
+					if bool(narrative.get_var("ryan_has_alternative")):
+						return "莱恩已经收下替代委托。"
+					if bool(narrative.get_var("ryan_alternative_pending")):
+						return "莱恩把替代委托压在手边，等着今晚的选择。"
+					if bool(narrative.get_var("ryan_alternative_declined")):
+						return "莱恩拒开了替代委托，仍要走向北矿道。"
+					if bool(narrative.get_var("ryan_informed")):
+						return "莱恩知道血斧委托有问题，却还没放下它。"
 					return "莱恩仍想抓住血斧委托。"
 				3:
 					return "莱恩的北矿道结局已经落账。"

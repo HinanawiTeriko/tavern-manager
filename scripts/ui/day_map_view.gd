@@ -955,7 +955,7 @@ func _visit_toast_message(result: Dictionary) -> String:
 		var rumor: Dictionary = raw_rumor
 		var rumor_text := String(rumor.get("text", "")).strip_edges()
 		if rumor_text != "":
-			return "听到传闻：" + rumor_text
+			return "风声 · " + _compact_toast_text(rumor_text, 26)
 	return String(result.get("message", ""))
 
 
