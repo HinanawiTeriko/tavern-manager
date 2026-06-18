@@ -12,6 +12,8 @@ func _ready() -> void:
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
 		_test_material_gathering_locations_all_have_wind_rumors()
+		_test_day_map_locations_have_explicit_wind_policy()
+		_test_game_manager_honors_day_map_wind_policy()
 		_test_guest_group_profiles_drive_orders()
 		_test_game_manager_preserves_group_guest_portrait_id()
 		_test_regular_customer_traits_are_exposed()
@@ -288,6 +290,43 @@ func _test_material_gathering_locations_all_have_wind_rumors() -> void:
 	for location_id in expected_locations.keys():
 		_ok(bool(expected_locations[location_id]),
 			"material gathering location has at least one practical wind rumor: " + String(location_id))
+
+
+func _test_day_map_locations_have_explicit_wind_policy() -> void:
+	var locations_data := _load_json_dictionary("res://data/locations.json")
+	var rumors_data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_locations: Dictionary = {}
+	for raw in rumors_data.get("rumors", []):
+		if raw is Dictionary:
+			rumor_locations[String((raw as Dictionary).get("location", ""))] = true
+	for raw in locations_data.get("locations", []):
+		if not raw is Dictionary:
+			continue
+		var loc: Dictionary = raw
+		var id := String(loc.get("id", ""))
+		if id == "":
+			continue
+		var policy := String(loc.get("windPolicy", ""))
+		var chance := float(loc.get("windChance", -1.0))
+		_ok(["menu", "none"].has(policy), "day-map location has explicit wind policy: " + id)
+		if policy == "menu":
+			_ok(is_equal_approx(chance, 1.0), "menu wind location grants eligible wind at 100 percent: " + id)
+			_ok(bool(rumor_locations.get(id, false)), "menu wind location has at least one rumor: " + id)
+		elif policy == "none":
+			_ok(is_equal_approx(chance, 0.0), "silent story/investigation location has 0 percent wind chance: " + id)
+			_ok(not bool(rumor_locations.get(id, false)), "silent location does not carry DayMap wind rumors: " + id)
+
+
+func _test_game_manager_honors_day_map_wind_policy() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm != null and gm.has_method("_location_allows_wind_notice"),
+		"GameManager gates wind notice grants by day-map wind policy")
+	if gm == null or not gm.has_method("_location_allows_wind_notice"):
+		return
+	_ok(bool(gm.call("_location_allows_wind_notice", {"windPolicy": "menu", "windChance": 1.0})),
+		"menu wind policy allows deterministic wind notice grants")
+	_ok(not bool(gm.call("_location_allows_wind_notice", {"windPolicy": "none", "windChance": 0.0})),
+		"silent story/investigation wind policy blocks DayMap wind notices")
 
 
 func _test_game_manager_preserves_group_guest_portrait_id() -> void:

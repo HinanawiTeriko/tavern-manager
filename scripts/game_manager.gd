@@ -1004,7 +1004,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 			narrative.set_var("toby_secured", false)
 	if bool(location_before.get("completeOnVisit", false)) and day_map.has_method("mark_completed"):
 		day_map.call("mark_completed", location_id)
-	if rumors != null:
+	if rumors != null and _location_allows_wind_notice(location_before):
 		var rumor_day := economy.current_day
 		if day_map != null:
 			rumor_day = int(day_map.current_day)
@@ -1395,6 +1395,13 @@ func _rumor_context_flags() -> Dictionary:
 				flag_value = String(raw_value) == "true"
 		flags[String(key)] = flag_value
 	return flags
+
+
+func _location_allows_wind_notice(location: Dictionary) -> bool:
+	if String(location.get("windPolicy", "menu")) == "none":
+		return false
+	# Wind notices are deterministic planning rewards: available content is 100%, silent locations are 0%.
+	return float(location.get("windChance", 1.0)) > 0.0
 
 
 func _day_location_gold_cost(location_id: String) -> int:
