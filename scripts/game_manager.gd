@@ -451,6 +451,7 @@ func start_day_map(day: int) -> void:
 		narrative.set_var("toby_contract_found", true)
 	_sync_day_map_completion_from_story_state()
 	_ensure_fate_tracks_for_day(day)
+	_add_mira_old_road_menu_hint_for_day(day)
 	_migrate_missing_day_map_state()
 
 
@@ -508,6 +509,27 @@ func _has_next_day_fate_ledger_warning() -> bool:
 	var next_day := economy.current_day + 1
 	return not ryan_slice.day_start_ledger_entries(next_day).is_empty() \
 		or not _mira_day_start_ledger_entries(next_day).is_empty()
+
+
+func _add_mira_old_road_menu_hint_for_day(day: int) -> void:
+	if day < 7 or day > 11:
+		return
+	if inference == null or not _mira_old_ledger_route_active():
+		return
+	var missing: Array[String] = []
+	if not inference.has_clue("mira_traveling_mentor"):
+		missing.append("带孩子跑货的旧事")
+	if not inference.has_clue("child_learned_saying"):
+		missing.append("一个人走那句旧话")
+	if missing.is_empty():
+		return
+	_ensure_fate_track("mira")
+	var note := _source_note("wind",
+		"第 %d 天，%s还没接全。今晚用旧路酒、清淡热汤、体面酒菜留住旧路熟人和贸易客。" %
+		[day, " / ".join(PackedStringArray(missing))]
+	)
+	if documents.add_fate_note("mira", note):
+		play_audio_event("new_document")
 
 
 func _add_mira_stall_ledger_beat() -> void:
@@ -2617,6 +2639,8 @@ func _record_story_item_fate_note(npc_id: String, item_key: String) -> void:
 		documents.index_evidence("alternative_contract", ["莱恩", "公会柜台"])
 	elif npc_id == "mira" and item_key == "toby_contract":
 		_add_fate_note("mira", "托比的委托书已递到她手上。")
+		if narrative.get_affection("mira") < narrative.MIRA_TRUST_THRESHOLD:
+			_add_sourced_fate_note("mira", "heart", "米拉听见了托比那份黑齿委托，但这还不等于她会回头。")
 		_add_fate_note("toby", "托比的委托书已递给米拉。")
 		documents.index_evidence("toby_contract", ["托比", "米拉"])
 
