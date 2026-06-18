@@ -53,18 +53,25 @@ func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void
 	_ok(item.has_meta("chaos_ghost_target"), "target item should be visibly warned before being stolen")
 	var ghost := bar.get_node_or_null("ChaosGhost") as Node2D
 	_ok(ghost != null and ghost.visible, "ghost should become visible when the thief event starts")
+	var entry_position := Vector2.ZERO
+	var entry_to_target_distance := 0.0
 	if ghost != null:
+		entry_position = ghost.global_position
+		entry_to_target_distance = entry_position.distance_to(item.global_position)
 		_ok(_is_offscreen(ghost.global_position), "ghost should enter from a random screen edge, not pop above the item")
 		_ok(ghost.global_position.distance_to(item.global_position) > 180.0, "ghost should need to fly toward the target")
 
-	for _i in range(12):
+	for _i in range(24):
 		bar._process(0.1)
 		await get_tree().process_frame
 
-	_ok(bar.call("is_chaos_ghost_active"), "ghost theft should stay readable for at least 1.2 seconds")
+	_ok(bar.call("is_chaos_ghost_active"), "ghost theft should stay readable for at least 2.4 seconds")
 	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(), "ghost should not finish stealing before the player has time to react")
+	if ghost != null and is_instance_valid(ghost):
+		_ok(ghost.global_position.distance_to(entry_position) > entry_to_target_distance + 20.0,
+			"after grabbing, ghost should keep flying through the target instead of retreating to its entry edge")
 
-	for _i in range(22):
+	for _i in range(20):
 		bar._process(0.1)
 		await get_tree().process_frame
 

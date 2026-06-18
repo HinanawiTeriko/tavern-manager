@@ -45,8 +45,8 @@ const CHAOS_GHOST_STOLEN_META := "chaos_ghost_stolen_once"
 const CHAOS_GHOST_BASE_MODULATE_META := "chaos_ghost_base_modulate"
 const CHAOS_LEVEL_MAX := 4.0
 const CHAOS_GHOST_TRIGGER_LEVEL := 1.0
-const CHAOS_GHOST_APPROACH_SECONDS := 1.35
-const CHAOS_GHOST_ESCAPE_SECONDS := 1.05
+const CHAOS_GHOST_APPROACH_SECONDS := 2.2
+const CHAOS_GHOST_ESCAPE_SECONDS := 1.8
 const CHAOS_GHOST_EDGE_MARGIN := 96.0
 const CHAOS_GHOST_COOLDOWN_SECONDS := 6.0
 const CHAOS_GHOST_Z_INDEX := 360
@@ -394,6 +394,7 @@ func _start_chaos_ghost_escape() -> void:
 	_chaos_ghost_frames = 0
 	var ghost := _ensure_chaos_ghost_node()
 	_chaos_ghost_capture_position = ghost.global_position
+	_chaos_ghost_escape_position = _chaos_ghost_exit_position_from(_chaos_ghost_capture_position)
 	_update_carried_chaos_ghost_target(ghost.global_position)
 	if _gm != null and _gm.has_method("play_audio_event"):
 		_gm.play_audio_event("drop")
@@ -435,9 +436,8 @@ func _update_chaos_ghost_approach_visual() -> void:
 	var target_position := _chaos_ghost_target.global_position + CHAOS_GHOST_HOVER_OFFSET
 	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_APPROACH_SECONDS, 0.0, 1.0)
 	var eased := _ease_in_out_chaos(ratio)
-	var wobble := Vector2(0.0, sin(float(_chaos_ghost_frames) * 0.85) * 7.0)
-	ghost.global_position = _chaos_ghost_entry_position.lerp(target_position, eased) + wobble
-	ghost.scale = Vector2.ONE * (lerpf(0.78, 0.98, ratio) + 0.04 * sin(float(_chaos_ghost_frames) * 0.6))
+	ghost.global_position = _chaos_ghost_entry_position.lerp(target_position, eased)
+	ghost.scale = Vector2.ONE * (lerpf(0.78, 0.98, ratio) + 0.02 * sin(float(_chaos_ghost_frames) * 0.45))
 	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.18, 0.92, ratio))
 
 
@@ -445,10 +445,9 @@ func _update_chaos_ghost_escape_visual() -> void:
 	var ghost := _ensure_chaos_ghost_node()
 	ghost.visible = true
 	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_ESCAPE_SECONDS, 0.0, 1.0)
-	var eased := ratio * ratio
-	var arc := Vector2(0.0, -36.0 * sin(ratio * PI))
-	ghost.global_position = _chaos_ghost_capture_position.lerp(_chaos_ghost_escape_position, eased) + arc
-	ghost.scale = Vector2.ONE * (0.98 + 0.08 * ratio)
+	var eased := _ease_in_out_chaos(ratio)
+	ghost.global_position = _chaos_ghost_capture_position.lerp(_chaos_ghost_escape_position, eased)
+	ghost.scale = Vector2.ONE * (0.98 + 0.05 * ratio)
 	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.92, 0.1, ratio))
 	_update_carried_chaos_ghost_target(ghost.global_position)
 
@@ -478,6 +477,16 @@ func _random_chaos_ghost_edge_position() -> Vector2:
 			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), min_y - CHAOS_GHOST_EDGE_MARGIN)
 		_:
 			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), max_y + CHAOS_GHOST_EDGE_MARGIN)
+
+
+func _chaos_ghost_exit_position_from(capture_position: Vector2) -> Vector2:
+	var rect := get_viewport().get_visible_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+	var direction := (capture_position - _chaos_ghost_entry_position).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+	return capture_position + direction * (rect.size.length() + CHAOS_GHOST_EDGE_MARGIN * 2.0)
 
 
 func _ease_in_out_chaos(value: float) -> float:
