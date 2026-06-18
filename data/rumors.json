@@ -77,6 +77,63 @@
       }
     },
     {
+      "id": "dark_river_cold_shift",
+      "location": "dark_river",
+      "dayMin": 2,
+      "text": "暗河边的搬运人说今晚水汽重，靠热汤和烈一点的酒才压得住寒气。",
+      "menuHints": {
+        "customerGroups": ["搬运工", "夜班矿工"],
+        "recommendedTags": ["热食", "酒水", "顶饿"],
+        "summary": "热汤、麦芽酒和扎实主食更容易接住湿冷夜班客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.2,
+          "trade": 1.1,
+          "regular_coen": 1.15,
+          "regular_dorin": 1.15
+        }
+      }
+    },
+    {
+      "id": "grape_trellis_sour_wine",
+      "location": "grape_trellis",
+      "dayMin": 3,
+      "text": "葡萄架下有人试了新酸酒，今晚走货商和旧路熟人会拿酒味挑话头。",
+      "menuHints": {
+        "customerGroups": ["走货商人", "旧路熟人"],
+        "recommendedTags": ["酒水", "清香", "体面"],
+        "summary": "葡萄酒、旧路酒和清香小菜更容易换来好话。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.2,
+          "old_road": 1.2,
+          "regular_lyra": 1.15,
+          "regular_oma": 1.15
+        }
+      }
+    },
+    {
+      "id": "mill_farm_malt_dust",
+      "location": "mill_farm",
+      "dayMin": 3,
+      "text": "磨坊农田今天麦尘很重，早班人回城会想找顶饿、热乎、能配麦香的东西。",
+      "menuHints": {
+        "customerGroups": ["早班工人", "农田帮工"],
+        "recommendedTags": ["顶饿", "热食", "酒水"],
+        "summary": "面包、麦芽酒、肉汤和热食能稳住这批饿客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.15,
+          "trade": 1.1,
+          "regular_belta": 1.15,
+          "regular_gareth": 1.15
+        }
+      }
+    },
+    {
       "id": "market_shop_trade_talk",
       "location": "market_shop",
       "dayMin": 1,

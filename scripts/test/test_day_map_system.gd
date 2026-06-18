@@ -16,6 +16,7 @@ func _ready() -> void:
 	_test_game_manager_previews_shop_gossip_without_consuming()
 	_test_game_manager_consumes_shop_gossip_once()
 	_test_shop_button_enters_shop_without_gossip_gate()
+	_test_wind_notice_contract()
 	_test_gathering_toast_keeps_rumor_text_with_rewards()
 	_test_reveal_tracking()
 	_test_completed_locations_do_not_reopen_next_day()
@@ -341,8 +342,8 @@ func _test_shop_button_enters_shop_without_gossip_gate() -> void:
 	_ok(not source.contains("action_text = \"听传闻\""), "DayMap shop action stays as direct shop entry")
 	_ok(not source.contains("_try_show_shop_gossip"), "DayMap shop no longer opens a blocking gossip panel")
 	_ok(not source.contains("_pending_shop_after_gossip"), "DayMap shop no longer needs a pending gossip continuation")
-	_ok(source.contains("_compact_toast_text(rumor_text"),
-		"DayMap location toast compacts long rumor copy for the small top banner")
+	_ok(not source.contains("_compact_toast_text(rumor_text"),
+		"DayMap no longer compresses wind-rumor copy into the small reward toast")
 	_ok(not source.contains("菜单提示："), "DayMap top toast keeps menu advice out of the reward banner")
 
 
@@ -351,6 +352,16 @@ func _test_gathering_toast_keeps_rumor_text_with_rewards() -> void:
 	_ok(source.contains("_label.text += \"\\n\" + message"), "reward toast appends the actual detail message")
 	_ok(source.contains("AUTOWRAP_WORD_SMART"), "reward toast wraps longer rumor text")
 	_ok(not source.contains("message.contains(\"传闻\")"), "reward toast does not collapse rumor copy into a generic marker")
+
+
+func _test_wind_notice_contract() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/day_map_view.gd")
+	_ok(source.contains("WIND_NOTICE_PANEL_TEXTURE"), "DayMapView declares wind notice panel art")
+	_ok(source.contains("WIND_NOTICE_ICON_TEXTURE"), "DayMapView declares wind notice icon art")
+	_ok(source.contains("show_wind_notice"), "DayMapView exposes a wind notice feedback method")
+	_ok(source.contains("_show_wind_notice_for_result"), "DayMap visit flow routes rumor payloads to the wind notice")
+	_ok(source.contains("notice.name = \"WindNotice\""), "DayMap wind notice keeps a stable runtime node name")
+	_ok(source.contains("已记入今日风声"), "wind notice explains that the rumor is saved for menu planning")
 
 
 func _test_reveal_tracking() -> void:

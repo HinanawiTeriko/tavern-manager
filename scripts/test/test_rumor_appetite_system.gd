@@ -11,6 +11,7 @@ func _ready() -> void:
 		_test_appetite_system_scores_customer_food_matches()
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
+		_test_material_gathering_locations_all_have_wind_rumors()
 		_test_guest_group_profiles_drive_orders()
 		_test_game_manager_preserves_group_guest_portrait_id()
 		_test_regular_customer_traits_are_exposed()
@@ -262,6 +263,31 @@ func _test_guest_group_profiles_drive_orders() -> void:
 	_ok(line != "", "group match feedback returns a line for preferred tags")
 	var miss := String(guest_system.get_group_match_feedback("mine", ["清香"]))
 	_ok(miss == "", "group match feedback stays quiet for unrelated tags")
+
+
+func _test_material_gathering_locations_all_have_wind_rumors() -> void:
+	var data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_list: Array = data.get("rumors", [])
+	var expected_locations := {
+		"mushroom_forest": false,
+		"dark_river": false,
+		"grape_trellis": false,
+		"mill_farm": false,
+	}
+	for raw in rumor_list:
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if expected_locations.has(location_id):
+			var menu_hints: Dictionary = rumor.get("menuHints", {})
+			var recommended_tags: Array = menu_hints.get("recommendedTags", [])
+			expected_locations[location_id] = String(rumor.get("text", "")) != "" \
+					and String(menu_hints.get("summary", "")) != "" \
+					and recommended_tags.size() >= 2
+	for location_id in expected_locations.keys():
+		_ok(bool(expected_locations[location_id]),
+			"material gathering location has at least one practical wind rumor: " + String(location_id))
 
 
 func _test_game_manager_preserves_group_guest_portrait_id() -> void:
