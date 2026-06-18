@@ -57,7 +57,14 @@ func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void
 		_ok(_is_offscreen(ghost.global_position), "ghost should enter from a random screen edge, not pop above the item")
 		_ok(ghost.global_position.distance_to(item.global_position) > 180.0, "ghost should need to fly toward the target")
 
-	for _i in range(20):
+	for _i in range(12):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(bar.call("is_chaos_ghost_active"), "ghost theft should stay readable for at least 1.2 seconds")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(), "ghost should not finish stealing before the player has time to react")
+
+	for _i in range(22):
 		bar._process(0.1)
 		await get_tree().process_frame
 
