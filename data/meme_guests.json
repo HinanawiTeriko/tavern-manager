@@ -1,0 +1,28 @@
+{
+  "guests": [
+    {
+      "id": "meme_doge",
+      "display_name": "Doge",
+      "portrait_id": "meme_doge",
+      "physics_law_id": "low_gravity",
+      "unlock_day": 1,
+      "spawn_weight": 0.45,
+      "patience_multiplier": 1.15,
+      "tip_multiplier": 1.05,
+      "preferred_tags": ["savory", "comfort"],
+      "dialogue_tags": ["meme_guest", "low_gravity"]
+    },
+    {
+      "id": "meme_snack_cat",
+      "display_name": "Snack Cat",
+      "portrait_id": "meme_snack_cat",
+      "physics_law_id": "heavy_gravity",
+      "unlock_day": 1,
+      "spawn_weight": 0.45,
+      "patience_multiplier": 0.9,
+      "tip_multiplier": 1.0,
+      "preferred_tags": ["snack", "quick"],
+      "dialogue_tags": ["meme_guest", "heavy_gravity"]
+    }
+  ]
+}

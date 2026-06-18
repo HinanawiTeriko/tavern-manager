@@ -10,6 +10,8 @@ signal all_guests_served()
 
 const APPETITE_SYSTEM_SCRIPT := preload("res://scripts/systems/appetite_system.gd")
 const GUEST_GROUP_PROFILE_PATH := "res://data/guest_group_profiles.json"
+const MEME_GUESTS_PATH := "res://data/meme_guests.json"
+const MEME_GUEST_BASE_CHANCE := 0.18
 
 class CustomerRecord extends RefCounted:
 	var customer_id: String        # 唯一ID
@@ -52,6 +54,7 @@ var _night_guest_bias: Dictionary = {}
 # 客户持久化
 var _customer_db: Dictionary = {}     # customer_id -> CustomerRecord
 var _customer_pool: Array = []        # 模板池（加载自 npc_pool.json）
+var _meme_guest_pool: Array = []
 var _customer_by_id: Dictionary = {}
 var _reaction_pools: Dictionary = {}
 var _guest_group_profiles: Dictionary = {}
@@ -77,6 +80,7 @@ func _init(menu_items_callable: Callable) -> void:
 	_rng.randomize()
 	_load_reaction_pools()
 	_load_regular_customer_roster()
+	_load_meme_guest_roster()
 	_load_guest_group_profiles()
 	_group_appetite = APPETITE_SYSTEM_SCRIPT.new()
 	_group_appetite.load_data()
@@ -113,6 +117,32 @@ func _load_regular_customer_roster() -> void:
 		if entry is Dictionary:
 			_customer_by_id[String(entry.get("id", ""))] = entry
 	print("[GuestSystem] loaded ", _customer_pool.size(), " named regular customers")
+
+
+func _load_meme_guest_roster() -> void:
+	_meme_guest_pool.clear()
+	if not FileAccess.file_exists(MEME_GUESTS_PATH):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(MEME_GUESTS_PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("[GuestSystem] meme_guests.json parse failed")
+		return
+	for raw_entry in parsed.get("guests", []):
+		if typeof(raw_entry) != TYPE_DICTIONARY:
+			continue
+		var entry := Dictionary(raw_entry).duplicate(true)
+		var guest_id := String(entry.get("id", "")).strip_edges()
+		var law_id := String(entry.get("physics_law_id", "")).strip_edges()
+		if guest_id == "" or law_id == "":
+			continue
+		entry["id"] = guest_id
+		entry["portrait_id"] = String(entry.get("portrait_id", guest_id)).strip_edges()
+		entry["physics_law_id"] = law_id
+		entry["unlock_day"] = max(1, int(entry.get("unlock_day", 1)))
+		entry["spawn_weight"] = maxf(float(entry.get("spawn_weight", 0.0)), 0.0)
+		_meme_guest_pool.append(entry)
+	print("[GuestSystem] loaded ", _meme_guest_pool.size(), " meme guests")
+
 
 func _load_guest_group_profiles(path: String = GUEST_GROUP_PROFILE_PATH) -> void:
 	_guest_group_profiles.clear()
@@ -464,6 +494,43 @@ func _pick_regular_customer(day: int) -> Dictionary:
 	return candidates.back()
 
 
+func _meme_guest_entries_for_day(day: int) -> Array:
+	var result: Array = []
+	for entry in _meme_guest_pool:
+		if not entry is Dictionary:
+			continue
+		if day < int(entry.get("unlock_day", 1)):
+			continue
+		if float(entry.get("spawn_weight", 0.0)) <= 0.0:
+			continue
+		result.append(Dictionary(entry).duplicate(true))
+	return result
+
+
+func _pick_meme_guest(day: int) -> Dictionary:
+	var candidates := _meme_guest_entries_for_day(day)
+	if candidates.is_empty():
+		return {}
+	var total_weight := 0.0
+	for entry in candidates:
+		total_weight += maxf(float(entry.get("spawn_weight", 0.0)), 0.0)
+	if total_weight <= 0.0:
+		return Dictionary(candidates[_rng.randi() % candidates.size()]).duplicate(true)
+	var roll := _rng.randf() * total_weight
+	for entry in candidates:
+		roll -= maxf(float(entry.get("spawn_weight", 0.0)), 0.0)
+		if roll <= 0.0:
+			return Dictionary(entry).duplicate(true)
+	return Dictionary(candidates.back()).duplicate(true)
+
+
+func _should_try_meme_guest() -> bool:
+	if _daily_total_guests <= 1:
+		return false
+	var chance := clampf(MEME_GUEST_BASE_CHANCE * float(_night_guest_bias.get("meme", 1.0)), 0.0, 1.0)
+	return chance > 0.0 and _rng.randf() < chance
+
+
 func _entry_bias_multiplier(entry: Dictionary) -> float:
 	var customer_id := String(entry.get("id", ""))
 	var multiplier := float(_night_guest_bias.get(customer_id, 1.0))
@@ -540,6 +607,70 @@ func _choose_regular_order(entry: Dictionary, menu_items: Array) -> String:
 		return available_favorites[_rng.randi() % available_favorites.size()]
 	var chosen = menu_items[_rng.randi() % menu_items.size()]
 	return _menu_item_key(chosen)
+
+
+func _pick_menu_item_for_tags(menu_items: Array, preferred_tags: Array) -> Dictionary:
+	if menu_items.is_empty():
+		return {}
+	if preferred_tags.is_empty():
+		var fallback = menu_items[_rng.randi() % menu_items.size()]
+		return Dictionary(fallback) if fallback is Dictionary else {"key": String(fallback)}
+	var weighted: Array = []
+	for item in menu_items:
+		if not item is Dictionary:
+			continue
+		var item_key := _menu_item_key(item)
+		var tags: Array = Array(item.get("tags", [])) + Array(item.get("flavor_tags", [])) + _product_tags(item_key)
+		var score := 1.0
+		for tag in preferred_tags:
+			if tags.has(String(tag)):
+				score += 2.0
+		weighted.append({"item": item, "score": score})
+	if weighted.is_empty():
+		var fallback = menu_items[_rng.randi() % menu_items.size()]
+		return Dictionary(fallback) if fallback is Dictionary else {"key": String(fallback)}
+	var total := 0.0
+	for row in weighted:
+		total += float(row["score"])
+	var roll := _rng.randf() * total
+	for row in weighted:
+		roll -= float(row["score"])
+		if roll <= 0.0:
+			return Dictionary(row["item"])
+	return Dictionary(weighted.back()["item"])
+
+
+func _spawn_meme_guest(entry: Dictionary, menu_items: Array) -> void:
+	if menu_items.is_empty():
+		return
+	var chosen := _pick_menu_item_for_tags(menu_items, Array(entry.get("preferred_tags", [])))
+	var order_key := _menu_item_key(chosen)
+	if order_key == "":
+		return
+	var guest := GuestData.new()
+	var meme_id := String(entry.get("id", "")).strip_edges()
+	var portrait_id := String(entry.get("portrait_id", meme_id)).strip_edges()
+	guest.guest_name = String(entry.get("display_name", meme_id))
+	guest.type = GuestData.GuestType.NORMAL
+	guest.order_key = order_key
+	guest.npc_id = portrait_id
+	guest.patience = GuestData.BASE_PATIENCE * maxf(float(entry.get("patience_multiplier", 1.0)), 0.1)
+	guest.has_dialogue = false
+	guest.set_meta("customer_id", "")
+	guest.set_meta("meme_guest_id", meme_id)
+	guest.set_meta("physics_law_id", String(entry.get("physics_law_id", "")))
+	guest.set_meta("portrait_id", portrait_id)
+	guest.set_meta("dialogue_tags", Array(entry.get("dialogue_tags", [])))
+	guest.set_meta("preferred_tags", Array(entry.get("preferred_tags", [])))
+	guest.set_meta("tip_multiplier", float(entry.get("tip_multiplier", 1.0)))
+	guest.set_meta("template_id", meme_id)
+
+	current_guest = guest
+	has_guest = true
+	_daily_spawned += 1
+	_normal_orders_spawned = _daily_spawned
+	_record_guest_arrival(guest)
+	guest_arrived.emit(guest)
 
 
 func _spawn_regular_customer(entry: Dictionary, menu_items: Array) -> void:
@@ -672,6 +803,15 @@ func _spawn_group_guest(group_key: String, menu_items: Array) -> void:
 
 
 func _spawn_new_customer(menu_items: Array) -> void:
+	if menu_items.is_empty():
+		return
+	if _should_try_meme_guest():
+		var meme_entry := _pick_meme_guest(_get_current_day())
+		if not meme_entry.is_empty():
+			_spawn_meme_guest(meme_entry, menu_items)
+			if has_guest:
+				return
+
 	var group_key := _pick_guest_group_key()
 	if group_key != "":
 		var group_chance := 0.65 if _active_group_bias_exists() else 0.28
@@ -868,6 +1008,8 @@ func _record_guest_arrival(guest: GuestData) -> void:
 		"npc_id": npc_id,
 		"display_name": String(guest.guest_name),
 		"guest_group": String(guest.get_meta("guest_group", "")),
+		"meme_guest_id": String(guest.get_meta("meme_guest_id", "")),
+		"physics_law_id": String(guest.get_meta("physics_law_id", "")),
 		"order_key": String(guest.order_key),
 		"result": "pending",
 		"gold_delta": 0,
