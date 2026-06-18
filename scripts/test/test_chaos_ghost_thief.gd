@@ -8,6 +8,7 @@ var _failures := 0
 
 func _ready() -> void:
 	await _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item()
+	await _test_ghost_fades_in_place_when_player_snatches_target_back()
 	await _test_ghost_ignores_held_and_story_items()
 	await _test_fast_releases_feed_hidden_chaos()
 	await _test_waiting_guest_feeds_hidden_chaos_without_visible_meter()
@@ -80,6 +81,62 @@ func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void
 	if ghost != null and is_instance_valid(ghost):
 		_ok(not ghost.visible, "ghost should vanish after escaping offscreen")
 
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_ghost_fades_in_place_when_player_snatches_target_back() -> void:
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null or not bar.has_method("record_chaos_event") or not bar.has_method("try_trigger_chaos_event"):
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	var item := bar._spawn_desk_item_at(Vector2(620.0, 340.0), "ale")
+	await get_tree().process_frame
+	bar.call("record_chaos_event", "guest_wait", 2.0)
+	var triggered: bool = bar.call("try_trigger_chaos_event")
+	var ghost := bar.get_node_or_null("ChaosGhost") as Node2D
+	_ok(triggered and ghost != null and ghost.visible, "ghost should be visible before the player snatches the target back")
+	if ghost == null:
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	for _i in range(8):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	var fade_origin := ghost.global_position
+	item.is_held = true
+	bar._process(0.1)
+	await get_tree().process_frame
+	var first_alpha := ghost.modulate.a
+	_ok(ghost.visible, "ghost should remain visible when the player snatches the target back")
+	_ok(first_alpha < 0.92 and first_alpha > 0.05, "ghost should start fading instead of disappearing instantly")
+	_ok(ghost.global_position.distance_to(fade_origin) < 1.0, "ghost should fade in place after the target is snatched back")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(), "snatched item should remain in the player's control")
+	_ok(not bool(item.get_meta("chaos_ghost_stolen_once", false)), "snatched item should not be marked as stolen")
+
+	for _i in range(3):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(ghost.visible and ghost.modulate.a < first_alpha, "ghost should continue fading over multiple frames")
+	_ok(ghost.global_position.distance_to(fade_origin) < 1.0, "ghost should not drift while fading out")
+
+	for _i in range(10):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(not bar.call("is_chaos_ghost_active"), "ghost fade-out should complete after the player saves the item")
+	_ok(not ghost.visible, "ghost should be hidden after fade-out completes")
+
+	item.is_held = false
 	tavern.queue_free()
 	await get_tree().process_frame
 

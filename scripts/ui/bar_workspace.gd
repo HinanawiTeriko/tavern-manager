@@ -47,6 +47,7 @@ const CHAOS_LEVEL_MAX := 4.0
 const CHAOS_GHOST_TRIGGER_LEVEL := 1.0
 const CHAOS_GHOST_APPROACH_SECONDS := 2.2
 const CHAOS_GHOST_ESCAPE_SECONDS := 1.8
+const CHAOS_GHOST_CANCEL_FADE_SECONDS := 0.8
 const CHAOS_GHOST_EDGE_MARGIN := 96.0
 const CHAOS_GHOST_COOLDOWN_SECONDS := 6.0
 const CHAOS_GHOST_Z_INDEX := 360
@@ -98,6 +99,7 @@ var _chaos_ghost_node: Node2D = null
 var _chaos_ghost_entry_position := Vector2.ZERO
 var _chaos_ghost_capture_position := Vector2.ZERO
 var _chaos_ghost_escape_position := Vector2.ZERO
+var _chaos_ghost_fade_alpha_from := 1.0
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -264,6 +266,8 @@ func _update_chaos_director(delta: float) -> void:
 		_update_chaos_ghost_approach(dt)
 	elif _chaos_ghost_phase == "escape":
 		_update_chaos_ghost_escape(dt)
+	elif _chaos_ghost_phase == "fade":
+		_update_chaos_ghost_fade(dt)
 
 
 func _feed_ambient_chaos(delta: float) -> void:
@@ -320,6 +324,18 @@ func _update_chaos_ghost_escape(delta: float) -> void:
 	_update_chaos_ghost_escape_visual()
 	if _chaos_ghost_elapsed >= CHAOS_GHOST_ESCAPE_SECONDS:
 		_complete_chaos_ghost_escape()
+
+
+func _update_chaos_ghost_fade(delta: float) -> void:
+	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
+		_complete_chaos_ghost_fade()
+		return
+	_chaos_ghost_elapsed += delta
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_CANCEL_FADE_SECONDS, 0.0, 1.0)
+	_chaos_ghost_node.visible = true
+	_chaos_ghost_node.modulate = Color(1.0, 1.0, 1.0, lerpf(_chaos_ghost_fade_alpha_from, 0.0, ratio))
+	if ratio >= 1.0:
+		_complete_chaos_ghost_fade()
 
 
 func _find_chaos_ghost_target() -> DeskItem:
@@ -405,10 +421,16 @@ func _cancel_chaos_ghost_event() -> void:
 		if _chaos_ghost_target.has_meta(CHAOS_GHOST_TARGET_META):
 			_chaos_ghost_target.remove_meta(CHAOS_GHOST_TARGET_META)
 		_restore_chaos_ghost_target_visual(_chaos_ghost_target)
-	_hide_chaos_ghost_visual()
 	_chaos_ghost_target = null
-	_chaos_ghost_phase = ""
-	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS * 0.35
+	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
+		_complete_chaos_ghost_fade()
+		return
+	_chaos_ghost_phase = "fade"
+	_chaos_ghost_elapsed = 0.0
+	_chaos_ghost_frames = 0
+	_chaos_ghost_node.visible = true
+	_chaos_ghost_fade_alpha_from = clampf(_chaos_ghost_node.modulate.a, 0.1, 0.92)
+	_chaos_ghost_node.modulate = Color(1.0, 1.0, 1.0, _chaos_ghost_fade_alpha_from)
 
 
 func _restore_chaos_ghost_target_visual(target: DeskItem) -> void:
@@ -426,6 +448,13 @@ func _complete_chaos_ghost_escape() -> void:
 	_chaos_ghost_target = null
 	_chaos_ghost_phase = ""
 	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS
+
+
+func _complete_chaos_ghost_fade() -> void:
+	_hide_chaos_ghost_visual()
+	_chaos_ghost_target = null
+	_chaos_ghost_phase = ""
+	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS * 0.35
 
 
 func _update_chaos_ghost_approach_visual() -> void:
