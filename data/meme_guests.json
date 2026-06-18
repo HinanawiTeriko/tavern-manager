@@ -75,6 +75,82 @@
       },
       "preferred_tags": ["snack", "quick"],
       "dialogue_tags": ["meme_guest", "bouncy_physics"]
+    },
+    {
+      "id": "meme_tomori_penguin",
+      "display_name": "高松灯企鹅",
+      "portrait_id": "meme_tomori_penguin",
+      "physics_law_id": "gugu_waddle_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.35,
+      "patience_multiplier": 1.1,
+      "tip_multiplier": 1.0,
+      "arrival_line": "咕咕嘎嘎。",
+      "reactions": {
+        "success": "咕咕嘎嘎！",
+        "fail_wrong": "咕？不是这个。",
+        "fail_weird": "嘎嘎……",
+        "impatient": "咕咕，嘎。"
+      },
+      "preferred_tags": ["comfort", "savory"],
+      "dialogue_tags": ["meme_guest", "gugu_waddle_physics"]
+    },
+    {
+      "id": "meme_doro",
+      "display_name": "Doro",
+      "portrait_id": "meme_doro",
+      "physics_law_id": "orunji_bounce_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.35,
+      "patience_multiplier": 1.0,
+      "tip_multiplier": 1.0,
+      "arrival_line": "欧润吉。",
+      "reactions": {
+        "success": "欧润吉！",
+        "fail_wrong": "欧润吉？",
+        "fail_weird": "欧……润吉？",
+        "impatient": "欧润吉，快点。"
+      },
+      "preferred_tags": ["snack", "quick"],
+      "dialogue_tags": ["meme_guest", "orunji_bounce_physics"]
+    },
+    {
+      "id": "meme_anon_face",
+      "display_name": "千早爱音",
+      "portrait_id": "meme_anon_face",
+      "physics_law_id": "anon_hia_laugh_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.35,
+      "patience_multiplier": 1.05,
+      "tip_multiplier": 1.0,
+      "arrival_line": "hii... hia?",
+      "reactions": {
+        "success": "hiiiiiii! hiaaaaaa!",
+        "fail_wrong": "hi...? hia...",
+        "fail_weird": "hii...?",
+        "impatient": "hiaaaaa... 还没好吗？"
+      },
+      "preferred_tags": ["comfort", "quick"],
+      "dialogue_tags": ["meme_guest", "anon_hia_laugh_physics"]
+    },
+    {
+      "id": "meme_yellow_laugh",
+      "display_name": "奶龙",
+      "portrait_id": "meme_yellow_laugh",
+      "physics_law_id": "nailong_belly_laugh_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.35,
+      "patience_multiplier": 0.95,
+      "tip_multiplier": 1.0,
+      "arrival_line": "哈哈哈哈哈！",
+      "reactions": {
+        "success": "哈哈哈哈哈哈！",
+        "fail_wrong": "啊？笑不出来了。",
+        "fail_weird": "哈哈……哈？",
+        "impatient": "哈哈哈哈！快！"
+      },
+      "preferred_tags": ["savory", "comfort"],
+      "dialogue_tags": ["meme_guest", "nailong_belly_laugh_physics"]
     }
   ]
 }

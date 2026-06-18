@@ -251,6 +251,15 @@ func _test_tavern_patience_ui_contract() -> void:
 		if customer_area != null:
 			_ok(_rect_array_close(customer_rect, _control_screen_rect(customer_area)),
 				"serve tutorial CustomerNode highlight follows the live CustomerArea rect")
+		var order_groove_rect := serve_rects.get("OrderGroove", []) as Array
+		_ok(serve_rects.has("OrderGroove"), "serve tutorial provides the OrderGroove highlight key")
+		var order_bubble_for_rect := tavern.get_node_or_null("CustomerArea/OrderBubble") as Control
+		if order_bubble_for_rect != null:
+			_ok(_rect_contains_point(order_groove_rect, order_bubble_for_rect.global_position + order_bubble_for_rect.size * 0.5),
+				"serve tutorial OrderGroove highlight contains the live order text")
+			if order_groove_rect.size() >= 4:
+				_ok(float(order_groove_rect[1]) > 720.0 * 0.55,
+					"serve tutorial OrderGroove highlight triggers the raised narrator layout")
 
 	var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as TextureRect
 	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
@@ -271,6 +280,8 @@ func _test_tavern_patience_ui_contract() -> void:
 	var order_icon := tavern.get_node_or_null("CustomerArea/OrderIcon") as TextureRect
 	var reaction_bubble := tavern.get_node_or_null("CustomerArea/ReactionBubble") as Label
 	var reaction_highlight := tavern.get_node_or_null("CustomerArea/ReactionHighlight") as RichTextLabel
+	var pot_art := tavern.get_node_or_null("BarWorkspace/World/Pot/Art") as Sprite2D
+	var reward_coin_layer := tavern.get_node_or_null("RewardCoinPhysicsLayer") as Node2D
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
@@ -293,6 +304,12 @@ func _test_tavern_patience_ui_contract() -> void:
 			"OrderBubble uses high-contrast light text for the order")
 		_ok(order_bubble.get_theme_constant("outline_size") >= 3,
 			"OrderBubble uses a dark outline so requests remain readable over the counter")
+		if pot_art != null:
+			_ok(order_bubble.z_index > pot_art.z_index,
+				"OrderBubble draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(order_bubble.z_index > reward_coin_layer.z_index,
+				"OrderBubble draws above temporary table reward coins")
 	_ok(order_ticket_frame == null, "Tavern no longer uses a separate floating OrderTicketFrame")
 	_ok(order_icon == null, "Tavern no longer uses a separate floating OrderIcon")
 	_ok(reaction_bubble != null, "ReactionBubble separates temporary customer reactions from the stable order request")
@@ -303,6 +320,12 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_bubble.get_theme_font_size("font_size") >= 16, "ReactionBubble remains readable for short customer reactions")
 		_ok(reaction_bubble.get_theme_color("font_color") == Color.WHITE,
 			"ReactionBubble uses white dialogue text so clue highlights can be layered separately")
+		if pot_art != null:
+			_ok(reaction_bubble.z_index > pot_art.z_index,
+				"ReactionBubble draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(reaction_bubble.z_index > reward_coin_layer.z_index,
+				"ReactionBubble draws above temporary table reward coins")
 	_ok(reaction_highlight != null, "ReactionHighlight renders highlighted clue phrases without replacing ReactionBubble")
 	if reaction_highlight != null:
 		_ok(reaction_highlight.mouse_filter == Control.MOUSE_FILTER_IGNORE,
@@ -310,6 +333,12 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_highlight.get_theme_font("normal_font") != null
 				and reaction_highlight.get_theme_font("normal_font").resource_path == PIXEL_FONT_PATH,
 			"ReactionHighlight uses the shared pixel UI font")
+		if pot_art != null:
+			_ok(reaction_highlight.z_index > pot_art.z_index,
+				"ReactionHighlight draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(reaction_highlight.z_index > reward_coin_layer.z_index,
+				"ReactionHighlight draws above temporary table reward coins")
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")

@@ -627,7 +627,7 @@ func _set_silhouette_final(index: int) -> void:
 func _refresh_score_labels(changed_keys: Array = []) -> void:
 	if _active_ledger_data == null:
 		return
-	_set_score_text("gold", "+%d / %d" % [int(_current_score["gold"]), _active_ledger_data.gold_total], changed_keys.has("gold"))
+	_set_score_text("gold", "%+d / %d" % [int(_current_score["gold"]), _active_ledger_data.gold_total], changed_keys.has("gold"))
 	_set_score_text("reputation", "%+d / %d" % [int(_current_score["reputation"]), _active_ledger_data.rep_total], changed_keys.has("reputation"))
 	_set_score_text("guests", "%d 位" % int(_current_score["guests"]), changed_keys.has("guests"))
 	_set_score_text("success", "%d 单" % int(_current_score["success"]), changed_keys.has("success"))

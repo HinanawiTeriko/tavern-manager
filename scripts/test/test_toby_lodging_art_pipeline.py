@@ -204,6 +204,19 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
         self.assertLessEqual(bright, 100, "background should avoid bright noisy pixels")
         self.assertGreaterEqual(color_count(native), 36, "background should keep authored color nuance")
 
+    def test_background_floor_has_no_square_warm_light_patch(self) -> None:
+        native = load_rgba(SOURCE / "background_native.png")
+        center_floor_luma = self._average_luma(native.crop((102, 102, 218, 154)))
+        side_floor_luma = max(
+            self._average_luma(native.crop((36, 102, 92, 154))),
+            self._average_luma(native.crop((228, 102, 284, 154))),
+        )
+        self.assertLessEqual(
+            center_floor_luma - side_floor_luma,
+            2.0,
+            "center floor should not read as a separate square warm-light patch",
+        )
+
     def test_item_and_button_alpha_contracts(self) -> None:
         for item_id, native_size in EXPECTED_ITEMS.items():
             native = load_rgba(SOURCE / "items" / f"{item_id}_native.png")
@@ -242,6 +255,11 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
                 text = path.read_text(encoding="utf-8", errors="ignore").replace("\\", "/")
                 for marker in forbidden:
                     self.assertNotIn(marker, text, f"{path.relative_to(ROOT)} references raw/reference art")
+
+    def _average_luma(self, image: Image.Image) -> float:
+        visible = [px for px in pixels(image) if px[3] > 0]
+        self.assertTrue(visible, "luma sample must contain visible pixels")
+        return sum(0.2126 * red + 0.7152 * green + 0.0722 * blue for red, green, blue, _alpha in visible) / len(visible)
 
 
 if __name__ == "__main__":

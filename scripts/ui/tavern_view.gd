@@ -142,6 +142,8 @@ const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
 const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
 const SHORTCUT_SEPARATION := 4
 const MAX_DAILY_MENU_ITEMS := 4
+const CUSTOMER_BUBBLE_Z_INDEX := 70
+const CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX := 71
 const DIALOGUE_SPEAKER_Z_INDEX := 10
 const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
@@ -247,6 +249,7 @@ func _apply_theme() -> void:
 	_reaction_bubble.clip_text = true
 	_reaction_bubble.visible = false
 	_configure_reaction_highlight()
+	_configure_customer_bubble_layers()
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
@@ -376,7 +379,7 @@ func _configure_reaction_highlight() -> void:
 		return
 	_reaction_highlight.position = _reaction_bubble.position
 	_reaction_highlight.size = _reaction_bubble.size
-	_reaction_highlight.z_index = _reaction_bubble.z_index + 1
+	_reaction_highlight.z_index = CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX
 	_reaction_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_reaction_highlight.bbcode_enabled = true
 	_reaction_highlight.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -390,6 +393,15 @@ func _configure_reaction_highlight() -> void:
 	_reaction_highlight.add_theme_font_size_override("normal_font_size", 16)
 	_reaction_highlight.add_theme_color_override("default_color", Color.WHITE)
 	_reaction_highlight.visible = false
+
+
+func _configure_customer_bubble_layers() -> void:
+	if _order_bubble != null:
+		_order_bubble.z_index = CUSTOMER_BUBBLE_Z_INDEX
+	if _reaction_bubble != null:
+		_reaction_bubble.z_index = CUSTOMER_BUBBLE_Z_INDEX
+	if _reaction_highlight != null:
+		_reaction_highlight.z_index = CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX
 
 
 func _configure_topbar_layout() -> void:
@@ -1869,6 +1881,11 @@ func _craft_tutorial_rects() -> Dictionary:
 func _serve_tutorial_rects() -> Dictionary:
 	return {
 		"CustomerNode": _control_screen_rect(get_node_or_null("CustomerArea") as Control),
+		"OrderGroove": _union_screen_rects([
+			_control_screen_rect(get_node_or_null("CustomerArea/OrderBubble") as Control),
+			_control_screen_rect(get_node_or_null("CustomerArea/PatienceIcon") as Control),
+			_control_screen_rect(get_node_or_null("CustomerArea/TimerBar") as Control),
+		]),
 	}
 
 

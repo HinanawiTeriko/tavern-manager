@@ -38,12 +38,34 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 		return
 
 	var meme_entries: Array = system.call("_meme_guest_entries_for_day", 1)
-	_ok(meme_entries.size() >= 4, "four meme guests should be available on day 1")
+	_ok(meme_entries.size() >= 8, "eight meme guests should be available on day 1")
 
 	var doge := {}
 	var snack_cat := {}
 	var cheems := {}
 	var popcat := {}
+	var tomori_penguin := {}
+	var doro := {}
+	var anon_face := {}
+	var yellow_laugh := {}
+	var expected_new_laws := {
+		"meme_tomori_penguin": "gugu_waddle_physics",
+		"meme_doro": "orunji_bounce_physics",
+		"meme_anon_face": "anon_hia_laugh_physics",
+		"meme_yellow_laugh": "nailong_belly_laugh_physics",
+	}
+	var expected_new_arrival_lines := {
+		"meme_tomori_penguin": "咕咕嘎嘎。",
+		"meme_doro": "欧润吉。",
+		"meme_anon_face": "hii... hia?",
+		"meme_yellow_laugh": "哈哈哈哈哈！",
+	}
+	var expected_new_success_lines := {
+		"meme_tomori_penguin": "咕咕嘎嘎！",
+		"meme_doro": "欧润吉！",
+		"meme_anon_face": "hiiiiiii! hiaaaaaa!",
+		"meme_yellow_laugh": "哈哈哈哈哈哈！",
+	}
 	for entry in meme_entries:
 		if String(entry.get("id", "")) == "meme_doge":
 			doge = entry
@@ -53,11 +75,23 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 			cheems = entry
 		if String(entry.get("id", "")) == "meme_popcat":
 			popcat = entry
+		if String(entry.get("id", "")) == "meme_tomori_penguin":
+			tomori_penguin = entry
+		if String(entry.get("id", "")) == "meme_doro":
+			doro = entry
+		if String(entry.get("id", "")) == "meme_anon_face":
+			anon_face = entry
+		if String(entry.get("id", "")) == "meme_yellow_laugh":
+			yellow_laugh = entry
 
 	_ok(not doge.is_empty(), "meme_doge should load")
 	_ok(not snack_cat.is_empty(), "meme_snack_cat should load")
 	_ok(not cheems.is_empty(), "meme_cheems should load")
 	_ok(not popcat.is_empty(), "meme_popcat should load")
+	_ok(not tomori_penguin.is_empty(), "meme_tomori_penguin should load")
+	_ok(not doro.is_empty(), "meme_doro should load")
+	_ok(not anon_face.is_empty(), "meme_anon_face should load")
+	_ok(not yellow_laugh.is_empty(), "meme_yellow_laugh should load")
 	if doge.is_empty() or snack_cat.is_empty():
 		return
 
@@ -117,6 +151,31 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(
 		popcat_system.get_reaction_line("success", popcat_guest.npc_id) == "pop. pop. POP!",
 		"popcat should use meme-specific success reaction after delivery")
+
+	for new_entry in [tomori_penguin, doro, anon_face, yellow_laugh]:
+		if new_entry.is_empty():
+			continue
+		var guest_system = GuestSystem.new(Callable(self, "_menu_items"))
+		guest_system.call("_spawn_meme_guest", new_entry, _menu_items())
+		var guest = guest_system.current_guest
+		var meme_id := String(new_entry.get("id", ""))
+		_ok(guest_system.has_guest, meme_id + " should set has_guest")
+		_ok(guest != null, meme_id + " should spawn")
+		if guest == null:
+			continue
+		_ok(String(guest.npc_id) == meme_id, meme_id + " npc_id should match portrait key")
+		_ok(String(guest.get_meta("meme_guest_id", "")) == meme_id, meme_id + " should carry meme_guest_id")
+		_ok(String(guest.get_meta("portrait_id", "")) == meme_id, meme_id + " should carry portrait id")
+		_ok(
+			String(guest.get_meta("physics_law_id", "")) == String(expected_new_laws.get(meme_id, "")),
+			meme_id + " should carry its themed physics law")
+		_ok(
+			String(guest.get_meta("arrival_line", "")) == String(expected_new_arrival_lines.get(meme_id, "")),
+			meme_id + " should carry its designed arrival line")
+		_ok(not guest.has_dialogue, meme_id + " should stay outside important NPC dialogue flow")
+		_ok(
+			guest_system.get_reaction_line("success", guest.npc_id) == String(expected_new_success_lines.get(meme_id, "")),
+			meme_id + " should use its designed success reaction")
 
 
 func _finish() -> void:

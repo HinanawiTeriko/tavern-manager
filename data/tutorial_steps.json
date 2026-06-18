@@ -108,15 +108,15 @@
     {
       "id": "craft_intro",
       "group": "craft",
-      "title": "夜晚 · 物理吧台",
-      "description": "从快捷栏拖出麦芽，投入右侧酒桶。抓住酒桶摇晃，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
+      "title": "夜晚 · 取出材料",
+      "description": "从底部快捷栏拖出麦芽。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
       "narrator_lines": [
-        {"expression": "neutral", "text": "夜晚在吧台上直接操作材料。先从快捷栏拖出麦芽。"},
-        {"expression": "smirk", "text": "把麦芽丢进右侧酒桶，抓住酒桶摇一摇，再松手。"},
-        {"expression": "neutral", "text": "Day 2 会解锁烤架，Day 3 会解锁炖锅和勺子。"}
+        {"expression": "neutral", "text": "夜晚在吧台上直接操作材料。先从底部快捷栏拖出麦芽。"},
+        {"expression": "smirk", "text": "按 E 可以打开背包，材料和剧情物品也能从背包拖出来。"},
+        {"expression": "concerned", "text": "剧情物品不会永久丢失，掉出桌面后会回到背包。"}
       ],
-      "highlight_node": "CraftBarrel",
-      "highlight_rect": [896, 432, 128, 116],
+      "highlight_node": "ShortcutBar",
+      "highlight_rect": [140, 675, 1000, 40],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.25,
       "desc_width": 470,
@@ -125,15 +125,15 @@
     {
       "id": "craft_drag",
       "group": "craft",
-      "title": "取出材料",
-      "description": "从底部快捷栏拖出常用材料。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
+      "title": "酒桶酿造",
+      "description": "把麦芽丢进右侧酒桶。抓住酒桶摇一摇，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
       "narrator_lines": [
-        {"expression": "neutral", "text": "底部快捷栏放常用材料，直接拖到桌面。"},
-        {"expression": "smirk", "text": "按 E 可以打开背包，把材料或剧情物品也拖出来。"},
-        {"expression": "concerned", "text": "剧情物品不会永久丢失，掉出桌面会回到背包。"}
+        {"expression": "neutral", "text": "把麦芽丢进右侧酒桶。"},
+        {"expression": "smirk", "text": "抓住酒桶摇一摇，再松手完成酿造。"},
+        {"expression": "neutral", "text": "Day 2 会解锁烤架，Day 3 会解锁炖锅和勺子。"}
       ],
-      "highlight_node": "ShortcutBar",
-      "highlight_rect": [140, 675, 1000, 40],
+      "highlight_node": "CraftBarrel",
+      "highlight_rect": [896, 432, 128, 116],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.84,
       "desc_width": 460,
@@ -188,8 +188,8 @@
         {"expression": "concerned", "text": "注意耐心条。等太久，客人会离开。"},
         {"expression": "neutral", "text": "每晚普通订单数量有限，做完后就可以打烊。"}
       ],
-      "highlight_node": "CustomerNode",
-      "highlight_rect": [440, 80, 400, 360],
+      "highlight_node": "OrderGroove",
+      "highlight_rect": [392, 604, 496, 32],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.6,
       "desc_width": 430,

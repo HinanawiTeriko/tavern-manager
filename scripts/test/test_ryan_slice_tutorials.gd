@@ -87,10 +87,10 @@ func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> vo
 	var craft_keys := {}
 	for step in craft_steps:
 		craft_keys[String(step.get("id", ""))] = String(step.get("highlight_node", ""))
-	_ok(craft_keys.get("craft_intro", "") == "CraftBarrel",
-		"craft intro highlights the actual barrel work area")
-	_ok(craft_keys.get("craft_drag", "") == "ShortcutBar",
-		"craft drag highlights the shortcut bar")
+	_ok(craft_keys.get("craft_intro", "") == "ShortcutBar",
+		"craft intro highlights the shortcut bar while it explains dragging out malt")
+	_ok(craft_keys.get("craft_drag", "") == "CraftBarrel",
+		"craft drag highlights the barrel while it explains dropping and shaking malt")
 	_ok(craft_keys.get("craft_recovery", "") == "RecoveryContainer",
 		"craft recovery uses its own recovery highlight instead of the intro barrel rect")
 
@@ -176,6 +176,8 @@ func _test_serve_tutorial_matches_table_order_groove(parsed: Dictionary) -> void
 	if serve_steps.is_empty():
 		return
 	var serve_intro: Dictionary = serve_steps[0]
+	_ok(String(serve_intro.get("highlight_node", "")) == "OrderGroove",
+		"serve tutorial highlights the table order groove instead of the customer body")
 	var text := String(serve_intro.get("description", ""))
 	for line in serve_intro.get("narrator_lines", []):
 		text += "\n" + String(line.get("text", ""))
@@ -369,5 +371,8 @@ class ServeTutorialTestView:
 
 	func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 		if group_key == "serve":
-			return {"CustomerNode": [440, 80, 400, 360]}
+			return {
+				"CustomerNode": [440, 80, 400, 360],
+				"OrderGroove": [392, 604, 496, 32],
+			}
 		return {}

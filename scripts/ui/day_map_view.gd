@@ -77,6 +77,8 @@ const DAYMAP_DETAIL_GO_TEXT_MARGIN_LEFT := 20.0
 const DAYMAP_DETAIL_GO_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
+const PINNED_NOTE_VIEWPORT_MARGIN := Vector2(16, 16)
+const PINNED_NOTE_VIEWPORT_TOP_MARGIN := 64.0
 const PINNED_NOTE_NAME_POS := Vector2(76, 72)
 const PINNED_NOTE_NAME_SIZE := Vector2(220, 34)
 const PINNED_NOTE_DESC_POS := Vector2(92, 126)
@@ -848,7 +850,38 @@ func _update_pinned_note_position() -> void:
 	if map_world == null:
 		return
 	var anchor: Vector2 = map_world.to_local(marker.global_position)
-	_pinned_note_panel.position = (anchor + PINNED_NOTE_RIGHT_OFFSET).round()
+	_pinned_note_panel.position = _clamp_pinned_note_position(anchor + PINNED_NOTE_RIGHT_OFFSET).round()
+
+
+func _clamp_pinned_note_position(desired_position: Vector2) -> Vector2:
+	if _camera == null or _pinned_note_panel == null:
+		return desired_position
+	var visible_rect := _camera_visible_map_rect()
+	var zoom := maxf(_camera.zoom.x, 0.001)
+	var min_pos := visible_rect.position + Vector2(
+		PINNED_NOTE_VIEWPORT_MARGIN.x / zoom,
+		PINNED_NOTE_VIEWPORT_TOP_MARGIN / zoom
+	)
+	var max_pos := visible_rect.end - _pinned_note_panel.size - Vector2(
+		PINNED_NOTE_VIEWPORT_MARGIN.x / zoom,
+		PINNED_NOTE_VIEWPORT_MARGIN.y / zoom
+	)
+	return Vector2(
+		_clamp_pinned_note_axis(desired_position.x, min_pos.x, max_pos.x),
+		_clamp_pinned_note_axis(desired_position.y, min_pos.y, max_pos.y)
+	)
+
+
+func _camera_visible_map_rect() -> Rect2:
+	var zoom := maxf(_camera.zoom.x, 0.001)
+	var size := _camera.get_viewport_rect().size / zoom
+	return Rect2(_camera.position - size * 0.5, size)
+
+
+func _clamp_pinned_note_axis(value: float, min_value: float, max_value: float) -> float:
+	if min_value > max_value:
+		return (min_value + max_value) * 0.5
+	return clampf(value, min_value, max_value)
 
 
 func _set_detail_text(name_text: String, desc_text: String, cost_text: String, yield_text: String, action_text: String) -> void:

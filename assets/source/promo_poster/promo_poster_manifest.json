@@ -1,0 +1,25 @@
+{
+  "assets": [
+    {
+      "id": "last_call_below_promo_poster",
+      "intended_godot_use": "external_promo_only_not_referenced_by_runtime_scenes",
+      "native_file": "assets/source/promo_poster/last_call_below_promo_poster_native.png",
+      "native_size": [
+        640,
+        360
+      ],
+      "output_file": "assets/textures/promo_poster/last_call_below_promo_poster.png",
+      "safe_area": {
+        "height": 972,
+        "width": 1728,
+        "x": 96,
+        "y": 54
+      },
+      "size": [
+        1920,
+        1080
+      ],
+      "source_file": "art_sources/generated_raw/promo_poster/promo_poster_source.png"
+    }
+  ]
+}

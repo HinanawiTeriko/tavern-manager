@@ -97,6 +97,20 @@ func _ready() -> void:
 	preview_screen.queue_free()
 	await get_tree().process_frame
 
+	var loss_data := LedgerData.new()
+	loss_data.day = 5
+	loss_data.gold_today = -24
+	loss_data.rep_today = 0
+	loss_data.gold_total = 92
+	loss_data.rep_total = 3
+	loss_data.guests_served = 3
+	loss_data.orders_success = 3
+	loss_data.orders_failed = 0
+	var loss_screen = await _make_screen(loss_data)
+	_test_negative_gold_format_uses_single_minus(loss_screen)
+	loss_screen.queue_free()
+	await get_tree().process_frame
+
 	await _test_fate_notice_waits_for_ledger_tutorial(data)
 	await _test_tutorial_then_fate_presentation_then_score_replay_order()
 
@@ -494,6 +508,14 @@ func _test_dynamic_data(screen: Node) -> void:
 	_ok(combined.find("5") >= 0, "stats render guests_served")
 	_ok(combined.find("4") >= 0, "stats render orders_success")
 	_ok(combined.find("1") >= 0, "stats render orders_failed")
+
+
+func _test_negative_gold_format_uses_single_minus(screen: Node) -> void:
+	if screen.has_method("_complete_score_replay"):
+		screen._complete_score_replay()
+	var combined := _collect_stats_text(screen)
+	_ok(combined.find("+-24") < 0, "negative gold delta must not render with both plus and minus signs")
+	_ok(combined.find("-24 / 92") >= 0, "negative gold delta renders with a single minus sign")
 
 
 func _test_rumor_summary_text(screen: Node) -> void:
