@@ -61,7 +61,9 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(doge_guest.get_meta("meme_guest_id", "")) == "meme_doge", "doge should carry meme_guest_id")
 	_ok(String(doge_guest.get_meta("physics_law_id", "")) == "low_gravity", "doge should carry low gravity law")
 	_ok(String(doge_guest.get_meta("portrait_id", "")) == "meme_doge", "doge should carry portrait id")
+	_ok(String(doge_guest.get_meta("arrival_line", "")) != "", "doge should carry animal-like arrival line")
 	_ok(String(doge_guest.get_meta("regular_customer_id", "")) == "", "meme guests should not enter regular-customer memory")
+	_ok(not doge_guest.has_dialogue, "meme guest arrival lines should not use important NPC dialogue flow")
 
 	var cat_system = GuestSystem.new(Callable(self, "_menu_items"))
 	cat_system.call("_spawn_meme_guest", snack_cat, _menu_items())
@@ -70,6 +72,8 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(cat_guest != null, "snack cat should spawn")
 	_ok(String(cat_guest.npc_id) == "meme_snack_cat", "snack cat npc_id should match portrait key")
 	_ok(String(cat_guest.get_meta("physics_law_id", "")) == "heavy_gravity", "snack cat should carry heavy gravity law")
+	_ok(String(cat_guest.get_meta("arrival_line", "")) != "", "snack cat should carry animal-like arrival line")
+	_ok(not cat_guest.has_dialogue, "snack cat should stay outside important NPC dialogue flow")
 
 
 func _finish() -> void:

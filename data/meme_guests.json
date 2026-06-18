@@ -9,6 +9,7 @@
       "spawn_weight": 0.45,
       "patience_multiplier": 1.15,
       "tip_multiplier": 1.05,
+      "arrival_line": "wow... woof?",
       "preferred_tags": ["savory", "comfort"],
       "dialogue_tags": ["meme_guest", "low_gravity"]
     },
@@ -21,6 +22,7 @@
       "spawn_weight": 0.45,
       "patience_multiplier": 0.9,
       "tip_multiplier": 1.0,
+      "arrival_line": "mrrp... crunch.",
       "preferred_tags": ["snack", "quick"],
       "dialogue_tags": ["meme_guest", "heavy_gravity"]
     }

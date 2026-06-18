@@ -660,6 +660,7 @@ func _spawn_meme_guest(entry: Dictionary, menu_items: Array) -> void:
 	guest.set_meta("meme_guest_id", meme_id)
 	guest.set_meta("physics_law_id", String(entry.get("physics_law_id", "")))
 	guest.set_meta("portrait_id", portrait_id)
+	guest.set_meta("arrival_line", String(entry.get("arrival_line", "")))
 	guest.set_meta("dialogue_tags", Array(entry.get("dialogue_tags", [])))
 	guest.set_meta("preferred_tags", Array(entry.get("preferred_tags", [])))
 	guest.set_meta("tip_multiplier", float(entry.get("tip_multiplier", 1.0)))

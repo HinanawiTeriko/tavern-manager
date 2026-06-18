@@ -1664,6 +1664,9 @@ func _on_guest_arrived(guest: GuestData) -> void:
 	var item: Dictionary = craft.get_item(guest.order_key)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
 	_activate_guest_physics_law(guest)
+	var arrival_line := String(guest.get_meta("arrival_line", ""))
+	if arrival_line != "" and _tavern_view.has_method("customer_say"):
+		_tavern_view.customer_say(arrival_line)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	_queue_first_guest_serve_tutorial(guest.has_dialogue)
