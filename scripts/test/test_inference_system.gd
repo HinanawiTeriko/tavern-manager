@@ -345,7 +345,13 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	var unrelated: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(not bool(unrelated.get("granted", true)), "unrelated mine customer does not grant Mira old-ledger gossip")
 	_ok(not gm.inference.has_clue("mira_traveling_mentor"), "blocked unrelated customer does not add mentor clue")
-	_set_gossip_guest(gm, "regular_jora", "ale_beer")
+	_set_gossip_guest(gm, "regular_noel", "herb_tea", "ledger")
+	var ledger_first: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
+	_ok(not bool(ledger_first.get("granted", true)),
+		"ledger customer does not grant old-road merchant-and-child gossip")
+	_ok(not gm.inference.has_clue("mira_traveling_mentor"),
+		"blocked ledger customer does not add mentor clue")
+	_set_gossip_guest(gm, "regular_jora", "ale_beer", "old_road")
 	var first: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(bool(first.get("granted", false)), "Day7 relevant old-road customer can grant first Mira old-ledger gossip")
 	_ok(String(first.get("clue_id", "")) == "mira_traveling_mentor", "first Mira gossip grants mentor clue")
@@ -359,7 +365,13 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	_ok(not bool(second.get("granted", true)), "same night does not grant a second Mira old-ledger gossip")
 	gm.economy.current_day = 8
 	gm.start_day_map(8)
-	_set_gossip_guest(gm, "regular_jora", "ale_beer")
+	_set_gossip_guest(gm, "regular_marco", "wine", "trade")
+	var trade_phrase: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
+	_ok(not bool(trade_phrase.get("granted", true)),
+		"trade customer does not grant the child-phrase gossip after the route opens")
+	_ok(not gm.inference.has_clue("child_learned_saying"),
+		"blocked trade customer does not add child-phrase clue")
+	_set_gossip_guest(gm, "regular_jora", "ale_beer", "old_road")
 	var third: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(bool(third.get("granted", false)), "next night can grant the second Mira old-ledger gossip")
 	_ok(String(third.get("clue_id", "")) == "child_learned_saying", "second Mira gossip grants phrase clue")

@@ -41,8 +41,29 @@ var current_ledger_data: LedgerData = null
 const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
 const RYAN_ACTION_FEEDBACK_DIALOGUE := "res://dialogue/ryan_action_feedback.dialogue"
 const MIRA_OLD_LEDGER_GOSSIP_GRANTED_DAY_VAR := "mira_old_ledger_gossip_granted_day"
-const MIRA_OLD_LEDGER_GOSSIP_GROUPS := ["old_road", "trade", "ledger"]
-const MIRA_OLD_LEDGER_GOSSIP_ROLE_KEYWORDS := ["旧路", "走货", "商人", "账房", "书记", "审账", "符文", "称币", "抄写", "地图"]
+const MIRA_OLD_LEDGER_GOSSIP_SOURCE_GROUPS := {
+	"mira_traveling_mentor": ["old_road", "trade"],
+	"child_learned_saying": ["old_road"],
+}
+const MIRA_OLD_LEDGER_GOSSIP_SOURCE_TRAITS := {
+	"mira_traveling_mentor": [
+		"road_runner",
+		"road_tax_guard",
+		"lamp_oil_runner",
+		"map_copyist",
+		"generous_trader",
+		"bardic_spread",
+		"caravan_cook",
+		"spice_broker",
+		"glass_peddler",
+	],
+	"child_learned_saying": [
+		"road_runner",
+		"road_tax_guard",
+		"lamp_oil_runner",
+		"map_copyist",
+	],
+}
 const MIRA_RESPONSIBILITY_STALL_BONUS_SEEN_VAR := "mira_responsibility_stall_bonus_seen"
 const MIRA_RESPONSIBILITY_STALL_BONUS := 2
 const EVELYN_FINAL_DAY := 20
@@ -611,13 +632,13 @@ func _try_grant_mira_old_ledger_gossip() -> Dictionary:
 		return {"granted": false, "clue_id": "", "line": ""}
 	if not _mira_old_ledger_route_active():
 		return {"granted": false, "clue_id": "", "line": ""}
-	if not _current_guest_can_share_mira_old_ledger_gossip():
-		return {"granted": false, "clue_id": "", "line": ""}
 
 	var candidate := _next_mira_old_ledger_gossip()
 	if candidate.is_empty():
 		return {"granted": false, "clue_id": "", "line": ""}
 	var clue_id := String(candidate.get("clue_id", ""))
+	if not _current_guest_can_share_mira_old_ledger_gossip(clue_id):
+		return {"granted": false, "clue_id": "", "line": ""}
 	var previous_questions := _available_inference_question_ids()
 	if not inference.add_clue(clue_id):
 		return {"granted": false, "clue_id": "", "line": ""}
@@ -661,22 +682,41 @@ func _mira_old_ledger_route_active() -> bool:
 		or inference.has_clue("one_person_walk")
 
 
-func _current_guest_can_share_mira_old_ledger_gossip() -> bool:
+func _current_guest_can_share_mira_old_ledger_gossip(clue_id: String = "") -> bool:
 	if guests == null or not guests.has_guest or guests.current_guest == null:
+		return false
+	var target_clue_id := clue_id
+	if target_clue_id == "":
+		var candidate := _next_mira_old_ledger_gossip()
+		target_clue_id = String(candidate.get("clue_id", ""))
+	if target_clue_id == "":
 		return false
 	var guest := guests.current_guest
 	var group_key := String(guest.get_meta("guest_group", ""))
-	if MIRA_OLD_LEDGER_GOSSIP_GROUPS.has(group_key):
-		return true
+	if group_key != "":
+		return _mira_old_ledger_gossip_source_allows(
+			MIRA_OLD_LEDGER_GOSSIP_SOURCE_GROUPS,
+			target_clue_id,
+			group_key
+		)
 	var npc_id := String(guest.npc_id)
 	if npc_id == "" or not guests.has_method("get_regular_customer_preview"):
 		return false
 	var preview: Dictionary = guests.get_regular_customer_preview(npc_id)
-	var role := String(preview.get("role", ""))
-	for keyword in MIRA_OLD_LEDGER_GOSSIP_ROLE_KEYWORDS:
-		if role.contains(String(keyword)):
-			return true
+	var trait_info: Dictionary = preview.get("trait", {})
+	var trait_id := String(trait_info.get("id", ""))
+	if trait_id != "":
+		return _mira_old_ledger_gossip_source_allows(
+			MIRA_OLD_LEDGER_GOSSIP_SOURCE_TRAITS,
+			target_clue_id,
+			trait_id
+		)
 	return false
+
+
+func _mira_old_ledger_gossip_source_allows(source_map: Dictionary, clue_id: String, source_key: String) -> bool:
+	var allowed = source_map.get(clue_id, [])
+	return allowed is Array and (allowed as Array).has(source_key)
 
 
 func _next_mira_old_ledger_gossip() -> Dictionary:
