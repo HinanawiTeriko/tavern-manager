@@ -12,6 +12,7 @@ func _ready() -> void:
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
 		_test_material_gathering_locations_all_have_wind_rumors()
+		_test_material_gathering_wind_rumors_are_available_on_location_open_day()
 		_test_day_map_locations_have_explicit_wind_policy()
 		_test_game_manager_honors_day_map_wind_policy()
 		_test_guest_group_profiles_drive_orders()
@@ -290,6 +291,37 @@ func _test_material_gathering_locations_all_have_wind_rumors() -> void:
 	for location_id in expected_locations.keys():
 		_ok(bool(expected_locations[location_id]),
 			"material gathering location has at least one practical wind rumor: " + String(location_id))
+
+
+func _test_material_gathering_wind_rumors_are_available_on_location_open_day() -> void:
+	var locations_data := _load_json_dictionary("res://data/locations.json")
+	var rumors_data := _load_json_dictionary("res://data/rumors.json")
+	var gathering_open_day := {}
+	for raw in locations_data.get("locations", []):
+		if not raw is Dictionary:
+			continue
+		var loc: Dictionary = raw
+		var id := String(loc.get("id", ""))
+		if ["mushroom_forest", "dark_river", "grape_trellis", "mill_farm"].has(id):
+			gathering_open_day[id] = int(loc.get("dayMin", 1))
+	var earliest_rumor_day := {}
+	for raw in rumors_data.get("rumors", []):
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if not gathering_open_day.has(location_id):
+			continue
+		var day_min := int(rumor.get("dayMin", 1))
+		if not earliest_rumor_day.has(location_id) or day_min < int(earliest_rumor_day[location_id]):
+			earliest_rumor_day[location_id] = day_min
+	for location_id in gathering_open_day.keys():
+		_ok(earliest_rumor_day.has(location_id),
+			"material gathering location has wind available on opening day: " + String(location_id))
+		if earliest_rumor_day.has(location_id):
+			_ok(int(earliest_rumor_day[location_id]) <= int(gathering_open_day[location_id]),
+				"material wind rumor is not delayed after location opens: %s opens day %d, earliest wind day %d" %
+				[String(location_id), int(gathering_open_day[location_id]), int(earliest_rumor_day[location_id])])
 
 
 func _test_day_map_locations_have_explicit_wind_policy() -> void:

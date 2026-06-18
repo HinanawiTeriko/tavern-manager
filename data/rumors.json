@@ -79,7 +79,7 @@
     {
       "id": "dark_river_cold_shift",
       "location": "dark_river",
-      "dayMin": 2,
+      "dayMin": 1,
       "text": "暗河边的搬运人说今晚水汽重，靠热汤和烈一点的酒才压得住寒气。",
       "menuHints": {
         "customerGroups": ["搬运工", "夜班矿工"],
@@ -98,7 +98,7 @@
     {
       "id": "grape_trellis_sour_wine",
       "location": "grape_trellis",
-      "dayMin": 3,
+      "dayMin": 1,
       "text": "葡萄架下有人试了新酸酒，今晚走货商和旧路熟人会拿酒味挑话头。",
       "menuHints": {
         "customerGroups": ["走货商人", "旧路熟人"],
@@ -117,7 +117,7 @@
     {
       "id": "mill_farm_malt_dust",
       "location": "mill_farm",
-      "dayMin": 3,
+      "dayMin": 1,
       "text": "磨坊农田今天麦尘很重，早班人回城会想找顶饿、热乎、能配麦香的东西。",
       "menuHints": {
         "customerGroups": ["早班工人", "农田帮工"],
