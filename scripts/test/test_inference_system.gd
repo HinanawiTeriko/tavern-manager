@@ -314,8 +314,13 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	gm.economy.current_day = 7
 	gm.start_day_map(7)
 	gm.inference.add_clue("one_person_walk")
+	_set_gossip_guest(gm, "regular_belta", "meat_cooked")
+	var unrelated: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
+	_ok(not bool(unrelated.get("granted", true)), "unrelated mine customer does not grant Mira old-ledger gossip")
+	_ok(not gm.inference.has_clue("mira_traveling_mentor"), "blocked unrelated customer does not add mentor clue")
+	_set_gossip_guest(gm, "regular_jora", "ale_beer")
 	var first: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
-	_ok(bool(first.get("granted", false)), "Day7 ordinary success can grant first Mira old-ledger gossip")
+	_ok(bool(first.get("granted", false)), "Day7 relevant old-road customer can grant first Mira old-ledger gossip")
 	_ok(String(first.get("clue_id", "")) == "mira_traveling_mentor", "first Mira gossip grants mentor clue")
 	_ok(gm.inference.has_clue("mira_traveling_mentor"), "mentor clue is owned after gossip")
 	_ok(String(first.get("line", "")) != "", "Mira gossip returns guest-spoken clue text")
@@ -327,6 +332,7 @@ func _test_game_manager_grants_mira_gossip_once_per_night() -> void:
 	_ok(not bool(second.get("granted", true)), "same night does not grant a second Mira old-ledger gossip")
 	gm.economy.current_day = 8
 	gm.start_day_map(8)
+	_set_gossip_guest(gm, "regular_jora", "ale_beer")
 	var third: Dictionary = gm._grant_mira_old_ledger_gossip_for_test()
 	_ok(bool(third.get("granted", false)), "next night can grant the second Mira old-ledger gossip")
 	_ok(String(third.get("clue_id", "")) == "child_learned_saying", "second Mira gossip grants phrase clue")
@@ -349,7 +355,7 @@ func _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption() -> void
 	guest.guest_name = "Gossip Guest"
 	guest.type = GuestData.GuestType.NORMAL
 	guest.order_key = "ale_beer"
-	guest.npc_id = "regular_belta"
+	guest.npc_id = "regular_jora"
 	guest.has_dialogue = false
 	gm.guests.current_guest = guest
 	gm.guests.has_guest = true
@@ -370,6 +376,19 @@ func _test_mira_gossip_guest_clue_uses_customer_line_not_stage_caption() -> void
 	gm._tavern_view = old_view
 	gm.guests.clear_guest()
 	probe.queue_free()
+
+
+func _set_gossip_guest(gm: Node, npc_id: String, order_key: String, guest_group: String = "") -> void:
+	var guest := GuestData.new()
+	guest.guest_name = npc_id
+	guest.type = GuestData.GuestType.NORMAL
+	guest.order_key = order_key
+	guest.npc_id = npc_id
+	guest.has_dialogue = false
+	if guest_group != "":
+		guest.set_meta("guest_group", guest_group)
+	gm.guests.current_guest = guest
+	gm.guests.has_guest = true
 
 
 func _test_game_manager_applies_mira_inference_flags() -> void:

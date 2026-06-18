@@ -85,7 +85,7 @@ const PINNED_NOTE_YIELD_POS := Vector2(92, 254)
 const PINNED_NOTE_YIELD_SIZE := Vector2(224, 40)
 const PINNED_NOTE_BUTTON_POS := Vector2(72, 284)
 const GATHERING_TOAST_POS := Vector2(430, 68)
-const GATHERING_TOAST_SIZE := Vector2(420, 56)
+const GATHERING_TOAST_SIZE := Vector2(480, 78)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -129,7 +129,6 @@ var _overlay_layer: CanvasLayer = null
 var _shop_open: bool = false
 var _shop_overlay: ShopOverlay = null
 var _gold_label: Label
-var _pending_shop_after_gossip: bool = false
 
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
@@ -823,7 +822,6 @@ func _show_pinned_detail(location_id: String) -> void:
 			if hint_text == "":
 				hint_text = "商人似乎有新的传闻。"
 			desc_text += "\n\n" + hint_text
-			action_text = "听传闻"
 	else:
 		cost_text = "体力消耗：%d" % int(loc.get("cost", 1))
 		yield_text = _yield_text(loc)
@@ -897,8 +895,6 @@ func _on_go_here_pressed() -> void:
 		get_node("/root/GameManager").enter_night_from_day_map()
 		return
 	if _is_shop_location(_selected_id):
-		if _try_show_shop_gossip(_selected_id):
-			return
 		_open_shop()
 		return
 	_visit_location(_selected_id)
@@ -917,25 +913,6 @@ func _peek_shop_gossip(location_id: String) -> Dictionary:
 	if not gm.has_method("peek_shop_gossip"):
 		return {}
 	return gm.peek_shop_gossip(location_id)
-
-
-func _try_show_shop_gossip(location_id: String) -> bool:
-	var gm = get_node("/root/GameManager")
-	if not gm.has_method("consume_shop_gossip"):
-		return false
-	var gossip: Dictionary = gm.consume_shop_gossip(location_id)
-	if not bool(gossip.get("success", false)):
-		return false
-	if _gathering_toast != null:
-		_gathering_toast.visible = false
-	_result_label.text = String(gossip.get("message", ""))
-	_result_panel.visible = true
-	_continue_btn.text = "进入商店"
-	_pending_shop_after_gossip = true
-	_detail_panel.visible = false
-	_hide_pinned_note()
-	_clear_selection()
-	return true
 
 
 func _visit_location(location_id: String) -> void:
@@ -976,13 +953,9 @@ func _visit_toast_message(result: Dictionary) -> String:
 	var raw_rumor = result.get("rumor", {})
 	if raw_rumor is Dictionary:
 		var rumor: Dictionary = raw_rumor
-		var menu_hints: Dictionary = rumor.get("menuHints", {})
-		var summary := String(menu_hints.get("summary", ""))
-		if summary != "":
-			return "听到传闻：" + _compact_toast_text(summary)
-		var rumor_text := String(rumor.get("text", ""))
+		var rumor_text := String(rumor.get("text", "")).strip_edges()
 		if rumor_text != "":
-			return "听到传闻：" + _compact_toast_text(rumor_text)
+			return "听到传闻：" + rumor_text
 	return String(result.get("message", ""))
 
 
@@ -1042,9 +1015,6 @@ func _update_stamina_display() -> void:
 
 func _on_continue() -> void:
 	_result_panel.visible = false
-	if _pending_shop_after_gossip:
-		_pending_shop_after_gossip = false
-		_open_shop()
 
 
 func _open_latest_document() -> void:

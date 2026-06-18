@@ -13,7 +13,9 @@ func _ready() -> void:
 	_test_guest_budget()
 	_test_game_manager_owns_slice()
 	_test_pending_important_guest_blocks_early_close()
-	await _test_day2_important_npc_spawns_when_menu_already_confirmed()
+	_test_important_arrival_timing_rules()
+	await _test_day2_important_npc_waits_for_one_normal_guest()
+	_test_ryan_day2_dialogue_matches_single_order()
 	_test_day3_fate_reveal_is_not_a_formal_npc_scene()
 	await _test_day3_fate_reveal_spawns_when_menu_already_confirmed()
 	_test_day1_settlement_warns_about_day2_fate_ledger_entry()
@@ -162,6 +164,28 @@ func _test_pending_important_guest_blocks_early_close() -> void:
 	gm.day_cycle.phase = original_phase
 
 
+func _test_important_arrival_timing_rules() -> void:
+	var slice := RyanSliceSystem.new()
+	_ok(slice.has_method("important_arrival_normal_orders_before"),
+		"RyanSliceSystem exposes important NPC arrival timing")
+	if not slice.has_method("important_arrival_normal_orders_before"):
+		return
+	_ok(slice.important_arrival_normal_orders_before(1) == 1,
+		"Day 1 Ryan waits for one ordinary customer")
+	_ok(slice.important_arrival_normal_orders_before(2) == 1,
+		"Day 2 Ryan waits for one ordinary customer")
+	_ok(slice.important_arrival_normal_orders_before(3) == 0,
+		"Day 3 fate reveal can still arrive immediately")
+	_ok(slice.important_arrival_normal_orders_before(5) == 1,
+		"Evelyn line also waits for tavern traffic before entering")
+
+
+func _test_ryan_day2_dialogue_matches_single_order() -> void:
+	var pre_dialogue := FileAccess.get_file_as_string("res://dialogue/ryan_day2.pre.dialogue")
+	_ok(pre_dialogue.contains("烤肉"), "Day 2 Ryan pre-dialogue still asks for cooked meat")
+	_ok(not pre_dialogue.contains("麦芽酒"), "Day 2 Ryan pre-dialogue no longer implies a second ale order")
+
+
 func _test_day1_settlement_warns_about_day2_fate_ledger_entry() -> void:
 	var gm = get_node("/root/GameManager")
 	var original_phase = gm.day_cycle.phase
@@ -192,7 +216,7 @@ func _test_day1_settlement_warns_about_day2_fate_ledger_entry() -> void:
 	gm.day_cycle.phase = original_phase
 
 
-func _test_day2_important_npc_spawns_when_menu_already_confirmed() -> void:
+func _test_day2_important_npc_waits_for_one_normal_guest() -> void:
 	var gm = get_node("/root/GameManager")
 	var tutorial = get_node_or_null("/root/TutorialManager")
 	var original_day: int = gm.economy.current_day
@@ -233,10 +257,25 @@ func _test_day2_important_npc_spawns_when_menu_already_confirmed() -> void:
 	if tavern.has_method("_confirm_menu_preparation"):
 		tavern.call("_confirm_menu_preparation")
 		await get_tree().process_frame
+	_ok(not gm.guests.has_guest,
+		"Day 2 menu confirmation keeps the important NPC pending until tavern traffic starts")
+	_ok(gm._important_npc_pending,
+		"Day 2 keeps Ryan pending after menu confirmation")
+
+	gm.guests._spawn_normal()
+	await get_tree().process_frame
 	_ok(gm.guests.has_guest,
-		"Day 2 menu confirmation spawns the pending important NPC")
+		"Day 2 first service slot spawns an ordinary customer")
+	_ok(gm.guests.current_guest != null and gm.guests.current_guest.type == GuestData.GuestType.NORMAL,
+		"Day 2 ordinary customer arrives before Ryan")
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	await _wait_until(func(): return gm.guests.has_guest and gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan", 30)
+
+	_ok(gm.guests.has_guest,
+		"Day 2 Ryan arrives after one ordinary customer leaves")
 	_ok(gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan",
-		"Day 2 important guest is Ryan")
+		"Day 2 delayed important guest is Ryan")
 	_ok(gm.guests.current_guest != null and gm.guests.current_guest.order_key == "meat_cooked",
 		"Day 2 Ryan orders cooked meat")
 
@@ -254,6 +293,14 @@ func _test_day2_important_npc_spawns_when_menu_already_confirmed() -> void:
 	if tutorial != null:
 		tutorial.tavern_first_entered = original_tutorial_entered
 		tutorial._is_active = original_tutorial_active
+
+
+func _wait_until(condition: Callable, max_frames: int) -> bool:
+	for _i in range(max_frames):
+		if bool(condition.call()):
+			return true
+		await get_tree().process_frame
+	return bool(condition.call())
 
 
 func _test_day3_fate_reveal_is_not_a_formal_npc_scene() -> void:

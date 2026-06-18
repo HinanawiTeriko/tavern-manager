@@ -91,7 +91,7 @@ const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
 const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
 const MENU_PREP_LEFT_TEXT_WIDTH := 286.0
-const MENU_PREP_RUMOR_CARD_HEIGHT := 176.0
+const MENU_PREP_RUMOR_CARD_HEIGHT := 124.0
 const MENU_PREP_ECHO_CARD_HEIGHT := 78.0
 
 const NPC_TEXTURE_KEYS: Dictionary = {
@@ -1223,16 +1223,19 @@ func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 		var customerGroups := _strings_from_array(menu_hints.get("customerGroups", []), 3)
 		var affectedNames := _customer_names_from_previews(rumor_data.get("affectedCustomers", []), 3)
 		var recommendedTags := _strings_from_array(menu_hints.get("recommendedTags", []), 4)
-		label.text = "· " + String(rumor_data.get("text", ""))
+		label.text = "风声 · " + String(rumor_data.get("text", ""))
 		var summary := String(menu_hints.get("summary", ""))
 		if summary != "":
-			label.text += "\n" + summary
+			label.text += "\n菜单：" + summary
+		var context_parts: Array[String] = []
 		if not customerGroups.is_empty():
-			label.text += "\n客群：" + " / ".join(customerGroups)
+			context_parts.append("客群 " + " / ".join(customerGroups))
 		if not affectedNames.is_empty():
-			label.text += "\n可能来：" + " / ".join(affectedNames)
+			context_parts.append("可能来 " + " / ".join(affectedNames))
 		if not recommendedTags.is_empty():
-			label.text += "\n推荐：" + " / ".join(recommendedTags)
+			context_parts.append("推荐 " + " / ".join(recommendedTags))
+		if not context_parts.is_empty():
+			label.text += "\n" + "；".join(PackedStringArray(context_parts))
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, MENU_PREP_RUMOR_CARD_HEIGHT)
 		ThemeColors.style_brush_label(label, 14, ThemeColors.TEXT_SUBTITLE)

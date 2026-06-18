@@ -41,6 +41,8 @@ var current_ledger_data: LedgerData = null
 const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
 const RYAN_ACTION_FEEDBACK_DIALOGUE := "res://dialogue/ryan_action_feedback.dialogue"
 const MIRA_OLD_LEDGER_GOSSIP_GRANTED_DAY_VAR := "mira_old_ledger_gossip_granted_day"
+const MIRA_OLD_LEDGER_GOSSIP_GROUPS := ["old_road", "trade", "ledger"]
+const MIRA_OLD_LEDGER_GOSSIP_ROLE_KEYWORDS := ["旧路", "走货", "商人", "账房", "书记", "审账", "符文", "称币", "抄写", "地图"]
 const MIRA_RESPONSIBILITY_STALL_BONUS_SEEN_VAR := "mira_responsibility_stall_bonus_seen"
 const MIRA_RESPONSIBILITY_STALL_BONUS := 2
 const EVELYN_FINAL_DAY := 20
@@ -97,6 +99,8 @@ const EVELYN_PUBLIC_ACCOUNT_FINAL_GAP := {
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
+var _important_npc_normal_orders_before: int = 0
+var _important_npc_normal_orders_seen: int = 0
 var _guest_lingering: bool = false
 var _serve_tutorial_pending_after_dialogue: bool = false
 var _craft_tutorial_pending_after_menu: bool = false
@@ -378,15 +382,16 @@ func register_view(view: Node) -> void:
 
 		var important_guest_request := _today_important_guest_request()
 		_important_npc_pending = false
+		_important_npc_normal_orders_before = 0
+		_important_npc_normal_orders_seen = 0
 
 		if not important_guest_request.is_empty():
 			_important_npc_pending = true
-			var npc_id := String(important_guest_request.get("npc_id", ""))
-			var order_key := String(important_guest_request.get("order_key", "bread"))
+			_important_npc_normal_orders_before = ryan_slice.important_arrival_normal_orders_before(economy.current_day)
 
 			if not tutorial_will_start and _tavern_view.daily_menu_confirmed and not guests.has_guest:
-				guests.spawn_important(npc_id, order_key)
-			# 菜单未确认时等待 on_menu_confirmed() 生成
+				_spawn_pending_important_guest_after_menu()
+			# 菜单未确认时等待 on_menu_confirmed() 生成；非揭示日还会等普通客先离场。
 
 		if menu_prep_tutorial_will_start:
 			view.call_deferred("trigger_menu_prep_tutorial")
@@ -606,6 +611,8 @@ func _try_grant_mira_old_ledger_gossip() -> Dictionary:
 		return {"granted": false, "clue_id": "", "line": ""}
 	if not _mira_old_ledger_route_active():
 		return {"granted": false, "clue_id": "", "line": ""}
+	if not _current_guest_can_share_mira_old_ledger_gossip():
+		return {"granted": false, "clue_id": "", "line": ""}
 
 	var candidate := _next_mira_old_ledger_gossip()
 	if candidate.is_empty():
@@ -637,6 +644,24 @@ func _mira_old_ledger_route_active() -> bool:
 		or bool(narrative.get_var("toby_identity_known")) \
 		or bool(narrative.get_var("toby_commission_lead")) \
 		or inference.has_clue("one_person_walk")
+
+
+func _current_guest_can_share_mira_old_ledger_gossip() -> bool:
+	if guests == null or not guests.has_guest or guests.current_guest == null:
+		return false
+	var guest := guests.current_guest
+	var group_key := String(guest.get_meta("guest_group", ""))
+	if MIRA_OLD_LEDGER_GOSSIP_GROUPS.has(group_key):
+		return true
+	var npc_id := String(guest.npc_id)
+	if npc_id == "" or not guests.has_method("get_regular_customer_preview"):
+		return false
+	var preview: Dictionary = guests.get_regular_customer_preview(npc_id)
+	var role := String(preview.get("role", ""))
+	for keyword in MIRA_OLD_LEDGER_GOSSIP_ROLE_KEYWORDS:
+		if role.contains(String(keyword)):
+			return true
+	return false
 
 
 func _next_mira_old_ledger_gossip() -> Dictionary:
@@ -1522,13 +1547,13 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	# 如果准备阶段还未结束（菜单未确认），推迟到 on_menu_confirmed
 	if _tavern_view != null and is_instance_valid(_tavern_view) and not _tavern_view.daily_menu_confirmed:
 		return  # on_menu_confirmed 会在菜单确认后生成
-	guests.spawn_important(npc_id, order_key)
+	_spawn_pending_important_guest_after_menu()
 
 ## 准备阶段结束后延迟生成重要NPC
 func _spawn_important_deferred(npc_id: String, order_key: String) -> void:
 	await get_tree().create_timer(1.0).timeout
 	if _tavern_view != null and _tavern_view.daily_menu_confirmed:
-		guests.spawn_important(npc_id, order_key)
+		_spawn_pending_important_guest_after_menu()
 
 ## 菜单确认后的回调：触发生成重要NPC（由 TavernView._confirm_menu 调用）
 func on_menu_confirmed() -> void:
@@ -1566,6 +1591,8 @@ func _on_deferred_craft_tutorial_sequence_ended(group_id: String) -> void:
 
 func _spawn_pending_important_guest_after_menu() -> void:
 	if _important_npc_pending:
+		if _important_npc_normal_orders_seen < _important_npc_normal_orders_before:
+			return
 		var important_guest_request := _today_important_guest_request()
 		if not important_guest_request.is_empty():
 			if guests.has_guest:
@@ -1887,13 +1914,23 @@ func _recover_from_dialogue_failure() -> void:
 		guests.clear_guest()
 
 func _on_guest_left() -> void:
-	if guests.current_guest != null and guests.current_guest.has_dialogue:
+	var departed := guests.current_guest
+	if departed != null and departed.has_dialogue:
 		_important_npc_pending = false
+	elif departed != null and departed.type == GuestData.GuestType.NORMAL and _important_npc_pending:
+		_important_npc_normal_orders_seen += 1
+		call_deferred("_spawn_pending_important_guest_after_normal_gap")
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
 	# 注：guest_left 在 clear_guest 内 emit，此刻 has_guest 仍为 true（随后才置 false）。
 	# 必须延迟刷新，等 clear_guest 收尾后再算，否则按钮会卡在禁用，整段"等待中"无法打烊。
 	call_deferred("_refresh_close_button")
+
+
+func _spawn_pending_important_guest_after_normal_gap() -> void:
+	await get_tree().process_frame
+	_spawn_pending_important_guest_after_menu()
+
 
 func _on_dialogue_ended() -> void:
 	_is_dialogue_active = false
@@ -2952,6 +2989,8 @@ func restart_current_day() -> void:
 		current_ledger_data = null
 		_guest_lingering = false
 		_important_npc_pending = false
+		_important_npc_normal_orders_before = 0
+		_important_npc_normal_orders_seen = 0
 		_craft_tutorial_pending_after_menu = false
 		_is_dialogue_active = false
 		day_cycle.phase = DayCycleSystem.DayPhase.DAY

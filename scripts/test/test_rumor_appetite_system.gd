@@ -326,6 +326,10 @@ func _test_game_manager_grants_location_rumors() -> void:
 	_ok(bool(result.get("success", false)), "GM visit to mercenary board succeeds")
 	_ok(result.has("rumor"), "GM visit result includes rumor payload")
 	_ok(String(result.get("message", "")).contains("听到传闻"), "GM appends rumor copy to visit message")
+	var rumor: Dictionary = result.get("rumor", {})
+	var rumor_text := String(rumor.get("text", ""))
+	_ok(rumor_text != "", "GM visit rumor carries actual player-facing text")
+	_ok(String(result.get("message", "")).contains(rumor_text), "GM visit message includes the actual rumor text")
 	_ok(gm.get_today_rumors().size() == 1, "GM stores the heard rumor for menu prep")
 
 
@@ -455,6 +459,9 @@ func _test_tavern_view_exposes_menu_preparation_contract() -> void:
 	_ok(source.contains("affectedCustomers"), "TavernView renders affected named customers from rumors")
 	_ok(source.contains("可能来"), "TavernView labels likely arriving customers")
 	_ok(source.contains("recommendedTags"), "TavernView renders recommended tags from rumors")
+	_ok(source.contains("\"风声 · \""), "TavernView labels rumor cards as wind/rumor source instead of hard evidence")
+	_ok(source.contains("菜单："), "TavernView folds rumor menu advice into a compact line")
+	_ok(not source.contains("label.text += \"\\n\" + summary"), "TavernView no longer spends a full extra line on raw rumor summary")
 	_ok(source.contains("RumorScroll"), "TavernView contains long rumor planning copy inside a scrollable clipped region")
 	_ok(source.contains("YesterdayEchoScroll"), "TavernView contains yesterday echo copy inside a scrollable clipped region")
 	_ok(source.contains("SCROLL_MODE_SHOW_NEVER"), "TavernView hides menu preparation scrollbars while keeping scroll regions")
