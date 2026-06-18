@@ -60,7 +60,7 @@ func _test_clean_table_screen_contract() -> void:
 	_ok(String(screen.get_current_question_id()) == "toby_identity", "screen starts from the identity question")
 	_assert_question_title(screen, "托比身份")
 	screen.call("_select_clue", "back_alley_boy")
-	_assert_selected_clue_source_feedback(screen, "人心", "夜晚客人")
+	_assert_selected_clue_source_feedback(screen, "人心", "托比夜谈")
 	var wrong: Dictionary = screen.place_clue_for_test("identity", "blacktooth_escort")
 	var feedback := screen.get_node_or_null("BookArea/FeedbackLabel") as Label
 	_ok(not bool(wrong.get("accepted", true)), "wrong clue is rejected on the current blank")
