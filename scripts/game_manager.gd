@@ -961,6 +961,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 		result["message"] = _prepare_mira_stall_encounter()
 		_grant_mira_responsibility_stall_bonus_if_ready()
 		_add_mira_stall_ledger_beat()
+	_add_grey_location_followup_note(location_id)
 	if bool(result.get("securesToby", false)):
 		var cost := int(result.get("goldCost", 0))
 		if economy.gold >= cost:
@@ -999,6 +1000,20 @@ func visit_day_location(location_id: String) -> Dictionary:
 		"location_id": location_id,
 	})
 	return result
+
+
+func _add_grey_location_followup_note(location_id: String) -> void:
+	var note := ""
+	match location_id:
+		"payout_office":
+			note = "赔付登记处只是初证。回清算台压出赔付即结案，才能证明莱恩案卷的结案顺序。"
+		"blacktooth_ledger":
+			note = "黑齿转运账只是初证。回清算台压出被改名的护送委托，才能证明托比怎样被挪进临时人名栏。"
+		"mira_supply_copy":
+			note = "米拉旧供应副本只是初证。回清算台压出供应协议灰印，才能把她的协议接进灰账。"
+		_:
+			return
+	_add_sourced_fate_note("evelyn", "evidence", note)
 
 
 func get_today_rumors() -> Array[Dictionary]:

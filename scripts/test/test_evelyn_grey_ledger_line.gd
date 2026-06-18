@@ -7,6 +7,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_evelyn_npc_schedule()
 	_test_grey_day_locations()
+	_test_grey_location_followups_write_clearing_table_notes()
 	_test_grey_documents_grant_inference_clues()
 	_test_grey_route_endings()
 	_test_evelyn_public_account_gap_diagnostics()
@@ -100,6 +101,30 @@ func _test_grey_day_locations() -> void:
 	var supply := _find_location(map.get_locations(), "mira_supply_copy")
 	_ok((supply.get("documents", []) as Array).is_empty(),
 		"Mira supply copy is text context; supply-stamp clue is reserved for clearing table")
+
+
+func _test_grey_location_followups_write_clearing_table_notes() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(14)
+	_ok(gm.visit_day_location("payout_office").get("success", false), "Day14 payout office visit succeeds")
+	var ledger_text := _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("赔付即结案"),
+		"payout office ledger note tells the player to press payout closure at the clearing table")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(16)
+	_ok(gm.visit_day_location("blacktooth_ledger").get("success", false), "Day16 Blacktooth ledger visit succeeds")
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("被改名的护送委托"),
+		"Blacktooth ledger note tells the player to press renamed escort at the clearing table")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(17)
+	_ok(gm.visit_day_location("mira_supply_copy").get("success", false), "Day17 Mira supply copy visit succeeds")
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("供应协议灰印"),
+		"Mira supply copy note tells the player to press the supply stamp at the clearing table")
 
 
 func _test_grey_documents_grant_inference_clues() -> void:
