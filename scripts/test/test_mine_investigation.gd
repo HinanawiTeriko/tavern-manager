@@ -14,6 +14,7 @@ func _ready() -> void:
 	_test_locations_no_auto_grant()
 	_test_grant_idempotent_and_owned()
 	await _test_scene_collect_feedback_is_labeled_evidence()
+	await _test_scene_feedback_names_unlocked_inference()
 	_finish()
 
 
@@ -77,6 +78,36 @@ func _test_scene_collect_feedback_is_labeled_evidence() -> void:
 	scene.queue_free()
 	await get_tree().process_frame
 	gm._apply_save_state(snapshot)
+
+
+func _test_scene_feedback_names_unlocked_inference() -> void:
+	var gm = get_node("/root/GameManager")
+	var snapshot: Dictionary = gm._capture_save_state()
+	gm._apply_save_state(gm._default_new_game_state())
+	_solve_toby_commission_risk(gm)
+	gm.grant_investigation_document("grey_ryan_case_number")
+	gm.grant_investigation_document("grey_blacktooth_batch")
+	var scene: MineInvestigation = preload("res://scenes/ui/MineInvestigation.tscn").instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+	_ok(gm.grant_investigation_document("grey_payout_closure"),
+		"granting the third grey-ledger evidence unlocks a new deduction")
+	var feedback := scene._evidence_feedback_text(gm, "grey_payout_closure", true)
+	_ok(feedback.contains("推断 · "), "evidence feedback labels newly unlocked deduction")
+	_ok(feedback.contains("莱恩与托比的同批灰账"),
+		"evidence feedback names the newly unlocked deduction")
+	scene.queue_free()
+	await get_tree().process_frame
+	gm._apply_save_state(snapshot)
+
+
+func _solve_toby_commission_risk(gm: Node) -> void:
+	gm.inference.add_clues(["toby_name", "back_alley_boy", "blacktooth_escort", "high_pay_trap", "one_person_walk"])
+	gm.apply_inference_result(gm.inference.try_place("toby_identity", "name", "toby_name"))
+	gm.apply_inference_result(gm.inference.try_place("toby_identity", "identity", "back_alley_boy"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "commission", "blacktooth_escort"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "risk", "high_pay_trap"))
+	gm.apply_inference_result(gm.inference.try_place("toby_commission_risk", "mindset", "one_person_walk"))
 
 
 func _label_text(scene: Node, path: String) -> String:

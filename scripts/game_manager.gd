@@ -136,6 +136,7 @@ var _ending_screen = null
 var _tutorial_manager = null
 var _day_map_state_missing_from_save: bool = false
 var _announced_inference_question_ids: Dictionary = {}
+var _last_investigation_unlocked_question_titles: Array[String] = []
 var _day_start_snapshot: Dictionary = {}
 var _current_day_events: Array = []
 var _pending_guest_reaction_suffix: String = ""
@@ -743,6 +744,27 @@ func _available_inference_question_ids() -> Array[String]:
 		var question_id := String(question.get("id", ""))
 		if question_id != "":
 			result.append(question_id)
+	return result
+
+
+func get_last_investigation_unlocked_question_titles() -> Array[String]:
+	var result: Array[String] = []
+	for title in _last_investigation_unlocked_question_titles:
+		result.append(String(title))
+	return result
+
+
+func _new_inference_question_titles(previous_question_ids: Array[String]) -> Array[String]:
+	var result: Array[String] = []
+	if inference == null:
+		return result
+	for question in inference.get_available_questions():
+		var question_id := String(question.get("id", ""))
+		if question_id == "" or previous_question_ids.has(question_id):
+			continue
+		var title := String(question.get("title", question_id)).strip_edges()
+		if title != "":
+			result.append(title)
 	return result
 
 
@@ -1382,6 +1404,7 @@ func _is_shop_gossip_available(entry: Dictionary) -> bool:
 func grant_investigation_document(document_id: String) -> bool:
 	# 物理调查场景捡起/拼合出线索时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
 	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
+	_last_investigation_unlocked_question_titles.clear()
 	var id := String(document_id)
 	var already_owned := documents.owns_document(id)
 	var newly := documents.grant_document(id) and not already_owned
@@ -1396,6 +1419,7 @@ func grant_investigation_document(document_id: String) -> bool:
 			var previous_questions := _available_inference_question_ids()
 			if inference.add_clue(clue_id):
 				_add_grey_document_fate_note(id)
+				_last_investigation_unlocked_question_titles = _new_inference_question_titles(previous_questions)
 				_maybe_show_inference_ready_notice(previous_questions)
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
@@ -2945,6 +2969,7 @@ func _apply_save_state(data: Dictionary) -> void:
 	if inference != null:
 		inference.restore_state(data.get("inference", {}))
 	_announced_inference_question_ids.clear()
+	_last_investigation_unlocked_question_titles.clear()
 
 	var nar: Dictionary = data.get("narrative", {})
 	var restored_vars := _fresh_narrative_vars()
