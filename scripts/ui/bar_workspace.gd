@@ -40,6 +40,8 @@ const COMEDY_RELEASE_LINEAR_BOOST_MAX := 56.0
 const COMEDY_RELEASE_MAX_LINEAR_SPEED := 1200.0
 const COMEDY_RELEASE_MAX_ANGULAR_SPEED := 18.0
 const CHAOS_GHOST_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost.png"
+const CHAOS_GHOST_GRAB_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png"
+const CHAOS_GHOST_FADE_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png"
 const CHAOS_GHOST_TARGET_META := "chaos_ghost_target"
 const CHAOS_GHOST_STOLEN_META := "chaos_ghost_stolen_once"
 const CHAOS_GHOST_BASE_MODULATE_META := "chaos_ghost_base_modulate"
@@ -376,6 +378,7 @@ func _start_chaos_ghost_approach(target: DeskItem) -> void:
 		target.set_meta(CHAOS_GHOST_BASE_MODULATE_META, target.modulate)
 	_pulse_chaos_ghost_target()
 	var ghost := _ensure_chaos_ghost_node()
+	_set_chaos_ghost_texture(CHAOS_GHOST_TEXTURE_PATH)
 	ghost.visible = true
 	ghost.global_position = _chaos_ghost_entry_position
 	ghost.scale = Vector2.ONE * 0.78
@@ -405,10 +408,13 @@ func _start_chaos_ghost_escape() -> void:
 	target.collision_layer = 0
 	target.collision_mask = 0
 	target.set_physics_process(false)
+	target.z_as_relative = false
+	target.z_index = CHAOS_GHOST_Z_INDEX + 1
 	_chaos_ghost_phase = "escape"
 	_chaos_ghost_elapsed = 0.0
 	_chaos_ghost_frames = 0
 	var ghost := _ensure_chaos_ghost_node()
+	_set_chaos_ghost_texture(CHAOS_GHOST_GRAB_TEXTURE_PATH)
 	_chaos_ghost_capture_position = ghost.global_position
 	_chaos_ghost_escape_position = _chaos_ghost_exit_position_from(_chaos_ghost_capture_position)
 	_update_carried_chaos_ghost_target(ghost.global_position)
@@ -425,6 +431,7 @@ func _cancel_chaos_ghost_event() -> void:
 	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
 		_complete_chaos_ghost_fade()
 		return
+	_set_chaos_ghost_texture(CHAOS_GHOST_FADE_TEXTURE_PATH)
 	_chaos_ghost_phase = "fade"
 	_chaos_ghost_elapsed = 0.0
 	_chaos_ghost_frames = 0
@@ -550,8 +557,7 @@ func _build_chaos_ghost_visual(root: Node2D) -> void:
 	sprite.name = "Sprite"
 	sprite.centered = true
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists(CHAOS_GHOST_TEXTURE_PATH):
-		sprite.texture = load(CHAOS_GHOST_TEXTURE_PATH)
+	_apply_chaos_ghost_sprite_texture(sprite, CHAOS_GHOST_TEXTURE_PATH)
 	if sprite.texture != null:
 		sprite.scale = Vector2.ONE * CHAOS_GHOST_SPRITE_SCALE
 		sprite.modulate = Color(1.0, 1.0, 1.0, 0.92)
@@ -571,6 +577,22 @@ func _build_chaos_ghost_visual(root: Node2D) -> void:
 	])
 	fallback.color = Color(0.62, 0.85, 1.0, 0.56)
 	root.add_child(fallback)
+
+
+func _set_chaos_ghost_texture(texture_path: String) -> void:
+	var ghost := _ensure_chaos_ghost_node()
+	var sprite := ghost.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	_apply_chaos_ghost_sprite_texture(sprite, texture_path)
+
+
+func _apply_chaos_ghost_sprite_texture(sprite: Sprite2D, texture_path: String) -> void:
+	if sprite == null or not ResourceLoader.exists(texture_path):
+		return
+	var texture := load(texture_path) as Texture2D
+	if texture != null:
+		sprite.texture = texture
 
 
 func _ensure_shortcut_slot_visuals(slot: ColorRect) -> void:

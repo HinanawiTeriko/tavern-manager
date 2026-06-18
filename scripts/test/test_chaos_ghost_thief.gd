@@ -26,6 +26,15 @@ func _is_offscreen(position: Vector2) -> bool:
 	return position.x < -40.0 or position.x > 1320.0 or position.y < -40.0 or position.y > 760.0
 
 
+func _ghost_texture_path(ghost: Node2D) -> String:
+	if ghost == null:
+		return ""
+	var sprite := ghost.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null or sprite.texture == null:
+		return ""
+	return String(sprite.texture.resource_path)
+
+
 func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void:
 	var tavern := TAVERN_SCENE.instantiate()
 	add_child(tavern)
@@ -71,6 +80,10 @@ func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void
 	if ghost != null and is_instance_valid(ghost):
 		_ok(ghost.global_position.distance_to(entry_position) > entry_to_target_distance + 20.0,
 			"after grabbing, ghost should keep flying through the target instead of retreating to its entry edge")
+		_ok(item.z_index > ghost.z_index,
+			"carried item should render above the ghost while being stolen")
+		_ok(_ghost_texture_path(ghost) == "res://assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png",
+			"ghost should switch to the grab expression while carrying an item")
 
 	for _i in range(20):
 		bar._process(0.1)
@@ -119,6 +132,8 @@ func _test_ghost_fades_in_place_when_player_snatches_target_back() -> void:
 	_ok(ghost.visible, "ghost should remain visible when the player snatches the target back")
 	_ok(first_alpha < 0.92 and first_alpha > 0.05, "ghost should start fading instead of disappearing instantly")
 	_ok(ghost.global_position.distance_to(fade_origin) < 1.0, "ghost should fade in place after the target is snatched back")
+	_ok(_ghost_texture_path(ghost) == "res://assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png",
+		"ghost should switch to the fade expression when the player interrupts theft")
 	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(), "snatched item should remain in the player's control")
 	_ok(not bool(item.get_meta("chaos_ghost_stolen_once", false)), "snatched item should not be marked as stolen")
 
