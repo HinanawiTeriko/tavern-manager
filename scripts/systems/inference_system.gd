@@ -145,6 +145,26 @@ func has_available_questions() -> bool:
 	return not get_available_questions().is_empty()
 
 
+func get_next_blocked_question_hint() -> Dictionary:
+	for question in _questions:
+		var question_id := String(question.get("id", ""))
+		if bool(_solved.get(question_id, false)):
+			continue
+		if _requirements_met(question):
+			continue
+		var missing_clues := _missing_required_clues(question)
+		var missing_questions := _missing_required_questions(question)
+		if missing_clues.is_empty() and missing_questions.is_empty():
+			continue
+		return {
+			"questionId": question_id,
+			"title": String(question.get("title", question_id)),
+			"missingClues": missing_clues,
+			"missingQuestions": missing_questions,
+		}
+	return {}
+
+
 func try_place(question_id: String, blank_id: String, clue_id: String) -> Dictionary:
 	var question := get_question(question_id)
 	if question.is_empty():
@@ -209,6 +229,41 @@ func _requirements_met(question: Dictionary) -> bool:
 		if not bool(_solved.get(String(question_id), false)):
 			return false
 	return true
+
+
+func _missing_required_clues(question: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for clue_id_value in question.get("requiresClues", []):
+		var clue_id := String(clue_id_value)
+		if clue_id == "" or has_clue(clue_id):
+			continue
+		var clue := get_clue(clue_id)
+		if clue.is_empty():
+			continue
+		result.append(clue)
+	return result
+
+
+func _missing_required_questions(question: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for question_id_value in question.get("requiresSolved", []):
+		var question_id := String(question_id_value)
+		if question_id == "" or bool(_solved.get(question_id, false)):
+			continue
+		result.append({
+			"id": question_id,
+			"title": _question_title(question_id),
+			"sourceType": "fact",
+			"sourceLabel": source_label_for_type("fact"),
+		})
+	return result
+
+
+func _question_title(question_id: String) -> String:
+	for question in _questions:
+		if String(question.get("id", "")) == question_id:
+			return String(question.get("title", question_id))
+	return question_id
 
 
 func _unsolved_fillable_clue_ids() -> Dictionary:

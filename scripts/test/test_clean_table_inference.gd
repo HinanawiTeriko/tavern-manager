@@ -17,6 +17,7 @@ var _failures := 0
 func _ready() -> void:
 	await _test_clean_table_screen_contract()
 	await _test_mira_question_title_contract()
+	await _test_empty_question_names_missing_clue_sources()
 	await _test_public_account_gap_hint_contract()
 	_test_game_manager_clean_table_route_contract()
 	await _test_inference_tutorial_contract()
@@ -130,6 +131,26 @@ func _test_mira_question_title_contract() -> void:
 	_ok(String(screen.get_current_question_id()) == "mira_toby_old_relation",
 		"screen can open directly on the first Mira inference question after Toby identity")
 	_assert_question_title(screen, "米拉旧路")
+	screen.queue_free()
+	await get_tree().process_frame
+
+
+func _test_empty_question_names_missing_clue_sources() -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	_suppress_inference_tutorial_auto_start()
+	var scene: PackedScene = preload("res://scenes/ui/CleanTableInferenceScreen.tscn")
+	var screen = scene.instantiate()
+	add_child(screen)
+	await get_tree().process_frame
+	var label := screen.get_node_or_null("BookArea/QuestionLabel") as RichTextLabel
+	_ok(label != null and label.visible, "empty inference state still uses the question label")
+	if label != null:
+		_ok(label.text.contains("还缺"), "empty inference state explains missing requirements")
+		_ok(label.text.contains("风声") and label.text.contains("人心"),
+			"empty inference state names missing clue source types")
+		_ok(label.text.contains("托比身份"),
+			"empty inference state names the blocked deduction")
 	screen.queue_free()
 	await get_tree().process_frame
 

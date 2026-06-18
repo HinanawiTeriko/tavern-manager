@@ -249,7 +249,7 @@ func _render_current_question() -> void:
 		_current_question = {}
 		title.visible = false
 		_question_label.visible = true
-		_question_label.text = "今晚没有新的推断。"
+		_question_label.text = _empty_question_text()
 		_clear_feedback()
 		_extinguish_btn.text = "翻到账本"
 		return
@@ -263,6 +263,45 @@ func _render_current_question() -> void:
 	var blanks: Dictionary = _current_question.get("blanks", {})
 	var placements: Dictionary = _merged_render_placements(_current_question.get("placements", {}))
 	_render_sentence_controls(blanks, placements)
+
+
+func _empty_question_text() -> String:
+	var lines := PackedStringArray(["今晚没有新的推断。"])
+	if _inference == null or not _inference.has_method("get_next_blocked_question_hint"):
+		return "\n".join(lines)
+	var hint: Dictionary = _inference.get_next_blocked_question_hint()
+	if hint.is_empty():
+		return "\n".join(lines)
+	var title := String(hint.get("title", "")).strip_edges()
+	if title != "":
+		lines.append("下一题：" + title)
+	var missing_text := _missing_requirement_text(hint)
+	if missing_text != "":
+		lines.append("还缺：" + missing_text)
+	return "\n".join(lines)
+
+
+func _missing_requirement_text(hint: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for clue in hint.get("missingClues", []):
+		if not clue is Dictionary:
+			continue
+		var clue_info: Dictionary = clue
+		var source_label := String(clue_info.get("sourceLabel", "线索")).strip_edges()
+		var label := String(clue_info.get("label", clue_info.get("id", ""))).strip_edges()
+		if label == "":
+			continue
+		parts.append("%s · %s" % [source_label if source_label != "" else "线索", label])
+	for required_question in hint.get("missingQuestions", []):
+		if not required_question is Dictionary:
+			continue
+		var question_info: Dictionary = required_question
+		var source_label := String(question_info.get("sourceLabel", "事实")).strip_edges()
+		var title := String(question_info.get("title", question_info.get("id", ""))).strip_edges()
+		if title == "":
+			continue
+		parts.append("%s · %s" % [source_label if source_label != "" else "事实", title])
+	return " / ".join(parts)
 
 
 func _ensure_question_title() -> Label:
