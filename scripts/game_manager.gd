@@ -99,6 +99,7 @@ var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
 var _guest_lingering: bool = false
 var _serve_tutorial_pending_after_dialogue: bool = false
+var _craft_tutorial_pending_after_menu: bool = false
 
 # 开场交接：刚看完开场后置位，DayMap 一次性消费以走 match-cut 拉镜
 var _pending_intro_handoff: bool = false
@@ -336,6 +337,16 @@ func _should_defer_important_guest_for_tutorial(tm: Node) -> bool:
 	return true
 
 
+func _should_start_menu_prep_tutorial(tm: Node) -> bool:
+	if tm == null:
+		return false
+	if bool(tm.first_menu_prep_shown):
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed("menu_prep"):
+		return false
+	return true
+
+
 func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
@@ -354,9 +365,15 @@ func register_view(view: Node) -> void:
 		var tm = _tutorial_manager
 		var first_tavern_entry = tm != null and not tm.tavern_first_entered
 		var tutorial_will_start = _should_defer_important_guest_for_tutorial(tm)
+		var menu_prep_tutorial_will_start = _should_start_menu_prep_tutorial(tm)
 
 		if first_tavern_entry:
 			tm.tavern_first_entered = true
+			tm._save_state()
+		if tutorial_will_start:
+			_craft_tutorial_pending_after_menu = true
+		if menu_prep_tutorial_will_start:
+			tm.first_menu_prep_shown = true
 			tm._save_state()
 
 		var important_guest_request := _today_important_guest_request()
@@ -367,16 +384,13 @@ func register_view(view: Node) -> void:
 			var npc_id := String(important_guest_request.get("npc_id", ""))
 			var order_key := String(important_guest_request.get("order_key", "bread"))
 
-			if tutorial_will_start:
-				# 教程结束后再生成重要 NPC（如莱恩）
-				var spawn_after_tutorial := _spawn_npc_after_tutorial.bind(npc_id, order_key)
-				if not tm.tutorial_sequence_ended.is_connected(spawn_after_tutorial):
-					tm.tutorial_sequence_ended.connect(spawn_after_tutorial, CONNECT_ONE_SHOT)
-			elif _tavern_view.daily_menu_confirmed and not guests.has_guest:
+			if not tutorial_will_start and _tavern_view.daily_menu_confirmed and not guests.has_guest:
 				guests.spawn_important(npc_id, order_key)
 			# 菜单未确认时等待 on_menu_confirmed() 生成
 
-		if tutorial_will_start:
+		if menu_prep_tutorial_will_start:
+			view.call_deferred("trigger_menu_prep_tutorial")
+		elif tutorial_will_start and _tavern_view.daily_menu_confirmed:
 			view.call_deferred("trigger_craft_tutorial")
 
 		_refresh_close_button()
@@ -1518,13 +1532,50 @@ func _spawn_important_deferred(npc_id: String, order_key: String) -> void:
 
 ## 菜单确认后的回调：触发生成重要NPC（由 TavernView._confirm_menu 调用）
 func on_menu_confirmed() -> void:
+	if _craft_tutorial_pending_after_menu:
+		if _start_deferred_craft_tutorial_after_menu():
+			return
+	_spawn_pending_important_guest_after_menu()
+
+
+func _start_deferred_craft_tutorial_after_menu() -> bool:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		_craft_tutorial_pending_after_menu = false
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed("craft"):
+		_craft_tutorial_pending_after_menu = false
+		return false
+	if tm._is_active:
+		return true
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		_craft_tutorial_pending_after_menu = false
+		return false
+	_craft_tutorial_pending_after_menu = false
+	if tm.has_signal("tutorial_sequence_ended") and not tm.tutorial_sequence_ended.is_connected(_on_deferred_craft_tutorial_sequence_ended):
+		tm.tutorial_sequence_ended.connect(_on_deferred_craft_tutorial_sequence_ended, CONNECT_ONE_SHOT)
+	_tavern_view.call_deferred("trigger_craft_tutorial")
+	return true
+
+
+func _on_deferred_craft_tutorial_sequence_ended(group_id: String) -> void:
+	if group_id != "craft":
+		return
+	_spawn_pending_important_guest_after_menu()
+
+
+func _spawn_pending_important_guest_after_menu() -> void:
 	if _important_npc_pending:
 		var important_guest_request := _today_important_guest_request()
 		if not important_guest_request.is_empty():
+			if guests.has_guest:
+				return
 			guests.spawn_important(
 				String(important_guest_request.get("npc_id", "")),
 				String(important_guest_request.get("order_key", "bread"))
 			)
+		else:
+			_important_npc_pending = false
 
 ## 当所有客人都招待完毕后提示打烊
 func _on_all_guests_served() -> void:
@@ -2710,6 +2761,7 @@ func _capture_tutorial_state() -> Dictionary:
 		"completed_steps": tm._completed_steps.duplicate(),
 		"daymap_first_shown": tm.daymap_first_shown,
 		"tavern_first_entered": tm.tavern_first_entered,
+		"first_menu_prep_shown": tm.first_menu_prep_shown,
 		"shop_first_visited": tm.shop_first_visited,
 		"first_guest_arrived": tm.first_guest_arrived,
 		"first_product_seasoned": tm.first_product_seasoned,
@@ -2855,6 +2907,7 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 	tm._completed_steps = (t.get("completed_steps", []) as Array).duplicate()
 	tm.daymap_first_shown = bool(t.get("daymap_first_shown", false))
 	tm.tavern_first_entered = bool(t.get("tavern_first_entered", false))
+	tm.first_menu_prep_shown = bool(t.get("first_menu_prep_shown", false))
 	tm.shop_first_visited = bool(t.get("shop_first_visited", false))
 	tm.first_guest_arrived = bool(t.get("first_guest_arrived", false))
 	tm.first_product_seasoned = bool(t.get("first_product_seasoned", false))
@@ -2865,6 +2918,7 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 
 
 func reset_tutorial_progress() -> void:
+	_craft_tutorial_pending_after_menu = false
 	var tm = _tutorial_manager
 	if tm == null:
 		tm = get_node_or_null("/root/TutorialManager")
@@ -2898,6 +2952,7 @@ func restart_current_day() -> void:
 		current_ledger_data = null
 		_guest_lingering = false
 		_important_npc_pending = false
+		_craft_tutorial_pending_after_menu = false
 		_is_dialogue_active = false
 		day_cycle.phase = DayCycleSystem.DayPhase.DAY
 		if save_sys != null:
@@ -2949,6 +3004,7 @@ func _default_tutorial_state() -> Dictionary:
 		"completed_steps": [],
 		"daymap_first_shown": false,
 		"tavern_first_entered": false,
+		"first_menu_prep_shown": false,
 		"shop_first_visited": false,
 		"first_guest_arrived": false,
 		"first_product_seasoned": false,

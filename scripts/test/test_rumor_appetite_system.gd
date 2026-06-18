@@ -21,6 +21,7 @@ func _ready() -> void:
 		_test_game_manager_exposes_menu_preparation_echoes()
 		_test_game_manager_recommends_menu_products()
 		_test_tavern_view_exposes_menu_preparation_contract()
+		await _test_tavern_view_menu_prep_tutorial_rects_are_live()
 		_test_game_manager_exposes_rumor_match_feedback()
 	_finish()
 
@@ -456,12 +457,106 @@ func _test_tavern_view_exposes_menu_preparation_contract() -> void:
 	_ok(source.contains("recommendedTags"), "TavernView renders recommended tags from rumors")
 	_ok(source.contains("RumorScroll"), "TavernView contains long rumor planning copy inside a scrollable clipped region")
 	_ok(source.contains("YesterdayEchoScroll"), "TavernView contains yesterday echo copy inside a scrollable clipped region")
+	_ok(source.contains("SCROLL_MODE_SHOW_NEVER"), "TavernView hides menu preparation scrollbars while keeping scroll regions")
 	_ok(source.contains("YesterdayEchoList"), "TavernView has a bounded yesterday echo list")
 	_ok(source.contains("昨日回响"), "TavernView labels previous-night planning feedback")
 	_ok(source.contains("get_product_tags"), "TavernView labels menu products with readable food tags")
 	_ok(source.contains("MenuPrepReasonLabel"), "TavernView has a bounded product recommendation detail label")
 	_ok(source.contains("_menu_product_recommendation_text"), "TavernView renders short recommendation chips on menu buttons")
 	_ok(source.contains("_refresh_menu_prep_reason"), "TavernView refreshes product recommendation detail text")
+	_ok(source.contains("trigger_menu_prep_tutorial"), "TavernView exposes a menu preparation tutorial trigger")
+	_ok(source.contains("\"menu_prep\""), "TavernView exposes a dedicated menu preparation tutorial group")
+	for key in ["MenuPrepRumors", "MenuPrepProducts", "MenuPrepStartButton"]:
+		_ok(source.contains(key), "TavernView exposes menu preparation tutorial rect: " + key)
+	_ok(source.contains("is_menu_config_open()") and source.contains("trigger_craft_tutorial"),
+		"TavernView guards craft tutorial while menu preparation is open")
+
+
+func _test_tavern_view_menu_prep_tutorial_rects_are_live() -> void:
+	var gm = get_node("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	var old_view = gm._tavern_view
+	var tutorial_backup := _capture_tutorial_state(tm)
+	if tm != null:
+		tm._remove_overlay()
+		tm._is_active = false
+		tm._current_sequence.clear()
+		tm._current_step = -1
+		tm.tavern_first_entered = true
+		tm.first_menu_prep_shown = true
+		for step_id in ["craft_intro", "craft_drag", "craft_recovery"]:
+			tm._completed_steps.erase(step_id)
+
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate() as TavernView
+	add_child(tavern)
+	await get_tree().process_frame
+	tavern.configure_menu_preparation(gm.get_today_rumors(), gm.get_menu_preparation_echoes())
+	await get_tree().process_frame
+
+	var panel := tavern.get_node_or_null("MenuPrepPanel") as Control
+	_ok(panel != null and panel.visible, "runtime menu preparation panel is visible for tutorial rects")
+	for scroll_name in ["RumorScroll", "YesterdayEchoScroll", "ProductScroll"]:
+		var scroll := panel.get_node_or_null(scroll_name) as ScrollContainer if panel != null else null
+		_ok(scroll != null, "runtime menu preparation scroll exists: " + scroll_name)
+		if scroll != null:
+			_assert_menu_prep_scrollbar_hidden(scroll, scroll_name)
+	var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+	var rects: Dictionary = tavern.get_tutorial_highlight_rects("menu_prep")
+	for key in ["MenuPrepRumors", "MenuPrepProducts", "MenuPrepStartButton"]:
+		_ok(rects.has(key), "runtime menu preparation rect exists: " + key)
+		var rect := _rect_from_array(rects.get(key, []))
+		_ok(rect.size.x > 0.0 and rect.size.y > 0.0,
+			"runtime menu preparation rect has positive size: " + key)
+		_ok(panel_rect.grow(2.0).encloses(rect),
+			"runtime menu preparation rect stays inside the visible prep panel: " + key)
+
+	if tm != null:
+		tavern.trigger_craft_tutorial()
+		_ok(not tm._is_active, "craft tutorial does not start while menu preparation panel is open")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+	gm._tavern_view = old_view
+	_restore_tutorial_state(tm, tutorial_backup)
+
+
+func _capture_tutorial_state(tm: Node) -> Dictionary:
+	if tm == null:
+		return {}
+	return {
+		"completed_steps": tm._completed_steps.duplicate(),
+		"current_sequence": tm._current_sequence.duplicate(true),
+		"current_step": tm._current_step,
+		"is_active": tm._is_active,
+		"tavern_first_entered": tm.tavern_first_entered,
+		"first_menu_prep_shown": tm.first_menu_prep_shown,
+	}
+
+
+func _restore_tutorial_state(tm: Node, state: Dictionary) -> void:
+	if tm == null or state.is_empty():
+		return
+	tm._remove_overlay()
+	tm._completed_steps = (state.get("completed_steps", []) as Array).duplicate()
+	tm._current_sequence = (state.get("current_sequence", []) as Array).duplicate(true)
+	tm._current_step = int(state.get("current_step", -1))
+	tm._is_active = bool(state.get("is_active", false))
+	tm._overlay = null
+	tm.tavern_first_entered = bool(state.get("tavern_first_entered", false))
+	tm.first_menu_prep_shown = bool(state.get("first_menu_prep_shown", false))
+
+
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
+
+
+func _assert_menu_prep_scrollbar_hidden(scroll: ScrollContainer, scroll_name: String) -> void:
+	_ok(scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+		scroll_name + " hides the vertical scrollbar control")
+	_ok(scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		scroll_name + " keeps horizontal scrolling disabled")
 
 
 func _test_game_manager_exposes_rumor_match_feedback() -> void:

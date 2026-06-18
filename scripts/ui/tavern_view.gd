@@ -1159,11 +1159,7 @@ func _ensure_menu_prep_panel() -> void:
 	ThemeColors.style_brush_label(product_title, 16, ThemeColors.TEXT_SUBTITLE)
 	_menu_prep_panel.add_child(product_title)
 
-	var product_scroll := ScrollContainer.new()
-	product_scroll.name = "ProductScroll"
-	product_scroll.position = Vector2(384, 102)
-	product_scroll.size = Vector2(340, 318)
-	product_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var product_scroll := _make_menu_prep_scroll("ProductScroll", Vector2(384, 102), Vector2(340, 318))
 	_menu_prep_panel.add_child(product_scroll)
 
 	_menu_prep_product_list = VBoxContainer.new()
@@ -1205,6 +1201,7 @@ func _make_menu_prep_scroll(node_name: String, node_position: Vector2, node_size
 	scroll.size = node_size
 	scroll.clip_contents = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	return scroll
 
 
@@ -1778,6 +1775,8 @@ func _reset_tutorial_progress_from_ui() -> void:
 
 func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 	match group_key:
+		"menu_prep":
+			return _menu_prep_tutorial_rects()
 		"craft":
 			return _craft_tutorial_rects()
 		"seasoning":
@@ -1787,12 +1786,39 @@ func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 	return {}
 
 
+func trigger_menu_prep_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active:
+		return
+	if _menu_prep_panel == null or not _menu_prep_panel.visible:
+		return
+	tm.start_tutorial("menu_prep", get_tutorial_highlight_rects("menu_prep"))
+
+
 func trigger_craft_tutorial() -> void:
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm == null:
 		return
+	if is_menu_config_open():
+		return
 
 	tm.start_tutorial("craft", get_tutorial_highlight_rects("craft"))
+
+
+func _menu_prep_tutorial_rects() -> Dictionary:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return {}
+	var rumor_rect := _union_screen_rects([
+		_menu_prep_child_screen_rect("RumorScroll"),
+		_menu_prep_child_screen_rect("YesterdayEchoScroll"),
+	])
+	var product_rect := _menu_prep_child_screen_rect("ProductScroll")
+	var start_rect := _control_screen_rect(_menu_prep_start_btn)
+	return {
+		"MenuPrepRumors": rumor_rect,
+		"MenuPrepProducts": product_rect,
+		"MenuPrepStartButton": start_rect,
+	}
 
 
 func _craft_tutorial_rects() -> Dictionary:
@@ -1830,6 +1856,13 @@ func _control_screen_rect(control: Control) -> Array:
 		return [0.0, 0.0, 0.0, 0.0]
 	var rect := control.get_global_rect()
 	return _rect_to_array(rect)
+
+
+func _menu_prep_child_screen_rect(node_path: String) -> Array:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return []
+	var control := _menu_prep_panel.get_node_or_null(node_path) as Control
+	return _control_screen_rect(control)
 
 
 func _available_sprite_screen_rect(sprite_path: String, fallback_node_path: String, fallback_size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:

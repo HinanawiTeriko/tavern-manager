@@ -52,6 +52,58 @@
       "desc_height": 150
     }
   ],
+  "menu_prep": [
+    {
+      "id": "menu_prep_rumors",
+      "group": "menu_prep",
+      "title": "今日菜单 · 传闻",
+      "description": "这里汇总白天听到的传闻和昨日回响。传闻会提示可能来的客群、受影响的熟客，以及今晚更值得准备的口味标签。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "开门前先看今日菜单。左边是白天听到的传闻，还有昨日回响。"},
+        {"expression": "concerned", "text": "传闻不是闲话。它会提示可能来的客群、熟客和推荐口味。"},
+        {"expression": "smirk", "text": "昨日回响会提醒谁记住了哪道菜，方便你今天接着做准备。"}
+      ],
+      "highlight_node": "MenuPrepRumors",
+      "highlight_rect": [286, 188, 300, 278],
+      "desc_pos_x": 0.68,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 150
+    },
+    {
+      "id": "menu_prep_products",
+      "group": "menu_prep",
+      "title": "今日菜单 · 选择供应",
+      "description": "右侧是今晚能挂出的菜品。按钮里的推荐会结合传闻、昨日回响和菜品标签；菜单越窄，客人点单越可控。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "右边选择今晚供应的菜品。默认会先挂上几道可做的东西。"},
+        {"expression": "smirk", "text": "带“推荐”的菜品命中了传闻、昨日回响或口味标签，可以优先考虑。"},
+        {"expression": "concerned", "text": "菜单越窄，点单越可控；但太窄也可能错过传闻带来的客人。"}
+      ],
+      "highlight_node": "MenuPrepProducts",
+      "highlight_rect": [634, 188, 340, 318],
+      "desc_pos_x": 0.26,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 150
+    },
+    {
+      "id": "menu_prep_start",
+      "group": "menu_prep",
+      "title": "今日菜单 · 开始营业",
+      "description": "确认至少一道菜后，点击“开始营业”进入夜晚服务。之后才会切回吧台操作教程和客人流程。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "确认今日菜单后，点“开始营业”。"},
+        {"expression": "smirk", "text": "进入服务后，我再教你吧台操作；在哪个界面，就只讲那个界面的事。"}
+      ],
+      "highlight_node": "MenuPrepStartButton",
+      "highlight_rect": [528, 562, 224, 54],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 140
+    }
+  ],
   "craft": [
     {
       "id": "craft_intro",
@@ -149,11 +201,12 @@
       "id": "ledger_intro",
       "group": "ledger",
       "title": "账本",
-      "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。",
+      "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。结算页的“重写今日”会打开倒回确认，让你回到当天早晨。",
       "narrator_lines": [
         {"expression": "surprised", "text": "账本会记录每天的金币、声望，还有重要人物的命运。"},
         {"expression": "neutral", "text": "白天或夜晚按 Tab，也能随时翻开桌面账本。"},
-        {"expression": "concerned", "text": "新线索出现时，账本和文档按钮会留下提示，别漏看。"}
+        {"expression": "concerned", "text": "新线索出现时，账本和文档按钮会留下提示，别漏看。"},
+        {"expression": "neutral", "text": "结算页的“重写今日”会打开倒回确认；确认后会回到当天早晨，重新选择白天行动。"}
       ],
       "highlight_node": "UI",
       "highlight_rect": [90, 50, 1100, 560],
