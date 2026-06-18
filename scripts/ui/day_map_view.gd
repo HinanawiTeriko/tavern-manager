@@ -974,7 +974,14 @@ func _yield_text(loc: Dictionary) -> String:
 		items = loc.get("materials", [])
 	if items.is_empty():
 		return "产出：—"
-	return "产出：" + ", ".join(PackedStringArray(items))
+	return "产出：" + _format_item_names(items)
+
+
+func _format_item_names(items: Array) -> String:
+	var names: Array[String] = []
+	for item_key in items:
+		names.append(_resolve_item_name(String(item_key)))
+	return ", ".join(PackedStringArray(names))
 
 
 func _on_go_here_pressed() -> void:

@@ -14,6 +14,7 @@ const DAYMAP_SCENE := preload("res://scenes/ui/DayMap.tscn")
 func _ready() -> void:
 	await _test_single_selection_ring()
 	await _test_tutorial_highlight_rects_follow_map_area()
+	await _test_yield_text_uses_item_display_names()
 	_test_clear_selection_is_centralized()
 	_finish()
 
@@ -84,6 +85,36 @@ func _test_single_selection_ring() -> void:
 	_ok(_selected_ring_count(view) == 1, "switching selection A↔B never stacks two rings")
 
 	view.queue_free()
+
+
+func _test_yield_text_uses_item_display_names() -> void:
+	var gm = get_node("/root/GameManager")
+	gm.economy.current_day = 2
+	gm.start_day_map(2)
+	var view = DAYMAP_SCENE.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+
+	var forest := _find_location(gm.day_map.get_locations(), "mushroom_forest")
+	var day2_yield := String(view._yield_text(forest))
+	_ok(day2_yield.contains("沉睡花粉"), "DayMap day-specific yield uses the item display name")
+	_ok(not day2_yield.contains("sleep_powder"), "DayMap day-specific yield does not expose item ids")
+
+	gm.economy.current_day = 3
+	gm.start_day_map(3)
+	forest = _find_location(gm.day_map.get_locations(), "mushroom_forest")
+	var day3_yield := String(view._yield_text(forest))
+	_ok(day3_yield.contains("草药"), "DayMap repeatable yield uses the item display name")
+	_ok(not day3_yield.contains("herb"), "DayMap repeatable yield does not expose item ids")
+
+	view.queue_free()
+
+
+func _find_location(locations: Array, location_id: String) -> Dictionary:
+	for loc in locations:
+		if String(loc.get("id", "")) == location_id:
+			return loc
+	return {}
 
 
 func _test_tutorial_highlight_rects_follow_map_area() -> void:
