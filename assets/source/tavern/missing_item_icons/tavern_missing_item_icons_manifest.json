@@ -307,31 +307,6 @@
       ],
       "intended_godot_use": "grape and herb intermediate item icon for recipe UI and draggable DeskItem art"
     },
-    "meat_stew_raw": {
-      "source_sheet": "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png",
-      "source_rect": [
-        887,
-        296,
-        1183,
-        591
-      ],
-      "reference": "assets/source/tavern/missing_item_icons/reference/meat_stew_raw_reference.png",
-      "native": "assets/source/tavern/missing_item_icons/meat_stew_raw_native.png",
-      "runtime": "assets/textures/tavern/items/meat_stew_raw.png",
-      "native_size": [
-        24,
-        24
-      ],
-      "scale": 4,
-      "padding": 2,
-      "safe_area": [
-        1,
-        1,
-        22,
-        22
-      ],
-      "intended_godot_use": "raw meat stew intermediate item icon for recipe UI and draggable DeskItem art"
-    },
     "herb_tea": {
       "source_sheet": "assets/source/tavern/missing_item_icons/reference/missing_item_icons_sheet_v3.png",
       "source_rect": [

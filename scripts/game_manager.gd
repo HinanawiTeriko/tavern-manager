@@ -163,7 +163,6 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"dough_meat": "res://assets/textures/tavern/items/dough_meat.png",
 	"ale_herb": "res://assets/textures/tavern/items/ale_herb.png",
 	"grape_herb": "res://assets/textures/tavern/items/grape_herb.png",
-	"meat_stew_raw": "res://assets/textures/tavern/items/meat_stew_raw.png",
 	"failed_brew": "res://assets/textures/tavern/items/failed_brew.png",
 	"failed_stew": "res://assets/textures/tavern/items/failed_stew.png",
 	"ale_beer": "res://assets/textures/tavern/items/ale_beer.png",

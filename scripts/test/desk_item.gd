@@ -14,6 +14,12 @@ const MOTION_TRAIL_FULL_SPEED := 680.0
 const MOTION_TRAIL_SPAWN_INTERVAL_SLOW := 0.055
 const MOTION_TRAIL_SPAWN_INTERVAL_FAST := 0.025
 const MOTION_TRAIL_MAX_ACTIVE := 12
+const COMEDY_MAX_LINEAR_SPEED := 1200.0
+const COMEDY_MAX_ANGULAR_SPEED := 18.0
+const COMEDY_IMPACT_SIDE_KICK_MIN := 18.0
+const COMEDY_IMPACT_SIDE_KICK_MAX := 48.0
+const COMEDY_IMPACT_SPIN_MIN := 1.5
+const COMEDY_IMPACT_SPIN_MAX := 5.0
 const SEASONING_VISUAL_LAYER_NAME := "SeasoningVisual"
 const PRODUCT_SEASONING_VISUAL_KIND_META := "product_seasoning_visual_kind"
 const PRODUCT_SEASONING_VISUAL_LIFE_META := "product_seasoning_visual_life"
@@ -107,6 +113,7 @@ var _last_impact_audio_msec: int = -1000
 
 
 func _ready() -> void:
+	set_physics_process(true)
 	_ensure_icon_art()
 	_apply_base_color(_pending_color)
 	_apply_art_texture()
@@ -118,6 +125,7 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	_apply_comedy_velocity_guardrails()
 	if global_position.y > KILL_Y and not _fell_emitted:
 		_fell_emitted = true
 		fell_out_of_bounds.emit(self)
@@ -272,11 +280,38 @@ func _motion_trail_speed_ratio(speed: float) -> float:
 func _on_body_entered(_body: Node) -> void:
 	if linear_velocity.length() < IMPACT_DEBUG_SPEED:
 		return
+	_apply_comedy_impact_reaction()
 	var now := Time.get_ticks_msec()
 	if now - _last_impact_audio_msec < 100:
 		return
 	_last_impact_audio_msec = now
 	GameManager.play_audio_event("collision")
+
+
+func _apply_comedy_velocity_guardrails() -> void:
+	var speed := linear_velocity.length()
+	if speed > COMEDY_MAX_LINEAR_SPEED:
+		linear_velocity = linear_velocity.normalized() * COMEDY_MAX_LINEAR_SPEED
+	angular_velocity = clampf(angular_velocity, -COMEDY_MAX_ANGULAR_SPEED, COMEDY_MAX_ANGULAR_SPEED)
+
+
+func _apply_comedy_impact_reaction() -> void:
+	var speed := linear_velocity.length()
+	if speed < IMPACT_DEBUG_SPEED:
+		return
+	var direction := linear_velocity.normalized()
+	if direction == Vector2.ZERO:
+		return
+	var side := Vector2(-direction.y, direction.x)
+	var sign := 1.0 if int(get_instance_id()) % 2 == 0 else -1.0
+	var ratio := clampf(
+		(speed - IMPACT_DEBUG_SPEED) / maxf(MOTION_TRAIL_FULL_SPEED - IMPACT_DEBUG_SPEED, 0.01),
+		0.0,
+		1.0
+	)
+	linear_velocity += side * sign * lerpf(COMEDY_IMPACT_SIDE_KICK_MIN, COMEDY_IMPACT_SIDE_KICK_MAX, ratio)
+	angular_velocity += sign * lerpf(COMEDY_IMPACT_SPIN_MIN, COMEDY_IMPACT_SPIN_MAX, ratio)
+	_apply_comedy_velocity_guardrails()
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

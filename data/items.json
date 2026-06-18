@@ -28,7 +28,6 @@
   "herbal_ale":   { "name": "草药麦酒",    "color": [0.6, 0.45, 0.2],  "price": 10, "type": "product" },
   "grape_herb":   { "name": "香料葡萄",    "color": [0.5, 0.2, 0.2],   "price": 0,  "type": "intermediate" },
   "spiced_wine":  { "name": "香料红酒",    "color": [0.45, 0.1, 0.2],  "price": 11, "type": "product" },
-  "meat_stew_raw":{ "name": "生肉汤",      "color": [0.5, 0.3, 0.15],  "price": 0,  "type": "intermediate" },
   "meat_stew":    { "name": "肉汤",        "color": [0.55, 0.3, 0.15], "price": 12, "type": "product" },
   "cave_mushroom_stew": { "name": "菌菇肉汤", "color": [0.38, 0.30, 0.18], "price": 14, "type": "product" },
   "herb_broth":   { "name": "草药清汤",    "color": [0.35, 0.55, 0.22], "price": 8, "type": "product" },
