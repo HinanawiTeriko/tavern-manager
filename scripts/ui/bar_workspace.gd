@@ -358,20 +358,23 @@ func _find_chaos_ghost_target() -> DeskItem:
 	return null
 
 
-func _is_chaos_ghost_targetable(item: DeskItem) -> bool:
-	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
+func _is_chaos_ghost_targetable(item) -> bool:
+	if item == null or not is_instance_valid(item) or not item is DeskItem:
 		return false
-	if item.item_key == "" or item.is_held:
+	var desk_item := item as DeskItem
+	if desk_item.is_queued_for_deletion():
 		return false
-	if _drag_ctrl != null and _drag_ctrl.get_body() == item:
+	if desk_item.item_key == "" or desk_item.is_held:
 		return false
-	if not item.visible or _is_item_inside_any_container(item):
+	if _drag_ctrl != null and _drag_ctrl.get_body() == desk_item:
 		return false
-	if bool(item.get_meta(CHAOS_GHOST_STOLEN_META, false)):
+	if not desk_item.visible or _is_item_inside_any_container(desk_item):
 		return false
-	if item.document_id != "":
+	if bool(desk_item.get_meta(CHAOS_GHOST_STOLEN_META, false)):
 		return false
-	if _gm != null and _gm.inventory_sys != null and _gm.inventory_sys.is_story_item(item.item_key):
+	if desk_item.document_id != "":
+		return false
+	if _gm != null and _gm.inventory_sys != null and _gm.inventory_sys.is_story_item(desk_item.item_key):
 		return false
 	return true
 

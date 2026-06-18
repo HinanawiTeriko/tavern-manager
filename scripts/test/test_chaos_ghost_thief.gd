@@ -10,6 +10,7 @@ func _ready() -> void:
 	await _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item()
 	await _test_ghost_fades_in_place_when_player_snatches_target_back()
 	await _test_ghost_ignores_held_and_story_items()
+	await _test_ghost_handles_target_freed_mid_approach()
 	await _test_fast_releases_feed_hidden_chaos()
 	await _test_waiting_guest_feeds_hidden_chaos_without_visible_meter()
 	_finish()
@@ -180,6 +181,34 @@ func _test_ghost_ignores_held_and_story_items() -> void:
 	_ok(not held_item.has_meta("chaos_ghost_target"), "ghost should not target the item currently held by the player")
 	_ok(not story_item.has_meta("chaos_ghost_target"), "ghost should not target story-critical readable items")
 	_ok(free_item.has_meta("chaos_ghost_target"), "ghost should target an ordinary unheld desk item")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_ghost_handles_target_freed_mid_approach() -> void:
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null or not bar.has_method("record_chaos_event") or not bar.has_method("try_trigger_chaos_event"):
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	var item := bar._spawn_desk_item_at(Vector2(560.0, 340.0), "ale")
+	await get_tree().process_frame
+	bar.call("record_chaos_event", "guest_wait", 2.0)
+	var triggered: bool = bar.call("try_trigger_chaos_event")
+	_ok(triggered, "ghost should start before its target is removed")
+
+	item.free()
+	for _i in range(10):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(not bar.call("is_chaos_ghost_active"), "ghost should cancel cleanly when its target is freed mid-approach")
 
 	tavern.queue_free()
 	await get_tree().process_frame
