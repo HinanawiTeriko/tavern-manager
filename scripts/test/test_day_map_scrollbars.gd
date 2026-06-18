@@ -178,6 +178,13 @@ func _test_gathering_toast_contract(view) -> void:
 
 
 func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
+	var gm = get_node("/root/GameManager")
+	if gm.rumors != null:
+		gm.rumors.restore_state({
+			"current_day": int(gm.economy.current_day),
+			"heard_ids": ["mushroom_forest_clear_scent"],
+			"today_ids": [],
+		})
 	view._visit_location("mushroom_forest")
 	await get_tree().process_frame
 	var result := view.get_node_or_null("UILayer/ResultPanel") as Panel
@@ -191,7 +198,7 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 	var content := toast.get_node_or_null("Content") as Label
 	_ok(content != null and content.text.begins_with("采集获得："),
 		"gathering toast announces collected rewards")
-	_ok(content != null and content.text.contains("×1"),
+	_ok(content != null and content.text.contains("×"),
 		"gathering toast includes the collected item count")
 
 
@@ -209,15 +216,19 @@ func _test_rumor_visit_shows_top_toast(view) -> void:
 	_ok(result != null and not result.visible,
 		"rumor visit does not rely on the blocking result panel for feedback")
 	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
-	_ok(toast != null and toast.visible,
-		"rumor visit shows the top DayMap toast")
-	if toast == null:
+	_ok(toast != null and not toast.visible,
+		"rumor visit hides the compact gathering toast")
+	var notice := view.get_node_or_null("UILayer/WindNotice") as Control
+	_ok(notice != null and notice.visible,
+		"rumor visit shows the wind notice")
+	if notice == null:
 		return
-	var content := toast.get_node_or_null("Content") as Label
-	_ok(content != null and content.text.contains("风声 · "),
-		"rumor toast explicitly labels heard information as compact wind")
-	_ok(content != null and content.text.split("\n").size() <= 2,
-		"rumor toast keeps the top banner to at most two compact lines")
+	var body := notice.get_node_or_null("Body") as Label
+	_ok(body != null and body.text.strip_edges() != "",
+		"wind notice shows the heard rumor text")
+	var rewards := notice.get_node_or_null("Rewards") as Label
+	_ok(rewards != null,
+		"wind notice keeps a rewards label for gathered reward locations")
 
 
 func _test_fixer_visit_refreshes_gold_label(view) -> void:

@@ -89,7 +89,8 @@ func _test_find_slam_recipe() -> void:
 	_ok(c.find_slam_recipe(["herb", "ale"]).is_empty(), "未解锁 pot 时草药清汤不可砸")
 
 	c.unlock_slam("pot")
-	# 双料 pot 配方：herb_broth = herb + ale（不需购买）
+	# 双料 pot 配方：herb_broth = herb + ale（购买解锁后可砸）
+	c.unlock_recipe("herb_broth")
 	var r1 = c.find_slam_recipe(["herb", "ale"])
 	_ok(r1.get("product", "") == "herb_broth", "草药清汤可砸")
 	_ok(r1.get("double", true) == false, "双料配方 double=false")

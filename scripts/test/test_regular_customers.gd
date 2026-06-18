@@ -199,9 +199,12 @@ func _test_guest_system_spawns_named_regular_customer() -> void:
 	if _roster.is_empty():
 		return
 	var gm = _gm()
+	var original_group_profiles: Dictionary = gm.guests._guest_group_profiles.duplicate(true)
+	gm.guests._guest_group_profiles.clear()
 	gm.guests.clear_guest()
 	gm.guests.configure_night(1, 1)
 	gm.guests._spawn_normal()
+	gm.guests._guest_group_profiles = original_group_profiles
 	var guest = gm.guests.current_guest
 	_ok(guest != null, "GuestSystem spawns a normal guest")
 	if guest == null:
@@ -211,12 +214,13 @@ func _test_guest_system_spawns_named_regular_customer() -> void:
 	_ok(_roster.has(guest.npc_id), "spawned regular id exists in roster")
 	_ok(String(guest.get_meta("regular_customer_id", "")) == guest.npc_id, "guest metadata stores regular_customer_id")
 	_ok(String(guest.get_meta("template_id", "")) == guest.npc_id, "guest reactions use regular customer id")
-	_ok(String(guest.guest_name) == String(_roster[guest.npc_id].get("display_name", "")), "spawned guest uses roster display name")
-	var favorite_orders_value = _roster[guest.npc_id].get("favorite_orders", [])
+	var roster_entry: Dictionary = _roster.get(guest.npc_id, {})
+	_ok(String(guest.guest_name) == String(roster_entry.get("display_name", "")), "spawned guest uses roster display name")
+	var favorite_orders_value = roster_entry.get("favorite_orders", [])
 	var favorite_orders: Array = favorite_orders_value if favorite_orders_value is Array else []
 	_ok(favorite_orders.has(guest.order_key), "spawned regular orders from its favorite_orders")
 	var line: String = gm.guests.get_reaction_line("success", guest.npc_id)
-	var reactions_value = _roster[guest.npc_id].get("reactions", {})
+	var reactions_value = roster_entry.get("reactions", {})
 	var reactions: Dictionary = reactions_value if reactions_value is Dictionary else {}
 	_ok(line == String(reactions.get("success", "")),
 		"regular customer reaction line comes from roster")
