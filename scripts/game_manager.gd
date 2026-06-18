@@ -544,7 +544,7 @@ func _grant_mira_old_road_stall_clue(note: String) -> void:
 		return
 	var previous_questions := _available_inference_question_ids()
 	if inference.add_clue("mira_avoids_old_road"):
-		if documents.add_fate_note("mira", note):
+		if documents.add_fate_note("mira", _source_note("heart", note)):
 			play_audio_event("new_document")
 		_maybe_show_inference_ready_notice(previous_questions)
 
@@ -574,7 +574,7 @@ func _collect_toby_board_clues() -> void:
 	if inference != null:
 		inference.add_clues(["toby_name", "blacktooth_escort", "high_pay_trap"])
 		_maybe_show_inference_ready_notice(previous_questions)
-	if documents.add_fate_note("toby", "告示板出现黑齿矿脉护送委托，落款是托比。"):
+	if documents.add_fate_note("toby", _source_note("wind", "告示板出现黑齿矿脉护送委托，落款是托比。")):
 		play_audio_event("new_document")
 
 
@@ -585,7 +585,7 @@ func _collect_toby_day6_night_clues() -> bool:
 		return false
 	var previous_questions := _available_inference_question_ids()
 	var changed: bool = inference.add_clues(["back_alley_boy", "one_person_walk"])
-	if changed and documents.add_fate_note("toby", "夜里买草药清汤的后巷少年，也说起了黑齿矿脉。"):
+	if changed and documents.add_fate_note("toby", _source_note("heart", "夜里买草药清汤的后巷少年，也说起了黑齿矿脉。")):
 		play_audio_event("new_document")
 	if changed:
 		_maybe_show_inference_ready_notice(previous_questions)
@@ -622,7 +622,7 @@ func _try_grant_mira_old_ledger_gossip() -> Dictionary:
 	if not inference.add_clue(clue_id):
 		return {"granted": false, "clue_id": "", "line": ""}
 	narrative.set_var(MIRA_OLD_LEDGER_GOSSIP_GRANTED_DAY_VAR, economy.current_day)
-	if documents.add_fate_note("mira", String(candidate.get("note", ""))):
+	if documents.add_fate_note("mira", _source_note("wind", String(candidate.get("note", "")))):
 		play_audio_event("new_document")
 	_maybe_show_inference_ready_notice(previous_questions)
 	return {
@@ -637,6 +637,21 @@ func _inference_clue_label(clue_id: String) -> String:
 		return clue_id
 	var clue: Dictionary = inference.get_clue(clue_id)
 	return String(clue.get("label", clue_id))
+
+
+func _source_note(source_type: String, note: String) -> String:
+	if inference != null and inference.has_method("source_note"):
+		return String(inference.call("source_note", source_type, note))
+	var clean := note.strip_edges()
+	if clean == "":
+		return ""
+	var fallback_labels := {
+		"wind": "风声",
+		"heart": "人心",
+		"evidence": "证据",
+		"fact": "事实",
+	}
+	return "%s · %s" % [String(fallback_labels.get(source_type, "线索")), clean]
 
 
 func _mira_old_ledger_route_active() -> bool:
@@ -732,8 +747,7 @@ func apply_inference_result(result: Dictionary) -> bool:
 					narrative.set_var("toby_identity_known", true)
 					day_map.set_lead_flag("toby_identity_known", true)
 					changed = true
-					if documents.add_fate_note("toby", "夜里的后巷少年，就是告示上的托比。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("toby", "fact", "夜里的后巷少年，就是告示上的托比。")
 			"toby_commission_lead":
 				if not bool(narrative.get_var("toby_commission_lead")):
 					narrative.set_var("toby_commission_lead", true)
@@ -742,44 +756,37 @@ func apply_inference_result(result: Dictionary) -> bool:
 				if not bool(narrative.get_var("toby_danger_known")):
 					narrative.set_var("toby_danger_known", true)
 					changed = true
-					if documents.add_fate_note("toby", "黑齿矿脉护送的报酬高得像陷阱，得找人截住这趟路。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("toby", "fact", "黑齿矿脉护送的报酬高得像陷阱，得找人截住这趟路。")
 			"mira_toby_link_known":
 				if narrative.get_var("mira_toby_link_known") != true:
 					narrative.set_var("mira_toby_link_known", true)
 					changed = true
-					if documents.add_fate_note("mira", "托比和米拉的旧路被重新对上。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("mira", "fact", "托比和米拉的旧路被重新对上。")
 			"mira_responsibility_lead":
 				if narrative.get_var("mira_responsibility_lead") != true:
 					narrative.set_var("mira_responsibility_lead", true)
 					changed = true
-					if documents.add_fate_note("mira", "托比那句“一个人走”，来自米拉留下的旧办法。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("mira", "fact", "托比那句“一个人走”，来自米拉留下的旧办法。")
 			"grey_same_batch_known":
 				if narrative.get_var("grey_same_batch_known") != true:
 					narrative.set_var("grey_same_batch_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "莱恩案卷和托比的黑齿批次被对进同一批灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "莱恩案卷和托比的黑齿批次被对进同一批灰账。")
 			"grey_payout_method_known":
 				if narrative.get_var("grey_payout_method_known") != true:
 					narrative.set_var("grey_payout_method_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "灰账先决定赔付，再把事故补成已结案。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "灰账先决定赔付，再把事故补成已结案。")
 			"mira_grey_ledger_link_known":
 				if narrative.get_var("mira_grey_ledger_link_known") != true:
 					narrative.set_var("mira_grey_ledger_link_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "米拉的供应协议背面盖着同一枚灰契印，协议也接进灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "米拉的供应协议背面盖着同一枚灰契印，协议也接进灰账。")
 			"grey_public_account_known":
 				if narrative.get_var("grey_public_account_known") != true:
 					narrative.set_var("grey_public_account_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "莱恩、托比和米拉能被抄成同一份公开灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "莱恩、托比和米拉能被抄成同一份公开灰账。")
 	if changed:
 		if economy != null and economy.current_day == EVELYN_FINAL_DAY:
 			_refresh_evelyn_public_gap_vars()
@@ -2493,6 +2500,10 @@ func _add_fate_note(track_id: String, note: String) -> void:
 	_ensure_fate_track(track_id)
 	if documents.add_fate_note(track_id, note):
 		play_audio_event("new_document")
+
+
+func _add_sourced_fate_note(track_id: String, source_type: String, note: String) -> void:
+	_add_fate_note(track_id, _source_note(source_type, note))
 
 
 func _ensure_fate_track(track_id: String) -> void:

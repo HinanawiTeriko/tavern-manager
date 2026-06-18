@@ -2,6 +2,32 @@ class_name InferenceSystem
 extends RefCounted
 
 const DEFAULT_PATH := "res://data/inference_puzzles.json"
+const SOURCE_LABELS := {
+	"wind": "风声",
+	"heart": "人心",
+	"evidence": "证据",
+	"fact": "事实",
+	"cost": "代价",
+	"consequence": "后果",
+}
+const CLUE_SOURCE_TYPES := {
+	"toby_name": "wind",
+	"blacktooth_escort": "wind",
+	"high_pay_trap": "wind",
+	"back_alley_boy": "heart",
+	"one_person_walk": "heart",
+	"mira_traveling_mentor": "wind",
+	"child_learned_saying": "wind",
+	"mira_avoids_old_road": "heart",
+	"grey_ryan_case_number": "evidence",
+	"grey_old_payout_register": "evidence",
+	"grey_missing_page": "evidence",
+	"grey_blacktooth_batch": "evidence",
+	"grey_closure_method": "evidence",
+	"grey_payout_closure": "evidence",
+	"grey_renamed_escort": "evidence",
+	"grey_supply_stamp": "evidence",
+}
 
 var _clues: Dictionary = {}
 var _questions: Array[Dictionary] = []
@@ -52,7 +78,28 @@ func get_clue(clue_id: String) -> Dictionary:
 		return {}
 	var clue := (_clues[clue_id] as Dictionary).duplicate(true)
 	clue["id"] = clue_id
+	var source_type := source_type_for_clue(clue_id, clue)
+	clue["sourceType"] = source_type
+	clue["sourceLabel"] = source_label_for_type(source_type)
 	return clue
+
+
+func source_type_for_clue(clue_id: String, clue: Dictionary = {}) -> String:
+	var explicit := String(clue.get("sourceType", "")).strip_edges()
+	if explicit != "":
+		return _normalized_source_type(explicit)
+	return _normalized_source_type(String(CLUE_SOURCE_TYPES.get(clue_id, "wind")))
+
+
+func source_label_for_type(source_type: String) -> String:
+	return String(SOURCE_LABELS.get(_normalized_source_type(source_type), "线索"))
+
+
+func source_note(source_type: String, text: String) -> String:
+	var clean := text.strip_edges()
+	if clean == "":
+		return ""
+	return "%s · %s" % [source_label_for_type(source_type), clean]
 
 
 func get_owned_clues() -> Array[Dictionary]:
@@ -122,6 +169,8 @@ func try_place(question_id: String, blank_id: String, clue_id: String) -> Dictio
 		_solved[question_id] = true
 		result["conclusion"] = String(question.get("conclusion", ""))
 		result["unlockFlags"] = (question.get("unlockFlags", []) as Array).duplicate()
+		result["sourceType"] = "fact"
+		result["sourceLabel"] = source_label_for_type("fact")
 	result["placements"] = placed.duplicate(true)
 	return result
 
@@ -259,4 +308,13 @@ func _placement_result(accepted: bool, solved: bool, question_id: String, blank_
 		"hint": hint,
 		"conclusion": "",
 		"unlockFlags": [],
+		"sourceType": "",
+		"sourceLabel": "",
 	}
+
+
+func _normalized_source_type(source_type: String) -> String:
+	var normalized := source_type.strip_edges().to_lower()
+	if SOURCE_LABELS.has(normalized):
+		return normalized
+	return "wind"

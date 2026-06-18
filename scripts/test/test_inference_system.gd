@@ -40,6 +40,7 @@ class TavernFeedbackProbe:
 
 func _ready() -> void:
 	_test_toby_inference_rules()
+	_test_clue_source_taxonomy()
 	_test_mira_old_ledger_inference_rules()
 	_test_grey_ledger_inference_rules()
 	_test_toby_dialogue_marks_clues()
@@ -102,6 +103,26 @@ func _test_toby_inference_rules() -> void:
 	restored.restore_state(captured)
 	_ok(restored.has_clue("back_alley_boy"), "restore keeps owned clues")
 	_ok(restored.get_available_questions().is_empty(), "restore keeps solved questions")
+
+
+func _test_clue_source_taxonomy() -> void:
+	var sys = INFERENCE_SYSTEM_SCRIPT.new()
+	_ok(sys.load_data(), "inference data loads for source taxonomy")
+	_ok(sys.has_method("source_label_for_type"), "inference system exposes source label taxonomy")
+	var board_clue: Dictionary = sys.get_clue("toby_name")
+	_ok(String(board_clue.get("sourceType", "")) == "wind", "board clue is tagged as wind")
+	_ok(String(board_clue.get("sourceLabel", "")) == "风声", "board clue shows the wind source label")
+	var heart_clue: Dictionary = sys.get_clue("one_person_walk")
+	_ok(String(heart_clue.get("sourceType", "")) == "heart", "important NPC clue is tagged as heart")
+	_ok(String(heart_clue.get("sourceLabel", "")) == "人心", "important NPC clue shows the heart source label")
+	var evidence_clue: Dictionary = sys.get_clue("grey_ryan_case_number")
+	_ok(String(evidence_clue.get("sourceType", "")) == "evidence", "document clue is tagged as evidence")
+	_ok(String(evidence_clue.get("sourceLabel", "")) == "证据", "document clue shows the evidence source label")
+	sys.add_clues(["toby_name", "back_alley_boy"])
+	sys.try_place("toby_identity", "name", "toby_name")
+	var identity: Dictionary = sys.try_place("toby_identity", "identity", "back_alley_boy")
+	_ok(String(identity.get("sourceType", "")) == "fact", "solved inference result is tagged as fact")
+	_ok(String(identity.get("sourceLabel", "")) == "事实", "solved inference result shows the fact source label")
 
 
 func _test_mira_old_ledger_inference_rules() -> void:
@@ -282,10 +303,16 @@ func _test_game_manager_collects_board_and_night_clues() -> void:
 	_ok(gm.inference.has_clue("blacktooth_escort"), "board grants commission clue")
 	_ok(gm.inference.has_clue("high_pay_trap"), "board grants suspicious-pay clue")
 	_ok(not gm.inference.has_clue("back_alley_boy"), "night-only clue is not granted from the board")
+	var ledger_text := _ledger_text(gm.documents)
+	_ok(ledger_text.contains("风声 · 告示板出现黑齿矿脉护送委托"),
+		"board clue note is recorded as wind instead of an untyped clue")
 	gm._collect_toby_day6_night_clues_for_test()
 	_ok(gm.inference.has_clue("back_alley_boy"), "night event grants the back-alley boy clue")
 	_ok(gm.inference.has_clue("one_person_walk"), "night event grants the lone-road clue")
 	_ok(not gm.inference.has_clue("mine_danger"), "night event does not grant unused clue scraps")
+	ledger_text = _ledger_text(gm.documents)
+	_ok(ledger_text.contains("人心 · 夜里买草药清汤的后巷少年"),
+		"Toby night dialogue note is recorded as heart instead of anonymous gossip")
 
 
 func _test_game_manager_shows_inference_ready_notice_when_question_unlocks() -> void:
@@ -401,6 +428,9 @@ func _test_game_manager_applies_mira_inference_flags() -> void:
 	_ok(changed, "applying Mira inference flags reports changed state")
 	_ok(gm.narrative.get_var("mira_toby_link_known") == true, "Mira old relation flag is stored")
 	_ok(gm.narrative.get_var("mira_responsibility_lead") == true, "Mira responsibility flag is stored")
+	var ledger_text := _ledger_text(gm.documents)
+	_ok(ledger_text.contains("事实 · 托比和米拉的旧路被重新对上。"),
+		"Mira inference result is recorded as fact in the ledger")
 
 
 func _test_mira_stall_collects_old_road_clue() -> void:
@@ -435,6 +465,17 @@ func _clue_ids(clues: Array) -> Array[String]:
 	for clue in clues:
 		if clue is Dictionary:
 			result.append(String((clue as Dictionary).get("id", "")))
+	return result
+
+
+func _ledger_text(docs: DocumentSystem) -> String:
+	return "\n".join(PackedStringArray(_string_pages(docs.get_document("ledger").get("pages", []))))
+
+
+func _string_pages(pages: Array) -> Array[String]:
+	var result: Array[String] = []
+	for page in pages:
+		result.append(String(page))
 	return result
 
 

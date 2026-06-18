@@ -606,6 +606,24 @@ func _select_clue(clue_id: String) -> void:
 			var label := child.get_node_or_null("Label") as Label
 			if label != null:
 				label.add_theme_color_override("font_color", Color(0.13, 0.055, 0.02) if selected else Color(0.22, 0.12, 0.045))
+	_show_selected_clue_source(clue_id)
+
+
+func _show_selected_clue_source(clue_id: String) -> void:
+	if _feedback_label == null or _inference == null:
+		return
+	var clue: Dictionary = _inference.get_clue(clue_id)
+	if clue.is_empty():
+		return
+	var source_label := String(clue.get("sourceLabel", "线索"))
+	var source := String(clue.get("source", "")).strip_edges()
+	var clue_text := String(clue.get("text", "")).strip_edges()
+	var header := source_label
+	if source != "":
+		header += " · " + source
+	_feedback_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_feedback_label.text = header if clue_text == "" else header + "\n" + clue_text
+	_feedback_label.visible = true
 
 
 func _blank_text(blank_id: String, placements: Dictionary) -> String:
@@ -661,6 +679,7 @@ func _apply_static_style() -> void:
 	_question_label.add_theme_color_override("default_color", INFERENCE_INK_COLOR)
 	_question_label.fit_content = false
 	_style_label(_feedback_label, 13, ThemeColors.AMBER_PRIMARY)
+	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_feedback_label.visible = false
 	_solved_list.add_theme_constant_override("separation", 8)
 	_style_paper_tag_button(_extinguish_btn, 16)

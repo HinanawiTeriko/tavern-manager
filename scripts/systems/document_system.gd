@@ -321,6 +321,7 @@ func _render_evidence_pages() -> Array[String]:
 		if current.size() > 1:
 			current.append("")
 		current.append(String(entry.get("title", document_id)))
+		current.append("来源：证据")
 		var links: Array = entry.get("links", [])
 		if not links.is_empty():
 			current.append("关联：" + " / ".join(PackedStringArray(_string_array(links))))

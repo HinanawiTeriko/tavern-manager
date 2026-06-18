@@ -58,6 +58,8 @@ func _test_clean_table_screen_contract() -> void:
 	_ok(screen.get_node_or_null("BookArea/FeedbackLabel") is Label, "screen keeps a feedback label for wrong clues")
 	_ok(String(screen.get_current_question_id()) == "toby_identity", "screen starts from the identity question")
 	_assert_question_title(screen, "托比身份")
+	screen.call("_select_clue", "back_alley_boy")
+	_assert_selected_clue_source_feedback(screen, "人心", "夜晚客人")
 	var wrong: Dictionary = screen.place_clue_for_test("identity", "blacktooth_escort")
 	var feedback := screen.get_node_or_null("BookArea/FeedbackLabel") as Label
 	_ok(not bool(wrong.get("accepted", true)), "wrong clue is rejected on the current blank")
@@ -238,6 +240,18 @@ func _assert_clue_word_can_be_arranged_on_notes_page(screen: Node, clue_id: Stri
 	var word := screen.get_node_or_null("ClueArea/Clue_" + clue_id) as Control
 	_ok(word != null and word.position.distance_to(target) <= 2.0,
 		"clue words can be freely placed on the notes page and stay where released")
+
+
+func _assert_selected_clue_source_feedback(screen: Node, expected_label: String, expected_source: String) -> void:
+	var feedback := screen.get_node_or_null("BookArea/FeedbackLabel") as Label
+	_ok(feedback != null and feedback.visible,
+		"selecting a clue shows its source in the existing feedback area")
+	if feedback == null:
+		return
+	_ok(feedback.text.contains(expected_label),
+		"selected clue feedback shows source label " + expected_label)
+	_ok(feedback.text.contains(expected_source),
+		"selected clue feedback shows original source " + expected_source)
 
 
 func _drag_clue_word_to_notes_position(screen: Node, clue_id: String, target_position: Vector2) -> void:
