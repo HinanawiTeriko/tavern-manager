@@ -39,6 +39,14 @@ const COMEDY_RELEASE_LINEAR_BOOST_MIN := 12.0
 const COMEDY_RELEASE_LINEAR_BOOST_MAX := 56.0
 const COMEDY_RELEASE_MAX_LINEAR_SPEED := 1200.0
 const COMEDY_RELEASE_MAX_ANGULAR_SPEED := 18.0
+const PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER := 4.0
+const PHYSICS_LAW_MAX_CUSTOMER_PULL := 240.0
+const PHYSICS_LAW_MAX_RANDOM_LIFT := 360.0
+const PHYSICS_LAW_COLLISION_MIN_SPEED := 110.0
+const PHYSICS_LAW_COLLISION_SIDE_KICK := 46.0
+const PHYSICS_LAW_COLLISION_HOP := 62.0
+const PHYSICS_LAW_PULL_MAX_LINEAR_SPEED := 980.0
+const PHYSICS_LAW_PULSE_SPIN := 2.6
 const CHAOS_GHOST_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost.png"
 const CHAOS_GHOST_GRAB_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png"
 const CHAOS_GHOST_FADE_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png"
@@ -91,6 +99,7 @@ var _shortcut_preview_body_layer: int = 0
 var _shortcut_preview_body_mask: int = 0
 var _seasoning_tutorial_retry_armed := false
 var _active_physics_law: Dictionary = {}
+var _physics_law_pulse_elapsed := 0.0
 var _chaos_level := 0.0
 var _chaos_ghost_cooldown := 0.0
 var _chaos_ghost_phase := ""
@@ -141,6 +150,7 @@ func apply_physics_law(law: Dictionary) -> void:
 	if not _active_physics_law.is_empty():
 		clear_physics_law()
 	_active_physics_law = law.duplicate(true)
+	_physics_law_pulse_elapsed = 0.0
 	for child in _items_node.get_children():
 		_apply_active_physics_law_to_body(child)
 
@@ -149,6 +159,7 @@ func clear_physics_law() -> void:
 	for child in _items_node.get_children():
 		_restore_body_physics_law(child)
 	_active_physics_law.clear()
+	_physics_law_pulse_elapsed = 0.0
 
 
 func record_chaos_event(event_id: String, amount: float = 1.0) -> void:
@@ -898,16 +909,26 @@ func _apply_comedy_release_to_item(item: DeskItem) -> void:
 	if direction == Vector2.ZERO:
 		return
 	var sign := 1.0 if item.linear_velocity.x >= 0.0 else -1.0
-	item.linear_velocity += direction * lerpf(COMEDY_RELEASE_LINEAR_BOOST_MIN, COMEDY_RELEASE_LINEAR_BOOST_MAX, ratio)
-	if item.linear_velocity.length() > COMEDY_RELEASE_MAX_LINEAR_SPEED:
-		item.linear_velocity = item.linear_velocity.normalized() * COMEDY_RELEASE_MAX_LINEAR_SPEED
+	var release_impulse_multiplier := clampf(
+		float(_active_physics_law.get("release_impulse_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
+	item.linear_velocity += direction * lerpf(
+		COMEDY_RELEASE_LINEAR_BOOST_MIN,
+		COMEDY_RELEASE_LINEAR_BOOST_MAX,
+		ratio) * release_impulse_multiplier
+	_clamp_desk_item_linear_velocity(item, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	var release_spin_multiplier := clampf(
+		float(_active_physics_law.get("release_spin_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
 	item.angular_velocity = clampf(
-		item.angular_velocity + sign * lerpf(COMEDY_RELEASE_SPIN_MIN, COMEDY_RELEASE_SPIN_MAX, ratio),
+		item.angular_velocity + sign * lerpf(COMEDY_RELEASE_SPIN_MIN, COMEDY_RELEASE_SPIN_MAX, ratio) * release_spin_multiplier,
 		-COMEDY_RELEASE_MAX_ANGULAR_SPEED,
 		COMEDY_RELEASE_MAX_ANGULAR_SPEED
 	)
 	item.sleeping = false
-	record_chaos_event("fast_release", 1.0)
+	record_chaos_event("fast_release", 1.0 + _active_law_chaos_feed())
 
 
 func _begin_shortcut_drag_preview(item: DeskItem, mouse_global_position: Vector2) -> void:
@@ -1340,8 +1361,90 @@ func _desk_item_return_position(item: DeskItem) -> Vector2:
 
 func _physics_process(_delta: float) -> void:
 	_recover_docked_bodies()
+	_apply_active_customer_pull(_delta)
+	_update_active_physics_law_pulse(_delta)
 	_update_spoon_depth()
 	_update_dragged_item_depth()
+
+
+func _apply_active_customer_pull(delta: float) -> void:
+	if _active_physics_law.is_empty() or delta <= 0.0:
+		return
+	var pull := clampf(
+		float(_active_physics_law.get("near_customer_pull", 0.0)),
+		0.0,
+		PHYSICS_LAW_MAX_CUSTOMER_PULL)
+	if pull <= 0.0:
+		return
+	var target_position := _customer_area.global_position
+	for child in _items_node.get_children():
+		if not _is_physics_law_motion_target(child):
+			continue
+		var item := child as DeskItem
+		var to_customer := target_position - item.global_position
+		var distance := to_customer.length()
+		if distance <= 8.0:
+			continue
+		var falloff := clampf(1.0 - distance / 900.0, 0.65, 1.0)
+		item.linear_velocity += to_customer.normalized() * pull * delta * falloff
+		_clamp_desk_item_linear_velocity(item, PHYSICS_LAW_PULL_MAX_LINEAR_SPEED)
+		item.sleeping = false
+
+
+func _update_active_physics_law_pulse(delta: float) -> void:
+	if _active_physics_law.is_empty() or delta <= 0.0:
+		return
+	var lift := clampf(
+		float(_active_physics_law.get("random_lift_impulse", 0.0)),
+		0.0,
+		PHYSICS_LAW_MAX_RANDOM_LIFT)
+	if lift <= 0.0:
+		return
+	var interval := maxf(float(_active_physics_law.get("pulse_interval_seconds", 2.5)), 0.5)
+	_physics_law_pulse_elapsed += delta
+	if _physics_law_pulse_elapsed < interval:
+		return
+	_physics_law_pulse_elapsed = fmod(_physics_law_pulse_elapsed, interval)
+	var candidates: Array[DeskItem] = []
+	for child in _items_node.get_children():
+		if _is_physics_law_motion_target(child):
+			candidates.append(child as DeskItem)
+	if candidates.is_empty():
+		return
+	var item := candidates[randi() % candidates.size()]
+	item.linear_velocity += Vector2(randf_range(-lift * 0.18, lift * 0.18), -lift)
+	item.angular_velocity = clampf(
+		item.angular_velocity + randf_range(-PHYSICS_LAW_PULSE_SPIN, PHYSICS_LAW_PULSE_SPIN),
+		-COMEDY_RELEASE_MAX_ANGULAR_SPEED,
+		COMEDY_RELEASE_MAX_ANGULAR_SPEED)
+	_clamp_desk_item_linear_velocity(item, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	item.sleeping = false
+	record_chaos_event("fast_release", _active_law_chaos_feed())
+
+
+func _is_physics_law_motion_target(node: Node) -> bool:
+	if not is_instance_valid(node) or not node is DeskItem:
+		return false
+	var item := node as DeskItem
+	return (
+		not item.is_queued_for_deletion()
+		and item.item_key != ""
+		and not item.is_held
+		and not item.freeze
+	)
+
+
+func _clamp_desk_item_linear_velocity(item: DeskItem, max_speed: float) -> void:
+	if item == null or max_speed <= 0.0:
+		return
+	if item.linear_velocity.length() > max_speed:
+		item.linear_velocity = item.linear_velocity.normalized() * max_speed
+
+
+func _active_law_chaos_feed() -> float:
+	if _active_physics_law.is_empty():
+		return 0.0
+	return clampf(float(_active_physics_law.get("stage_chaos_feed", 0.0)), 0.0, 2.0)
 
 
 func _update_spoon_depth() -> void:
@@ -1433,6 +1536,7 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 	if _gm.craft.is_product(key_a) or _gm.craft.is_product(key_b):
 		return
 	var rel_speed: float = (a.linear_velocity - other.linear_velocity).length()
+	_apply_active_collision_impulse(a, other, rel_speed)
 	var force_tier: String = _gm.craft.classify_slam_force(rel_speed)
 	if force_tier == "none":
 		return
@@ -1446,6 +1550,33 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 		call_deferred("_do_collision_combine", a, other, combined_key, center, conserved)
 		return
 	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _apply_active_collision_impulse(a: DeskItem, other: DeskItem, rel_speed: float) -> void:
+	if _active_physics_law.is_empty() or rel_speed < PHYSICS_LAW_COLLISION_MIN_SPEED:
+		return
+	var multiplier := clampf(
+		float(_active_physics_law.get("collision_impulse_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
+	if multiplier <= 1.0:
+		return
+	var normal := (a.global_position - other.global_position).normalized()
+	if normal == Vector2.ZERO:
+		normal = (a.linear_velocity - other.linear_velocity).normalized()
+	if normal == Vector2.ZERO:
+		normal = Vector2.RIGHT
+	var ratio := clampf((rel_speed - PHYSICS_LAW_COLLISION_MIN_SPEED) / 520.0, 0.0, 1.0)
+	var side_kick := normal * PHYSICS_LAW_COLLISION_SIDE_KICK * multiplier * ratio
+	var hop := Vector2(0.0, -PHYSICS_LAW_COLLISION_HOP * multiplier * ratio)
+	a.linear_velocity += side_kick + hop
+	other.linear_velocity -= side_kick
+	other.linear_velocity += hop
+	_clamp_desk_item_linear_velocity(a, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	_clamp_desk_item_linear_velocity(other, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	a.sleeping = false
+	other.sleeping = false
+	record_chaos_event("collision", _active_law_chaos_feed())
 
 
 func _do_collision_combine(a: DeskItem, other: DeskItem, result_key: String, center: Vector2, conserved: Vector2) -> void:

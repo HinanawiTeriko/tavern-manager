@@ -8,6 +8,16 @@ const MIN_DAMP_MULTIPLIER := 0.05
 const MAX_DAMP_MULTIPLIER := 4.0
 const MIN_BOUNCE := 0.0
 const MAX_BOUNCE := 1.0
+const MIN_DRAMATIC_MULTIPLIER := 0.0
+const MAX_DRAMATIC_MULTIPLIER := 4.0
+const MIN_RANDOM_LIFT_IMPULSE := 0.0
+const MAX_RANDOM_LIFT_IMPULSE := 360.0
+const MIN_CUSTOMER_PULL := 0.0
+const MAX_CUSTOMER_PULL := 240.0
+const MIN_PULSE_INTERVAL := 0.5
+const MAX_PULSE_INTERVAL := 8.0
+const MIN_CHAOS_FEED := 0.0
+const MAX_CHAOS_FEED := 2.0
 
 var _laws_by_id: Dictionary = {}
 var _active_law_id := ""
@@ -45,6 +55,41 @@ func load_from_path(path: String = DEFAULT_PATH) -> bool:
 		law["angular_damp_multiplier"] = clampf(angular_damp_multiplier, MIN_DAMP_MULTIPLIER, MAX_DAMP_MULTIPLIER)
 		if law.has("bounce_override"):
 			law["bounce_override"] = clampf(float(law.get("bounce_override", 0.0)), MIN_BOUNCE, MAX_BOUNCE)
+		if law.has("release_impulse_multiplier"):
+			law["release_impulse_multiplier"] = clampf(
+				float(law.get("release_impulse_multiplier", 1.0)),
+				MIN_DRAMATIC_MULTIPLIER,
+				MAX_DRAMATIC_MULTIPLIER)
+		if law.has("release_spin_multiplier"):
+			law["release_spin_multiplier"] = clampf(
+				float(law.get("release_spin_multiplier", 1.0)),
+				MIN_DRAMATIC_MULTIPLIER,
+				MAX_DRAMATIC_MULTIPLIER)
+		if law.has("collision_impulse_multiplier"):
+			law["collision_impulse_multiplier"] = clampf(
+				float(law.get("collision_impulse_multiplier", 1.0)),
+				MIN_DRAMATIC_MULTIPLIER,
+				MAX_DRAMATIC_MULTIPLIER)
+		if law.has("random_lift_impulse"):
+			law["random_lift_impulse"] = clampf(
+				float(law.get("random_lift_impulse", 0.0)),
+				MIN_RANDOM_LIFT_IMPULSE,
+				MAX_RANDOM_LIFT_IMPULSE)
+		if law.has("near_customer_pull"):
+			law["near_customer_pull"] = clampf(
+				float(law.get("near_customer_pull", 0.0)),
+				MIN_CUSTOMER_PULL,
+				MAX_CUSTOMER_PULL)
+		if law.has("pulse_interval_seconds"):
+			law["pulse_interval_seconds"] = clampf(
+				float(law.get("pulse_interval_seconds", 2.5)),
+				MIN_PULSE_INTERVAL,
+				MAX_PULSE_INTERVAL)
+		if law.has("stage_chaos_feed"):
+			law["stage_chaos_feed"] = clampf(
+				float(law.get("stage_chaos_feed", 0.0)),
+				MIN_CHAOS_FEED,
+				MAX_CHAOS_FEED)
 		law["id"] = id
 		_laws_by_id[id] = law
 	return not _laws_by_id.is_empty()

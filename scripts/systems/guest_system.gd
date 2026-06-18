@@ -1075,6 +1075,11 @@ func reset_daily() -> void:
 
 ## 获取客人专属反应台词（NPC模板优先，通用池兜底）
 func get_reaction_line(outcome: String, npc_id: String = "") -> String:
+	if current_guest != null:
+		var meme_reaction := _current_meme_reaction_line(outcome)
+		if meme_reaction != "":
+			return meme_reaction
+
 	# 先从当前客人的模板中找专属反应
 	if current_guest != null:
 		var tid: String = str(current_guest.get_meta("template_id", ""))
@@ -1092,6 +1097,30 @@ func get_reaction_line(outcome: String, npc_id: String = "") -> String:
 	return "「……」"
 
 # ── 客人问候/告别（供UI调用） ──
+
+func _current_meme_reaction_line(outcome: String) -> String:
+	if current_guest == null:
+		return ""
+	var meme_id := String(current_guest.get_meta("meme_guest_id", "")).strip_edges()
+	if meme_id == "":
+		meme_id = String(current_guest.get_meta("template_id", "")).strip_edges()
+	if meme_id == "":
+		return ""
+	for entry in _meme_guest_pool:
+		if String(entry.get("id", "")) != meme_id:
+			continue
+		var reactions: Dictionary = entry.get("reactions", {})
+		if not reactions.has(outcome):
+			return ""
+		var reaction_value = reactions.get(outcome)
+		if reaction_value is Array:
+			var lines: Array = reaction_value
+			if lines.is_empty():
+				return ""
+			return String(lines[_rng.randi() % lines.size()])
+		return String(reaction_value)
+	return ""
+
 
 func get_greeting() -> String:
 	if current_guest == null:

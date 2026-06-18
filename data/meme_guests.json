@@ -10,6 +10,12 @@
       "patience_multiplier": 1.15,
       "tip_multiplier": 1.05,
       "arrival_line": "wow... woof?",
+      "reactions": {
+        "success": "wow... such serve. very snack.",
+        "fail_wrong": "wow... no. much wrong.",
+        "fail_weird": "hmm... very question.",
+        "impatient": "so wait. much hungry."
+      },
       "preferred_tags": ["savory", "comfort"],
       "dialogue_tags": ["meme_guest", "low_gravity"]
     },
@@ -23,6 +29,12 @@
       "patience_multiplier": 0.9,
       "tip_multiplier": 1.0,
       "arrival_line": "mrrp... crunch.",
+      "reactions": {
+        "success": "mrrp. crunch crunch. mine.",
+        "fail_wrong": "mrrp? not chip.",
+        "fail_weird": "blep. no crunch.",
+        "impatient": "mrrp. snack now."
+      },
       "preferred_tags": ["snack", "quick"],
       "dialogue_tags": ["meme_guest", "heavy_gravity"]
     },
@@ -36,6 +48,12 @@
       "patience_multiplier": 1.05,
       "tip_multiplier": 1.0,
       "arrival_line": "bork... cheems.",
+      "reactions": {
+        "success": "such noms... cheems.",
+        "fail_wrong": "bonk... wrong noms.",
+        "fail_weird": "no thoughts. only bonk.",
+        "impatient": "pls... foods."
+      },
       "preferred_tags": ["comfort", "savory"],
       "dialogue_tags": ["meme_guest", "slippery_physics"]
     },
@@ -49,6 +67,12 @@
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.0,
       "arrival_line": "pop. pop. pop!",
+      "reactions": {
+        "success": "pop. pop. POP!",
+        "fail_wrong": "pop?",
+        "fail_weird": "p... op.",
+        "impatient": "POP."
+      },
       "preferred_tags": ["snack", "quick"],
       "dialogue_tags": ["meme_guest", "bouncy_physics"]
     }

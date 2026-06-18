@@ -14,6 +14,9 @@ var _failures := 0
 func _ready() -> void:
 	await _check_existing_and_new_item_gravity()
 	await _check_damp_and_bounce_laws_restore()
+	await _check_dramatic_release_law_adds_extra_spin_and_impulse()
+	await _check_collision_law_kicks_items_apart()
+	await _check_customer_pull_law_draws_items_toward_drop_area()
 	_finish()
 
 
@@ -125,6 +128,116 @@ func _check_damp_and_bounce_laws_restore() -> void:
 	_ok(bouncy_item.physics_material_override == base_material, "bouncy law should restore original physics material")
 	_ok(not bouncy_item.has_meta(HAS_BASE_MATERIAL_META), "bouncy law should clear material presence metadata")
 	_ok(not bouncy_item.has_meta(BASE_MATERIAL_META), "bouncy law should clear base material metadata")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _check_dramatic_release_law_adds_extra_spin_and_impulse() -> void:
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null:
+		_ok(false, "Tavern should expose BarWorkspace for dramatic release checks")
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	var item := bar._spawn_desk_item_at(Vector2(540.0, 340.0), "ale")
+	await get_tree().process_frame
+	item.linear_velocity = Vector2(720.0, -160.0)
+	item.angular_velocity = 0.0
+	var base_speed := item.linear_velocity.length()
+
+	bar.call("apply_physics_law", {
+		"id": "slippery_physics",
+		"gravity_scale_multiplier": 1.0,
+		"release_impulse_multiplier": 1.85,
+		"release_spin_multiplier": 2.1,
+		"stage_chaos_feed": 0.45,
+		"scope": "desk_items"
+	})
+	bar._on_drag_ended(item)
+	await get_tree().process_frame
+
+	_ok(item.linear_velocity.length() > base_speed + 60.0, "dramatic law should add readable release impulse")
+	_ok(absf(item.angular_velocity) >= 10.0, "dramatic law should add much stronger meme spin")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _check_collision_law_kicks_items_apart() -> void:
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null:
+		_ok(false, "Tavern should expose BarWorkspace for collision law checks")
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	var left := bar._spawn_desk_item_at(Vector2(500.0, 340.0), "rock_lizard_meat")
+	var right := bar._spawn_desk_item_at(Vector2(555.0, 340.0), "black_malt")
+	await get_tree().process_frame
+	left.linear_velocity = Vector2(260.0, 0.0)
+	right.linear_velocity = Vector2(-260.0, 0.0)
+	var before_vertical := absf(left.linear_velocity.y) + absf(right.linear_velocity.y)
+
+	bar.call("apply_physics_law", {
+		"id": "bouncy_physics",
+		"gravity_scale_multiplier": 1.0,
+		"collision_impulse_multiplier": 1.8,
+		"scope": "desk_items"
+	})
+	bar._on_item_collision(right, left)
+	await get_tree().process_frame
+
+	var after_vertical := absf(left.linear_velocity.y) + absf(right.linear_velocity.y)
+	_ok(after_vertical > before_vertical + 60.0, "collision law should kick colliding items into a visible hop")
+	_ok(left.linear_velocity.x < 260.0 or right.linear_velocity.x > -260.0, "collision law should push items away from each other")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _check_customer_pull_law_draws_items_toward_drop_area() -> void:
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null:
+		_ok(false, "Tavern should expose BarWorkspace for customer pull checks")
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	if not bar.has_method("_apply_active_customer_pull"):
+		_ok(false, "BarWorkspace should expose active customer pull behavior")
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+
+	var item := bar._spawn_desk_item_at(Vector2(340.0, 350.0), "bread")
+	await get_tree().process_frame
+	item.linear_velocity = Vector2.ZERO
+	var drop_area := tavern.get_node("BarWorkspace/CustomerDropArea") as Area2D
+	var direction_to_customer := (drop_area.global_position - item.global_position).normalized()
+
+	bar.call("apply_physics_law", {
+		"id": "heavy_gravity",
+		"gravity_scale_multiplier": 2.0,
+		"near_customer_pull": 140.0,
+		"scope": "desk_items"
+	})
+	bar.call("_apply_active_customer_pull", 1.0)
+	await get_tree().process_frame
+
+	_ok(item.linear_velocity.dot(direction_to_customer) > 80.0, "snack cat law should pull loose food toward the customer")
 
 	tavern.queue_free()
 	await get_tree().process_frame

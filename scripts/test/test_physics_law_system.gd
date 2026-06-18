@@ -46,6 +46,14 @@ func _check_loads_expected_laws() -> void:
 	_ok(float(slippery.get("angular_damp_multiplier", 1.0)) < 1.0, "slippery law should reduce angular damping")
 	_ok(float(bouncy.get("bounce_override", 0.0)) > 0.0, "bouncy law should set bounce")
 	_ok(float(bouncy.get("bounce_override", 0.0)) <= 1.0, "bouncy law should clamp bounce to Godot material range")
+	_ok(float(low.get("release_impulse_multiplier", 1.0)) > 1.0, "doge law should add moon-table release drift")
+	_ok(float(low.get("random_lift_impulse", 0.0)) > 0.0, "doge law should define a float-up pulse")
+	_ok(float(heavy.get("near_customer_pull", 0.0)) > 0.0, "snack cat law should pull food toward the customer")
+	_ok(float(heavy.get("collision_impulse_multiplier", 1.0)) > 1.0, "snack cat law should make impacts feel heavier")
+	_ok(float(slippery.get("release_spin_multiplier", 1.0)) > 1.0, "cheems law should add extra slipping spin")
+	_ok(float(slippery.get("collision_impulse_multiplier", 1.0)) > 1.0, "cheems law should kick items sideways on collision")
+	_ok(float(bouncy.get("collision_impulse_multiplier", 1.0)) > 1.0, "popcat law should exaggerate rebounds")
+	_ok(float(bouncy.get("random_lift_impulse", 0.0)) > 0.0, "popcat law should define a pop-up impulse")
 
 
 func _check_activation_contract() -> void:

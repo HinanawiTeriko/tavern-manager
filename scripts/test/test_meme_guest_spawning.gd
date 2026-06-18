@@ -72,6 +72,9 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(doge_guest.get_meta("arrival_line", "")) != "", "doge should carry animal-like arrival line")
 	_ok(String(doge_guest.get_meta("regular_customer_id", "")) == "", "meme guests should not enter regular-customer memory")
 	_ok(not doge_guest.has_dialogue, "meme guest arrival lines should not use important NPC dialogue flow")
+	_ok(
+		system.get_reaction_line("success", doge_guest.npc_id) == "wow... such serve. very snack.",
+		"doge should use meme-specific success reaction after delivery")
 
 	var cat_system = GuestSystem.new(Callable(self, "_menu_items"))
 	cat_system.call("_spawn_meme_guest", snack_cat, _menu_items())
@@ -82,6 +85,9 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(cat_guest.get_meta("physics_law_id", "")) == "heavy_gravity", "snack cat should carry heavy gravity law")
 	_ok(String(cat_guest.get_meta("arrival_line", "")) != "", "snack cat should carry animal-like arrival line")
 	_ok(not cat_guest.has_dialogue, "snack cat should stay outside important NPC dialogue flow")
+	_ok(
+		cat_system.get_reaction_line("success", cat_guest.npc_id) == "mrrp. crunch crunch. mine.",
+		"snack cat should use meme-specific success reaction after delivery")
 
 	if cheems.is_empty() or popcat.is_empty():
 		return
@@ -95,6 +101,9 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(cheems_guest.get_meta("physics_law_id", "")) == "slippery_physics", "cheems should carry slippery physics law")
 	_ok(String(cheems_guest.get_meta("arrival_line", "")) != "", "cheems should carry animal-like arrival line")
 	_ok(not cheems_guest.has_dialogue, "cheems should stay outside important NPC dialogue flow")
+	_ok(
+		cheems_system.get_reaction_line("fail_wrong", cheems_guest.npc_id) == "bonk... wrong noms.",
+		"cheems should use meme-specific wrong-order reaction after delivery")
 
 	var popcat_system = GuestSystem.new(Callable(self, "_menu_items"))
 	popcat_system.call("_spawn_meme_guest", popcat, _menu_items())
@@ -105,6 +114,9 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(popcat_guest.get_meta("physics_law_id", "")) == "bouncy_physics", "popcat should carry bouncy physics law")
 	_ok(String(popcat_guest.get_meta("arrival_line", "")) != "", "popcat should carry animal-like arrival line")
 	_ok(not popcat_guest.has_dialogue, "popcat should stay outside important NPC dialogue flow")
+	_ok(
+		popcat_system.get_reaction_line("success", popcat_guest.npc_id) == "pop. pop. POP!",
+		"popcat should use meme-specific success reaction after delivery")
 
 
 func _finish() -> void:
