@@ -17,6 +17,27 @@
       "duration": "night",
       "gravity_scale_multiplier": 1.75,
       "max_activations_per_night": 1
+    },
+    {
+      "id": "slippery_physics",
+      "display_name": "Slippery Physics",
+      "stage_caption": "Everything slides like the table was waxed.",
+      "scope": "desk_items",
+      "duration": "night",
+      "gravity_scale_multiplier": 1.0,
+      "linear_damp_multiplier": 0.25,
+      "angular_damp_multiplier": 0.25,
+      "max_activations_per_night": 1
+    },
+    {
+      "id": "bouncy_physics",
+      "display_name": "Bouncy Physics",
+      "stage_caption": "Every plate wants to hop.",
+      "scope": "desk_items",
+      "duration": "night",
+      "gravity_scale_multiplier": 1.0,
+      "bounce_override": 0.8,
+      "max_activations_per_night": 1
     }
   ]
 }

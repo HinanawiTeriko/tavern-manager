@@ -38,18 +38,26 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 		return
 
 	var meme_entries: Array = system.call("_meme_guest_entries_for_day", 1)
-	_ok(meme_entries.size() >= 2, "meme guests should be available on day 1")
+	_ok(meme_entries.size() >= 4, "four meme guests should be available on day 1")
 
 	var doge := {}
 	var snack_cat := {}
+	var cheems := {}
+	var popcat := {}
 	for entry in meme_entries:
 		if String(entry.get("id", "")) == "meme_doge":
 			doge = entry
 		if String(entry.get("id", "")) == "meme_snack_cat":
 			snack_cat = entry
+		if String(entry.get("id", "")) == "meme_cheems":
+			cheems = entry
+		if String(entry.get("id", "")) == "meme_popcat":
+			popcat = entry
 
 	_ok(not doge.is_empty(), "meme_doge should load")
 	_ok(not snack_cat.is_empty(), "meme_snack_cat should load")
+	_ok(not cheems.is_empty(), "meme_cheems should load")
+	_ok(not popcat.is_empty(), "meme_popcat should load")
 	if doge.is_empty() or snack_cat.is_empty():
 		return
 
@@ -74,6 +82,29 @@ func _check_meme_guest_data_and_spawn_contract() -> void:
 	_ok(String(cat_guest.get_meta("physics_law_id", "")) == "heavy_gravity", "snack cat should carry heavy gravity law")
 	_ok(String(cat_guest.get_meta("arrival_line", "")) != "", "snack cat should carry animal-like arrival line")
 	_ok(not cat_guest.has_dialogue, "snack cat should stay outside important NPC dialogue flow")
+
+	if cheems.is_empty() or popcat.is_empty():
+		return
+
+	var cheems_system = GuestSystem.new(Callable(self, "_menu_items"))
+	cheems_system.call("_spawn_meme_guest", cheems, _menu_items())
+	var cheems_guest = cheems_system.current_guest
+	_ok(cheems_system.has_guest, "cheems should set has_guest")
+	_ok(cheems_guest != null, "cheems should spawn")
+	_ok(String(cheems_guest.npc_id) == "meme_cheems", "cheems npc_id should match portrait key")
+	_ok(String(cheems_guest.get_meta("physics_law_id", "")) == "slippery_physics", "cheems should carry slippery physics law")
+	_ok(String(cheems_guest.get_meta("arrival_line", "")) != "", "cheems should carry animal-like arrival line")
+	_ok(not cheems_guest.has_dialogue, "cheems should stay outside important NPC dialogue flow")
+
+	var popcat_system = GuestSystem.new(Callable(self, "_menu_items"))
+	popcat_system.call("_spawn_meme_guest", popcat, _menu_items())
+	var popcat_guest = popcat_system.current_guest
+	_ok(popcat_system.has_guest, "popcat should set has_guest")
+	_ok(popcat_guest != null, "popcat should spawn")
+	_ok(String(popcat_guest.npc_id) == "meme_popcat", "popcat npc_id should match portrait key")
+	_ok(String(popcat_guest.get_meta("physics_law_id", "")) == "bouncy_physics", "popcat should carry bouncy physics law")
+	_ok(String(popcat_guest.get_meta("arrival_line", "")) != "", "popcat should carry animal-like arrival line")
+	_ok(not popcat_guest.has_dialogue, "popcat should stay outside important NPC dialogue flow")
 
 
 func _finish() -> void:

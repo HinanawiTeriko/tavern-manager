@@ -25,6 +25,32 @@
       "arrival_line": "mrrp... crunch.",
       "preferred_tags": ["snack", "quick"],
       "dialogue_tags": ["meme_guest", "heavy_gravity"]
+    },
+    {
+      "id": "meme_cheems",
+      "display_name": "Cheems",
+      "portrait_id": "meme_cheems",
+      "physics_law_id": "slippery_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.4,
+      "patience_multiplier": 1.05,
+      "tip_multiplier": 1.0,
+      "arrival_line": "bork... cheems.",
+      "preferred_tags": ["comfort", "savory"],
+      "dialogue_tags": ["meme_guest", "slippery_physics"]
+    },
+    {
+      "id": "meme_popcat",
+      "display_name": "Popcat",
+      "portrait_id": "meme_popcat",
+      "physics_law_id": "bouncy_physics",
+      "unlock_day": 1,
+      "spawn_weight": 0.4,
+      "patience_multiplier": 0.95,
+      "tip_multiplier": 1.0,
+      "arrival_line": "pop. pop. pop!",
+      "preferred_tags": ["snack", "quick"],
+      "dialogue_tags": ["meme_guest", "bouncy_physics"]
     }
   ]
 }

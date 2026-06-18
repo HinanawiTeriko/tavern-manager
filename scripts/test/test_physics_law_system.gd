@@ -30,14 +30,22 @@ func _check_loads_expected_laws() -> void:
 	_ok(system.load_from_path("res://data/physics_laws.json"), "physics laws should load")
 	_ok(system.has_law("low_gravity"), "low_gravity should exist")
 	_ok(system.has_law("heavy_gravity"), "heavy_gravity should exist")
+	_ok(system.has_law("slippery_physics"), "slippery_physics should exist")
+	_ok(system.has_law("bouncy_physics"), "bouncy_physics should exist")
 
 	var low: Dictionary = system.get_law("low_gravity")
 	var heavy: Dictionary = system.get_law("heavy_gravity")
+	var slippery: Dictionary = system.get_law("slippery_physics")
+	var bouncy: Dictionary = system.get_law("bouncy_physics")
 	_ok(String(low.get("id", "")) == "low_gravity", "low gravity lookup should return id")
 	_ok(float(low.get("gravity_scale_multiplier", 0.0)) >= 0.2, "low gravity multiplier should respect DeskItem minimum")
 	_ok(float(low.get("gravity_scale_multiplier", 0.0)) < 1.0, "low gravity should reduce gravity")
 	_ok(float(heavy.get("gravity_scale_multiplier", 0.0)) > 1.0, "heavy gravity should increase gravity")
 	_ok(float(heavy.get("gravity_scale_multiplier", 0.0)) <= 2.0, "heavy gravity multiplier should respect DeskItem maximum")
+	_ok(float(slippery.get("linear_damp_multiplier", 1.0)) < 1.0, "slippery law should reduce linear damping")
+	_ok(float(slippery.get("angular_damp_multiplier", 1.0)) < 1.0, "slippery law should reduce angular damping")
+	_ok(float(bouncy.get("bounce_override", 0.0)) > 0.0, "bouncy law should set bounce")
+	_ok(float(bouncy.get("bounce_override", 0.0)) <= 1.0, "bouncy law should clamp bounce to Godot material range")
 
 
 func _check_activation_contract() -> void:

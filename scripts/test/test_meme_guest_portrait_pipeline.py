@@ -16,7 +16,21 @@ class MemeGuestPortraitPipelineTest(unittest.TestCase):
     def test_manifest_shape(self):
         data = json.loads(MANIFEST.read_text(encoding="utf-8"))
         ids = [asset["id"] for asset in data["assets"]]
-        self.assertEqual(len(ids), 6)
+        expected_ids = {
+            "meme_doge_neutral",
+            "meme_doge_satisfied",
+            "meme_doge_dissatisfied",
+            "meme_snack_cat_neutral",
+            "meme_snack_cat_satisfied",
+            "meme_snack_cat_dissatisfied",
+            "meme_cheems_neutral",
+            "meme_cheems_satisfied",
+            "meme_cheems_dissatisfied",
+            "meme_popcat_neutral",
+            "meme_popcat_satisfied",
+            "meme_popcat_dissatisfied",
+        }
+        self.assertEqual(set(ids), expected_ids)
         self.assertEqual(len(ids), len(set(ids)))
         for asset in data["assets"]:
             self.assertEqual(asset["native_size"], [96, 96])

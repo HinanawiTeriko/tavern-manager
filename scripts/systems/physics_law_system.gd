@@ -4,6 +4,10 @@ extends RefCounted
 const DEFAULT_PATH := "res://data/physics_laws.json"
 const MIN_DESK_GRAVITY := 0.2
 const MAX_DESK_GRAVITY := 2.0
+const MIN_DAMP_MULTIPLIER := 0.05
+const MAX_DAMP_MULTIPLIER := 4.0
+const MIN_BOUNCE := 0.0
+const MAX_BOUNCE := 1.0
 
 var _laws_by_id: Dictionary = {}
 var _active_law_id := ""
@@ -35,6 +39,12 @@ func load_from_path(path: String = DEFAULT_PATH) -> bool:
 			continue
 		var multiplier := float(law.get("gravity_scale_multiplier", 1.0))
 		law["gravity_scale_multiplier"] = clampf(multiplier, MIN_DESK_GRAVITY, MAX_DESK_GRAVITY)
+		var linear_damp_multiplier := float(law.get("linear_damp_multiplier", 1.0))
+		var angular_damp_multiplier := float(law.get("angular_damp_multiplier", 1.0))
+		law["linear_damp_multiplier"] = clampf(linear_damp_multiplier, MIN_DAMP_MULTIPLIER, MAX_DAMP_MULTIPLIER)
+		law["angular_damp_multiplier"] = clampf(angular_damp_multiplier, MIN_DAMP_MULTIPLIER, MAX_DAMP_MULTIPLIER)
+		if law.has("bounce_override"):
+			law["bounce_override"] = clampf(float(law.get("bounce_override", 0.0)), MIN_BOUNCE, MAX_BOUNCE)
 		law["id"] = id
 		_laws_by_id[id] = law
 	return not _laws_by_id.is_empty()

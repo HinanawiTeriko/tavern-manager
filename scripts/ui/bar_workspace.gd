@@ -22,9 +22,15 @@ const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
 const DESK_RETURN_MIN_X := 260.0
 const DESK_RETURN_MAX_X := 1020.0
 const PHYSICS_LAW_META_BASE_GRAVITY := "base_gravity_scale"
+const PHYSICS_LAW_META_BASE_LINEAR_DAMP := "base_linear_damp"
+const PHYSICS_LAW_META_BASE_ANGULAR_DAMP := "base_angular_damp"
+const PHYSICS_LAW_META_HAS_BASE_MATERIAL := "has_base_physics_material_override"
+const PHYSICS_LAW_META_BASE_MATERIAL := "base_physics_material_override"
 const PHYSICS_LAW_META_APPLIED_ID := "applied_physics_law_id"
 const PHYSICS_LAW_MIN_GRAVITY := 0.2
 const PHYSICS_LAW_MAX_GRAVITY := 2.0
+const PHYSICS_LAW_MIN_BOUNCE := 0.0
+const PHYSICS_LAW_MAX_BOUNCE := 1.0
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
@@ -84,6 +90,8 @@ func configure_day(day: int) -> void:
 func apply_physics_law(law: Dictionary) -> void:
 	if String(law.get("scope", "desk_items")) != "desk_items":
 		return
+	if not _active_physics_law.is_empty():
+		clear_physics_law()
 	_active_physics_law = law.duplicate(true)
 	for child in _items_node.get_children():
 		_apply_active_physics_law_to_body(child)
@@ -794,11 +802,16 @@ func _apply_active_physics_law_to_body(body: Node) -> void:
 		return
 	if not is_instance_valid(body) or not body is DeskItem:
 		return
-	if not body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
-		body.set_meta(PHYSICS_LAW_META_BASE_GRAVITY, float(body.gravity_scale))
+	_store_body_physics_law_base(body)
 	var multiplier := float(_active_physics_law.get("gravity_scale_multiplier", 1.0))
 	var base_gravity := float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
 	body.gravity_scale = clampf(base_gravity * multiplier, PHYSICS_LAW_MIN_GRAVITY, PHYSICS_LAW_MAX_GRAVITY)
+	var linear_damp_multiplier := float(_active_physics_law.get("linear_damp_multiplier", 1.0))
+	var angular_damp_multiplier := float(_active_physics_law.get("angular_damp_multiplier", 1.0))
+	body.linear_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP)) * linear_damp_multiplier
+	body.angular_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP)) * angular_damp_multiplier
+	if _active_physics_law.has("bounce_override"):
+		_apply_bounce_override(body, float(_active_physics_law.get("bounce_override", 0.0)))
 	body.set_meta(PHYSICS_LAW_META_APPLIED_ID, String(_active_physics_law.get("id", "")))
 
 
@@ -808,8 +821,46 @@ func _restore_body_physics_law(body: Node) -> void:
 	if body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
 		body.gravity_scale = float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
 		body.remove_meta(PHYSICS_LAW_META_BASE_GRAVITY)
+	if body.has_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP):
+		body.linear_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP))
+		body.remove_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP)
+	if body.has_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP):
+		body.angular_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP))
+		body.remove_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP)
+	if body.has_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL):
+		if bool(body.get_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL)):
+			body.physics_material_override = body.get_meta(PHYSICS_LAW_META_BASE_MATERIAL) as PhysicsMaterial
+		else:
+			body.physics_material_override = null
+		body.remove_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL)
+	if body.has_meta(PHYSICS_LAW_META_BASE_MATERIAL):
+		body.remove_meta(PHYSICS_LAW_META_BASE_MATERIAL)
 	if body.has_meta(PHYSICS_LAW_META_APPLIED_ID):
 		body.remove_meta(PHYSICS_LAW_META_APPLIED_ID)
+
+
+func _store_body_physics_law_base(body: DeskItem) -> void:
+	if not body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
+		body.set_meta(PHYSICS_LAW_META_BASE_GRAVITY, float(body.gravity_scale))
+	if not body.has_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP):
+		body.set_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP, float(body.linear_damp))
+	if not body.has_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP):
+		body.set_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP, float(body.angular_damp))
+	if not body.has_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL):
+		var base_material := body.physics_material_override as PhysicsMaterial
+		body.set_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL, base_material != null)
+		if base_material != null:
+			body.set_meta(PHYSICS_LAW_META_BASE_MATERIAL, base_material)
+
+
+func _apply_bounce_override(body: DeskItem, bounce: float) -> void:
+	var material := body.physics_material_override as PhysicsMaterial
+	if material != null:
+		material = material.duplicate(true) as PhysicsMaterial
+	else:
+		material = PhysicsMaterial.new()
+	material.bounce = clampf(bounce, PHYSICS_LAW_MIN_BOUNCE, PHYSICS_LAW_MAX_BOUNCE)
+	body.physics_material_override = material
 
 
 ## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
