@@ -1,0 +1,22 @@
+{
+  "laws": [
+    {
+      "id": "low_gravity",
+      "display_name": "Low Gravity",
+      "stage_caption": "Gravity feels lighter tonight.",
+      "scope": "desk_items",
+      "duration": "night",
+      "gravity_scale_multiplier": 0.45,
+      "max_activations_per_night": 1
+    },
+    {
+      "id": "heavy_gravity",
+      "display_name": "Heavy Gravity",
+      "stage_caption": "Everything feels heavier tonight.",
+      "scope": "desk_items",
+      "duration": "night",
+      "gravity_scale_multiplier": 1.75,
+      "max_activations_per_night": 1
+    }
+  ]
+}
