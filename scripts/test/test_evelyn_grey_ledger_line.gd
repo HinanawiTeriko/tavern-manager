@@ -380,6 +380,19 @@ func _test_evelyn_living_pressure_explainers() -> void:
 		"public-account fate track lists the paper evidence spine")
 
 	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("ryan_ending", "drugged_survivor")
+	gm.narrative.set_var("grey_public_account_known", true)
+	gm.narrative.finalize_evelyn_ending()
+	var drugged_result := String(gm._evelyn_track_result("public_account"))
+	_ok(drugged_result.contains("莱恩（被迫活下来的证人）"),
+		"drugged Ryan is named as a forced survivor witness in Evelyn pressure text")
+	_ok(String(gm._ryan_track_result("drugged_survivor")).contains("被迫活下来的证人"),
+		"Ryan fate track names the drugged survivor route as forced survival")
+	gm.start_day_map(13)
+	_ok(_ledger_pages_text(gm).contains("被迫活下来的证人"),
+		"Day13 Evelyn fate track seeds drugged Ryan as forced survivor pressure")
+
+	gm._apply_save_state(gm._default_new_game_state())
 	gm.narrative.set_var("ryan_ending", "uninformed_fallen")
 	gm.narrative.set_var("mira_ending", "never_turned_back")
 	gm.narrative.set_var("toby_survived", false)

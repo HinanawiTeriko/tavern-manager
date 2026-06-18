@@ -453,6 +453,7 @@ func start_day_map(day: int) -> void:
 	_ensure_fate_tracks_for_day(day)
 	_add_mira_old_road_menu_hint_for_day(day)
 	_add_evelyn_public_gap_hint_for_day(day)
+	_add_evelyn_ryan_drugged_pressure_hint_for_day(day)
 	_migrate_missing_day_map_state()
 
 
@@ -545,6 +546,18 @@ func _add_evelyn_public_gap_hint_for_day(day: int) -> void:
 	)
 	if documents.add_fate_note("evelyn", note):
 		play_audio_event("new_document")
+
+
+func _add_evelyn_ryan_drugged_pressure_hint_for_day(day: int) -> void:
+	if day != 13:
+		return
+	var route := String(narrative.get_var("ryan_ending"))
+	if route == "":
+		route = narrative.get_ryan_route()
+	if route != "drugged_survivor":
+		return
+	_add_sourced_fate_note("evelyn", "consequence",
+		"莱恩活下来了，但那不是他自己的选择；他会成为灰账里一名被迫活下来的证人。")
 
 
 func _add_mira_stall_ledger_beat() -> void:
@@ -2782,7 +2795,7 @@ func _ryan_track_result(route: String) -> String:
 		"alternative_survivor":
 			return "未赴血斧委托。存活。改走更慢的安全路线。"
 		"drugged_survivor":
-			return "未赴约。存活。怨恨未消。"
+			return "未赴约。存活。被迫活下来的证人，怨恨未消。"
 		"informed_fallen":
 			return "清醒赴约。未归。"
 		"uninformed_fallen":
