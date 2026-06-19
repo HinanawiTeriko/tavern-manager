@@ -160,6 +160,7 @@ const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
+	BGMManager.crossfade_to_path("res://assets/audio/bgm/business.wav")
 	_refresh_default_daily_menu()
 	_bg_sprite = $Background
 	_customer_sprite = $CustomerArea/CustomerSprite
@@ -756,7 +757,7 @@ func _refresh_recipe_hint() -> void:
 	var hint_lines := PackedStringArray()
 	for step in visible_steps:
 		hint_lines.append(String(step))
-	_recipe_hint_label.text = "\n".join(hint_lines)
+	_recipe_hint_label.text = _format_recipe_hint_steps(hint_lines)
 	_recipe_hint_panel.set_meta("product_key", _current_order_key)
 	_recipe_hint_panel.set_meta("step_count", steps.size())
 	_recipe_hint_panel.visible = true
@@ -792,6 +793,32 @@ func _recipe_hint_steps(product_key: String, visited: Array) -> Array[String]:
 	var container_name := String(CONTAINER_NAMES.get(container_key, container_key))
 	steps.append("%s -> %s -> %s" % [" + ".join(ingredient_names), container_name, _recipe_hint_item_name(product_key)])
 	return steps
+
+
+func _format_recipe_hint_steps(steps: PackedStringArray) -> String:
+	if steps.is_empty():
+		return ""
+	var compact_parts := PackedStringArray()
+	for step in steps:
+		var step_parts := String(step).split(" -> ", false)
+		if step_parts.size() != 3:
+			return "  /  ".join(steps)
+		var ingredients := String(step_parts[0])
+		var container_name := String(step_parts[1])
+		var product_name := String(step_parts[2])
+		if compact_parts.is_empty():
+			compact_parts.append(ingredients)
+		else:
+			var previous_product := String(compact_parts[compact_parts.size() - 1])
+			if ingredients == previous_product:
+				pass
+			elif ingredients.begins_with(previous_product + " + ") or ingredients.ends_with(" + " + previous_product):
+				compact_parts[compact_parts.size() - 1] = ingredients
+			else:
+				compact_parts.append(ingredients)
+		compact_parts.append(container_name)
+		compact_parts.append(product_name)
+	return " -> ".join(compact_parts)
 
 
 func _recipe_hint_item_name(item_key: String) -> String:

@@ -28,6 +28,7 @@ var _intro_tween: Tween = null
 
 
 func _ready() -> void:
+	BGMManager.crossfade_to_path("res://assets/audio/bgm/title.wav")
 	var ambience = $Ambience
 	ambience.star_color = Color(ThemeColors.AMBER_PRIMARY, 0.9)
 	ambience.dust_color = ThemeColors.AMBER_PRIMARY
