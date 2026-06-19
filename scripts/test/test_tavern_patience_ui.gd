@@ -563,7 +563,7 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	_ok(tavern.has_method("show_order_reward_feedback"), "TavernView exposes reward feedback method")
 	if tavern.has_method("show_order_reward_feedback") and coin_layer != null and reward_particles is Node2D:
-		_update_top_bar_with_max(tavern, 13, 8, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 13, 8, 1, EconomySystem.MAX_DAYS, 80)
 		var gold_label := tavern.get_node_or_null("TopPanel/GoldLabel") as Label
 		var gold_fill_clip := tavern.get_node_or_null("TopPanel/GoldProgress/FillClip") as Control
 		var rep_fill_clip := tavern.get_node_or_null("TopPanel/ReputationProgress/FillClip") as Control
@@ -573,8 +573,8 @@ func _test_tavern_patience_ui_contract() -> void:
 			"GoldProgress fill reflects historical max held gold, not current spendable gold")
 		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 23.0) <= 2.0,
 			"ReputationProgress fill reflects the visible 8/50 pre-reward progress")
-		_update_top_bar_with_max(tavern, 25, 8, 1, 30, 120)
-		_update_top_bar_with_max(tavern, 5, 8, 1, 30, 120)
+		_update_top_bar_with_max(tavern, 25, 8, 1, EconomySystem.MAX_DAYS, 120)
+		_update_top_bar_with_max(tavern, 5, 8, 1, EconomySystem.MAX_DAYS, 120)
 		_ok(gold_label != null and gold_label.text.find("5") >= 0 and gold_label.text.find("25") == -1,
 			"GoldLabel can decrease after spending")
 		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 29.0) <= 2.0,
@@ -582,9 +582,9 @@ func _test_tavern_patience_ui_contract() -> void:
 
 		var coin_count_before := _reward_coin_body_count(coin_layer)
 		var particle_count_before := (reward_particles as Node2D).get_child_count()
-		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 25, 10, 1, EconomySystem.MAX_DAYS, 80)
 		_show_order_reward_feedback_with_max(tavern, 12, 2, 13, 8, 80, 80)
-		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 25, 10, 1, EconomySystem.MAX_DAYS, 80)
 		await get_tree().process_frame
 		_ok(gold_label != null and gold_label.text.find("13") >= 0 and gold_label.text.find("25") == -1,
 			"gold label keeps the previous total until tabletop coins are collected")
@@ -627,8 +627,8 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 86.0) <= 2.0,
 			"GoldProgress fill remains on historical max if the reward does not beat it")
 
-		_update_top_bar_with_max(tavern, 45, 10, 1, 30, 45)
-		_update_top_bar_with_max(tavern, 55, 10, 1, 30, 55)
+		_update_top_bar_with_max(tavern, 45, 10, 1, EconomySystem.MAX_DAYS, 45)
+		_update_top_bar_with_max(tavern, 55, 10, 1, EconomySystem.MAX_DAYS, 55)
 		_show_order_reward_feedback_with_max(tavern, 10, 0, 45, 10, 45, 55)
 		await get_tree().process_frame
 		var gold_ornate := tavern.get_node_or_null("TopPanel/GoldProgress/Ornate") as TextureRect

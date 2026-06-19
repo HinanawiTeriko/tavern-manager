@@ -34,6 +34,13 @@ const MIRA_FATE_TEXTURES := {
 	"never_turned_back": "res://assets/textures/endings/mira/mira_never_turned_back.png",
 	"she_finally_stopped": "res://assets/textures/endings/mira/mira_she_finally_stopped.png",
 }
+const EVELYN_FATE_TEXTURES := {
+	"sealed_account": "res://assets/textures/endings/evelyn/evelyn_sealed_account.png",
+	"living_witnesses": "res://assets/textures/endings/evelyn/evelyn_living_witnesses.png",
+	"paper_public": "res://assets/textures/endings/evelyn/evelyn_paper_public.png",
+	"damaged_amendment": "res://assets/textures/endings/evelyn/evelyn_damaged_amendment.png",
+	"cold_amendment": "res://assets/textures/endings/evelyn/evelyn_cold_amendment.png",
+}
 const ICONS := {
 	"gold": "res://assets/textures/ui/night_settlement/night_settlement_icon_gold.png",
 	"reputation": "res://assets/textures/ui/night_settlement/night_settlement_icon_reputation.png",
@@ -174,8 +181,8 @@ func _show_fate_cinematic_if_needed(data: LedgerData) -> void:
 	if fate.is_empty():
 		return
 	var npc_id := String(fate.get("npc_id", ""))
-	var route := String(fate.get("ending_key", ""))
-	var texture_path := _fate_texture_path(npc_id, route)
+	var visual_key := _fate_visual_key(fate)
+	var texture_path := _fate_texture_path(npc_id, visual_key)
 	if texture_path == "":
 		return
 	var texture := _load_runtime_texture(texture_path)
@@ -277,10 +284,17 @@ func _find_first_cinematic_fate(fates: Array) -> Dictionary:
 			continue
 		var data: Dictionary = fate
 		var npc_id := String(data.get("npc_id", ""))
-		var route := String(data.get("ending_key", ""))
-		if _fate_texture_path(npc_id, route) != "":
+		var visual_key := _fate_visual_key(data)
+		if _fate_texture_path(npc_id, visual_key) != "":
 			return data
 	return {}
+
+
+func _fate_visual_key(fate: Dictionary) -> String:
+	var visual_key := String(fate.get("visual_key", ""))
+	if visual_key != "":
+		return visual_key
+	return String(fate.get("ending_key", ""))
 
 
 func _fate_texture_path(npc_id: String, route: String) -> String:
@@ -289,6 +303,8 @@ func _fate_texture_path(npc_id: String, route: String) -> String:
 			return String(RYAN_FATE_TEXTURES.get(route, ""))
 		"mira":
 			return String(MIRA_FATE_TEXTURES.get(route, ""))
+		"evelyn":
+			return String(EVELYN_FATE_TEXTURES.get(route, ""))
 	return ""
 
 
@@ -298,6 +314,8 @@ func _fate_cinematic_node_name(npc_id: String) -> String:
 			return "RyanFateCinematic"
 		"mira":
 			return "MiraFateCinematic"
+		"evelyn":
+			return "EvelynFateCinematic"
 	return "FateCinematic"
 
 

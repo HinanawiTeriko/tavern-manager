@@ -59,21 +59,22 @@ func _finish() -> void:
 
 func _test_three_day_boundary() -> void:
 	var slice := RyanSliceSystem.new()
-	# [走查脚手架] Day20 保留 Evelyn 灰账线高潮；正式流程继续到 Day30。
-	_ok(slice.last_day() == 30, "slice ends on Day 30")
+	# Day20 保留 Evelyn 灰账线高潮；Day21 作为最后一晚余波经营后收束。
+	_ok(slice.last_day() == 21, "slice ends on Day 21")
+	_ok(EconomySystem.MAX_DAYS == 21, "economy max days matches the Day 21 campaign boundary")
 	_ok(slice.normal_order_limit(1) == 2, "Day 1 has two normal orders")
 	_ok(slice.normal_order_limit(2) == 2, "Day 2 has two normal orders")
 	_ok(slice.normal_order_limit(3) == 2, "Day 3 has two normal orders")
 	_ok(slice.normal_order_limit(4) == 3, "Day 4 opens the mid-slice three-normal-order rhythm")
 	_ok(slice.normal_order_limit(12) == 3, "Day 12 keeps the three-normal-order Mira climax rhythm")
 	_ok(slice.normal_order_limit(20) == 3, "Day 20 keeps the three-normal-order Evelyn climax rhythm")
-	_ok(slice.normal_order_limit(30) == 3, "Day 30 keeps the default three-normal-order rhythm")
+	_ok(slice.normal_order_limit(21) == 3, "Day 21 keeps the default three-normal-order epilogue rhythm")
 	_ok(slice.day_start_ledger_entries(2).has("第三日。莱恩。\n北矿道。\n未归。"), "Day 2 adds Ryan prediction")
 	_ok(slice.day_start_ledger_entries(13).has("第二十日。伊芙琳。\n灰账清算。\n封存。"), "Day 13 adds Evelyn prediction")
 	_ok(not slice.should_finish_after_day(2), "Day 2 continues")
 	_ok(not slice.should_finish_after_day(12), "Day 12 continues into Evelyn line")
-	_ok(not slice.should_finish_after_day(20), "Day 20 continues into the final ten-day management stretch")
-	_ok(slice.should_finish_after_day(30), "Day 30 finishes the slice")
+	_ok(not slice.should_finish_after_day(20), "Day 20 continues into the final epilogue management day")
+	_ok(slice.should_finish_after_day(21), "Day 21 finishes the slice")
 
 
 func _test_state_roundtrip() -> void:

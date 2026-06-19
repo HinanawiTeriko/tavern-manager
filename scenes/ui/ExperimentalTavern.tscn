@@ -432,7 +432,7 @@ offset_left = 412.0
 offset_top = 4.0
 offset_right = 562.0
 offset_bottom = 32.0
-text = "第1/30天"
+text = "第1/21天"
 
 [node name="DragCtrl" type="Node" parent="."]
 script = ExtResource("2")

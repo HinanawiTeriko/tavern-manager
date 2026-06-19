@@ -448,13 +448,20 @@ func _append_npc_fate(result: Array[Dictionary], npc: NpcData) -> void:
 	var ending_key: String = String(raw_ending)
 	if ending_key == "" or not npc.endings.has(ending_key):
 		return
-	result.append({
+	var fate := {
 		"npc_id": npc.id,
 		"ending_key": ending_key,
 		"npc_name": npc.npc_name,
 		"npc_title": npc.title,
 		"fate_text": npc.endings[ending_key]
-	})
+	}
+	if npc.id == "evelyn":
+		var visual_key := String(dialogue_vars.get("evelyn_pressure", ""))
+		if visual_key == "":
+			visual_key = get_evelyn_pressure(ending_key)
+		if visual_key != "":
+			fate["visual_key"] = visual_key
+	result.append(fate)
 
 func _fate_result_has_npc(result: Array[Dictionary], npc_id: String) -> bool:
 	for fate in result:

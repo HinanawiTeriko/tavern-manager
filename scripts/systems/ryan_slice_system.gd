@@ -1,8 +1,8 @@
 class_name RyanSliceSystem
 extends RefCounted
 
-# [走查脚手架] 伊芙琳灰账线结算在 Day20；Day21-30 先复用普通经营循环直到正式收束内容接入。
-const LAST_DAY := 30
+# 伊芙琳灰账线结算在 Day20；Day21 作为余波经营日后进入结局。
+const LAST_DAY := 21
 const DEFAULT_NORMAL_ORDER_LIMIT := 3
 const DEFAULT_IMPORTANT_ARRIVAL_NORMALS_BEFORE := 1
 const DAY_CONFIG := {

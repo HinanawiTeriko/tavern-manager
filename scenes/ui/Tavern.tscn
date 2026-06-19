@@ -463,7 +463,7 @@ stretch_mode = 5
 [node name="DayLabel" type="Label" parent="TopPanel"]
 layout_mode = 0
 custom_minimum_size = Vector2(150, 0)
-text = "第1/30天"
+text = "第1/21天"
 
 [node name="MenuButton" type="Button" parent="TopPanel"]
 layout_mode = 0
