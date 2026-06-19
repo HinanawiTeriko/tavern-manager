@@ -59,6 +59,7 @@ var _closing_label: Label
 var _content: VBoxContainer
 
 func _ready() -> void:
+	BGMManager.crossfade_to(preload("res://assets/audio/bgm/fate.wav"))
 	_content = $Content
 	_npc_endings_list = $Content/NPCEndingsList
 	_gold_label = $Content/Stats/GoldLabel

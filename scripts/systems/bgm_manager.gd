@@ -25,6 +25,13 @@ var _fade_in_player: AudioStreamPlayer = null
 
 
 func _ready() -> void:
+	# 确保 "Music" 音频总线存在（紧接 Master 之后）
+	if AudioServer.get_bus_index("Music") < 0:
+		var master_idx := AudioServer.get_bus_index("Master")
+		AudioServer.add_bus(master_idx + 1)
+		AudioServer.set_bus_name(master_idx + 1, "Music")
+		AudioServer.set_bus_send(master_idx + 1, "Master")
+
 	_player_a = AudioStreamPlayer.new()
 	_player_b = AudioStreamPlayer.new()
 	_player_a.bus = "Music"

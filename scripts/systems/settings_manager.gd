@@ -11,11 +11,13 @@ const RESOLUTIONS: Array[Vector2i] = [
 ]
 const DEFAULT_RESOLUTION := Vector2i(1280, 720)
 const DEFAULT_MASTER_VOLUME_PERCENT := 100.0
+const DEFAULT_BGM_VOLUME_PERCENT := 80.0
 
 var _path: String
 var fullscreen := false
 var resolution := DEFAULT_RESOLUTION
 var master_volume_percent := DEFAULT_MASTER_VOLUME_PERCENT
+var bgm_volume_percent := DEFAULT_BGM_VOLUME_PERCENT
 
 
 func _init(path: String = SETTINGS_PATH) -> void:
@@ -42,6 +44,11 @@ func load_settings() -> void:
 		0.0,
 		100.0,
 	)
+	bgm_volume_percent = clampf(
+		float(config.get_value("audio", "bgm_volume_percent", DEFAULT_BGM_VOLUME_PERCENT)),
+		0.0,
+		100.0,
+	)
 
 
 func save_settings() -> int:
@@ -50,6 +57,7 @@ func save_settings() -> int:
 	config.set_value("display", "width", resolution.x)
 	config.set_value("display", "height", resolution.y)
 	config.set_value("audio", "master_volume_percent", master_volume_percent)
+	config.set_value("audio", "bgm_volume_percent", bgm_volume_percent)
 	return config.save(_path)
 
 
@@ -75,15 +83,23 @@ func set_master_volume_percent(value: float) -> void:
 	save_settings()
 
 
+func set_bgm_volume_percent(value: float) -> void:
+	bgm_volume_percent = clampf(value, 0.0, 100.0)
+	_apply_bgm_volume()
+	save_settings()
+
+
 func apply_all() -> void:
 	_apply_display()
 	_apply_audio()
+	_apply_bgm_volume()
 
 
 func reset_defaults() -> void:
 	fullscreen = false
 	resolution = DEFAULT_RESOLUTION
 	master_volume_percent = DEFAULT_MASTER_VOLUME_PERCENT
+	bgm_volume_percent = DEFAULT_BGM_VOLUME_PERCENT
 
 
 func _normalize_resolution(value: Vector2i) -> Vector2i:
@@ -108,3 +124,13 @@ func _apply_audio() -> void:
 	AudioServer.set_bus_mute(bus_index, muted)
 	if not muted:
 		AudioServer.set_bus_volume_db(bus_index, linear_to_db(master_volume_percent / 100.0))
+
+
+func _apply_bgm_volume() -> void:
+	var bus_index := AudioServer.get_bus_index("Music")
+	if bus_index < 0:
+		return
+	var muted := bgm_volume_percent <= 0.0
+	AudioServer.set_bus_mute(bus_index, muted)
+	if not muted:
+		AudioServer.set_bus_volume_db(bus_index, linear_to_db(bgm_volume_percent / 100.0))

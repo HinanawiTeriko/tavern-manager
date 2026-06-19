@@ -21,6 +21,7 @@ var _contract_taken: bool = false
 
 
 func _setup_scene() -> void:
+	BGMManager.crossfade_to(preload("res://assets/audio/bgm/cave.wav"))
 	_apply_mine_ui_style()
 	_spawn_shallow_items()
 	_spawn_deep_layer()

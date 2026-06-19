@@ -16,6 +16,7 @@ const INVESTIGATION_SCENES := {
 const SHOP_OVERLAY_SCENE := preload("res://scenes/ui/ShopOverlay.tscn")
 const POINT_MARKER := preload("res://scenes/ui/MapPointMarker.tscn")
 const DAYMAP_BACKGROUND := preload("res://assets/textures/daymap/daymap_full.png")
+const DAYMAP_BGM := preload("res://assets/audio/bgm/daymap.wav")
 const DAYMAP_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
 const DAYMAP_BUTTON_PRIMARY_NORMAL := "res://assets/textures/daymap/ui/button_primary_normal.png"
 const DAYMAP_BUTTON_PRIMARY_HOVER := "res://assets/textures/daymap/ui/button_primary_hover.png"
@@ -139,6 +140,7 @@ var _shop_overlay: ShopOverlay = null
 var _gold_label: Label
 
 func _ready() -> void:
+	BGMManager.crossfade_to(DAYMAP_BGM)
 	_stamina_label = $UILayer/TopBar/StaminaLabel
 	_day_label = $UILayer/TopBar/DayLabel
 	_result_panel = $UILayer/ResultPanel
@@ -1210,6 +1212,8 @@ func _on_investigation_finished() -> void:
 	# 否则退出调查后地图无法平移/缩放（test_mine_enter_exit 守此）。
 	_camera.enabled = true
 	_camera.set_active(true)
+	# 从洞穴调查返回 → 恢复白天 BGM
+	BGMManager.crossfade_to(DAYMAP_BGM)
 	_refresh_map()
 
 
