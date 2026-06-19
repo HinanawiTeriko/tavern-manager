@@ -13,5 +13,17 @@
   "meat_stew":     { "might": 3, "vitality": 3, "fortune": 1 },
   "cave_mushroom_stew": { "vitality": 2, "arcana": 1, "alacrity": 1 },
   "herb_broth":    { "arcana": 2, "alacrity": 2 },
+  "charred_crust_broth": { "vitality": 1, "fortune": 1 },
+  "charred_meat_plate": { "might": 1, "vitality": 1 },
+  "bitter_black_ale": { "might": 2, "fortune": 2, "arcana": 1 },
+  "ash_pot_stew": { "vitality": 1, "might": 1, "fortune": 1 },
+  "sour_herb_wine": { "charm": 2, "fortune": 2, "arcana": 1 },
+  "black_malt_porridge": { "vitality": 2, "fortune": 2, "might": 1 },
+  "herbal_lizard_roast": { "might": 4, "vitality": 2, "arcana": 1 },
+  "mushroom_pie": { "vitality": 2, "arcana": 2 },
+  "grape_tart": { "charm": 2, "vitality": 1 },
+  "wakeful_herb_juice": { "alacrity": 3, "arcana": 1 },
+  "roasted_malt_porridge": { "vitality": 2, "fortune": 1, "might": 1 },
+  "mushroom_meat_pie": { "might": 3, "vitality": 3, "arcana": 1 },
   "malt_porridge": { "vitality": 2, "fortune": 2 }
 }

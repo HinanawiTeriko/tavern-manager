@@ -3,7 +3,7 @@ extends RigidBody2D
 
 signal recipe_consumed(product_key: String)
 
-const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const DESK_ITEM_SCENE := preload("res://scenes/ui/components/DeskItem.tscn")
 const COOK_STATION_STATE := preload("res://scripts/systems/cook_station_state.gd")
 const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 const PHYSICS_MOTION_TRAIL := preload("res://scripts/ui/physics_motion_trail.gd")

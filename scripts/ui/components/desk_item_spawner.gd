@@ -8,7 +8,7 @@ extends RefCounted
 ##   # 或手动指定颜色和名称：
 ##   var item := DeskItemSpawner.spawn_with_color(pos, "malt", "麦芽", Color.RED, $World/Items)
 
-const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const DESK_ITEM_SCENE := preload("res://scenes/ui/components/DeskItem.tscn")
 
 
 ## 使用 CraftSystem 数据生成 DeskItem（自动从 item 定义读取颜色和名称）

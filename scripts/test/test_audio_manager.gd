@@ -30,8 +30,8 @@ func _test_hook_wiring() -> void:
 	_expect_tokens("res://scripts/game_manager.gd", [
 		"func play_audio_event", "\"serve_success\"", "\"serve_fail\"", "\"new_document\"",
 	])
-	_expect_tokens("res://scripts/test/desk_item.gd", ["\"collision\""])
-	_expect_tokens("res://scripts/test/brewery.gd", [
+	_expect_tokens("res://scripts/ui/desk_item.gd", ["\"collision\""])
+	_expect_tokens("res://scripts/ui/brewery.gd", [
 		"\"ingredient_drop\"", "\"barrel_shake\"", "\"product_ready\"",
 	])
 	_expect_tokens("res://scripts/ui/kitchen_container.gd", [

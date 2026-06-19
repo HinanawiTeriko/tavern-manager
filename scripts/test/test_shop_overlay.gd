@@ -20,6 +20,7 @@ func _ready() -> void:
 	_test_shop_clean_texture_paths(overlay)
 	_test_shop_clean_text_safe_layout(overlay)
 	await _test_shop_clean_direct_state_textures(overlay)
+	await _test_recipe_unlocks_are_pageable_without_default_scrollbar(overlay)
 	_test_default_selection(overlay)
 	_test_mira_discount_state(overlay)
 	_test_material_quantity_total(overlay)
@@ -343,6 +344,39 @@ func _test_shop_clean_direct_state_textures(overlay) -> void:
 		close_zone.emit_signal("button_up")
 		close_zone.emit_signal("mouse_exited")
 		await get_tree().process_frame
+
+
+func _test_recipe_unlocks_are_pageable_without_default_scrollbar(overlay) -> void:
+	var item_list := overlay.get_node_or_null("ItemList") as Control
+	_ok(item_list != null and not (item_list is ScrollContainer),
+		"shop item list remains custom drawn instead of using a default ScrollContainer")
+	overlay.select_category("recipes")
+	await get_tree().process_frame
+	var page_up := overlay.get_node_or_null("ItemPageUp/Zone") as Button
+	var page_down := overlay.get_node_or_null("ItemPageDown/Zone") as Button
+	var page_indicator := overlay.get_node_or_null("ItemPageIndicator") as Label
+	_ok(page_up != null, "shop list exposes a custom page-up input zone")
+	_ok(page_down != null, "shop list exposes a custom page-down input zone")
+	_ok(page_indicator != null and page_indicator.visible, "shop list shows a compact page indicator when recipe unlocks exceed one page")
+	_ok(item_list.get_child_count() <= 5, "shop list keeps the visible row count within the clean list art")
+	_ok(overlay.get_node_or_null("ItemList/Item_bitter_black_ale") == null,
+		"new recipe unlocks start beyond the first visible recipe page")
+	if page_down != null:
+		page_down.pressed.emit()
+		await get_tree().process_frame
+	_ok(overlay.get_node_or_null("ItemList/Item_bitter_black_ale") != null,
+		"custom shop paging reveals recipe unlocks beyond the first five rows")
+	_ok(item_list.get_child_count() <= 5, "paged shop list still keeps the visible row count within the clean list art")
+	overlay.select_item("mushroom_meat_pie")
+	var title := overlay.get_node_or_null("DetailPanel/Title") as Label
+	var total := overlay.get_node_or_null("CheckoutBar/TotalLabel") as Label
+	_ok(title != null and title.text != "", "new recipe unlocks have detail title text")
+	_ok(total != null and total.text.contains("50"), "new recipe unlocks use their shop.json price in detail totals")
+	if page_up != null:
+		page_up.pressed.emit()
+		await get_tree().process_frame
+	overlay.select_category("materials")
+	await get_tree().process_frame
 
 
 func _test_default_selection(overlay) -> void:

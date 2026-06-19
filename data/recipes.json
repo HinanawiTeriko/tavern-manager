@@ -40,6 +40,84 @@
     "container": "barrel",
     "requires_purchase": true
   },
+  "charred_crust_broth": {
+    "name": "焦面包浓汤",
+    "ingredients": ["bread_burnt", "ale"],
+    "container": "pot"
+  },
+  "charred_meat_plate": {
+    "name": "香草焦肉盘",
+    "ingredients": ["meat_burnt", "herb"],
+    "container": "grill"
+  },
+  "bitter_black_ale": {
+    "name": "苦黑麦酒",
+    "ingredients": ["ale_burnt", "black_malt"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["ale_beer", "miner_dark_ale"]
+  },
+  "ash_pot_stew": {
+    "name": "焦糊杂烩",
+    "ingredients": ["bread_burnt", "meat_burnt"],
+    "container": "pot"
+  },
+  "sour_herb_wine": {
+    "name": "酸葡萄草酒",
+    "ingredients": ["north_sour_grape", "herb"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["wine", "old_road_wine"]
+  },
+  "black_malt_porridge": {
+    "name": "黑麦芽粥",
+    "ingredients": ["black_malt", "flour"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["malt_porridge"]
+  },
+  "herbal_lizard_roast": {
+    "name": "香草蜥蜴烤肉",
+    "ingredients": ["rock_lizard_meat", "herb"],
+    "container": "grill",
+    "requires_purchase": true,
+    "satisfies_orders": ["meat_cooked", "rock_lizard_steak"]
+  },
+  "mushroom_pie": {
+    "name": "洞菇馅饼",
+    "ingredients": ["dough", "cave_mushroom"],
+    "container": "grill",
+    "requires_purchase": true,
+    "satisfies_orders": ["bread"]
+  },
+  "grape_tart": {
+    "name": "葡萄塔",
+    "ingredients": ["dough", "grape"],
+    "container": "grill",
+    "requires_purchase": true,
+    "satisfies_orders": ["bread"]
+  },
+  "wakeful_herb_juice": {
+    "name": "醒神草汁",
+    "ingredients": ["grape_juice", "herb"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["herb_tea"]
+  },
+  "roasted_malt_porridge": {
+    "name": "烤麦芽粥",
+    "ingredients": ["ale_roasted", "flour"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["malt_porridge"]
+  },
+  "mushroom_meat_pie": {
+    "name": "菌肉馅饼",
+    "ingredients": ["dough_meat", "cave_mushroom"],
+    "container": "grill",
+    "requires_purchase": true,
+    "satisfies_orders": ["meat_sand"]
+  },
   "dough": {
     "name": "面团",
     "ingredients": ["flour"],

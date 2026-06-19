@@ -1,4 +1,3 @@
-class_name BrewShakeMeter
 extends RefCounted
 
 ## Counts full shake cycles from velocity direction reversals.

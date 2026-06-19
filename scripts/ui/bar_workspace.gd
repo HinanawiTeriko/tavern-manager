@@ -7,7 +7,7 @@ extends Node2D
 ## 上菜：成品拖进 CustomerDropArea 松手 → GameManager.request_serve()。
 ## 只跟 GameManager 说话，不引用 tavern_view（守 mediator 规则）。
 
-const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const DESK_ITEM_SCENE := preload("res://scenes/ui/components/DeskItem.tscn")
 const KITCHEN_CONTAINER_SCRIPT := preload("res://scripts/ui/kitchen_container.gd")
 const TAVERN_ITEM_ICON_PREFIX := "res://assets/textures/tavern/icons/"
 const TAVERN_ITEM_ART_PREFIX := "res://assets/textures/tavern/items/"
@@ -19,6 +19,7 @@ const KILL_Y := 800.0
 const TABLE_DRAG_CLEARANCE_PADDING := 4.0
 const DEFAULT_DRAG_ITEM_CLEARANCE := 34.0
 const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
+const NO_RELEASE_GLOBAL_POSITION := Vector2(-999999.0, -999999.0)
 const DESK_RETURN_MIN_X := 260.0
 const DESK_RETURN_MAX_X := 1020.0
 const PHYSICS_LAW_META_BASE_GRAVITY := "base_gravity_scale"
@@ -338,8 +339,13 @@ func _update_chaos_ghost_approach(delta: float) -> void:
 		_pulse_chaos_ghost_target()
 		_update_chaos_ghost_approach_visual()
 		var tm = get_node_or_null("/root/TutorialManager")
-		if tm != null and tm._is_active:
+		if _chaos_ghost_tutorial_is_active(tm):
 			return
+		if _formal_dialogue_blocks_chaos_ghost():
+			return
+		if _chaos_ghost_tutorial_is_pending(tm):
+			if _maybe_trigger_chaos_ghost_tutorial():
+				return
 		_chaos_ghost_waiting_for_tutorial = false
 		_start_chaos_ghost_escape()
 		return
@@ -348,6 +354,10 @@ func _update_chaos_ghost_approach(delta: float) -> void:
 	_pulse_chaos_ghost_target()
 	_update_chaos_ghost_approach_visual()
 	if _chaos_ghost_elapsed >= CHAOS_GHOST_APPROACH_SECONDS:
+		if _formal_dialogue_blocks_chaos_ghost():
+			_chaos_ghost_waiting_for_tutorial = true
+			_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
+			return
 		if _maybe_trigger_chaos_ghost_tutorial():
 			_chaos_ghost_waiting_for_tutorial = true
 			_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
@@ -459,10 +469,34 @@ func _maybe_trigger_chaos_ghost_tutorial() -> bool:
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm == null or tm._is_active:
 		return false
+	if _formal_dialogue_blocks_chaos_ghost():
+		return false
 	if tm.has_method("is_group_completed") and tm.is_group_completed(CHAOS_GHOST_TUTORIAL_GROUP):
 		return false
 	tm.start_tutorial(CHAOS_GHOST_TUTORIAL_GROUP, _chaos_ghost_tutorial_rects())
 	return tm._is_active
+
+
+func _chaos_ghost_tutorial_is_pending(tm) -> bool:
+	if tm == null:
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed(CHAOS_GHOST_TUTORIAL_GROUP):
+		return false
+	return true
+
+
+func _chaos_ghost_tutorial_is_active(tm) -> bool:
+	if tm == null or not tm._is_active or tm._current_sequence.is_empty():
+		return false
+	return String(tm._current_sequence[0].get("group", "")) == CHAOS_GHOST_TUTORIAL_GROUP
+
+
+func _formal_dialogue_blocks_chaos_ghost() -> bool:
+	if _gm == null or not is_instance_valid(_gm):
+		return false
+	if String(_gm._dialogue_phase) != "":
+		return true
+	return bool(_gm._is_dialogue_active)
 
 
 func _chaos_ghost_tutorial_rects() -> Dictionary:
@@ -883,7 +917,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif dragged is DeskItem:
 				if _try_return_to_backpack(dragged, pos):
 					return
-				if _try_store_released_item_in_container(dragged):
+				if _try_store_released_item_in_container(dragged, pos):
 					return
 				_try_deliver(dragged)
 	elif event is InputEventMouseMotion and _drag_ctrl.is_dragging():
@@ -902,7 +936,7 @@ func _release_dragged_body() -> void:
 	elif dragged is DeskItem:
 		if _try_return_to_backpack(dragged, get_global_mouse_position()):
 			return
-		if _try_store_released_item_in_container(dragged):
+		if _try_store_released_item_in_container(dragged, get_global_mouse_position()):
 			return
 		_try_deliver(dragged)
 
@@ -1341,11 +1375,11 @@ func _try_return_to_backpack(item: DeskItem, release_global_position: Vector2) -
 	return true
 
 
-func _try_store_released_item_in_container(item: DeskItem) -> bool:
+func _try_store_released_item_in_container(item: DeskItem, release_global_position: Vector2 = NO_RELEASE_GLOBAL_POSITION) -> bool:
 	if not _is_body_usable(item):
 		return false
 	if _brewery.visible and _brewery.process_mode != Node.PROCESS_MODE_DISABLED:
-		_brewery._try_accept_mouth_body(item)
+		_brewery._try_accept_mouth_body_at_release(item, release_global_position)
 		if not _is_body_usable(item):
 			return true
 	if _shaker.visible and _shaker.process_mode != Node.PROCESS_MODE_DISABLED:

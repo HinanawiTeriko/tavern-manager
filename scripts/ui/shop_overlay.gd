@@ -108,6 +108,7 @@ var _active_category := "materials"
 var _selected_key := ""
 var _quantity := 0
 var _items_by_category: Dictionary = {}
+var _page_offsets: Dictionary = {"materials": 0, "recipes": 0, "abilities": 0}
 var _runtime_texture_cache: Dictionary = {}
 
 var _backdrop: TextureRect
@@ -116,6 +117,13 @@ var _bookmarks: Control
 var _bookmark_textures: Dictionary = {}
 var _item_rows: Control
 var _row_nodes: Dictionary = {}
+var _item_page_up: Control
+var _item_page_down: Control
+var _item_page_indicator: Label
+var _item_page_up_btn: Button
+var _item_page_down_btn: Button
+var _item_page_up_art: TextureRect
+var _item_page_down_art: TextureRect
 var _detail_page: Control
 var _coin_tray: Control
 var _quantity_control: Control
@@ -188,6 +196,7 @@ func select_category(category: String) -> void:
 	if not CATEGORIES.has(category):
 		return
 	_active_category = category
+	_page_offsets[_active_category] = 0
 	_selected_key = ""
 	_quantity = 0
 	_refresh_items()
@@ -234,7 +243,13 @@ func _material_keys() -> Array:
 
 
 func _recipe_keys() -> Array:
-	return _sorted_keys_from_ui("recipes")
+	var keys := _sorted_keys_from_ui("recipes")
+	if _gm != null and _gm.shop != null and _gm.shop.has_method("get_recipe_unlock_keys"):
+		for key in _gm.shop.get_recipe_unlock_keys():
+			var recipe_key := String(key)
+			if recipe_key != "" and not keys.has(recipe_key):
+				keys.append(recipe_key)
+	return keys
 
 
 func _ability_keys() -> Array:
@@ -338,6 +353,7 @@ func _build() -> void:
 	_item_rows.position = Vector2(104, 152)
 	_item_rows.size = Vector2(580, 344)
 	add_child(_item_rows)
+	_build_item_page_controls()
 
 	_detail_page = Control.new()
 	_detail_page.name = "DetailPanel"
@@ -525,6 +541,42 @@ func _add_bookmark(category: String, title: String, pos: Vector2, normal_path: S
 	}
 
 
+func _build_item_page_controls() -> void:
+	_item_page_up = _new_page_control("ItemPageUp", Vector2(692, 160), "^")
+	_item_page_up_art = _item_page_up.get_node_or_null("Art") as TextureRect
+	_item_page_up_btn = _item_page_up.get_node_or_null("Zone") as Button
+	if _item_page_up_btn != null:
+		_item_page_up_btn.pressed.connect(_change_item_page.bind(-1))
+	add_child(_item_page_up)
+
+	_item_page_down = _new_page_control("ItemPageDown", Vector2(692, 438), "v")
+	_item_page_down_art = _item_page_down.get_node_or_null("Art") as TextureRect
+	_item_page_down_btn = _item_page_down.get_node_or_null("Zone") as Button
+	if _item_page_down_btn != null:
+		_item_page_down_btn.pressed.connect(_change_item_page.bind(1))
+	add_child(_item_page_down)
+
+	_item_page_indicator = _add_label(self, "ItemPageIndicator", Vector2(644, 484), Vector2(84, 22), 12, ThemeColors.TEXT_SUBTITLE)
+	_item_page_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_item_page_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _new_page_control(node_name: String, pos: Vector2, text: String) -> Control:
+	var control := Control.new()
+	control.name = node_name
+	control.position = pos
+	control.size = Vector2(36, 36)
+	var art := _add_texture(control, "Art", SHOP_CLEAN_QUANTITY_BODY, Vector2.ZERO, Vector2(36, 36))
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label := _add_label(control, "Label", Vector2(0, 4), Vector2(36, 26), 14, ThemeColors.AMBER_PRIMARY)
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var zone := _make_input_zone("Zone", Vector2(36, 36))
+	control.add_child(zone)
+	return control
+
+
 func _set_bookmark_hover(category: String, hovered: bool) -> void:
 	if not _bookmark_textures.has(category):
 		return
@@ -544,12 +596,77 @@ func _refresh_items() -> void:
 		"abilities": _ability_keys(),
 	}
 	_sync_bookmarks()
+	_clamp_item_page_offset(_active_category)
+	var visible_keys := _visible_keys_for_active_category()
 	var index := 0
-	for key in _items_by_category.get(_active_category, []):
-		if index >= MAX_VISIBLE_ROWS:
-			break
+	for key in visible_keys:
 		_add_item_row(String(key), index)
 		index += 1
+	_sync_item_page_controls()
+
+
+func _visible_keys_for_active_category() -> Array:
+	var keys: Array = _items_by_category.get(_active_category, [])
+	var start := int(_page_offsets.get(_active_category, 0))
+	var visible := []
+	for index in range(start, mini(start + MAX_VISIBLE_ROWS, keys.size())):
+		visible.append(keys[index])
+	return visible
+
+
+func _clamp_item_page_offset(category: String) -> void:
+	var keys: Array = _items_by_category.get(category, [])
+	var offset := int(_page_offsets.get(category, 0))
+	var max_start := _max_page_start(keys.size())
+	offset = clampi(offset, 0, max_start)
+	_page_offsets[category] = offset
+
+
+func _max_page_start(count: int) -> int:
+	if count <= MAX_VISIBLE_ROWS:
+		return 0
+	return int(floor(float(count - 1) / float(MAX_VISIBLE_ROWS))) * MAX_VISIBLE_ROWS
+
+
+func _change_item_page(direction: int) -> void:
+	var keys: Array = _items_by_category.get(_active_category, [])
+	if keys.size() <= MAX_VISIBLE_ROWS:
+		return
+	var current := int(_page_offsets.get(_active_category, 0))
+	var next := clampi(current + direction * MAX_VISIBLE_ROWS, 0, _max_page_start(keys.size()))
+	if next == current:
+		return
+	_page_offsets[_active_category] = next
+	_refresh_items()
+	var visible_keys := _visible_keys_for_active_category()
+	if not visible_keys.has(_selected_key) and not visible_keys.is_empty():
+		_selected_key = String(visible_keys[0])
+		_quantity = 1 if _active_category == "materials" else 0
+	_sync()
+
+
+func _sync_item_page_controls() -> void:
+	var keys: Array = _items_by_category.get(_active_category, [])
+	var has_pages := keys.size() > MAX_VISIBLE_ROWS
+	var offset := int(_page_offsets.get(_active_category, 0))
+	var max_start := _max_page_start(keys.size())
+	if _item_page_up != null:
+		_item_page_up.visible = has_pages
+	if _item_page_down != null:
+		_item_page_down.visible = has_pages
+	if _item_page_indicator != null:
+		_item_page_indicator.visible = has_pages
+		var page := int(floor(float(offset) / float(MAX_VISIBLE_ROWS))) + 1
+		var page_count := int(floor(float(maxi(keys.size() - 1, 0)) / float(MAX_VISIBLE_ROWS))) + 1
+		_item_page_indicator.text = "%d/%d" % [page, page_count]
+	if _item_page_up_btn != null:
+		_item_page_up_btn.disabled = not has_pages or offset <= 0
+	if _item_page_down_btn != null:
+		_item_page_down_btn.disabled = not has_pages or offset >= max_start
+	if _item_page_up_art != null:
+		_item_page_up_art.texture = _load_texture(SHOP_CLEAN_QUANTITY_MINUS_DISABLED if _item_page_up_btn != null and _item_page_up_btn.disabled else SHOP_CLEAN_QUANTITY_BODY)
+	if _item_page_down_art != null:
+		_item_page_down_art.texture = _load_texture(SHOP_CLEAN_QUANTITY_PLUS_DISABLED if _item_page_down_btn != null and _item_page_down_btn.disabled else SHOP_CLEAN_QUANTITY_BODY)
 
 
 func _sync_bookmarks() -> void:
@@ -585,7 +702,9 @@ func _add_item_row(key: String, index: int) -> void:
 
 
 func _select_first_available() -> void:
-	var keys: Array = _items_by_category.get(_active_category, [])
+	var keys: Array = _visible_keys_for_active_category()
+	if keys.is_empty():
+		keys = _items_by_category.get(_active_category, [])
 	if keys.is_empty():
 		return
 	_selected_key = String(keys[0])
@@ -704,13 +823,19 @@ func _sync_close_tag() -> void:
 
 
 func _description_for(key: String) -> String:
-	return String(_meta_for(_active_category, key).get("description", ""))
+	var description := String(_meta_for(_active_category, key).get("description", ""))
+	if description == "" and _active_category == "recipes":
+		description = "买下%s的公开菜谱。" % _display_name(key)
+	return description
 
 
 func _uses_for_selected(key: String) -> String:
 	if _active_category == "materials":
 		return _uses_for_material(key)
-	return String(_meta_for(_active_category, key).get("usage", ""))
+	var usage := String(_meta_for(_active_category, key).get("usage", ""))
+	if usage == "" and _active_category == "recipes":
+		usage = "购买后配方书会显示%s，并可进入普通客人的点单池。" % _display_name(key)
+	return usage
 
 
 func _state_for(key: String) -> String:

@@ -6,10 +6,11 @@ extends RigidBody2D
 signal recipe_consumed(product_key: String)
 
 const CONTAINER_KEY := "barrel"
-const DESK_ITEM_SCENE := preload("res://scenes/test/desk_item.tscn")
+const DESK_ITEM_SCENE := preload("res://scenes/ui/components/DeskItem.tscn")
 const TEXTURE_COLLISION_BOUNDS := preload("res://scripts/ui/texture_collision_bounds.gd")
 const PHYSICS_MOTION_TRAIL := preload("res://scripts/ui/physics_motion_trail.gd")
 const INGREDIENT_INTAKE_VFX := preload("res://scripts/ui/ingredient_intake_vfx.gd")
+const BREW_SHAKE_METER := preload("res://scripts/ui/brew_shake_meter.gd")
 const BARREL_MASS := 2.5
 const BARREL_LINEAR_DAMP := 0.8
 const BARREL_ANGULAR_DAMP := 4.0
@@ -17,6 +18,10 @@ const MAX_INGREDIENTS := 2
 const MOUTH_INNER_HALF_WIDTH := 24.0
 const MOUTH_TOP_Y := -64.0
 const MOUTH_BOTTOM_Y := -34.0
+const RELEASE_INTAKE_HALF_WIDTH := MOUTH_INNER_HALF_WIDTH + 26.0
+const RELEASE_INTAKE_TOP_Y := MOUTH_TOP_Y - 8.0
+const RELEASE_INTAKE_BOTTOM_Y := 34.0
+const NO_RELEASE_GLOBAL_POSITION := Vector2(-999999.0, -999999.0)
 const SPOON_ZONE_INNER_HALF_WIDTH := 40.0
 const SPOON_ZONE_TOP_Y := MOUTH_TOP_Y
 const SPOON_ZONE_BOTTOM_Y := 40.0
@@ -128,7 +133,7 @@ const BREW_COMBO_SPARK_WORDS: Array[String] = ["离谱", "炸桶", "上天", "�
 
 var _items_parent: Node2D = null
 var _pending_keys: Array[String] = []
-var _shake := BrewShakeMeter.new()
+var _shake := BREW_SHAKE_METER.new()
 var _session_active: bool = false
 var _shake_bubble_layer: Node2D = null
 var _shake_bubbles: Array[Node2D] = []
@@ -225,6 +230,10 @@ func _container_motion_trail_fallback_polygon() -> PackedVector2Array:
 
 
 func _try_accept_mouth_body(body: Node) -> void:
+	_try_accept_mouth_body_at_release(body, NO_RELEASE_GLOBAL_POSITION)
+
+
+func _try_accept_mouth_body_at_release(body: Node, release_global_position: Vector2) -> void:
 	if not body is DeskItem:
 		return
 	var item: DeskItem = body
@@ -234,7 +243,7 @@ func _try_accept_mouth_body(body: Node) -> void:
 		return
 	if GameManager.craft.is_product(item.item_key):
 		return
-	if not _is_item_inside_mouth_opening(item):
+	if not _is_item_inside_mouth_opening(item) and not _is_release_point_inside_intake(release_global_position):
 		return
 	if _pending_keys.size() >= MAX_INGREDIENTS:
 		_reject_extra_ingredient(item)
@@ -276,6 +285,15 @@ func _is_point_inside_mouth_opening(global_pos: Vector2) -> bool:
 	return absf(local_pos.x) <= MOUTH_INNER_HALF_WIDTH \
 		and local_pos.y >= MOUTH_TOP_Y \
 		and local_pos.y <= MOUTH_BOTTOM_Y
+
+
+func _is_release_point_inside_intake(global_pos: Vector2) -> bool:
+	if global_pos == NO_RELEASE_GLOBAL_POSITION:
+		return false
+	var local_pos: Vector2 = to_local(global_pos)
+	return absf(local_pos.x) <= RELEASE_INTAKE_HALF_WIDTH \
+		and local_pos.y >= RELEASE_INTAKE_TOP_Y \
+		and local_pos.y <= RELEASE_INTAKE_BOTTOM_Y
 
 
 func _spawn_product(product_key: String, quality: String = "normal") -> void:

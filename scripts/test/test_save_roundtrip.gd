@@ -317,6 +317,19 @@ func _test_shortcut_bindings_roundtrip() -> void:
 	gm._apply_save_state(gm._default_new_game_state())
 	var defaults: Array = gm.get_shortcut_bindings()
 	_ok(defaults[0] == "ale" and defaults[1] == "grape", "new game restores default shortcut bindings")
+	var old_empty_shortcuts: Dictionary = gm._default_new_game_state()
+	old_empty_shortcuts["shortcut_bindings"] = ["", "", "", "", "", "", "", "", "", ""]
+	gm._apply_save_state(old_empty_shortcuts)
+	var migrated: Array = gm.get_shortcut_bindings()
+	_ok(migrated[0] == "ale" and migrated[1] == "grape" and migrated[4] == "herb",
+		"old web saves with empty shortcut bindings migrate back to starter shortcuts")
+	var empty_runtime_bindings: Array[String] = []
+	for _i in range(10):
+		empty_runtime_bindings.append("")
+	gm.shortcut_bindings = empty_runtime_bindings
+	var repaired: Array = gm.get_shortcut_bindings()
+	_ok(repaired[0] == "ale" and repaired[1] == "grape" and repaired[4] == "herb",
+		"runtime getter repairs empty shortcut bindings before UI reads them")
 	gm.save_sys.clear()
 
 

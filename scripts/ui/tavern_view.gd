@@ -44,6 +44,8 @@ var _inference_ready_notice: Label
 var _inference_ready_notice_tween: Tween
 var _recipe_discovery_notice: Control
 var _recipe_discovery_notice_tween: Tween
+var _recipe_hint_panel: PanelContainer
+var _recipe_hint_label: Label
 var _dialogue_overlay: ColorRect
 var _inventory_overlay: InventoryOverlay
 var _document_overlay: DocumentOverlay
@@ -55,6 +57,7 @@ var _customer_sprite_normal_modulate: Color = Color.WHITE
 var _customer_dialogue_highlight_active: bool = false
 var _current_customer_npc_id: String = ""
 var _current_customer_reaction_outcome: String = ""
+var _current_order_key: String = ""
 var _current_order_text: String = ""
 var _current_order_status_text: String = ""
 var _recipe_filter_container: String = "barrel"
@@ -74,13 +77,14 @@ var _menu_prep_temporarily_hidden: bool = false
 var daily_menu: Dictionary = {}
 var daily_menu_confirmed: bool = true
 
-const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅"}
+const CONTAINER_NAMES: Dictionary = {"barrel": "酒桶", "grill": "烤架", "pot": "炖锅", "hand": "手作"}
 
-const RECIPE_CONTAINER_ORDER := ["barrel", "grill", "pot"]
+const RECIPE_CONTAINER_ORDER := ["barrel", "grill", "pot", "hand"]
 const RECIPE_CONTAINER_INSTRUCTIONS: Dictionary = {
 	"barrel": "投入酒桶后摇晃，完成后从桶口取出。",
 	"grill": "放到烤架上，到时间后取下成品。",
 	"pot": "投入炖锅后用勺子搅拌，完成后从锅口取出。",
+	"hand": "把两件材料直接拖到一起，形成可继续加工的手作组合。",
 }
 const RECIPE_LAYOUT_MIN_SIZE := Vector2(660.0, 360.0)
 const RECIPE_LEFT_COLUMN_WIDTH := 300.0
@@ -90,6 +94,9 @@ const RECIPE_DETAIL_BAND_ART := "res://assets/textures/ui/menu_brush_band.png"
 const RECIPE_DISCOVERY_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.png"
 const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
 const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
+const RECIPE_HINT_PANEL_SIZE := Vector2(472.0, 46.0)
+const RECIPE_HINT_ORDER_OFFSET := Vector2(0.0, -52.0)
+const RECIPE_HINT_MAX_STEPS := 3
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
 const MENU_PREP_LEFT_TEXT_WIDTH := 286.0
 const MENU_PREP_RUMOR_CARD_HEIGHT := 124.0
@@ -256,6 +263,7 @@ func _apply_theme() -> void:
 	_reaction_bubble.visible = false
 	_configure_reaction_highlight()
 	_configure_customer_bubble_layers()
+	_ensure_recipe_hint_panel()
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
@@ -289,6 +297,8 @@ func _apply_theme() -> void:
 
 	var recipe_panel = $OverlayMenu/RecipePanel
 	var backpack_panel = $OverlayMenu/BackpackPanel
+	_hide_default_scrollbars(recipe_panel)
+	_hide_default_scrollbars(backpack_panel)
 	recipe_panel.visible = true
 	backpack_panel.visible = false
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
@@ -655,6 +665,7 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 		_set_customer_dialogue_highlight(false)
 	_current_customer_npc_id = npc_id
 	_current_customer_reaction_outcome = ""
+	_current_order_key = order_key
 	_current_order_text = order
 	_current_order_status_text = ""
 	var tex_key: String = _customer_texture_key(npc_id)
@@ -676,6 +687,7 @@ func show_customer(customer_name: String, order: String, npc_id: String = "guest
 	_customer_name.text = customer_name
 	_customer_name.visible = true
 	_refresh_order_groove_text()
+	_refresh_recipe_hint()
 	_order_bubble.visible = true
 	_clear_customer_reaction_text()
 	_timer_bar.modulate = Color.WHITE
@@ -692,6 +704,101 @@ func _refresh_order_groove_text() -> void:
 	if _current_order_status_text != "":
 		text += "  ·  " + _current_order_status_text
 	_order_bubble.text = text
+
+
+func _ensure_recipe_hint_panel() -> void:
+	if _order_bubble == null:
+		return
+	var parent := _order_bubble.get_parent() as Control
+	if parent == null:
+		return
+	_recipe_hint_panel = parent.get_node_or_null("RecipeHintPanel") as PanelContainer
+	if _recipe_hint_panel == null:
+		_recipe_hint_panel = PanelContainer.new()
+		_recipe_hint_panel.name = "RecipeHintPanel"
+		parent.add_child(_recipe_hint_panel)
+	_recipe_hint_panel.position = _order_bubble.position + RECIPE_HINT_ORDER_OFFSET
+	_recipe_hint_panel.size = RECIPE_HINT_PANEL_SIZE
+	_recipe_hint_panel.custom_minimum_size = RECIPE_HINT_PANEL_SIZE
+	_recipe_hint_panel.z_index = CUSTOMER_BUBBLE_Z_INDEX
+	_recipe_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_recipe_hint_panel.visible = false
+	_apply_recipe_panel_art(_recipe_hint_panel, RECIPE_DETAIL_BAND_ART, Vector4(10.0, 6.0, 10.0, 6.0))
+
+	_recipe_hint_label = _recipe_hint_panel.get_node_or_null("HintText") as Label
+	if _recipe_hint_label == null:
+		_recipe_hint_label = Label.new()
+		_recipe_hint_label.name = "HintText"
+		_recipe_hint_panel.add_child(_recipe_hint_label)
+	_recipe_hint_label.text = ""
+	_recipe_hint_label.custom_minimum_size = Vector2(RECIPE_HINT_PANEL_SIZE.x - 20.0, RECIPE_HINT_PANEL_SIZE.y - 12.0)
+	_recipe_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_recipe_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_recipe_hint_label.clip_text = true
+	_recipe_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(_recipe_hint_label, 12, ThemeColors.TEXT_LIGHT)
+
+
+func _refresh_recipe_hint() -> void:
+	_ensure_recipe_hint_panel()
+	if _recipe_hint_panel == null or _recipe_hint_label == null:
+		return
+	if _current_order_key == "" or _gm == null or _gm.craft == null:
+		_hide_recipe_hint()
+		return
+	var steps := _recipe_hint_steps(_current_order_key, [])
+	if steps.is_empty():
+		_hide_recipe_hint()
+		return
+	var visible_steps := steps
+	if visible_steps.size() > RECIPE_HINT_MAX_STEPS:
+		visible_steps = visible_steps.slice(visible_steps.size() - RECIPE_HINT_MAX_STEPS, visible_steps.size())
+	var hint_lines := PackedStringArray()
+	for step in visible_steps:
+		hint_lines.append(String(step))
+	_recipe_hint_label.text = "\n".join(hint_lines)
+	_recipe_hint_panel.set_meta("product_key", _current_order_key)
+	_recipe_hint_panel.set_meta("step_count", steps.size())
+	_recipe_hint_panel.visible = true
+
+
+func _hide_recipe_hint() -> void:
+	if _recipe_hint_panel == null:
+		return
+	_recipe_hint_panel.visible = false
+	_recipe_hint_panel.set_meta("product_key", "")
+	_recipe_hint_panel.set_meta("step_count", 0)
+	if _recipe_hint_label != null:
+		_recipe_hint_label.text = ""
+
+
+func _recipe_hint_steps(product_key: String, visited: Array) -> Array[String]:
+	if product_key == "" or _gm == null or _gm.craft == null:
+		return []
+	if visited.has(product_key):
+		return []
+	var recipe: Dictionary = _gm.craft.recipes.get(product_key, {})
+	if recipe.is_empty():
+		return []
+	var next_visited := visited.duplicate()
+	next_visited.append(product_key)
+	var steps: Array[String] = []
+	for ingredient in Array(recipe.get("ingredients", [])):
+		steps.append_array(_recipe_hint_steps(String(ingredient), next_visited))
+	var ingredient_names := PackedStringArray()
+	for ingredient in Array(recipe.get("ingredients", [])):
+		ingredient_names.append(_recipe_hint_item_name(String(ingredient)))
+	var container_key := String(recipe.get("container", ""))
+	var container_name := String(CONTAINER_NAMES.get(container_key, container_key))
+	steps.append("%s -> %s -> %s" % [" + ".join(ingredient_names), container_name, _recipe_hint_item_name(product_key)])
+	return steps
+
+
+func _recipe_hint_item_name(item_key: String) -> String:
+	if _gm == null or _gm.craft == null:
+		return item_key
+	var item: Dictionary = _gm.craft.get_item(item_key)
+	return String(item.get("name", item_key))
 
 func show_order_warning() -> void:
 	if _patience_fill_art != null:
@@ -864,6 +971,7 @@ func hide_customer() -> void:
 	_set_customer_dialogue_highlight(false)
 	_current_customer_npc_id = ""
 	_current_customer_reaction_outcome = ""
+	_current_order_key = ""
 	_current_order_text = ""
 	_current_order_status_text = ""
 	_customer_sprite.visible = false
@@ -871,6 +979,7 @@ func hide_customer() -> void:
 	_customer_name.visible = false
 	_order_bubble.text = ""
 	_order_bubble.visible = false
+	_hide_recipe_hint()
 	_clear_customer_reaction_text()
 	_timer_bar.modulate = Color.WHITE
 	if _patience_fill_art != null:
@@ -1264,9 +1373,15 @@ func _make_menu_prep_scroll(node_name: String, node_position: Vector2, node_size
 	scroll.position = node_position
 	scroll.size = node_size
 	scroll.clip_contents = true
+	_hide_default_scrollbars(scroll)
+	return scroll
+
+
+func _hide_default_scrollbars(scroll: ScrollContainer) -> void:
+	if scroll == null:
+		return
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	return scroll
 
 
 func _rebuild_menu_prep_rumors(rumors: Array) -> void:
@@ -2157,7 +2272,7 @@ func _build_split_recipe_list() -> void:
 		var tab := Button.new()
 		tab.name = "Tab_%s" % container_key
 		tab.text = String(CONTAINER_NAMES.get(container_key, container_key))
-		tab.custom_minimum_size = Vector2(92.0, 34.0)
+		tab.custom_minimum_size = Vector2(68.0, 34.0)
 		tab.set_meta("container_key", container_key)
 		ThemeColors.style_brush_tab_button(tab, 13)
 		ThemeColors.set_brush_selected(tab, container_key == _recipe_filter_container)
@@ -2338,8 +2453,14 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 		else:
 			ingredient_grid.add_child(_new_unknown_recipe_ingredient_cell(index))
 
-	var instruction := String(RECIPE_CONTAINER_INSTRUCTIONS.get(container_key, "")) if discovered else "继续尝试%s里的材料组合。" % String(CONTAINER_NAMES.get(container_key, container_key))
+	var instruction := String(RECIPE_CONTAINER_INSTRUCTIONS.get(container_key, "")) if discovered else _unknown_recipe_instruction(container_key)
 	body.add_child(_new_recipe_instruction_panel(instruction))
+
+
+func _unknown_recipe_instruction(container_key: String) -> String:
+	if container_key == "hand":
+		return "继续尝试把材料直接组合在一起。"
+	return "继续尝试%s里的材料组合。" % String(CONTAINER_NAMES.get(container_key, container_key))
 
 
 func _recipe_status_text(product_key: String, recipe: Dictionary) -> String:

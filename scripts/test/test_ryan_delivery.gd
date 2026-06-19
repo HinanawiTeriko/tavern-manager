@@ -10,6 +10,7 @@ var _failures := 0
 
 func _ready() -> void:
 	_test_current_order_key()
+	_test_post_dialogue_gate_is_export_resource_aware()
 	_test_action_feedback_keeps_ryan_story_out_of_customer_bubble()
 	_test_action_feedback_routes_mira_contract_handoff_to_dialogue()
 	_test_day12_mira_contract_delivery_uses_unsettled_feedback()
@@ -246,6 +247,18 @@ func _test_current_order_key() -> void:
 	_ok(_gm().current_order_key() == "meat_cooked", "current_order_key reflects guest order")
 	_gm().guests.clear_guest()
 	_ok(_gm().current_order_key() == "", "no guest -> empty order key")
+
+
+func _test_post_dialogue_gate_is_export_resource_aware() -> void:
+	var gm_source := FileAccess.get_file_as_string("res://scripts/game_manager.gd")
+	_ok(not gm_source.contains("FileAccess.file_exists(post_path)"),
+		"post-dialogue gate must not use FileAccess.file_exists on imported dialogue resources")
+	_ok(gm_source.contains("ResourceLoader.exists(post_path)"),
+		"post-dialogue gate checks exported dialogue resources through ResourceLoader")
+	_ok(ResourceLoader.exists("res://dialogue/ryan_day1.post.dialogue"),
+		"Ryan day1 post dialogue is importable as an exported Resource")
+	_ok(ResourceLoader.exists("res://dialogue/ryan_day2.post.dialogue"),
+		"Ryan day2 post dialogue is importable as an exported Resource")
 
 
 func _test_give_evidence_informs_ryan() -> void:

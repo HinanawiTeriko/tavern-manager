@@ -1,0 +1,124 @@
+{
+  "icons": {
+    "charred_crust_broth": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [0, 0, 362, 362],
+      "native": "assets/source/recipes/charred_crust_broth_native.png",
+      "runtime": "assets/textures/recipes/charred_crust_broth.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "charred_meat_plate": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [362, 0, 724, 362],
+      "native": "assets/source/recipes/charred_meat_plate_native.png",
+      "runtime": "assets/textures/recipes/charred_meat_plate.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "bitter_black_ale": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [724, 0, 1086, 362],
+      "native": "assets/source/recipes/bitter_black_ale_native.png",
+      "runtime": "assets/textures/recipes/bitter_black_ale.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "ash_pot_stew": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [1086, 0, 1448, 362],
+      "native": "assets/source/recipes/ash_pot_stew_native.png",
+      "runtime": "assets/textures/recipes/ash_pot_stew.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "sour_herb_wine": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [0, 362, 362, 724],
+      "native": "assets/source/recipes/sour_herb_wine_native.png",
+      "runtime": "assets/textures/recipes/sour_herb_wine.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "black_malt_porridge": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [362, 362, 724, 724],
+      "native": "assets/source/recipes/black_malt_porridge_native.png",
+      "runtime": "assets/textures/recipes/black_malt_porridge.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "herbal_lizard_roast": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [724, 362, 1086, 724],
+      "native": "assets/source/recipes/herbal_lizard_roast_native.png",
+      "runtime": "assets/textures/recipes/herbal_lizard_roast.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "mushroom_pie": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [1086, 362, 1448, 724],
+      "native": "assets/source/recipes/mushroom_pie_native.png",
+      "runtime": "assets/textures/recipes/mushroom_pie.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "grape_tart": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [0, 724, 362, 1086],
+      "native": "assets/source/recipes/grape_tart_native.png",
+      "runtime": "assets/textures/recipes/grape_tart.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "wakeful_herb_juice": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [362, 724, 724, 1086],
+      "native": "assets/source/recipes/wakeful_herb_juice_native.png",
+      "runtime": "assets/textures/recipes/wakeful_herb_juice.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "roasted_malt_porridge": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [724, 724, 1086, 1086],
+      "native": "assets/source/recipes/roasted_malt_porridge_native.png",
+      "runtime": "assets/textures/recipes/roasted_malt_porridge.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    },
+    "mushroom_meat_pie": {
+      "source": "art_sources/generated_raw/recipes/recipe_icon_sheet_v1.png",
+      "source_rect": [1086, 724, 1448, 1086],
+      "native": "assets/source/recipes/mushroom_meat_pie_native.png",
+      "runtime": "assets/textures/recipes/mushroom_meat_pie.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "chroma_threshold": 120
+    }
+  }
+}
