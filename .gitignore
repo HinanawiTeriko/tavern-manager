@@ -1,6 +1,8 @@
 # Godot 4+ specific ignores
 .godot/
 .godot-shop-ui-redesign-user-data/
+.godot-test-user-data/
+.godot-item-icons-user-data/
 
 # Godot-specific ignores
 .import/
@@ -21,6 +23,10 @@ tmp/
 tmp_tests/
 tmp_*.log
 tmp_*.png
+
+# Local source-art exploration candidates
+assets/source/intro/reference/candidates/*.png
+assets/source/intro/reference/tavern_continuity_master-v*.png
 
 # Python (asset-pipeline tooling cache)
 __pycache__/
@@ -64,6 +70,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # Superpowers docs (local only)
+.superpowers/
 docs/superpowers/
 
 #godot import
