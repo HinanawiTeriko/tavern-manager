@@ -7,10 +7,12 @@ var _failures := 0
 
 
 func _ready() -> void:
+	await _test_chaos_ghost_tutorial_waits_until_phoebe_is_fully_visible()
 	await _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item()
 	await _test_ghost_fades_in_place_when_player_snatches_target_back()
 	await _test_ghost_ignores_held_and_story_items()
 	await _test_ghost_handles_target_freed_mid_approach()
+	await _test_ghost_can_steal_idle_cookware_and_dock_it_after_escape()
 	await _test_fast_releases_feed_hidden_chaos()
 	await _test_waiting_guest_feeds_hidden_chaos_without_visible_meter()
 	_finish()
@@ -34,6 +36,118 @@ func _ghost_texture_path(ghost: Node2D) -> String:
 	if sprite == null or sprite.texture == null:
 		return ""
 	return String(sprite.texture.resource_path)
+
+
+func _reset_active_tutorial(tm: Node) -> void:
+	if tm == null:
+		return
+	tm._is_active = false
+	tm._current_sequence.clear()
+	tm._current_step = -1
+	if tm.has_method("_remove_overlay"):
+		tm._remove_overlay()
+
+
+func _capture_tutorial_state(tm: Node) -> Dictionary:
+	return {
+		"completed_steps": tm._completed_steps.duplicate(),
+		"daymap_first_shown": tm.daymap_first_shown,
+		"tavern_first_entered": tm.tavern_first_entered,
+		"first_menu_prep_shown": tm.first_menu_prep_shown,
+		"shop_first_visited": tm.shop_first_visited,
+		"first_guest_arrived": tm.first_guest_arrived,
+		"first_product_seasoned": tm.first_product_seasoned,
+		"first_guest_served": tm.first_guest_served,
+		"first_ledger_shown": tm.first_ledger_shown,
+		"first_inference_shown": tm.first_inference_shown,
+	}
+
+
+func _restore_tutorial_state(tm: Node, state: Dictionary) -> void:
+	_reset_active_tutorial(tm)
+	tm._completed_steps = (state.get("completed_steps", []) as Array).duplicate()
+	tm.daymap_first_shown = bool(state.get("daymap_first_shown", false))
+	tm.tavern_first_entered = bool(state.get("tavern_first_entered", false))
+	tm.first_menu_prep_shown = bool(state.get("first_menu_prep_shown", false))
+	tm.shop_first_visited = bool(state.get("shop_first_visited", false))
+	tm.first_guest_arrived = bool(state.get("first_guest_arrived", false))
+	tm.first_product_seasoned = bool(state.get("first_product_seasoned", false))
+	tm.first_guest_served = bool(state.get("first_guest_served", false))
+	tm.first_ledger_shown = bool(state.get("first_ledger_shown", false))
+	tm.first_inference_shown = bool(state.get("first_inference_shown", false))
+	if tm.has_method("_save_state"):
+		tm._save_state()
+
+
+func _complete_existing_tutorials_except(tm: Node, except_step_id: String) -> void:
+	tm._completed_steps.clear()
+	for group_key in tm._steps.keys():
+		for step in tm._steps[group_key]:
+			var step_id := String(step.get("id", ""))
+			if step_id != except_step_id and step_id != "":
+				tm._completed_steps.append(step_id)
+	tm.daymap_first_shown = true
+	tm.tavern_first_entered = true
+	tm.first_menu_prep_shown = true
+	tm.shop_first_visited = true
+	tm.first_guest_arrived = true
+	tm.first_product_seasoned = true
+	tm.first_guest_served = true
+	tm.first_ledger_shown = true
+	tm.first_inference_shown = true
+
+
+func _complete_all_existing_tutorials(tm: Node) -> void:
+	_complete_existing_tutorials_except(tm, "")
+
+
+func _test_chaos_ghost_tutorial_waits_until_phoebe_is_fully_visible() -> void:
+	var tm := get_node_or_null("/root/TutorialManager")
+	_ok(tm != null, "TutorialManager autoload should exist for chaos ghost tutorial")
+	if tm == null:
+		return
+
+	_reset_active_tutorial(tm)
+	var tutorial_backup := _capture_tutorial_state(tm)
+	_complete_existing_tutorials_except(tm, "chaos_ghost_intro")
+
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null or not bar.has_method("record_chaos_event") or not bar.has_method("try_trigger_chaos_event"):
+		_restore_tutorial_state(tm, tutorial_backup)
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	bar.set_process(false)
+
+	var item := bar._spawn_desk_item_at(Vector2(560.0, 340.0), "ale")
+	await get_tree().process_frame
+	bar.call("record_chaos_event", "guest_wait", 2.0)
+	var triggered: bool = bar.call("try_trigger_chaos_event")
+	_ok(triggered, "high hidden chaos should start before testing the tutorial timing")
+	_ok(not tm._is_active, "chaos ghost tutorial should not appear the instant Phoebe enters from offscreen")
+
+	for _i in range(21):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(not tm._is_active, "chaos ghost tutorial should wait until Phoebe is fully visible")
+
+	bar._process(0.1)
+	await get_tree().process_frame
+
+	_ok(tm._is_active, "chaos ghost tutorial should start when Phoebe has fully appeared beside the target")
+	_ok(tm._current_sequence.size() > 0 and String(tm._current_sequence[0].get("group", "")) == "chaos_ghost",
+		"first full Phoebe appearance should launch the chaos_ghost tutorial group")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+		"target item should remain on the table while the first chaos ghost tutorial is shown")
+
+	_restore_tutorial_state(tm, tutorial_backup)
+	tavern.queue_free()
+	await get_tree().process_frame
 
 
 func _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item() -> void:
@@ -210,6 +324,58 @@ func _test_ghost_handles_target_freed_mid_approach() -> void:
 
 	_ok(not bar.call("is_chaos_ghost_active"), "ghost should cancel cleanly when its target is freed mid-approach")
 
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_ghost_can_steal_idle_cookware_and_dock_it_after_escape() -> void:
+	var tm := get_node_or_null("/root/TutorialManager")
+	var tutorial_backup := {}
+	if tm != null:
+		_reset_active_tutorial(tm)
+		tutorial_backup = _capture_tutorial_state(tm)
+		_complete_all_existing_tutorials(tm)
+
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null or not bar.has_method("record_chaos_event") or not bar.has_method("try_trigger_chaos_event"):
+		if tm != null:
+			_restore_tutorial_state(tm, tutorial_backup)
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	bar.set_process(false)
+
+	var brewery := bar.get_node("World/Brewery") as RigidBody2D
+	_ok(brewery != null, "Tavern should expose docked brewery cookware")
+	if brewery == null:
+		if tm != null:
+			_restore_tutorial_state(tm, tutorial_backup)
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	var dock_position := brewery.global_position
+
+	bar.call("record_chaos_event", "guest_wait", 2.0)
+	var triggered: bool = bar.call("try_trigger_chaos_event")
+
+	_ok(triggered, "high hidden chaos should start a ghost thief event when only cookware is stealable")
+	_ok(brewery.has_meta("chaos_ghost_target"), "idle cookware should be marked as the ghost target")
+
+	for _i in range(46):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(not bar.call("is_chaos_ghost_active"), "cookware ghost theft should end after the escape")
+	_ok(is_instance_valid(brewery) and not brewery.is_queued_for_deletion(), "stolen cookware should not be deleted")
+	_ok(brewery.global_position.distance_to(dock_position) < 1.0, "stolen cookware should dock back at its original position")
+	_ok(not brewery.has_meta("chaos_ghost_target"), "cookware target marker should clear after docking")
+
+	if tm != null:
+		_restore_tutorial_state(tm, tutorial_backup)
 	tavern.queue_free()
 	await get_tree().process_frame
 

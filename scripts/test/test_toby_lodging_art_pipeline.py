@@ -217,6 +217,19 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
             "center floor should not read as a separate square warm-light patch",
         )
 
+    def test_background_wall_has_no_square_orange_patch(self) -> None:
+        native = load_rgba(SOURCE / "background_native.png")
+        target_warm = self._warm_pixel_count(native.crop((96, 44, 126, 88)))
+        adjacent_warm = max(
+            self._warm_pixel_count(native.crop((84, 44, 96, 88))),
+            self._warm_pixel_count(native.crop((126, 44, 152, 88))),
+        )
+        self.assertLessEqual(
+            target_warm,
+            adjacent_warm + 30,
+            "left-center wall should not read as a separate square orange patch",
+        )
+
     def test_item_and_button_alpha_contracts(self) -> None:
         for item_id, native_size in EXPECTED_ITEMS.items():
             native = load_rgba(SOURCE / "items" / f"{item_id}_native.png")
@@ -260,6 +273,13 @@ class TobyLodgingArtPipelineTest(unittest.TestCase):
         visible = [px for px in pixels(image) if px[3] > 0]
         self.assertTrue(visible, "luma sample must contain visible pixels")
         return sum(0.2126 * red + 0.7152 * green + 0.0722 * blue for red, green, blue, _alpha in visible) / len(visible)
+
+    def _warm_pixel_count(self, image: Image.Image) -> int:
+        return sum(
+            1
+            for red, green, blue, alpha in pixels(image)
+            if alpha == 255 and red >= 52 and green >= 30 and blue <= 50 and red >= blue * 1.20 and red >= green * 0.90
+        )
 
 
 if __name__ == "__main__":

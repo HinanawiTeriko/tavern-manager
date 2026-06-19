@@ -429,7 +429,7 @@ func _try_spawn_next() -> void:
 	# 重要NPC由 GM 调用 spawn_important 直接生成
 
 	if _daily_spawned >= _daily_total_guests:
-		_emit_normal_orders_completed()
+		ensure_idle_completion()
 		return
 
 	var menu_items: Array = _get_menu_items.call()
@@ -456,6 +456,17 @@ func _spawn_normal() -> void:
 
 func remaining_normal_orders() -> int:
 	return maxi(_daily_total_guests - _daily_spawned, 0)
+
+
+func ensure_idle_completion() -> void:
+	if has_guest or current_guest != null:
+		return
+	if _daily_spawned < _daily_total_guests:
+		return
+	_emit_normal_orders_completed()
+	var expected_total := _daily_total_guests + (1 if _daily_important_spawned else 0)
+	if _daily_cleared >= expected_total:
+		_emit_all_guests_served()
 
 
 func _regular_customer_entries_for_day(day: int, exclude_seen_today: bool = true) -> Array:

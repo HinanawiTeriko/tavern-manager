@@ -30,6 +30,7 @@ func _ready() -> void:
 	view._open_shop()
 	await get_tree().process_frame
 	_test_shop_overlay_integration(view)
+	await _test_shop_purchase_refreshes_daymap_gold_label(view)
 	view._close_shop()
 	await get_tree().process_frame
 	await _test_fixer_visit_refreshes_gold_label(view)
@@ -183,7 +184,7 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 		gm.rumors.restore_state({
 			"current_day": int(gm.economy.current_day),
 			"heard_ids": ["mushroom_forest_clear_scent"],
-			"today_ids": [],
+			"today_ids": ["mushroom_forest_clear_scent"],
 		})
 	view._visit_location("mushroom_forest")
 	await get_tree().process_frame
@@ -249,6 +250,32 @@ func _test_fixer_visit_refreshes_gold_label(view) -> void:
 	_ok(gm.economy.gold == 10, "fixer visit spends 40 gold through GameManager")
 	_ok(gold_label != null and gold_label.text.contains("10") and not gold_label.text.contains("50"),
 		"DayMap gold label refreshes after fixer spending")
+
+
+func _test_shop_purchase_refreshes_daymap_gold_label(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 1
+	gm.economy.gold = 30
+	gm.start_day_map(1)
+	view.show_day(1, EconomySystem.MAX_DAYS)
+	await get_tree().process_frame
+	var gold_label := view.get_node_or_null("UILayer/TopBar/GoldLabel") as Label
+	_ok(gold_label != null and gold_label.text.contains("30"),
+		"DayMap gold label starts from current economy gold before shop purchase")
+	view._open_shop()
+	await get_tree().process_frame
+	var overlay := view.get_node_or_null("UILayer/ShopOverlay") as ShopOverlay
+	_ok(overlay != null and overlay.visible, "shop overlay is open for DayMap purchase refresh test")
+	if overlay == null:
+		return
+	overlay.select_item("ale")
+	overlay.set_quantity(2)
+	overlay.purchase_selected()
+	await get_tree().process_frame
+	_ok(gm.economy.gold == 26, "shop purchase spends gold through GameManager while DayMap is active")
+	_ok(gold_label != null and gold_label.text.contains("26") and not gold_label.text.contains("30"),
+		"DayMap gold label refreshes immediately after shop spending")
 
 
 func _test_pinned_note_contract(view) -> void:

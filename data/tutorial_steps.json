@@ -265,5 +265,24 @@
       "desc_width": 440,
       "desc_height": 140
     }
+  ],
+  "chaos_ghost": [
+    {
+      "id": "chaos_ghost_intro",
+      "group": "chaos_ghost",
+      "title": "菲比幽灵",
+      "description": "菲比会趁桌面混乱时盯上普通物品。她靠近目标后，赶紧把目标抓起来就能打断偷窃；如果放着不管，她会把东西带出酒馆。",
+      "narrator_lines": [
+        {"expression": "surprised", "text": "停一下，菲比出来了。她喜欢趁桌面乱的时候顺走东西。"},
+        {"expression": "concerned", "text": "她靠近哪个物品，就赶紧把那个物品抓起来；抓到手里就能打断偷窃。"},
+        {"expression": "smirk", "text": "普通材料和成品别放着不管。桌面越乱，她越容易找到机会。"}
+      ],
+      "highlight_node": "ChaosGhostEvent",
+      "highlight_rect": [480, 250, 320, 180],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.18,
+      "desc_width": 460,
+      "desc_height": 150
+    }
   ]
 }

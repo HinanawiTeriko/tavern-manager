@@ -191,6 +191,8 @@ func _ready() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
+		if gm.economy != null and not gm.economy.changed.is_connected(_on_economy_changed):
+			gm.economy.changed.connect(_on_economy_changed)
 
 	_ensure_shop_overlay()
 
@@ -1255,6 +1257,9 @@ func _update_gold_display() -> void:
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		_gold_label.text = "金币：" + str(gm.economy.gold)
+
+func _on_economy_changed(_gold: int, _reputation: int, _level: int) -> void:
+	_update_gold_display()
 
 func _ensure_shop_overlay() -> void:
 	if _shop_overlay != null:

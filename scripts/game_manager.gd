@@ -296,9 +296,34 @@ func _process(delta: float) -> void:
 		var menu_open = _tavern_view.is_menu_open() or _tavern_view.is_menu_config_open()
 		var in_prep = _tavern_view.is_preparation_phase() or not _tavern_view.daily_menu_confirmed
 		if not in_prep and not _is_dialogue_active and not tutorial_active and not _guest_lingering:
+			if not menu_open:
+				_recover_unreachable_important_guest_wait()
 			guests.update(delta, guests.has_guest, menu_open)
+			if not menu_open:
+				_ensure_idle_guest_completion()
 		if guests.has_guest:
 			_tavern_view.update_timer(_guest_patience_ratio(guests.current_guest))
+
+
+func _recover_unreachable_important_guest_wait() -> void:
+	if not _important_npc_pending:
+		return
+	if guests == null or guests.has_guest:
+		return
+	if guests.remaining_normal_orders() > 0:
+		return
+	if _important_npc_normal_orders_seen < _important_npc_normal_orders_before:
+		_important_npc_normal_orders_seen = _important_npc_normal_orders_before
+	_spawn_pending_important_guest_after_menu()
+
+
+func _ensure_idle_guest_completion() -> void:
+	if _important_npc_pending:
+		return
+	if guests == null or guests.has_guest:
+		return
+	if guests.has_method("ensure_idle_completion"):
+		guests.ensure_idle_completion()
 
 
 func _guest_patience_ratio(guest: GuestData) -> float:

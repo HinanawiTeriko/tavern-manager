@@ -69,6 +69,7 @@ var _menu_prep_start_btn: Button
 var _menu_prep_selected: Array[String] = []
 var _menu_prep_buttons: Dictionary = {}
 var _menu_prep_focus_product_key: String = ""
+var _menu_prep_temporarily_hidden: bool = false
 
 var daily_menu: Dictionary = {}
 var daily_menu_confirmed: bool = true
@@ -141,6 +142,9 @@ const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
 const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
 const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
 const SHORTCUT_SEPARATION := 4
+const STAGE_CAPTION_POS := Vector2(240.0, 112.0)
+const STAGE_CAPTION_SIZE := Vector2(800.0, 40.0)
+const STAGE_CAPTION_Z_INDEX := 90
 const MAX_DAILY_MENU_ITEMS := 4
 const CUSTOMER_BUBBLE_Z_INDEX := 70
 const CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX := 71
@@ -182,7 +186,9 @@ func _ready() -> void:
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
+	_inventory_overlay.closed.connect(_on_modal_overlay_closed)
 	_document_overlay = $DocumentOverlay
+	_document_overlay.closed.connect(_on_modal_overlay_closed)
 	_settings_panel = $SettingsPanel
 	_settings_panel.configure(_gm.settings)
 	_settings_panel.closed.connect(_on_settings_closed)
@@ -333,6 +339,7 @@ func _apply_theme() -> void:
 	_stage_caption.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
 	_stage_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_stage_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_configure_stage_caption_layout()
 	if _inference_ready_notice != null:
 		ThemeColors.style_brush_label(_inference_ready_notice, 72, ThemeColors.AMBER_PRIMARY)
 		_inference_ready_notice.add_theme_constant_override("outline_size", 5)
@@ -393,6 +400,13 @@ func _configure_reaction_highlight() -> void:
 	_reaction_highlight.add_theme_font_size_override("normal_font_size", 16)
 	_reaction_highlight.add_theme_color_override("default_color", Color.WHITE)
 	_reaction_highlight.visible = false
+
+func _configure_stage_caption_layout() -> void:
+	if _stage_caption == null:
+		return
+	_stage_caption.position = STAGE_CAPTION_POS
+	_stage_caption.size = STAGE_CAPTION_SIZE
+	_stage_caption.z_index = STAGE_CAPTION_Z_INDEX
 
 
 func _configure_customer_bubble_layers() -> void:
@@ -1101,6 +1115,33 @@ func is_menu_config_open() -> bool:
 	return _menu_prep_panel != null and _menu_prep_panel.visible
 
 
+func _set_menu_prep_temporarily_hidden(hidden: bool) -> void:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return
+	if hidden:
+		if _menu_prep_panel.visible:
+			_menu_prep_temporarily_hidden = true
+			_menu_prep_panel.visible = false
+		return
+	_restore_menu_prep_if_no_blocking_overlay()
+
+
+func _restore_menu_prep_if_no_blocking_overlay() -> void:
+	if not _menu_prep_temporarily_hidden:
+		return
+	if _menu_panel != null and _menu_panel.visible:
+		return
+	if _inventory_overlay != null and _inventory_overlay.visible:
+		return
+	if _document_overlay != null and _document_overlay.visible:
+		return
+	if _settings_panel != null and _settings_panel.visible:
+		return
+	_menu_prep_temporarily_hidden = false
+	if _menu_prep_panel != null and is_instance_valid(_menu_prep_panel) and not daily_menu_confirmed:
+		_menu_prep_panel.visible = true
+
+
 func configure_menu_preparation(rumors: Array = [], echoes: Array = []) -> void:
 	_ensure_menu_prep_panel()
 	daily_menu.clear()
@@ -1112,6 +1153,7 @@ func configure_menu_preparation(rumors: Array = [], echoes: Array = []) -> void:
 	_rebuild_menu_prep_echoes(echoes)
 	_rebuild_menu_prep_products()
 	_refresh_menu_prep_selection()
+	_menu_prep_temporarily_hidden = false
 	_menu_prep_panel.visible = true
 	if _menu_panel != null:
 		_menu_panel.visible = false
@@ -1449,6 +1491,7 @@ func _confirm_menu_preparation() -> void:
 			"enabled": true,
 		}
 	daily_menu_confirmed = true
+	_menu_prep_temporarily_hidden = false
 	_menu_prep_panel.visible = false
 	if _gm != null and _gm.has_method("on_menu_confirmed"):
 		_gm.on_menu_confirmed()
@@ -1685,8 +1728,12 @@ func toggle_menu() -> void:
 	_document_overlay.close()
 	_menu_panel.visible = not _menu_panel.visible
 	if _menu_panel.visible:
+		_set_menu_prep_temporarily_hidden(true)
+		_menu_panel.move_to_front()
 		_build_recipe_list()
 		_build_backpack_list()
+	else:
+		_restore_menu_prep_if_no_blocking_overlay()
 
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
@@ -1698,11 +1745,18 @@ func is_menu_open() -> bool:
 func _open_settings() -> void:
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnSettings)
 	_menu_panel.visible = false
+	_set_menu_prep_temporarily_hidden(true)
 	_settings_panel.open()
+	_settings_panel.move_to_front()
 
 
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
+	_menu_panel.move_to_front()
+
+
+func _on_modal_overlay_closed() -> void:
+	call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 
 
 func _select_overlay_tab(selected: Button) -> void:
@@ -1716,14 +1770,19 @@ func toggle_inventory_overlay() -> void:
 	_document_overlay.close()
 	if _inventory_overlay.visible:
 		_inventory_overlay.close()
+		_restore_menu_prep_if_no_blocking_overlay()
 	else:
+		_set_menu_prep_temporarily_hidden(true)
 		_inventory_overlay.open()
+		_inventory_overlay.move_to_front()
 
 
 func open_document(document: Dictionary) -> void:
 	_menu_panel.visible = false
 	_inventory_overlay.close()
+	_set_menu_prep_temporarily_hidden(true)
 	_document_overlay.open_document(document)
+	_document_overlay.move_to_front()
 	_refresh_ledger_hint()
 
 
@@ -1761,9 +1820,11 @@ func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> v
 	var bar = get_node_or_null("BarWorkspace")
 	if bar != null and bar.has_method("bind_shortcut_at_position"):
 		if bar.bind_shortcut_at_position(item_key, global_position):
+			call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 			return
 	if bar != null and bar.has_method("spawn_inventory_item_at"):
 		bar.spawn_inventory_item_at(item_key, global_position)
+	call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1775,6 +1836,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
+		_restore_menu_prep_if_no_blocking_overlay()
 	else:
 		return
 	get_viewport().set_input_as_handled()

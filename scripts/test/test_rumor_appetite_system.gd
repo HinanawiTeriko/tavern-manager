@@ -8,9 +8,11 @@ func _ready() -> void:
 	_test_files_exist()
 	if _failures == 0:
 		_test_rumor_system_grants_and_restores()
+		_test_rumor_system_repeats_daily_planning_wind()
 		_test_appetite_system_scores_customer_food_matches()
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
+		_test_wind_rumor_pool_has_midgame_depth()
 		_test_material_gathering_locations_all_have_wind_rumors()
 		_test_material_gathering_wind_rumors_are_available_on_location_open_day()
 		_test_day_map_locations_have_explicit_wind_policy()
@@ -128,7 +130,7 @@ func _test_rumor_system_grants_and_restores() -> void:
 	_ok(String(hints.get("summary", "")) != "", "rumor hint includes one-line planning summary")
 	_ok(rumors.get_today_rumors().size() == 1, "today rumor list records the grant")
 	var repeat: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
-	_ok(not bool(repeat.get("success", true)), "same location rumor is not granted twice in one save")
+	_ok(not bool(repeat.get("success", true)), "same location rumor is not granted twice in one day")
 	var bias: Dictionary = rumors.get_guest_bias()
 	_ok(float(bias.get("mine", 1.0)) > 1.0, "granted rumor exposes mine guest bias")
 	var snap: Dictionary = rumors.capture_state()
@@ -139,7 +141,35 @@ func _test_rumor_system_grants_and_restores() -> void:
 	restored.restore_state(snap)
 	_ok(restored.get_today_rumors().size() == 1, "today rumor list survives restore")
 	_ok(not bool(restored.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true}).get("success", true)),
-		"restored heard rumor stays consumed")
+		"restored heard rumor stays consumed for the same day")
+
+
+func _test_rumor_system_repeats_daily_planning_wind() -> void:
+	var rumors = _new_rumor_system()
+	if rumors == null:
+		return
+	_ok(rumors.load_data(), "rumor data loads for daily wind repeat")
+	rumors.start_day(2)
+	var day_two: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
+	_ok(bool(day_two.get("success", false)), "day two board wind is available")
+	var same_day: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
+	_ok(not bool(same_day.get("success", true)), "same board wind does not repeat on the same day")
+	rumors.start_day(3)
+	var next_day: Dictionary = rumors.grant_location_rumor("mercenary_board", 3, {"ryan_warhammer_lead": true})
+	_ok(bool(next_day.get("success", false)), "board wind can repeat on a later day when it is still relevant")
+	_ok(String(next_day.get("id", "")) == String(day_two.get("id", "")),
+		"later-day repeated board wind reuses the current planning rumor when no new one is available")
+
+	var fresh = _new_rumor_system()
+	if fresh == null:
+		return
+	_ok(fresh.load_data(), "fresh rumor data loads for same-location daily cap")
+	fresh.start_day(8)
+	var first: Dictionary = fresh.grant_location_rumor("mushroom_forest", 8)
+	_ok(bool(first.get("success", false)), "day eight forest wind grants one eligible rumor")
+	var second: Dictionary = fresh.grant_location_rumor("mushroom_forest", 8)
+	_ok(not bool(second.get("success", true)),
+		"same location grants at most one wind notice per day even if several entries are eligible")
 
 
 func _test_appetite_system_scores_customer_food_matches() -> void:
@@ -184,7 +214,7 @@ func _test_expanded_product_tag_coverage() -> void:
 func _test_rumor_pool_menu_coverage() -> void:
 	var data := _load_json_dictionary("res://data/rumors.json")
 	var rumor_list: Array = data.get("rumors", [])
-	_ok(rumor_list.size() >= 13, "rumor pool has enough entries for the first content expansion")
+	_ok(rumor_list.size() >= 36, "rumor pool has enough entries for a longer day-map loop")
 	var appetite = _new_appetite_system()
 	if appetite == null:
 		return
@@ -210,6 +240,30 @@ func _test_rumor_pool_menu_coverage() -> void:
 		_ok(not guest_bias.is_empty(), "rumor has guest bias effects: " + id)
 		var matches := _products_matching_tags(appetite, products, recommended_tags)
 		_ok(matches.size() >= 2, "rumor has at least two matching menu products: %s -> %s" % [id, ", ".join(matches)])
+
+
+func _test_wind_rumor_pool_has_midgame_depth() -> void:
+	var data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_list: Array = data.get("rumors", [])
+	var by_location: Dictionary = {}
+	var late_count := 0
+	for raw in rumor_list:
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if location_id == "":
+			continue
+		by_location[location_id] = int(by_location.get(location_id, 0)) + 1
+		if int(rumor.get("dayMin", 1)) >= 14:
+			late_count += 1
+	for location_id in ["mushroom_forest", "dark_river", "grape_trellis", "mill_farm"]:
+		_ok(int(by_location.get(location_id, 0)) >= 4,
+			"repeatable material location has a deeper wind pool: " + location_id)
+	for location_id in ["market_shop", "mercenary_board"]:
+		_ok(int(by_location.get(location_id, 0)) >= 6,
+			"frequent town location has a deeper wind pool: " + location_id)
+	_ok(late_count >= 8, "rumor pool keeps adding new wind from day fourteen onward")
 
 
 func _test_guest_group_profiles_drive_orders() -> void:

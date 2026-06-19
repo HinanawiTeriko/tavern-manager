@@ -388,6 +388,14 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(_control_uses_pixel_font(stage_caption), "StageCaption uses the shared pixel UI font")
 		_ok(stage_caption.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"StageCaption does not block center-table item clicks while faded out")
+		if customer_name != null and customer_sprite != null:
+			_ok(stage_caption.global_position.y >= customer_name.global_position.y + customer_name.size.y + 6.0,
+				"StageCaption sits below the customer name instead of covering it")
+			_ok(stage_caption.global_position.y + stage_caption.size.y <= customer_sprite.global_position.y,
+				"StageCaption sits above the customer portrait instead of down near the table items")
+		if reward_coin_layer != null:
+			_ok(stage_caption.z_index > reward_coin_layer.z_index,
+				"StageCaption draws above temporary table reward coins")
 		tavern.show_stage_caption("今日客流招待完毕，可以打烊了！", ThemeColors.AMBER_PRIMARY)
 		_ok(stage_caption.text == "今日客流招待完毕，可以打烊了！",
 			"show_stage_caption keeps the all-guests-served caption as Godot-rendered text")
@@ -763,6 +771,7 @@ func _test_tavern_game_manager_contract() -> void:
 		_ok(tavern.is_preparation_phase() == true, "TavernView starts in menu preparation phase")
 	if tavern.has_method("is_business_phase"):
 		_ok(tavern.is_business_phase() == false, "TavernView does not enter business phase before menu confirmation")
+	await _test_inventory_drop_restores_menu_preparation(tavern)
 
 	if tavern.has_method("get_daily_menu_items"):
 		var menu_items: Array[Dictionary] = tavern.get_daily_menu_items()
@@ -789,6 +798,29 @@ func _test_tavern_game_manager_contract() -> void:
 
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_inventory_drop_restores_menu_preparation(tavern: Node) -> void:
+	var inventory := tavern.get_node_or_null("InventoryOverlay")
+	if inventory == null:
+		_ok(false, "TavernView keeps the InventoryOverlay contract path")
+		return
+	if not tavern.has_method("toggle_inventory_overlay") or not inventory.has_method("_drop_data"):
+		_ok(false, "Inventory overlay exposes the drop path used by TavernView")
+		return
+	_ok(tavern.is_menu_config_open(), "menu preparation is visible before opening inventory")
+	tavern.toggle_inventory_overlay()
+	_ok(not tavern.is_menu_config_open(), "inventory temporarily hides menu preparation")
+	await get_tree().process_frame
+	_ok(not tavern.is_menu_config_open(), "menu preparation stays hidden while inventory remains open")
+	var closed_count := [0]
+	inventory.closed.connect(func(): closed_count[0] += 1, CONNECT_ONE_SHOT)
+	inventory.call("_drop_data", Vector2(-32.0, -32.0), {"item_key": "ale"})
+	await get_tree().process_frame
+	_ok(int(closed_count[0]) == 1, "inventory world drop emits the public closed signal")
+	_ok(not inventory.visible, "inventory closes after a world drop")
+	_ok(tavern.is_preparation_phase(), "inventory drop does not confirm the daily menu")
+	_ok(tavern.is_menu_config_open(), "inventory drop restores hidden menu preparation")
 
 
 func _select_first_menu_prep_product(tavern: Node) -> void:

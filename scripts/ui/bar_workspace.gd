@@ -50,6 +50,7 @@ const PHYSICS_LAW_PULSE_SPIN := 2.6
 const CHAOS_GHOST_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost.png"
 const CHAOS_GHOST_GRAB_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png"
 const CHAOS_GHOST_FADE_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png"
+const CHAOS_GHOST_TUTORIAL_GROUP := "chaos_ghost"
 const CHAOS_GHOST_TARGET_META := "chaos_ghost_target"
 const CHAOS_GHOST_STOLEN_META := "chaos_ghost_stolen_once"
 const CHAOS_GHOST_BASE_MODULATE_META := "chaos_ghost_base_modulate"
@@ -105,12 +106,16 @@ var _chaos_ghost_cooldown := 0.0
 var _chaos_ghost_phase := ""
 var _chaos_ghost_elapsed := 0.0
 var _chaos_ghost_frames := 0
-var _chaos_ghost_target: DeskItem = null
+var _chaos_ghost_target: RigidBody2D = null
 var _chaos_ghost_node: Node2D = null
 var _chaos_ghost_entry_position := Vector2.ZERO
 var _chaos_ghost_capture_position := Vector2.ZERO
 var _chaos_ghost_escape_position := Vector2.ZERO
 var _chaos_ghost_fade_alpha_from := 1.0
+var _chaos_ghost_waiting_for_tutorial := false
+var _chaos_ghost_target_collision_layer := 0
+var _chaos_ghost_target_collision_mask := 0
+var _chaos_ghost_target_freeze := false
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -287,7 +292,7 @@ func _feed_ambient_chaos(delta: float) -> void:
 	if delta <= 0.0 or _chaos_ghost_phase != "":
 		return
 	var stealable_count := _stealable_chaos_item_count()
-	if stealable_count <= 0:
+	if stealable_count <= 0 and _stealable_chaos_cookware_count() <= 0:
 		return
 	if _current_guest_patience_ratio() <= CHAOS_GUEST_WAIT_PATIENCE_RATIO:
 		record_chaos_event("guest_wait", delta * CHAOS_GUEST_WAIT_PER_SECOND)
@@ -316,15 +321,37 @@ func _stealable_chaos_item_count() -> int:
 	return count
 
 
+func _stealable_chaos_cookware_count() -> int:
+	var count := 0
+	for body in _chaos_ghost_cookware_targets():
+		if _is_chaos_ghost_targetable(body):
+			count += 1
+	return count
+
+
 func _update_chaos_ghost_approach(delta: float) -> void:
 	if not _is_chaos_ghost_targetable(_chaos_ghost_target):
 		_cancel_chaos_ghost_event()
+		return
+	if _chaos_ghost_waiting_for_tutorial:
+		_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
+		_pulse_chaos_ghost_target()
+		_update_chaos_ghost_approach_visual()
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null and tm._is_active:
+			return
+		_chaos_ghost_waiting_for_tutorial = false
+		_start_chaos_ghost_escape()
 		return
 	_chaos_ghost_elapsed += delta
 	_chaos_ghost_frames += 1
 	_pulse_chaos_ghost_target()
 	_update_chaos_ghost_approach_visual()
 	if _chaos_ghost_elapsed >= CHAOS_GHOST_APPROACH_SECONDS:
+		if _maybe_trigger_chaos_ghost_tutorial():
+			_chaos_ghost_waiting_for_tutorial = true
+			_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
+			return
 		_start_chaos_ghost_escape()
 
 
@@ -351,16 +378,19 @@ func _update_chaos_ghost_fade(delta: float) -> void:
 		_complete_chaos_ghost_fade()
 
 
-func _find_chaos_ghost_target() -> DeskItem:
+func _find_chaos_ghost_target() -> RigidBody2D:
 	for child in _items_node.get_children():
 		if child is DeskItem and _is_chaos_ghost_targetable(child):
 			return child
+	for body in _chaos_ghost_cookware_targets():
+		if _is_chaos_ghost_targetable(body):
+			return body
 	return null
 
 
 func _is_chaos_ghost_targetable(item) -> bool:
 	if item == null or not is_instance_valid(item) or not item is DeskItem:
-		return false
+		return _is_chaos_ghost_cookware_targetable(item)
 	var desk_item := item as DeskItem
 	if desk_item.is_queued_for_deletion():
 		return false
@@ -379,11 +409,37 @@ func _is_chaos_ghost_targetable(item) -> bool:
 	return true
 
 
-func _start_chaos_ghost_approach(target: DeskItem) -> void:
+func _chaos_ghost_cookware_targets() -> Array[RigidBody2D]:
+	var targets: Array[RigidBody2D] = []
+	for body in [_brewery, _shaker, _grill, _pot, _spoon]:
+		if body is RigidBody2D:
+			targets.append(body)
+	return targets
+
+
+func _is_chaos_ghost_cookware_targetable(body) -> bool:
+	if body == null or not is_instance_valid(body) or not body is RigidBody2D:
+		return false
+	var rigid := body as RigidBody2D
+	if rigid.is_queued_for_deletion():
+		return false
+	if not _docks.has(rigid):
+		return false
+	if not _chaos_ghost_cookware_targets().has(rigid):
+		return false
+	if not rigid.visible or rigid.process_mode == Node.PROCESS_MODE_DISABLED:
+		return false
+	if _drag_ctrl != null and _drag_ctrl.get_body() == rigid:
+		return false
+	return true
+
+
+func _start_chaos_ghost_approach(target: RigidBody2D) -> void:
 	_chaos_ghost_target = target
 	_chaos_ghost_phase = "approach"
 	_chaos_ghost_elapsed = 0.0
 	_chaos_ghost_frames = 0
+	_chaos_ghost_waiting_for_tutorial = false
 	_chaos_level = maxf(0.0, _chaos_level - CHAOS_GHOST_TRIGGER_LEVEL)
 	_chaos_ghost_entry_position = _random_chaos_ghost_edge_position()
 	_chaos_ghost_escape_position = _chaos_ghost_entry_position
@@ -397,6 +453,48 @@ func _start_chaos_ghost_approach(target: DeskItem) -> void:
 	ghost.global_position = _chaos_ghost_entry_position
 	ghost.scale = Vector2.ONE * 0.78
 	ghost.modulate = Color(1.0, 1.0, 1.0, 0.18)
+
+
+func _maybe_trigger_chaos_ghost_tutorial() -> bool:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active:
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed(CHAOS_GHOST_TUTORIAL_GROUP):
+		return false
+	tm.start_tutorial(CHAOS_GHOST_TUTORIAL_GROUP, _chaos_ghost_tutorial_rects())
+	return tm._is_active
+
+
+func _chaos_ghost_tutorial_rects() -> Dictionary:
+	return {
+		"ChaosGhostEvent": _union_screen_rects([
+			_node_centered_screen_rect(_chaos_ghost_node, Vector2(100.0, 112.0), Vector2(18.0, 18.0)),
+			_node_centered_screen_rect(_chaos_ghost_target, Vector2(72.0, 72.0), Vector2(18.0, 18.0)),
+		]),
+	}
+
+
+func _union_screen_rects(rect_arrays: Array) -> Array:
+	var has_rect := false
+	var union_rect := Rect2()
+	for values in rect_arrays:
+		var rect := _rect_from_array(values as Array)
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		if not has_rect:
+			union_rect = rect
+			has_rect = true
+		else:
+			union_rect = union_rect.merge(rect)
+	if not has_rect:
+		return []
+	return [union_rect.position.x, union_rect.position.y, union_rect.size.x, union_rect.size.y]
+
+
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
 
 
 func _pulse_chaos_ghost_target() -> void:
@@ -414,14 +512,18 @@ func _start_chaos_ghost_escape() -> void:
 		return
 	_restore_chaos_ghost_target_visual(target)
 	target.remove_meta(CHAOS_GHOST_TARGET_META)
-	target.set_meta(CHAOS_GHOST_STOLEN_META, true)
+	if target is DeskItem:
+		target.set_meta(CHAOS_GHOST_STOLEN_META, true)
+		target.set_physics_process(false)
+	_chaos_ghost_target_collision_layer = target.collision_layer
+	_chaos_ghost_target_collision_mask = target.collision_mask
+	_chaos_ghost_target_freeze = target.freeze
 	target.freeze = true
 	target.sleeping = true
 	target.linear_velocity = Vector2.ZERO
 	target.angular_velocity = 0.0
 	target.collision_layer = 0
 	target.collision_mask = 0
-	target.set_physics_process(false)
 	target.z_as_relative = false
 	target.z_index = CHAOS_GHOST_Z_INDEX + 1
 	_chaos_ghost_phase = "escape"
@@ -442,6 +544,7 @@ func _cancel_chaos_ghost_event() -> void:
 			_chaos_ghost_target.remove_meta(CHAOS_GHOST_TARGET_META)
 		_restore_chaos_ghost_target_visual(_chaos_ghost_target)
 	_chaos_ghost_target = null
+	_chaos_ghost_waiting_for_tutorial = false
 	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
 		_complete_chaos_ghost_fade()
 		return
@@ -454,7 +557,7 @@ func _cancel_chaos_ghost_event() -> void:
 	_chaos_ghost_node.modulate = Color(1.0, 1.0, 1.0, _chaos_ghost_fade_alpha_from)
 
 
-func _restore_chaos_ghost_target_visual(target: DeskItem) -> void:
+func _restore_chaos_ghost_target_visual(target: Node2D) -> void:
 	if target == null or not is_instance_valid(target):
 		return
 	if target.has_meta(CHAOS_GHOST_BASE_MODULATE_META):
@@ -464,10 +567,14 @@ func _restore_chaos_ghost_target_visual(target: DeskItem) -> void:
 
 func _complete_chaos_ghost_escape() -> void:
 	if _chaos_ghost_target != null and is_instance_valid(_chaos_ghost_target) and not _chaos_ghost_target.is_queued_for_deletion():
-		_chaos_ghost_target.queue_free()
+		if _chaos_ghost_target is DeskItem:
+			_chaos_ghost_target.queue_free()
+		else:
+			_restore_chaos_ghost_cookware_target(_chaos_ghost_target)
 	_hide_chaos_ghost_visual()
 	_chaos_ghost_target = null
 	_chaos_ghost_phase = ""
+	_chaos_ghost_waiting_for_tutorial = false
 	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS
 
 
@@ -475,7 +582,20 @@ func _complete_chaos_ghost_fade() -> void:
 	_hide_chaos_ghost_visual()
 	_chaos_ghost_target = null
 	_chaos_ghost_phase = ""
+	_chaos_ghost_waiting_for_tutorial = false
 	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS * 0.35
+
+
+func _restore_chaos_ghost_cookware_target(target: RigidBody2D) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	if target.has_meta(CHAOS_GHOST_TARGET_META):
+		target.remove_meta(CHAOS_GHOST_TARGET_META)
+	target.collision_layer = _chaos_ghost_target_collision_layer
+	target.collision_mask = _chaos_ghost_target_collision_mask
+	target.freeze = _chaos_ghost_target_freeze
+	if _docks.has(target):
+		_dock_body(target)
 
 
 func _update_chaos_ghost_approach_visual() -> void:

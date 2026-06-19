@@ -305,6 +305,460 @@
           "regular_elira": 1.1
         }
       }
+    },
+    {
+      "id": "dark_river_ferry_salt",
+      "location": "dark_river",
+      "dayMin": 4,
+      "text": "暗河渡口的盐包受潮了，搬运工今晚会偏爱热食和够咸够顶的主菜。",
+      "menuHints": {
+        "customerGroups": ["搬运工", "夜班矿工"],
+        "recommendedTags": ["热食", "顶饿", "力量"],
+        "summary": "肉汤、烤肉和扎实主食能接住湿冷渡口客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.25,
+          "regular_dorin": 1.25,
+          "regular_gareth": 1.15
+        }
+      }
+    },
+    {
+      "id": "dark_river_barrel_chill",
+      "location": "dark_river",
+      "dayMin": 9,
+      "text": "河边酒桶冻得发硬，守桶人说今晚酒水要有热菜压着才舒服。",
+      "menuHints": {
+        "customerGroups": ["守桶人", "走货商人"],
+        "recommendedTags": ["酒水", "热食", "体面"],
+        "summary": "麦酒、葡萄酒配热菜，适合从河边回来的商旅。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.2,
+          "mine": 1.1,
+          "regular_marco": 1.2,
+          "regular_coen": 1.15
+        }
+      }
+    },
+    {
+      "id": "dark_river_lantern_watch",
+      "location": "dark_river",
+      "dayMin": 14,
+      "text": "暗河巡灯人今晚会换班，清香热汤比烈酒更容易让他们多坐一会儿。",
+      "menuHints": {
+        "customerGroups": ["巡灯人", "安静客人"],
+        "recommendedTags": ["清香", "热食", "轻快"],
+        "summary": "草药汤、菌菇汤和轻快热食适合疲惫夜班。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.2,
+          "old_road": 1.1,
+          "regular_elira": 1.2,
+          "regular_oma": 1.15
+        }
+      }
+    },
+    {
+      "id": "dark_river_flooded_steps",
+      "location": "dark_river",
+      "dayMin": 18,
+      "text": "暗河石阶涨水，跑腿人和矿口客今晚会想要快、热、能立刻填肚子的东西。",
+      "menuHints": {
+        "customerGroups": ["后巷跑腿人", "矿口搬运工"],
+        "recommendedTags": ["顶饿", "热食", "酒水"],
+        "summary": "肉夹面包、麦酒和热汤能照顾赶时间的湿脚客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.25,
+          "trade": 1.1,
+          "regular_belta": 1.15,
+          "regular_nix": 1.2
+        }
+      }
+    },
+    {
+      "id": "grape_trellis_merchant_tasting",
+      "location": "grape_trellis",
+      "dayMin": 4,
+      "text": "葡萄架旁开了小型试饮，商旅客今晚会拿酒香和菜的体面程度说事。",
+      "menuHints": {
+        "customerGroups": ["走货商人", "吟游诗人"],
+        "recommendedTags": ["酒水", "体面", "精致"],
+        "summary": "葡萄酒、香料酒和精致小菜更适合谈价与闲聊。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.25,
+          "regular_marco": 1.25,
+          "regular_lyra": 1.2
+        }
+      }
+    },
+    {
+      "id": "grape_trellis_old_road_toast",
+      "location": "grape_trellis",
+      "dayMin": 9,
+      "text": "旧路车队借了葡萄架避风，今晚他们会偏爱清香酒水和不太油的热菜。",
+      "menuHints": {
+        "customerGroups": ["旧路熟人", "走货商人"],
+        "recommendedTags": ["酒水", "清香", "热食"],
+        "summary": "旧路酒、草药热汤和清香小菜能让旅客留久一点。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.25,
+          "trade": 1.15,
+          "regular_oma": 1.2,
+          "regular_elira": 1.15
+        }
+      }
+    },
+    {
+      "id": "grape_trellis_ledger_vintage",
+      "location": "grape_trellis",
+      "dayMin": 14,
+      "text": "账房学徒在问旧年份酒价，今晚体面酒菜会比粗重肉食更容易打开话头。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "体面客人"],
+        "recommendedTags": ["体面", "精致", "酒水"],
+        "summary": "葡萄酒、旧路酒和精致菜品适合安静谈账。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.3,
+          "trade": 1.1,
+          "regular_noel": 1.25,
+          "regular_selene": 1.15
+        }
+      }
+    },
+    {
+      "id": "grape_trellis_late_harvest",
+      "location": "grape_trellis",
+      "dayMin": 18,
+      "text": "晚收葡萄酸甜不稳，吟游客今晚会喜欢能配酒、清爽又不失体面的菜单。",
+      "menuHints": {
+        "customerGroups": ["吟游诗人", "旧路熟人"],
+        "recommendedTags": ["酒水", "清香", "体面"],
+        "summary": "清香饮品、葡萄酒和体面小菜更容易换来轻松谈话。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.2,
+          "old_road": 1.2,
+          "regular_lyra": 1.25,
+          "regular_oma": 1.15
+        }
+      }
+    },
+    {
+      "id": "mill_farm_bread_queue",
+      "location": "mill_farm",
+      "dayMin": 4,
+      "text": "磨坊外排了面包队，早班客今晚会想找热乎、顶饿、带麦香的东西。",
+      "menuHints": {
+        "customerGroups": ["早班工人", "农田帮工"],
+        "recommendedTags": ["顶饿", "热食", "酒水"],
+        "summary": "面包、麦芽酒、肉汤和热主食都适合这批客人。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.2,
+          "trade": 1.1,
+          "regular_belta": 1.2,
+          "regular_gareth": 1.15
+        }
+      }
+    },
+    {
+      "id": "mill_farm_night_cart",
+      "location": "mill_farm",
+      "dayMin": 9,
+      "text": "夜车要从磨坊绕路进城，赶车人今晚会偏爱能快上桌的热食和酒水。",
+      "menuHints": {
+        "customerGroups": ["赶车人", "走货商人"],
+        "recommendedTags": ["热食", "酒水", "轻快"],
+        "summary": "热汤、麦酒和轻快主食适合匆忙的夜车客。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.25,
+          "mine": 1.1,
+          "regular_marco": 1.15,
+          "regular_nix": 1.15
+        }
+      }
+    },
+    {
+      "id": "mill_farm_tax_scales",
+      "location": "mill_farm",
+      "dayMin": 14,
+      "text": "磨坊今天借了账房的秤，今晚会有些懂账的人来问麦价和酒价。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "走货商人"],
+        "recommendedTags": ["体面", "酒水", "精致"],
+        "summary": "体面酒菜和精致小食更适合谈账、谈价。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.25,
+          "trade": 1.15,
+          "regular_noel": 1.2,
+          "regular_marco": 1.15
+        }
+      }
+    },
+    {
+      "id": "mill_farm_damp_grain",
+      "location": "mill_farm",
+      "dayMin": 18,
+      "text": "磨坊说谷仓返潮，农田帮工今晚会想要更热、更顶饿、能压住霉味的菜单。",
+      "menuHints": {
+        "customerGroups": ["农田帮工", "夜班矿工"],
+        "recommendedTags": ["热食", "顶饿", "力量"],
+        "summary": "肉汤、烤肉和扎实主食能让湿冷晚班客满意。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.25,
+          "regular_belta": 1.2,
+          "regular_dorin": 1.15,
+          "regular_gareth": 1.15
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_blue_caps",
+      "location": "mushroom_forest",
+      "dayMin": 12,
+      "text": "林地里冒出蓝帽菌，草药客今晚会追着清香和秘香问个不停。",
+      "menuHints": {
+        "customerGroups": ["草药客", "符文学者"],
+        "recommendedTags": ["秘香", "清香", "精致"],
+        "summary": "菌菇汤、草药茶和细致香味能留住好奇客。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.25,
+          "ledger": 1.1,
+          "regular_elira": 1.2,
+          "regular_selene": 1.2
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_ledger_foragers",
+      "location": "mushroom_forest",
+      "dayMin": 16,
+      "text": "账房雇了采菌人做记录，今晚安静客和学徒会喜欢清淡但有层次的菜。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "安静客人"],
+        "recommendedTags": ["清香", "精致", "体面"],
+        "summary": "草药茶、清香汤和体面小菜更适合低声交谈。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.25,
+          "herbal": 1.15,
+          "regular_noel": 1.2,
+          "regular_masha": 1.15
+        }
+      }
+    },
+    {
+      "id": "mushroom_forest_sleepy_pollen_watch",
+      "location": "mushroom_forest",
+      "dayMin": 18,
+      "text": "林地巡夜人说花粉让人犯困，今晚别全上烈菜，清香热饮更稳。",
+      "menuHints": {
+        "customerGroups": ["巡林人", "安静客人"],
+        "recommendedTags": ["清香", "热食", "轻快"],
+        "summary": "热茶、菌菇汤和轻快菜能照顾犯困的客人。"
+      },
+      "effects": {
+        "guestBias": {
+          "herbal": 1.25,
+          "old_road": 1.1,
+          "regular_elira": 1.2,
+          "regular_oma": 1.15
+        }
+      }
+    },
+    {
+      "id": "market_shop_repair_crews",
+      "location": "market_shop",
+      "dayMin": 14,
+      "text": "市场棚架要连夜修，修棚人和搬货人会找热、快、能配酒的东西。",
+      "menuHints": {
+        "customerGroups": ["修棚人", "搬货人"],
+        "recommendedTags": ["热食", "酒水", "顶饿"],
+        "summary": "热主食、麦酒和烤肉适合连夜干活的人。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.2,
+          "mine": 1.15,
+          "regular_nix": 1.2,
+          "regular_belta": 1.1
+        }
+      }
+    },
+    {
+      "id": "market_shop_last_caravan",
+      "location": "market_shop",
+      "dayMin": 18,
+      "text": "最后一支商队压晚进城，今晚商旅会挑体面酒菜，也会记住谁上菜够快。",
+      "menuHints": {
+        "customerGroups": ["走货商人", "吟游诗人"],
+        "recommendedTags": ["体面", "酒水", "轻快"],
+        "summary": "体面酒菜、清爽饮品和上桌快的主食能稳住晚到客。"
+      },
+      "effects": {
+        "guestBias": {
+          "trade": 1.3,
+          "regular_marco": 1.25,
+          "regular_lyra": 1.2,
+          "regular_noel": 1.15
+        }
+      }
+    },
+    {
+      "id": "mercenary_board_bridge_watch",
+      "location": "mercenary_board",
+      "dayMin": 10,
+      "text": "桥头守夜名单贴上来了，巡夜人今晚会找有劲的酒和不失体面的热菜。",
+      "menuHints": {
+        "customerGroups": ["巡夜人", "退伍兵"],
+        "recommendedTags": ["力量", "酒水", "体面"],
+        "summary": "麦酒、黑啤和体面肉菜能吸引守夜客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.2,
+          "regular_coen": 1.25,
+          "regular_dorin": 1.15,
+          "regular_nix": 1.15
+        }
+      }
+    },
+    {
+      "id": "mercenary_board_payday_ledger",
+      "location": "mercenary_board",
+      "dayMin": 14,
+      "text": "告示板旁贴了短工结钱日，矿口客今晚有钱但会挑更顶饿的好东西。",
+      "menuHints": {
+        "customerGroups": ["矿口搬运工", "体面客人"],
+        "recommendedTags": ["顶饿", "力量", "体面"],
+        "summary": "扎实肉菜和体面主食能接住手头宽裕的矿口客。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.3,
+          "ledger": 1.1,
+          "regular_belta": 1.25,
+          "regular_gareth": 1.15
+        }
+      }
+    },
+    {
+      "id": "mercenary_board_old_patrol",
+      "location": "mercenary_board",
+      "dayMin": 18,
+      "text": "旧巡逻队有人回城，退伍兵今晚会偏爱酒水、热食和能让人慢慢说话的菜。",
+      "menuHints": {
+        "customerGroups": ["退伍兵", "旧路熟人"],
+        "recommendedTags": ["酒水", "热食", "体面"],
+        "summary": "麦酒、热汤和体面小菜适合让老熟人坐久一点。"
+      },
+      "effects": {
+        "guestBias": {
+          "mine": 1.2,
+          "old_road": 1.15,
+          "regular_dorin": 1.2,
+          "regular_oma": 1.1
+        }
+      }
+    },
+    {
+      "id": "mira_stall_trade_silence",
+      "location": "mira_stall",
+      "dayMin": 10,
+      "text": "米拉摊前的商人今天话少，今晚旧路客可能更愿意借清香热饮慢慢说。",
+      "menuHints": {
+        "customerGroups": ["旧路熟人", "走货商人"],
+        "recommendedTags": ["清香", "热食", "体面"],
+        "summary": "清香热汤、旧路酒和体面小菜能让旧识放慢脚步。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.25,
+          "trade": 1.1,
+          "regular_oma": 1.2,
+          "regular_marco": 1.1
+        }
+      }
+    },
+    {
+      "id": "mira_stall_rain_blankets",
+      "location": "mira_stall",
+      "dayMin": 14,
+      "text": "米拉把雨毯挂得很低，安静客人今晚会想要热乎、清淡、不逼人的东西。",
+      "menuHints": {
+        "customerGroups": ["安静客人", "旧路熟人"],
+        "recommendedTags": ["热食", "清香", "轻快"],
+        "summary": "热茶、菌菇汤和轻快主食更适合低声聊天。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.25,
+          "herbal": 1.1,
+          "regular_elira": 1.15,
+          "regular_oma": 1.2
+        }
+      }
+    },
+    {
+      "id": "mira_stall_old_road_return",
+      "location": "mira_stall",
+      "dayMin": 18,
+      "text": "旧路车铃又从摊后响过，今晚熟人们可能靠酒水和清香菜慢慢试探。",
+      "menuHints": {
+        "customerGroups": ["旧路熟人", "吟游诗人"],
+        "recommendedTags": ["酒水", "清香", "体面"],
+        "summary": "旧路酒、清香饮品和体面小菜能稳住旧识的谈话。"
+      },
+      "effects": {
+        "guestBias": {
+          "old_road": 1.3,
+          "trade": 1.1,
+          "regular_lyra": 1.15,
+          "regular_oma": 1.2
+        }
+      }
+    },
+    {
+      "id": "payout_office_quiet_witnesses",
+      "location": "payout_office",
+      "dayMin": 18,
+      "text": "赔付登记处有人等到很晚才离开，今晚账房客会更喜欢安静、体面、清香的菜单。",
+      "menuHints": {
+        "customerGroups": ["账房学徒", "安静客人"],
+        "recommendedTags": ["体面", "清香", "精致"],
+        "summary": "清香汤、茶和精致酒菜适合让谨慎客人多停一会儿。"
+      },
+      "effects": {
+        "guestBias": {
+          "ledger": 1.35,
+          "old_road": 1.1,
+          "regular_noel": 1.25,
+          "regular_selene": 1.2
+        }
+      }
     }
   ]
 }

@@ -35,9 +35,12 @@ func start_day(day: int) -> void:
 
 func grant_location_rumor(location_id: String, day: int, flags: Dictionary = {}) -> Dictionary:
 	start_day(day)
-	for rumor in _rumors:
-		if not _rumor_available_for_location(rumor, location_id, day, flags):
-			continue
+	if _today_has_location_rumor(location_id):
+		return {"success": false}
+	var rumor := _best_location_rumor(location_id, day, flags, true)
+	if rumor.is_empty():
+		rumor = _best_location_rumor(location_id, day, flags, false)
+	if not rumor.is_empty():
 		var id := String(rumor.get("id", ""))
 		_heard_ids[id] = true
 		if not _today_ids.has(id):
@@ -96,11 +99,31 @@ func restore_state(state: Dictionary) -> void:
 			_today_ids.append(clean)
 
 
-func _rumor_available_for_location(rumor: Dictionary, location_id: String, day: int, flags: Dictionary) -> bool:
+func _today_has_location_rumor(location_id: String) -> bool:
+	for id in _today_ids:
+		var rumor := _rumor_by_id(id)
+		if not rumor.is_empty() and String(rumor.get("location", "")) == location_id:
+			return true
+	return false
+
+
+func _best_location_rumor(location_id: String, day: int, flags: Dictionary, require_unheard: bool) -> Dictionary:
+	var best := {}
+	for rumor in _rumors:
+		if not _rumor_available_for_location(rumor, location_id, day, flags, require_unheard):
+			continue
+		if best.is_empty() or int(rumor.get("dayMin", 1)) > int(best.get("dayMin", 1)):
+			best = rumor
+	return best
+
+
+func _rumor_available_for_location(rumor: Dictionary, location_id: String, day: int, flags: Dictionary, require_unheard: bool = true) -> bool:
 	if String(rumor.get("location", "")) != location_id:
 		return false
 	var id := String(rumor.get("id", ""))
-	if id == "" or bool(_heard_ids.get(id, false)):
+	if id == "":
+		return false
+	if require_unheard and bool(_heard_ids.get(id, false)):
 		return false
 	if day < int(rumor.get("dayMin", 1)):
 		return false

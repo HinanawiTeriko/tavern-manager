@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_toby_day6_identity_is_masked_in_tavern()
 	_test_toby_name_reveals_after_identity_deduction()
 	_test_guest_budget()
+	_test_zero_normal_guest_budget_emits_all_done()
 	_test_game_manager_owns_slice()
 	_test_pending_important_guest_blocks_early_close()
 	_test_important_arrival_timing_rules()
@@ -35,6 +36,7 @@ func _ready() -> void:
 	_test_post_dialogue_shows_heart_feedback()
 	_test_day3_fate_reveal_is_not_a_formal_npc_scene()
 	await _test_day3_fate_reveal_spawns_when_menu_already_confirmed()
+	await _test_pending_important_guest_recovers_when_normal_gate_is_impossible()
 	_test_day1_settlement_warns_about_day2_fate_ledger_entry()
 	_finish()
 
@@ -160,6 +162,18 @@ func _test_guest_budget() -> void:
 	guests._spawn_normal()
 	_ok(not guests.has_guest, "third normal order is blocked")
 	_ok(completed[0] == 1, "completion signal emits once")
+
+
+func _test_zero_normal_guest_budget_emits_all_done() -> void:
+	var guests := GuestSystem.new(func(): return ["ale_beer"])
+	var normal_completed := [0]
+	var all_completed := [0]
+	guests.normal_orders_completed.connect(func(): normal_completed[0] += 1)
+	guests.all_guests_served.connect(func(): all_completed[0] += 1)
+	guests.configure_night(0)
+	guests.update(2.1, false, false)
+	_ok(int(normal_completed[0]) == 1, "zero-normal-order night emits normal completion")
+	_ok(int(all_completed[0]) == 1, "zero-normal-order night emits all-guests-served instead of idling forever")
 
 
 func _test_game_manager_owns_slice() -> void:
@@ -392,6 +406,63 @@ func _test_day2_important_npc_waits_for_one_normal_guest() -> void:
 	gm._dialogue_phase = original_dialogue_phase
 	if tutorial != null:
 		tutorial.tavern_first_entered = original_tutorial_entered
+		tutorial._is_active = original_tutorial_active
+
+
+func _test_pending_important_guest_recovers_when_normal_gate_is_impossible() -> void:
+	var gm = get_node("/root/GameManager")
+	var tutorial = get_node_or_null("/root/TutorialManager")
+	var original_view = gm._tavern_view
+	var original_day: int = gm.economy.current_day
+	var original_phase: int = gm.day_cycle.phase
+	var original_pending: bool = gm._important_npc_pending
+	var original_before: int = gm._important_npc_normal_orders_before
+	var original_seen: int = gm._important_npc_normal_orders_seen
+	var original_today_npc: String = gm.narrative.today_important_npc
+	var original_dialogue_active: bool = gm._is_dialogue_active
+	var original_dialogue_phase: String = gm._dialogue_phase
+	var original_guest_lingering: bool = gm._guest_lingering
+	var original_tutorial_active := false
+	if tutorial != null:
+		original_tutorial_active = bool(tutorial._is_active)
+
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	gm.guests.reset_daily()
+	gm.economy.current_day = 3
+	gm.day_cycle.phase = DayCycleSystem.DayPhase.NIGHT
+	gm._important_npc_pending = true
+	gm._important_npc_normal_orders_before = 1
+	gm._important_npc_normal_orders_seen = 0
+	gm.narrative.today_important_npc = ""
+	gm._is_dialogue_active = false
+	gm._dialogue_phase = ""
+	gm._guest_lingering = false
+	gm.guests.configure_night(0, 3, {})
+	if tutorial != null:
+		tutorial._is_active = false
+
+	gm._tavern_view = null
+	gm._recover_unreachable_important_guest_wait()
+
+	_ok(gm.guests.has_guest, "pending important guest spawns when no normal slots remain")
+	_ok(gm.guests.current_guest != null and gm.guests.current_guest.npc_id == "ryan",
+		"impossible normal gate recovers by spawning the pending Ryan event")
+
+	if gm.guests.has_guest:
+		gm.guests.clear_guest()
+	gm.guests.reset_daily()
+	gm._tavern_view = original_view
+	gm.economy.current_day = original_day
+	gm.day_cycle.phase = original_phase
+	gm._important_npc_pending = original_pending
+	gm._important_npc_normal_orders_before = original_before
+	gm._important_npc_normal_orders_seen = original_seen
+	gm.narrative.today_important_npc = original_today_npc
+	gm._is_dialogue_active = original_dialogue_active
+	gm._dialogue_phase = original_dialogue_phase
+	gm._guest_lingering = original_guest_lingering
+	if tutorial != null:
 		tutorial._is_active = original_tutorial_active
 
 
