@@ -135,10 +135,22 @@ def normalize_background(reference: Image.Image, entry: dict[str, Any]) -> Image
                 red = int(red * scale)
                 green = int(green * scale)
                 blue = int(blue * scale)
+            if 92 <= x <= 132 and 38 <= y <= 92 and red >= 45 and green >= 24 and blue <= 58:
+                edge_fade = min((x - 92) / 10.0, (132 - x) / 10.0, (y - 38) / 10.0, (92 - y) / 10.0, 1.0)
+                edge_fade = max(0.0, edge_fade)
+                red = int(red * (1.0 - 0.32 * edge_fade))
+                green = int(green * (1.0 - 0.20 * edge_fade))
+                blue = int(blue * (1.0 + 0.24 * edge_fade) + 4 * edge_fade)
             if y > 122:
                 red = int(red * 0.88)
                 green = int(green * 0.90)
                 blue = int(blue * 0.92)
+            if 96 <= x <= 222 and 94 <= y <= 158:
+                edge_fade = min((x - 96) / 18.0, (222 - x) / 18.0, (y - 94) / 14.0, (158 - y) / 14.0, 1.0)
+                edge_fade = max(0.0, edge_fade)
+                red = int(red * (1.0 - 0.18 * edge_fade))
+                green = int(green * (1.0 - 0.15 * edge_fade))
+                blue = int(blue * (1.0 - 0.08 * edge_fade))
             pixels[x, y] = (max(4, red), max(6, green), max(8, blue), alpha)
     return quantize_rgba(native, 60)
 

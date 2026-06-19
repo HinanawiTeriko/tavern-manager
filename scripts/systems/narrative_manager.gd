@@ -151,6 +151,21 @@ func get_evelyn_living_pressure_labels() -> Array[String]:
 	return labels
 
 
+func _evelyn_living_pressure_summary_labels() -> Array[String]:
+	var labels: Array[String] = []
+	var ryan_route := _current_ryan_route()
+	if _ryan_is_evelyn_witness(ryan_route):
+		if ryan_route == "drugged_survivor":
+			labels.append("莱恩（被迫活下来的证人）")
+		else:
+			labels.append("莱恩")
+	if _mira_is_evelyn_witness(_current_mira_route()):
+		labels.append("米拉")
+	if _toby_is_evelyn_witness():
+		labels.append("托比")
+	return labels
+
+
 func get_evelyn_paper_evidence_labels() -> Array[String]:
 	var labels: Array[String] = []
 	for label in EVELYN_PAPER_EVIDENCE_LABELS:
@@ -159,7 +174,7 @@ func get_evelyn_paper_evidence_labels() -> Array[String]:
 
 
 func get_evelyn_pressure_evidence_summary() -> String:
-	var living_labels := get_evelyn_living_pressure_labels()
+	var living_labels := _evelyn_living_pressure_summary_labels()
 	var living_text := "无" if living_labels.is_empty() else " / ".join(PackedStringArray(living_labels))
 	var paper_text := " / ".join(PackedStringArray(get_evelyn_paper_evidence_labels()))
 	return "活人证词：" + living_text + "；纸证：" + paper_text
@@ -433,13 +448,20 @@ func _append_npc_fate(result: Array[Dictionary], npc: NpcData) -> void:
 	var ending_key: String = String(raw_ending)
 	if ending_key == "" or not npc.endings.has(ending_key):
 		return
-	result.append({
+	var fate := {
 		"npc_id": npc.id,
 		"ending_key": ending_key,
 		"npc_name": npc.npc_name,
 		"npc_title": npc.title,
 		"fate_text": npc.endings[ending_key]
-	})
+	}
+	if npc.id == "evelyn":
+		var visual_key := String(dialogue_vars.get("evelyn_pressure", ""))
+		if visual_key == "":
+			visual_key = get_evelyn_pressure(ending_key)
+		if visual_key != "":
+			fate["visual_key"] = visual_key
+	result.append(fate)
 
 func _fate_result_has_npc(result: Array[Dictionary], npc_id: String) -> bool:
 	for fate in result:

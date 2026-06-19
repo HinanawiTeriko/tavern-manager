@@ -200,9 +200,40 @@ func _prune_invalid_recovery_positions() -> void:
 			_item_recovery_positions.erase(item)
 
 
-func _grant_document(document_id: String) -> void:
+func _grant_document(document_id: String) -> String:
 	var gm = get_node("/root/GameManager")
-	gm.grant_investigation_document(document_id)
+	var newly: bool = gm.grant_investigation_document(document_id)
+	var feedback := _evidence_feedback_text(gm, document_id, newly)
+	if feedback != "":
+		_hint_label.text = feedback
+	return feedback
+
+
+func _evidence_feedback_text(gm, document_id: String, newly: bool) -> String:
+	var title := document_id
+	if gm != null and gm.documents != null:
+		var document: Dictionary = gm.documents.get_document(document_id)
+		title = String(document.get("title", document_id))
+	var lines := PackedStringArray()
+	if newly:
+		lines.append("证据 · %s已收入账本。" % title)
+		if gm != null and gm.has_method("get_last_investigation_unlocked_question_titles"):
+			var question_titles: Array = gm.get_last_investigation_unlocked_question_titles()
+			if not question_titles.is_empty():
+				lines.append("推断 · %s可以整理了。" % _joined_question_titles(question_titles))
+	else:
+		lines.append("证据 · %s已在账本中。" % title)
+	return "\n".join(lines)
+
+
+func _joined_question_titles(question_titles: Array) -> String:
+	var readable := PackedStringArray()
+	for title in question_titles:
+		var text := String(title).strip_edges()
+		if text == "":
+			continue
+		readable.append(text)
+	return "、".join(readable)
 
 
 func _on_leave_pressed() -> void:

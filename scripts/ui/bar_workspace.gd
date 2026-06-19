@@ -21,6 +21,62 @@ const DEFAULT_DRAG_ITEM_CLEARANCE := 34.0
 const SHORTCUT_DRAG_PREVIEW_Z_INDEX := 300
 const DESK_RETURN_MIN_X := 260.0
 const DESK_RETURN_MAX_X := 1020.0
+const PHYSICS_LAW_META_BASE_GRAVITY := "base_gravity_scale"
+const PHYSICS_LAW_META_BASE_LINEAR_DAMP := "base_linear_damp"
+const PHYSICS_LAW_META_BASE_ANGULAR_DAMP := "base_angular_damp"
+const PHYSICS_LAW_META_HAS_BASE_MATERIAL := "has_base_physics_material_override"
+const PHYSICS_LAW_META_BASE_MATERIAL := "base_physics_material_override"
+const PHYSICS_LAW_META_APPLIED_ID := "applied_physics_law_id"
+const PHYSICS_LAW_MIN_GRAVITY := 0.2
+const PHYSICS_LAW_MAX_GRAVITY := 2.0
+const PHYSICS_LAW_MIN_BOUNCE := 0.0
+const PHYSICS_LAW_MAX_BOUNCE := 1.0
+const COMEDY_RELEASE_MIN_SPEED := 420.0
+const COMEDY_RELEASE_FULL_SPEED := 900.0
+const COMEDY_RELEASE_SPIN_MIN := 2.4
+const COMEDY_RELEASE_SPIN_MAX := 7.0
+const COMEDY_RELEASE_LINEAR_BOOST_MIN := 12.0
+const COMEDY_RELEASE_LINEAR_BOOST_MAX := 56.0
+const COMEDY_RELEASE_MAX_LINEAR_SPEED := 1200.0
+const COMEDY_RELEASE_MAX_ANGULAR_SPEED := 18.0
+const PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER := 4.0
+const PHYSICS_LAW_MAX_CUSTOMER_PULL := 240.0
+const PHYSICS_LAW_MAX_RANDOM_LIFT := 360.0
+const PHYSICS_LAW_COLLISION_MIN_SPEED := 110.0
+const PHYSICS_LAW_COLLISION_SIDE_KICK := 46.0
+const PHYSICS_LAW_COLLISION_HOP := 62.0
+const PHYSICS_LAW_PULL_MAX_LINEAR_SPEED := 980.0
+const PHYSICS_LAW_PULSE_SPIN := 2.6
+const CHAOS_GHOST_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost.png"
+const CHAOS_GHOST_GRAB_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png"
+const CHAOS_GHOST_FADE_TEXTURE_PATH := "res://assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png"
+const CHAOS_GHOST_TUTORIAL_GROUP := "chaos_ghost"
+const CHAOS_GHOST_TARGET_META := "chaos_ghost_target"
+const CHAOS_GHOST_STOLEN_META := "chaos_ghost_stolen_once"
+const CHAOS_GHOST_BASE_MODULATE_META := "chaos_ghost_base_modulate"
+const CHAOS_LEVEL_MAX := 4.0
+const CHAOS_GHOST_TRIGGER_LEVEL := 1.0
+const CHAOS_GHOST_APPROACH_SECONDS := 2.2
+const CHAOS_GHOST_ESCAPE_SECONDS := 1.8
+const CHAOS_GHOST_CANCEL_FADE_SECONDS := 0.8
+const CHAOS_GHOST_EDGE_MARGIN := 96.0
+const CHAOS_GHOST_COOLDOWN_SECONDS := 6.0
+const CHAOS_GHOST_Z_INDEX := 360
+const CHAOS_GHOST_SPRITE_SCALE := 0.42
+const CHAOS_GHOST_TARGET_TINT := Color(0.7, 0.9, 1.0, 1.0)
+const CHAOS_GHOST_HOVER_OFFSET := Vector2(0.0, -58.0)
+const CHAOS_GHOST_CARRY_OFFSET := Vector2(0.0, 34.0)
+const CHAOS_GUEST_WAIT_PATIENCE_RATIO := 0.28
+const CHAOS_GUEST_WAIT_PER_SECOND := 0.13
+const CHAOS_CROWDED_DESK_MIN_ITEMS := 4
+const CHAOS_CROWDED_DESK_PER_ITEM_SECOND := 0.06
+const CHAOS_GHOST_EVENT_WEIGHTS := {
+	"guest_wait": 1.0,
+	"crowded_desk": 1.0,
+	"fast_release": 0.42,
+	"desk_item_fell": 0.55,
+	"collision": 0.35,
+}
 
 @onready var _drag_ctrl: DragController = $DragCtrl
 @onready var _items_node: Node2D = $World/Items
@@ -43,6 +99,23 @@ var _shortcut_preview_body: DeskItem = null
 var _shortcut_preview_body_layer: int = 0
 var _shortcut_preview_body_mask: int = 0
 var _seasoning_tutorial_retry_armed := false
+var _active_physics_law: Dictionary = {}
+var _physics_law_pulse_elapsed := 0.0
+var _chaos_level := 0.0
+var _chaos_ghost_cooldown := 0.0
+var _chaos_ghost_phase := ""
+var _chaos_ghost_elapsed := 0.0
+var _chaos_ghost_frames := 0
+var _chaos_ghost_target: RigidBody2D = null
+var _chaos_ghost_node: Node2D = null
+var _chaos_ghost_entry_position := Vector2.ZERO
+var _chaos_ghost_capture_position := Vector2.ZERO
+var _chaos_ghost_escape_position := Vector2.ZERO
+var _chaos_ghost_fade_alpha_from := 1.0
+var _chaos_ghost_waiting_for_tutorial := false
+var _chaos_ghost_target_collision_layer := 0
+var _chaos_ghost_target_collision_mask := 0
+var _chaos_ghost_target_freeze := false
 @onready var _recycle_anchor: Marker2D = $World/RecycleAnchor
 var _docks: Dictionary = {}   # RigidBody2D -> Vector2 初始泊位
 
@@ -74,6 +147,47 @@ func configure_day(day: int) -> void:
 	_set_body_available(_grill, _gm.workspace.is_container_unlocked("grill", day))
 	_set_body_available(_pot, _gm.workspace.is_container_unlocked("pot", day))
 	_set_body_available(_spoon, _gm.workspace.is_container_unlocked("spoon", day))
+
+
+func apply_physics_law(law: Dictionary) -> void:
+	if String(law.get("scope", "desk_items")) != "desk_items":
+		return
+	if not _active_physics_law.is_empty():
+		clear_physics_law()
+	_active_physics_law = law.duplicate(true)
+	_physics_law_pulse_elapsed = 0.0
+	for child in _items_node.get_children():
+		_apply_active_physics_law_to_body(child)
+
+
+func clear_physics_law() -> void:
+	for child in _items_node.get_children():
+		_restore_body_physics_law(child)
+	_active_physics_law.clear()
+	_physics_law_pulse_elapsed = 0.0
+
+
+func record_chaos_event(event_id: String, amount: float = 1.0) -> void:
+	if amount <= 0.0:
+		return
+	var weight := float(CHAOS_GHOST_EVENT_WEIGHTS.get(event_id, 1.0))
+	_chaos_level = clampf(_chaos_level + amount * weight, 0.0, CHAOS_LEVEL_MAX)
+
+
+func try_trigger_chaos_event() -> bool:
+	if _chaos_ghost_phase != "" or _chaos_ghost_cooldown > 0.0:
+		return false
+	if _chaos_level < CHAOS_GHOST_TRIGGER_LEVEL:
+		return false
+	var target := _find_chaos_ghost_target()
+	if target == null:
+		return false
+	_start_chaos_ghost_approach(target)
+	return true
+
+
+func is_chaos_ghost_active() -> bool:
+	return _chaos_ghost_phase != ""
 
 
 func _maybe_trigger_seasoning_tutorial() -> void:
@@ -153,8 +267,466 @@ func _set_body_available(body: RigidBody2D, available: bool) -> void:
 		child.set_deferred("disabled", not available)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_shortcut_hover(get_global_mouse_position())
+	_update_chaos_director(delta)
+
+
+func _update_chaos_director(delta: float) -> void:
+	var dt := maxf(delta, 0.0)
+	_feed_ambient_chaos(dt)
+	if _chaos_ghost_cooldown > 0.0:
+		_chaos_ghost_cooldown = maxf(0.0, _chaos_ghost_cooldown - dt)
+	if _chaos_ghost_phase == "":
+		try_trigger_chaos_event()
+		return
+	if _chaos_ghost_phase == "approach":
+		_update_chaos_ghost_approach(dt)
+	elif _chaos_ghost_phase == "escape":
+		_update_chaos_ghost_escape(dt)
+	elif _chaos_ghost_phase == "fade":
+		_update_chaos_ghost_fade(dt)
+
+
+func _feed_ambient_chaos(delta: float) -> void:
+	if delta <= 0.0 or _chaos_ghost_phase != "":
+		return
+	var stealable_count := _stealable_chaos_item_count()
+	if stealable_count <= 0 and _stealable_chaos_cookware_count() <= 0:
+		return
+	if _current_guest_patience_ratio() <= CHAOS_GUEST_WAIT_PATIENCE_RATIO:
+		record_chaos_event("guest_wait", delta * CHAOS_GUEST_WAIT_PER_SECOND)
+	if stealable_count >= CHAOS_CROWDED_DESK_MIN_ITEMS:
+		var overflow := stealable_count - CHAOS_CROWDED_DESK_MIN_ITEMS + 1
+		record_chaos_event("crowded_desk", delta * CHAOS_CROWDED_DESK_PER_ITEM_SECOND * float(overflow))
+
+
+func _current_guest_patience_ratio() -> float:
+	if _gm == null or _gm.guests == null or not _gm.guests.has_guest:
+		return 1.0
+	var guest: GuestData = _gm.guests.current_guest as GuestData
+	if guest == null:
+		return 1.0
+	var max_patience := GuestData.BASE_PATIENCE
+	if guest.has_dialogue:
+		max_patience = GuestData.BASE_PATIENCE * 1.5
+	return clampf(guest.patience / maxf(max_patience, 1.0), 0.0, 1.0)
+
+
+func _stealable_chaos_item_count() -> int:
+	var count := 0
+	for child in _items_node.get_children():
+		if child is DeskItem and _is_chaos_ghost_targetable(child):
+			count += 1
+	return count
+
+
+func _stealable_chaos_cookware_count() -> int:
+	var count := 0
+	for body in _chaos_ghost_cookware_targets():
+		if _is_chaos_ghost_targetable(body):
+			count += 1
+	return count
+
+
+func _update_chaos_ghost_approach(delta: float) -> void:
+	if not _is_chaos_ghost_targetable(_chaos_ghost_target):
+		_cancel_chaos_ghost_event()
+		return
+	if _chaos_ghost_waiting_for_tutorial:
+		_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
+		_pulse_chaos_ghost_target()
+		_update_chaos_ghost_approach_visual()
+		var tm = get_node_or_null("/root/TutorialManager")
+		if tm != null and tm._is_active:
+			return
+		_chaos_ghost_waiting_for_tutorial = false
+		_start_chaos_ghost_escape()
+		return
+	_chaos_ghost_elapsed += delta
+	_chaos_ghost_frames += 1
+	_pulse_chaos_ghost_target()
+	_update_chaos_ghost_approach_visual()
+	if _chaos_ghost_elapsed >= CHAOS_GHOST_APPROACH_SECONDS:
+		if _maybe_trigger_chaos_ghost_tutorial():
+			_chaos_ghost_waiting_for_tutorial = true
+			_chaos_ghost_elapsed = CHAOS_GHOST_APPROACH_SECONDS
+			return
+		_start_chaos_ghost_escape()
+
+
+func _update_chaos_ghost_escape(delta: float) -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target) or _chaos_ghost_target.is_queued_for_deletion():
+		_complete_chaos_ghost_escape()
+		return
+	_chaos_ghost_elapsed += delta
+	_chaos_ghost_frames += 1
+	_update_chaos_ghost_escape_visual()
+	if _chaos_ghost_elapsed >= CHAOS_GHOST_ESCAPE_SECONDS:
+		_complete_chaos_ghost_escape()
+
+
+func _update_chaos_ghost_fade(delta: float) -> void:
+	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
+		_complete_chaos_ghost_fade()
+		return
+	_chaos_ghost_elapsed += delta
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_CANCEL_FADE_SECONDS, 0.0, 1.0)
+	_chaos_ghost_node.visible = true
+	_chaos_ghost_node.modulate = Color(1.0, 1.0, 1.0, lerpf(_chaos_ghost_fade_alpha_from, 0.0, ratio))
+	if ratio >= 1.0:
+		_complete_chaos_ghost_fade()
+
+
+func _find_chaos_ghost_target() -> RigidBody2D:
+	for child in _items_node.get_children():
+		if child is DeskItem and _is_chaos_ghost_targetable(child):
+			return child
+	for body in _chaos_ghost_cookware_targets():
+		if _is_chaos_ghost_targetable(body):
+			return body
+	return null
+
+
+func _is_chaos_ghost_targetable(item) -> bool:
+	if item == null or not is_instance_valid(item) or not item is DeskItem:
+		return _is_chaos_ghost_cookware_targetable(item)
+	var desk_item := item as DeskItem
+	if desk_item.is_queued_for_deletion():
+		return false
+	if desk_item.item_key == "" or desk_item.is_held:
+		return false
+	if _drag_ctrl != null and _drag_ctrl.get_body() == desk_item:
+		return false
+	if not desk_item.visible or _is_item_inside_any_container(desk_item):
+		return false
+	if bool(desk_item.get_meta(CHAOS_GHOST_STOLEN_META, false)):
+		return false
+	if desk_item.document_id != "":
+		return false
+	if _gm != null and _gm.inventory_sys != null and _gm.inventory_sys.is_story_item(desk_item.item_key):
+		return false
+	return true
+
+
+func _chaos_ghost_cookware_targets() -> Array[RigidBody2D]:
+	var targets: Array[RigidBody2D] = []
+	for body in [_brewery, _shaker, _grill, _pot, _spoon]:
+		if body is RigidBody2D:
+			targets.append(body)
+	return targets
+
+
+func _is_chaos_ghost_cookware_targetable(body) -> bool:
+	if body == null or not is_instance_valid(body) or not body is RigidBody2D:
+		return false
+	var rigid := body as RigidBody2D
+	if rigid.is_queued_for_deletion():
+		return false
+	if not _docks.has(rigid):
+		return false
+	if not _chaos_ghost_cookware_targets().has(rigid):
+		return false
+	if not rigid.visible or rigid.process_mode == Node.PROCESS_MODE_DISABLED:
+		return false
+	if _drag_ctrl != null and _drag_ctrl.get_body() == rigid:
+		return false
+	return true
+
+
+func _start_chaos_ghost_approach(target: RigidBody2D) -> void:
+	_chaos_ghost_target = target
+	_chaos_ghost_phase = "approach"
+	_chaos_ghost_elapsed = 0.0
+	_chaos_ghost_frames = 0
+	_chaos_ghost_waiting_for_tutorial = false
+	_chaos_level = maxf(0.0, _chaos_level - CHAOS_GHOST_TRIGGER_LEVEL)
+	_chaos_ghost_entry_position = _random_chaos_ghost_edge_position()
+	_chaos_ghost_escape_position = _chaos_ghost_entry_position
+	target.set_meta(CHAOS_GHOST_TARGET_META, true)
+	if not target.has_meta(CHAOS_GHOST_BASE_MODULATE_META):
+		target.set_meta(CHAOS_GHOST_BASE_MODULATE_META, target.modulate)
+	_pulse_chaos_ghost_target()
+	var ghost := _ensure_chaos_ghost_node()
+	_set_chaos_ghost_texture(CHAOS_GHOST_TEXTURE_PATH)
+	ghost.visible = true
+	ghost.global_position = _chaos_ghost_entry_position
+	ghost.scale = Vector2.ONE * 0.78
+	ghost.modulate = Color(1.0, 1.0, 1.0, 0.18)
+
+
+func _maybe_trigger_chaos_ghost_tutorial() -> bool:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active:
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed(CHAOS_GHOST_TUTORIAL_GROUP):
+		return false
+	tm.start_tutorial(CHAOS_GHOST_TUTORIAL_GROUP, _chaos_ghost_tutorial_rects())
+	return tm._is_active
+
+
+func _chaos_ghost_tutorial_rects() -> Dictionary:
+	return {
+		"ChaosGhostEvent": _union_screen_rects([
+			_node_centered_screen_rect(_chaos_ghost_node, Vector2(100.0, 112.0), Vector2(18.0, 18.0)),
+			_node_centered_screen_rect(_chaos_ghost_target, Vector2(72.0, 72.0), Vector2(18.0, 18.0)),
+		]),
+	}
+
+
+func _union_screen_rects(rect_arrays: Array) -> Array:
+	var has_rect := false
+	var union_rect := Rect2()
+	for values in rect_arrays:
+		var rect := _rect_from_array(values as Array)
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		if not has_rect:
+			union_rect = rect
+			has_rect = true
+		else:
+			union_rect = union_rect.merge(rect)
+	if not has_rect:
+		return []
+	return [union_rect.position.x, union_rect.position.y, union_rect.size.x, union_rect.size.y]
+
+
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
+
+
+func _pulse_chaos_ghost_target() -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target):
+		return
+	var base: Color = _chaos_ghost_target.get_meta(CHAOS_GHOST_BASE_MODULATE_META, _chaos_ghost_target.modulate)
+	var pulse := 0.35 + 0.25 * sin(float(_chaos_ghost_frames) * 0.9)
+	_chaos_ghost_target.modulate = base.lerp(CHAOS_GHOST_TARGET_TINT, pulse)
+
+
+func _start_chaos_ghost_escape() -> void:
+	var target := _chaos_ghost_target
+	if not _is_chaos_ghost_targetable(target):
+		_cancel_chaos_ghost_event()
+		return
+	_restore_chaos_ghost_target_visual(target)
+	target.remove_meta(CHAOS_GHOST_TARGET_META)
+	if target is DeskItem:
+		target.set_meta(CHAOS_GHOST_STOLEN_META, true)
+		target.set_physics_process(false)
+	_chaos_ghost_target_collision_layer = target.collision_layer
+	_chaos_ghost_target_collision_mask = target.collision_mask
+	_chaos_ghost_target_freeze = target.freeze
+	target.freeze = true
+	target.sleeping = true
+	target.linear_velocity = Vector2.ZERO
+	target.angular_velocity = 0.0
+	target.collision_layer = 0
+	target.collision_mask = 0
+	target.z_as_relative = false
+	target.z_index = CHAOS_GHOST_Z_INDEX + 1
+	_chaos_ghost_phase = "escape"
+	_chaos_ghost_elapsed = 0.0
+	_chaos_ghost_frames = 0
+	var ghost := _ensure_chaos_ghost_node()
+	_set_chaos_ghost_texture(CHAOS_GHOST_GRAB_TEXTURE_PATH)
+	_chaos_ghost_capture_position = ghost.global_position
+	_chaos_ghost_escape_position = _chaos_ghost_exit_position_from(_chaos_ghost_capture_position)
+	_update_carried_chaos_ghost_target(ghost.global_position)
+	if _gm != null and _gm.has_method("play_audio_event"):
+		_gm.play_audio_event("drop")
+
+
+func _cancel_chaos_ghost_event() -> void:
+	if _chaos_ghost_target != null and is_instance_valid(_chaos_ghost_target):
+		if _chaos_ghost_target.has_meta(CHAOS_GHOST_TARGET_META):
+			_chaos_ghost_target.remove_meta(CHAOS_GHOST_TARGET_META)
+		_restore_chaos_ghost_target_visual(_chaos_ghost_target)
+	_chaos_ghost_target = null
+	_chaos_ghost_waiting_for_tutorial = false
+	if _chaos_ghost_node == null or not is_instance_valid(_chaos_ghost_node):
+		_complete_chaos_ghost_fade()
+		return
+	_set_chaos_ghost_texture(CHAOS_GHOST_FADE_TEXTURE_PATH)
+	_chaos_ghost_phase = "fade"
+	_chaos_ghost_elapsed = 0.0
+	_chaos_ghost_frames = 0
+	_chaos_ghost_node.visible = true
+	_chaos_ghost_fade_alpha_from = clampf(_chaos_ghost_node.modulate.a, 0.1, 0.92)
+	_chaos_ghost_node.modulate = Color(1.0, 1.0, 1.0, _chaos_ghost_fade_alpha_from)
+
+
+func _restore_chaos_ghost_target_visual(target: Node2D) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	if target.has_meta(CHAOS_GHOST_BASE_MODULATE_META):
+		target.modulate = target.get_meta(CHAOS_GHOST_BASE_MODULATE_META)
+		target.remove_meta(CHAOS_GHOST_BASE_MODULATE_META)
+
+
+func _complete_chaos_ghost_escape() -> void:
+	if _chaos_ghost_target != null and is_instance_valid(_chaos_ghost_target) and not _chaos_ghost_target.is_queued_for_deletion():
+		if _chaos_ghost_target is DeskItem:
+			_chaos_ghost_target.queue_free()
+		else:
+			_restore_chaos_ghost_cookware_target(_chaos_ghost_target)
+	_hide_chaos_ghost_visual()
+	_chaos_ghost_target = null
+	_chaos_ghost_phase = ""
+	_chaos_ghost_waiting_for_tutorial = false
+	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS
+
+
+func _complete_chaos_ghost_fade() -> void:
+	_hide_chaos_ghost_visual()
+	_chaos_ghost_target = null
+	_chaos_ghost_phase = ""
+	_chaos_ghost_waiting_for_tutorial = false
+	_chaos_ghost_cooldown = CHAOS_GHOST_COOLDOWN_SECONDS * 0.35
+
+
+func _restore_chaos_ghost_cookware_target(target: RigidBody2D) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	if target.has_meta(CHAOS_GHOST_TARGET_META):
+		target.remove_meta(CHAOS_GHOST_TARGET_META)
+	target.collision_layer = _chaos_ghost_target_collision_layer
+	target.collision_mask = _chaos_ghost_target_collision_mask
+	target.freeze = _chaos_ghost_target_freeze
+	if _docks.has(target):
+		_dock_body(target)
+
+
+func _update_chaos_ghost_approach_visual() -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target):
+		return
+	var ghost := _ensure_chaos_ghost_node()
+	ghost.visible = true
+	var target_position := _chaos_ghost_target.global_position + CHAOS_GHOST_HOVER_OFFSET
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_APPROACH_SECONDS, 0.0, 1.0)
+	var eased := _ease_in_out_chaos(ratio)
+	ghost.global_position = _chaos_ghost_entry_position.lerp(target_position, eased)
+	ghost.scale = Vector2.ONE * (lerpf(0.78, 0.98, ratio) + 0.02 * sin(float(_chaos_ghost_frames) * 0.45))
+	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.18, 0.92, ratio))
+
+
+func _update_chaos_ghost_escape_visual() -> void:
+	var ghost := _ensure_chaos_ghost_node()
+	ghost.visible = true
+	var ratio := clampf(_chaos_ghost_elapsed / CHAOS_GHOST_ESCAPE_SECONDS, 0.0, 1.0)
+	var eased := _ease_in_out_chaos(ratio)
+	ghost.global_position = _chaos_ghost_capture_position.lerp(_chaos_ghost_escape_position, eased)
+	ghost.scale = Vector2.ONE * (0.98 + 0.05 * ratio)
+	ghost.modulate = Color(1.0, 1.0, 1.0, lerpf(0.92, 0.1, ratio))
+	_update_carried_chaos_ghost_target(ghost.global_position)
+
+
+func _update_carried_chaos_ghost_target(ghost_position: Vector2) -> void:
+	if _chaos_ghost_target == null or not is_instance_valid(_chaos_ghost_target) or _chaos_ghost_target.is_queued_for_deletion():
+		return
+	_chaos_ghost_target.global_position = ghost_position + CHAOS_GHOST_CARRY_OFFSET
+	_chaos_ghost_target.linear_velocity = Vector2.ZERO
+	_chaos_ghost_target.angular_velocity = 0.0
+
+
+func _random_chaos_ghost_edge_position() -> Vector2:
+	var rect := get_viewport().get_visible_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+	var min_x := rect.position.x
+	var max_x := rect.position.x + rect.size.x
+	var min_y := rect.position.y
+	var max_y := rect.position.y + rect.size.y
+	match randi() % 4:
+		0:
+			return Vector2(min_x - CHAOS_GHOST_EDGE_MARGIN, randf_range(min_y + 90.0, max_y - 90.0))
+		1:
+			return Vector2(max_x + CHAOS_GHOST_EDGE_MARGIN, randf_range(min_y + 90.0, max_y - 90.0))
+		2:
+			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), min_y - CHAOS_GHOST_EDGE_MARGIN)
+		_:
+			return Vector2(randf_range(min_x + 120.0, max_x - 120.0), max_y + CHAOS_GHOST_EDGE_MARGIN)
+
+
+func _chaos_ghost_exit_position_from(capture_position: Vector2) -> Vector2:
+	var rect := get_viewport().get_visible_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+	var direction := (capture_position - _chaos_ghost_entry_position).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+	return capture_position + direction * (rect.size.length() + CHAOS_GHOST_EDGE_MARGIN * 2.0)
+
+
+func _ease_in_out_chaos(value: float) -> float:
+	var t := clampf(value, 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
+
+
+func _hide_chaos_ghost_visual() -> void:
+	if _chaos_ghost_node != null and is_instance_valid(_chaos_ghost_node):
+		_chaos_ghost_node.visible = false
+		_chaos_ghost_node.modulate = Color.WHITE
+
+
+func _ensure_chaos_ghost_node() -> Node2D:
+	if _chaos_ghost_node != null and is_instance_valid(_chaos_ghost_node):
+		return _chaos_ghost_node
+	_chaos_ghost_node = get_node_or_null("ChaosGhost") as Node2D
+	if _chaos_ghost_node == null:
+		_chaos_ghost_node = Node2D.new()
+		_chaos_ghost_node.name = "ChaosGhost"
+		_chaos_ghost_node.z_index = CHAOS_GHOST_Z_INDEX
+		_chaos_ghost_node.z_as_relative = false
+		add_child(_chaos_ghost_node)
+	_build_chaos_ghost_visual(_chaos_ghost_node)
+	return _chaos_ghost_node
+
+
+func _build_chaos_ghost_visual(root: Node2D) -> void:
+	for child in root.get_children():
+		child.queue_free()
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite"
+	sprite.centered = true
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_apply_chaos_ghost_sprite_texture(sprite, CHAOS_GHOST_TEXTURE_PATH)
+	if sprite.texture != null:
+		sprite.scale = Vector2.ONE * CHAOS_GHOST_SPRITE_SCALE
+		sprite.modulate = Color(1.0, 1.0, 1.0, 0.92)
+		root.add_child(sprite)
+		return
+	var fallback := Polygon2D.new()
+	fallback.name = "FallbackShape"
+	fallback.polygon = PackedVector2Array([
+		Vector2(0, -42),
+		Vector2(34, -18),
+		Vector2(28, 30),
+		Vector2(12, 20),
+		Vector2(0, 34),
+		Vector2(-12, 20),
+		Vector2(-28, 30),
+		Vector2(-34, -18),
+	])
+	fallback.color = Color(0.62, 0.85, 1.0, 0.56)
+	root.add_child(fallback)
+
+
+func _set_chaos_ghost_texture(texture_path: String) -> void:
+	var ghost := _ensure_chaos_ghost_node()
+	var sprite := ghost.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	_apply_chaos_ghost_sprite_texture(sprite, texture_path)
+
+
+func _apply_chaos_ghost_sprite_texture(sprite: Sprite2D, texture_path: String) -> void:
+	if sprite == null or not ResourceLoader.exists(texture_path):
+		return
+	var texture := load(texture_path) as Texture2D
+	if texture != null:
+		sprite.texture = texture
 
 
 func _ensure_shortcut_slot_visuals(slot: ColorRect) -> void:
@@ -216,6 +788,7 @@ func _on_drag_ended(body: RigidBody2D) -> void:
 		var item := body as DeskItem
 		if not item.is_queued_for_deletion():
 			item.is_held = false
+			_apply_comedy_release_to_item(item)
 		_finish_shortcut_drag_preview(item, true)
 		_restore_dragged_item_depth(item)
 
@@ -442,6 +1015,43 @@ func _desk_item_lower_clearance(item: DeskItem) -> float:
 		if lower == -INF:
 			lower = DEFAULT_DRAG_ITEM_CLEARANCE
 	return maxf(8.0, lower)
+
+
+func _apply_comedy_release_to_item(item: DeskItem) -> void:
+	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
+		return
+	var speed := item.linear_velocity.length()
+	if speed < COMEDY_RELEASE_MIN_SPEED:
+		return
+	var ratio := clampf(
+		(speed - COMEDY_RELEASE_MIN_SPEED) / maxf(COMEDY_RELEASE_FULL_SPEED - COMEDY_RELEASE_MIN_SPEED, 0.01),
+		0.0,
+		1.0
+	)
+	var direction := item.linear_velocity.normalized()
+	if direction == Vector2.ZERO:
+		return
+	var sign := 1.0 if item.linear_velocity.x >= 0.0 else -1.0
+	var release_impulse_multiplier := clampf(
+		float(_active_physics_law.get("release_impulse_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
+	item.linear_velocity += direction * lerpf(
+		COMEDY_RELEASE_LINEAR_BOOST_MIN,
+		COMEDY_RELEASE_LINEAR_BOOST_MAX,
+		ratio) * release_impulse_multiplier
+	_clamp_desk_item_linear_velocity(item, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	var release_spin_multiplier := clampf(
+		float(_active_physics_law.get("release_spin_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
+	item.angular_velocity = clampf(
+		item.angular_velocity + sign * lerpf(COMEDY_RELEASE_SPIN_MIN, COMEDY_RELEASE_SPIN_MAX, ratio) * release_spin_multiplier,
+		-COMEDY_RELEASE_MAX_ANGULAR_SPEED,
+		COMEDY_RELEASE_MAX_ANGULAR_SPEED
+	)
+	item.sleeping = false
+	record_chaos_event("fast_release", 1.0 + _active_law_chaos_feed())
 
 
 func _begin_shortcut_drag_preview(item: DeskItem, mouse_global_position: Vector2) -> void:
@@ -684,6 +1294,7 @@ func _spawn_desk_item_at(pos: Vector2, item_key: String) -> DeskItem:
 		item.set_art_texture(art_texture)
 	_items_node.add_child(item)
 	item.global_position = pos
+	_apply_active_physics_law_to_body(item)
 	# 可阅读物品：设为可拾取输入，双击时打开关联文档
 	var capabilities: Array[String] = _gm.inventory_sys.get_capabilities(item_key)
 	if capabilities.has("readable"):
@@ -766,6 +1377,73 @@ func _on_items_child_added(child: Node) -> void:
 			child.fell_out_of_bounds.connect(_on_desk_item_fell)
 		if not child.body_entered.is_connected(_on_item_collision.bind(child)):
 			child.body_entered.connect(_on_item_collision.bind(child))
+		_apply_active_physics_law_to_body(child)
+
+
+func _apply_active_physics_law_to_body(body: Node) -> void:
+	if _active_physics_law.is_empty():
+		return
+	if not is_instance_valid(body) or not body is DeskItem:
+		return
+	_store_body_physics_law_base(body)
+	var multiplier := float(_active_physics_law.get("gravity_scale_multiplier", 1.0))
+	var base_gravity := float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
+	body.gravity_scale = clampf(base_gravity * multiplier, PHYSICS_LAW_MIN_GRAVITY, PHYSICS_LAW_MAX_GRAVITY)
+	var linear_damp_multiplier := float(_active_physics_law.get("linear_damp_multiplier", 1.0))
+	var angular_damp_multiplier := float(_active_physics_law.get("angular_damp_multiplier", 1.0))
+	body.linear_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP)) * linear_damp_multiplier
+	body.angular_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP)) * angular_damp_multiplier
+	if _active_physics_law.has("bounce_override"):
+		_apply_bounce_override(body, float(_active_physics_law.get("bounce_override", 0.0)))
+	body.set_meta(PHYSICS_LAW_META_APPLIED_ID, String(_active_physics_law.get("id", "")))
+
+
+func _restore_body_physics_law(body: Node) -> void:
+	if not is_instance_valid(body) or not body is DeskItem:
+		return
+	if body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
+		body.gravity_scale = float(body.get_meta(PHYSICS_LAW_META_BASE_GRAVITY))
+		body.remove_meta(PHYSICS_LAW_META_BASE_GRAVITY)
+	if body.has_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP):
+		body.linear_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP))
+		body.remove_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP)
+	if body.has_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP):
+		body.angular_damp = float(body.get_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP))
+		body.remove_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP)
+	if body.has_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL):
+		if bool(body.get_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL)):
+			body.physics_material_override = body.get_meta(PHYSICS_LAW_META_BASE_MATERIAL) as PhysicsMaterial
+		else:
+			body.physics_material_override = null
+		body.remove_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL)
+	if body.has_meta(PHYSICS_LAW_META_BASE_MATERIAL):
+		body.remove_meta(PHYSICS_LAW_META_BASE_MATERIAL)
+	if body.has_meta(PHYSICS_LAW_META_APPLIED_ID):
+		body.remove_meta(PHYSICS_LAW_META_APPLIED_ID)
+
+
+func _store_body_physics_law_base(body: DeskItem) -> void:
+	if not body.has_meta(PHYSICS_LAW_META_BASE_GRAVITY):
+		body.set_meta(PHYSICS_LAW_META_BASE_GRAVITY, float(body.gravity_scale))
+	if not body.has_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP):
+		body.set_meta(PHYSICS_LAW_META_BASE_LINEAR_DAMP, float(body.linear_damp))
+	if not body.has_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP):
+		body.set_meta(PHYSICS_LAW_META_BASE_ANGULAR_DAMP, float(body.angular_damp))
+	if not body.has_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL):
+		var base_material := body.physics_material_override as PhysicsMaterial
+		body.set_meta(PHYSICS_LAW_META_HAS_BASE_MATERIAL, base_material != null)
+		if base_material != null:
+			body.set_meta(PHYSICS_LAW_META_BASE_MATERIAL, base_material)
+
+
+func _apply_bounce_override(body: DeskItem, bounce: float) -> void:
+	var material := body.physics_material_override as PhysicsMaterial
+	if material != null:
+		material = material.duplicate(true) as PhysicsMaterial
+	else:
+		material = PhysicsMaterial.new()
+	material.bounce = clampf(bounce, PHYSICS_LAW_MIN_BOUNCE, PHYSICS_LAW_MAX_BOUNCE)
+	body.physics_material_override = material
 
 
 ## 应急整理（spec §6.5）：散落桌面物品按分类恢复，容器/勺子归泊位，
@@ -806,8 +1484,90 @@ func _desk_item_return_position(item: DeskItem) -> Vector2:
 
 func _physics_process(_delta: float) -> void:
 	_recover_docked_bodies()
+	_apply_active_customer_pull(_delta)
+	_update_active_physics_law_pulse(_delta)
 	_update_spoon_depth()
 	_update_dragged_item_depth()
+
+
+func _apply_active_customer_pull(delta: float) -> void:
+	if _active_physics_law.is_empty() or delta <= 0.0:
+		return
+	var pull := clampf(
+		float(_active_physics_law.get("near_customer_pull", 0.0)),
+		0.0,
+		PHYSICS_LAW_MAX_CUSTOMER_PULL)
+	if pull <= 0.0:
+		return
+	var target_position := _customer_area.global_position
+	for child in _items_node.get_children():
+		if not _is_physics_law_motion_target(child):
+			continue
+		var item := child as DeskItem
+		var to_customer := target_position - item.global_position
+		var distance := to_customer.length()
+		if distance <= 8.0:
+			continue
+		var falloff := clampf(1.0 - distance / 900.0, 0.65, 1.0)
+		item.linear_velocity += to_customer.normalized() * pull * delta * falloff
+		_clamp_desk_item_linear_velocity(item, PHYSICS_LAW_PULL_MAX_LINEAR_SPEED)
+		item.sleeping = false
+
+
+func _update_active_physics_law_pulse(delta: float) -> void:
+	if _active_physics_law.is_empty() or delta <= 0.0:
+		return
+	var lift := clampf(
+		float(_active_physics_law.get("random_lift_impulse", 0.0)),
+		0.0,
+		PHYSICS_LAW_MAX_RANDOM_LIFT)
+	if lift <= 0.0:
+		return
+	var interval := maxf(float(_active_physics_law.get("pulse_interval_seconds", 2.5)), 0.5)
+	_physics_law_pulse_elapsed += delta
+	if _physics_law_pulse_elapsed < interval:
+		return
+	_physics_law_pulse_elapsed = fmod(_physics_law_pulse_elapsed, interval)
+	var candidates: Array[DeskItem] = []
+	for child in _items_node.get_children():
+		if _is_physics_law_motion_target(child):
+			candidates.append(child as DeskItem)
+	if candidates.is_empty():
+		return
+	var item := candidates[randi() % candidates.size()]
+	item.linear_velocity += Vector2(randf_range(-lift * 0.18, lift * 0.18), -lift)
+	item.angular_velocity = clampf(
+		item.angular_velocity + randf_range(-PHYSICS_LAW_PULSE_SPIN, PHYSICS_LAW_PULSE_SPIN),
+		-COMEDY_RELEASE_MAX_ANGULAR_SPEED,
+		COMEDY_RELEASE_MAX_ANGULAR_SPEED)
+	_clamp_desk_item_linear_velocity(item, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	item.sleeping = false
+	record_chaos_event("fast_release", _active_law_chaos_feed())
+
+
+func _is_physics_law_motion_target(node: Node) -> bool:
+	if not is_instance_valid(node) or not node is DeskItem:
+		return false
+	var item := node as DeskItem
+	return (
+		not item.is_queued_for_deletion()
+		and item.item_key != ""
+		and not item.is_held
+		and not item.freeze
+	)
+
+
+func _clamp_desk_item_linear_velocity(item: DeskItem, max_speed: float) -> void:
+	if item == null or max_speed <= 0.0:
+		return
+	if item.linear_velocity.length() > max_speed:
+		item.linear_velocity = item.linear_velocity.normalized() * max_speed
+
+
+func _active_law_chaos_feed() -> float:
+	if _active_physics_law.is_empty():
+		return 0.0
+	return clampf(float(_active_physics_law.get("stage_chaos_feed", 0.0)), 0.0, 2.0)
 
 
 func _update_spoon_depth() -> void:
@@ -869,6 +1629,7 @@ func _dock_body(body: RigidBody2D) -> void:
 
 
 func _exit_tree() -> void:
+	clear_physics_law()
 	if _gm != null and _gm.inventory_changed.is_connected(_init_material_slots):
 		_gm.inventory_changed.disconnect(_init_material_slots)
 	if _gm != null and _gm.inventory_changed.is_connected(_maybe_trigger_seasoning_tutorial):
@@ -898,6 +1659,7 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 	if _gm.craft.is_product(key_a) or _gm.craft.is_product(key_b):
 		return
 	var rel_speed: float = (a.linear_velocity - other.linear_velocity).length()
+	_apply_active_collision_impulse(a, other, rel_speed)
 	var force_tier: String = _gm.craft.classify_slam_force(rel_speed)
 	if force_tier == "none":
 		return
@@ -911,6 +1673,33 @@ func _on_item_collision(b: Node, a: DeskItem) -> void:
 		call_deferred("_do_collision_combine", a, other, combined_key, center, conserved)
 		return
 	call_deferred("_do_slam_merge", a, other, recipe, force_tier, center, conserved)
+
+
+func _apply_active_collision_impulse(a: DeskItem, other: DeskItem, rel_speed: float) -> void:
+	if _active_physics_law.is_empty() or rel_speed < PHYSICS_LAW_COLLISION_MIN_SPEED:
+		return
+	var multiplier := clampf(
+		float(_active_physics_law.get("collision_impulse_multiplier", 1.0)),
+		0.0,
+		PHYSICS_LAW_MAX_DRAMATIC_MULTIPLIER)
+	if multiplier <= 1.0:
+		return
+	var normal := (a.global_position - other.global_position).normalized()
+	if normal == Vector2.ZERO:
+		normal = (a.linear_velocity - other.linear_velocity).normalized()
+	if normal == Vector2.ZERO:
+		normal = Vector2.RIGHT
+	var ratio := clampf((rel_speed - PHYSICS_LAW_COLLISION_MIN_SPEED) / 520.0, 0.0, 1.0)
+	var side_kick := normal * PHYSICS_LAW_COLLISION_SIDE_KICK * multiplier * ratio
+	var hop := Vector2(0.0, -PHYSICS_LAW_COLLISION_HOP * multiplier * ratio)
+	a.linear_velocity += side_kick + hop
+	other.linear_velocity -= side_kick
+	other.linear_velocity += hop
+	_clamp_desk_item_linear_velocity(a, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	_clamp_desk_item_linear_velocity(other, COMEDY_RELEASE_MAX_LINEAR_SPEED)
+	a.sleeping = false
+	other.sleeping = false
+	record_chaos_event("collision", _active_law_chaos_feed())
 
 
 func _do_collision_combine(a: DeskItem, other: DeskItem, result_key: String, center: Vector2, conserved: Vector2) -> void:

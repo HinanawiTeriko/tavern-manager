@@ -30,7 +30,7 @@ The authoritative runtime coordinator is `GameManager` (`res://scripts/game_mana
 
 ## Playable Content Snapshot
 
-- 30-day structure target, with currently implemented Ryan, Mira, Toby, Evelyn/grey-ledger routes.
+- 21-day current campaign boundary, with Ryan, Mira, Toby, and Evelyn/grey-ledger routes resolving by Day 20 and a final Day 21 epilogue management day.
 - 30 named regular customers with neutral/satisfied/dissatisfied portraits.
 - Anonymous guest groups driven by DayMap rumors, each with reusable regular-customer portrait pools.
 - Menu preparation before service, using current-day rumors and previous-night echoes.

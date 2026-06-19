@@ -2,7 +2,6 @@
   "pairs": [
     ["dough", "meat_raw", "dough_meat"],
     ["ale", "herb", "ale_herb"],
-    ["grape", "herb", "grape_herb"],
-    ["meat_raw", "ale", "meat_stew_raw"]
+    ["grape", "herb", "grape_herb"]
   ]
 }

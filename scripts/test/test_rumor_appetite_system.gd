@@ -8,9 +8,15 @@ func _ready() -> void:
 	_test_files_exist()
 	if _failures == 0:
 		_test_rumor_system_grants_and_restores()
+		_test_rumor_system_repeats_daily_planning_wind()
 		_test_appetite_system_scores_customer_food_matches()
 		_test_expanded_product_tag_coverage()
 		_test_rumor_pool_menu_coverage()
+		_test_wind_rumor_pool_has_midgame_depth()
+		_test_material_gathering_locations_all_have_wind_rumors()
+		_test_material_gathering_wind_rumors_are_available_on_location_open_day()
+		_test_day_map_locations_have_explicit_wind_policy()
+		_test_game_manager_honors_day_map_wind_policy()
 		_test_guest_group_profiles_drive_orders()
 		_test_game_manager_preserves_group_guest_portrait_id()
 		_test_regular_customer_traits_are_exposed()
@@ -21,6 +27,8 @@ func _ready() -> void:
 		_test_game_manager_exposes_menu_preparation_echoes()
 		_test_game_manager_recommends_menu_products()
 		_test_tavern_view_exposes_menu_preparation_contract()
+		await _test_tavern_view_menu_prep_tutorial_rects_are_live()
+		await _test_tavern_menu_prep_starts_with_no_default_selection()
 		_test_game_manager_exposes_rumor_match_feedback()
 	_finish()
 
@@ -122,7 +130,7 @@ func _test_rumor_system_grants_and_restores() -> void:
 	_ok(String(hints.get("summary", "")) != "", "rumor hint includes one-line planning summary")
 	_ok(rumors.get_today_rumors().size() == 1, "today rumor list records the grant")
 	var repeat: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
-	_ok(not bool(repeat.get("success", true)), "same location rumor is not granted twice in one save")
+	_ok(not bool(repeat.get("success", true)), "same location rumor is not granted twice in one day")
 	var bias: Dictionary = rumors.get_guest_bias()
 	_ok(float(bias.get("mine", 1.0)) > 1.0, "granted rumor exposes mine guest bias")
 	var snap: Dictionary = rumors.capture_state()
@@ -133,7 +141,35 @@ func _test_rumor_system_grants_and_restores() -> void:
 	restored.restore_state(snap)
 	_ok(restored.get_today_rumors().size() == 1, "today rumor list survives restore")
 	_ok(not bool(restored.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true}).get("success", true)),
-		"restored heard rumor stays consumed")
+		"restored heard rumor stays consumed for the same day")
+
+
+func _test_rumor_system_repeats_daily_planning_wind() -> void:
+	var rumors = _new_rumor_system()
+	if rumors == null:
+		return
+	_ok(rumors.load_data(), "rumor data loads for daily wind repeat")
+	rumors.start_day(2)
+	var day_two: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
+	_ok(bool(day_two.get("success", false)), "day two board wind is available")
+	var same_day: Dictionary = rumors.grant_location_rumor("mercenary_board", 2, {"ryan_warhammer_lead": true})
+	_ok(not bool(same_day.get("success", true)), "same board wind does not repeat on the same day")
+	rumors.start_day(3)
+	var next_day: Dictionary = rumors.grant_location_rumor("mercenary_board", 3, {"ryan_warhammer_lead": true})
+	_ok(bool(next_day.get("success", false)), "board wind can repeat on a later day when it is still relevant")
+	_ok(String(next_day.get("id", "")) == String(day_two.get("id", "")),
+		"later-day repeated board wind reuses the current planning rumor when no new one is available")
+
+	var fresh = _new_rumor_system()
+	if fresh == null:
+		return
+	_ok(fresh.load_data(), "fresh rumor data loads for same-location daily cap")
+	fresh.start_day(8)
+	var first: Dictionary = fresh.grant_location_rumor("mushroom_forest", 8)
+	_ok(bool(first.get("success", false)), "day eight forest wind grants one eligible rumor")
+	var second: Dictionary = fresh.grant_location_rumor("mushroom_forest", 8)
+	_ok(not bool(second.get("success", true)),
+		"same location grants at most one wind notice per day even if several entries are eligible")
 
 
 func _test_appetite_system_scores_customer_food_matches() -> void:
@@ -178,7 +214,7 @@ func _test_expanded_product_tag_coverage() -> void:
 func _test_rumor_pool_menu_coverage() -> void:
 	var data := _load_json_dictionary("res://data/rumors.json")
 	var rumor_list: Array = data.get("rumors", [])
-	_ok(rumor_list.size() >= 13, "rumor pool has enough entries for the first content expansion")
+	_ok(rumor_list.size() >= 36, "rumor pool has enough entries for a longer day-map loop")
 	var appetite = _new_appetite_system()
 	if appetite == null:
 		return
@@ -204,6 +240,30 @@ func _test_rumor_pool_menu_coverage() -> void:
 		_ok(not guest_bias.is_empty(), "rumor has guest bias effects: " + id)
 		var matches := _products_matching_tags(appetite, products, recommended_tags)
 		_ok(matches.size() >= 2, "rumor has at least two matching menu products: %s -> %s" % [id, ", ".join(matches)])
+
+
+func _test_wind_rumor_pool_has_midgame_depth() -> void:
+	var data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_list: Array = data.get("rumors", [])
+	var by_location: Dictionary = {}
+	var late_count := 0
+	for raw in rumor_list:
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if location_id == "":
+			continue
+		by_location[location_id] = int(by_location.get(location_id, 0)) + 1
+		if int(rumor.get("dayMin", 1)) >= 14:
+			late_count += 1
+	for location_id in ["mushroom_forest", "dark_river", "grape_trellis", "mill_farm"]:
+		_ok(int(by_location.get(location_id, 0)) >= 4,
+			"repeatable material location has a deeper wind pool: " + location_id)
+	for location_id in ["market_shop", "mercenary_board"]:
+		_ok(int(by_location.get(location_id, 0)) >= 6,
+			"frequent town location has a deeper wind pool: " + location_id)
+	_ok(late_count >= 8, "rumor pool keeps adding new wind from day fourteen onward")
 
 
 func _test_guest_group_profiles_drive_orders() -> void:
@@ -250,10 +310,110 @@ func _test_guest_group_profiles_drive_orders() -> void:
 	_ok(portrait_id != "" and portrait_id != "guest", "group guest carries a non-placeholder portrait id")
 	_ok(ResourceLoader.exists("res://assets/textures/characters/%s_neutral.png" % portrait_id),
 		"group guest portrait id resolves to runtime art")
+	var portrait_preview: Dictionary = guest_system.get_regular_customer_preview(portrait_id)
+	var portrait_name := String(portrait_preview.get("name", ""))
+	var group_display_name := String(mine.get("displayName", ""))
+	_ok(portrait_name != "" and String(guest_system.current_guest.guest_name).contains(portrait_name),
+		"group guest display name includes the selected portrait character name")
+	_ok(group_display_name != "" and String(guest_system.current_guest.guest_name).contains(group_display_name),
+		"group guest display name keeps the group context as secondary information")
 	var line := String(guest_system.get_group_match_feedback("mine", ["顶饿", "热食"]))
 	_ok(line != "", "group match feedback returns a line for preferred tags")
 	var miss := String(guest_system.get_group_match_feedback("mine", ["清香"]))
 	_ok(miss == "", "group match feedback stays quiet for unrelated tags")
+
+
+func _test_material_gathering_locations_all_have_wind_rumors() -> void:
+	var data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_list: Array = data.get("rumors", [])
+	var expected_locations := {
+		"mushroom_forest": false,
+		"dark_river": false,
+		"grape_trellis": false,
+		"mill_farm": false,
+	}
+	for raw in rumor_list:
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if expected_locations.has(location_id):
+			var menu_hints: Dictionary = rumor.get("menuHints", {})
+			var recommended_tags: Array = menu_hints.get("recommendedTags", [])
+			expected_locations[location_id] = String(rumor.get("text", "")) != "" \
+					and String(menu_hints.get("summary", "")) != "" \
+					and recommended_tags.size() >= 2
+	for location_id in expected_locations.keys():
+		_ok(bool(expected_locations[location_id]),
+			"material gathering location has at least one practical wind rumor: " + String(location_id))
+
+
+func _test_material_gathering_wind_rumors_are_available_on_location_open_day() -> void:
+	var locations_data := _load_json_dictionary("res://data/locations.json")
+	var rumors_data := _load_json_dictionary("res://data/rumors.json")
+	var gathering_open_day := {}
+	for raw in locations_data.get("locations", []):
+		if not raw is Dictionary:
+			continue
+		var loc: Dictionary = raw
+		var id := String(loc.get("id", ""))
+		if ["mushroom_forest", "dark_river", "grape_trellis", "mill_farm"].has(id):
+			gathering_open_day[id] = int(loc.get("dayMin", 1))
+	var earliest_rumor_day := {}
+	for raw in rumors_data.get("rumors", []):
+		if not raw is Dictionary:
+			continue
+		var rumor: Dictionary = raw
+		var location_id := String(rumor.get("location", ""))
+		if not gathering_open_day.has(location_id):
+			continue
+		var day_min := int(rumor.get("dayMin", 1))
+		if not earliest_rumor_day.has(location_id) or day_min < int(earliest_rumor_day[location_id]):
+			earliest_rumor_day[location_id] = day_min
+	for location_id in gathering_open_day.keys():
+		_ok(earliest_rumor_day.has(location_id),
+			"material gathering location has wind available on opening day: " + String(location_id))
+		if earliest_rumor_day.has(location_id):
+			_ok(int(earliest_rumor_day[location_id]) <= int(gathering_open_day[location_id]),
+				"material wind rumor is not delayed after location opens: %s opens day %d, earliest wind day %d" %
+				[String(location_id), int(gathering_open_day[location_id]), int(earliest_rumor_day[location_id])])
+
+
+func _test_day_map_locations_have_explicit_wind_policy() -> void:
+	var locations_data := _load_json_dictionary("res://data/locations.json")
+	var rumors_data := _load_json_dictionary("res://data/rumors.json")
+	var rumor_locations: Dictionary = {}
+	for raw in rumors_data.get("rumors", []):
+		if raw is Dictionary:
+			rumor_locations[String((raw as Dictionary).get("location", ""))] = true
+	for raw in locations_data.get("locations", []):
+		if not raw is Dictionary:
+			continue
+		var loc: Dictionary = raw
+		var id := String(loc.get("id", ""))
+		if id == "":
+			continue
+		var policy := String(loc.get("windPolicy", ""))
+		var chance := float(loc.get("windChance", -1.0))
+		_ok(["menu", "none"].has(policy), "day-map location has explicit wind policy: " + id)
+		if policy == "menu":
+			_ok(is_equal_approx(chance, 1.0), "menu wind location grants eligible wind at 100 percent: " + id)
+			_ok(bool(rumor_locations.get(id, false)), "menu wind location has at least one rumor: " + id)
+		elif policy == "none":
+			_ok(is_equal_approx(chance, 0.0), "silent story/investigation location has 0 percent wind chance: " + id)
+			_ok(not bool(rumor_locations.get(id, false)), "silent location does not carry DayMap wind rumors: " + id)
+
+
+func _test_game_manager_honors_day_map_wind_policy() -> void:
+	var gm = get_node("/root/GameManager")
+	_ok(gm != null and gm.has_method("_location_allows_wind_notice"),
+		"GameManager gates wind notice grants by day-map wind policy")
+	if gm == null or not gm.has_method("_location_allows_wind_notice"):
+		return
+	_ok(bool(gm.call("_location_allows_wind_notice", {"windPolicy": "menu", "windChance": 1.0})),
+		"menu wind policy allows deterministic wind notice grants")
+	_ok(not bool(gm.call("_location_allows_wind_notice", {"windPolicy": "none", "windChance": 0.0})),
+		"silent story/investigation wind policy blocks DayMap wind notices")
 
 
 func _test_game_manager_preserves_group_guest_portrait_id() -> void:
@@ -318,6 +478,10 @@ func _test_game_manager_grants_location_rumors() -> void:
 	_ok(bool(result.get("success", false)), "GM visit to mercenary board succeeds")
 	_ok(result.has("rumor"), "GM visit result includes rumor payload")
 	_ok(String(result.get("message", "")).contains("听到传闻"), "GM appends rumor copy to visit message")
+	var rumor: Dictionary = result.get("rumor", {})
+	var rumor_text := String(rumor.get("text", ""))
+	_ok(rumor_text != "", "GM visit rumor carries actual player-facing text")
+	_ok(String(result.get("message", "")).contains(rumor_text), "GM visit message includes the actual rumor text")
 	_ok(gm.get_today_rumors().size() == 1, "GM stores the heard rumor for menu prep")
 
 
@@ -447,12 +611,146 @@ func _test_tavern_view_exposes_menu_preparation_contract() -> void:
 	_ok(source.contains("affectedCustomers"), "TavernView renders affected named customers from rumors")
 	_ok(source.contains("可能来"), "TavernView labels likely arriving customers")
 	_ok(source.contains("recommendedTags"), "TavernView renders recommended tags from rumors")
+	_ok(source.contains("\"风声 · \""), "TavernView labels rumor cards as wind/rumor source instead of hard evidence")
+	_ok(source.contains("菜单："), "TavernView folds rumor menu advice into a compact line")
+	_ok(not source.contains("label.text += \"\\n\" + summary"), "TavernView no longer spends a full extra line on raw rumor summary")
+	_ok(source.contains("RumorScroll"), "TavernView contains long rumor planning copy inside a scrollable clipped region")
+	_ok(source.contains("YesterdayEchoScroll"), "TavernView contains yesterday echo copy inside a scrollable clipped region")
+	_ok(source.contains("SCROLL_MODE_SHOW_NEVER"), "TavernView hides menu preparation scrollbars while keeping scroll regions")
 	_ok(source.contains("YesterdayEchoList"), "TavernView has a bounded yesterday echo list")
 	_ok(source.contains("昨日回响"), "TavernView labels previous-night planning feedback")
 	_ok(source.contains("get_product_tags"), "TavernView labels menu products with readable food tags")
 	_ok(source.contains("MenuPrepReasonLabel"), "TavernView has a bounded product recommendation detail label")
 	_ok(source.contains("_menu_product_recommendation_text"), "TavernView renders short recommendation chips on menu buttons")
 	_ok(source.contains("_refresh_menu_prep_reason"), "TavernView refreshes product recommendation detail text")
+	_ok(source.contains("trigger_menu_prep_tutorial"), "TavernView exposes a menu preparation tutorial trigger")
+	_ok(source.contains("\"menu_prep\""), "TavernView exposes a dedicated menu preparation tutorial group")
+	for key in ["MenuPrepRumors", "MenuPrepProducts", "MenuPrepStartButton"]:
+		_ok(source.contains(key), "TavernView exposes menu preparation tutorial rect: " + key)
+	_ok(source.contains("is_menu_config_open()") and source.contains("trigger_craft_tutorial"),
+		"TavernView guards craft tutorial while menu preparation is open")
+
+
+func _test_tavern_view_menu_prep_tutorial_rects_are_live() -> void:
+	var gm = get_node("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	var old_view = gm._tavern_view
+	var tutorial_backup := _capture_tutorial_state(tm)
+	if tm != null:
+		tm._remove_overlay()
+		tm._is_active = false
+		tm._current_sequence.clear()
+		tm._current_step = -1
+		tm.tavern_first_entered = true
+		tm.first_menu_prep_shown = true
+		for step_id in ["craft_intro", "craft_drag", "craft_recovery"]:
+			tm._completed_steps.erase(step_id)
+
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate() as TavernView
+	add_child(tavern)
+	await get_tree().process_frame
+	tavern.configure_menu_preparation(gm.get_today_rumors(), gm.get_menu_preparation_echoes())
+	await get_tree().process_frame
+
+	var panel := tavern.get_node_or_null("MenuPrepPanel") as Control
+	_ok(panel != null and panel.visible, "runtime menu preparation panel is visible for tutorial rects")
+	for scroll_name in ["RumorScroll", "YesterdayEchoScroll", "ProductScroll"]:
+		var scroll := panel.get_node_or_null(scroll_name) as ScrollContainer if panel != null else null
+		_ok(scroll != null, "runtime menu preparation scroll exists: " + scroll_name)
+		if scroll != null:
+			_assert_menu_prep_scrollbar_hidden(scroll, scroll_name)
+	var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+	var rects: Dictionary = tavern.get_tutorial_highlight_rects("menu_prep")
+	for key in ["MenuPrepRumors", "MenuPrepProducts", "MenuPrepStartButton"]:
+		_ok(rects.has(key), "runtime menu preparation rect exists: " + key)
+		var rect := _rect_from_array(rects.get(key, []))
+		_ok(rect.size.x > 0.0 and rect.size.y > 0.0,
+			"runtime menu preparation rect has positive size: " + key)
+		_ok(panel_rect.grow(2.0).encloses(rect),
+			"runtime menu preparation rect stays inside the visible prep panel: " + key)
+
+	if tm != null:
+		tavern.trigger_craft_tutorial()
+		_ok(not tm._is_active, "craft tutorial does not start while menu preparation panel is open")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+	gm._tavern_view = old_view
+	_restore_tutorial_state(tm, tutorial_backup)
+
+
+func _capture_tutorial_state(tm: Node) -> Dictionary:
+	if tm == null:
+		return {}
+	return {
+		"completed_steps": tm._completed_steps.duplicate(),
+		"current_sequence": tm._current_sequence.duplicate(true),
+		"current_step": tm._current_step,
+		"is_active": tm._is_active,
+		"tavern_first_entered": tm.tavern_first_entered,
+		"first_menu_prep_shown": tm.first_menu_prep_shown,
+	}
+
+
+func _restore_tutorial_state(tm: Node, state: Dictionary) -> void:
+	if tm == null or state.is_empty():
+		return
+	tm._remove_overlay()
+	tm._completed_steps = (state.get("completed_steps", []) as Array).duplicate()
+	tm._current_sequence = (state.get("current_sequence", []) as Array).duplicate(true)
+	tm._current_step = int(state.get("current_step", -1))
+	tm._is_active = bool(state.get("is_active", false))
+	tm._overlay = null
+	tm.tavern_first_entered = bool(state.get("tavern_first_entered", false))
+	tm.first_menu_prep_shown = bool(state.get("first_menu_prep_shown", false))
+
+
+func _rect_from_array(values: Array) -> Rect2:
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(Vector2(float(values[0]), float(values[1])), Vector2(float(values[2]), float(values[3])))
+
+
+func _assert_menu_prep_scrollbar_hidden(scroll: ScrollContainer, scroll_name: String) -> void:
+	_ok(scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+		scroll_name + " hides the vertical scrollbar control")
+	_ok(scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		scroll_name + " keeps horizontal scrolling disabled")
+
+
+func _test_tavern_menu_prep_starts_with_no_default_selection() -> void:
+	var gm = get_node("/root/GameManager")
+	var old_view = gm._tavern_view
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate() as TavernView
+	add_child(tavern)
+	await get_tree().process_frame
+	tavern.configure_menu_preparation(gm.get_today_rumors(), gm.get_menu_preparation_echoes())
+	await get_tree().process_frame
+
+	var panel := tavern.get_node_or_null("MenuPrepPanel") as Control
+	_ok(panel != null and panel.visible, "runtime menu preparation panel opens for empty default selection")
+	if panel != null:
+		var slot_label := panel.get_node_or_null("SlotLabel") as Label
+		_ok(slot_label != null, "runtime menu preparation exposes the selected slot label")
+		if slot_label != null:
+			_ok(slot_label.text.contains("今晚菜单 0/4") and slot_label.text.contains("未选择"),
+				"menu preparation starts with no selected products")
+		var start_button := panel.get_node_or_null("StartServiceBtn") as Button
+		_ok(start_button != null and start_button.disabled,
+			"start service button stays disabled until the player chooses a product")
+		var product_list := panel.get_node_or_null("ProductScroll/ProductList") as VBoxContainer
+		_ok(product_list != null and product_list.get_child_count() > 0,
+			"runtime menu preparation renders selectable products")
+		if product_list != null:
+			var pressed_count := 0
+			for child in product_list.get_children():
+				if child is Button and (child as Button).button_pressed:
+					pressed_count += 1
+			_ok(pressed_count == 0, "no menu product button is preselected")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+	gm._tavern_view = old_view
 
 
 func _test_game_manager_exposes_rumor_match_feedback() -> void:

@@ -52,19 +52,71 @@
       "desc_height": 150
     }
   ],
+  "menu_prep": [
+    {
+      "id": "menu_prep_rumors",
+      "group": "menu_prep",
+      "title": "今日菜单 · 传闻",
+      "description": "这里汇总白天听到的传闻和昨日回响。传闻会提示可能来的客群、受影响的熟客，以及今晚更值得准备的口味标签。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "开门前先看今日菜单。左边是白天听到的传闻，还有昨日回响。"},
+        {"expression": "concerned", "text": "传闻不是闲话。它会提示可能来的客群、熟客和推荐口味。"},
+        {"expression": "smirk", "text": "昨日回响会提醒谁记住了哪道菜，方便你今天接着做准备。"}
+      ],
+      "highlight_node": "MenuPrepRumors",
+      "highlight_rect": [286, 188, 300, 278],
+      "desc_pos_x": 0.68,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 150
+    },
+    {
+      "id": "menu_prep_products",
+      "group": "menu_prep",
+      "title": "今日菜单 · 选择供应",
+      "description": "右侧是今晚能挂出的菜品。按钮里的推荐会结合传闻、昨日回响和菜品标签；菜单越窄，客人点单越可控。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "右边选择今晚供应的菜品。默认会先挂上几道可做的东西。"},
+        {"expression": "smirk", "text": "带“推荐”的菜品命中了传闻、昨日回响或口味标签，可以优先考虑。"},
+        {"expression": "concerned", "text": "菜单越窄，点单越可控；但太窄也可能错过传闻带来的客人。"}
+      ],
+      "highlight_node": "MenuPrepProducts",
+      "highlight_rect": [634, 188, 340, 318],
+      "desc_pos_x": 0.26,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 150
+    },
+    {
+      "id": "menu_prep_start",
+      "group": "menu_prep",
+      "title": "今日菜单 · 开始营业",
+      "description": "确认至少一道菜后，点击“开始营业”进入夜晚服务。之后才会切回吧台操作教程和客人流程。",
+      "narrator_lines": [
+        {"expression": "neutral", "text": "确认今日菜单后，点“开始营业”。"},
+        {"expression": "smirk", "text": "进入服务后，我再教你吧台操作；在哪个界面，就只讲那个界面的事。"}
+      ],
+      "highlight_node": "MenuPrepStartButton",
+      "highlight_rect": [528, 562, 224, 54],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.18,
+      "desc_width": 430,
+      "desc_height": 140
+    }
+  ],
   "craft": [
     {
       "id": "craft_intro",
       "group": "craft",
-      "title": "夜晚 · 物理吧台",
-      "description": "从快捷栏拖出麦芽，投入右侧酒桶。抓住酒桶摇晃，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
+      "title": "夜晚 · 取出材料",
+      "description": "从底部快捷栏拖出麦芽。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
       "narrator_lines": [
-        {"expression": "neutral", "text": "夜晚在吧台上直接操作材料。先从快捷栏拖出麦芽。"},
-        {"expression": "smirk", "text": "把麦芽丢进右侧酒桶，抓住酒桶摇一摇，再松手。"},
-        {"expression": "neutral", "text": "Day 2 会解锁烤架，Day 3 会解锁炖锅和勺子。"}
+        {"expression": "neutral", "text": "夜晚在吧台上直接操作材料。先从底部快捷栏拖出麦芽。"},
+        {"expression": "smirk", "text": "按 E 可以打开背包，材料和剧情物品也能从背包拖出来。"},
+        {"expression": "concerned", "text": "剧情物品不会永久丢失，掉出桌面后会回到背包。"}
       ],
-      "highlight_node": "CraftBarrel",
-      "highlight_rect": [896, 432, 128, 116],
+      "highlight_node": "ShortcutBar",
+      "highlight_rect": [140, 675, 1000, 40],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.25,
       "desc_width": 470,
@@ -73,15 +125,15 @@
     {
       "id": "craft_drag",
       "group": "craft",
-      "title": "取出材料",
-      "description": "从底部快捷栏拖出常用材料。按 E 可以打开背包，把材料或剧情物品拖到桌面。\n\n剧情物品不会永久丢失，掉出桌面后会回到背包。",
+      "title": "酒桶酿造",
+      "description": "把麦芽丢进右侧酒桶。抓住酒桶摇一摇，再松手完成酿造。\n\nDay 2 会解锁烤架，Day 3 会解锁炖锅和勺子。",
       "narrator_lines": [
-        {"expression": "neutral", "text": "底部快捷栏放常用材料，直接拖到桌面。"},
-        {"expression": "smirk", "text": "按 E 可以打开背包，把材料或剧情物品也拖出来。"},
-        {"expression": "concerned", "text": "剧情物品不会永久丢失，掉出桌面会回到背包。"}
+        {"expression": "neutral", "text": "把麦芽丢进右侧酒桶。"},
+        {"expression": "smirk", "text": "抓住酒桶摇一摇，再松手完成酿造。"},
+        {"expression": "neutral", "text": "Day 2 会解锁烤架，Day 3 会解锁炖锅和勺子。"}
       ],
-      "highlight_node": "ShortcutBar",
-      "highlight_rect": [140, 675, 1000, 40],
+      "highlight_node": "CraftBarrel",
+      "highlight_rect": [896, 432, 128, 116],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.84,
       "desc_width": 460,
@@ -136,8 +188,8 @@
         {"expression": "concerned", "text": "注意耐心条。等太久，客人会离开。"},
         {"expression": "neutral", "text": "每晚普通订单数量有限，做完后就可以打烊。"}
       ],
-      "highlight_node": "CustomerNode",
-      "highlight_rect": [440, 80, 400, 360],
+      "highlight_node": "OrderGroove",
+      "highlight_rect": [392, 604, 496, 32],
       "desc_pos_x": 0.5,
       "desc_pos_y": 0.6,
       "desc_width": 430,
@@ -149,11 +201,12 @@
       "id": "ledger_intro",
       "group": "ledger",
       "title": "账本",
-      "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。",
+      "description": "每天结算会记录金币、声望和重要人物的命运。\n\n在白天或夜晚按 Tab，也可以随时翻开桌面账本。新线索出现时，账本和文档会留下提示。结算页的“重写今日”会打开倒回确认，让你回到当天早晨。",
       "narrator_lines": [
         {"expression": "surprised", "text": "账本会记录每天的金币、声望，还有重要人物的命运。"},
         {"expression": "neutral", "text": "白天或夜晚按 Tab，也能随时翻开桌面账本。"},
-        {"expression": "concerned", "text": "新线索出现时，账本和文档按钮会留下提示，别漏看。"}
+        {"expression": "concerned", "text": "新线索出现时，账本和文档按钮会留下提示，别漏看。"},
+        {"expression": "neutral", "text": "结算页的“重写今日”会打开倒回确认；确认后会回到当天早晨，重新选择白天行动。"}
       ],
       "highlight_node": "UI",
       "highlight_rect": [90, 50, 1100, 560],
@@ -211,6 +264,25 @@
       "desc_pos_y": 0.68,
       "desc_width": 440,
       "desc_height": 140
+    }
+  ],
+  "chaos_ghost": [
+    {
+      "id": "chaos_ghost_intro",
+      "group": "chaos_ghost",
+      "title": "菲比幽灵",
+      "description": "菲比会趁桌面混乱时盯上普通物品。她靠近目标后，赶紧把目标抓起来就能打断偷窃；如果放着不管，她会把东西带出酒馆。",
+      "narrator_lines": [
+        {"expression": "surprised", "text": "停一下，菲比出来了。她喜欢趁桌面乱的时候顺走东西。"},
+        {"expression": "concerned", "text": "她靠近哪个物品，就赶紧把那个物品抓起来；抓到手里就能打断偷窃。"},
+        {"expression": "smirk", "text": "普通材料和成品别放着不管。桌面越乱，她越容易找到机会。"}
+      ],
+      "highlight_node": "ChaosGhostEvent",
+      "highlight_rect": [480, 250, 320, 180],
+      "desc_pos_x": 0.5,
+      "desc_pos_y": 0.18,
+      "desc_width": 460,
+      "desc_height": 150
     }
   ]
 }

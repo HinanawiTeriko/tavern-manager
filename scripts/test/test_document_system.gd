@@ -118,6 +118,8 @@ func _test_structured_ledger_tracks_and_indexes() -> void:
 		"fate track renders the changed result")
 	_ok(all_text.contains("证物索引") and all_text.contains("染血委托书"),
 		"evidence renders as an index entry")
+	_ok(all_text.contains("来源：证据"),
+		"evidence index labels investigation documents as evidence")
 	_ok(not all_text.contains("纸角沾着已经干涸的血迹。"),
 		"ledger does not copy full evidence body text into the ledger")
 

@@ -3,9 +3,9 @@ extends Panel
 
 ## Top reward toast for DayMap gathering. Text is rendered by Godot; the panel art is a texture.
 
-const TOAST_WIDTH := 420.0
-const TOAST_HEIGHT := 56.0
-const DISPLAY_DURATION := 3.0
+const TOAST_WIDTH := 480.0
+const TOAST_HEIGHT := 78.0
+const DISPLAY_DURATION := 4.0
 const FADE_DURATION := 0.4
 const PANEL_TEXTURE := "res://assets/textures/daymap/ui/gathering_toast_panel.png"
 const TOAST_FONT := preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
@@ -25,9 +25,10 @@ func _ready() -> void:
 	_label.name = "Content"
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_label.add_theme_font_override("font", TOAST_FONT)
 	_label.add_theme_color_override("font_color", Color(0.27, 0.19, 0.12))
-	_label.add_theme_font_size_override("font_size", 15)
+	_label.add_theme_font_size_override("font_size", 14)
 	_label.anchor_left = 0.0
 	_label.anchor_right = 1.0
 	_label.anchor_top = 0.0
@@ -65,9 +66,8 @@ func show_rewards(rewards: Dictionary, message: String) -> void:
 		_label.text = message
 	else:
 		_label.text = "采集获得：" + "、".join(PackedStringArray(parts))
-
-	if not parts.is_empty() and message.contains("传闻"):
-		_label.text += " / 听到传闻"
+		if message.strip_edges() != "":
+			_label.text += "\n" + message
 
 	visible = true
 	_timer.start(DISPLAY_DURATION)

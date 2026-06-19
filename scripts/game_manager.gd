@@ -6,6 +6,7 @@ signal inventory_changed()
 const INFERENCE_SYSTEM_SCRIPT := preload("res://scripts/systems/inference_system.gd")
 const RUMOR_SYSTEM_SCRIPT := preload("res://scripts/systems/rumor_system.gd")
 const APPETITE_SYSTEM_SCRIPT := preload("res://scripts/systems/appetite_system.gd")
+const PHYSICS_LAW_SYSTEM_SCRIPT := preload("res://scripts/systems/physics_law_system.gd")
 
 # Subsystems
 var economy: EconomySystem
@@ -22,6 +23,7 @@ var day_map: DayMapSystem
 var rumors
 var appetite
 var inference
+var physics_laws
 var save_sys: SaveSystem
 var ryan_slice: RyanSliceSystem
 var audio: AudioManager
@@ -41,6 +43,29 @@ var current_ledger_data: LedgerData = null
 const DIALOGUE_BALLOON_SCENE := "res://scenes/ui/DialogueBalloon.tscn"
 const RYAN_ACTION_FEEDBACK_DIALOGUE := "res://dialogue/ryan_action_feedback.dialogue"
 const MIRA_OLD_LEDGER_GOSSIP_GRANTED_DAY_VAR := "mira_old_ledger_gossip_granted_day"
+const MIRA_OLD_LEDGER_GOSSIP_SOURCE_GROUPS := {
+	"mira_traveling_mentor": ["old_road", "trade"],
+	"child_learned_saying": ["old_road"],
+}
+const MIRA_OLD_LEDGER_GOSSIP_SOURCE_TRAITS := {
+	"mira_traveling_mentor": [
+		"road_runner",
+		"road_tax_guard",
+		"lamp_oil_runner",
+		"map_copyist",
+		"generous_trader",
+		"bardic_spread",
+		"caravan_cook",
+		"spice_broker",
+		"glass_peddler",
+	],
+	"child_learned_saying": [
+		"road_runner",
+		"road_tax_guard",
+		"lamp_oil_runner",
+		"map_copyist",
+	],
+}
 const MIRA_RESPONSIBILITY_STALL_BONUS_SEEN_VAR := "mira_responsibility_stall_bonus_seen"
 const MIRA_RESPONSIBILITY_STALL_BONUS := 2
 const EVELYN_FINAL_DAY := 20
@@ -97,8 +122,11 @@ const EVELYN_PUBLIC_ACCOUNT_FINAL_GAP := {
 var _is_dialogue_active: bool = false
 var _dialogue_phase: String = ""
 var _important_npc_pending: bool = false
+var _important_npc_normal_orders_before: int = 0
+var _important_npc_normal_orders_seen: int = 0
 var _guest_lingering: bool = false
 var _serve_tutorial_pending_after_dialogue: bool = false
+var _craft_tutorial_pending_after_menu: bool = false
 
 # 开场交接：刚看完开场后置位，DayMap 一次性消费以走 match-cut 拉镜
 var _pending_intro_handoff: bool = false
@@ -110,6 +138,7 @@ var _ending_screen = null
 var _tutorial_manager = null
 var _day_map_state_missing_from_save: bool = false
 var _announced_inference_question_ids: Dictionary = {}
+var _last_investigation_unlocked_question_titles: Array[String] = []
 var _day_start_snapshot: Dictionary = {}
 var _current_day_events: Array = []
 var _pending_guest_reaction_suffix: String = ""
@@ -134,7 +163,6 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"dough_meat": "res://assets/textures/tavern/items/dough_meat.png",
 	"ale_herb": "res://assets/textures/tavern/items/ale_herb.png",
 	"grape_herb": "res://assets/textures/tavern/items/grape_herb.png",
-	"meat_stew_raw": "res://assets/textures/tavern/items/meat_stew_raw.png",
 	"failed_brew": "res://assets/textures/tavern/items/failed_brew.png",
 	"failed_stew": "res://assets/textures/tavern/items/failed_stew.png",
 	"ale_beer": "res://assets/textures/tavern/items/ale_beer.png",
@@ -222,6 +250,7 @@ func _ready() -> void:
 	appetite.load_data()
 	inference = INFERENCE_SYSTEM_SCRIPT.new()
 	inference.load_data()
+	physics_laws = PHYSICS_LAW_SYSTEM_SCRIPT.new()
 	save_sys = SaveSystem.new()
 	settings = SettingsManager.new()
 	settings.load_and_apply()
@@ -267,9 +296,34 @@ func _process(delta: float) -> void:
 		var menu_open = _tavern_view.is_menu_open() or _tavern_view.is_menu_config_open()
 		var in_prep = _tavern_view.is_preparation_phase() or not _tavern_view.daily_menu_confirmed
 		if not in_prep and not _is_dialogue_active and not tutorial_active and not _guest_lingering:
+			if not menu_open:
+				_recover_unreachable_important_guest_wait()
 			guests.update(delta, guests.has_guest, menu_open)
+			if not menu_open:
+				_ensure_idle_guest_completion()
 		if guests.has_guest:
 			_tavern_view.update_timer(_guest_patience_ratio(guests.current_guest))
+
+
+func _recover_unreachable_important_guest_wait() -> void:
+	if not _important_npc_pending:
+		return
+	if guests == null or guests.has_guest:
+		return
+	if guests.remaining_normal_orders() > 0:
+		return
+	if _important_npc_normal_orders_seen < _important_npc_normal_orders_before:
+		_important_npc_normal_orders_seen = _important_npc_normal_orders_before
+	_spawn_pending_important_guest_after_menu()
+
+
+func _ensure_idle_guest_completion() -> void:
+	if _important_npc_pending:
+		return
+	if guests == null or guests.has_guest:
+		return
+	if guests.has_method("ensure_idle_completion"):
+		guests.ensure_idle_completion()
 
 
 func _guest_patience_ratio(guest: GuestData) -> float:
@@ -336,6 +390,16 @@ func _should_defer_important_guest_for_tutorial(tm: Node) -> bool:
 	return true
 
 
+func _should_start_menu_prep_tutorial(tm: Node) -> bool:
+	if tm == null:
+		return false
+	if bool(tm.first_menu_prep_shown):
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed("menu_prep"):
+		return false
+	return true
+
+
 func register_view(view: Node) -> void:
 	if view is TavernView:
 		_tavern_view = view
@@ -354,29 +418,33 @@ func register_view(view: Node) -> void:
 		var tm = _tutorial_manager
 		var first_tavern_entry = tm != null and not tm.tavern_first_entered
 		var tutorial_will_start = _should_defer_important_guest_for_tutorial(tm)
+		var menu_prep_tutorial_will_start = _should_start_menu_prep_tutorial(tm)
 
 		if first_tavern_entry:
 			tm.tavern_first_entered = true
 			tm._save_state()
+		if tutorial_will_start:
+			_craft_tutorial_pending_after_menu = true
+		if menu_prep_tutorial_will_start:
+			tm.first_menu_prep_shown = true
+			tm._save_state()
 
 		var important_guest_request := _today_important_guest_request()
 		_important_npc_pending = false
+		_important_npc_normal_orders_before = 0
+		_important_npc_normal_orders_seen = 0
 
 		if not important_guest_request.is_empty():
 			_important_npc_pending = true
-			var npc_id := String(important_guest_request.get("npc_id", ""))
-			var order_key := String(important_guest_request.get("order_key", "bread"))
+			_important_npc_normal_orders_before = ryan_slice.important_arrival_normal_orders_before(economy.current_day)
 
-			if tutorial_will_start:
-				# 教程结束后再生成重要 NPC（如莱恩）
-				var spawn_after_tutorial := _spawn_npc_after_tutorial.bind(npc_id, order_key)
-				if not tm.tutorial_sequence_ended.is_connected(spawn_after_tutorial):
-					tm.tutorial_sequence_ended.connect(spawn_after_tutorial, CONNECT_ONE_SHOT)
-			elif _tavern_view.daily_menu_confirmed and not guests.has_guest:
-				guests.spawn_important(npc_id, order_key)
-			# 菜单未确认时等待 on_menu_confirmed() 生成
+			if not tutorial_will_start and _tavern_view.daily_menu_confirmed and not guests.has_guest:
+				_spawn_pending_important_guest_after_menu()
+			# 菜单未确认时等待 on_menu_confirmed() 生成；非揭示日还会等普通客先离场。
 
-		if tutorial_will_start:
+		if menu_prep_tutorial_will_start:
+			view.call_deferred("trigger_menu_prep_tutorial")
+		elif tutorial_will_start and _tavern_view.daily_menu_confirmed:
 			view.call_deferred("trigger_craft_tutorial")
 
 		_refresh_close_button()
@@ -410,6 +478,9 @@ func start_day_map(day: int) -> void:
 		narrative.set_var("toby_contract_found", true)
 	_sync_day_map_completion_from_story_state()
 	_ensure_fate_tracks_for_day(day)
+	_add_mira_old_road_menu_hint_for_day(day)
+	_add_evelyn_public_gap_hint_for_day(day)
+	_add_evelyn_ryan_drugged_pressure_hint_for_day(day)
 	_migrate_missing_day_map_state()
 
 
@@ -469,6 +540,53 @@ func _has_next_day_fate_ledger_warning() -> bool:
 		or not _mira_day_start_ledger_entries(next_day).is_empty()
 
 
+func _add_mira_old_road_menu_hint_for_day(day: int) -> void:
+	if day < 7 or day > 11:
+		return
+	if inference == null or not _mira_old_ledger_route_active():
+		return
+	var missing: Array[String] = []
+	if not inference.has_clue("mira_traveling_mentor"):
+		missing.append("带孩子跑货的旧事")
+	if not inference.has_clue("child_learned_saying"):
+		missing.append("一个人走那句旧话")
+	if missing.is_empty():
+		return
+	_ensure_fate_track("mira")
+	var note := _source_note("wind",
+		"第 %d 天，%s还没接全。今晚用旧路酒、清淡热汤、体面酒菜留住旧路熟人和贸易客。" %
+		[day, " / ".join(PackedStringArray(missing))]
+	)
+	if documents.add_fate_note("mira", note):
+		play_audio_event("new_document")
+
+
+func _add_evelyn_public_gap_hint_for_day(day: int) -> void:
+	if day < 18 or day > 19:
+		return
+	var summary := get_evelyn_public_account_gap_summary()
+	if summary == "":
+		return
+	_ensure_fate_track("evelyn")
+	var note := _source_note("fact",
+		"第 %d 天，%s。第二十日封存前，先回推断桌补齐这些事实。" % [day, summary]
+	)
+	if documents.add_fate_note("evelyn", note):
+		play_audio_event("new_document")
+
+
+func _add_evelyn_ryan_drugged_pressure_hint_for_day(day: int) -> void:
+	if day != 13:
+		return
+	var route := String(narrative.get_var("ryan_ending"))
+	if route == "":
+		route = narrative.get_ryan_route()
+	if route != "drugged_survivor":
+		return
+	_add_sourced_fate_note("evelyn", "consequence",
+		"莱恩活下来了，但那不是他自己的选择；他会成为灰账里一名被迫活下来的证人。")
+
+
 func _add_mira_stall_ledger_beat() -> void:
 	var entry := ""
 	if bool(narrative.get_var("toby_contract_found")):
@@ -525,7 +643,7 @@ func _grant_mira_old_road_stall_clue(note: String) -> void:
 		return
 	var previous_questions := _available_inference_question_ids()
 	if inference.add_clue("mira_avoids_old_road"):
-		if documents.add_fate_note("mira", note):
+		if documents.add_fate_note("mira", _source_note("heart", note)):
 			play_audio_event("new_document")
 		_maybe_show_inference_ready_notice(previous_questions)
 
@@ -555,7 +673,7 @@ func _collect_toby_board_clues() -> void:
 	if inference != null:
 		inference.add_clues(["toby_name", "blacktooth_escort", "high_pay_trap"])
 		_maybe_show_inference_ready_notice(previous_questions)
-	if documents.add_fate_note("toby", "告示板出现黑齿矿脉护送委托，落款是托比。"):
+	if documents.add_fate_note("toby", _source_note("wind", "告示板出现黑齿矿脉护送委托，落款是托比。")):
 		play_audio_event("new_document")
 
 
@@ -566,7 +684,7 @@ func _collect_toby_day6_night_clues() -> bool:
 		return false
 	var previous_questions := _available_inference_question_ids()
 	var changed: bool = inference.add_clues(["back_alley_boy", "one_person_walk"])
-	if changed and documents.add_fate_note("toby", "夜里买草药清汤的后巷少年，也说起了黑齿矿脉。"):
+	if changed and documents.add_fate_note("toby", _source_note("heart", "夜里买草药清汤的后巷少年，也说起了黑齿矿脉。")):
 		play_audio_event("new_document")
 	if changed:
 		_maybe_show_inference_ready_notice(previous_questions)
@@ -597,11 +715,13 @@ func _try_grant_mira_old_ledger_gossip() -> Dictionary:
 	if candidate.is_empty():
 		return {"granted": false, "clue_id": "", "line": ""}
 	var clue_id := String(candidate.get("clue_id", ""))
+	if not _current_guest_can_share_mira_old_ledger_gossip(clue_id):
+		return {"granted": false, "clue_id": "", "line": ""}
 	var previous_questions := _available_inference_question_ids()
 	if not inference.add_clue(clue_id):
 		return {"granted": false, "clue_id": "", "line": ""}
 	narrative.set_var(MIRA_OLD_LEDGER_GOSSIP_GRANTED_DAY_VAR, economy.current_day)
-	if documents.add_fate_note("mira", String(candidate.get("note", ""))):
+	if documents.add_fate_note("mira", _source_note("wind", String(candidate.get("note", "")))):
 		play_audio_event("new_document")
 	_maybe_show_inference_ready_notice(previous_questions)
 	return {
@@ -618,11 +738,63 @@ func _inference_clue_label(clue_id: String) -> String:
 	return String(clue.get("label", clue_id))
 
 
+func _source_note(source_type: String, note: String) -> String:
+	if inference != null and inference.has_method("source_note"):
+		return String(inference.call("source_note", source_type, note))
+	var clean := note.strip_edges()
+	if clean == "":
+		return ""
+	var fallback_labels := {
+		"wind": "风声",
+		"heart": "人心",
+		"evidence": "证据",
+		"fact": "事实",
+	}
+	return "%s · %s" % [String(fallback_labels.get(source_type, "线索")), clean]
+
+
 func _mira_old_ledger_route_active() -> bool:
 	return bool(narrative.get_var("toby_name_seen")) \
 		or bool(narrative.get_var("toby_identity_known")) \
 		or bool(narrative.get_var("toby_commission_lead")) \
 		or inference.has_clue("one_person_walk")
+
+
+func _current_guest_can_share_mira_old_ledger_gossip(clue_id: String = "") -> bool:
+	if guests == null or not guests.has_guest or guests.current_guest == null:
+		return false
+	var target_clue_id := clue_id
+	if target_clue_id == "":
+		var candidate := _next_mira_old_ledger_gossip()
+		target_clue_id = String(candidate.get("clue_id", ""))
+	if target_clue_id == "":
+		return false
+	var guest := guests.current_guest
+	var group_key := String(guest.get_meta("guest_group", ""))
+	if group_key != "":
+		return _mira_old_ledger_gossip_source_allows(
+			MIRA_OLD_LEDGER_GOSSIP_SOURCE_GROUPS,
+			target_clue_id,
+			group_key
+		)
+	var npc_id := String(guest.npc_id)
+	if npc_id == "" or not guests.has_method("get_regular_customer_preview"):
+		return false
+	var preview: Dictionary = guests.get_regular_customer_preview(npc_id)
+	var trait_info: Dictionary = preview.get("trait", {})
+	var trait_id := String(trait_info.get("id", ""))
+	if trait_id != "":
+		return _mira_old_ledger_gossip_source_allows(
+			MIRA_OLD_LEDGER_GOSSIP_SOURCE_TRAITS,
+			target_clue_id,
+			trait_id
+		)
+	return false
+
+
+func _mira_old_ledger_gossip_source_allows(source_map: Dictionary, clue_id: String, source_key: String) -> bool:
+	var allowed = source_map.get(clue_id, [])
+	return allowed is Array and (allowed as Array).has(source_key)
 
 
 func _next_mira_old_ledger_gossip() -> Dictionary:
@@ -649,6 +821,27 @@ func _available_inference_question_ids() -> Array[String]:
 		var question_id := String(question.get("id", ""))
 		if question_id != "":
 			result.append(question_id)
+	return result
+
+
+func get_last_investigation_unlocked_question_titles() -> Array[String]:
+	var result: Array[String] = []
+	for title in _last_investigation_unlocked_question_titles:
+		result.append(String(title))
+	return result
+
+
+func _new_inference_question_titles(previous_question_ids: Array[String]) -> Array[String]:
+	var result: Array[String] = []
+	if inference == null:
+		return result
+	for question in inference.get_available_questions():
+		var question_id := String(question.get("id", ""))
+		if question_id == "" or previous_question_ids.has(question_id):
+			continue
+		var title := String(question.get("title", question_id)).strip_edges()
+		if title != "":
+			result.append(title)
 	return result
 
 
@@ -693,8 +886,7 @@ func apply_inference_result(result: Dictionary) -> bool:
 					narrative.set_var("toby_identity_known", true)
 					day_map.set_lead_flag("toby_identity_known", true)
 					changed = true
-					if documents.add_fate_note("toby", "夜里的后巷少年，就是告示上的托比。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("toby", "fact", "夜里的后巷少年，就是告示上的托比。")
 			"toby_commission_lead":
 				if not bool(narrative.get_var("toby_commission_lead")):
 					narrative.set_var("toby_commission_lead", true)
@@ -703,44 +895,37 @@ func apply_inference_result(result: Dictionary) -> bool:
 				if not bool(narrative.get_var("toby_danger_known")):
 					narrative.set_var("toby_danger_known", true)
 					changed = true
-					if documents.add_fate_note("toby", "黑齿矿脉护送的报酬高得像陷阱，得找人截住这趟路。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("toby", "fact", "黑齿矿脉护送的报酬高得像陷阱，得找人截住这趟路。")
 			"mira_toby_link_known":
 				if narrative.get_var("mira_toby_link_known") != true:
 					narrative.set_var("mira_toby_link_known", true)
 					changed = true
-					if documents.add_fate_note("mira", "托比和米拉的旧路被重新对上。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("mira", "fact", "托比和米拉的旧路被重新对上。")
 			"mira_responsibility_lead":
 				if narrative.get_var("mira_responsibility_lead") != true:
 					narrative.set_var("mira_responsibility_lead", true)
 					changed = true
-					if documents.add_fate_note("mira", "托比那句“一个人走”，来自米拉留下的旧办法。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("mira", "fact", "托比那句“一个人走”，来自米拉留下的旧办法。")
 			"grey_same_batch_known":
 				if narrative.get_var("grey_same_batch_known") != true:
 					narrative.set_var("grey_same_batch_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "莱恩案卷和托比的黑齿批次被对进同一批灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "莱恩案卷和托比的黑齿批次被对进同一批灰账。")
 			"grey_payout_method_known":
 				if narrative.get_var("grey_payout_method_known") != true:
 					narrative.set_var("grey_payout_method_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "灰账先决定赔付，再把事故补成已结案。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "灰账先决定赔付，再把事故补成已结案。")
 			"mira_grey_ledger_link_known":
 				if narrative.get_var("mira_grey_ledger_link_known") != true:
 					narrative.set_var("mira_grey_ledger_link_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "米拉的供应协议背面盖着同一枚灰契印，协议也接进灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "米拉的供应协议背面盖着同一枚灰契印，协议也接进灰账。")
 			"grey_public_account_known":
 				if narrative.get_var("grey_public_account_known") != true:
 					narrative.set_var("grey_public_account_known", true)
 					changed = true
-					if documents.add_fate_note("evelyn", "莱恩、托比和米拉能被抄成同一份公开灰账。"):
-						play_audio_event("new_document")
+					_add_sourced_fate_note("evelyn", "fact", "莱恩、托比和米拉能被抄成同一份公开灰账。")
 	if changed:
 		if economy != null and economy.current_day == EVELYN_FINAL_DAY:
 			_refresh_evelyn_public_gap_vars()
@@ -831,6 +1016,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 		result["message"] = _prepare_mira_stall_encounter()
 		_grant_mira_responsibility_stall_bonus_if_ready()
 		_add_mira_stall_ledger_beat()
+	_add_grey_location_followup_note(location_id)
 	if bool(result.get("securesToby", false)):
 		var cost := int(result.get("goldCost", 0))
 		if economy.gold >= cost:
@@ -845,7 +1031,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 			narrative.set_var("toby_secured", false)
 	if bool(location_before.get("completeOnVisit", false)) and day_map.has_method("mark_completed"):
 		day_map.call("mark_completed", location_id)
-	if rumors != null:
+	if rumors != null and _location_allows_wind_notice(location_before):
 		var rumor_day := economy.current_day
 		if day_map != null:
 			rumor_day = int(day_map.current_day)
@@ -869,6 +1055,20 @@ func visit_day_location(location_id: String) -> Dictionary:
 		"location_id": location_id,
 	})
 	return result
+
+
+func _add_grey_location_followup_note(location_id: String) -> void:
+	var note := ""
+	match location_id:
+		"payout_office":
+			note = "赔付登记处只是初证。回清算台压出赔付即结案，才能证明莱恩案卷的结案顺序。"
+		"blacktooth_ledger":
+			note = "黑齿转运账只是初证。回清算台压出被改名的护送委托，才能证明托比怎样被挪进临时人名栏。"
+		"mira_supply_copy":
+			note = "米拉旧供应副本只是初证。回清算台压出供应协议灰印，才能把她的协议接进灰账。"
+		_:
+			return
+	_add_sourced_fate_note("evelyn", "evidence", note)
 
 
 func get_today_rumors() -> Array[Dictionary]:
@@ -1224,6 +1424,13 @@ func _rumor_context_flags() -> Dictionary:
 	return flags
 
 
+func _location_allows_wind_notice(location: Dictionary) -> bool:
+	if String(location.get("windPolicy", "menu")) == "none":
+		return false
+	# Wind notices are deterministic planning rewards: available content is 100%, silent locations are 0%.
+	return float(location.get("windChance", 1.0)) > 0.0
+
+
 func _day_location_gold_cost(location_id: String) -> int:
 	for loc in day_map.get_locations():
 		if String(loc.get("id", "")) == location_id:
@@ -1296,6 +1503,7 @@ func _is_shop_gossip_available(entry: Dictionary) -> bool:
 func grant_investigation_document(document_id: String) -> bool:
 	# 物理调查场景捡起/拼合出线索时的授予入口（中介模式：View 不直接碰 DocumentSystem）。
 	# 返回是否「本次新授予」。授予后立即加入故事物品背包。
+	_last_investigation_unlocked_question_titles.clear()
 	var id := String(document_id)
 	var already_owned := documents.owns_document(id)
 	var newly := documents.grant_document(id) and not already_owned
@@ -1310,6 +1518,7 @@ func grant_investigation_document(document_id: String) -> bool:
 			var previous_questions := _available_inference_question_ids()
 			if inference.add_clue(clue_id):
 				_add_grey_document_fate_note(id)
+				_last_investigation_unlocked_question_titles = _new_inference_question_titles(previous_questions)
 				_maybe_show_inference_ready_notice(previous_questions)
 		# 文档作为故事物品立即放入背包，无需先阅读（玩家可双击背包中物品打开阅读）
 		if inventory_sys.is_story_item(id):
@@ -1431,6 +1640,29 @@ func _on_phase_changed(phase: int) -> void:
 			economy.current_day += 1
 			get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/DayMap.tscn")
 
+
+func _activate_guest_physics_law(guest: GuestData) -> void:
+	if physics_laws == null or guest == null:
+		return
+	var law_id := String(guest.get_meta("physics_law_id", ""))
+	if law_id == "":
+		return
+	if not physics_laws.try_activate_for_night(law_id):
+		return
+	var law: Dictionary = physics_laws.get_active_law()
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("apply_physics_law"):
+		_tavern_view.apply_physics_law(law)
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("show_stage_caption"):
+		_tavern_view.show_stage_caption(String(law.get("stage_caption", "")), ThemeColors.AMBER_PRIMARY)
+
+
+func _clear_active_physics_law() -> void:
+	if _tavern_view != null and is_instance_valid(_tavern_view) and _tavern_view.has_method("clear_physics_law"):
+		_tavern_view.clear_physics_law()
+	if physics_laws != null:
+		physics_laws.clear_active_law()
+
+
 func _on_guest_arrived(guest: GuestData) -> void:
 	if guest == null:
 		return
@@ -1455,6 +1687,10 @@ func _on_guest_arrived(guest: GuestData) -> void:
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
+	_activate_guest_physics_law(guest)
+	var arrival_line := String(guest.get_meta("arrival_line", ""))
+	if arrival_line != "" and _tavern_view.has_method("customer_say"):
+		_tavern_view.customer_say(arrival_line)
 
 	var tm = get_node_or_null("/root/TutorialManager")
 	_queue_first_guest_serve_tutorial(guest.has_dialogue)
@@ -1508,23 +1744,62 @@ func _spawn_npc_after_tutorial(group_id: String, npc_id: String, order_key: Stri
 	# 如果准备阶段还未结束（菜单未确认），推迟到 on_menu_confirmed
 	if _tavern_view != null and is_instance_valid(_tavern_view) and not _tavern_view.daily_menu_confirmed:
 		return  # on_menu_confirmed 会在菜单确认后生成
-	guests.spawn_important(npc_id, order_key)
+	_spawn_pending_important_guest_after_menu()
 
 ## 准备阶段结束后延迟生成重要NPC
 func _spawn_important_deferred(npc_id: String, order_key: String) -> void:
 	await get_tree().create_timer(1.0).timeout
 	if _tavern_view != null and _tavern_view.daily_menu_confirmed:
-		guests.spawn_important(npc_id, order_key)
+		_spawn_pending_important_guest_after_menu()
 
 ## 菜单确认后的回调：触发生成重要NPC（由 TavernView._confirm_menu 调用）
 func on_menu_confirmed() -> void:
+	if _craft_tutorial_pending_after_menu:
+		if _start_deferred_craft_tutorial_after_menu():
+			return
+	_spawn_pending_important_guest_after_menu()
+
+
+func _start_deferred_craft_tutorial_after_menu() -> bool:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null:
+		_craft_tutorial_pending_after_menu = false
+		return false
+	if tm.has_method("is_group_completed") and tm.is_group_completed("craft"):
+		_craft_tutorial_pending_after_menu = false
+		return false
+	if tm._is_active:
+		return true
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		_craft_tutorial_pending_after_menu = false
+		return false
+	_craft_tutorial_pending_after_menu = false
+	if tm.has_signal("tutorial_sequence_ended") and not tm.tutorial_sequence_ended.is_connected(_on_deferred_craft_tutorial_sequence_ended):
+		tm.tutorial_sequence_ended.connect(_on_deferred_craft_tutorial_sequence_ended, CONNECT_ONE_SHOT)
+	_tavern_view.call_deferred("trigger_craft_tutorial")
+	return true
+
+
+func _on_deferred_craft_tutorial_sequence_ended(group_id: String) -> void:
+	if group_id != "craft":
+		return
+	_spawn_pending_important_guest_after_menu()
+
+
+func _spawn_pending_important_guest_after_menu() -> void:
 	if _important_npc_pending:
+		if _important_npc_normal_orders_seen < _important_npc_normal_orders_before:
+			return
 		var important_guest_request := _today_important_guest_request()
 		if not important_guest_request.is_empty():
+			if guests.has_guest:
+				return
 			guests.spawn_important(
 				String(important_guest_request.get("npc_id", "")),
 				String(important_guest_request.get("order_key", "bread"))
 			)
+		else:
+			_important_npc_pending = false
 
 ## 当所有客人都招待完毕后提示打烊
 func _on_all_guests_served() -> void:
@@ -1792,6 +2067,62 @@ func _important_guest_display_name(npc_id: String, fallback: String) -> String:
 	return ryan_slice.important_display_name(economy.current_day, npc_id, fallback)
 
 
+func _important_post_dialogue_heart_feedback(npc_id: String, day: int) -> String:
+	match npc_id:
+		"ryan":
+			match day:
+				1:
+					return "莱恩把北矿道当成机会。"
+				2:
+					if bool(narrative.get_var("ryan_has_alternative")):
+						return "莱恩已经收下替代委托。"
+					if bool(narrative.get_var("ryan_alternative_pending")):
+						return "莱恩把替代委托压在手边，等着今晚的选择。"
+					if bool(narrative.get_var("ryan_alternative_declined")):
+						return "莱恩拒开了替代委托，仍要走向北矿道。"
+					if bool(narrative.get_var("ryan_informed")):
+						return "莱恩知道血斧委托有问题，却还没放下它。"
+					return "莱恩仍想抓住血斧委托。"
+				3:
+					return "莱恩的北矿道结局已经落账。"
+		"toby":
+			if day == 6:
+				return "瘦小少年把孤身上路当成证明。"
+		"mira":
+			match day:
+				4:
+					return "米拉避开了旧路和那个孩子。"
+				12:
+					return "米拉被旧路和托比的委托拦住了。"
+		"evelyn":
+			match day:
+				5:
+					return "伊芙琳把赔付顺序藏在礼貌里。"
+				8:
+					return "伊芙琳开始怀疑灰账批次。"
+				13:
+					return "伊芙琳把调查入口交给了你。"
+				20:
+					return "伊芙琳被公开账本逼到抉择前。"
+	if npc_id == "":
+		return ""
+	var display_name := _important_guest_display_name(npc_id, npc_id)
+	if display_name == "":
+		return ""
+	return "%s的反应已记入账本。" % display_name
+
+
+func _show_important_post_dialogue_heart_feedback(npc_id: String, day: int) -> void:
+	var feedback := _important_post_dialogue_heart_feedback(npc_id, day)
+	if feedback == "":
+		return
+	if _tavern_view == null or not is_instance_valid(_tavern_view):
+		return
+	if not _tavern_view.has_method("show_stage_caption"):
+		return
+	_tavern_view.show_stage_caption(_source_note("heart", feedback), ThemeColors.AMBER_PRIMARY)
+
+
 func _current_guest_allows_narrative_actions() -> bool:
 	if guests == null or guests.current_guest == null:
 		return false
@@ -1836,13 +2167,23 @@ func _recover_from_dialogue_failure() -> void:
 		guests.clear_guest()
 
 func _on_guest_left() -> void:
-	if guests.current_guest != null and guests.current_guest.has_dialogue:
+	var departed := guests.current_guest
+	if departed != null and departed.has_dialogue:
 		_important_npc_pending = false
+	elif departed != null and departed.type == GuestData.GuestType.NORMAL and _important_npc_pending:
+		_important_npc_normal_orders_seen += 1
+		call_deferred("_spawn_pending_important_guest_after_normal_gap")
 	if _tavern_view != null and is_instance_valid(_tavern_view):
 		_tavern_view.hide_customer()
 	# 注：guest_left 在 clear_guest 内 emit，此刻 has_guest 仍为 true（随后才置 false）。
 	# 必须延迟刷新，等 clear_guest 收尾后再算，否则按钮会卡在禁用，整段"等待中"无法打烊。
 	call_deferred("_refresh_close_button")
+
+
+func _spawn_pending_important_guest_after_normal_gap() -> void:
+	await get_tree().process_frame
+	_spawn_pending_important_guest_after_menu()
+
 
 func _on_dialogue_ended() -> void:
 	_is_dialogue_active = false
@@ -1860,10 +2201,15 @@ func _on_dialogue_ended() -> void:
 		# 不再依赖 pre 对话结束（拖拽递交发生在 pre 对话之后）。
 
 	elif _dialogue_phase == "post":
+		var feedback_npc_id := ""
+		var feedback_day := economy.current_day
+		if guests.current_guest != null and guests.current_guest.has_dialogue:
+			feedback_npc_id = String(guests.current_guest.npc_id)
 		_dialogue_phase = ""
 		guests.clear_guest()
 		if _tavern_view != null and is_instance_valid(_tavern_view):
 			_tavern_view.set_dialogue_mode(false)
+		_show_important_post_dialogue_heart_feedback(feedback_npc_id, feedback_day)
 
 	elif _dialogue_phase == "action_feedback":
 		_dialogue_phase = ""
@@ -1893,6 +2239,7 @@ func end_night() -> void:
 			_tavern_view.show_stage_caption("今晚还有要紧的客人没露面……", Color.ORANGE)
 		return
 
+	_clear_active_physics_law()
 	current_ledger_data = _create_ledger_data_for_current_day()
 	add_current_day_event({
 		"type": "settlement",
@@ -2397,6 +2744,8 @@ func _record_story_item_fate_note(npc_id: String, item_key: String) -> void:
 		documents.index_evidence("alternative_contract", ["莱恩", "公会柜台"])
 	elif npc_id == "mira" and item_key == "toby_contract":
 		_add_fate_note("mira", "托比的委托书已递到她手上。")
+		if narrative.get_affection("mira") < narrative.MIRA_TRUST_THRESHOLD:
+			_add_sourced_fate_note("mira", "heart", "米拉听见了托比那份黑齿委托，但这还不等于她会回头。")
 		_add_fate_note("toby", "托比的委托书已递给米拉。")
 		documents.index_evidence("toby_contract", ["托比", "米拉"])
 
@@ -2405,6 +2754,10 @@ func _add_fate_note(track_id: String, note: String) -> void:
 	_ensure_fate_track(track_id)
 	if documents.add_fate_note(track_id, note):
 		play_audio_event("new_document")
+
+
+func _add_sourced_fate_note(track_id: String, source_type: String, note: String) -> void:
+	_add_fate_note(track_id, _source_note(source_type, note))
 
 
 func _ensure_fate_track(track_id: String) -> void:
@@ -2504,7 +2857,7 @@ func _ryan_track_result(route: String) -> String:
 		"alternative_survivor":
 			return "未赴血斧委托。存活。改走更慢的安全路线。"
 		"drugged_survivor":
-			return "未赴约。存活。怨恨未消。"
+			return "未赴约。存活。被迫活下来的证人，怨恨未消。"
 		"informed_fallen":
 			return "清醒赴约。未归。"
 		"uninformed_fallen":
@@ -2710,6 +3063,7 @@ func _capture_tutorial_state() -> Dictionary:
 		"completed_steps": tm._completed_steps.duplicate(),
 		"daymap_first_shown": tm.daymap_first_shown,
 		"tavern_first_entered": tm.tavern_first_entered,
+		"first_menu_prep_shown": tm.first_menu_prep_shown,
 		"shop_first_visited": tm.shop_first_visited,
 		"first_guest_arrived": tm.first_guest_arrived,
 		"first_product_seasoned": tm.first_product_seasoned,
@@ -2744,6 +3098,7 @@ func _apply_save_state(data: Dictionary) -> void:
 	if inference != null:
 		inference.restore_state(data.get("inference", {}))
 	_announced_inference_question_ids.clear()
+	_last_investigation_unlocked_question_titles.clear()
 
 	var nar: Dictionary = data.get("narrative", {})
 	var restored_vars := _fresh_narrative_vars()
@@ -2855,6 +3210,7 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 	tm._completed_steps = (t.get("completed_steps", []) as Array).duplicate()
 	tm.daymap_first_shown = bool(t.get("daymap_first_shown", false))
 	tm.tavern_first_entered = bool(t.get("tavern_first_entered", false))
+	tm.first_menu_prep_shown = bool(t.get("first_menu_prep_shown", false))
 	tm.shop_first_visited = bool(t.get("shop_first_visited", false))
 	tm.first_guest_arrived = bool(t.get("first_guest_arrived", false))
 	tm.first_product_seasoned = bool(t.get("first_product_seasoned", false))
@@ -2865,6 +3221,7 @@ func _apply_tutorial_state(t: Dictionary) -> void:
 
 
 func reset_tutorial_progress() -> void:
+	_craft_tutorial_pending_after_menu = false
 	var tm = _tutorial_manager
 	if tm == null:
 		tm = get_node_or_null("/root/TutorialManager")
@@ -2890,6 +3247,7 @@ func continue_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/DayMap.tscn")
 
 func restart_current_day() -> void:
+	_clear_active_physics_law()
 	if not _day_start_snapshot.is_empty():
 		var snapshot := _day_start_snapshot.duplicate(true)
 		_apply_save_state(snapshot)
@@ -2898,6 +3256,9 @@ func restart_current_day() -> void:
 		current_ledger_data = null
 		_guest_lingering = false
 		_important_npc_pending = false
+		_important_npc_normal_orders_before = 0
+		_important_npc_normal_orders_seen = 0
+		_craft_tutorial_pending_after_menu = false
 		_is_dialogue_active = false
 		day_cycle.phase = DayCycleSystem.DayPhase.DAY
 		if save_sys != null:
@@ -2949,6 +3310,7 @@ func _default_tutorial_state() -> Dictionary:
 		"completed_steps": [],
 		"daymap_first_shown": false,
 		"tavern_first_entered": false,
+		"first_menu_prep_shown": false,
 		"shop_first_visited": false,
 		"first_guest_arrived": false,
 		"first_product_seasoned": false,

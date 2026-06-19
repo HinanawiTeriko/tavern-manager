@@ -16,6 +16,7 @@ var _overlay: Node = null
 # Trigger flags
 var daymap_first_shown: bool = false
 var tavern_first_entered: bool = false
+var first_menu_prep_shown: bool = false
 var shop_first_visited: bool = false
 var first_guest_arrived: bool = false
 var first_product_seasoned: bool = false
@@ -54,6 +55,7 @@ func _load_state() -> void:
 		_completed_steps = data.get("completed_steps", [])
 		daymap_first_shown = data.get("daymap_first_shown", false)
 		tavern_first_entered = data.get("tavern_first_entered", false)
+		first_menu_prep_shown = data.get("first_menu_prep_shown", false)
 		shop_first_visited = data.get("shop_first_visited", false)
 		first_guest_arrived = data.get("first_guest_arrived", false)
 		first_product_seasoned = data.get("first_product_seasoned", false)
@@ -67,6 +69,7 @@ func _save_state() -> void:
 		"completed_steps": _completed_steps,
 		"daymap_first_shown": daymap_first_shown,
 		"tavern_first_entered": tavern_first_entered,
+		"first_menu_prep_shown": first_menu_prep_shown,
 		"shop_first_visited": shop_first_visited,
 		"first_guest_arrived": first_guest_arrived,
 		"first_product_seasoned": first_product_seasoned,
@@ -216,6 +219,7 @@ func replay_all() -> void:
 	_completed_steps.clear()
 	daymap_first_shown = false
 	tavern_first_entered = false
+	first_menu_prep_shown = false
 	shop_first_visited = false
 	first_guest_arrived = false
 	first_product_seasoned = false

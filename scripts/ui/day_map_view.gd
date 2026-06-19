@@ -42,6 +42,8 @@ const DAYMAP_PANEL_RESULT := "res://assets/textures/daymap/ui/panel_result.png"
 const DAYMAP_TOPBAR_STRIP := "res://assets/textures/daymap/ui/topbar_strip.png"
 const DAYMAP_PINNED_NOTE_PANEL := "res://assets/textures/daymap/ui/pinned_note_panel.png"
 const DAYMAP_PINNED_NOTE_KNIFE := "res://assets/textures/daymap/ui/pinned_note_knife.png"
+const WIND_NOTICE_PANEL_TEXTURE := "res://assets/textures/ui/wind_notice/wind_notice_panel.png"
+const WIND_NOTICE_ICON_TEXTURE := "res://assets/textures/ui/wind_notice/wind_notice_icon.png"
 const DAYMAP_STATUS_FONT_SIZE := 18
 const DAYMAP_HEADER_FONT_SIZE := 20
 const DAYMAP_BODY_FONT_SIZE := 15
@@ -75,6 +77,8 @@ const DAYMAP_DETAIL_GO_TEXT_MARGIN_LEFT := 20.0
 const DAYMAP_DETAIL_GO_TEXT_MARGIN_RIGHT := 20.0
 const PINNED_NOTE_SIZE := Vector2(368, 384)
 const PINNED_NOTE_RIGHT_OFFSET := Vector2(44, -132)
+const PINNED_NOTE_VIEWPORT_MARGIN := Vector2(16, 16)
+const PINNED_NOTE_VIEWPORT_TOP_MARGIN := 64.0
 const PINNED_NOTE_NAME_POS := Vector2(76, 72)
 const PINNED_NOTE_NAME_SIZE := Vector2(220, 34)
 const PINNED_NOTE_DESC_POS := Vector2(92, 126)
@@ -85,7 +89,9 @@ const PINNED_NOTE_YIELD_POS := Vector2(92, 254)
 const PINNED_NOTE_YIELD_SIZE := Vector2(224, 40)
 const PINNED_NOTE_BUTTON_POS := Vector2(72, 284)
 const GATHERING_TOAST_POS := Vector2(430, 68)
-const GATHERING_TOAST_SIZE := Vector2(420, 56)
+const GATHERING_TOAST_SIZE := Vector2(480, 78)
+const WIND_NOTICE_POS := Vector2(340, 66)
+const WIND_NOTICE_SIZE := Vector2(600, 240)
 
 const HOME_ID := "__home__"
 const HOME_POS := Vector2(760, 845)
@@ -114,6 +120,8 @@ var _result_panel: Panel
 var _result_label: Label
 var _continue_btn: Button
 var _gathering_toast: GatheringToast
+var _wind_notice: Control
+var _wind_notice_tween: Tween
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
 var _documents_btn: Button
@@ -129,7 +137,6 @@ var _overlay_layer: CanvasLayer = null
 var _shop_open: bool = false
 var _shop_overlay: ShopOverlay = null
 var _gold_label: Label
-var _pending_shop_after_gossip: bool = false
 
 func _ready() -> void:
 	_stamina_label = $UILayer/TopBar/StaminaLabel
@@ -178,11 +185,14 @@ func _ready() -> void:
 	_setup_detail_panel()
 	_setup_pinned_note_panel()
 	_setup_gathering_toast()
+	_setup_wind_notice()
 	_setup_background()
 
 	var gm = get_node("/root/GameManager")
 	if gm != null:
 		gm.register_view(self)
+		if gm.economy != null and not gm.economy.changed.is_connected(_on_economy_changed):
+			gm.economy.changed.connect(_on_economy_changed)
 
 	_ensure_shop_overlay()
 
@@ -353,6 +363,91 @@ func _setup_gathering_toast() -> void:
 	_gathering_toast.z_index = 90
 	_gathering_toast.visible = false
 	$UILayer.add_child(_gathering_toast)
+
+
+func _setup_wind_notice() -> void:
+	if _wind_notice != null and is_instance_valid(_wind_notice):
+		return
+	var notice := Control.new()
+	notice.name = "WindNotice"
+	notice.position = WIND_NOTICE_POS
+	notice.size = WIND_NOTICE_SIZE
+	notice.custom_minimum_size = WIND_NOTICE_SIZE
+	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	notice.z_index = 91
+	notice.visible = false
+	notice.modulate.a = 0.0
+	$UILayer.add_child(notice)
+
+	var panel := TextureRect.new()
+	panel.name = "PanelArt"
+	panel.texture = load(WIND_NOTICE_PANEL_TEXTURE) as Texture2D
+	panel.position = Vector2.ZERO
+	panel.size = WIND_NOTICE_SIZE
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
+	notice.add_child(panel)
+
+	var icon := TextureRect.new()
+	icon.name = "Icon"
+	icon.texture = load(WIND_NOTICE_ICON_TEXTURE) as Texture2D
+	icon.position = Vector2(44, 72)
+	icon.size = Vector2(96, 96)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	notice.add_child(icon)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.text = "听到风声"
+	title.position = Vector2(156, 56)
+	title.size = Vector2(320, 30)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_header(title, 22)
+	_apply_daymap_label_font(title)
+	notice.add_child(title)
+
+	var body := Label.new()
+	body.name = "Body"
+	body.position = Vector2(156, 88)
+	body.size = Vector2(330, 76)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_theme_color_override("font_color", Color(0.27, 0.19, 0.12))
+	body.add_theme_font_size_override("font_size", 17)
+	_apply_daymap_label_font(body)
+	notice.add_child(body)
+
+	var subtitle := Label.new()
+	subtitle.name = "Subtitle"
+	subtitle.text = "已记入今日风声"
+	subtitle.position = Vector2(156, 164)
+	subtitle.size = Vector2(260, 24)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	subtitle.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
+	subtitle.add_theme_font_size_override("font_size", 14)
+	_apply_daymap_label_font(subtitle)
+	notice.add_child(subtitle)
+
+	var rewards := Label.new()
+	rewards.name = "Rewards"
+	rewards.position = Vector2(156, 188)
+	rewards.size = Vector2(330, 24)
+	rewards.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	rewards.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	rewards.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rewards.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	rewards.add_theme_font_size_override("font_size", 14)
+	_apply_daymap_label_font(rewards)
+	notice.add_child(rewards)
+
+	_wind_notice = notice
 
 
 func _style_daymap_primary_button(button: Button, font_size: int = DAYMAP_PRIMARY_BUTTON_FONT_SIZE) -> void:
@@ -757,7 +852,38 @@ func _update_pinned_note_position() -> void:
 	if map_world == null:
 		return
 	var anchor: Vector2 = map_world.to_local(marker.global_position)
-	_pinned_note_panel.position = (anchor + PINNED_NOTE_RIGHT_OFFSET).round()
+	_pinned_note_panel.position = _clamp_pinned_note_position(anchor + PINNED_NOTE_RIGHT_OFFSET).round()
+
+
+func _clamp_pinned_note_position(desired_position: Vector2) -> Vector2:
+	if _camera == null or _pinned_note_panel == null:
+		return desired_position
+	var visible_rect := _camera_visible_map_rect()
+	var zoom := maxf(_camera.zoom.x, 0.001)
+	var min_pos := visible_rect.position + Vector2(
+		PINNED_NOTE_VIEWPORT_MARGIN.x / zoom,
+		PINNED_NOTE_VIEWPORT_TOP_MARGIN / zoom
+	)
+	var max_pos := visible_rect.end - _pinned_note_panel.size - Vector2(
+		PINNED_NOTE_VIEWPORT_MARGIN.x / zoom,
+		PINNED_NOTE_VIEWPORT_MARGIN.y / zoom
+	)
+	return Vector2(
+		_clamp_pinned_note_axis(desired_position.x, min_pos.x, max_pos.x),
+		_clamp_pinned_note_axis(desired_position.y, min_pos.y, max_pos.y)
+	)
+
+
+func _camera_visible_map_rect() -> Rect2:
+	var zoom := maxf(_camera.zoom.x, 0.001)
+	var size := _camera.get_viewport_rect().size / zoom
+	return Rect2(_camera.position - size * 0.5, size)
+
+
+func _clamp_pinned_note_axis(value: float, min_value: float, max_value: float) -> float:
+	if min_value > max_value:
+		return (min_value + max_value) * 0.5
+	return clampf(value, min_value, max_value)
 
 
 func _set_detail_text(name_text: String, desc_text: String, cost_text: String, yield_text: String, action_text: String) -> void:
@@ -823,7 +949,6 @@ func _show_pinned_detail(location_id: String) -> void:
 			if hint_text == "":
 				hint_text = "商人似乎有新的传闻。"
 			desc_text += "\n\n" + hint_text
-			action_text = "听传闻"
 	else:
 		cost_text = "体力消耗：%d" % int(loc.get("cost", 1))
 		yield_text = _yield_text(loc)
@@ -884,7 +1009,14 @@ func _yield_text(loc: Dictionary) -> String:
 		items = loc.get("materials", [])
 	if items.is_empty():
 		return "产出：—"
-	return "产出：" + ", ".join(PackedStringArray(items))
+	return "产出：" + _format_item_names(items)
+
+
+func _format_item_names(items: Array) -> String:
+	var names: Array[String] = []
+	for item_key in items:
+		names.append(_resolve_item_name(String(item_key)))
+	return ", ".join(PackedStringArray(names))
 
 
 func _on_go_here_pressed() -> void:
@@ -897,8 +1029,6 @@ func _on_go_here_pressed() -> void:
 		get_node("/root/GameManager").enter_night_from_day_map()
 		return
 	if _is_shop_location(_selected_id):
-		if _try_show_shop_gossip(_selected_id):
-			return
 		_open_shop()
 		return
 	_visit_location(_selected_id)
@@ -919,25 +1049,6 @@ func _peek_shop_gossip(location_id: String) -> Dictionary:
 	return gm.peek_shop_gossip(location_id)
 
 
-func _try_show_shop_gossip(location_id: String) -> bool:
-	var gm = get_node("/root/GameManager")
-	if not gm.has_method("consume_shop_gossip"):
-		return false
-	var gossip: Dictionary = gm.consume_shop_gossip(location_id)
-	if not bool(gossip.get("success", false)):
-		return false
-	if _gathering_toast != null:
-		_gathering_toast.visible = false
-	_result_label.text = String(gossip.get("message", ""))
-	_result_panel.visible = true
-	_continue_btn.text = "进入商店"
-	_pending_shop_after_gossip = true
-	_detail_panel.visible = false
-	_hide_pinned_note()
-	_clear_selection()
-	return true
-
-
 func _visit_location(location_id: String) -> void:
 	var gm = get_node("/root/GameManager")
 	var result: Dictionary = gm.visit_day_location(location_id)
@@ -946,22 +1057,31 @@ func _visit_location(location_id: String) -> void:
 		_stamina_left = gm.day_map.stamina
 		_update_stamina_display()
 		_detail_panel.visible = false
+		_hide_wind_notice()
 		_hide_pinned_note()
 		_enter_investigation(INVESTIGATION_SCENES[location_id])
 		return
 	var reward_counts: Dictionary = result.get("reward_counts", {})
 	if bool(result.get("success", false)) and (not reward_counts.is_empty() or result.has("rumor")):
+		var wind_notice_shown := _show_wind_notice_for_result(result, reward_counts)
 		if _gathering_toast != null:
-			_gathering_toast.show_rewards(reward_counts, _visit_toast_message(result))
-		_result_panel.visible = false
-		_stamina_left = gm.day_map.stamina
-		_update_stamina_display()
-		_detail_panel.visible = false
-		_clear_selection()
-		_refresh_map()
-		return
+			if wind_notice_shown:
+				_gathering_toast.visible = false
+			elif not reward_counts.is_empty():
+				_gathering_toast.show_rewards(reward_counts, _visit_toast_message(result))
+			else:
+				_gathering_toast.visible = false
+		if wind_notice_shown or not reward_counts.is_empty():
+			_result_panel.visible = false
+			_stamina_left = gm.day_map.stamina
+			_update_stamina_display()
+			_detail_panel.visible = false
+			_clear_selection()
+			_refresh_map()
+			return
 	if _gathering_toast != null:
 		_gathering_toast.visible = false
+	_hide_wind_notice()
 	_result_label.text = String(result.get("message", "访问完成。"))
 	_result_panel.visible = true
 	_continue_btn.text = "知道了"
@@ -973,24 +1093,80 @@ func _visit_location(location_id: String) -> void:
 
 
 func _visit_toast_message(result: Dictionary) -> String:
-	var raw_rumor = result.get("rumor", {})
-	if raw_rumor is Dictionary:
-		var rumor: Dictionary = raw_rumor
-		var menu_hints: Dictionary = rumor.get("menuHints", {})
-		var summary := String(menu_hints.get("summary", ""))
-		if summary != "":
-			return "听到传闻：" + _compact_toast_text(summary)
-		var rumor_text := String(rumor.get("text", ""))
-		if rumor_text != "":
-			return "听到传闻：" + _compact_toast_text(rumor_text)
 	return String(result.get("message", ""))
 
 
-func _compact_toast_text(text: String, max_chars: int = 18) -> String:
-	var clean := text.replace("\n", " ").strip_edges()
-	if clean.length() <= max_chars:
-		return clean
-	return clean.substr(0, max_chars) + "..."
+func _show_wind_notice_for_result(result: Dictionary, reward_counts: Dictionary) -> bool:
+	var raw_rumor = result.get("rumor", {})
+	if not raw_rumor is Dictionary:
+		return false
+	var rumor: Dictionary = raw_rumor
+	var rumor_text := String(rumor.get("text", "")).strip_edges()
+	if rumor_text == "":
+		return false
+	show_wind_notice(rumor_text, reward_counts)
+	return true
+
+
+func show_wind_notice(rumor_text: String, reward_counts: Dictionary = {}) -> void:
+	if _wind_notice == null or not is_instance_valid(_wind_notice):
+		_setup_wind_notice()
+	if _wind_notice == null:
+		return
+	var body := _wind_notice.get_node_or_null("Body") as Label
+	if body != null:
+		body.text = rumor_text
+	var rewards := _wind_notice.get_node_or_null("Rewards") as Label
+	if rewards != null:
+		var reward_text := _format_reward_counts(reward_counts)
+		rewards.text = ("采集获得：" + reward_text) if reward_text != "" else ""
+	if _wind_notice_tween != null and _wind_notice_tween.is_valid():
+		_wind_notice_tween.kill()
+	_wind_notice.visible = true
+	_wind_notice.modulate = Color(1, 1, 1, 0)
+	_wind_notice.scale = Vector2(0.94, 0.94)
+	_wind_notice.pivot_offset = _wind_notice.size * 0.5
+	_wind_notice_tween = create_tween()
+	_wind_notice_tween.tween_property(_wind_notice, "modulate:a", 1.0, 0.16)
+	_wind_notice_tween.parallel().tween_property(_wind_notice, "scale", Vector2(1.02, 1.02), 0.16)
+	_wind_notice_tween.tween_interval(4.4)
+	_wind_notice_tween.tween_property(_wind_notice, "modulate:a", 0.0, 0.35)
+	_wind_notice_tween.parallel().tween_property(_wind_notice, "scale", Vector2.ONE, 0.35)
+	_wind_notice_tween.tween_callback(func():
+		if is_instance_valid(_wind_notice):
+			_wind_notice.visible = false
+			_wind_notice.scale = Vector2.ONE
+	)
+
+
+func _hide_wind_notice() -> void:
+	if _wind_notice_tween != null and _wind_notice_tween.is_valid():
+		_wind_notice_tween.kill()
+	if _wind_notice != null and is_instance_valid(_wind_notice):
+		_wind_notice.visible = false
+		_wind_notice.modulate = Color(1, 1, 1, 0)
+		_wind_notice.scale = Vector2.ONE
+
+
+func _format_reward_counts(reward_counts: Dictionary) -> String:
+	if reward_counts.is_empty():
+		return ""
+	var parts: Array[String] = []
+	var keys := reward_counts.keys()
+	keys.sort()
+	for key in keys:
+		var item_key := String(key)
+		parts.append("%s×%d" % [_resolve_item_name(item_key), int(reward_counts[key])])
+	return "、".join(PackedStringArray(parts))
+
+
+func _resolve_item_name(item_key: String) -> String:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm != null and gm.craft != null and gm.craft.has_method("get_item"):
+		var item: Dictionary = gm.craft.get_item(item_key)
+		if item.has("name"):
+			return String(item["name"])
+	return item_key
 
 
 func _enter_investigation(scene: PackedScene) -> void:
@@ -1042,9 +1218,6 @@ func _update_stamina_display() -> void:
 
 func _on_continue() -> void:
 	_result_panel.visible = false
-	if _pending_shop_after_gossip:
-		_pending_shop_after_gossip = false
-		_open_shop()
 
 
 func _open_latest_document() -> void:
@@ -1085,6 +1258,9 @@ func _update_gold_display() -> void:
 	if gm != null:
 		_gold_label.text = "金币：" + str(gm.economy.gold)
 
+func _on_economy_changed(_gold: int, _reputation: int, _level: int) -> void:
+	_update_gold_display()
+
 func _ensure_shop_overlay() -> void:
 	if _shop_overlay != null:
 		return
@@ -1102,6 +1278,7 @@ func _open_shop() -> void:
 	_detail_panel.visible = false
 	if _gathering_toast != null:
 		_gathering_toast.visible = false
+	_hide_wind_notice()
 	_clear_selection()
 	_camera.set_active(false)
 	_shop_overlay.open()

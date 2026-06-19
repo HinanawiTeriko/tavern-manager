@@ -7,9 +7,11 @@ var _failures := 0
 func _ready() -> void:
 	_test_evelyn_npc_schedule()
 	_test_grey_day_locations()
+	_test_grey_location_followups_write_clearing_table_notes()
 	_test_grey_documents_grant_inference_clues()
 	_test_grey_route_endings()
 	_test_evelyn_public_account_gap_diagnostics()
+	_test_day18_day19_public_account_gap_writes_ledger_hint()
 	_test_day20_clean_table_can_update_evelyn_final_ending()
 	_test_evelyn_pending_dialogue_names_public_account_gaps()
 	_test_previous_line_endings_shape_evelyn_pressure()
@@ -102,6 +104,30 @@ func _test_grey_day_locations() -> void:
 		"Mira supply copy is text context; supply-stamp clue is reserved for clearing table")
 
 
+func _test_grey_location_followups_write_clearing_table_notes() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(14)
+	_ok(gm.visit_day_location("payout_office").get("success", false), "Day14 payout office visit succeeds")
+	var ledger_text := _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("赔付即结案"),
+		"payout office ledger note tells the player to press payout closure at the clearing table")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(16)
+	_ok(gm.visit_day_location("blacktooth_ledger").get("success", false), "Day16 Blacktooth ledger visit succeeds")
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("被改名的护送委托"),
+		"Blacktooth ledger note tells the player to press renamed escort at the clearing table")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(17)
+	_ok(gm.visit_day_location("mira_supply_copy").get("success", false), "Day17 Mira supply copy visit succeeds")
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("回清算台") and ledger_text.contains("供应协议灰印"),
+		"Mira supply copy note tells the player to press the supply stamp at the clearing table")
+
+
 func _test_grey_documents_grant_inference_clues() -> void:
 	var gm = _gm()
 	gm._apply_save_state(gm._default_new_game_state())
@@ -164,6 +190,22 @@ func _test_evelyn_public_account_gap_diagnostics() -> void:
 	gm.narrative.set_var("grey_public_account_known", true)
 	_ok(String(gm.get_evelyn_public_account_gap_summary()) == "",
 		"gap summary clears once the public-account inference is solved")
+
+
+func _test_day18_day19_public_account_gap_writes_ledger_hint() -> void:
+	var gm = _gm()
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.start_day_map(18)
+	var ledger_text := _ledger_pages_text(gm)
+	_ok(ledger_text.contains("第 18 天") and ledger_text.contains("公开账本缺"),
+		"Day18 Evelyn fate track writes the public-account gap checklist")
+	_ok(ledger_text.contains("托比身份"),
+		"Day18 public-account gap hint names the first missing route proof")
+
+	gm.start_day_map(19)
+	ledger_text = _ledger_pages_text(gm)
+	_ok(ledger_text.contains("第 19 天") and ledger_text.contains("公开账本缺"),
+		"Day19 Evelyn fate track repeats the gap checklist as the final prep day")
 
 
 func _test_day20_clean_table_can_update_evelyn_final_ending() -> void:
@@ -336,6 +378,19 @@ func _test_evelyn_living_pressure_explainers() -> void:
 		"public-account fate track lists living witness pressure")
 	_ok(living_result.contains("纸证：莱恩案卷编号 / 黑齿批次号 / 供应协议灰印"),
 		"public-account fate track lists the paper evidence spine")
+
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.narrative.set_var("ryan_ending", "drugged_survivor")
+	gm.narrative.set_var("grey_public_account_known", true)
+	gm.narrative.finalize_evelyn_ending()
+	var drugged_result := String(gm._evelyn_track_result("public_account"))
+	_ok(drugged_result.contains("莱恩（被迫活下来的证人）"),
+		"drugged Ryan is named as a forced survivor witness in Evelyn pressure text")
+	_ok(String(gm._ryan_track_result("drugged_survivor")).contains("被迫活下来的证人"),
+		"Ryan fate track names the drugged survivor route as forced survival")
+	gm.start_day_map(13)
+	_ok(_ledger_pages_text(gm).contains("被迫活下来的证人"),
+		"Day13 Evelyn fate track seeds drugged Ryan as forced survivor pressure")
 
 	gm._apply_save_state(gm._default_new_game_state())
 	gm.narrative.set_var("ryan_ending", "uninformed_fallen")

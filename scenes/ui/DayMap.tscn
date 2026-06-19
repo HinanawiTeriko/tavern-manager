@@ -39,7 +39,7 @@ offset_left = 72.0
 offset_top = 10.0
 offset_right = 372.0
 offset_bottom = 50.0
-text = "第 1/30 天 — 白天·行动"
+text = "第 1/21 天 — 白天·行动"
 vertical_alignment = 1
 
 [node name="StaminaLabel" type="Label" parent="UILayer/TopBar"]

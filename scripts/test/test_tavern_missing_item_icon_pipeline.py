@@ -21,7 +21,6 @@ ITEM_IDS = (
     "dough_meat",
     "ale_herb",
     "grape_herb",
-    "meat_stew_raw",
     "herb_tea",
     "meat_sand",
     "herbal_ale",

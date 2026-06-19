@@ -21,6 +21,8 @@ const DOCUMENT_TITLE_SIZE := Vector2(240, 36)
 const DOCUMENT_LEFT_BODY_POS := Vector2(280, 120)
 const DOCUMENT_RIGHT_BODY_POS := Vector2(744, 120)
 const DOCUMENT_BODY_SIZE := Vector2(256, 368)
+const DOCUMENT_BODY_FONT_SIZE := 16
+const DOCUMENT_BODY_LINE_SPACING := 4
 const DOCUMENT_PAGE_LABEL_POS := Vector2(560, 552)
 const DOCUMENT_PAGE_LABEL_SIZE := Vector2(160, 28)
 const DOCUMENT_PREV_POS := Vector2(96, 300)
@@ -59,7 +61,7 @@ func open_document(document: Dictionary) -> void:
 	_title.text = String(document.get("title", "文档"))
 	_document_id = String(document.get("id", ""))
 	_kind = String(document.get("kind", "document"))
-	_pages = document.get("pages", []).duplicate()
+	_pages = _paginate_document_pages(document.get("pages", []))
 	if _pages.is_empty():
 		_pages.append("")
 	_page_index = 0
@@ -141,8 +143,8 @@ func _apply_document_art() -> void:
 	_title.size = DOCUMENT_TITLE_SIZE
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	for body_label in [_left_body, _right_body]:
-		_style_label(body_label, 16, LEDGER_INK)
-		body_label.add_theme_constant_override("line_spacing", 4)
+		_style_label(body_label, DOCUMENT_BODY_FONT_SIZE, LEDGER_INK)
+		body_label.add_theme_constant_override("line_spacing", DOCUMENT_BODY_LINE_SPACING)
 		body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_left_body.position = DOCUMENT_LEFT_BODY_POS
 	_left_body.size = DOCUMENT_BODY_SIZE
@@ -208,6 +210,80 @@ func _apply_standard_document_layout() -> void:
 	_right_body.size = DOCUMENT_BODY_SIZE
 	_page_label.position = DOCUMENT_PAGE_LABEL_POS
 	_page_label.size = DOCUMENT_PAGE_LABEL_SIZE
+
+
+func _paginate_document_pages(source_pages: Array) -> Array:
+	var visual_pages: Array[String] = []
+	for page in source_pages:
+		visual_pages.append_array(_paginate_text_page(String(page)))
+	if visual_pages.is_empty():
+		visual_pages.append("")
+	return visual_pages
+
+
+func _paginate_text_page(text: String) -> Array[String]:
+	var max_lines := _max_body_lines()
+	var visual_pages: Array[String] = []
+	var current_lines: Array[String] = []
+	for line in _wrap_text_to_body_lines(text):
+		if current_lines.size() >= max_lines:
+			visual_pages.append("\n".join(PackedStringArray(current_lines)))
+			current_lines.clear()
+			if line == "":
+				continue
+		current_lines.append(line)
+	if not current_lines.is_empty():
+		visual_pages.append("\n".join(PackedStringArray(current_lines)))
+	if visual_pages.is_empty():
+		visual_pages.append("")
+	return visual_pages
+
+
+func _wrap_text_to_body_lines(text: String) -> Array[String]:
+	var wrapped_lines: Array[String] = []
+	for raw_line in text.split("\n", true):
+		var line := String(raw_line)
+		if line == "":
+			wrapped_lines.append("")
+		else:
+			wrapped_lines.append_array(_wrap_body_line(line))
+	if wrapped_lines.is_empty():
+		wrapped_lines.append("")
+	return wrapped_lines
+
+
+func _wrap_body_line(line: String) -> Array[String]:
+	var wrapped: Array[String] = []
+	var current := ""
+	for index in line.length():
+		var character := line.substr(index, 1)
+		var candidate := current + character
+		if current != "" and _body_text_width(candidate) > DOCUMENT_BODY_SIZE.x:
+			wrapped.append(current)
+			current = "" if character == " " else character
+		else:
+			current = candidate
+	if current != "":
+		wrapped.append(current)
+	if wrapped.is_empty():
+		wrapped.append("")
+	return wrapped
+
+
+func _body_text_width(text: String) -> float:
+	return DOCUMENT_FONT.get_string_size(
+		text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		DOCUMENT_BODY_FONT_SIZE
+	).x
+
+
+func _max_body_lines() -> int:
+	var line_height := DOCUMENT_FONT.get_height(DOCUMENT_BODY_FONT_SIZE) + DOCUMENT_BODY_LINE_SPACING
+	if line_height <= 0.0:
+		return 1
+	return maxi(1, int(floor((DOCUMENT_BODY_SIZE.y + DOCUMENT_BODY_LINE_SPACING) / line_height)))
 
 
 func _style_label(label: Label, font_size: int, color: Color) -> void:

@@ -11,7 +11,7 @@ var current_day: int = 1
 var gold_today: int = 0
 var rep_today: int = 0
 
-const MAX_DAYS: int = 30
+const MAX_DAYS: int = 21
 const MAX_REP_THRESHOLD: int = 0x7FFFFFFF
 const _level_rep_thresholds: Array = [0, 50, 150]
 const QUALITY_GOLD_MULT := {"good": 1.5, "normal": 1.0, "poor": 0.5}

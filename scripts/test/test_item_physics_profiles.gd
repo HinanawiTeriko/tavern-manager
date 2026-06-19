@@ -11,9 +11,12 @@ var _failures := 0
 
 
 func _ready() -> void:
+	_test_project_default_profile_is_playful()
 	_test_profile_values_are_applied_and_clamped()
 	_test_omitted_profiles_fall_back_to_defaults()
 	_test_optional_art_texture_overrides_placeholder_visuals()
+	await _test_desk_item_velocity_guardrails()
+	_test_high_speed_collision_gets_comedy_kick()
 	if _failures == 0:
 		print("[TEST-ITEM-PHYSICS] ALL PASS (", _checks, " checks)")
 		get_tree().quit(0)
@@ -82,6 +85,22 @@ func _spawn_item() -> DeskItem:
 	return item
 
 
+func _test_project_default_profile_is_playful() -> void:
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/item_physics_profiles.json"))
+	_ok(typeof(parsed) == TYPE_DICTIONARY, "project physics profile data should parse")
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var physics: Dictionary = parsed.get("physics", {})
+	var default_profile: Dictionary = physics.get("default", {})
+	var round_light: Dictionary = physics.get("round_light", {})
+	_ok(float(default_profile.get("friction", 1.0)) <= 0.45, "default desk items should be slipperier for playful table physics")
+	_ok(float(default_profile.get("bounce", 0.0)) >= 0.38, "default desk items should bounce enough to feel toy-like")
+	_ok(float(default_profile.get("linear_damp", 1.0)) <= 0.14, "default desk items should keep sliding briefly after release")
+	_ok(float(default_profile.get("angular_damp", 1.0)) <= 0.2, "default desk items should keep a little spin")
+	_ok(float(round_light.get("bounce", 0.0)) >= 0.72, "round light items should be the comedy-bouncy class")
+	_ok(float(round_light.get("friction", 1.0)) <= 0.06, "round light items should roll and slide easily")
+
+
 func _test_profile_values_are_applied_and_clamped() -> void:
 	var item := _spawn_item()
 	item.setup_item("grape", {
@@ -143,6 +162,31 @@ func _test_optional_art_texture_overrides_placeholder_visuals() -> void:
 		var rect := shape.shape as RectangleShape2D
 		_ok(rect != null and rect.size == Vector2(56, 56), key + " heating restores profile collision size")
 		item.queue_free()
+
+
+func _test_desk_item_velocity_guardrails() -> void:
+	var item := _spawn_item()
+	item.sleeping = false
+	item.linear_velocity = Vector2(5000.0, -3200.0)
+	item.angular_velocity = 90.0
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().process_frame
+	_ok(item.linear_velocity.length() <= 1200.1, "desk item comedy physics should clamp runaway linear speed")
+	_ok(absf(item.angular_velocity) <= 18.1, "desk item comedy physics should clamp runaway angular speed")
+	item.queue_free()
+
+
+func _test_high_speed_collision_gets_comedy_kick() -> void:
+	var item := _spawn_item()
+	item.linear_velocity = Vector2(420.0, 0.0)
+	item.angular_velocity = 0.0
+	var other := Node.new()
+	item.call("_on_body_entered", other)
+	_ok(absf(item.linear_velocity.y) >= 8.0, "high speed collisions should gain a small sideways comedy kick")
+	_ok(absf(item.angular_velocity) >= 1.0, "high speed collisions should gain readable comedy spin")
+	other.queue_free()
+	item.queue_free()
 
 
 func _assert_collision_matches_scaled_texture_alpha(item: DeskItem, texture: Texture2D, art_scale: Vector2, key: String) -> void:

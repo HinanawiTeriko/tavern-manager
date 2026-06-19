@@ -1,0 +1,11 @@
+Use case: ui-mockup
+Asset type: production source sheet for a Godot pixel-art UI feedback element, later downsampled and extracted by fixed manifest rectangles.
+Primary request: Create one 1024x1024 source sheet for a wind-rumor notice reward UI. The sheet must contain exactly four separate assets on a perfectly flat solid #ff00ff chroma-key background: 1) a wide horizontal wind-rumor notice panel, 2) a small wind-rumor icon, 3) a wax stamp / seal mark for a rumor coming true, 4) a compact amber spark cluster.
+Composition/framing: Put the wide panel in the top half, centered, leaving generous padding. Put the icon in the lower-left quadrant, stamp in the lower-middle quadrant, spark cluster in the lower-right quadrant. Keep components separated with clear flat magenta gaps.
+Panel design: dark teal/black rough tavern wood and ink backing, worn parchment strip over it, small blank wax seal tabs, tiny brass nail or pin accents, sparse amber candle highlights. The center must stay mostly blank and readable for Godot-rendered Chinese text. It should feel like a tavern keeper received a street note, similar in importance to a recipe-unlock notification.
+Icon design: simple readable symbol combining a folded blank parchment note with a listening/wind swirl motif, no letters.
+Stamp design: wax-seal style mark with rough edge, no text, no letters, no numbers, no rune-like markings.
+Spark design: a small cluster of chunky amber pixel-like light flecks for reward feedback.
+Style/medium: crisp pixel-game UI source art, chunky native-pixel silhouettes, rough ink edges, dark teal dungeon tavern shadows, warm parchment, amber candle accents, limited palette. Avoid soft antialiasing, blur, gradients, modern rounded rectangles, glossy mobile UI, and one-color purple/blue themes.
+Text: none.
+Constraints: no readable text, no logos, no numbers, no fake UI labels, no watermarks, no characters, no existing game names, no living artist style. Background must be one uniform #ff00ff color with no texture, shadow, lighting variation, floor plane, or gradient. Do not use #ff00ff inside any asset.

@@ -7,6 +7,8 @@ var _failures := 0
 func _ready() -> void:
 	_test_truth_and_trust_route()
 	_test_truth_without_trust_route()
+	_test_old_road_menu_guidance_note()
+	_test_truth_without_trust_writes_ledger_warning()
 	_test_contract_found_without_telling_route()
 	_test_mira_stall_affection_weights_responsibility_inference()
 	_test_mira_stall_does_not_accept_contract()
@@ -72,6 +74,16 @@ func _tell_mira_truth(gm) -> void:
 	_ok(gm.narrative.get_var("told_mira_truth") == true, "telling Mira truth flag is set")
 
 
+func _tell_mira_truth_through_delivery(gm) -> Dictionary:
+	gm.guests.clear_guest()
+	gm.guests.spawn_important("mira", "wine")
+	var result: Dictionary = gm.request_narrative_delivery("toby_contract", [])
+	_ok(result.get("accepted", false), "Mira accepts Toby contract through gameplay delivery")
+	_ok(gm.narrative.get_var("told_mira_truth") == true, "gameplay delivery tells Mira the truth")
+	gm.guests.clear_guest()
+	return result
+
+
 func _visit_mira_on_day(gm, day: int) -> Dictionary:
 	gm.economy.current_day = day
 	gm.start_day_map(day)
@@ -108,6 +120,31 @@ func _test_truth_without_trust_route() -> void:
 	_ok(gm.narrative.get_affection("mira") < gm.narrative.MIRA_TRUST_THRESHOLD,
 		"truth-only route stays below the trust threshold")
 	_finalize_and_expect(gm, "never_turned_back", "lost", "truth without trust route")
+
+
+func _test_old_road_menu_guidance_note() -> void:
+	var gm = _reset_gm(6, 0)
+	_learn_toby_danger(gm)
+	gm.economy.current_day = 7
+	gm.start_day_map(7)
+	var ledger_text := _ledger_text(gm)
+	_ok(ledger_text.contains("旧路熟人") and ledger_text.contains("贸易客"),
+		"Day7 Mira fate note names the guest groups that can carry old-road gossip")
+	_ok(ledger_text.contains("旧路酒") and ledger_text.contains("清淡热汤"),
+		"Day7 Mira fate note connects menu prep to old-road gossip hunting")
+
+
+func _test_truth_without_trust_writes_ledger_warning() -> void:
+	var gm = _reset_gm(6, 0)
+	_learn_toby_danger(gm)
+	_find_contract(gm)
+	gm.narrative.set_affection("mira", gm.narrative.MIRA_TRUST_THRESHOLD - 1)
+	var result := _tell_mira_truth_through_delivery(gm)
+	_ok(String(result.get("feedback", "")) == "mira_informed_guarded",
+		"below-threshold delivery returns guarded Mira feedback before Day12")
+	var ledger_text := _ledger_text(gm)
+	_ok(ledger_text.contains("听见了") and ledger_text.contains("不等于她会回头"),
+		"truth without trust writes a warning that delivery alone may not save Toby")
 
 
 func _test_contract_found_without_telling_route() -> void:

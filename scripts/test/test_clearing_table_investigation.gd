@@ -95,6 +95,8 @@ func _test_rounds_grant_documents_once() -> void:
 		_ok(gm.inventory_sys.get_count(doc_id) == 1, doc_id + " inventory count stays idempotent")
 		var hint_text := _label_text(scene, "UI/HintLabel")
 		_ok(not hint_text.contains(doc_id), doc_id + " completion hint does not expose internal document id")
+		_ok(hint_text.contains("证据 · ") and hint_text.contains("收入账本"),
+			doc_id + " completion hint labels the collected clearing output as evidence")
 		if i < NEXT_ROUND_FIRST_TAGS.size():
 			var next_tag := String(NEXT_ROUND_FIRST_TAGS[i])
 			_ok(scene.get_current_round_index() == i,

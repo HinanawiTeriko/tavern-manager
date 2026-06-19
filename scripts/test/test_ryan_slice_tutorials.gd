@@ -20,8 +20,12 @@ func _ready() -> void:
 	for stale in ["[+]", "[-]", "分配体力", "合成台", "混合区", "结果槽", "撒粉区"]:
 		_ok(not text.contains(stale), "stale tutorial term removed: " + stale)
 	_test_daymap_tutorial_matches_current_continue_flow(parsed)
+	_test_menu_prep_tutorial_data(parsed)
 	_test_tutorial_data_declares_narrator_lines(parsed)
 	_test_tutorial_highlight_keys_match_trigger_rects(parsed)
+	_test_menu_prep_tutorial_reset_contract()
+	_test_menu_prep_tutorial_game_save_contract()
+	_test_tavern_tutorial_sequence_uses_menu_prep_before_craft()
 	_test_seasoning_tutorial_current_workspace_trigger()
 	_test_serve_tutorial_matches_table_order_groove(parsed)
 	_test_inference_tutorial_data(parsed)
@@ -49,6 +53,22 @@ func _test_daymap_tutorial_matches_current_continue_flow(parsed: Dictionary) -> 
 		"daymap tutorial explains the current tavern marker night-entry flow")
 
 
+func _test_menu_prep_tutorial_data(parsed: Dictionary) -> void:
+	_ok(parsed.has("menu_prep"), "menu preparation tutorial group exists")
+	var menu_steps: Array = parsed.get("menu_prep", [])
+	_ok(menu_steps.size() >= 3, "menu preparation tutorial covers rumors, product choices, and starting service")
+	var keys := {}
+	var text := JSON.stringify(menu_steps)
+	for step in menu_steps:
+		keys[String(step.get("highlight_node", ""))] = true
+	for key in ["MenuPrepRumors", "MenuPrepProducts", "MenuPrepStartButton"]:
+		_ok(keys.has(key), "menu preparation tutorial exposes highlight: " + key)
+	for required in ["传闻", "昨日回响", "推荐", "今日菜单", "开始营业"]:
+		_ok(text.contains(required), "menu preparation tutorial explains: " + required)
+	_ok(not text.contains("把麦芽丢进右侧酒桶"),
+		"menu preparation tutorial copy does not describe covered barrel interaction")
+
+
 func _test_tutorial_data_declares_narrator_lines(parsed: Dictionary) -> void:
 	for group_key in parsed.keys():
 		for step in parsed.get(group_key, []):
@@ -67,10 +87,10 @@ func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> vo
 	var craft_keys := {}
 	for step in craft_steps:
 		craft_keys[String(step.get("id", ""))] = String(step.get("highlight_node", ""))
-	_ok(craft_keys.get("craft_intro", "") == "CraftBarrel",
-		"craft intro highlights the actual barrel work area")
-	_ok(craft_keys.get("craft_drag", "") == "ShortcutBar",
-		"craft drag highlights the shortcut bar")
+	_ok(craft_keys.get("craft_intro", "") == "ShortcutBar",
+		"craft intro highlights the shortcut bar while it explains dragging out malt")
+	_ok(craft_keys.get("craft_drag", "") == "CraftBarrel",
+		"craft drag highlights the barrel while it explains dropping and shaking malt")
 	_ok(craft_keys.get("craft_recovery", "") == "RecoveryContainer",
 		"craft recovery uses its own recovery highlight instead of the intro barrel rect")
 
@@ -87,12 +107,77 @@ func _test_tutorial_highlight_keys_match_trigger_rects(parsed: Dictionary) -> vo
 			"seasoning tutorial no longer points to the removed seasoning zone flow")
 
 
+func _test_menu_prep_tutorial_reset_contract() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(tm != null, "TutorialManager is available for menu preparation tutorial reset test")
+	if tm == null:
+		return
+	var source := FileAccess.get_file_as_string("res://scripts/tutorial/tutorial_manager.gd")
+	_ok(source.contains("first_menu_prep_shown"),
+		"TutorialManager tracks whether the menu preparation tutorial was shown")
+	if not source.contains("first_menu_prep_shown"):
+		return
+	var old_value = tm.get("first_menu_prep_shown")
+	tm.set("first_menu_prep_shown", true)
+	tm.replay_all()
+	_ok(bool(tm.get("first_menu_prep_shown")) == false,
+		"replay_all resets the menu preparation tutorial first-time flag")
+	tm.set("first_menu_prep_shown", bool(old_value))
+
+
+func _test_menu_prep_tutorial_game_save_contract() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	var tm = get_node_or_null("/root/TutorialManager")
+	_ok(gm != null and tm != null, "GameManager and TutorialManager are available for menu preparation tutorial save test")
+	if gm == null or tm == null:
+		return
+	var source := FileAccess.get_file_as_string("res://scripts/tutorial/tutorial_manager.gd")
+	if not source.contains("first_menu_prep_shown"):
+		return
+	var old_value = tm.get("first_menu_prep_shown")
+	tm.set("first_menu_prep_shown", true)
+	var captured: Dictionary = gm._capture_save_state()
+	var captured_tutorial: Dictionary = captured.get("tutorial", {})
+	_ok(captured_tutorial.get("first_menu_prep_shown", null) == true,
+		"GameManager save state captures the menu preparation tutorial first-time flag")
+
+	var default_state: Dictionary = gm._default_new_game_state()
+	var default_tutorial: Dictionary = default_state.get("tutorial", {})
+	_ok(default_tutorial.get("first_menu_prep_shown", null) == false,
+		"new-game tutorial state defaults the menu preparation tutorial flag to false")
+
+	tm.set("first_menu_prep_shown", false)
+	default_tutorial["first_menu_prep_shown"] = true
+	default_state["tutorial"] = default_tutorial
+	gm._apply_save_state(default_state)
+	_ok(tm.get("first_menu_prep_shown") == true,
+		"GameManager restore state restores the menu preparation tutorial first-time flag")
+	tm.set("first_menu_prep_shown", old_value)
+
+
+func _test_tavern_tutorial_sequence_uses_menu_prep_before_craft() -> void:
+	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
+	var gm_source := FileAccess.get_file_as_string("res://scripts/game_manager.gd")
+	_ok(tavern_source.contains("trigger_menu_prep_tutorial"),
+		"TavernView exposes a menu preparation tutorial trigger")
+	_ok(tavern_source.contains("\"menu_prep\"") and tavern_source.contains("MenuPrepStartButton"),
+		"TavernView exposes live menu preparation tutorial highlight rects")
+	_ok(gm_source.contains("_craft_tutorial_pending_after_menu"),
+		"GameManager tracks the deferred craft tutorial after menu preparation")
+	_ok(gm_source.contains("trigger_menu_prep_tutorial"),
+		"GameManager starts the first tavern tutorial on the visible menu preparation panel")
+	_ok(gm_source.contains("_start_deferred_craft_tutorial_after_menu"),
+		"GameManager starts the physical bar tutorial only after menu confirmation")
+
+
 func _test_serve_tutorial_matches_table_order_groove(parsed: Dictionary) -> void:
 	var serve_steps: Array = parsed.get("serve", [])
 	_ok(not serve_steps.is_empty(), "serve tutorial step exists")
 	if serve_steps.is_empty():
 		return
 	var serve_intro: Dictionary = serve_steps[0]
+	_ok(String(serve_intro.get("highlight_node", "")) == "OrderGroove",
+		"serve tutorial highlights the table order groove instead of the customer body")
 	var text := String(serve_intro.get("description", ""))
 	for line in serve_intro.get("narrator_lines", []):
 		text += "\n" + String(line.get("text", ""))
@@ -286,5 +371,8 @@ class ServeTutorialTestView:
 
 	func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 		if group_key == "serve":
-			return {"CustomerNode": [440, 80, 400, 360]}
+			return {
+				"CustomerNode": [440, 80, 400, 360],
+				"OrderGroove": [392, 604, 496, 32],
+			}
 		return {}

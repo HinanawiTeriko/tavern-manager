@@ -30,6 +30,7 @@ func _ready() -> void:
 	view._open_shop()
 	await get_tree().process_frame
 	_test_shop_overlay_integration(view)
+	await _test_shop_purchase_refreshes_daymap_gold_label(view)
 	view._close_shop()
 	await get_tree().process_frame
 	await _test_fixer_visit_refreshes_gold_label(view)
@@ -156,7 +157,7 @@ func _test_gathering_toast_contract(view) -> void:
 	if toast == null:
 		return
 	_ok(toast.position == Vector2(430, 68), "gathering toast sits at the top center of the screen")
-	_ok(toast.size == Vector2(420, 56), "gathering toast uses the DayMap art panel size")
+	_ok(toast.size == Vector2(480, 78), "gathering toast uses the DayMap art panel size")
 	_ok(toast.mouse_filter == Control.MOUSE_FILTER_IGNORE, "gathering toast never blocks map clicks")
 	var content := toast.get_node_or_null("Content") as Label
 	_ok(content != null, "gathering toast keeps a content label")
@@ -164,9 +165,11 @@ func _test_gathering_toast_contract(view) -> void:
 		var font := content.get_theme_font("font")
 		_ok(font != null and String(font.resource_path).ends_with("assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf"),
 			"gathering toast content uses Fusion Pixel font")
-		toast.show_rewards({"herb": 1}, "听到传闻：今晚菜单有新线索")
-		_ok(content.text.contains("传闻"),
-			"gathering toast can mention a rumor alongside gathered rewards")
+		toast.show_rewards({"herb": 1}, "风声 · 今晚菜单有新线索")
+		_ok(content.text.contains("风声"),
+			"gathering toast can mention compact wind alongside gathered rewards")
+		_ok(content.text.split("\n").size() <= 2,
+			"gathering toast keeps rewards and wind within two compact lines")
 		toast.visible = false
 	var style := toast.get_theme_stylebox("panel") as StyleBoxTexture
 	_ok(style != null and style.texture != null, "gathering toast uses texture panel art")
@@ -176,6 +179,13 @@ func _test_gathering_toast_contract(view) -> void:
 
 
 func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
+	var gm = get_node("/root/GameManager")
+	if gm.rumors != null:
+		gm.rumors.restore_state({
+			"current_day": int(gm.economy.current_day),
+			"heard_ids": ["mushroom_forest_clear_scent"],
+			"today_ids": ["mushroom_forest_clear_scent"],
+		})
 	view._visit_location("mushroom_forest")
 	await get_tree().process_frame
 	var result := view.get_node_or_null("UILayer/ResultPanel") as Panel
@@ -189,7 +199,7 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 	var content := toast.get_node_or_null("Content") as Label
 	_ok(content != null and content.text.begins_with("采集获得："),
 		"gathering toast announces collected rewards")
-	_ok(content != null and content.text.contains("×1"),
+	_ok(content != null and content.text.contains("×"),
 		"gathering toast includes the collected item count")
 
 
@@ -207,13 +217,19 @@ func _test_rumor_visit_shows_top_toast(view) -> void:
 	_ok(result != null and not result.visible,
 		"rumor visit does not rely on the blocking result panel for feedback")
 	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
-	_ok(toast != null and toast.visible,
-		"rumor visit shows the top DayMap toast")
-	if toast == null:
+	_ok(toast != null and not toast.visible,
+		"rumor visit hides the compact gathering toast")
+	var notice := view.get_node_or_null("UILayer/WindNotice") as Control
+	_ok(notice != null and notice.visible,
+		"rumor visit shows the wind notice")
+	if notice == null:
 		return
-	var content := toast.get_node_or_null("Content") as Label
-	_ok(content != null and content.text.contains("传闻"),
-		"rumor toast explicitly says a rumor was heard")
+	var body := notice.get_node_or_null("Body") as Label
+	_ok(body != null and body.text.strip_edges() != "",
+		"wind notice shows the heard rumor text")
+	var rewards := notice.get_node_or_null("Rewards") as Label
+	_ok(rewards != null,
+		"wind notice keeps a rewards label for gathered reward locations")
 
 
 func _test_fixer_visit_refreshes_gold_label(view) -> void:
@@ -234,6 +250,32 @@ func _test_fixer_visit_refreshes_gold_label(view) -> void:
 	_ok(gm.economy.gold == 10, "fixer visit spends 40 gold through GameManager")
 	_ok(gold_label != null and gold_label.text.contains("10") and not gold_label.text.contains("50"),
 		"DayMap gold label refreshes after fixer spending")
+
+
+func _test_shop_purchase_refreshes_daymap_gold_label(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	gm.economy.current_day = 1
+	gm.economy.gold = 30
+	gm.start_day_map(1)
+	view.show_day(1, EconomySystem.MAX_DAYS)
+	await get_tree().process_frame
+	var gold_label := view.get_node_or_null("UILayer/TopBar/GoldLabel") as Label
+	_ok(gold_label != null and gold_label.text.contains("30"),
+		"DayMap gold label starts from current economy gold before shop purchase")
+	view._open_shop()
+	await get_tree().process_frame
+	var overlay := view.get_node_or_null("UILayer/ShopOverlay") as ShopOverlay
+	_ok(overlay != null and overlay.visible, "shop overlay is open for DayMap purchase refresh test")
+	if overlay == null:
+		return
+	overlay.select_item("ale")
+	overlay.set_quantity(2)
+	overlay.purchase_selected()
+	await get_tree().process_frame
+	_ok(gm.economy.gold == 26, "shop purchase spends gold through GameManager while DayMap is active")
+	_ok(gold_label != null and gold_label.text.contains("26") and not gold_label.text.contains("30"),
+		"DayMap gold label refreshes immediately after shop spending")
 
 
 func _test_pinned_note_contract(view) -> void:

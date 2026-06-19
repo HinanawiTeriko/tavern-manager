@@ -251,6 +251,15 @@ func _test_tavern_patience_ui_contract() -> void:
 		if customer_area != null:
 			_ok(_rect_array_close(customer_rect, _control_screen_rect(customer_area)),
 				"serve tutorial CustomerNode highlight follows the live CustomerArea rect")
+		var order_groove_rect := serve_rects.get("OrderGroove", []) as Array
+		_ok(serve_rects.has("OrderGroove"), "serve tutorial provides the OrderGroove highlight key")
+		var order_bubble_for_rect := tavern.get_node_or_null("CustomerArea/OrderBubble") as Control
+		if order_bubble_for_rect != null:
+			_ok(_rect_contains_point(order_groove_rect, order_bubble_for_rect.global_position + order_bubble_for_rect.size * 0.5),
+				"serve tutorial OrderGroove highlight contains the live order text")
+			if order_groove_rect.size() >= 4:
+				_ok(float(order_groove_rect[1]) > 720.0 * 0.55,
+					"serve tutorial OrderGroove highlight triggers the raised narrator layout")
 
 	var customer_sprite := tavern.get_node_or_null("CustomerArea/CustomerSprite") as TextureRect
 	var tabletop := tavern.get_node_or_null("TabletopArt") as Sprite2D
@@ -271,6 +280,8 @@ func _test_tavern_patience_ui_contract() -> void:
 	var order_icon := tavern.get_node_or_null("CustomerArea/OrderIcon") as TextureRect
 	var reaction_bubble := tavern.get_node_or_null("CustomerArea/ReactionBubble") as Label
 	var reaction_highlight := tavern.get_node_or_null("CustomerArea/ReactionHighlight") as RichTextLabel
+	var pot_art := tavern.get_node_or_null("BarWorkspace/World/Pot/Art") as Sprite2D
+	var reward_coin_layer := tavern.get_node_or_null("RewardCoinPhysicsLayer") as Node2D
 	_ok(customer_name != null, "CustomerName remains the public Tavern customer name label path")
 	if customer_name != null:
 		_ok(_control_uses_pixel_font(customer_name), "CustomerName uses the shared pixel UI font")
@@ -293,6 +304,12 @@ func _test_tavern_patience_ui_contract() -> void:
 			"OrderBubble uses high-contrast light text for the order")
 		_ok(order_bubble.get_theme_constant("outline_size") >= 3,
 			"OrderBubble uses a dark outline so requests remain readable over the counter")
+		if pot_art != null:
+			_ok(order_bubble.z_index > pot_art.z_index,
+				"OrderBubble draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(order_bubble.z_index > reward_coin_layer.z_index,
+				"OrderBubble draws above temporary table reward coins")
 	_ok(order_ticket_frame == null, "Tavern no longer uses a separate floating OrderTicketFrame")
 	_ok(order_icon == null, "Tavern no longer uses a separate floating OrderIcon")
 	_ok(reaction_bubble != null, "ReactionBubble separates temporary customer reactions from the stable order request")
@@ -303,6 +320,12 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_bubble.get_theme_font_size("font_size") >= 16, "ReactionBubble remains readable for short customer reactions")
 		_ok(reaction_bubble.get_theme_color("font_color") == Color.WHITE,
 			"ReactionBubble uses white dialogue text so clue highlights can be layered separately")
+		if pot_art != null:
+			_ok(reaction_bubble.z_index > pot_art.z_index,
+				"ReactionBubble draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(reaction_bubble.z_index > reward_coin_layer.z_index,
+				"ReactionBubble draws above temporary table reward coins")
 	_ok(reaction_highlight != null, "ReactionHighlight renders highlighted clue phrases without replacing ReactionBubble")
 	if reaction_highlight != null:
 		_ok(reaction_highlight.mouse_filter == Control.MOUSE_FILTER_IGNORE,
@@ -310,6 +333,12 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(reaction_highlight.get_theme_font("normal_font") != null
 				and reaction_highlight.get_theme_font("normal_font").resource_path == PIXEL_FONT_PATH,
 			"ReactionHighlight uses the shared pixel UI font")
+		if pot_art != null:
+			_ok(reaction_highlight.z_index > pot_art.z_index,
+				"ReactionHighlight draws above work-surface items and container art")
+		if reward_coin_layer != null:
+			_ok(reaction_highlight.z_index > reward_coin_layer.z_index,
+				"ReactionHighlight draws above temporary table reward coins")
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
@@ -359,6 +388,14 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(_control_uses_pixel_font(stage_caption), "StageCaption uses the shared pixel UI font")
 		_ok(stage_caption.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"StageCaption does not block center-table item clicks while faded out")
+		if customer_name != null and customer_sprite != null:
+			_ok(stage_caption.global_position.y >= customer_name.global_position.y + customer_name.size.y + 6.0,
+				"StageCaption sits below the customer name instead of covering it")
+			_ok(stage_caption.global_position.y + stage_caption.size.y <= customer_sprite.global_position.y,
+				"StageCaption sits above the customer portrait instead of down near the table items")
+		if reward_coin_layer != null:
+			_ok(stage_caption.z_index > reward_coin_layer.z_index,
+				"StageCaption draws above temporary table reward coins")
 		tavern.show_stage_caption("今日客流招待完毕，可以打烊了！", ThemeColors.AMBER_PRIMARY)
 		_ok(stage_caption.text == "今日客流招待完毕，可以打烊了！",
 			"show_stage_caption keeps the all-guests-served caption as Godot-rendered text")
@@ -526,7 +563,7 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	_ok(tavern.has_method("show_order_reward_feedback"), "TavernView exposes reward feedback method")
 	if tavern.has_method("show_order_reward_feedback") and coin_layer != null and reward_particles is Node2D:
-		_update_top_bar_with_max(tavern, 13, 8, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 13, 8, 1, EconomySystem.MAX_DAYS, 80)
 		var gold_label := tavern.get_node_or_null("TopPanel/GoldLabel") as Label
 		var gold_fill_clip := tavern.get_node_or_null("TopPanel/GoldProgress/FillClip") as Control
 		var rep_fill_clip := tavern.get_node_or_null("TopPanel/ReputationProgress/FillClip") as Control
@@ -536,8 +573,8 @@ func _test_tavern_patience_ui_contract() -> void:
 			"GoldProgress fill reflects historical max held gold, not current spendable gold")
 		_ok(rep_fill_clip != null and abs(rep_fill_clip.size.x - 23.0) <= 2.0,
 			"ReputationProgress fill reflects the visible 8/50 pre-reward progress")
-		_update_top_bar_with_max(tavern, 25, 8, 1, 30, 120)
-		_update_top_bar_with_max(tavern, 5, 8, 1, 30, 120)
+		_update_top_bar_with_max(tavern, 25, 8, 1, EconomySystem.MAX_DAYS, 120)
+		_update_top_bar_with_max(tavern, 5, 8, 1, EconomySystem.MAX_DAYS, 120)
 		_ok(gold_label != null and gold_label.text.find("5") >= 0 and gold_label.text.find("25") == -1,
 			"GoldLabel can decrease after spending")
 		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 29.0) <= 2.0,
@@ -545,9 +582,9 @@ func _test_tavern_patience_ui_contract() -> void:
 
 		var coin_count_before := _reward_coin_body_count(coin_layer)
 		var particle_count_before := (reward_particles as Node2D).get_child_count()
-		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 25, 10, 1, EconomySystem.MAX_DAYS, 80)
 		_show_order_reward_feedback_with_max(tavern, 12, 2, 13, 8, 80, 80)
-		_update_top_bar_with_max(tavern, 25, 10, 1, 30, 80)
+		_update_top_bar_with_max(tavern, 25, 10, 1, EconomySystem.MAX_DAYS, 80)
 		await get_tree().process_frame
 		_ok(gold_label != null and gold_label.text.find("13") >= 0 and gold_label.text.find("25") == -1,
 			"gold label keeps the previous total until tabletop coins are collected")
@@ -590,8 +627,8 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(gold_fill_clip != null and abs(gold_fill_clip.size.x - 86.0) <= 2.0,
 			"GoldProgress fill remains on historical max if the reward does not beat it")
 
-		_update_top_bar_with_max(tavern, 45, 10, 1, 30, 45)
-		_update_top_bar_with_max(tavern, 55, 10, 1, 30, 55)
+		_update_top_bar_with_max(tavern, 45, 10, 1, EconomySystem.MAX_DAYS, 45)
+		_update_top_bar_with_max(tavern, 55, 10, 1, EconomySystem.MAX_DAYS, 55)
 		_show_order_reward_feedback_with_max(tavern, 10, 0, 45, 10, 45, 55)
 		await get_tree().process_frame
 		var gold_ornate := tavern.get_node_or_null("TopPanel/GoldProgress/Ornate") as TextureRect
@@ -734,11 +771,13 @@ func _test_tavern_game_manager_contract() -> void:
 		_ok(tavern.is_preparation_phase() == true, "TavernView starts in menu preparation phase")
 	if tavern.has_method("is_business_phase"):
 		_ok(tavern.is_business_phase() == false, "TavernView does not enter business phase before menu confirmation")
+	await _test_inventory_drop_restores_menu_preparation(tavern)
 
 	if tavern.has_method("get_daily_menu_items"):
 		var menu_items: Array[Dictionary] = tavern.get_daily_menu_items()
 		_ok(menu_items.is_empty(), "TavernView withholds orderable menu items before menu confirmation")
 		if tavern.has_method("_confirm_menu_preparation"):
+			_select_first_menu_prep_product(tavern)
 			tavern.call("_confirm_menu_preparation")
 			menu_items = tavern.get_daily_menu_items()
 		_ok(menu_items.size() >= 1, "TavernView provides orderable menu items after menu confirmation")
@@ -759,6 +798,41 @@ func _test_tavern_game_manager_contract() -> void:
 
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_inventory_drop_restores_menu_preparation(tavern: Node) -> void:
+	var inventory := tavern.get_node_or_null("InventoryOverlay")
+	if inventory == null:
+		_ok(false, "TavernView keeps the InventoryOverlay contract path")
+		return
+	if not tavern.has_method("toggle_inventory_overlay") or not inventory.has_method("_drop_data"):
+		_ok(false, "Inventory overlay exposes the drop path used by TavernView")
+		return
+	_ok(tavern.is_menu_config_open(), "menu preparation is visible before opening inventory")
+	tavern.toggle_inventory_overlay()
+	_ok(not tavern.is_menu_config_open(), "inventory temporarily hides menu preparation")
+	await get_tree().process_frame
+	_ok(not tavern.is_menu_config_open(), "menu preparation stays hidden while inventory remains open")
+	var closed_count := [0]
+	inventory.closed.connect(func(): closed_count[0] += 1, CONNECT_ONE_SHOT)
+	inventory.call("_drop_data", Vector2(-32.0, -32.0), {"item_key": "ale"})
+	await get_tree().process_frame
+	_ok(int(closed_count[0]) == 1, "inventory world drop emits the public closed signal")
+	_ok(not inventory.visible, "inventory closes after a world drop")
+	_ok(tavern.is_preparation_phase(), "inventory drop does not confirm the daily menu")
+	_ok(tavern.is_menu_config_open(), "inventory drop restores hidden menu preparation")
+
+
+func _select_first_menu_prep_product(tavern: Node) -> void:
+	if not tavern.has_method("_toggle_menu_prep_product"):
+		return
+	var gm = get_node("/root/GameManager")
+	if gm == null or gm.craft == null:
+		return
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	if products.is_empty():
+		return
+	tavern.call("_toggle_menu_prep_product", products[0])
 
 
 func _test_important_guest_patience_ratio_uses_important_guest_max() -> void:

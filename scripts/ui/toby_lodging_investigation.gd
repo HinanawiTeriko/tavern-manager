@@ -126,8 +126,6 @@ func _on_special_pickup(item: MineItem) -> bool:
 
 
 func _investigation_physics(_delta: float) -> void:
-	if _drag_ctrl.is_dragging():
-		return
 	_join_nearby_fragments()
 	_check_assembly()
 
@@ -152,6 +150,9 @@ func _join_nearby_fragments() -> void:
 
 func _create_fragment_pair(a: MineItem, b: MineItem) -> void:
 	var pair_position := (a.global_position + b.global_position) * 0.5
+	var keep_dragging_pair := _is_dragging_item(a) or _is_dragging_item(b)
+	if keep_dragging_pair:
+		_drag_ctrl.end_drag()
 	_paired_fragment_tags = [a.item_tag, b.item_tag]
 	_remove_fragment_node(a.item_tag)
 	_remove_fragment_node(b.item_tag)
@@ -159,6 +160,8 @@ func _create_fragment_pair(a: MineItem, b: MineItem) -> void:
 		Color(0.62, 0.54, 0.34), "拼在一起的委托书碎片",
 		"两片纸边咬住了。还缺最后一角。", pair_position)
 	_place_item_for_drag(_fragment_pair, pair_position)
+	if keep_dragging_pair and is_instance_valid(_fragment_pair):
+		_drag_ctrl.start_drag(_fragment_pair, pair_position)
 	_obs_label.text = "两片委托书已经拼成一块。"
 
 
@@ -218,6 +221,9 @@ func _remaining_fragment() -> MineItem:
 func _complete_assembly() -> void:
 	_assembled = true
 	var complete_position := _fragment_pair.global_position if is_instance_valid(_fragment_pair) else ASSEMBLE_POINT
+	var remaining := _remaining_fragment()
+	if _is_dragging_item(_fragment_pair) or _is_dragging_item(remaining):
+		_drag_ctrl.end_drag()
 	for frag in _fragments:
 		if is_instance_valid(frag):
 			frag.queue_free()
@@ -231,6 +237,10 @@ func _complete_assembly() -> void:
 		"委托书拼回去了。背面写着米拉那句“一个人走”。", complete_position)
 	_lock_item_at(_completed_contract, complete_position)
 	_obs_label.text = "委托书拼回去了。点一下，把它收起来。"
+
+
+func _is_dragging_item(item: MineItem) -> bool:
+	return item != null and is_instance_valid(item) and _drag_ctrl.get_body() == item
 
 
 func _has_deep_progress() -> bool:

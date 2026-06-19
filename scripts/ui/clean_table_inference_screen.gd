@@ -249,7 +249,7 @@ func _render_current_question() -> void:
 		_current_question = {}
 		title.visible = false
 		_question_label.visible = true
-		_question_label.text = "今晚没有新的推断。"
+		_question_label.text = _empty_question_text()
 		_clear_feedback()
 		_extinguish_btn.text = "翻到账本"
 		return
@@ -263,6 +263,45 @@ func _render_current_question() -> void:
 	var blanks: Dictionary = _current_question.get("blanks", {})
 	var placements: Dictionary = _merged_render_placements(_current_question.get("placements", {}))
 	_render_sentence_controls(blanks, placements)
+
+
+func _empty_question_text() -> String:
+	var lines := PackedStringArray(["今晚没有新的推断。"])
+	if _inference == null or not _inference.has_method("get_next_blocked_question_hint"):
+		return "\n".join(lines)
+	var hint: Dictionary = _inference.get_next_blocked_question_hint()
+	if hint.is_empty():
+		return "\n".join(lines)
+	var title := String(hint.get("title", "")).strip_edges()
+	if title != "":
+		lines.append("下一题：" + title)
+	var missing_text := _missing_requirement_text(hint)
+	if missing_text != "":
+		lines.append("还缺：" + missing_text)
+	return "\n".join(lines)
+
+
+func _missing_requirement_text(hint: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for clue in hint.get("missingClues", []):
+		if not clue is Dictionary:
+			continue
+		var clue_info: Dictionary = clue
+		var source_label := String(clue_info.get("sourceLabel", "线索")).strip_edges()
+		var label := String(clue_info.get("label", clue_info.get("id", ""))).strip_edges()
+		if label == "":
+			continue
+		parts.append("%s · %s" % [source_label if source_label != "" else "线索", label])
+	for required_question in hint.get("missingQuestions", []):
+		if not required_question is Dictionary:
+			continue
+		var question_info: Dictionary = required_question
+		var source_label := String(question_info.get("sourceLabel", "事实")).strip_edges()
+		var title := String(question_info.get("title", question_info.get("id", ""))).strip_edges()
+		if title == "":
+			continue
+		parts.append("%s · %s" % [source_label if source_label != "" else "事实", title])
+	return " / ".join(parts)
 
 
 func _ensure_question_title() -> Label:
@@ -606,6 +645,24 @@ func _select_clue(clue_id: String) -> void:
 			var label := child.get_node_or_null("Label") as Label
 			if label != null:
 				label.add_theme_color_override("font_color", Color(0.13, 0.055, 0.02) if selected else Color(0.22, 0.12, 0.045))
+	_show_selected_clue_source(clue_id)
+
+
+func _show_selected_clue_source(clue_id: String) -> void:
+	if _feedback_label == null or _inference == null:
+		return
+	var clue: Dictionary = _inference.get_clue(clue_id)
+	if clue.is_empty():
+		return
+	var source_label := String(clue.get("sourceLabel", "线索"))
+	var source := String(clue.get("source", "")).strip_edges()
+	var clue_text := String(clue.get("text", "")).strip_edges()
+	var header := source_label
+	if source != "":
+		header += " · " + source
+	_feedback_label.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
+	_feedback_label.text = header if clue_text == "" else header + "\n" + clue_text
+	_feedback_label.visible = true
 
 
 func _blank_text(blank_id: String, placements: Dictionary) -> String:
@@ -661,6 +718,7 @@ func _apply_static_style() -> void:
 	_question_label.add_theme_color_override("default_color", INFERENCE_INK_COLOR)
 	_question_label.fit_content = false
 	_style_label(_feedback_label, 13, ThemeColors.AMBER_PRIMARY)
+	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_feedback_label.visible = false
 	_solved_list.add_theme_constant_override("separation", 8)
 	_style_paper_tag_button(_extinguish_btn, 16)

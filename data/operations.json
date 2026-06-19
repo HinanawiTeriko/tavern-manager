@@ -13,6 +13,5 @@
   "dough_meat":  { "heat": "meat_sand" },
   "meat_sand":   { "heat": "bread_burnt" },
   "ale_herb":    { "heat": "herbal_ale" },
-  "grape_herb":  { "heat": "spiced_wine" },
-  "meat_stew_raw":{ "heat": "meat_stew" }
+  "grape_herb":  { "heat": "spiced_wine" }
 }

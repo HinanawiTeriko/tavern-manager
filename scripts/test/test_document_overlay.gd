@@ -13,6 +13,7 @@ func _ready() -> void:
 	_test_toby_contract_uses_standard_ledger_layout(view.get_node("UILayer/DocumentOverlay"))
 	_test_document_buttons(view.get_node("UILayer/DocumentOverlay"))
 	_test_ledger_buttons(view.get_node("UILayer/DocumentOverlay"))
+	await _test_long_ledger_pages_are_paginated_to_fit(view.get_node("UILayer/DocumentOverlay"))
 	view.queue_free()
 	_finish()
 
@@ -172,3 +173,39 @@ func _test_ledger_buttons(overlay: DocumentOverlay) -> void:
 	_ok(not previous_button.disabled, "ledger previous button enables after advancing")
 	previous_button.pressed.emit()
 	_ok(overlay.get_current_page_text() == "ledger page 1", "ledger previous button returns to the first spread")
+
+
+func _test_long_ledger_pages_are_paginated_to_fit(overlay: DocumentOverlay) -> void:
+	var long_note := "\n".join(PackedStringArray([
+		"米拉 · 宿命轨迹",
+		"",
+		"预记",
+		"第十二日。长期供应协议。签署。",
+		"",
+		"旁注",
+		"- 米拉收摊时停了停，像是在等一个不被问出口的问题。",
+		"- 风声 · 第 7 天，带孩子跑货的旧事。",
+		"- 风声 · 今晚有人提起带孩子跑货的女商人。",
+		"- 旧路酒、清淡热汤、体面酒菜都留住旧路熟人和贸易客。",
+		"- 风声 · 第 8 天，一个人走那句旧话还没接全。",
+		"- 风声 · 第 9 天，账房客说旧账压着新的押金。",
+		"- 风声 · 第 10 天，孩子学过那句旧话。",
+		"- 风声 · 第 11 天，米拉的货单背面有一枚灰印。",
+		"- 这条记录很长，必须翻到下一页，而不是盖住页码和底部书签。",
+		"- 终行仍要保留在后续页里。",
+	]))
+	overlay.open_document({"kind": "ledger", "pages": [long_note, "莱恩 · 宿命轨迹\n\n预记\n第三日。北矿道。未归。"]})
+	await get_tree().process_frame
+	var left_body := overlay.get_node("Panel/LeftBody") as Label
+	var next_button := overlay.get_node("Panel/NextBtn") as Button
+	_ok(_label_fits_body(left_body), "long ledger body text is paginated before it overflows the paper page")
+	_ok(not next_button.disabled, "long ledger entry creates a continuation spread instead of disabling next page")
+
+
+func _label_fits_body(label: Label) -> bool:
+	var font := label.get_theme_font("font")
+	var font_size := label.get_theme_font_size("font_size")
+	var line_spacing := label.get_theme_constant("line_spacing")
+	var line_height := font.get_height(font_size) + line_spacing
+	var max_lines := int(floor((label.size.y + line_spacing) / line_height))
+	return label.get_line_count() <= max_lines

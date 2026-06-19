@@ -344,6 +344,23 @@ func _test_workspace_collision_combines_intermediates() -> void:
 	_ok(_desk_item_count_with_key(items, "dough_meat") == before + 1,
 		"slamming dough and raw meat on the workspace should make dough_meat")
 
+	var prior_slam_containers := GameManager.craft.unlocked_slam_containers.duplicate()
+	var prior_unlocked_recipes := GameManager.craft.unlocked_recipes.duplicate()
+	GameManager.craft.unlocked_slam_containers.clear()
+	GameManager.craft.unlocked_recipes.clear()
+	var malt := bar._spawn_desk_item_at(Vector2(620.0, 500.0), "ale") as DeskItem
+	var second_meat := bar._spawn_desk_item_at(Vector2(660.0, 500.0), "meat_raw") as DeskItem
+	malt.linear_velocity = Vector2(280.0, 0.0)
+	second_meat.linear_velocity = Vector2(-280.0, 0.0)
+	var raw_stew_before := _desk_item_count_with_key(items, "meat_stew_raw")
+	bar._on_item_collision(second_meat, malt)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_ok(_desk_item_count_with_key(items, "meat_stew_raw") == raw_stew_before,
+		"slamming malt and raw meat without slam magic should not make raw meat stew")
+	GameManager.craft.unlocked_slam_containers.assign(prior_slam_containers)
+	GameManager.craft.unlocked_recipes.assign(prior_unlocked_recipes)
+
 	tavern.queue_free()
 	await get_tree().process_frame
 
@@ -370,6 +387,8 @@ func _test_recipe_data() -> void:
 	_ok(craft.query_recipe("pot", ["meat_raw", "ale"]) == "meat_stew", "meat and ale in pot should make stew")
 	_ok(craft.query_recipe("pot", ["ale", "herb"]) == "herb_broth", "herb and ale in pot should make broth")
 	_ok(craft.query_recipe("pot", ["flour", "ale"]) == "malt_porridge", "flour and ale in pot should make porridge")
+	_ok(craft.get_item("meat_stew_raw").is_empty(), "raw meat stew intermediate should not remain in runtime item data")
+	_ok(not craft.has_operations("meat_stew_raw"), "raw meat stew intermediate should not have a legacy heat operation")
 
 
 func _test_failure_product_data() -> void:

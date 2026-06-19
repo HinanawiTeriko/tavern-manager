@@ -71,7 +71,6 @@ func _apply_unified_grid_layout() -> void:
 
 
 func _on_return_pressed() -> void:
-	closed.emit()
 	close()
 
 
@@ -86,7 +85,10 @@ func open() -> void:
 
 func close() -> void:
 	_hide_tooltip()
+	if not visible:
+		return
 	visible = false
+	closed.emit()
 
 
 func accepts_world_drop(world_position: Vector2, _item_key: String = "") -> bool:

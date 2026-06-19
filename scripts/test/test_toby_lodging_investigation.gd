@@ -20,6 +20,7 @@ func _ready() -> void:
 	_test_locations_contract()
 	_test_grant_idempotent_and_owned()
 	await _test_mine_items_recover_when_outside_view_bounds()
+	await _test_fragments_snap_while_dragging()
 	await _test_fragments_snap_near_assembly_and_grant_when_complete()
 	_finish()
 
@@ -111,6 +112,38 @@ func _test_mine_items_recover_when_outside_view_bounds() -> void:
 	await get_tree().process_frame
 
 
+func _test_fragments_snap_while_dragging() -> void:
+	var scene := TOBY_SCENE.instantiate()
+	add_child(scene)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	var frag_a := _toby_fragment(scene, "contract_fragment_a")
+	var frag_b := _toby_fragment(scene, "contract_fragment_b")
+	_ok(frag_a != null and frag_b != null,
+		"Toby lodging drag snap test finds the first two contract fragments")
+	if frag_a != null and frag_b != null:
+		_ok(scene._try_pickup(frag_a.global_position),
+			"contract fragment can be picked up for held-drag snapping")
+		_ok(scene._drag_ctrl.get_body() == frag_a,
+			"picked up contract fragment is the active dragged body")
+		var snap_position := frag_b.global_position + Vector2(24, 0)
+		scene._drag_ctrl.update_target_global(snap_position)
+		frag_a.global_position = snap_position
+		scene._investigation_physics(0.016)
+		await get_tree().process_frame
+		var pair := _toby_item(scene, CONTRACT_PAIR_TAG)
+		_ok(pair != null,
+			"dragging a held fragment onto another fragment immediately creates the combined piece")
+		_ok(pair != null and scene._drag_ctrl.get_body() == pair,
+			"combined piece remains under drag control after held-fragment snapping")
+		if scene._drag_ctrl.is_dragging():
+			scene._drag_ctrl.end_drag()
+
+	scene.queue_free()
+	await get_tree().process_frame
+
+
 func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 	var gm = get_node("/root/GameManager")
 	var snapshot: Dictionary = gm._capture_save_state()
@@ -188,6 +221,11 @@ func _test_fragments_snap_near_assembly_and_grant_when_complete() -> void:
 					"clicking the complete commission grants the contract document")
 				_ok(gm.narrative.get_var("toby_contract_found") == true,
 					"collecting the completed Toby contract marks the route proof found")
+				var hint_text := _label_text(scene, "UI/HintLabel")
+				_ok(hint_text.contains("证据 · 托比的委托书"),
+					"collecting the completed Toby contract labels the immediate feedback as evidence")
+				_ok(hint_text.contains("收入账本"),
+					"collecting the completed Toby contract tells the player the evidence went into the ledger")
 				_ok(_toby_item(scene, CONTRACT_COMPLETE_TAG) == null,
 					"collected complete commission is removed from the room")
 
@@ -208,3 +246,9 @@ func _toby_item(scene: Node, item_tag: String) -> MineItem:
 		if child is MineItem and child.item_tag == item_tag:
 			return child
 	return null
+
+
+func _label_text(scene: Node, path: String) -> String:
+	var label := scene.get_node_or_null(path) as Label
+	_ok(label != null, path + " exists")
+	return label.text if label != null else ""

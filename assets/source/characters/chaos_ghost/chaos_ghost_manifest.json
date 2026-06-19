@@ -1,0 +1,64 @@
+{
+  "assets": [
+    {
+      "id": "chaos_phoebe_chupi_ghost",
+      "source": "art_sources/generated_raw/characters/chaos_ghost/candidates_v2/phoebe_chupi_candidate_v2_20260618T142704Z_ig_0aa274d60e47d99f016a33ffdcfb908191af513c162f547599.png",
+      "native_output": "assets/source/characters/chaos_ghost/chaos_phoebe_chupi_ghost.png",
+      "runtime_output": "assets/textures/characters/chaos_phoebe_chupi_ghost.png",
+      "native_size": [
+        96,
+        96
+      ],
+      "runtime_scale": 4,
+      "safe_area": [
+        96,
+        96,
+        1062,
+        1062
+      ],
+      "contact_sheet": "docs/art/characters/chaos_phoebe_chupi_ghost_contact_sheet.png",
+      "intended_godot_use": "BarWorkspace hidden chaos ghost thief sprite state=approach",
+      "prompt_notes": "Selected candidate C from imagegen v2. Reference priority: user screenshot #3 for face and low wide hat, #1 for cute round eyes, #2 for mischievous thief attitude. Base approach/idle ghost sprite."
+    },
+    {
+      "id": "chaos_phoebe_chupi_ghost_grab",
+      "source": "art_sources/generated_raw/characters/chaos_ghost/variants_v1/phoebe_chupi_variant_v1_20260618T153210Z_ig_02e16f8f4f0d2207016a340f2b4bac819198c252a8a6d61452.png",
+      "native_output": "assets/source/characters/chaos_ghost/chaos_phoebe_chupi_ghost_grab.png",
+      "runtime_output": "assets/textures/characters/chaos_phoebe_chupi_ghost_grab.png",
+      "native_size": [
+        96,
+        96
+      ],
+      "runtime_scale": 4,
+      "safe_area": [
+        96,
+        96,
+        1062,
+        1062
+      ],
+      "contact_sheet": "docs/art/characters/chaos_phoebe_chupi_ghost_contact_sheet.png",
+      "intended_godot_use": "BarWorkspace hidden chaos ghost thief sprite state=grab",
+      "prompt_notes": "Imagegen v1 grab variant: same chibi ghost, mischievous grabbing pose."
+    },
+    {
+      "id": "chaos_phoebe_chupi_ghost_fade",
+      "source": "art_sources/generated_raw/characters/chaos_ghost/variants_v1/phoebe_chupi_variant_v1_fade_retry_20260618T153722Z_ig_02e16f8f4f0d2207016a3410638c508191a62a7cbafc77d29a.png",
+      "native_output": "assets/source/characters/chaos_ghost/chaos_phoebe_chupi_ghost_fade.png",
+      "runtime_output": "assets/textures/characters/chaos_phoebe_chupi_ghost_fade.png",
+      "native_size": [
+        96,
+        96
+      ],
+      "runtime_scale": 4,
+      "safe_area": [
+        96,
+        96,
+        1062,
+        1062
+      ],
+      "contact_sheet": "docs/art/characters/chaos_phoebe_chupi_ghost_contact_sheet.png",
+      "intended_godot_use": "BarWorkspace hidden chaos ghost thief sprite state=fade",
+      "prompt_notes": "Imagegen v1 fade retry variant: cute embarrassed retreat pose with purple eyes preserved."
+    }
+  ]
+}

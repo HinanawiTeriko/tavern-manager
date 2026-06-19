@@ -10,57 +10,80 @@ position = Vector2(640, 360)
 centered = true
 z_index = -10
 
+[node name="ArtLayer" type="Control" parent="."]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+
+[node name="SettlementBackdrop" type="TextureRect" parent="ArtLayer"]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="FinalPanelArt" type="TextureRect" parent="ArtLayer"]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 64.0
+offset_right = 1080.0
+offset_bottom = 664.0
+mouse_filter = 2
+stretch_mode = 5
+
 [node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 240.0
-offset_top = 60.0
-offset_right = 1040.0
-offset_bottom = 660.0
+offset_left = 296.0
+offset_top = 96.0
+offset_right = 984.0
+offset_bottom = 640.0
 
 [node name="TitleLabel" type="Label" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(0, 60)
-text = "Ryan 垂直切片结束"
+custom_minimum_size = Vector2(0, 52)
+text = "打烊之后"
 horizontal_alignment = 1
 
 [node name="Stats" type="HBoxContainer" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 36)
 
 [node name="GoldLabel" type="Label" parent="Content/Stats"]
 layout_mode = 0
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(210, 0)
 text = "最终金币：0"
 horizontal_alignment = 1
 
 [node name="RepLabel" type="Label" parent="Content/Stats"]
 layout_mode = 0
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(210, 0)
 text = "最终声望：0"
 horizontal_alignment = 1
 
 [node name="OrdersLabel" type="Label" parent="Content/Stats"]
 layout_mode = 0
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(230, 0)
 text = "成功订单：0"
 horizontal_alignment = 1
 
 [node name="ClosingLabel" type="Label" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 70)
 text = "账本仍有许多空白页。"
 horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="NPCEndingsList" type="VBoxContainer" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 216)
 
 [node name="QuitBtn" type="Button" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(200, 36)
 text = "退出游戏"
 
 [node name="RestartBtn" type="Button" parent="Content"]
 layout_mode = 0
-custom_minimum_size = Vector2(200, 40)
-text = "重新开始"
+custom_minimum_size = Vector2(200, 36)
+text = "返回标题"

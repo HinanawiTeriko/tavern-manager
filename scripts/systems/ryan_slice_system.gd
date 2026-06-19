@@ -1,9 +1,10 @@
 class_name RyanSliceSystem
 extends RefCounted
 
-# [走查脚手架] 伊芙琳灰账线结算在 Day20；Day21-30 先复用普通经营循环直到正式收束内容接入。
-const LAST_DAY := 30
+# 伊芙琳灰账线结算在 Day20；Day21 作为余波经营日后进入结局。
+const LAST_DAY := 21
 const DEFAULT_NORMAL_ORDER_LIMIT := 3
+const DEFAULT_IMPORTANT_ARRIVAL_NORMALS_BEFORE := 1
 const DAY_CONFIG := {
 	1: {
 		"normal_order_limit": 2,
@@ -16,7 +17,7 @@ const DAY_CONFIG := {
 	},
 	3: {
 		"normal_order_limit": 2,
-		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a", "order": "herb_broth"}],
+		"events": [{"type": "fate_reveal", "npc_id": "ryan", "display_name": "佣兵甲", "portrait_id": "mercenary_a", "order": "meat_cooked"}],
 	},
 	5: {
 		"events": [{"type": "important_npc", "npc_id": "evelyn", "display_name": "伊芙琳", "portrait_id": "grey_ledger_lady"}],
@@ -56,6 +57,16 @@ func night_events(day: int) -> Array:
 
 func day_start_ledger_entries(day: int) -> Array:
 	return DAY_CONFIG.get(day, {}).get("ledger_entries", []).duplicate()
+
+
+func important_arrival_normal_orders_before(day: int) -> int:
+	for event in night_events(day):
+		var event_type := String(event.get("type", ""))
+		if event_type == "fate_reveal":
+			return 0
+		if event_type == "important_npc":
+			return int(event.get("normal_orders_before", DEFAULT_IMPORTANT_ARRIVAL_NORMALS_BEFORE))
+	return 0
 
 
 func important_display_name(day: int, npc_id: String, fallback: String) -> String:

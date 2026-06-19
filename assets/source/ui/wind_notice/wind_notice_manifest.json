@@ -1,0 +1,112 @@
+{
+  "id": "wind_notice",
+  "raw_source": "art_sources/generated_raw/wind_notice/wind_notice_source_v1.png",
+  "prompt": "art_sources/generated_raw/wind_notice/wind_notice_prompt_v1.txt",
+  "scale": 4,
+  "assets": {
+    "wind_notice_panel": {
+      "id": "wind_notice_panel",
+      "source_rect": [
+        30,
+        150,
+        1225,
+        635
+      ],
+      "native_size": [
+        150,
+        60
+      ],
+      "runtime_size": [
+        600,
+        240
+      ],
+      "native_file": "assets/source/ui/wind_notice/wind_notice_panel_native.png",
+      "runtime_file": "assets/textures/ui/wind_notice/wind_notice_panel.png",
+      "safe_area": [
+        126,
+        70,
+        424,
+        94
+      ],
+      "intended_godot_use": "DayMap WindNotice panel backing"
+    },
+    "wind_notice_icon": {
+      "id": "wind_notice_icon",
+      "source_rect": [
+        74,
+        748,
+        455,
+        1128
+      ],
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "native_file": "assets/source/ui/wind_notice/wind_notice_icon_native.png",
+      "runtime_file": "assets/textures/ui/wind_notice/wind_notice_icon.png",
+      "safe_area": [
+        10,
+        10,
+        76,
+        76
+      ],
+      "intended_godot_use": "DayMap WindNotice listening note icon"
+    },
+    "wind_notice_stamp": {
+      "id": "wind_notice_stamp",
+      "source_rect": [
+        500,
+        768,
+        820,
+        1088
+      ],
+      "native_size": [
+        32,
+        32
+      ],
+      "runtime_size": [
+        128,
+        128
+      ],
+      "native_file": "assets/source/ui/wind_notice/wind_notice_stamp_native.png",
+      "runtime_file": "assets/textures/ui/wind_notice/wind_notice_stamp.png",
+      "safe_area": [
+        16,
+        16,
+        96,
+        96
+      ],
+      "intended_godot_use": "Tavern WindNotice fulfilled rumor stamp"
+    },
+    "wind_notice_spark": {
+      "id": "wind_notice_spark",
+      "source_rect": [
+        922,
+        770,
+        1172,
+        1048
+      ],
+      "native_size": [
+        24,
+        24
+      ],
+      "runtime_size": [
+        96,
+        96
+      ],
+      "native_file": "assets/source/ui/wind_notice/wind_notice_spark_native.png",
+      "runtime_file": "assets/textures/ui/wind_notice/wind_notice_spark.png",
+      "safe_area": [
+        8,
+        8,
+        80,
+        80
+      ],
+      "intended_godot_use": "Tavern WindNotice fulfilled rumor sparkle"
+    }
+  }
+}

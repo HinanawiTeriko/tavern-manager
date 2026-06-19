@@ -97,6 +97,20 @@ func _ready() -> void:
 	preview_screen.queue_free()
 	await get_tree().process_frame
 
+	var loss_data := LedgerData.new()
+	loss_data.day = 5
+	loss_data.gold_today = -24
+	loss_data.rep_today = 0
+	loss_data.gold_total = 92
+	loss_data.rep_total = 3
+	loss_data.guests_served = 3
+	loss_data.orders_success = 3
+	loss_data.orders_failed = 0
+	var loss_screen = await _make_screen(loss_data)
+	_test_negative_gold_format_uses_single_minus(loss_screen)
+	loss_screen.queue_free()
+	await get_tree().process_frame
+
 	await _test_fate_notice_waits_for_ledger_tutorial(data)
 	await _test_tutorial_then_fate_presentation_then_score_replay_order()
 
@@ -150,6 +164,33 @@ func _ready() -> void:
 	await _test_mira_cinematic_dismisses_on_click(mira_screen)
 	mira_screen.queue_free()
 	await get_tree().process_frame
+
+	var evelyn_data := LedgerData.new()
+	evelyn_data.day = 20
+	evelyn_data.gold_today = 21
+	evelyn_data.rep_today = 2
+	evelyn_data.gold_total = 96
+	evelyn_data.rep_total = 9
+	evelyn_data.guests_served = 4
+	evelyn_data.orders_success = 4
+	evelyn_data.orders_failed = 0
+	evelyn_data.npc_fates = [
+		{
+			"npc_id": "evelyn",
+			"ending_key": "public_account",
+			"visual_key": "living_witnesses",
+			"npc_name": "伊芙琳",
+			"npc_title": "灰账清算人",
+			"fate_text": "灰账公开。莱恩、托比和米拉三条线合为一案，活人和纸证一起顶住公会封存。"
+		},
+	]
+	var evelyn_screen = await _make_screen(evelyn_data)
+	_test_evelyn_cinematic_overlay(evelyn_screen)
+	await _test_evelyn_cinematic_dismisses_on_click(evelyn_screen)
+	evelyn_screen.queue_free()
+	await get_tree().process_frame
+
+	_test_evelyn_narrative_fate_includes_visual_key(gm)
 
 	_finish()
 
@@ -337,7 +378,7 @@ func _test_game_manager_captures_day3_mercenary_visual_identity(gm: Node) -> voi
 	gm._tavern_view = null
 	gm.economy.current_day = 3
 	gm.guests.reset_daily()
-	gm.guests.spawn_important("ryan", "herb_broth")
+	gm.guests.spawn_important("ryan", "meat_cooked")
 	gm.guests.record_order_failed(0, 0, "failed")
 	gm.guests.record_guest_served()
 	gm.guests.clear_guest()
@@ -494,6 +535,14 @@ func _test_dynamic_data(screen: Node) -> void:
 	_ok(combined.find("5") >= 0, "stats render guests_served")
 	_ok(combined.find("4") >= 0, "stats render orders_success")
 	_ok(combined.find("1") >= 0, "stats render orders_failed")
+
+
+func _test_negative_gold_format_uses_single_minus(screen: Node) -> void:
+	if screen.has_method("_complete_score_replay"):
+		screen._complete_score_replay()
+	var combined := _collect_stats_text(screen)
+	_ok(combined.find("+-24") < 0, "negative gold delta must not render with both plus and minus signs")
+	_ok(combined.find("-24 / 92") >= 0, "negative gold delta renders with a single minus sign")
 
 
 func _test_rumor_summary_text(screen: Node) -> void:
@@ -806,6 +855,76 @@ func _test_mira_cinematic_dismisses_on_click(screen: Node) -> void:
 	screen._unhandled_input(event)
 	await get_tree().process_frame
 	_ok(not overlay.visible, "Mira fate cinematic hides after click")
+
+
+func _test_evelyn_cinematic_overlay(screen: Node) -> void:
+	var overlay := screen.get_node_or_null("EvelynFateCinematic") as Control
+	_ok(overlay != null, "Evelyn settlement shows fate cinematic overlay")
+	if overlay == null:
+		return
+	_ok(screen.get_node_or_null("RyanFateCinematic") == null, "Evelyn settlement does not reuse the Ryan node name")
+	_ok(screen.get_node_or_null("MiraFateCinematic") == null, "Evelyn settlement does not reuse the Mira node name")
+	_ok(overlay.visible, "Evelyn fate cinematic starts visible")
+	_ok(overlay.position == Vector2.ZERO and overlay.size == Vector2(1280, 720), "Evelyn fate cinematic covers the screen")
+	var still := overlay.get_node_or_null("Still") as TextureRect
+	_ok(still != null, "Evelyn fate cinematic has wide still texture")
+	if still != null:
+		_ok(still.position == Vector2(0, 80) and still.size == Vector2(1280, 560), "Evelyn fate still uses intro-style letterbox image bounds")
+		_ok(still.texture != null and String(still.texture.resource_path).ends_with("assets/textures/endings/evelyn/evelyn_living_witnesses.png"), "Evelyn fate still uses pressure-specific runtime texture")
+		_ok(still.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Evelyn fate still uses nearest filtering")
+	var fate_label := overlay.get_node_or_null("FateLabel") as Label
+	_ok(fate_label != null, "Evelyn fate cinematic has fate text label")
+	if fate_label != null:
+		_ok(fate_label.text.find("灰账公开") >= 0, "Evelyn fate label renders the fate text")
+		_ok(fate_label.text.find("金币") < 0 and fate_label.text.find("成功订单") < 0, "Evelyn fate label does not include settlement stats")
+
+
+func _test_evelyn_cinematic_dismisses_on_click(screen: Node) -> void:
+	var overlay := screen.get_node_or_null("EvelynFateCinematic") as Control
+	if overlay == null:
+		return
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = true
+	screen._unhandled_input(event)
+	await get_tree().process_frame
+	_ok(not overlay.visible, "Evelyn fate cinematic hides after click")
+
+
+func _test_evelyn_narrative_fate_includes_visual_key(gm: Node) -> void:
+	var original_ryan = gm.narrative.get_var("ryan_ending")
+	var original_mira = gm.narrative.get_var("mira_ending")
+	var original_toby = gm.narrative.endings.get("toby", null)
+	var original_evelyn = gm.narrative.endings.get("evelyn", null)
+	var original_public = gm.narrative.get_var("grey_public_account_known")
+	var original_pressure = gm.narrative.get_var("evelyn_pressure")
+	var original_ending = gm.narrative.get_var("evelyn_ending")
+	gm.narrative.set_var("ryan_ending", "alternative_survivor")
+	gm.narrative.set_var("mira_ending", "she_finally_stopped")
+	gm.narrative.set_ending("toby", "saved")
+	gm.narrative.set_var("grey_public_account_known", true)
+	gm.narrative.finalize_evelyn_ending()
+	var fates: Array = gm.narrative.get_today_npc_fates(20)
+	var evelyn_fate: Dictionary = {}
+	for fate in fates:
+		if fate is Dictionary and String(fate.get("npc_id", "")) == "evelyn":
+			evelyn_fate = fate
+			break
+	_ok(String(evelyn_fate.get("ending_key", "")) == "public_account", "Evelyn fate includes route key")
+	_ok(String(evelyn_fate.get("visual_key", "")) == "living_witnesses", "Evelyn fate includes pressure-specific visual key")
+	gm.narrative.set_var("ryan_ending", original_ryan)
+	gm.narrative.set_var("mira_ending", original_mira)
+	if original_toby == null:
+		gm.narrative.endings.erase("toby")
+	else:
+		gm.narrative.endings["toby"] = original_toby
+	if original_evelyn == null:
+		gm.narrative.endings.erase("evelyn")
+	else:
+		gm.narrative.endings["evelyn"] = original_evelyn
+	gm.narrative.set_var("grey_public_account_known", original_public)
+	gm.narrative.set_var("evelyn_pressure", original_pressure)
+	gm.narrative.set_var("evelyn_ending", original_ending)
 
 
 func _test_compact_stats_rows(screen: Node) -> void:

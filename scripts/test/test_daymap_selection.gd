@@ -13,7 +13,9 @@ const DAYMAP_SCENE := preload("res://scenes/ui/DayMap.tscn")
 
 func _ready() -> void:
 	await _test_single_selection_ring()
+	await _test_pinned_note_stays_inside_visible_map_view()
 	await _test_tutorial_highlight_rects_follow_map_area()
+	await _test_yield_text_uses_item_display_names()
 	_test_clear_selection_is_centralized()
 	_finish()
 
@@ -60,6 +62,32 @@ func _rect_array_close(actual: Array, expected: Array, tolerance: float = 0.5) -
 	return true
 
 
+func _rect_contains_rect(container: Rect2, rect: Rect2, tolerance: float = 0.5) -> bool:
+	return rect.position.x >= container.position.x - tolerance \
+		and rect.position.y >= container.position.y - tolerance \
+		and rect.end.x <= container.end.x + tolerance \
+		and rect.end.y <= container.end.y + tolerance
+
+
+func _camera_visible_rect(camera: Camera2D) -> Rect2:
+	var zoom := maxf(camera.zoom.x, 0.001)
+	var size := camera.get_viewport_rect().size / zoom
+	return Rect2(camera.position - size * 0.5, size)
+
+
+func _pinned_note_safe_rect(view) -> Rect2:
+	var camera := view._camera as Camera2D
+	var visible := _camera_visible_rect(camera)
+	var zoom := maxf(camera.zoom.x, 0.001)
+	var side_margin := 16.0 / zoom
+	var top_margin := 64.0 / zoom
+	var bottom_margin := 16.0 / zoom
+	return Rect2(
+		visible.position + Vector2(side_margin, top_margin),
+		visible.size - Vector2(side_margin * 2.0, top_margin + bottom_margin)
+	)
+
+
 func _test_single_selection_ring() -> void:
 	var view = DAYMAP_SCENE.instantiate()
 	add_child(view)
@@ -84,6 +112,65 @@ func _test_single_selection_ring() -> void:
 	_ok(_selected_ring_count(view) == 1, "switching selection A↔B never stacks two rings")
 
 	view.queue_free()
+
+
+func _test_pinned_note_stays_inside_visible_map_view() -> void:
+	var view = DAYMAP_SCENE.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	view._camera.apply_view(Vector2(640.0, 420.0), 1.0)
+
+	var visible := _camera_visible_rect(view._camera)
+	var center := visible.position + visible.size * 0.5
+	var edge_locs := [
+		{"id": "edge_left", "name": "Left Edge", "pos": [visible.position.x + 8.0, center.y]},
+		{"id": "edge_right", "name": "Right Edge", "pos": [visible.end.x - 8.0, center.y]},
+		{"id": "edge_top", "name": "Top Edge", "pos": [center.x, visible.position.y + 8.0]},
+		{"id": "edge_bottom", "name": "Bottom Edge", "pos": [center.x, visible.end.y - 8.0]},
+	]
+
+	for loc in edge_locs:
+		var location_id := String(loc["id"])
+		view._create_marker(loc, false)
+		view._selected_id = location_id
+		view._pinned_note_panel.visible = true
+		view._update_pinned_note_position()
+		var note_rect := Rect2(view._pinned_note_panel.position, view._pinned_note_panel.size)
+		_ok(_rect_contains_rect(_pinned_note_safe_rect(view), note_rect),
+			"pinned detail note stays fully visible for marker near %s" % location_id)
+
+	view.queue_free()
+
+
+func _test_yield_text_uses_item_display_names() -> void:
+	var gm = get_node("/root/GameManager")
+	gm.economy.current_day = 2
+	gm.start_day_map(2)
+	var view = DAYMAP_SCENE.instantiate()
+	add_child(view)
+	await get_tree().process_frame
+
+	var forest := _find_location(gm.day_map.get_locations(), "mushroom_forest")
+	var day2_yield := String(view._yield_text(forest))
+	_ok(day2_yield.contains("沉睡花粉"), "DayMap day-specific yield uses the item display name")
+	_ok(not day2_yield.contains("sleep_powder"), "DayMap day-specific yield does not expose item ids")
+
+	gm.economy.current_day = 3
+	gm.start_day_map(3)
+	forest = _find_location(gm.day_map.get_locations(), "mushroom_forest")
+	var day3_yield := String(view._yield_text(forest))
+	_ok(day3_yield.contains("草药"), "DayMap repeatable yield uses the item display name")
+	_ok(not day3_yield.contains("herb"), "DayMap repeatable yield does not expose item ids")
+
+	view.queue_free()
+
+
+func _find_location(locations: Array, location_id: String) -> Dictionary:
+	for loc in locations:
+		if String(loc.get("id", "")) == location_id:
+			return loc
+	return {}
 
 
 func _test_tutorial_highlight_rects_follow_map_area() -> void:

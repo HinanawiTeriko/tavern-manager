@@ -69,6 +69,7 @@ var _menu_prep_start_btn: Button
 var _menu_prep_selected: Array[String] = []
 var _menu_prep_buttons: Dictionary = {}
 var _menu_prep_focus_product_key: String = ""
+var _menu_prep_temporarily_hidden: bool = false
 
 var daily_menu: Dictionary = {}
 var daily_menu_confirmed: bool = true
@@ -90,6 +91,9 @@ const RECIPE_DISCOVERY_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.pn
 const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
 const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
+const MENU_PREP_LEFT_TEXT_WIDTH := 286.0
+const MENU_PREP_RUMOR_CARD_HEIGHT := 124.0
+const MENU_PREP_ECHO_CARD_HEIGHT := 78.0
 
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
@@ -138,7 +142,12 @@ const GOLD_PROGRESS_THRESHOLDS := [0, 50, 100, 200, 400]
 const REP_PROGRESS_THRESHOLDS := [0, 50, 150]
 const SHORTCUT_SLOT_SIZE := Vector2(96, 40)
 const SHORTCUT_SEPARATION := 4
+const STAGE_CAPTION_POS := Vector2(240.0, 112.0)
+const STAGE_CAPTION_SIZE := Vector2(800.0, 40.0)
+const STAGE_CAPTION_Z_INDEX := 90
 const MAX_DAILY_MENU_ITEMS := 4
+const CUSTOMER_BUBBLE_Z_INDEX := 70
+const CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX := 71
 const DIALOGUE_SPEAKER_Z_INDEX := 10
 const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
@@ -177,7 +186,9 @@ func _ready() -> void:
 	_inventory_overlay = $InventoryOverlay
 	_inventory_overlay.configure(_gm)
 	_inventory_overlay.item_dropped.connect(_on_inventory_item_dropped)
+	_inventory_overlay.closed.connect(_on_modal_overlay_closed)
 	_document_overlay = $DocumentOverlay
+	_document_overlay.closed.connect(_on_modal_overlay_closed)
 	_settings_panel = $SettingsPanel
 	_settings_panel.configure(_gm.settings)
 	_settings_panel.closed.connect(_on_settings_closed)
@@ -244,6 +255,7 @@ func _apply_theme() -> void:
 	_reaction_bubble.clip_text = true
 	_reaction_bubble.visible = false
 	_configure_reaction_highlight()
+	_configure_customer_bubble_layers()
 	var patience_icon := get_node_or_null("CustomerArea/PatienceIcon") as TextureRect
 	if patience_icon != null:
 		patience_icon.texture = TextureManager.try_load("res://assets/textures/ui/icon_patience.png")
@@ -327,6 +339,7 @@ func _apply_theme() -> void:
 	_stage_caption.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
 	_stage_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_stage_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_configure_stage_caption_layout()
 	if _inference_ready_notice != null:
 		ThemeColors.style_brush_label(_inference_ready_notice, 72, ThemeColors.AMBER_PRIMARY)
 		_inference_ready_notice.add_theme_constant_override("outline_size", 5)
@@ -373,7 +386,7 @@ func _configure_reaction_highlight() -> void:
 		return
 	_reaction_highlight.position = _reaction_bubble.position
 	_reaction_highlight.size = _reaction_bubble.size
-	_reaction_highlight.z_index = _reaction_bubble.z_index + 1
+	_reaction_highlight.z_index = CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX
 	_reaction_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_reaction_highlight.bbcode_enabled = true
 	_reaction_highlight.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -387,6 +400,22 @@ func _configure_reaction_highlight() -> void:
 	_reaction_highlight.add_theme_font_size_override("normal_font_size", 16)
 	_reaction_highlight.add_theme_color_override("default_color", Color.WHITE)
 	_reaction_highlight.visible = false
+
+func _configure_stage_caption_layout() -> void:
+	if _stage_caption == null:
+		return
+	_stage_caption.position = STAGE_CAPTION_POS
+	_stage_caption.size = STAGE_CAPTION_SIZE
+	_stage_caption.z_index = STAGE_CAPTION_Z_INDEX
+
+
+func _configure_customer_bubble_layers() -> void:
+	if _order_bubble != null:
+		_order_bubble.z_index = CUSTOMER_BUBBLE_Z_INDEX
+	if _reaction_bubble != null:
+		_reaction_bubble.z_index = CUSTOMER_BUBBLE_Z_INDEX
+	if _reaction_highlight != null:
+		_reaction_highlight.z_index = CUSTOMER_BUBBLE_HIGHLIGHT_Z_INDEX
 
 
 func _configure_topbar_layout() -> void:
@@ -708,6 +737,8 @@ func _customer_texture_key(npc_id: String, outcome: String = "") -> String:
 		return _grey_ledger_lady_texture_key(outcome)
 	if npc_id.begins_with("regular_"):
 		return _regular_customer_texture_key(npc_id, outcome)
+	if npc_id.begins_with("meme_"):
+		return _meme_guest_texture_key(npc_id, outcome)
 	return NPC_TEXTURE_KEYS.get(npc_id, npc_id)
 
 func _regular_customer_texture_key(customer_id: String, outcome: String = "") -> String:
@@ -717,6 +748,14 @@ func _regular_customer_texture_key(customer_id: String, outcome: String = "") ->
 	elif outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
 		state = "dissatisfied"
 	return "%s_%s" % [customer_id, state]
+
+func _meme_guest_texture_key(guest_id: String, outcome: String = "") -> String:
+	var state := "neutral"
+	if outcome == "success":
+		state = "satisfied"
+	elif outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
+		state = "dissatisfied"
+	return "%s_%s" % [guest_id, state]
 
 func _ryan_texture_key(outcome: String = "") -> String:
 	if outcome in ["fail_wrong", "fail_weird", "fail", "impatient"]:
@@ -1076,6 +1115,33 @@ func is_menu_config_open() -> bool:
 	return _menu_prep_panel != null and _menu_prep_panel.visible
 
 
+func _set_menu_prep_temporarily_hidden(hidden: bool) -> void:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return
+	if hidden:
+		if _menu_prep_panel.visible:
+			_menu_prep_temporarily_hidden = true
+			_menu_prep_panel.visible = false
+		return
+	_restore_menu_prep_if_no_blocking_overlay()
+
+
+func _restore_menu_prep_if_no_blocking_overlay() -> void:
+	if not _menu_prep_temporarily_hidden:
+		return
+	if _menu_panel != null and _menu_panel.visible:
+		return
+	if _inventory_overlay != null and _inventory_overlay.visible:
+		return
+	if _document_overlay != null and _document_overlay.visible:
+		return
+	if _settings_panel != null and _settings_panel.visible:
+		return
+	_menu_prep_temporarily_hidden = false
+	if _menu_prep_panel != null and is_instance_valid(_menu_prep_panel) and not daily_menu_confirmed:
+		_menu_prep_panel.visible = true
+
+
 func configure_menu_preparation(rumors: Array = [], echoes: Array = []) -> void:
 	_ensure_menu_prep_panel()
 	daily_menu.clear()
@@ -1087,6 +1153,7 @@ func configure_menu_preparation(rumors: Array = [], echoes: Array = []) -> void:
 	_rebuild_menu_prep_echoes(echoes)
 	_rebuild_menu_prep_products()
 	_refresh_menu_prep_selection()
+	_menu_prep_temporarily_hidden = false
 	_menu_prep_panel.visible = true
 	if _menu_panel != null:
 		_menu_panel.visible = false
@@ -1124,10 +1191,12 @@ func _ensure_menu_prep_panel() -> void:
 
 	_menu_prep_rumor_list = VBoxContainer.new()
 	_menu_prep_rumor_list.name = "RumorList"
-	_menu_prep_rumor_list.position = Vector2(36, 102)
-	_menu_prep_rumor_list.size = Vector2(300, 146)
-	_menu_prep_rumor_list.add_theme_constant_override("separation", 6)
-	_menu_prep_panel.add_child(_menu_prep_rumor_list)
+	_menu_prep_rumor_list.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 0.0)
+	_menu_prep_rumor_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_prep_rumor_list.add_theme_constant_override("separation", 12)
+	var rumor_scroll := _make_menu_prep_scroll("RumorScroll", Vector2(36, 102), Vector2(300, 146))
+	rumor_scroll.add_child(_menu_prep_rumor_list)
+	_menu_prep_panel.add_child(rumor_scroll)
 
 	var echo_title := Label.new()
 	echo_title.name = "YesterdayEchoTitle"
@@ -1139,10 +1208,12 @@ func _ensure_menu_prep_panel() -> void:
 
 	_menu_prep_echo_list = VBoxContainer.new()
 	_menu_prep_echo_list.name = "YesterdayEchoList"
-	_menu_prep_echo_list.position = Vector2(36, 288)
-	_menu_prep_echo_list.size = Vector2(300, 92)
-	_menu_prep_echo_list.add_theme_constant_override("separation", 5)
-	_menu_prep_panel.add_child(_menu_prep_echo_list)
+	_menu_prep_echo_list.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 0.0)
+	_menu_prep_echo_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_prep_echo_list.add_theme_constant_override("separation", 8)
+	var echo_scroll := _make_menu_prep_scroll("YesterdayEchoScroll", Vector2(36, 288), Vector2(300, 92))
+	echo_scroll.add_child(_menu_prep_echo_list)
+	_menu_prep_panel.add_child(echo_scroll)
 
 	var product_title := Label.new()
 	product_title.name = "ProductTitle"
@@ -1152,11 +1223,7 @@ func _ensure_menu_prep_panel() -> void:
 	ThemeColors.style_brush_label(product_title, 16, ThemeColors.TEXT_SUBTITLE)
 	_menu_prep_panel.add_child(product_title)
 
-	var product_scroll := ScrollContainer.new()
-	product_scroll.name = "ProductScroll"
-	product_scroll.position = Vector2(384, 102)
-	product_scroll.size = Vector2(340, 318)
-	product_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var product_scroll := _make_menu_prep_scroll("ProductScroll", Vector2(384, 102), Vector2(340, 318))
 	_menu_prep_panel.add_child(product_scroll)
 
 	_menu_prep_product_list = VBoxContainer.new()
@@ -1191,6 +1258,17 @@ func _ensure_menu_prep_panel() -> void:
 	_menu_prep_panel.add_child(_menu_prep_start_btn)
 
 
+func _make_menu_prep_scroll(node_name: String, node_position: Vector2, node_size: Vector2) -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = node_name
+	scroll.position = node_position
+	scroll.size = node_size
+	scroll.clip_contents = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	return scroll
+
+
 func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 	for child in _menu_prep_rumor_list.get_children():
 		child.queue_free()
@@ -1198,7 +1276,7 @@ func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 		var empty := Label.new()
 		empty.text = "今天还没有听到能影响菜单的传闻。"
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.custom_minimum_size = Vector2(286, 48)
+		empty.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 48)
 		ThemeColors.style_brush_label(empty, 14, ThemeColors.TEXT_DIM)
 		_menu_prep_rumor_list.add_child(empty)
 		return
@@ -1209,18 +1287,21 @@ func _rebuild_menu_prep_rumors(rumors: Array) -> void:
 		var customerGroups := _strings_from_array(menu_hints.get("customerGroups", []), 3)
 		var affectedNames := _customer_names_from_previews(rumor_data.get("affectedCustomers", []), 3)
 		var recommendedTags := _strings_from_array(menu_hints.get("recommendedTags", []), 4)
-		label.text = "· " + String(rumor_data.get("text", ""))
+		label.text = "风声 · " + String(rumor_data.get("text", ""))
 		var summary := String(menu_hints.get("summary", ""))
 		if summary != "":
-			label.text += "\n" + summary
+			label.text += "\n菜单：" + summary
+		var context_parts: Array[String] = []
 		if not customerGroups.is_empty():
-			label.text += "\n客群：" + " / ".join(customerGroups)
+			context_parts.append("客群 " + " / ".join(customerGroups))
 		if not affectedNames.is_empty():
-			label.text += "\n可能来：" + " / ".join(affectedNames)
+			context_parts.append("可能来 " + " / ".join(affectedNames))
 		if not recommendedTags.is_empty():
-			label.text += "\n推荐：" + " / ".join(recommendedTags)
+			context_parts.append("推荐 " + " / ".join(recommendedTags))
+		if not context_parts.is_empty():
+			label.text += "\n" + "；".join(PackedStringArray(context_parts))
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.custom_minimum_size = Vector2(286, 124)
+		label.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, MENU_PREP_RUMOR_CARD_HEIGHT)
 		ThemeColors.style_brush_label(label, 14, ThemeColors.TEXT_SUBTITLE)
 		_menu_prep_rumor_list.add_child(label)
 
@@ -1232,7 +1313,7 @@ func _rebuild_menu_prep_echoes(echoes: Array) -> void:
 		var empty := Label.new()
 		empty.text = "暂无昨日回响。"
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.custom_minimum_size = Vector2(286, 34)
+		empty.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, 34)
 		ThemeColors.style_brush_label(empty, 13, ThemeColors.TEXT_DIM)
 		_menu_prep_echo_list.add_child(empty)
 		return
@@ -1252,7 +1333,7 @@ func _rebuild_menu_prep_echoes(echoes: Array) -> void:
 		if not tags.is_empty():
 			label.text += "\n记忆：" + " / ".join(tags)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.custom_minimum_size = Vector2(286, 58)
+		label.custom_minimum_size = Vector2(MENU_PREP_LEFT_TEXT_WIDTH, MENU_PREP_ECHO_CARD_HEIGHT)
 		ThemeColors.style_brush_label(label, 13, ThemeColors.TEXT_LIGHT)
 		_menu_prep_echo_list.add_child(label)
 		shown += 1
@@ -1285,8 +1366,6 @@ func _rebuild_menu_prep_products() -> void:
 		button.pressed.connect(func(): _toggle_menu_prep_product(key_copy))
 		_menu_prep_product_list.add_child(button)
 		_menu_prep_buttons[product_key] = button
-		if _menu_prep_selected.size() < MAX_DAILY_MENU_ITEMS:
-			_menu_prep_selected.append(product_key)
 
 
 func _menu_product_tag_text(product_key: String) -> String:
@@ -1412,6 +1491,7 @@ func _confirm_menu_preparation() -> void:
 			"enabled": true,
 		}
 	daily_menu_confirmed = true
+	_menu_prep_temporarily_hidden = false
 	_menu_prep_panel.visible = false
 	if _gm != null and _gm.has_method("on_menu_confirmed"):
 		_gm.on_menu_confirmed()
@@ -1630,6 +1710,7 @@ func _set_customer_dialogue_highlight(active: bool) -> void:
 		_customer_dialogue_highlight_active = false
 
 func _exit_tree() -> void:
+	clear_physics_law()
 	if _gm != null and _gm.inventory_changed.is_connected(_on_inventory_changed):
 		_gm.inventory_changed.disconnect(_on_inventory_changed)
 
@@ -1647,8 +1728,12 @@ func toggle_menu() -> void:
 	_document_overlay.close()
 	_menu_panel.visible = not _menu_panel.visible
 	if _menu_panel.visible:
+		_set_menu_prep_temporarily_hidden(true)
+		_menu_panel.move_to_front()
 		_build_recipe_list()
 		_build_backpack_list()
+	else:
+		_restore_menu_prep_if_no_blocking_overlay()
 
 func is_menu_open() -> bool:
 	return (_menu_panel != null and _menu_panel.visible) \
@@ -1660,11 +1745,18 @@ func is_menu_open() -> bool:
 func _open_settings() -> void:
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnSettings)
 	_menu_panel.visible = false
+	_set_menu_prep_temporarily_hidden(true)
 	_settings_panel.open()
+	_settings_panel.move_to_front()
 
 
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
+	_menu_panel.move_to_front()
+
+
+func _on_modal_overlay_closed() -> void:
+	call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 
 
 func _select_overlay_tab(selected: Button) -> void:
@@ -1678,14 +1770,19 @@ func toggle_inventory_overlay() -> void:
 	_document_overlay.close()
 	if _inventory_overlay.visible:
 		_inventory_overlay.close()
+		_restore_menu_prep_if_no_blocking_overlay()
 	else:
+		_set_menu_prep_temporarily_hidden(true)
 		_inventory_overlay.open()
+		_inventory_overlay.move_to_front()
 
 
 func open_document(document: Dictionary) -> void:
 	_menu_panel.visible = false
 	_inventory_overlay.close()
+	_set_menu_prep_temporarily_hidden(true)
 	_document_overlay.open_document(document)
+	_document_overlay.move_to_front()
 	_refresh_ledger_hint()
 
 
@@ -1703,13 +1800,31 @@ func _refresh_ledger_hint() -> void:
 	ledger.set_unread_hint_visible(unread)
 
 
+func _get_bar_workspace() -> Node:
+	return get_node_or_null("BarWorkspace")
+
+
+func apply_physics_law(law: Dictionary) -> void:
+	var bar := _get_bar_workspace()
+	if bar != null and bar.has_method("apply_physics_law"):
+		bar.call("apply_physics_law", law)
+
+
+func clear_physics_law() -> void:
+	var bar := _get_bar_workspace()
+	if bar != null and bar.has_method("clear_physics_law"):
+		bar.call("clear_physics_law")
+
+
 func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> void:
 	var bar = get_node_or_null("BarWorkspace")
 	if bar != null and bar.has_method("bind_shortcut_at_position"):
 		if bar.bind_shortcut_at_position(item_key, global_position):
+			call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 			return
 	if bar != null and bar.has_method("spawn_inventory_item_at"):
 		bar.spawn_inventory_item_at(item_key, global_position)
+	call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1721,6 +1836,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_document_overlay.close()
 	elif _inventory_overlay.visible:
 		_inventory_overlay.close()
+		_restore_menu_prep_if_no_blocking_overlay()
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -1761,6 +1877,8 @@ func _reset_tutorial_progress_from_ui() -> void:
 
 func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 	match group_key:
+		"menu_prep":
+			return _menu_prep_tutorial_rects()
 		"craft":
 			return _craft_tutorial_rects()
 		"seasoning":
@@ -1770,12 +1888,39 @@ func get_tutorial_highlight_rects(group_key: String) -> Dictionary:
 	return {}
 
 
+func trigger_menu_prep_tutorial() -> void:
+	var tm = get_node_or_null("/root/TutorialManager")
+	if tm == null or tm._is_active:
+		return
+	if _menu_prep_panel == null or not _menu_prep_panel.visible:
+		return
+	tm.start_tutorial("menu_prep", get_tutorial_highlight_rects("menu_prep"))
+
+
 func trigger_craft_tutorial() -> void:
 	var tm = get_node_or_null("/root/TutorialManager")
 	if tm == null:
 		return
+	if is_menu_config_open():
+		return
 
 	tm.start_tutorial("craft", get_tutorial_highlight_rects("craft"))
+
+
+func _menu_prep_tutorial_rects() -> Dictionary:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return {}
+	var rumor_rect := _union_screen_rects([
+		_menu_prep_child_screen_rect("RumorScroll"),
+		_menu_prep_child_screen_rect("YesterdayEchoScroll"),
+	])
+	var product_rect := _menu_prep_child_screen_rect("ProductScroll")
+	var start_rect := _control_screen_rect(_menu_prep_start_btn)
+	return {
+		"MenuPrepRumors": rumor_rect,
+		"MenuPrepProducts": product_rect,
+		"MenuPrepStartButton": start_rect,
+	}
 
 
 func _craft_tutorial_rects() -> Dictionary:
@@ -1798,6 +1943,11 @@ func _craft_tutorial_rects() -> Dictionary:
 func _serve_tutorial_rects() -> Dictionary:
 	return {
 		"CustomerNode": _control_screen_rect(get_node_or_null("CustomerArea") as Control),
+		"OrderGroove": _union_screen_rects([
+			_control_screen_rect(get_node_or_null("CustomerArea/OrderBubble") as Control),
+			_control_screen_rect(get_node_or_null("CustomerArea/PatienceIcon") as Control),
+			_control_screen_rect(get_node_or_null("CustomerArea/TimerBar") as Control),
+		]),
 	}
 
 
@@ -1813,6 +1963,13 @@ func _control_screen_rect(control: Control) -> Array:
 		return [0.0, 0.0, 0.0, 0.0]
 	var rect := control.get_global_rect()
 	return _rect_to_array(rect)
+
+
+func _menu_prep_child_screen_rect(node_path: String) -> Array:
+	if _menu_prep_panel == null or not is_instance_valid(_menu_prep_panel):
+		return []
+	var control := _menu_prep_panel.get_node_or_null(node_path) as Control
+	return _control_screen_rect(control)
 
 
 func _available_sprite_screen_rect(sprite_path: String, fallback_node_path: String, fallback_size: Vector2, padding: Vector2 = Vector2.ZERO) -> Array:

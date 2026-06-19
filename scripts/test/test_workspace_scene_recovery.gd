@@ -35,6 +35,7 @@ func _ready() -> void:
 	await _test_spoon_renders_below_container_visuals()
 	await _test_held_items_render_below_container_visuals()
 	await _test_settings_menu_entry()
+	await _test_overlay_menu_clickable_during_menu_preparation()
 	await _test_overlay_menu_renders_above_workspace()
 	await _test_recipe_menu_uses_split_layout()
 	await _test_recipe_book_shows_dough_operation()
@@ -849,6 +850,36 @@ func _test_settings_menu_entry() -> void:
 	await get_tree().process_frame
 	_ok(not settings_panel.visible, "settings panel closes")
 	_ok(tavern.get_node("OverlayMenu").visible, "closing settings restores the overlay menu")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_overlay_menu_clickable_during_menu_preparation() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	tavern.configure_menu_preparation([], [])
+	await get_tree().process_frame
+
+	var prep_panel := tavern.get_node_or_null("MenuPrepPanel") as Control
+	var overlay_menu := tavern.get_node("OverlayMenu") as Control
+	_ok(prep_panel != null and prep_panel.visible, "menu preparation panel is visible before opening the legacy menu")
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	_ok(overlay_menu.visible, "legacy overlay menu opens during menu preparation")
+	_ok(prep_panel != null and not prep_panel.visible,
+		"menu preparation panel stops blocking input while the legacy overlay menu is open")
+	_ok(tavern.get_children().find(overlay_menu) > tavern.get_children().find(prep_panel),
+		"legacy overlay menu is above the menu preparation panel in GUI input order")
+
+	tavern.toggle_menu()
+	await get_tree().process_frame
+	_ok(not overlay_menu.visible, "legacy overlay menu closes from menu toggle during menu preparation")
+	_ok(prep_panel != null and prep_panel.visible, "menu preparation panel remains available after closing the legacy menu")
 
 	tavern.queue_free()
 	await get_tree().process_frame
