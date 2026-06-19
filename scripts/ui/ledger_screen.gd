@@ -936,8 +936,10 @@ func _on_continue() -> void:
 	if _score_replay_active:
 		_complete_score_replay()
 		return
-	var gm = get_node("/root/GameManager")
-	gm.day_cycle.next_phase()
+	BGMManager.fade_shade_in(func():
+		var gm := get_node("/root/GameManager")
+		gm.day_cycle.next_phase()
+	)
 
 
 func _on_restart_day() -> void:

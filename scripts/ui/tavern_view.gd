@@ -1958,22 +1958,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 func _on_end_night() -> void:
-	# 熄灯过渡：黑屏渐入 + BGM 淡出，1.5s 后切场景
-	var shade := ColorRect.new()
-	shade.name = "NightEndShade"
-	shade.color = Color.BLACK
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shade.modulate.a = 0.0
-	shade.z_index = 200
-	add_child(shade)
-
-	var tw := create_tween()
-	tw.tween_property(shade, "modulate:a", 1.0, 0.8)
-
-	BGMManager.fade_out(1.2)
-
-	await get_tree().create_timer(1.5).timeout
 	_gm.end_night()
 
 func _add_tutorial_button_to_menu() -> void:

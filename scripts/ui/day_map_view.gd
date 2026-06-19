@@ -141,6 +141,7 @@ var _gold_label: Label
 
 func _ready() -> void:
 	BGMManager.crossfade_to(DAYMAP_BGM)
+	BGMManager.fade_shade_out()
 	_stamina_label = $UILayer/TopBar/StaminaLabel
 	_day_label = $UILayer/TopBar/DayLabel
 	_result_panel = $UILayer/ResultPanel
