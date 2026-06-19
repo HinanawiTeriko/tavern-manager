@@ -18,7 +18,7 @@ const SILHOUETTE_QUEUE_SPACING := 108.0
 const SILHOUETTE_ARRIVAL_DURATION := 0.32
 const SILHOUETTE_STEP_PAUSE := 0.08
 const PIXEL_FONT: Font = preload("res://assets/fonts/fusion-pixel/fusion-pixel-12px-proportional-zh_hans.ttf")
-const FATE_BGM := preload("res://assets/audio/bgm/fate.wav")
+const FATE_BGM_PATH := "res://assets/audio/bgm/fate.wav"
 const FATE_REVEAL_TEXT := "宿命轨迹已显现"
 const FATE_PREVIEW_TEXT := "宿命轨迹即将显现"
 const FATE_REVEAL_HOLD := 1.25
@@ -385,7 +385,7 @@ func _create_ryan_fate_cinematic(texture: Texture2D, fate_text: String) -> Contr
 
 
 func _play_fate_cinematic_intro(overlay: Control) -> void:
-	BGMManager.crossfade_to(FATE_BGM)
+	BGMManager.crossfade_to_path(FATE_BGM_PATH)
 	var still := overlay.get_node_or_null("Still") as TextureRect
 	var fate_label := overlay.get_node_or_null("FateLabel") as Label
 	if still == null or fate_label == null:

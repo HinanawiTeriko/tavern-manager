@@ -160,7 +160,7 @@ const DIALOGUE_SPEAKER_MODULATE := Color(1.18, 1.1, 0.95, 1.0)
 
 func _ready() -> void:
 	_gm = get_node("/root/GameManager")
-	BGMManager.crossfade_to(preload("res://assets/audio/bgm/business.wav"))
+	BGMManager.crossfade_to_path("res://assets/audio/bgm/business.wav")
 	_refresh_default_daily_menu()
 	_bg_sprite = $Background
 	_customer_sprite = $CustomerArea/CustomerSprite

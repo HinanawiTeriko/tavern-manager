@@ -15,6 +15,7 @@ var _player_a: AudioStreamPlayer
 var _player_b: AudioStreamPlayer
 var _active: String = "a"
 var _current_stream: AudioStream = null
+var _current_stream_key: String = ""
 
 # 交叉淡变状态
 var _state: int = State.IDLE
@@ -28,6 +29,7 @@ var _shade_layer: CanvasLayer
 var _shade_rect: ColorRect
 var _shade_state: int = 0  # 0=hidden, 1=fading_in, 2=visible, 3=fading_out
 var _shade_elapsed: float = 0.0
+var _shade_fade_start_alpha: float = 1.0
 var _shade_done_callback: Callable
 
 
@@ -38,6 +40,7 @@ func _ready() -> void:
 		AudioServer.add_bus(master_idx + 1)
 		AudioServer.set_bus_name(master_idx + 1, "Music")
 		AudioServer.set_bus_send(master_idx + 1, "Master")
+	_apply_settings_volume()
 
 	_player_a = AudioStreamPlayer.new()
 	_player_b = AudioStreamPlayer.new()
@@ -88,7 +91,7 @@ func _process(delta: float) -> void:
 		3:  # fading_out
 			_shade_elapsed += delta
 			var st: float = clamp(_shade_elapsed / SHADE_FADE_DURATION, 0.0, 1.0)
-			_shade_rect.modulate.a = 1.0 - st
+			_shade_rect.modulate.a = lerpf(_shade_fade_start_alpha, 0.0, st)
 			if st >= 1.0:
 				_shade_state = 0
 
@@ -112,20 +115,50 @@ func _bgm_finish() -> void:
 
 
 func crossfade_to(stream: AudioStream, duration: float = DEFAULT_CROSSFADE) -> void:
-	if stream == null or stream == _current_stream:
+	var stream_key := ""
+	if stream != null:
+		stream_key = "stream:%d" % stream.get_instance_id()
+	_crossfade_to_stream(stream, stream_key, duration)
+
+
+func crossfade_to_path(path: String, duration: float = DEFAULT_CROSSFADE) -> void:
+	if path == "" or path == _current_stream_key:
 		return
-	_current_stream = stream
+	var resource := load(path)
+	var stream := resource as AudioStream
+	if stream == null:
+		push_warning("BGMManager could not load BGM stream: " + path)
+		return
+	_crossfade_to_stream(stream, path, duration)
+
+
+func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: float) -> void:
+	if stream == null or stream_key == _current_stream_key:
+		return
+	var prepared_stream := _prepare_bgm_stream(stream)
+	_current_stream = prepared_stream
+	_current_stream_key = stream_key
 	_fade_out_player = _player_a if _active == "a" else _player_b
 	_fade_in_player  = _player_b if _active == "a" else _player_a
-	_fade_in_player.stream = stream
+	_fade_in_player.stream = prepared_stream
 	_fade_in_player.volume_db = MIN_VOLUME_DB
 	_fade_in_player.play()
 	_elapsed = 0.0; _duration = max(duration, 0.05)
 	_state = State.CROSSFADE
 
 
+func _prepare_bgm_stream(stream: AudioStream) -> AudioStream:
+	var wav := stream as AudioStreamWAV
+	if wav == null:
+		return stream
+	var prepared := wav.duplicate(true) as AudioStreamWAV
+	prepared.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	return prepared
+
+
 func fade_out(duration: float = 0.5) -> void:
 	_current_stream = null
+	_current_stream_key = ""
 	_fade_out_player = _player_a if _active == "a" else _player_b
 	_fade_in_player = null
 	if not is_instance_valid(_fade_out_player) or not _fade_out_player.playing:
@@ -137,8 +170,18 @@ func fade_out(duration: float = 0.5) -> void:
 
 func stop_immediate() -> void:
 	_current_stream = null; _state = State.IDLE
+	_current_stream_key = ""
 	_player_a.stop(); _player_a.stream = null
 	_player_b.stop(); _player_b.stream = null
+
+
+func _apply_settings_volume() -> void:
+	var gm := get_node_or_null("/root/GameManager")
+	if gm == null:
+		return
+	var settings = gm.get("settings")
+	if settings != null and settings.has_method("apply_all"):
+		settings.apply_all()
 
 
 # ============================================================
@@ -155,5 +198,11 @@ func fade_shade_in(callback: Callable = Callable()) -> void:
 
 ## 黑幕渐出（新场景 ready 时调用）
 func fade_shade_out() -> void:
+	if _shade_rect == null:
+		return
+	if _shade_state == 0 and _shade_rect.modulate.a <= 0.001:
+		_shade_rect.modulate.a = 0.0
+		return
 	_shade_state = 3
 	_shade_elapsed = 0.0
+	_shade_fade_start_alpha = clampf(_shade_rect.modulate.a, 0.0, 1.0)
