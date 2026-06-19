@@ -9,6 +9,9 @@ func _ready() -> void:
 	_test_orderable_products_wait_for_production_chain()
 	_test_recipe_discovery_controls_recipe_visibility()
 	_test_recipe_discovery_new_marker_can_be_cleared()
+	_test_hand_combine_recipes_are_discoverable()
+	_test_intermediate_items_have_downstream_use()
+	_test_recipe_expansion_items_unlocks_and_attributes()
 	_test_shop_unlock_keys_exist_in_recipes()
 	_test_today_important_npc_resets_on_empty_day()
 	_test_material_icons_load()
@@ -90,6 +93,93 @@ func _test_recipe_discovery_new_marker_can_be_cleared() -> void:
 	_ok(not craft.call("mark_recipe_new", "herb_broth"), "marking an already-new recipe is a no-op")
 	_ok(craft.call("clear_recipe_new", "herb_broth"), "new recipe marker can be cleared")
 	_ok(not craft.call("is_recipe_new", "herb_broth"), "cleared recipe no longer reports as new")
+
+
+func _test_hand_combine_recipes_are_discoverable() -> void:
+	var craft = CraftSystem.new()
+	craft.load_data()
+	_ok(craft.recipes.has("dough_meat"), "hand combine output should be indexed as a recipe: dough_meat")
+	_ok(craft.recipes.has("ale_herb"), "hand combine output should be indexed as a recipe: ale_herb")
+	_ok(craft.recipes.has("grape_herb"), "hand combine output should be indexed as a recipe: grape_herb")
+	if not craft.recipes.has("dough_meat"):
+		return
+	var recipe: Dictionary = craft.recipes["dough_meat"]
+	_ok(String(recipe.get("container", "")) == "hand", "hand combine recipe uses hand container")
+	_ok(Array(recipe.get("ingredients", [])) == ["dough", "meat_raw"], "hand combine recipe preserves ingredient pair")
+	_ok(not craft.is_recipe_discovered("dough_meat"), "hand combine starts hidden before first discovery")
+	_ok(craft.discover_recipe("dough_meat"), "hand combine can be discovered through recipe API")
+	_ok(craft.is_recipe_discovered("dough_meat"), "discovered hand combine is visible to recipe book")
+
+
+func _test_intermediate_items_have_downstream_use() -> void:
+	var craft := CraftSystem.new()
+	craft.load_data()
+	var recipe_ingredients := {}
+	for product_key in craft.recipes.keys():
+		for ingredient in Array(craft.recipes[product_key].get("ingredients", [])):
+			recipe_ingredients[String(ingredient)] = true
+	var dead_intermediates: Array[String] = []
+	for item_key in craft.items.keys():
+		var item: Dictionary = craft.items[item_key]
+		if String(item.get("type", "")) != "intermediate":
+			continue
+		var key := String(item_key)
+		if craft.has_operations(key) or recipe_ingredients.has(key):
+			continue
+		dead_intermediates.append(key)
+	dead_intermediates.sort()
+	_ok(dead_intermediates.is_empty(), "intermediate items should feed another operation or recipe: " + ", ".join(dead_intermediates))
+
+
+func _test_recipe_expansion_items_unlocks_and_attributes() -> void:
+	var craft := CraftSystem.new()
+	craft.load_data()
+	var file := FileAccess.open("res://data/food_attributes.json", FileAccess.READ)
+	_ok(file != null, "food_attributes.json should exist")
+	if file == null:
+		return
+	var attributes = JSON.parse_string(file.get_as_text())
+	file.close()
+	_ok(attributes is Dictionary, "food_attributes.json should parse")
+	if not attributes is Dictionary:
+		return
+	var expected_products := [
+		"charred_crust_broth",
+		"charred_meat_plate",
+		"bitter_black_ale",
+		"ash_pot_stew",
+		"sour_herb_wine",
+		"black_malt_porridge",
+		"herbal_lizard_roast",
+		"mushroom_pie",
+		"grape_tart",
+		"wakeful_herb_juice",
+		"roasted_malt_porridge",
+		"mushroom_meat_pie",
+	]
+	for product_key in expected_products:
+		_ok(craft.items.has(product_key), "expanded recipe item exists: " + product_key)
+		if craft.items.has(product_key):
+			_ok(String(craft.items[product_key].get("type", "")) == "product", "expanded recipe item is a product: " + product_key)
+		_ok(craft.recipes.has(product_key), "expanded recipe exists: " + product_key)
+		_ok(attributes.has(product_key), "expanded recipe has appetite attributes: " + product_key)
+	var shoppable := [
+		"bitter_black_ale",
+		"sour_herb_wine",
+		"black_malt_porridge",
+		"herbal_lizard_roast",
+		"mushroom_pie",
+		"grape_tart",
+		"wakeful_herb_juice",
+		"roasted_malt_porridge",
+		"mushroom_meat_pie",
+	]
+	var shop := ShopSystem.new()
+	shop.load_config()
+	for product_key in shoppable:
+		_ok(craft.recipes.has(product_key) and bool(craft.recipes[product_key].get("requires_purchase", false)),
+			"advanced expanded recipe requires purchase: " + product_key)
+		_ok(shop.get_recipe_unlock_price(product_key) > 0, "advanced expanded recipe has shop price: " + product_key)
 
 
 func _test_shop_unlock_keys_exist_in_recipes() -> void:

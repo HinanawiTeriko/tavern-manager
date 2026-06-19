@@ -2,6 +2,7 @@ class_name SeasoningShaker
 extends RigidBody2D
 
 const INGREDIENT_INTAKE_VFX := preload("res://scripts/ui/ingredient_intake_vfx.gd")
+const BREW_SHAKE_METER := preload("res://scripts/ui/brew_shake_meter.gd")
 
 ## 香料罐：常驻吧台工具。
 ##   装填：拖香料 DeskItem 从上方丢进罐口 → Mouth Area2D 自动吸收（仿 Brewery 吸入式）。
@@ -71,7 +72,7 @@ const MOUTH_BOTTOM_Y := -14.0
 @onready var _mouth: Area2D = $Mouth
 
 var loaded_key: String = ""
-var _shake := BrewShakeMeter.new()
+var _shake := BREW_SHAKE_METER.new()
 var _session_active: bool = false
 var _powder_layer: Node2D = null
 var _powder_particles: Array[Node2D] = []

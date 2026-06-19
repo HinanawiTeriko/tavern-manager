@@ -46,6 +46,14 @@ func _ok(cond: bool, msg: String) -> void:
 		push_error("[TEST-DAYMAP-SCROLLBARS] FAIL: " + msg)
 
 
+func _force_location_wind_chance(gm: Node, location_id: String, chance: float) -> void:
+	if gm == null or gm.day_map == null or not gm.day_map._locations.has(location_id):
+		return
+	var location: Dictionary = gm.day_map._locations[location_id].duplicate(true)
+	location["windChance"] = chance
+	gm.day_map._locations[location_id] = location
+
+
 func _color_close(actual: Color, expected: Color, epsilon: float = 0.002) -> bool:
 	return (
 		absf(actual.r - expected.r) <= epsilon
@@ -209,6 +217,7 @@ func _test_rumor_visit_shows_top_toast(view) -> void:
 	gm.economy.current_day = 2
 	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
+	_force_location_wind_chance(gm, "mercenary_board", 1.0)
 	view.show_day(2, EconomySystem.MAX_DAYS)
 	await get_tree().process_frame
 	view._visit_location("mercenary_board")

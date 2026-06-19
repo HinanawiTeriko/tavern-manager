@@ -136,6 +136,7 @@ var _tavern_view = null
 var _day_map_view = null
 var _ending_screen = null
 var _tutorial_manager = null
+var _wind_rng := RandomNumberGenerator.new()
 var _day_map_state_missing_from_save: bool = false
 var _announced_inference_question_ids: Dictionary = {}
 var _last_investigation_unlocked_question_titles: Array[String] = []
@@ -196,6 +197,7 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"grey_renamed_escort": "res://assets/ui/generated/investigation/clearing_table/items/clearing_rename_stamp.png",
 	"grey_supply_stamp": "res://assets/ui/generated/investigation/clearing_table/items/clearing_supply_contract.png",
 }
+const RECIPE_ICON_PATH_PREFIX := "res://assets/textures/recipes/"
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
 ## 对话只回应已发生的行为；这里是动作当下的即时反馈（spec §1.1 / §7.3）。
@@ -282,6 +284,7 @@ func _ready() -> void:
 	DialogueManager.dialogue_ended.connect(func(_resource): _on_dialogue_ended())
 
 	_tutorial_manager = get_node_or_null("/root/TutorialManager")
+	_wind_rng.randomize()
 
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("inventory_toggle") and _tavern_view != null and is_instance_valid(_tavern_view):
@@ -1031,7 +1034,7 @@ func visit_day_location(location_id: String) -> Dictionary:
 			narrative.set_var("toby_secured", false)
 	if bool(location_before.get("completeOnVisit", false)) and day_map.has_method("mark_completed"):
 		day_map.call("mark_completed", location_id)
-	if rumors != null and _location_allows_wind_notice(location_before):
+	if rumors != null and _should_grant_wind_notice(location_before):
 		var rumor_day := economy.current_day
 		if day_map != null:
 			rumor_day = int(day_map.current_day)
@@ -1427,8 +1430,25 @@ func _rumor_context_flags() -> Dictionary:
 func _location_allows_wind_notice(location: Dictionary) -> bool:
 	if String(location.get("windPolicy", "menu")) == "none":
 		return false
-	# Wind notices are deterministic planning rewards: available content is 100%, silent locations are 0%.
-	return float(location.get("windChance", 1.0)) > 0.0
+	return _location_wind_notice_chance(location) > 0.0
+
+
+func _location_wind_notice_chance(location: Dictionary) -> float:
+	var policy := String(location.get("windPolicy", "menu"))
+	if policy == "none":
+		return 0.0
+	if policy == "story":
+		return 1.0
+	return clampf(float(location.get("windChance", 0.4)), 0.0, 1.0)
+
+
+func _should_grant_wind_notice(location: Dictionary) -> bool:
+	var chance := _location_wind_notice_chance(location)
+	if chance <= 0.0:
+		return false
+	if chance >= 1.0:
+		return true
+	return _wind_rng.randf() < chance
 
 
 func _day_location_gold_cost(location_id: String) -> int:
@@ -1940,7 +1960,7 @@ func _on_serve_requested(item_key: String, seasoning_attribute: String, craft_st
 
 	if is_important and npc_id != "":
 		var post_path = "res://dialogue/" + npc_id + "_day" + str(economy.current_day) + ".post.dialogue"
-		if FileAccess.file_exists(post_path):
+		if ResourceLoader.exists(post_path):
 			# 有 post.dialogue：对话本身就是反应，不再补气泡（消除冗余）。
 			_dialogue_phase = "post"
 			_tavern_view.set_dialogue_mode(true)
@@ -2524,6 +2544,8 @@ func _default_shortcut_bindings() -> Array[String]:
 func get_shortcut_bindings() -> Array[String]:
 	if shortcut_bindings.size() != 10:
 		shortcut_bindings = _normalized_shortcut_bindings(shortcut_bindings)
+	if _shortcut_bindings_are_empty(shortcut_bindings):
+		shortcut_bindings = _default_shortcut_bindings()
 	return shortcut_bindings.duplicate()
 
 func can_bind_shortcut_item(item_key: String) -> bool:
@@ -2565,6 +2587,14 @@ func _normalized_shortcut_bindings(raw: Array) -> Array[String]:
 		else:
 			result.append("")
 	return result
+
+
+func _shortcut_bindings_are_empty(bindings: Array) -> bool:
+	for raw_key in bindings:
+		if String(raw_key) != "":
+			return false
+	return true
+
 
 func play_audio_event(event_key: String) -> bool:
 	if audio == null:
@@ -2977,6 +3007,9 @@ func remove_from_inventory(key: String, amount: int = 1) -> bool:
 func try_load_material_icon(key: String) -> Texture2D:
 	if MATERIAL_ICON_PATHS.has(key):
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
+	var recipe_icon := TextureManager.try_load(RECIPE_ICON_PATH_PREFIX + key + ".png")
+	if recipe_icon != null:
+		return recipe_icon
 	return null
 
 
@@ -3087,6 +3120,8 @@ func _apply_save_state(data: Dictionary) -> void:
 
 	inventory_sys.set_initial(data.get("inventory", {}))
 	shortcut_bindings = _normalized_shortcut_bindings(data.get("shortcut_bindings", _default_shortcut_bindings()))
+	if _shortcut_bindings_are_empty(shortcut_bindings):
+		shortcut_bindings = _default_shortcut_bindings()
 
 	documents.restore_state(data.get("documents", {}))
 	_day_map_state_missing_from_save = not data.has("day_map")

@@ -32,6 +32,7 @@ func _ready() -> void:
 	var visit_result: Dictionary = gm.visit_day_location("mushroom_forest")
 	_ok(bool(visit_result.get("success", false)), "visiting day location succeeds")
 	gm.narrative.set_var("ryan_warhammer_lead", true)
+	_force_location_wind_chance(gm, "mercenary_board", 1.0)
 	var rumor_result: Dictionary = gm.visit_day_location("mercenary_board")
 	_ok(bool(rumor_result.get("success", false)), "visiting rumor location succeeds")
 	_ok(rumor_result.has("rumor"), "day visit can grant a rumor after checkpoint")
@@ -75,6 +76,14 @@ func _event_types(events: Array) -> Array[String]:
 		if event_type != "" and not types.has(event_type):
 			types.append(event_type)
 	return types
+
+
+func _force_location_wind_chance(gm: Node, location_id: String, chance: float) -> void:
+	if gm == null or gm.day_map == null or not gm.day_map._locations.has(location_id):
+		return
+	var location: Dictionary = gm.day_map._locations[location_id].duplicate(true)
+	location["windChance"] = chance
+	gm.day_map._locations[location_id] = location
 
 
 func _finish() -> void:

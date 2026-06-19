@@ -4,8 +4,10 @@ extends RefCounted
 var items: Dictionary = {}
 var _ops: Dictionary = {}
 var _combine: Dictionary = {}
+var _combine_recipe_pairs: Array = []
 var item_physics_profiles: Dictionary = {}
 const DEFAULT_DISCOVERED_RECIPES := ["ale_beer", "wine", "herb_tea", "dough", "bread", "meat_cooked"]
+const HAND_COMBINE_CONTAINER := "hand"
 const FAILURE_PRODUCTS_BY_CONTAINER := {
 	"barrel": "failed_brew",
 	"pot": "failed_stew",
@@ -120,6 +122,7 @@ func load_data() -> void:
 	_load_operations()
 	_load_combines()
 	_load_recipes()
+	_add_hand_combine_recipes()
 	ensure_default_discovered_recipes()
 	_load_slam_config()
 	print("[Craft] 加载 ", items.size(), " 种物品, ", _ops.size(), " 个加工节点, ", _combine.size(), " 条组合规则, ", recipes.size(), " 条容器配方")
@@ -160,6 +163,8 @@ func _load_operations() -> void:
 	_ops = data
 
 func _load_combines() -> void:
+	_combine.clear()
+	_combine_recipe_pairs.clear()
 	var file = FileAccess.open("res://data/combines.json", FileAccess.READ)
 	if file == null:
 		push_error("[Craft] combines.json 未找到")
@@ -177,6 +182,10 @@ func _load_combines() -> void:
 		var r: String = p[2]
 		_combine[_make_key(a, b)] = r
 		_combine[_make_key(b, a)] = r
+		_combine_recipe_pairs.append({
+			"product": r,
+			"ingredients": [a, b],
+		})
 
 func _load_recipes() -> void:
 	var file = FileAccess.open("res://data/recipes.json", FileAccess.READ)
@@ -190,6 +199,7 @@ func _load_recipes() -> void:
 		push_error("[Craft] recipes.json 格式无效")
 		return
 	recipes = data
+	_recipes_by_container.clear()
 	for product_key in recipes.keys():
 		var recipe: Dictionary = recipes[product_key]
 		var container: String = recipe.get("container", "")
@@ -200,6 +210,27 @@ func _load_recipes() -> void:
 		var sorted_ingr: Array = ingredients.duplicate()
 		sorted_ingr.sort()
 		var key: String = container + "|" + "+".join(sorted_ingr)
+		_recipes_by_container[key] = product_key
+
+func _add_hand_combine_recipes() -> void:
+	for pair in _combine_recipe_pairs:
+		var product_key := String(pair.get("product", ""))
+		if product_key == "" or recipes.has(product_key):
+			continue
+		var ingredients: Array = pair.get("ingredients", [])
+		if ingredients.is_empty():
+			continue
+		var item: Dictionary = get_item(product_key)
+		var recipe := {
+			"name": String(item.get("name", product_key)),
+			"ingredients": ingredients.duplicate(),
+			"container": HAND_COMBINE_CONTAINER,
+			"orderable": false,
+		}
+		recipes[product_key] = recipe
+		var sorted_ingr: Array = ingredients.duplicate()
+		sorted_ingr.sort()
+		var key: String = HAND_COMBINE_CONTAINER + "|" + "+".join(sorted_ingr)
 		_recipes_by_container[key] = product_key
 
 func _make_key(a: String, b: String) -> String:

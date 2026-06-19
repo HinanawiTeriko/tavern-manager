@@ -76,6 +76,14 @@ func _new_appetite_system():
 	return script.new()
 
 
+func _force_location_wind_chance(gm: Node, location_id: String, chance: float) -> void:
+	if gm == null or gm.day_map == null or not gm.day_map._locations.has(location_id):
+		return
+	var location: Dictionary = gm.day_map._locations[location_id].duplicate(true)
+	location["windChance"] = chance
+	gm.day_map._locations[location_id] = location
+
+
 func _load_json_dictionary(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	_ok(file != null, "json file is readable: " + path)
@@ -395,10 +403,13 @@ func _test_day_map_locations_have_explicit_wind_policy() -> void:
 			continue
 		var policy := String(loc.get("windPolicy", ""))
 		var chance := float(loc.get("windChance", -1.0))
-		_ok(["menu", "none"].has(policy), "day-map location has explicit wind policy: " + id)
+		_ok(["menu", "story", "none"].has(policy), "day-map location has explicit wind policy: " + id)
 		if policy == "menu":
-			_ok(is_equal_approx(chance, 1.0), "menu wind location grants eligible wind at 100 percent: " + id)
+			_ok(chance > 0.0 and chance < 1.0, "menu wind location grants eligible wind by probability: " + id)
 			_ok(bool(rumor_locations.get(id, false)), "menu wind location has at least one rumor: " + id)
+		elif policy == "story":
+			_ok(is_equal_approx(chance, 1.0), "story wind location keeps deterministic critical notice: " + id)
+			_ok(bool(rumor_locations.get(id, false)), "story wind location has at least one rumor: " + id)
 		elif policy == "none":
 			_ok(is_equal_approx(chance, 0.0), "silent story/investigation location has 0 percent wind chance: " + id)
 			_ok(not bool(rumor_locations.get(id, false)), "silent location does not carry DayMap wind rumors: " + id)
@@ -410,10 +421,20 @@ func _test_game_manager_honors_day_map_wind_policy() -> void:
 		"GameManager gates wind notice grants by day-map wind policy")
 	if gm == null or not gm.has_method("_location_allows_wind_notice"):
 		return
-	_ok(bool(gm.call("_location_allows_wind_notice", {"windPolicy": "menu", "windChance": 1.0})),
-		"menu wind policy allows deterministic wind notice grants")
+	_ok(bool(gm.call("_location_allows_wind_notice", {"windPolicy": "menu", "windChance": 0.35})),
+		"menu wind policy allows probabilistic wind notice grants")
+	_ok(bool(gm.call("_location_allows_wind_notice", {"windPolicy": "story", "windChance": 1.0})),
+		"story wind policy allows deterministic wind notice grants")
 	_ok(not bool(gm.call("_location_allows_wind_notice", {"windPolicy": "none", "windChance": 0.0})),
 		"silent story/investigation wind policy blocks DayMap wind notices")
+	_ok(gm.has_method("_should_grant_wind_notice"), "GameManager rolls windChance before granting a wind notice")
+	if gm.has_method("_should_grant_wind_notice"):
+		_ok(not bool(gm.call("_should_grant_wind_notice", {"windPolicy": "menu", "windChance": 0.0})),
+			"zero wind chance never grants a wind notice")
+		_ok(bool(gm.call("_should_grant_wind_notice", {"windPolicy": "menu", "windChance": 1.0})),
+			"full wind chance always grants a wind notice")
+		_ok(bool(gm.call("_should_grant_wind_notice", {"windPolicy": "story", "windChance": 0.25})),
+			"story wind policy ignores accidental reduced chance and always grants")
 
 
 func _test_game_manager_preserves_group_guest_portrait_id() -> void:
@@ -474,6 +495,7 @@ func _test_game_manager_grants_location_rumors() -> void:
 	gm._apply_save_state(gm._default_new_game_state())
 	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
+	_force_location_wind_chance(gm, "mercenary_board", 1.0)
 	var result: Dictionary = gm.visit_day_location("mercenary_board")
 	_ok(bool(result.get("success", false)), "GM visit to mercenary board succeeds")
 	_ok(result.has("rumor"), "GM visit result includes rumor payload")
@@ -492,6 +514,7 @@ func _test_game_manager_enriches_rumor_customer_preview() -> void:
 	gm._apply_save_state(gm._default_new_game_state())
 	gm.narrative.set_var("ryan_warhammer_lead", true)
 	gm.start_day_map(2)
+	_force_location_wind_chance(gm, "mercenary_board", 1.0)
 	gm.visit_day_location("mercenary_board")
 	var today: Array = gm.get_today_rumors()
 	_ok(today.size() == 1, "GM has one rumor to enrich for menu prep")

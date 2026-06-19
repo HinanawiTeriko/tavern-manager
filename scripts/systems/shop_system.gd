@@ -7,6 +7,7 @@ const MIRA_DISCOUNT: float = 0.8
 
 var _material_prices: Dictionary = {}
 var _recipe_unlock_prices: Dictionary = {}
+var _recipe_unlock_order: Array[String] = []
 var _ability_prices: Dictionary = {}
 var _ability_names: Dictionary = {}
 
@@ -26,9 +27,12 @@ func load_config() -> void:
 		for m in data["materials"]:
 			_material_prices[m["key"]] = m["price"]
 	_recipe_unlock_prices.clear()
+	_recipe_unlock_order.clear()
 	if data.has("recipeUnlocks") and data["recipeUnlocks"] != null:
 		for r in data["recipeUnlocks"]:
-			_recipe_unlock_prices[r["key"]] = r["price"]
+			var key := String(r["key"])
+			_recipe_unlock_prices[key] = r["price"]
+			_recipe_unlock_order.append(key)
 	_ability_prices.clear()
 	_ability_names.clear()
 	if data.has("abilities") and data["abilities"] != null:
@@ -49,6 +53,9 @@ func get_recipe_unlock_price(key: String) -> int:
 	if _recipe_unlock_prices.has(key):
 		return _recipe_unlock_prices[key]
 	return INVALID_RECIPE_PRICE
+
+func get_recipe_unlock_keys() -> Array[String]:
+	return _recipe_unlock_order.duplicate()
 
 func get_ability_price(key: String) -> int:
 	return _ability_prices.get(key, INVALID_RECIPE_PRICE)

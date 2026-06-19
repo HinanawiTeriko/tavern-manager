@@ -342,12 +342,31 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
+		var recipe_hint := tavern.get_node_or_null("CustomerArea/RecipeHintPanel") as PanelContainer
+		var recipe_hint_label := tavern.get_node_or_null("CustomerArea/RecipeHintPanel/HintText") as Label
 		if customer_name != null:
 			_ok(customer_name.visible, "show_customer reveals CustomerName for the active guest")
 			_ok(customer_name.text == "Test Guest", "show_customer writes the active guest name")
 		_ok(order_bubble.visible, "show_customer reveals the table-carved order text")
 		_ok(order_bubble.text.begins_with("需要 · "), "show_customer uses readable Chinese order prefix")
 		_ok(order_bubble.text.find("order_ale") >= 0, "show_customer writes the stable order request to OrderBubble")
+		_ok(recipe_hint != null, "show_customer keeps a stable RecipeHintPanel beside the order groove")
+		if recipe_hint != null:
+			_ok(recipe_hint.visible, "RecipeHintPanel appears while there is an active order")
+			_ok(recipe_hint.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+				"RecipeHintPanel does not block table item clicks")
+			_ok(recipe_hint.global_position.y + recipe_hint.size.y <= order_bubble.global_position.y + 2.0,
+				"RecipeHintPanel sits above the carved order groove instead of covering shortcuts")
+			_ok(_stylebox_texture_path(recipe_hint, "panel") == "res://assets/textures/ui/menu_brush_band.png",
+				"RecipeHintPanel uses existing brush band art")
+			_ok(String(recipe_hint.get_meta("product_key", "")) == "ale_beer",
+				"RecipeHintPanel records the current order product key")
+		if recipe_hint_label != null:
+			_ok(_control_uses_pixel_font(recipe_hint_label), "RecipeHintPanel text uses the shared pixel UI font")
+			_ok(recipe_hint_label.text.find("ale_beer") == -1,
+				"RecipeHintPanel shows display names instead of raw product keys")
+			_ok(recipe_hint_label.text.find("->") >= 0,
+				"RecipeHintPanel summarizes the immediate recipe step")
 		tavern.customer_say("hurry")
 		_ok(order_bubble.text.find("order_ale") >= 0, "customer_say does not overwrite the stable order request")
 		_ok(order_bubble.text.find("hurry") == -1, "temporary reaction text stays out of OrderBubble")
@@ -364,11 +383,20 @@ func _test_tavern_patience_ui_contract() -> void:
 			_ok(order_bubble.text.find("order_ale") >= 0, "timeout state keeps the original order readable")
 			_ok(order_bubble.text.find("timeout") >= 0, "timeout state adds a clear failure reason in the groove label")
 			_ok(order_bubble.text.find("\n") == -1, "groove order text stays on one readable line")
+		tavern.show_customer("Test Guest", "sandwich", "regular_belta", "meat_sand")
+		await get_tree().process_frame
+		if recipe_hint != null:
+			_ok(String(recipe_hint.get_meta("product_key", "")) == "meat_sand",
+				"RecipeHintPanel updates when the active order changes")
+			_ok(int(recipe_hint.get_meta("step_count", 0)) >= 2,
+				"RecipeHintPanel can summarize multi-step recipes without opening the recipe book")
 		tavern.hide_customer()
 		if customer_name != null:
 			_ok(customer_name.text == "", "hide_customer clears the idle waiting placeholder text")
 			_ok(not customer_name.visible, "hide_customer hides CustomerName while no guest is present")
 		_ok(not order_bubble.visible, "hide_customer hides the order text while no guest is present")
+		if recipe_hint != null:
+			_ok(not recipe_hint.visible, "hide_customer hides the active recipe hint")
 	var btn_tutorial := tavern.get_node_or_null("OverlayMenu/TabBtns/BtnTutorial") as Button
 	_ok(btn_tutorial != null and btn_tutorial.text == "重置教程", "reset tutorial menu button uses readable Chinese")
 	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")

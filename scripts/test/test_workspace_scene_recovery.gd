@@ -8,6 +8,7 @@ var _failures := 0
 
 
 func _ready() -> void:
+	_test_runtime_ui_avoids_test_resource_paths()
 	await _test_docked_body_recovers_when_out_of_bounds()
 	await _test_inventory_spawn_deducts_and_recovers()
 	await _test_fast_desk_items_emit_motion_trails()
@@ -27,6 +28,7 @@ func _ready() -> void:
 	await _test_seasoning_shaker_spawns_powder_while_moving()
 	await _test_barrel_shake_spawns_persistent_upward_bubbles()
 	await _test_grape_desk_item_loads_into_barrel_mouth()
+	await _test_shortcut_malt_released_inside_barrel_loads()
 	await _test_dragged_barrel_shakes_grape_into_wine()
 	await _test_grill_press_finish_and_burn_feedback_effects()
 	await _test_good_barrel_brew_spawns_celebration()
@@ -38,6 +40,7 @@ func _ready() -> void:
 	await _test_overlay_menu_clickable_during_menu_preparation()
 	await _test_overlay_menu_renders_above_workspace()
 	await _test_recipe_menu_uses_split_layout()
+	await _test_recipe_book_shows_hand_combine_tab()
 	await _test_recipe_book_shows_dough_operation()
 	await _test_recipe_book_hides_undiscovered_entries()
 	await _test_first_crafted_recipe_discovers_recipe()
@@ -49,6 +52,27 @@ func _ok(cond: bool, msg: String) -> void:
 	if not cond:
 		_failures += 1
 		push_error("[TEST-WORKSPACE-SCENE] FAIL: " + msg)
+
+
+func _test_runtime_ui_avoids_test_resource_paths() -> void:
+	var runtime_paths := [
+		"res://scenes/ui/Tavern.tscn",
+		"res://scripts/ui/bar_workspace.gd",
+		"res://scripts/ui/brewery.gd",
+		"res://scripts/ui/brew_shake_meter.gd",
+		"res://scripts/ui/kitchen_container.gd",
+		"res://scripts/ui/seasoning_shaker.gd",
+		"res://scripts/ui/components/desk_item_spawner.gd",
+	]
+	for path in runtime_paths:
+		var file := FileAccess.open(path, FileAccess.READ)
+		_ok(file != null, "runtime UI file exists: " + path)
+		if file == null:
+			continue
+		var text := file.get_as_text()
+		file.close()
+		_ok(not text.contains("res://scenes/test/"), path + " does not reference test scenes")
+		_ok(not text.contains("res://scripts/test/"), path + " does not reference test scripts")
 
 
 func _texture_path(texture: Texture2D) -> String:
@@ -923,8 +947,17 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	await get_tree().process_frame
 
 	var recipe_panel := tavern.get_node("OverlayMenu/RecipePanel") as ScrollContainer
+	var backpack_panel := tavern.get_node("OverlayMenu/BackpackPanel") as ScrollContainer
 	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
 	_ok(recipe_panel != null and recipe_panel.visible, "recipe panel opens inside the legacy overlay menu")
+	_ok(recipe_panel != null and recipe_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+		"recipe panel hides the default vertical scrollbar")
+	_ok(recipe_panel != null and recipe_panel.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		"recipe panel disables the default horizontal scrollbar")
+	_ok(backpack_panel != null and backpack_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+		"backpack panel hides the default vertical scrollbar")
+	_ok(backpack_panel != null and backpack_panel.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		"backpack panel disables the default horizontal scrollbar")
 	_ok(recipe_list != null, "recipe list contract path remains available")
 
 	var layout := recipe_list.get_node_or_null("RecipeLayout") as HBoxContainer
@@ -940,7 +973,7 @@ func _test_recipe_menu_uses_split_layout() -> void:
 
 	_ok(layout != null, "recipe menu uses a split recipe layout root")
 	_ok(left_column != null, "recipe menu keeps container filters and rows in the left column")
-	_ok(tabs != null and tabs.get_child_count() == 3, "recipe menu exposes three container filter tabs")
+	_ok(tabs != null and tabs.get_child_count() == 4, "recipe menu exposes four recipe filter tabs")
 	_ok(rows != null and rows.get_child_count() > 0, "recipe menu renders filtered recipe rows")
 	_ok(detail != null, "recipe menu renders a right-side recipe detail panel")
 	_ok(_stylebox_texture_path(detail, "panel") == "res://assets/textures/ui/menu_brush_panel.png",
@@ -979,6 +1012,33 @@ func _test_recipe_menu_uses_split_layout() -> void:
 			"recipe menu filters rows by selected container")
 		_ok(detail != null and detail.get_meta("container_key", "") == "grill",
 			"recipe detail follows the selected container filter")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_recipe_book_shows_hand_combine_tab() -> void:
+	_reset_game_for_recipe_discovery_test()
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	tavern.toggle_menu()
+	await get_tree().process_frame
+
+	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
+	var hand_tab := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/ContainerTabs/Tab_hand") as Button
+	_ok(hand_tab != null, "recipe book has a hand-combine filter tab")
+	if hand_tab != null:
+		hand_tab.emit_signal("pressed")
+		await get_tree().process_frame
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var dough_meat_row := rows.get_node_or_null("Recipe_dough_meat") as Button if rows != null else null
+	_ok(dough_meat_row != null, "hand recipe book lists dough_meat combine recipe")
+	_ok(dough_meat_row != null and String(dough_meat_row.get_meta("container_key", "")) == "hand",
+		"hand recipe row records hand container metadata")
+	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
+	_ok(detail != null and detail.get_meta("container_key", "") == "hand",
+		"hand recipe detail follows hand filter")
 
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -1193,6 +1253,22 @@ func _left_press(bar: BarWorkspace, pos: Vector2) -> void:
 	event.position = pos
 	event.global_position = pos
 	bar._unhandled_input(event)
+
+
+func _left_release(bar: BarWorkspace, pos: Vector2) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = false
+	event.position = pos
+	event.global_position = pos
+	bar._unhandled_input(event)
+
+
+func _mouse_motion(bar: BarWorkspace, pos: Vector2) -> void:
+	var event := InputEventMouseMotion.new()
+	event.position = pos
+	event.global_position = pos
+	bar._input(event)
 
 
 func _find_grid_slot_by_item_key(grid: GridContainer, item_key: String) -> Control:
@@ -1876,6 +1952,45 @@ func _test_grape_desk_item_loads_into_barrel_mouth() -> void:
 		await get_tree().process_frame
 		_ok(items.get_child_count() == 0,
 			"absorbed grape is removed from world items")
+
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_shortcut_malt_released_inside_barrel_loads() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	var gm = get_node("/root/GameManager")
+	gm._apply_save_state(gm._default_new_game_state())
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var brewery := tavern.get_node("BarWorkspace/World/Brewery") as Brewery
+	var slot0 := tavern.get_node("ShortcutBar/Slot0") as Control
+	bar._init_material_slots()
+	_ok(bar._slot_item_keys.size() > 0 and bar._slot_item_keys[0] == "ale",
+		"default shortcut slot 0 is malt for the barrel drop regression")
+
+	var slot_center := slot0.global_position + slot0.size * 0.5
+	var release_pos := brewery.to_global(Vector2(0.0, -8.0))
+	_ok(not brewery._is_point_inside_mouth_opening(release_pos),
+		"shortcut release point is visibly inside the barrel but below the strict mouth opening")
+	_left_press(bar, slot_center)
+	var ale := bar._drag_ctrl.get_body() as DeskItem
+	_ok(ale != null and ale.item_key == "ale", "shortcut drag creates a malt desk item")
+	if ale != null:
+		_mouse_motion(bar, brewery._mouth_center_global_position())
+		await get_tree().physics_frame
+		_mouse_motion(bar, release_pos)
+		await get_tree().physics_frame
+		_left_release(bar, release_pos)
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		_ok(not is_instance_valid(ale) or ale.is_queued_for_deletion(),
+			"shortcut malt released inside the visible barrel is absorbed")
+		_ok(brewery._pending_keys == ["ale"],
+			"barrel stores shortcut malt after release inside the visible barrel: got %s" % [brewery._pending_keys])
 
 	tavern.queue_free()
 	await get_tree().process_frame

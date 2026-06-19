@@ -11,6 +11,15 @@
     { "key": "spiced_wine", "price": 20 },
     { "key": "meat_sand", "price": 30 },
     { "key": "herb_broth", "price": 20 },
+    { "key": "bitter_black_ale", "price": 35 },
+    { "key": "sour_herb_wine", "price": 35 },
+    { "key": "black_malt_porridge", "price": 30 },
+    { "key": "herbal_lizard_roast", "price": 45 },
+    { "key": "mushroom_pie", "price": 35 },
+    { "key": "grape_tart", "price": 30 },
+    { "key": "wakeful_herb_juice", "price": 30 },
+    { "key": "roasted_malt_porridge", "price": 35 },
+    { "key": "mushroom_meat_pie", "price": 50 },
     { "key": "meat_stew", "price": 40 }
   ],
   "abilities": [

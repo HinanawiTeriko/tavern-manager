@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/test/gravity_test.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/ui/components/drag_controller.gd" id="2_drag_ctrl"]
-[ext_resource type="Script" path="res://scripts/test/brewery.gd" id="3_brewery"]
+[ext_resource type="Script" path="res://scripts/ui/brewery.gd" id="3_brewery"]
 [ext_resource type="Script" path="res://scripts/test/sandbox_serve.gd" id="4_sandbox"]
 
 [sub_resource type="SegmentShape2D" id="seg_ground"]

@@ -8,6 +8,7 @@ var _failures := 0
 
 func _ready() -> void:
 	await _test_chaos_ghost_tutorial_waits_until_phoebe_is_fully_visible()
+	await _test_chaos_ghost_tutorial_waits_for_formal_dialogue_to_finish()
 	await _test_hidden_chaos_summons_ghost_from_screen_edge_and_steals_item()
 	await _test_ghost_fades_in_place_when_player_snatches_target_back()
 	await _test_ghost_ignores_held_and_story_items()
@@ -86,6 +87,8 @@ func _complete_existing_tutorials_except(tm: Node, except_step_id: String) -> vo
 			var step_id := String(step.get("id", ""))
 			if step_id != except_step_id and step_id != "":
 				tm._completed_steps.append(step_id)
+	while except_step_id != "" and tm._completed_steps.has(except_step_id):
+		tm._completed_steps.erase(except_step_id)
 	tm.daymap_first_shown = true
 	tm.tavern_first_entered = true
 	tm.first_menu_prep_shown = true
@@ -145,6 +148,71 @@ func _test_chaos_ghost_tutorial_waits_until_phoebe_is_fully_visible() -> void:
 	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
 		"target item should remain on the table while the first chaos ghost tutorial is shown")
 
+	_restore_tutorial_state(tm, tutorial_backup)
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _test_chaos_ghost_tutorial_waits_for_formal_dialogue_to_finish() -> void:
+	var tm := get_node_or_null("/root/TutorialManager")
+	var gm := get_node_or_null("/root/GameManager")
+	_ok(tm != null and gm != null, "TutorialManager and GameManager should exist for dialogue/tutorial exclusion")
+	if tm == null or gm == null:
+		return
+
+	_reset_active_tutorial(tm)
+	var tutorial_backup := _capture_tutorial_state(tm)
+	var old_dialogue_phase: String = gm._dialogue_phase
+	var old_dialogue_active: bool = gm._is_dialogue_active
+	_complete_existing_tutorials_except(tm, "chaos_ghost_intro")
+	_ok(not tm.is_group_completed("chaos_ghost"),
+		"test fixture leaves the first Phoebe tutorial incomplete")
+
+	var tavern := TAVERN_SCENE.instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	if bar == null or not bar.has_method("record_chaos_event") or not bar.has_method("try_trigger_chaos_event"):
+		gm._dialogue_phase = old_dialogue_phase
+		gm._is_dialogue_active = old_dialogue_active
+		_restore_tutorial_state(tm, tutorial_backup)
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	bar.set_process(false)
+
+	var item := bar._spawn_desk_item_at(Vector2(560.0, 340.0), "ale")
+	await get_tree().process_frame
+	bar.call("record_chaos_event", "guest_wait", 2.0)
+	var triggered: bool = bar.call("try_trigger_chaos_event")
+	_ok(triggered, "high hidden chaos should start before testing dialogue exclusion")
+
+	gm._dialogue_phase = "pre"
+	gm._is_dialogue_active = false
+	for _i in range(23):
+		bar._process(0.1)
+		await get_tree().process_frame
+
+	_ok(not tm._is_active, "Phoebe tutorial does not start while Ryan pre-dialogue is pending")
+	_ok(bar._chaos_ghost_waiting_for_tutorial,
+		"Phoebe waits at the target instead of stealing while formal dialogue owns the overlay")
+	_ok(bar._chaos_ghost_phase == "approach",
+		"Phoebe remains in approach hold while waiting for the dialogue layer to clear")
+	_ok(is_instance_valid(item) and not item.is_queued_for_deletion(),
+		"target item remains on the table while Phoebe waits for dialogue to finish")
+
+	gm._dialogue_phase = ""
+	gm._is_dialogue_active = false
+	bar._process(0.1)
+	await get_tree().process_frame
+
+	_ok(tm._is_active, "Phoebe tutorial starts after formal dialogue finishes")
+	_ok(tm._current_sequence.size() > 0 and String(tm._current_sequence[0].get("group", "")) == "chaos_ghost",
+		"deferred Phoebe tutorial still uses the chaos_ghost group")
+
+	gm._dialogue_phase = old_dialogue_phase
+	gm._is_dialogue_active = old_dialogue_active
 	_restore_tutorial_state(tm, tutorial_backup)
 	tavern.queue_free()
 	await get_tree().process_frame

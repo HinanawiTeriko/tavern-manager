@@ -121,7 +121,7 @@ func start_tutorial(group_key: String, highlight_rects: Dictionary = {}) -> void
 	if all_done:
 		return
 
-	_current_sequence = steps_data
+	_current_sequence = steps_data.duplicate(true)
 	_current_step = -1
 	_is_active = true
 
