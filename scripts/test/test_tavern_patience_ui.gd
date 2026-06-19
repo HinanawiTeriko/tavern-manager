@@ -390,6 +390,20 @@ func _test_tavern_patience_ui_contract() -> void:
 				"RecipeHintPanel updates when the active order changes")
 			_ok(int(recipe_hint.get_meta("step_count", 0)) >= 2,
 				"RecipeHintPanel can summarize multi-step recipes without opening the recipe book")
+		tavern.show_customer("Bread Guest", "bread", "regular_belta", "bread")
+		await get_tree().process_frame
+		if recipe_hint != null:
+			_ok(String(recipe_hint.get_meta("product_key", "")) == "bread",
+				"RecipeHintPanel tracks bread orders after another order")
+			_ok(int(recipe_hint.get_meta("step_count", 0)) >= 2,
+				"RecipeHintPanel counts bread's dough and bake steps")
+		if recipe_hint_label != null:
+			var bread_name := String(GameManager.craft.get_item("bread").get("name", "bread"))
+			var dough_name := String(GameManager.craft.get_item("dough").get("name", "dough"))
+			_ok(recipe_hint_label.text.find("\n") == -1,
+				"RecipeHintPanel keeps bread's multi-step hint on one visible line")
+			_ok(recipe_hint_label.text.find(dough_name) >= 0 and recipe_hint_label.text.find(bread_name) > recipe_hint_label.text.find(dough_name),
+				"RecipeHintPanel continues bread's hint past dough to the requested bread")
 		tavern.hide_customer()
 		if customer_name != null:
 			_ok(customer_name.text == "", "hide_customer clears the idle waiting placeholder text")
