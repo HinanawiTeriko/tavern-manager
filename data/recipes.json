@@ -15,6 +15,108 @@
     "ingredients": ["herb"],
     "container": "barrel"
   },
+  "ale_roasted": {
+    "name": "烤麦芽",
+    "ingredients": ["ale"],
+    "container": "grill",
+    "orderable": false
+  },
+  "ale_burnt": {
+    "name": "焦麦芽",
+    "ingredients": ["ale_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "bread_burnt": {
+    "name": "\u7126\u9762\u5305",
+    "ingredients": ["bread"],
+    "container": "grill",
+    "orderable": false
+  },
+  "flour_toasted": {
+    "name": "\u70e4\u9762\u7c89",
+    "ingredients": ["flour"],
+    "container": "grill",
+    "orderable": false
+  },
+  "flour_burnt": {
+    "name": "\u7126\u9762\u7c89",
+    "ingredients": ["flour_toasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "meat_burnt": {
+    "name": "\u7126\u8089",
+    "ingredients": ["meat_cooked"],
+    "container": "grill",
+    "orderable": false
+  },
+  "rock_lizard_burnt": {
+    "name": "\u7126\u5ca9\u8725\u8089",
+    "ingredients": ["rock_lizard_steak"],
+    "container": "grill",
+    "orderable": false
+  },
+  "black_malt_roasted": {
+    "name": "\u6df1\u70d8\u9ed1\u9ea6\u82bd",
+    "ingredients": ["black_malt"],
+    "container": "grill",
+    "orderable": false
+  },
+  "black_malt_burnt": {
+    "name": "\u7126\u9ed1\u9ea6\u82bd",
+    "ingredients": ["black_malt_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "grape_roasted": {
+    "name": "\u70e4\u8461\u8404",
+    "ingredients": ["grape"],
+    "container": "grill",
+    "orderable": false
+  },
+  "grape_burnt": {
+    "name": "\u7126\u8461\u8404",
+    "ingredients": ["grape_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "north_sour_grape_roasted": {
+    "name": "\u70e4\u9178\u8461\u8404",
+    "ingredients": ["north_sour_grape"],
+    "container": "grill",
+    "orderable": false
+  },
+  "north_sour_grape_burnt": {
+    "name": "\u7126\u9178\u8461\u8404",
+    "ingredients": ["north_sour_grape_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "herb_roasted": {
+    "name": "\u70d8\u8349\u836f",
+    "ingredients": ["herb"],
+    "container": "grill",
+    "orderable": false
+  },
+  "herb_ash": {
+    "name": "\u8349\u836f\u7070",
+    "ingredients": ["herb_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
+  "cave_mushroom_roasted": {
+    "name": "\u70e4\u6d1e\u83c7",
+    "ingredients": ["cave_mushroom"],
+    "container": "grill",
+    "orderable": false
+  },
+  "cave_mushroom_burnt": {
+    "name": "\u7126\u6d1e\u83c7",
+    "ingredients": ["cave_mushroom_roasted"],
+    "container": "grill",
+    "orderable": false
+  },
   "old_road_wine": {
     "name": "旧路酸葡萄酒",
     "ingredients": ["north_sour_grape"],
@@ -48,7 +150,7 @@
   "charred_meat_plate": {
     "name": "香草焦肉盘",
     "ingredients": ["meat_burnt", "herb"],
-    "container": "grill"
+    "container": "hand"
   },
   "bitter_black_ale": {
     "name": "苦黑麦酒",
@@ -78,21 +180,21 @@
   },
   "herbal_lizard_roast": {
     "name": "香草蜥蜴烤肉",
-    "ingredients": ["rock_lizard_meat", "herb"],
+    "ingredients": ["herbed_lizard_raw"],
     "container": "grill",
     "requires_purchase": true,
     "satisfies_orders": ["meat_cooked", "rock_lizard_steak"]
   },
   "mushroom_pie": {
     "name": "洞菇馅饼",
-    "ingredients": ["dough", "cave_mushroom"],
+    "ingredients": ["mushroom_pie_raw"],
     "container": "grill",
     "requires_purchase": true,
     "satisfies_orders": ["bread"]
   },
   "grape_tart": {
     "name": "葡萄塔",
-    "ingredients": ["dough", "grape"],
+    "ingredients": ["grape_tart_raw"],
     "container": "grill",
     "requires_purchase": true,
     "satisfies_orders": ["bread"]
@@ -113,10 +215,80 @@
   },
   "mushroom_meat_pie": {
     "name": "菌肉馅饼",
-    "ingredients": ["dough_meat", "cave_mushroom"],
+    "ingredients": ["mushroom_meat_pie_raw"],
     "container": "grill",
     "requires_purchase": true,
     "satisfies_orders": ["meat_sand"]
+  },
+  "roasted_mushroom_broth": {
+    "name": "\u70e4\u83c7\u6d53\u6c64",
+    "ingredients": ["cave_mushroom_roasted", "ale"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["herb_broth", "cave_mushroom_stew"]
+  },
+  "toasted_herb_broth": {
+    "name": "\u70d8\u8349\u836f\u6c64",
+    "ingredients": ["herb_roasted", "ale"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["herb_broth"]
+  },
+  "warm_spiced_wine": {
+    "name": "\u70ed\u9999\u8461\u8404\u9152",
+    "ingredients": ["grape_roasted", "herb"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["spiced_wine", "wine"]
+  },
+  "sour_roast_herb_wine": {
+    "name": "\u70d8\u9178\u8349\u9152",
+    "ingredients": ["north_sour_grape_burnt", "herb_roasted"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["sour_herb_wine", "old_road_wine", "wine"]
+  },
+  "double_char_black_ale": {
+    "name": "\u53cc\u7126\u9ed1\u9ea6\u9152",
+    "ingredients": ["black_malt_burnt", "ale_burnt"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["bitter_black_ale", "miner_dark_ale", "ale_beer"]
+  },
+  "grape_flour_porridge": {
+    "name": "\u679c\u9999\u70e4\u7c89\u7cca",
+    "ingredients": ["flour_toasted", "grape_juice"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["malt_porridge"]
+  },
+  "ash_flatbread": {
+    "name": "\u7070\u70ec\u5e72\u7cae",
+    "ingredients": ["flour_burnt", "herb_ash"],
+    "container": "hand",
+    "requires_purchase": true,
+    "satisfies_orders": ["bread"]
+  },
+  "charred_mushroom_meat_stew": {
+    "name": "\u7126\u83cc\u8089\u6742\u70e9",
+    "ingredients": ["cave_mushroom_burnt", "meat_burnt"],
+    "container": "pot",
+    "requires_purchase": true,
+    "satisfies_orders": ["ash_pot_stew", "cave_mushroom_stew", "meat_stew"]
+  },
+  "charred_lizard_herb_plate": {
+    "name": "\u9999\u8349\u7126\u8725\u8089",
+    "ingredients": ["rock_lizard_burnt", "herb"],
+    "container": "hand",
+    "requires_purchase": true,
+    "satisfies_orders": ["charred_meat_plate", "rock_lizard_steak", "meat_cooked"]
+  },
+  "bitter_grape_dark_ale": {
+    "name": "\u82e6\u751c\u9ed1\u8461\u8404\u9152",
+    "ingredients": ["grape_burnt", "black_malt"],
+    "container": "barrel",
+    "requires_purchase": true,
+    "satisfies_orders": ["miner_dark_ale", "wine"]
   },
   "dough": {
     "name": "面团",

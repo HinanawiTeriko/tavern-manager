@@ -16,6 +16,7 @@ func _ready() -> void:
 	_test_daymap_art_assets(view)
 	_test_marker_labels_use_pixel_font(view)
 	_test_topbar_button_layout(view)
+	await _test_today_intel_panel_contract(view)
 	_test_gather_tutorial_targets_stamina_label(view)
 	_test_gathering_toast_contract(view)
 	_test_static_text_uses_pixel_font(view)
@@ -26,6 +27,7 @@ func _ready() -> void:
 	_test_daymap_primary_button_style(view)
 	_test_panel_styles(view)
 	await _test_gathering_toast_replaces_normal_gather_result(view)
+	await _test_wind_notice_text_layout(view)
 	await _test_rumor_visit_shows_top_toast(view)
 	view._open_shop()
 	await get_tree().process_frame
@@ -34,6 +36,7 @@ func _ready() -> void:
 	view._close_shop()
 	await get_tree().process_frame
 	await _test_fixer_visit_refreshes_gold_label(view)
+	_test_daymap_inventory_drop_does_not_duplicate(view)
 	view.queue_free()
 	await get_tree().process_frame
 	_finish()
@@ -54,6 +57,28 @@ func _force_location_wind_chance(gm: Node, location_id: String, chance: float) -
 	gm.day_map._locations[location_id] = location
 
 
+func _restore_today_intel_scroll_fixture(gm: Node) -> void:
+	if gm == null or gm.rumors == null:
+		return
+	gm.rumors.restore_state({
+		"current_day": 1,
+		"heard_ids": [
+			"dark_river_cold_shift",
+			"grape_trellis_sour_wine",
+			"mill_farm_malt_dust",
+			"market_shop_trade_talk",
+			"mushroom_forest_clear_scent",
+		],
+		"today_ids": [
+			"dark_river_cold_shift",
+			"grape_trellis_sour_wine",
+			"mill_farm_malt_dust",
+			"market_shop_trade_talk",
+			"mushroom_forest_clear_scent",
+		],
+	})
+
+
 func _color_close(actual: Color, expected: Color, epsilon: float = 0.002) -> bool:
 	return (
 		absf(actual.r - expected.r) <= epsilon
@@ -61,6 +86,13 @@ func _color_close(actual: Color, expected: Color, epsilon: float = 0.002) -> boo
 		and absf(actual.b - expected.b) <= epsilon
 		and absf(actual.a - expected.a) <= epsilon
 	)
+
+
+func _button_stylebox_texture_path(button: Button, state: String) -> String:
+	var style := button.get_theme_stylebox(state) as StyleBoxTexture
+	if style == null or style.texture == null:
+		return ""
+	return String(style.texture.resource_path)
 
 
 func _finish() -> void:
@@ -159,6 +191,112 @@ func _test_panel_styles(view) -> void:
 			_ok(continue_btn.size == Vector2(280, 72), "continue button keeps the DayMap primary button size")
 
 
+func _test_today_intel_panel_contract(view) -> void:
+	var gm = get_node("/root/GameManager")
+	_restore_today_intel_scroll_fixture(gm)
+	var button := view.get_node_or_null("UILayer/TodayIntelBtn") as Button
+	_ok(button != null, "DayMap keeps TodayIntelBtn only as a hidden compatibility node")
+	if button != null:
+		_ok(not button.visible, "TodayIntelBtn is not visible to the player")
+		_ok(button.disabled, "TodayIntelBtn is not clickable")
+		_ok(button.mouse_filter == Control.MOUSE_FILTER_IGNORE, "TodayIntelBtn does not catch map or UI input")
+		_ok(button.size == Vector2.ZERO, "TodayIntelBtn keeps no visible hit area")
+		_ok(button.custom_minimum_size == Vector2.ZERO, "TodayIntelBtn cannot force layout space")
+		_ok(button.text == "", "TodayIntelBtn does not render visible text")
+		_ok(_button_stylebox_texture_path(button, "normal") == "", "TodayIntelBtn has no normal texture")
+		_ok(_button_stylebox_texture_path(button, "hover") == "", "TodayIntelBtn has no hover texture")
+		_ok(_button_stylebox_texture_path(button, "pressed") == "", "TodayIntelBtn has no pressed texture")
+		_ok(view.get_node_or_null("UILayer/TopBar/TodayIntelBtn") == null,
+			"TodayIntelBtn is not embedded in the status topbar")
+		view.show_wind_notice("今晚菜单有新线索", {})
+		await get_tree().process_frame
+		_ok(not button.visible and button.disabled and button.size == Vector2.ZERO and button.scale == Vector2.ONE,
+			"DayMap wind notice keeps TodayIntelBtn hidden and inert")
+		_ok(button.get_node_or_null("UnreadCue") == null,
+			"DayMap wind notice does not add a separate unread cue to TodayIntelBtn")
+	var panel := view.get_node_or_null("UILayer/TodayIntelPanel") as Panel
+	_ok(panel != null, "DayMap exposes TodayIntelPanel")
+	if panel == null:
+		return
+	_ok(panel.size == Vector2(560, 520), "TodayIntelPanel keeps the fixed readable panel size")
+	_ok(not panel.visible, "TodayIntelPanel starts hidden")
+	var style := panel.get_theme_stylebox("panel") as StyleBoxTexture
+	_ok(style != null and style.texture != null, "TodayIntelPanel uses brush texture panel art")
+	if style != null and style.texture != null:
+		_ok(String(style.texture.resource_path).ends_with("assets/textures/ui/menu_brush_panel.png"),
+			"TodayIntelPanel uses the same brush panel art as menu preparation")
+	var title := panel.get_node_or_null("Title") as Label
+	_ok(title != null and title.size == Vector2(390, 34), "TodayIntelPanel title has a fixed safe area")
+	var close_btn := panel.get_node_or_null("CloseBtn") as Button
+	_ok(close_btn != null and close_btn.size == Vector2(92, 36), "TodayIntelPanel close button uses fixed size")
+	var scroll := panel.get_node_or_null("IntelScroll") as ScrollContainer
+	_ok(scroll != null, "TodayIntelPanel keeps IntelScroll")
+	if scroll != null:
+		_ok(scroll.size == Vector2(488, 374), "TodayIntelPanel scroll area has fixed text-safe size")
+		_ok(scroll.clip_contents, "TodayIntelPanel clips long text inside IntelScroll")
+		_ok(scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+			"TodayIntelPanel disables horizontal scrolling")
+		_ok(scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+			"TodayIntelPanel hides its vertical scrollbar")
+		_ok(scroll.get_v_scroll_bar() == null or not scroll.get_v_scroll_bar().visible,
+			"TodayIntelPanel vertical scrollbar stays visually hidden")
+	var list := panel.get_node_or_null("IntelScroll/IntelList") as VBoxContainer
+	_ok(list != null, "TodayIntelPanel keeps IntelList")
+	if button != null:
+		var camera := view.get_node_or_null("MapWorld/Camera2D") as DayMapCamera
+		_ok(camera != null, "DayMap exposes its camera for intel input isolation")
+		if camera != null:
+			camera.active = true
+			camera.zoom = Vector2.ONE
+		button.pressed.emit()
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_ok(not panel.visible, "hidden TodayIntelBtn does not open TodayIntelPanel")
+		view._open_today_intel_panel()
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_ok(panel.visible, "TodayIntelPanel remains available to internal callers")
+		if camera != null:
+			_ok(not camera.active, "TodayIntelPanel suspends DayMap camera input while open")
+			var blocked_zoom := camera.zoom.x
+			var wheel_up := InputEventMouseButton.new()
+			wheel_up.button_index = MOUSE_BUTTON_WHEEL_UP
+			wheel_up.pressed = true
+			camera._unhandled_input(wheel_up)
+			_ok(is_equal_approx(camera.zoom.x, blocked_zoom),
+				"TodayIntelPanel prevents wheel input from zooming the map behind it")
+		if list != null:
+			_ok(list.get_child_count() > 0, "TodayIntelPanel renders an empty state or rumor entries")
+			var entry := list.get_child(0) as Control
+			_ok(entry != null and entry.clip_contents, "TodayIntelPanel rumor entries clip to their brush safe area")
+			if entry != null:
+				_ok(entry.size.x <= scroll.size.x, "TodayIntelPanel rumor entry stays inside the fixed scroll width")
+				var entry_title := entry.find_child("Title", true, false) as Label
+				_ok(entry_title != null and not entry_title.text.contains("dark_river"),
+					"TodayIntelPanel rumor title resolves location ids before showing player text")
+				_ok(entry_title != null and entry_title.text.contains("暗河"),
+					"TodayIntelPanel rumor title shows the localized DayMap location name")
+				_ok(entry_title != null and entry_title.custom_minimum_size.x <= 424.0 and entry_title.clip_text,
+					"TodayIntelPanel title text is constrained to the entry safe inset")
+				var context := entry.find_child("Context", true, false) as Label
+				if context != null:
+					_ok(context.custom_minimum_size.x <= 424.0 and context.clip_text,
+						"TodayIntelPanel context text is constrained to the entry safe inset")
+					_ok(not context.text.contains("客群"),
+						"TodayIntelPanel context does not append generic guest-group labels after customers")
+		if scroll != null and list != null and list.size.y > scroll.size.y:
+			scroll.scroll_vertical = 96
+			await get_tree().process_frame
+			_ok(scroll.scroll_vertical > 0,
+				"TodayIntelPanel remains vertically scrollable while the scrollbar is hidden")
+		if close_btn != null:
+			close_btn.pressed.emit()
+			_ok(not panel.visible, "TodayIntelPanel close button hides the panel")
+			if camera != null:
+				_ok(camera.active, "TodayIntelPanel restores DayMap camera input when closed")
+	view._hide_wind_notice()
+
+
 func _test_gathering_toast_contract(view) -> void:
 	var toast := view.get_node_or_null("UILayer/GatheringToast") as GatheringToast
 	_ok(toast != null, "DayMap has a top gathering toast")
@@ -209,6 +347,40 @@ func _test_gathering_toast_replaces_normal_gather_result(view) -> void:
 		"gathering toast announces collected rewards")
 	_ok(content != null and content.text.contains("×"),
 		"gathering toast includes the collected item count")
+
+
+func _test_wind_notice_text_layout(view) -> void:
+	view.show_wind_notice(
+		"Dark river carriers say cold rain makes hot soup and stronger drink sell better tonight.",
+		{"meat_raw": 2}
+	)
+	await get_tree().process_frame
+	var notice := view.get_node_or_null("UILayer/WindNotice") as Control
+	_ok(notice != null and notice.visible, "wind notice is visible for layout inspection")
+	if notice == null:
+		return
+	var body := notice.get_node_or_null("Body") as Label
+	var subtitle := notice.get_node_or_null("Subtitle") as Label
+	var rewards := notice.get_node_or_null("Rewards") as Label
+	_ok(body != null and subtitle != null and rewards != null,
+		"wind notice keeps body, subtitle, and rewards labels")
+	if body == null or subtitle == null or rewards == null:
+		return
+	_ok(body.vertical_alignment == VERTICAL_ALIGNMENT_TOP,
+		"wind notice body reads from the top of its safe area")
+	_ok(body.clip_text,
+		"wind notice body clips inside its safe area")
+	_ok(body.position.y + body.size.y + 6.0 <= subtitle.position.y,
+		"wind notice subtitle sits below the body safe area")
+	_ok(subtitle.position.y + subtitle.size.y <= rewards.position.y,
+		"wind notice rewards sit below the saved-state line")
+	_ok(rewards.position.y + rewards.size.y <= 180.0,
+		"wind notice rewards stay inside the light paper safe area")
+	var rewards_color := rewards.get_theme_color("font_color")
+	_ok(rewards_color.r < 0.55 and rewards_color.g < 0.35 and rewards_color.b < 0.22,
+		"wind notice rewards use dark ink instead of low-contrast amber on paper")
+	_ok(body.size.x >= 370.0,
+		"wind notice body has enough width to avoid awkward short wraps")
 
 
 func _test_rumor_visit_shows_top_toast(view) -> void:
@@ -618,6 +790,15 @@ func _test_tavern_node(view) -> void:
 		_ok(action != null, "pinned note keeps tavern action button")
 		if action != null:
 			_ok(action.text != "", "selecting tavern gives the pinned note an action")
+
+
+func _test_daymap_inventory_drop_does_not_duplicate(view) -> void:
+	var gm = get_node("/root/GameManager")
+	gm.add_to_inventory("ale", 1)
+	var before: int = gm.inventory_sys.get_count("ale")
+	view._on_inventory_item_dropped("ale", Vector2(200, 200))
+	_ok(gm.inventory_sys.get_count("ale") == before,
+		"DayMap accidental inventory drop does not duplicate inventory items")
 
 
 func _test_daymap_art_assets(view) -> void:

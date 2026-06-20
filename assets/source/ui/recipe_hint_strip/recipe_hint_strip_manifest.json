@@ -1,0 +1,42 @@
+{
+  "id": "recipe_hint_strip",
+  "raw_source": "art_sources/generated_raw/recipe_hint_strip/recipe_hint_strip_source_v1.png",
+  "prompt": "art_sources/generated_raw/recipe_hint_strip/recipe_hint_strip_prompt_v1.txt",
+  "scale": 4,
+  "contact_sheet": "docs/art/recipe_hint_strip_contact_sheet.png",
+  "assets": {
+    "recipe_hint_strip_panel": {
+      "id": "recipe_hint_strip_panel",
+      "source_file": "art_sources/generated_raw/recipe_hint_strip/recipe_hint_strip_source_v1.png",
+      "source_rect": [
+        72,
+        388,
+        1182,
+        584
+      ],
+      "native_size": [
+        118,
+        14
+      ],
+      "runtime_size": [
+        472,
+        56
+      ],
+      "native_file": "assets/source/ui/recipe_hint_strip/recipe_hint_strip_panel_native.png",
+      "runtime_file": "assets/textures/ui/recipe_hint_strip/recipe_hint_strip_panel.png",
+      "safe_area": [
+        96,
+        10,
+        400,
+        34
+      ],
+      "nine_slice_margins": [
+        56,
+        20,
+        56,
+        20
+      ],
+      "intended_godot_use": "Tavern CustomerArea/RecipeHintPanel paper and wood strip backing"
+    }
+  }
+}

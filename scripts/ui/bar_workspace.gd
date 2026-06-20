@@ -1359,6 +1359,26 @@ func spawn_inventory_item_at(item_key: String, pos: Vector2) -> DeskItem:
 	return _spawn_desk_item_at(pos, item_key)
 
 
+func begin_inventory_item_drag(item_key: String, global_position: Vector2) -> DeskItem:
+	var body := spawn_inventory_item_at(item_key, global_position)
+	if body == null:
+		return null
+	var drag_start := _desk_item_drag_target(body, global_position)
+	body.global_position = drag_start
+	_begin_shortcut_drag_preview(body, global_position)
+	_drag_ctrl.start_drag(body, drag_start)
+	return body
+
+
+func drop_inventory_item_at(item_key: String, global_position: Vector2) -> DeskItem:
+	var body := spawn_inventory_item_at(item_key, global_position)
+	if body == null:
+		return null
+	body.global_position = _desk_item_drag_target(body, global_position)
+	body.sleeping = false
+	return body
+
+
 func _try_return_to_backpack(item: DeskItem, release_global_position: Vector2) -> bool:
 	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
 		return false

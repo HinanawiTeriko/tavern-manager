@@ -16,6 +16,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_scene_scripts_do_not_preload_raw_bgm_wavs()
 	_test_bgm_manager_owns_path_loading_and_looping()
+	_test_bgm_manager_does_not_duplicate_imported_wav_streams()
 	_test_transparent_shade_out_is_noop()
 	BGMManager.stop_immediate()
 	_finish()
@@ -44,8 +45,19 @@ func _test_bgm_manager_owns_path_loading_and_looping() -> void:
 	file.close()
 	_ok(text.contains("func crossfade_to_path"), "BGM manager exposes path-based crossfade")
 	_ok(text.contains("_current_stream_key"), "BGM manager tracks source identity for idempotent path playback")
-	_ok(text.contains("LOOP_FORWARD"), "BGM manager prepares WAV streams for looping")
+	_ok(text.contains("finished.connect"), "BGM manager loops music with player finished signals")
+	_ok(text.contains("_on_bgm_player_finished"), "BGM manager owns player-level replay looping")
 	_ok(text.contains("settings.apply_all()"), "BGM manager reapplies loaded settings after Music bus setup")
+
+
+func _test_bgm_manager_does_not_duplicate_imported_wav_streams() -> void:
+	var stream := load("res://assets/audio/bgm/title.wav") as AudioStreamWAV
+	_ok(stream != null, "title BGM loads as WAV")
+	if stream == null:
+		return
+	var prepared := BGMManager.call("_prepare_bgm_stream", stream) as AudioStreamWAV
+	_ok(prepared == stream, "BGM manager keeps imported WAV stream instance playable")
+	_ok(stream.loop_mode == AudioStreamWAV.LOOP_DISABLED, "BGM manager leaves imported WAV loop mode unchanged")
 
 
 func _test_transparent_shade_out_is_noop() -> void:

@@ -41,8 +41,21 @@ def load_rgba(path: Path) -> Image.Image:
 def visible_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
     return [
         (red, green, blue, alpha)
-        for red, green, blue, alpha in image.getdata()
+        for red, green, blue, alpha in image.get_flattened_data()
         if alpha > 0
+    ]
+
+
+def red_residue_pixels(image: Image.Image) -> list[tuple[int, int, int, int]]:
+    return [
+        (red, green, blue, alpha)
+        for red, green, blue, alpha in visible_pixels(image)
+        if alpha >= 160
+        and red >= 90
+        and red > green * 1.55
+        and red > blue * 1.25
+        and green <= 90
+        and blue <= 90
     ]
 
 
@@ -111,6 +124,22 @@ class WindNoticeAssetPipelineTest(unittest.TestCase):
                     len(bad_pixels),
                     0,
                     f"{asset_id}: purple/magenta fringe remains in normalized art",
+                )
+
+    def test_daymap_notice_panel_and_icon_do_not_keep_red_source_residue(self) -> None:
+        for asset_id in ["wind_notice_panel", "wind_notice_icon"]:
+            with self.subTest(asset_id=asset_id):
+                native = load_rgba(SOURCE / f"{asset_id}_native.png")
+                runtime = load_rgba(RUNTIME / f"{asset_id}.png")
+                self.assertEqual(
+                    len(red_residue_pixels(native)),
+                    0,
+                    f"{asset_id}: native art retains red source residue",
+                )
+                self.assertEqual(
+                    len(red_residue_pixels(runtime)),
+                    0,
+                    f"{asset_id}: runtime art magnifies red source residue",
                 )
 
     def test_manifest_records_runtime_contract(self) -> None:

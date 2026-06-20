@@ -1,0 +1,129 @@
+{
+  "id": "today_intel_tab",
+  "raw_source": "art_sources/generated_raw/today_intel_tab/today_intel_tab_source_v1.png",
+  "prompt": "art_sources/generated_raw/today_intel_tab/today_intel_tab_prompt_v1.txt",
+  "scale": 4,
+  "native_size": [
+    56,
+    24
+  ],
+  "runtime_size": [
+    224,
+    96
+  ],
+  "contact_sheet": "docs/art/today_intel_tab_contact_sheet.png",
+  "states": {
+    "normal": {
+      "source_file": "art_sources/generated_raw/today_intel_tab/today_intel_tab_source_v1.png",
+      "source_rect": [
+        68,
+        178,
+        688,
+        438
+      ],
+      "native_file": "assets/source/ui/today_intel_tab/today_intel_tab_normal_native.png",
+      "runtime_file": "assets/textures/ui/today_intel_tab_normal.png",
+      "size": [
+        224,
+        96
+      ],
+      "safe_area": [
+        82,
+        18,
+        120,
+        60
+      ],
+      "nine_slice_margins": [
+        34,
+        28,
+        34,
+        28
+      ],
+      "intended_godot_use": "DayMap TodayIntelBtn paper tab state"
+    },
+    "hover": {
+      "source_file": "art_sources/generated_raw/today_intel_tab/today_intel_tab_source_v1.png",
+      "source_rect": [
+        768,
+        178,
+        1388,
+        438
+      ],
+      "native_file": "assets/source/ui/today_intel_tab/today_intel_tab_hover_native.png",
+      "runtime_file": "assets/textures/ui/today_intel_tab_hover.png",
+      "size": [
+        224,
+        96
+      ],
+      "safe_area": [
+        82,
+        18,
+        120,
+        60
+      ],
+      "nine_slice_margins": [
+        34,
+        28,
+        34,
+        28
+      ],
+      "intended_godot_use": "DayMap TodayIntelBtn paper tab state"
+    },
+    "pressed": {
+      "source_file": "art_sources/generated_raw/today_intel_tab/today_intel_tab_source_v1.png",
+      "source_rect": [
+        68,
+        622,
+        688,
+        882
+      ],
+      "native_file": "assets/source/ui/today_intel_tab/today_intel_tab_pressed_native.png",
+      "runtime_file": "assets/textures/ui/today_intel_tab_pressed.png",
+      "size": [
+        224,
+        96
+      ],
+      "safe_area": [
+        82,
+        18,
+        120,
+        60
+      ],
+      "nine_slice_margins": [
+        34,
+        28,
+        34,
+        28
+      ],
+      "intended_godot_use": "DayMap TodayIntelBtn paper tab state"
+    },
+    "unread": {
+      "source_file": "art_sources/generated_raw/today_intel_tab/today_intel_tab_source_v1.png",
+      "source_rect": [
+        768,
+        622,
+        1388,
+        882
+      ],
+      "native_file": "assets/source/ui/today_intel_tab/today_intel_tab_unread_native.png",
+      "runtime_file": "assets/textures/ui/today_intel_tab_unread.png",
+      "size": [
+        224,
+        96
+      ],
+      "safe_area": [
+        82,
+        18,
+        120,
+        60
+      ],
+      "nine_slice_margins": [
+        34,
+        28,
+        34,
+        28
+      ],
+      "intended_godot_use": "DayMap TodayIntelBtn paper tab state"
+    }
+  }
+}

@@ -285,6 +285,10 @@ func _advance_grill_item(item: DeskItem, delta: float) -> void:
 func _grill_product_for_elapsed(item_key: String, elapsed: float) -> String:
 	if elapsed < _grill_threshold_for_item(item_key):
 		return ""
+	return _grill_product_for_key(item_key)
+
+
+func _grill_product_for_key(item_key: String) -> String:
 	if item_key == "meat_cooked" or item_key == "bread":
 		return _burnt_key_for(item_key)
 	return GameManager.craft.query_recipe("grill", [item_key])
@@ -335,7 +339,7 @@ func _try_spawn_grill_press_feedback(item: DeskItem, delta: float) -> void:
 func _try_spawn_grill_burn_warning(item: DeskItem) -> void:
 	if item == null or not is_instance_valid(item) or item.is_queued_for_deletion():
 		return
-	if item.item_key != "meat_cooked" and item.item_key != "bread":
+	if not _is_grill_burn_result(_grill_product_for_key(item.item_key)):
 		return
 	var threshold := _grill_threshold_for_item(item.item_key)
 	if threshold <= 0.0:
@@ -357,6 +361,10 @@ func _try_spawn_grill_burn_warning(item: DeskItem) -> void:
 		1.0
 	)
 	_spawn_grill_feedback_spark("char_spark", item.global_position, 0, 1, true)
+
+
+func _is_grill_burn_result(product_key: String) -> bool:
+	return product_key.ends_with("_burnt") or product_key == "herb_ash"
 
 
 func _spawn_grill_done_feedback(origin: Vector2, _product_key: String) -> void:
@@ -1200,8 +1208,6 @@ func can_sear_item_key(item_key: String) -> bool:
 		return false
 	if item_key == "meat_cooked" or item_key == "bread":
 		return true
-	if GameManager.craft.is_product(item_key):
-		return false
 	return GameManager.craft.query_recipe("grill", [item_key]) != ""
 
 

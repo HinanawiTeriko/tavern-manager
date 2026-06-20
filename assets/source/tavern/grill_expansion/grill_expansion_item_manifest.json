@@ -1,0 +1,585 @@
+{
+  "generated_sources": {
+    "grill_intermediate_sheet_v1": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "prompt": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_intermediates_prompt_v1.txt",
+      "size": [
+        1254,
+        1254
+      ],
+      "intended_use": "4x4 source sheet for cooked and burnt material desk item art"
+    },
+    "grill_product_sheet_v1": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065851Z_ig_0cccad223cc1bb6f016a3639d6fd8c8191ad6e163ca6d3a9c5.png",
+      "prompt": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_products_prompt_v1.txt",
+      "size": [
+        1254,
+        1254
+      ],
+      "intended_use": "4x4 source sheet for grill expansion recipe desk item art"
+    },
+    "distinct_replacement_sheet_v2": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "prompt": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_prompt_v2.txt",
+      "size": [
+        1254,
+        1254
+      ],
+      "intended_use": "4x4 replacement sheet for visually distinct tavern grill expansion item icons"
+    }
+  },
+  "items": {
+    "flour_toasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "source_rect": [
+        0,
+        0,
+        313,
+        313
+      ],
+      "native": "assets/source/tavern/items/flour_toasted_native.png",
+      "runtime": "assets/textures/tavern/items/flour_toasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for toasted flour"
+    },
+    "flour_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        0,
+        0,
+        313,
+        313
+      ],
+      "native": "assets/source/tavern/items/flour_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/flour_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for burnt flour"
+    },
+    "rock_lizard_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "source_rect": [
+        627,
+        0,
+        940,
+        313
+      ],
+      "native": "assets/source/tavern/items/rock_lizard_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/rock_lizard_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for charred rock lizard meat"
+    },
+    "black_malt_roasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        627,
+        0,
+        940,
+        313
+      ],
+      "native": "assets/source/tavern/items/black_malt_roasted_native.png",
+      "runtime": "assets/textures/tavern/items/black_malt_roasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted black malt"
+    },
+    "black_malt_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        900,
+        0,
+        1254,
+        313
+      ],
+      "native": "assets/source/tavern/items/black_malt_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/black_malt_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for burnt black malt"
+    },
+    "grape_roasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        0,
+        313,
+        313,
+        627
+      ],
+      "native": "assets/source/tavern/items/grape_roasted_native.png",
+      "runtime": "assets/textures/tavern/items/grape_roasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted grapes"
+    },
+    "grape_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        313,
+        313,
+        627,
+        627
+      ],
+      "native": "assets/source/tavern/items/grape_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/grape_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for burnt grapes"
+    },
+    "north_sour_grape_roasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        627,
+        313,
+        940,
+        627
+      ],
+      "native": "assets/source/tavern/items/north_sour_grape_roasted_native.png",
+      "runtime": "assets/textures/tavern/items/north_sour_grape_roasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted sour grapes"
+    },
+    "north_sour_grape_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        940,
+        313,
+        1254,
+        627
+      ],
+      "native": "assets/source/tavern/items/north_sour_grape_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/north_sour_grape_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for burnt sour grapes"
+    },
+    "herb_roasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "source_rect": [
+        313,
+        627,
+        627,
+        940
+      ],
+      "native": "assets/source/tavern/items/herb_roasted_native.png",
+      "runtime": "assets/textures/tavern/items/herb_roasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted herbs"
+    },
+    "herb_ash": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        313,
+        0,
+        627,
+        313
+      ],
+      "native": "assets/source/tavern/items/herb_ash_native.png",
+      "runtime": "assets/textures/tavern/items/herb_ash.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for herb ash"
+    },
+    "cave_mushroom_roasted": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "source_rect": [
+        940,
+        627,
+        1254,
+        940
+      ],
+      "native": "assets/source/tavern/items/cave_mushroom_roasted_native.png",
+      "runtime": "assets/textures/tavern/items/cave_mushroom_roasted.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted cave mushroom"
+    },
+    "cave_mushroom_burnt": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065726Z_ig_0cccad223cc1bb6f016a36398044e08191abb21c83fa501b24.png",
+      "source_rect": [
+        0,
+        940,
+        313,
+        1254
+      ],
+      "native": "assets/source/tavern/items/cave_mushroom_burnt_native.png",
+      "runtime": "assets/textures/tavern/items/cave_mushroom_burnt.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for burnt cave mushroom"
+    },
+    "roasted_mushroom_broth": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        0,
+        627,
+        313,
+        900
+      ],
+      "native": "assets/source/tavern/items/roasted_mushroom_broth_native.png",
+      "runtime": "assets/textures/tavern/items/roasted_mushroom_broth.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for roasted mushroom broth"
+    },
+    "toasted_herb_broth": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        313,
+        627,
+        627,
+        890
+      ],
+      "native": "assets/source/tavern/items/toasted_herb_broth_native.png",
+      "runtime": "assets/textures/tavern/items/toasted_herb_broth.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for toasted herb broth"
+    },
+    "warm_spiced_wine": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        0,
+        900,
+        313,
+        1254
+      ],
+      "native": "assets/source/tavern/items/warm_spiced_wine_native.png",
+      "runtime": "assets/textures/tavern/items/warm_spiced_wine.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for warm spiced wine"
+    },
+    "sour_roast_herb_wine": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        313,
+        885,
+        627,
+        1254
+      ],
+      "native": "assets/source/tavern/items/sour_roast_herb_wine_native.png",
+      "runtime": "assets/textures/tavern/items/sour_roast_herb_wine.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for sour roasted herb wine"
+    },
+    "double_char_black_ale": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        627,
+        900,
+        940,
+        1254
+      ],
+      "native": "assets/source/tavern/items/double_char_black_ale_native.png",
+      "runtime": "assets/textures/tavern/items/double_char_black_ale.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for double char black ale"
+    },
+    "grape_flour_porridge": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        620,
+        627,
+        915,
+        900
+      ],
+      "native": "assets/source/tavern/items/grape_flour_porridge_native.png",
+      "runtime": "assets/textures/tavern/items/grape_flour_porridge.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for grape flour porridge"
+    },
+    "ash_flatbread": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065851Z_ig_0cccad223cc1bb6f016a3639d6fd8c8191ad6e163ca6d3a9c5.png",
+      "source_rect": [
+        627,
+        313,
+        940,
+        627
+      ],
+      "native": "assets/source/tavern/items/ash_flatbread_native.png",
+      "runtime": "assets/textures/tavern/items/ash_flatbread.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for ash flatbread"
+    },
+    "charred_mushroom_meat_stew": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        910,
+        627,
+        1254,
+        900
+      ],
+      "native": "assets/source/tavern/items/charred_mushroom_meat_stew_native.png",
+      "runtime": "assets/textures/tavern/items/charred_mushroom_meat_stew.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for charred mushroom meat stew"
+    },
+    "charred_lizard_herb_plate": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_20260620T065851Z_ig_0cccad223cc1bb6f016a3639d6fd8c8191ad6e163ca6d3a9c5.png",
+      "source_rect": [
+        0,
+        627,
+        313,
+        940
+      ],
+      "native": "assets/source/tavern/items/charred_lizard_herb_plate_native.png",
+      "runtime": "assets/textures/tavern/items/charred_lizard_herb_plate.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for charred lizard herb plate"
+    },
+    "bitter_grape_dark_ale": {
+      "source_file": "art_sources/generated_raw/tavern_grill_expansion/tavern_grill_expansion_distinct_v2_20260620T071556Z_ig_0cccad223cc1bb6f016a363dcfa3d481919f20ea9b4c196bf0.png",
+      "source_rect": [
+        940,
+        900,
+        1254,
+        1254
+      ],
+      "native": "assets/source/tavern/items/bitter_grape_dark_ale_native.png",
+      "runtime": "assets/textures/tavern/items/bitter_grape_dark_ale.png",
+      "native_size": [
+        24,
+        24
+      ],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [
+        1,
+        1,
+        22,
+        22
+      ],
+      "intended_godot_use": "DeskItem art for bitter grape dark ale"
+    }
+  }
+}

@@ -63,6 +63,15 @@ const DAYMAP_TOPBAR_STAMINA_POS := Vector2(636, 1)
 const DAYMAP_TOPBAR_STAMINA_SIZE := Vector2(128, 40)
 const DAYMAP_TOPBAR_GOLD_POS := Vector2(904, 1)
 const DAYMAP_TOPBAR_GOLD_SIZE := Vector2(116, 40)
+const TODAY_INTEL_BUTTON_POS := Vector2.ZERO
+const TODAY_INTEL_BUTTON_SIZE := Vector2.ZERO
+const TODAY_INTEL_PANEL_POS := Vector2(680, 86)
+const TODAY_INTEL_PANEL_SIZE := Vector2(560, 520)
+const TODAY_INTEL_SCROLL_POS := Vector2(36, 86)
+const TODAY_INTEL_SCROLL_SIZE := Vector2(488, 374)
+const TODAY_INTEL_LIST_WIDTH := 456.0
+const TODAY_INTEL_ENTRY_INSET := 16.0
+const TODAY_INTEL_ENTRY_TEXT_WIDTH := 424.0
 const DAYMAP_LEDGER_BUTTON_POS := Vector2(1092, 8)
 const DAYMAP_DETAIL_INSET := Vector2(36, 34)
 const DAYMAP_DETAIL_BODY_X := 58.0
@@ -126,6 +135,11 @@ var _wind_notice_tween: Tween
 var _document_overlay: DocumentOverlay
 var _inventory_overlay: InventoryOverlay
 var _documents_btn: Button
+var _today_intel_btn: Button
+var _today_intel_panel: Panel
+var _today_intel_list: VBoxContainer
+var _today_intel_location_name_cache: Dictionary = {}
+var _today_intel_previous_camera_active: bool = true
 
 var _stamina_left: int = 0
 var _max_stamina: int = 5
@@ -183,6 +197,7 @@ func _ready() -> void:
 	_gold_label.add_theme_font_size_override("font_size", DAYMAP_STATUS_FONT_SIZE)
 	_apply_daymap_label_font(_gold_label)
 	_apply_topbar_layout(_documents_btn)
+	_setup_today_intel_panel()
 	_refresh_ledger_hint()
 
 	_setup_detail_panel()
@@ -253,6 +268,364 @@ func _apply_topbar_layout(documents_btn: Button) -> void:
 	documents_btn.disabled = false
 	documents_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	documents_btn.focus_mode = Control.FOCUS_NONE
+
+
+func _setup_today_intel_panel() -> void:
+	_today_intel_btn = $UILayer.get_node_or_null("TodayIntelBtn") as Button
+	if _today_intel_btn == null:
+		_today_intel_btn = Button.new()
+		_today_intel_btn.name = "TodayIntelBtn"
+		$UILayer.add_child(_today_intel_btn)
+	_today_intel_btn.position = TODAY_INTEL_BUTTON_POS
+	_today_intel_btn.size = TODAY_INTEL_BUTTON_SIZE
+	_today_intel_btn.custom_minimum_size = TODAY_INTEL_BUTTON_SIZE
+	_today_intel_btn.text = "风声"
+	_today_intel_btn.focus_mode = Control.FOCUS_NONE
+	_today_intel_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	_today_intel_btn.z_index = 95
+	_hide_today_intel_entry_button(_today_intel_btn)
+	_today_intel_btn.position = TODAY_INTEL_BUTTON_POS
+	_today_intel_btn.size = TODAY_INTEL_BUTTON_SIZE
+	if not _today_intel_btn.pressed.is_connected(_open_today_intel_panel):
+		_today_intel_btn.pressed.connect(_open_today_intel_panel)
+	_hide_today_intel_entry_button(_today_intel_btn)
+
+	_today_intel_panel = $UILayer.get_node_or_null("TodayIntelPanel") as Panel
+	if _today_intel_panel == null:
+		_today_intel_panel = Panel.new()
+		_today_intel_panel.name = "TodayIntelPanel"
+		$UILayer.add_child(_today_intel_panel)
+	_today_intel_panel.position = TODAY_INTEL_PANEL_POS
+	_today_intel_panel.size = TODAY_INTEL_PANEL_SIZE
+	_today_intel_panel.custom_minimum_size = TODAY_INTEL_PANEL_SIZE
+	_today_intel_panel.z_index = 96
+	_today_intel_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_today_intel_panel.visible = false
+	ThemeColors.style_brush_panel(_today_intel_panel)
+
+	var title := _today_intel_panel.get_node_or_null("Title") as Label
+	if title == null:
+		title = Label.new()
+		title.name = "Title"
+		_today_intel_panel.add_child(title)
+	title.position = Vector2(36, 24)
+	title.size = Vector2(390, 34)
+	title.text = "今日情报"
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ThemeColors.style_brush_label(title, 20, ThemeColors.AMBER_PRIMARY)
+
+	var close_btn := _today_intel_panel.get_node_or_null("CloseBtn") as Button
+	if close_btn == null:
+		close_btn = Button.new()
+		close_btn.name = "CloseBtn"
+		_today_intel_panel.add_child(close_btn)
+	close_btn.position = Vector2(432, 24)
+	close_btn.size = Vector2(92, 36)
+	close_btn.custom_minimum_size = Vector2(92, 36)
+	close_btn.text = "关闭"
+	close_btn.focus_mode = Control.FOCUS_NONE
+	ThemeColors.style_brush_button(close_btn, 14)
+	if not close_btn.pressed.is_connected(_close_today_intel_panel):
+		close_btn.pressed.connect(_close_today_intel_panel)
+
+	var scroll := _today_intel_panel.get_node_or_null("IntelScroll") as ScrollContainer
+	if scroll == null:
+		scroll = ScrollContainer.new()
+		scroll.name = "IntelScroll"
+		_today_intel_panel.add_child(scroll)
+	scroll.position = TODAY_INTEL_SCROLL_POS
+	scroll.size = TODAY_INTEL_SCROLL_SIZE
+	scroll.custom_minimum_size = TODAY_INTEL_SCROLL_SIZE
+	scroll.clip_contents = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+
+	_today_intel_list = scroll.get_node_or_null("IntelList") as VBoxContainer
+	if _today_intel_list == null:
+		_today_intel_list = VBoxContainer.new()
+		_today_intel_list.name = "IntelList"
+		scroll.add_child(_today_intel_list)
+	_today_intel_list.custom_minimum_size = Vector2(TODAY_INTEL_LIST_WIDTH, 0.0)
+	_today_intel_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_today_intel_list.add_theme_constant_override("separation", 10)
+
+	var footer := _today_intel_panel.get_node_or_null("Footer") as Label
+	if footer == null:
+		footer = Label.new()
+		footer.name = "Footer"
+		_today_intel_panel.add_child(footer)
+	footer.position = Vector2(36, 472)
+	footer.size = Vector2(488, 28)
+	footer.text = "这些情报会进入今晚菜单准备。"
+	footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	footer.clip_text = true
+	ThemeColors.style_brush_label(footer, 13, ThemeColors.TEXT_SUBTITLE)
+
+
+func _hide_today_intel_entry_button(button: Button) -> void:
+	button.position = TODAY_INTEL_BUTTON_POS
+	button.size = TODAY_INTEL_BUTTON_SIZE
+	button.custom_minimum_size = TODAY_INTEL_BUTTON_SIZE
+	button.text = ""
+	button.tooltip_text = ""
+	button.visible = false
+	button.disabled = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.z_index = 0
+	button.scale = Vector2.ONE
+	button.icon = null
+	button.expand_icon = false
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("disabled", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if button.pressed.is_connected(_open_today_intel_panel):
+		button.pressed.disconnect(_open_today_intel_panel)
+
+
+func _open_today_intel_panel() -> void:
+	_rebuild_today_intel_panel()
+	_today_intel_panel.visible = true
+	if _camera != null:
+		_today_intel_previous_camera_active = _camera.active
+		_camera.set_active(false)
+
+
+func _close_today_intel_panel() -> void:
+	if _today_intel_panel != null:
+		_today_intel_panel.visible = false
+	if _camera != null:
+		_camera.set_active(_today_intel_previous_camera_active)
+
+
+func _rebuild_today_intel_panel() -> void:
+	if _today_intel_list == null:
+		return
+	for child in _today_intel_list.get_children():
+		child.queue_free()
+	var gm = get_node_or_null("/root/GameManager")
+	var rumors: Array = []
+	if gm != null and gm.has_method("get_today_rumors"):
+		rumors = gm.get_today_rumors()
+	if rumors.is_empty():
+		_today_intel_list.add_child(_new_today_intel_empty_state())
+		return
+	for rumor in rumors:
+		if rumor is Dictionary:
+			_today_intel_list.add_child(_new_today_intel_rumor_entry(rumor as Dictionary))
+
+
+func _new_today_intel_empty_state() -> Control:
+	var label := Label.new()
+	label.name = "EmptyState"
+	label.text = "今天还没有听到能影响菜单的传闻。\n访问地点后，风声会记录在这里，开门前可以回来核对。"
+	label.custom_minimum_size = Vector2(TODAY_INTEL_LIST_WIDTH, 84)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	ThemeColors.style_brush_label(label, 14, ThemeColors.TEXT_DIM)
+	return label
+
+
+func _new_today_intel_rumor_entry(rumor: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	panel.name = "RumorEntry"
+	panel.custom_minimum_size = Vector2(TODAY_INTEL_LIST_WIDTH, 156)
+	panel.clip_contents = true
+	ThemeColors.style_brush_content_panel(panel)
+
+	var inset := MarginContainer.new()
+	inset.name = "Inset"
+	inset.custom_minimum_size = Vector2(TODAY_INTEL_LIST_WIDTH, 0)
+	inset.clip_contents = true
+	inset.add_theme_constant_override("margin_left", int(TODAY_INTEL_ENTRY_INSET))
+	inset.add_theme_constant_override("margin_top", 12)
+	inset.add_theme_constant_override("margin_right", int(TODAY_INTEL_ENTRY_INSET))
+	inset.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(inset)
+
+	var box := VBoxContainer.new()
+	box.name = "Body"
+	box.custom_minimum_size = Vector2(TODAY_INTEL_ENTRY_TEXT_WIDTH, 0)
+	box.clip_contents = true
+	box.size_flags_horizontal = Control.SIZE_FILL
+	box.add_theme_constant_override("separation", 4)
+	inset.add_child(box)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.text = _today_intel_rumor_title(rumor)
+	title.custom_minimum_size = Vector2(TODAY_INTEL_ENTRY_TEXT_WIDTH, 24)
+	title.size_flags_horizontal = Control.SIZE_FILL
+	title.clip_text = true
+	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	ThemeColors.style_brush_label(title, 14, ThemeColors.AMBER_PRIMARY)
+	box.add_child(title)
+
+	var summary := Label.new()
+	summary.name = "Summary"
+	summary.text = _today_intel_rumor_summary(rumor)
+	summary.custom_minimum_size = Vector2(TODAY_INTEL_ENTRY_TEXT_WIDTH, 44)
+	summary.size_flags_horizontal = Control.SIZE_FILL
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.clip_text = true
+	ThemeColors.style_brush_label(summary, 13, ThemeColors.TEXT_LIGHT)
+	box.add_child(summary)
+
+	var menu_hints: Dictionary = rumor.get("menuHints", {})
+	var recommended_tags := _strings_from_values(menu_hints.get("recommendedTags", []), 4)
+	if not recommended_tags.is_empty():
+		box.add_child(_new_today_intel_tag_row(recommended_tags))
+
+	var context_parts: Array[String] = []
+	var affected := _customer_names_from_today_intel(rumor.get("affectedCustomers", []), 3)
+	if not affected.is_empty():
+		context_parts.append("可能来 " + " / ".join(affected))
+	if not context_parts.is_empty():
+		var context := Label.new()
+		context.name = "Context"
+		context.text = "；".join(context_parts)
+		context.custom_minimum_size = Vector2(TODAY_INTEL_ENTRY_TEXT_WIDTH, 22)
+		context.size_flags_horizontal = Control.SIZE_FILL
+		context.clip_text = true
+		context.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		ThemeColors.style_brush_label(context, 12, ThemeColors.TEXT_SUBTITLE)
+		box.add_child(context)
+	return panel
+
+
+func _today_intel_rumor_title(rumor: Dictionary) -> String:
+	var location_id := String(rumor.get("location", ""))
+	if location_id == "":
+		return "风声"
+	var location_name := _today_intel_location_name(location_id)
+	if location_name == "":
+		location_name = "未知地点"
+	return "风声 · " + location_name
+
+
+func _today_intel_location_name(location_id: String) -> String:
+	if location_id == "":
+		return ""
+	if _today_intel_location_name_cache.has(location_id):
+		return String(_today_intel_location_name_cache[location_id])
+	var resolved := ""
+	var gm = get_node_or_null("/root/GameManager")
+	if gm != null and gm.day_map != null and gm.day_map.has_method("get_locations"):
+		for loc in gm.day_map.get_locations():
+			if loc is Dictionary and String((loc as Dictionary).get("id", "")) == location_id:
+				resolved = String((loc as Dictionary).get("name", ""))
+				break
+	if resolved == "":
+		resolved = _today_intel_location_name_from_data(location_id)
+	_today_intel_location_name_cache[location_id] = resolved
+	return resolved
+
+
+func _today_intel_location_name_from_data(location_id: String) -> String:
+	var file := FileAccess.open("res://data/locations.json", FileAccess.READ)
+	if file == null:
+		return ""
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		return ""
+	for raw in (parsed as Dictionary).get("locations", []):
+		if not raw is Dictionary:
+			continue
+		var loc := raw as Dictionary
+		if String(loc.get("id", "")) == location_id:
+			return String(loc.get("name", ""))
+	return ""
+
+
+func _today_intel_rumor_summary(rumor: Dictionary) -> String:
+	var menu_hints: Dictionary = rumor.get("menuHints", {})
+	var summary := String(menu_hints.get("summary", ""))
+	if summary != "":
+		return summary
+	return String(rumor.get("text", ""))
+
+
+func _new_today_intel_tag_row(tags: PackedStringArray) -> Control:
+	var row := HBoxContainer.new()
+	row.name = "TagRow"
+	row.custom_minimum_size = Vector2(TODAY_INTEL_ENTRY_TEXT_WIDTH, 22)
+	row.clip_contents = true
+	row.size_flags_horizontal = Control.SIZE_FILL
+	row.add_theme_constant_override("separation", 8)
+	for index in range(tags.size()):
+		row.add_child(_new_today_intel_tag_label(tags[index], index))
+	return row
+
+
+func _new_today_intel_tag_label(tag: String, index: int) -> Label:
+	var label := Label.new()
+	label.name = "TagText_%d" % index
+	label.text = tag
+	label.custom_minimum_size = Vector2(82, 20)
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(label, 12, _semantic_tag_color(tag))
+	return label
+
+
+func _semantic_tag_color(tag: String) -> Color:
+	match tag:
+		"酒水":
+			return ThemeColors.AMBER_PRIMARY
+		"热食":
+			return Color(1.0, 0.42, 0.28)
+		"顶饿":
+			return Color(0.86, 0.68, 0.38)
+		"力量":
+			return Color(0.95, 0.32, 0.28)
+		"清香":
+			return Color(0.46, 0.78, 0.44)
+		"秘香":
+			return Color(0.72, 0.52, 0.94)
+		"轻快":
+			return Color(0.42, 0.78, 0.76)
+		"体面":
+			return ThemeColors.AMBER_BRIGHT
+		"精致":
+			return Color(0.96, 0.78, 0.42)
+		_:
+			return ThemeColors.TEXT_SUBTITLE
+
+
+func _strings_from_values(values, limit: int = 0) -> PackedStringArray:
+	var result := PackedStringArray()
+	if not values is Array:
+		return result
+	for value in values:
+		var text := String(value)
+		if text == "":
+			continue
+		result.append(text)
+		if limit > 0 and result.size() >= limit:
+			break
+	return result
+
+
+func _customer_names_from_today_intel(values, limit: int = 0) -> PackedStringArray:
+	var result := PackedStringArray()
+	if not values is Array:
+		return result
+	for value in values:
+		var name := ""
+		if value is Dictionary:
+			name = String((value as Dictionary).get("name", ""))
+		else:
+			name = String(value)
+		if name == "":
+			continue
+		result.append(name)
+		if limit > 0 and result.size() >= limit:
+			break
+	return result
 
 
 func _refresh_ledger_hint() -> void:
@@ -394,8 +767,8 @@ func _setup_wind_notice() -> void:
 	var icon := TextureRect.new()
 	icon.name = "Icon"
 	icon.texture = load(WIND_NOTICE_ICON_TEXTURE) as Texture2D
-	icon.position = Vector2(44, 72)
-	icon.size = Vector2(96, 96)
+	icon.position = Vector2(50, 86)
+	icon.size = Vector2(88, 88)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	notice.add_child(icon)
@@ -403,50 +776,52 @@ func _setup_wind_notice() -> void:
 	var title := Label.new()
 	title.name = "Title"
 	title.text = "听到风声"
-	title.position = Vector2(156, 56)
-	title.size = Vector2(320, 30)
+	title.position = Vector2(156, 52)
+	title.size = Vector2(380, 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ThemeColors.style_header(title, 22)
+	ThemeColors.style_header(title, 21)
 	_apply_daymap_label_font(title)
 	notice.add_child(title)
 
 	var body := Label.new()
 	body.name = "Body"
-	body.position = Vector2(156, 88)
-	body.size = Vector2(330, 76)
+	body.position = Vector2(156, 84)
+	body.size = Vector2(382, 42)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	body.clip_text = true
+	body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_theme_color_override("font_color", Color(0.27, 0.19, 0.12))
-	body.add_theme_font_size_override("font_size", 17)
+	body.add_theme_font_size_override("font_size", 15)
 	_apply_daymap_label_font(body)
 	notice.add_child(body)
 
 	var subtitle := Label.new()
 	subtitle.name = "Subtitle"
 	subtitle.text = "已记入今日风声"
-	subtitle.position = Vector2(156, 164)
-	subtitle.size = Vector2(260, 24)
+	subtitle.position = Vector2(156, 132)
+	subtitle.size = Vector2(382, 20)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	subtitle.add_theme_color_override("font_color", ThemeColors.TEXT_SUBTITLE)
-	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_color_override("font_color", Color(0.45, 0.31, 0.18))
+	subtitle.add_theme_font_size_override("font_size", 12)
 	_apply_daymap_label_font(subtitle)
 	notice.add_child(subtitle)
 
 	var rewards := Label.new()
 	rewards.name = "Rewards"
-	rewards.position = Vector2(156, 188)
-	rewards.size = Vector2(330, 24)
+	rewards.position = Vector2(156, 156)
+	rewards.size = Vector2(382, 20)
 	rewards.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	rewards.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	rewards.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rewards.add_theme_color_override("font_color", ThemeColors.AMBER_PRIMARY)
-	rewards.add_theme_font_size_override("font_size", 14)
+	rewards.add_theme_color_override("font_color", Color(0.28, 0.12, 0.04))
+	rewards.add_theme_font_size_override("font_size", 12)
 	_apply_daymap_label_font(rewards)
 	notice.add_child(rewards)
 
@@ -1254,9 +1629,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _on_inventory_item_dropped(item_key: String, _global_position: Vector2) -> void:
-	# DayMap 场景无法拖出物品使用，意外拖出时放回背包
-	get_node("/root/GameManager").add_to_inventory(item_key, 1)
+func _on_inventory_item_dropped(_item_key: String, _global_position: Vector2) -> void:
+	# InventoryOverlay does not deduct items during UI drag. DayMap has no
+	# world item spawn target, so dropping outside the backpack is a no-op.
+	return
 
 func _update_gold_display() -> void:
 	var gm = get_node("/root/GameManager")

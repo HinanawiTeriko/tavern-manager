@@ -1,0 +1,11 @@
+Use case: game asset sprite sheet
+Asset type: source art for a pixel-art tavern management game item icon pipeline
+Primary request: Create a single square 4x4 grid sprite sheet of 16 small fantasy tavern prepared food and drink icons, centered one item per cell, on a perfectly flat solid #ff00ff chroma-key background. No text, no labels, no numbers, no watermark, no border frames. Keep generous padding in every cell.
+Style/medium: dark teal dungeon tavern pixel-art concept source with crisp chunky silhouettes, rough ink-line edges, warm amber candle highlights, limited palette, readable at tiny icon size. The output may be high resolution source art but must simplify cleanly to 24x24 icons.
+Composition/framing: exact row-major order, one isolated object per cell:
+1 roasted mushroom broth bowl, 2 toasted herb broth bowl, 3 warm spiced red wine cup, 4 sour roasted herb wine cup,
+5 double-char black ale mug, 6 grape flour porridge bowl, 7 ash flatbread, 8 charred mushroom meat stew bowl,
+9 charred lizard herb plate, 10 bitter grape dark ale goblet, 11 smoky mushroom soup, 12 herb wine bottle,
+13 dark malt tankard, 14 grape porridge crock, 15 scorched tavern ration, 16 charred stew pot.
+Lighting/mood: warm tavern fire accents, dark readable outline, no cast shadows.
+Constraints: background must be one uniform #ff00ff color with no texture, no shadows, no gradients, no floor plane. Do not use #ff00ff in any item. Every cell contains only the item object, no readable text.

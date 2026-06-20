@@ -19,6 +19,7 @@ func _ready() -> void:
 	await _test_failed_products_drop_on_customer_area_stays_on_desk()
 	await _test_inventory_overlay_lists_and_drop()
 	await _test_inventory_drop_binds_shortcut_slot()
+	await _test_inventory_drop_releases_free_desk_item()
 	await _test_shortcut_drag_starts_above_table_baseline()
 	await _test_document_overlay_opens_ledger()
 	await _test_work_surface_ledger_can_be_dragged()
@@ -515,9 +516,10 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 			var drag_data = ale_slot._get_drag_data(Vector2(8.0, 8.0))
 			_ok(drag_data is Dictionary and String(drag_data.get("item_key", "")) == "ale",
 				"inventory grid slot keeps drag payload compatibility")
-			ale_slot.emit_signal("mouse_entered")
-			await get_tree().process_frame
 			var tooltip := overlay.get_node_or_null("Panel/ItemTooltip") as PanelContainer
+			ale_slot.emit_signal("mouse_entered")
+			var first_tooltip_size := tooltip.size if tooltip != null else Vector2.ZERO
+			await get_tree().process_frame
 			_ok(tooltip != null and tooltip.visible, "hovering an inventory grid slot shows an item tooltip")
 			var tooltip_title := tooltip.get_node_or_null("VBox/Title") as Label if tooltip != null else null
 			var tooltip_count := tooltip.get_node_or_null("VBox/Count") as Label if tooltip != null else null
@@ -525,6 +527,18 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 				"inventory item tooltip shows the item name")
 			_ok(tooltip_count != null and tooltip_count.text.find(str(gm.inventory_sys.get_count("ale"))) >= 0,
 				"inventory item tooltip shows the stack count")
+			if tooltip != null:
+				var settled_tooltip_size := tooltip.size
+				_ok(first_tooltip_size.x >= 180.0 and first_tooltip_size.x <= 220.0,
+					"inventory item tooltip has stable first-frame width")
+				_ok(first_tooltip_size.y >= 72.0 and first_tooltip_size.y <= 150.0,
+					"inventory item tooltip has stable first-frame height")
+				_ok(absf(first_tooltip_size.y - settled_tooltip_size.y) <= 4.0,
+					"inventory item tooltip first-frame height does not jump after layout")
+				_ok(tooltip.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+					"inventory item tooltip ignores mouse input")
+				_ok(not tooltip.get_global_rect().intersects(ale_slot.get_global_rect()),
+					"inventory item tooltip stays clear of the hovered slot")
 			ale_slot.emit_signal("mouse_exited")
 			await get_tree().process_frame
 			_ok(tooltip != null and not tooltip.visible, "leaving an inventory grid slot hides the item tooltip")
@@ -533,10 +547,13 @@ func _test_inventory_overlay_lists_and_drop() -> void:
 		_ok(sleep_slot != null, "inventory unified grid includes sleep_powder story item")
 
 	var before: int = gm.inventory_sys.get_count("ale")
-	var item_count: int = items.get_child_count()
+	var item_count: int = _desk_item_count(items)
 	overlay._drop_data(Vector2(20.0, 20.0), {"item_key": "ale"})
 	_ok(gm.inventory_sys.get_count("ale") == before - 1, "overlay drop deducts inventory")
-	_ok(items.get_child_count() == item_count + 1, "overlay drop spawns a desk item")
+	_ok(_desk_item_count(items) == item_count + 1, "overlay drop spawns a desk item")
+	_ok(not bar._drag_ctrl.is_dragging(), "overlay release leaves spawned inventory item free instead of stuck to cursor")
+	var release_preview := bar.get_node_or_null("ShortcutDragPreview") as Sprite2D
+	_ok(release_preview == null or not release_preview.visible, "overlay release does not leave a cursor-following preview")
 
 	for material_key in ["ale", "grape", "flour", "meat_raw", "herb", "spice", "herb_spice", "salt"]:
 		var before_count: int = gm.inventory_sys.get_count(material_key)
@@ -625,6 +642,47 @@ func _test_inventory_drop_binds_shortcut_slot() -> void:
 		spawned.queue_free()
 	tavern.queue_free()
 	await get_tree().process_frame
+
+
+func _test_inventory_drop_releases_free_desk_item() -> void:
+	var tavern := preload("res://scenes/ui/Tavern.tscn").instantiate()
+	add_child(tavern)
+	await get_tree().process_frame
+
+	var gm = get_node("/root/GameManager")
+	var bar := tavern.get_node("BarWorkspace") as BarWorkspace
+	var items := tavern.get_node("BarWorkspace/World/Items")
+	gm.add_to_inventory("ale", 1)
+	_ok(bar.has_method("drop_inventory_item_at"),
+		"BarWorkspace exposes a release-time inventory drop entry point")
+	if not bar.has_method("drop_inventory_item_at"):
+		tavern.queue_free()
+		await get_tree().process_frame
+		return
+	var before: int = gm.inventory_sys.get_count("ale")
+	var before_items := _desk_item_count(items)
+	tavern._on_inventory_item_dropped("ale", Vector2(640.0, 620.0))
+	await get_tree().process_frame
+	_ok(_desk_item_count(items) == before_items + 1, "inventory release creates a desk item")
+	_ok(gm.inventory_sys.get_count("ale") == before - 1,
+		"inventory release deducts one inventory item")
+	_ok(not bar._drag_ctrl.is_dragging(),
+		"inventory release does not start DragController after the mouse is already up")
+	var preview := bar.get_node_or_null("ShortcutDragPreview") as Sprite2D
+	_ok(preview == null or not preview.visible,
+		"inventory release does not leave a cursor-following shortcut preview")
+	tavern.queue_free()
+	await get_tree().process_frame
+
+
+func _desk_item_count(items: Node) -> int:
+	var count := 0
+	if items == null:
+		return count
+	for child in items.get_children():
+		if child is DeskItem:
+			count += 1
+	return count
 
 
 func _test_shortcut_drag_starts_above_table_baseline() -> void:
@@ -950,8 +1008,8 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	var backpack_panel := tavern.get_node("OverlayMenu/BackpackPanel") as ScrollContainer
 	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
 	_ok(recipe_panel != null and recipe_panel.visible, "recipe panel opens inside the legacy overlay menu")
-	_ok(recipe_panel != null and recipe_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
-		"recipe panel hides the default vertical scrollbar")
+	_ok(recipe_panel != null and recipe_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		"recipe panel does not scroll both recipe columns")
 	_ok(recipe_panel != null and recipe_panel.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
 		"recipe panel disables the default horizontal scrollbar")
 	_ok(backpack_panel != null and backpack_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
@@ -963,7 +1021,8 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	var layout := recipe_list.get_node_or_null("RecipeLayout") as HBoxContainer
 	var left_column := layout.get_node_or_null("LeftColumn") as VBoxContainer if layout != null else null
 	var tabs := left_column.get_node_or_null("ContainerTabs") as HBoxContainer if left_column != null else null
-	var rows := left_column.get_node_or_null("RecipeRows") as VBoxContainer if left_column != null else null
+	var rows_scroll := left_column.get_node_or_null("RecipeRowsScroll") as ScrollContainer if left_column != null else null
+	var rows := rows_scroll.get_node_or_null("RecipeRows") as VBoxContainer if rows_scroll != null else null
 	var detail := layout.get_node_or_null("RecipeDetail") as PanelContainer if layout != null else null
 	var ingredient_grid := detail.get_node_or_null("Body/IngredientGrid") as GridContainer if detail != null else null
 	var header_frame := detail.get_node_or_null("Body/HeaderFrame") as PanelContainer if detail != null else null
@@ -974,6 +1033,8 @@ func _test_recipe_menu_uses_split_layout() -> void:
 	_ok(layout != null, "recipe menu uses a split recipe layout root")
 	_ok(left_column != null, "recipe menu keeps container filters and rows in the left column")
 	_ok(tabs != null and tabs.get_child_count() == 4, "recipe menu exposes four recipe filter tabs")
+	_ok(rows_scroll != null and rows_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+		"recipe rows hide their own scrollbar while remaining scrollable")
 	_ok(rows != null and rows.get_child_count() > 0, "recipe menu renders filtered recipe rows")
 	_ok(detail != null, "recipe menu renders a right-side recipe detail panel")
 	_ok(_stylebox_texture_path(detail, "panel") == "res://assets/textures/ui/menu_brush_panel.png",
@@ -1006,7 +1067,8 @@ func _test_recipe_menu_uses_split_layout() -> void:
 		await get_tree().process_frame
 		layout = recipe_list.get_node_or_null("RecipeLayout") as HBoxContainer
 		left_column = layout.get_node_or_null("LeftColumn") as VBoxContainer if layout != null else null
-		rows = left_column.get_node_or_null("RecipeRows") as VBoxContainer if left_column != null else null
+		rows_scroll = left_column.get_node_or_null("RecipeRowsScroll") as ScrollContainer if left_column != null else null
+		rows = rows_scroll.get_node_or_null("RecipeRows") as VBoxContainer if rows_scroll != null else null
 		detail = layout.get_node_or_null("RecipeDetail") as PanelContainer if layout != null else null
 		_ok(rows != null and rows.get_child_count() > 0 and rows.get_child(0).get_meta("container_key", "") == "grill",
 			"recipe menu filters rows by selected container")
@@ -1031,7 +1093,7 @@ func _test_recipe_book_shows_hand_combine_tab() -> void:
 	if hand_tab != null:
 		hand_tab.emit_signal("pressed")
 		await get_tree().process_frame
-	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
 	var dough_meat_row := rows.get_node_or_null("Recipe_dough_meat") as Button if rows != null else null
 	_ok(dough_meat_row != null, "hand recipe book lists dough_meat combine recipe")
 	_ok(dough_meat_row != null and String(dough_meat_row.get_meta("container_key", "")) == "hand",
@@ -1039,6 +1101,9 @@ func _test_recipe_book_shows_hand_combine_tab() -> void:
 	var detail := recipe_list.get_node_or_null("RecipeLayout/RecipeDetail") as PanelContainer
 	_ok(detail != null and detail.get_meta("container_key", "") == "hand",
 		"hand recipe detail follows hand filter")
+	var instruction := detail.get_node_or_null("Body/InstructionPanel/Instruction") as Label if detail != null else null
+	_ok(instruction != null and instruction.text.contains("预制品") and instruction.text.contains("成品"),
+		"hand recipe instruction explains hand combine can produce prep items or final products")
 
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -1059,7 +1124,7 @@ func _test_recipe_book_shows_dough_operation() -> void:
 		pot_tab.pressed.emit()
 		await get_tree().process_frame
 
-	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
 	var dough_row := rows.get_node_or_null("Recipe_dough") as Button if rows != null else null
 	_ok(dough_row != null, "pot recipe book lists dough as a learnable operation recipe")
 	_ok(dough_row != null and dough_row.text.find("???") == -1,
@@ -1096,7 +1161,7 @@ func _test_recipe_book_hides_undiscovered_entries() -> void:
 
 	var spiced_name := String(GameManager.craft.get_item("spiced_wine").get("name", "spiced_wine"))
 	var recipe_list := tavern.get_node("OverlayMenu/RecipePanel/RecipeList") as Control
-	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	var rows := recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
 	var hidden_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
 	_ok(hidden_row != null, "recipe book still has a stable row for undiscovered spiced_wine")
 	_ok(hidden_row != null and hidden_row.text.contains("???"),
@@ -1127,7 +1192,7 @@ func _test_recipe_book_hides_undiscovered_entries() -> void:
 			GameManager.craft.call("mark_recipe_new", "spiced_wine")
 		tavern._build_recipe_list()
 		await get_tree().process_frame
-		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
 		var revealed_row := rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
 		_ok(revealed_row != null and revealed_row.text.contains(spiced_name),
 			"discovered recipe row reveals the product name")
@@ -1145,7 +1210,7 @@ func _test_recipe_book_hides_undiscovered_entries() -> void:
 				"opening a recipe detail clears the recipe new marker")
 		tavern._build_recipe_list()
 		await get_tree().process_frame
-		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+		rows = recipe_list.get_node_or_null("RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
 		revealed_row = rows.get_node_or_null("Recipe_spiced_wine") as Button if rows != null else null
 		new_mark = revealed_row.get_node_or_null("NewMark") as Label if revealed_row != null else null
 		_ok(new_mark == null or not new_mark.visible,

@@ -47,6 +47,8 @@ func _ready() -> void:
 	_player_a.bus = "Music"; _player_b.bus = "Music"
 	_player_a.volume_db = MIN_VOLUME_DB; _player_b.volume_db = MIN_VOLUME_DB
 	add_child(_player_a); add_child(_player_b)
+	_player_a.finished.connect(_on_bgm_player_finished.bind(_player_a))
+	_player_b.finished.connect(_on_bgm_player_finished.bind(_player_b))
 
 	# 场景过渡遮罩
 	_shade_layer = CanvasLayer.new()
@@ -122,7 +124,9 @@ func crossfade_to(stream: AudioStream, duration: float = DEFAULT_CROSSFADE) -> v
 
 
 func crossfade_to_path(path: String, duration: float = DEFAULT_CROSSFADE) -> void:
-	if path == "" or path == _current_stream_key:
+	if path == "":
+		return
+	if path == _current_stream_key and _active_player_is_playing():
 		return
 	var resource := load(path)
 	var stream := resource as AudioStream
@@ -151,9 +155,23 @@ func _prepare_bgm_stream(stream: AudioStream) -> AudioStream:
 	var wav := stream as AudioStreamWAV
 	if wav == null:
 		return stream
-	var prepared := wav.duplicate(true) as AudioStreamWAV
-	prepared.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	return prepared
+	# Imported compressed WAV resources can stop immediately when loop_mode is changed.
+	# Keep the stream untouched; loop by replaying the active player on finished.
+	return wav
+
+
+func _active_player_is_playing() -> bool:
+	var active_player := _player_a if _active == "a" else _player_b
+	return is_instance_valid(active_player) and active_player.playing
+
+
+func _on_bgm_player_finished(player: AudioStreamPlayer) -> void:
+	if _state != State.IDLE or _current_stream_key == "":
+		return
+	var active_player := _player_a if _active == "a" else _player_b
+	if player != active_player or player.stream == null:
+		return
+	player.play()
 
 
 func fade_out(duration: float = 0.5) -> void:

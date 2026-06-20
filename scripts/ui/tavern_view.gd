@@ -40,6 +40,10 @@ var _menu_panel: Panel
 var _end_night_btn: Button
 var _stage_caption: Label
 var _caption_tween: Tween
+var _meme_event_notice: Panel
+var _meme_event_title: Label
+var _meme_event_hint: Label
+var _meme_event_tween: Tween
 var _inference_ready_notice: Label
 var _inference_ready_notice_tween: Tween
 var _recipe_discovery_notice: Control
@@ -84,23 +88,35 @@ const RECIPE_CONTAINER_INSTRUCTIONS: Dictionary = {
 	"barrel": "投入酒桶后摇晃，完成后从桶口取出。",
 	"grill": "放到烤架上，到时间后取下成品。",
 	"pot": "投入炖锅后用勺子搅拌，完成后从锅口取出。",
-	"hand": "把两件材料直接拖到一起，形成可继续加工的手作组合。",
+	"hand": "把两件材料直接拖到一起，形成预制品或成品。",
 }
 const RECIPE_LAYOUT_MIN_SIZE := Vector2(660.0, 360.0)
 const RECIPE_LEFT_COLUMN_WIDTH := 300.0
 const RECIPE_DETAIL_WIDTH := 340.0
 const RECIPE_DETAIL_PANEL_ART := "res://assets/textures/ui/menu_brush_panel.png"
 const RECIPE_DETAIL_BAND_ART := "res://assets/textures/ui/menu_brush_band.png"
+const RECIPE_HINT_STRIP_ART := "res://assets/textures/ui/recipe_hint_strip/recipe_hint_strip_panel.png"
+const RECIPE_HINT_TEXT_COLOR := Color(0.18, 0.105, 0.055)
 const RECIPE_DISCOVERY_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.png"
 const RECIPE_DISCOVERY_NOTICE_SIZE := Vector2(480.0, 104.0)
 const RECIPE_DISCOVERY_NOTICE_FALLBACK_POS := Vector2(400.0, 56.0)
-const RECIPE_HINT_PANEL_SIZE := Vector2(472.0, 46.0)
-const RECIPE_HINT_ORDER_OFFSET := Vector2(0.0, -52.0)
+const MEME_EVENT_NOTICE_BRUSH_ART := "res://assets/textures/ui/menu_brush_band.png"
+const MEME_EVENT_NOTICE_POS := Vector2(330.0, 52.0)
+const MEME_EVENT_NOTICE_SIZE := Vector2(620.0, 54.0)
+const MEME_EVENT_NOTICE_Z_INDEX := 91
+const RECIPE_HINT_PANEL_SIZE := Vector2(472.0, 56.0)
+const RECIPE_HINT_ORDER_OFFSET := Vector2(0.0, -60.0)
 const RECIPE_HINT_MAX_STEPS := 3
 const RECIPE_SLOT_ART := "res://assets/textures/ui/inventory_slot_normal.png"
 const MENU_PREP_LEFT_TEXT_WIDTH := 286.0
 const MENU_PREP_RUMOR_CARD_HEIGHT := 124.0
 const MENU_PREP_ECHO_CARD_HEIGHT := 78.0
+const MENU_PRODUCT_BUTTON_WIDTH := 310.0
+const MENU_PRODUCT_BUTTON_HEIGHT := 74.0
+const MENU_PRODUCT_COMPACT_HEIGHT := 44.0
+const MENU_PRODUCT_CONTENT_X := 22.0
+const MENU_PRODUCT_CONTENT_WIDTH := 266.0
+const MENU_PRODUCT_TAG_LIMIT := 3
 
 const NPC_TEXTURE_KEYS: Dictionary = {
 	"ryan": "ryan_neutral",
@@ -201,11 +217,15 @@ func _ready() -> void:
 	_settings_panel.configure(_gm.settings)
 	_settings_panel.closed.connect(_on_settings_closed)
 	_settings_panel.tutorial_reset_requested.connect(_on_tutorial_reset_requested)
+	_meme_event_notice = $MemeEventNotice
+	_meme_event_title = $MemeEventNotice/Title
+	_meme_event_hint = $MemeEventNotice/Hint
 
 	_menu_panel = $OverlayMenu
 	$TopPanel/MenuButton.pressed.connect(_toggle_menu)
 	$OverlayMenu/CloseBtn.pressed.connect(_toggle_menu)
 	$OverlayMenu/TabBtns/BtnSettings.pressed.connect(_open_settings)
+	$OverlayMenu/TabBtns/BtnMainMenu.pressed.connect(_return_to_main_menu)
 	var tidy_btn = $OverlayMenu/BtnTidy
 	if tidy_btn != null and not tidy_btn.pressed.is_connected(_on_tidy_desk_pressed):
 		tidy_btn.pressed.connect(_on_tidy_desk_pressed)
@@ -285,14 +305,12 @@ func _apply_theme() -> void:
 	ThemeColors.style_topbar_button($TopPanel/MenuButton, "menu", 14)
 	ThemeColors.style_topbar_button(_end_night_btn, "end_night", 14)
 
-	# 娣诲姞鏁欑▼鎸夐挳鍒拌彍鍗?
-	_add_tutorial_button_to_menu()
-
 	ThemeColors.style_brush_panel(_menu_panel)
 
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnRecipes)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnBackpack)
 	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnSettings)
+	ThemeColors.style_brush_tab_button($OverlayMenu/TabBtns/BtnMainMenu)
 	ThemeColors.style_brush_button($OverlayMenu/BtnTidy, 14)
 	ThemeColors.style_brush_button($OverlayMenu/CloseBtn, 14)
 
@@ -300,6 +318,7 @@ func _apply_theme() -> void:
 	var backpack_panel = $OverlayMenu/BackpackPanel
 	_hide_default_scrollbars(recipe_panel)
 	_hide_default_scrollbars(backpack_panel)
+	_configure_recipe_book_outer_scroll(recipe_panel)
 	recipe_panel.visible = true
 	backpack_panel.visible = false
 	_select_overlay_tab($OverlayMenu/TabBtns/BtnRecipes)
@@ -351,6 +370,7 @@ func _apply_theme() -> void:
 	_stage_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_stage_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_configure_stage_caption_layout()
+	_configure_meme_event_notice()
 	if _inference_ready_notice != null:
 		ThemeColors.style_brush_label(_inference_ready_notice, 72, ThemeColors.AMBER_PRIMARY)
 		_inference_ready_notice.add_theme_constant_override("outline_size", 5)
@@ -418,6 +438,41 @@ func _configure_stage_caption_layout() -> void:
 	_stage_caption.position = STAGE_CAPTION_POS
 	_stage_caption.size = STAGE_CAPTION_SIZE
 	_stage_caption.z_index = STAGE_CAPTION_Z_INDEX
+
+
+func _configure_meme_event_notice() -> void:
+	if _meme_event_notice == null:
+		return
+	_meme_event_notice.position = MEME_EVENT_NOTICE_POS
+	_meme_event_notice.size = MEME_EVENT_NOTICE_SIZE
+	_meme_event_notice.z_index = MEME_EVENT_NOTICE_Z_INDEX
+	_meme_event_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_meme_event_notice.visible = false
+	_meme_event_notice.modulate.a = 0.0
+	var brush_style := TextureManager.try_load_style_box(MEME_EVENT_NOTICE_BRUSH_ART)
+	if brush_style != null:
+		_meme_event_notice.add_theme_stylebox_override("panel", brush_style)
+	else:
+		ThemeColors.style_brush_panel(_meme_event_notice)
+	if _meme_event_title != null:
+		_meme_event_title.position = Vector2(18.0, 4.0)
+		_meme_event_title.size = Vector2(584.0, 22.0)
+		_meme_event_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_meme_event_title.clip_text = true
+		_meme_event_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		ThemeColors.style_brush_label(_meme_event_title, 15, ThemeColors.AMBER_PRIMARY)
+		_meme_event_title.add_theme_constant_override("outline_size", 2)
+		_meme_event_title.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
+	if _meme_event_hint != null:
+		_meme_event_hint.position = Vector2(18.0, 26.0)
+		_meme_event_hint.size = Vector2(584.0, 24.0)
+		_meme_event_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_meme_event_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_meme_event_hint.clip_text = true
+		_meme_event_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		ThemeColors.style_brush_label(_meme_event_hint, 15, ThemeColors.TEXT_LIGHT)
+		_meme_event_hint.add_theme_constant_override("outline_size", 2)
+		_meme_event_hint.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
 
 
 func _configure_customer_bubble_layers() -> void:
@@ -724,7 +779,7 @@ func _ensure_recipe_hint_panel() -> void:
 	_recipe_hint_panel.z_index = CUSTOMER_BUBBLE_Z_INDEX
 	_recipe_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_recipe_hint_panel.visible = false
-	_apply_recipe_panel_art(_recipe_hint_panel, RECIPE_DETAIL_BAND_ART, Vector4(10.0, 6.0, 10.0, 6.0))
+	_apply_recipe_hint_panel_art(_recipe_hint_panel)
 
 	_recipe_hint_label = _recipe_hint_panel.get_node_or_null("HintText") as Label
 	if _recipe_hint_label == null:
@@ -732,12 +787,29 @@ func _ensure_recipe_hint_panel() -> void:
 		_recipe_hint_label.name = "HintText"
 		_recipe_hint_panel.add_child(_recipe_hint_label)
 	_recipe_hint_label.text = ""
-	_recipe_hint_label.custom_minimum_size = Vector2(RECIPE_HINT_PANEL_SIZE.x - 20.0, RECIPE_HINT_PANEL_SIZE.y - 12.0)
+	_recipe_hint_label.custom_minimum_size = Vector2(304.0, 24.0)
 	_recipe_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_recipe_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_recipe_hint_label.clip_text = true
 	_recipe_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ThemeColors.style_brush_label(_recipe_hint_label, 12, ThemeColors.TEXT_LIGHT)
+	ThemeColors.style_brush_label(_recipe_hint_label, 12, RECIPE_HINT_TEXT_COLOR)
+
+
+func _apply_recipe_hint_panel_art(panel: PanelContainer) -> void:
+	panel.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var style := TextureManager.try_load_style_box(RECIPE_HINT_STRIP_ART)
+	if style == null:
+		_apply_recipe_panel_art(panel, RECIPE_DETAIL_BAND_ART, Vector4(10.0, 6.0, 10.0, 6.0))
+		return
+	style.set_texture_margin(SIDE_LEFT, 56.0)
+	style.set_texture_margin(SIDE_TOP, 20.0)
+	style.set_texture_margin(SIDE_RIGHT, 56.0)
+	style.set_texture_margin(SIDE_BOTTOM, 20.0)
+	style.set_content_margin(SIDE_LEFT, 96.0)
+	style.set_content_margin(SIDE_TOP, 10.0)
+	style.set_content_margin(SIDE_RIGHT, 72.0)
+	style.set_content_margin(SIDE_BOTTOM, 22.0)
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _refresh_recipe_hint() -> void:
@@ -1381,6 +1453,7 @@ func _ensure_menu_prep_panel() -> void:
 	_menu_prep_reason_label.size = Vector2(688, 34)
 	_menu_prep_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_menu_prep_reason_label.clip_text = true
+	_menu_prep_reason_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	ThemeColors.style_brush_label(_menu_prep_reason_label, 13, ThemeColors.TEXT_SUBTITLE)
 	_menu_prep_panel.add_child(_menu_prep_reason_label)
 
@@ -1409,6 +1482,14 @@ func _hide_default_scrollbars(scroll: ScrollContainer) -> void:
 		return
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+
+
+func _configure_recipe_book_outer_scroll(scroll: ScrollContainer) -> void:
+	if scroll == null:
+		return
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.clip_contents = true
 
 
 func _rebuild_menu_prep_rumors(rumors: Array) -> void:
@@ -1496,18 +1577,113 @@ func _rebuild_menu_prep_products() -> void:
 		var tag_text := _menu_product_tag_text(product_key)
 		var recommendation_text := _menu_product_recommendation_text(product_key)
 		var has_extra_text := tag_text != "" or recommendation_text != ""
-		button.custom_minimum_size = Vector2(310, 74 if has_extra_text else 40)
+		button.custom_minimum_size = Vector2(
+			MENU_PRODUCT_BUTTON_WIDTH,
+			MENU_PRODUCT_BUTTON_HEIGHT if has_extra_text else MENU_PRODUCT_COMPACT_HEIGHT
+		)
 		button.toggle_mode = true
-		button.text = "%s  %dG" % [String(item.get("name", product_key)), int(item.get("price", 0))]
-		if tag_text != "":
-			button.text += "\n" + tag_text
-		if recommendation_text != "":
-			button.text += "\n推荐：" + recommendation_text
+		button.text = ""
+		button.clip_contents = true
 		ThemeColors.style_brush_button(button, 14)
+		_add_menu_product_button_content(button, product_key, item, recommendation_text)
 		var key_copy := product_key
 		button.pressed.connect(func(): _toggle_menu_prep_product(key_copy))
 		_menu_prep_product_list.add_child(button)
 		_menu_prep_buttons[product_key] = button
+
+
+func _add_menu_product_button_content(button: Button, product_key: String, item: Dictionary, recommendation_text: String) -> void:
+	var title := Label.new()
+	title.name = "NamePrice"
+	title.position = Vector2(MENU_PRODUCT_CONTENT_X, 7.0)
+	title.size = Vector2(MENU_PRODUCT_CONTENT_WIDTH, 21.0)
+	title.text = "%s  %dG" % [String(item.get("name", product_key)), int(item.get("price", 0))]
+	title.clip_text = true
+	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title.z_index = 2
+	ThemeColors.style_brush_label(title, 14, ThemeColors.TEXT_LIGHT)
+	button.add_child(title)
+
+	var tags := _menu_product_visible_tag_values(product_key)
+	if not tags.is_empty():
+		var tag_row := HBoxContainer.new()
+		tag_row.name = "TagRow"
+		tag_row.position = Vector2(MENU_PRODUCT_CONTENT_X, 30.0)
+		tag_row.size = Vector2(MENU_PRODUCT_CONTENT_WIDTH, 20.0)
+		tag_row.custom_minimum_size = Vector2(MENU_PRODUCT_CONTENT_WIDTH, 20.0)
+		tag_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tag_row.z_index = 2
+		tag_row.add_theme_constant_override("separation", 7)
+		button.add_child(tag_row)
+		for index in range(tags.size()):
+			tag_row.add_child(_new_menu_product_tag_label(tags[index], index))
+
+	if recommendation_text != "":
+		var recommendation := Label.new()
+		recommendation.name = "Recommendation"
+		recommendation.position = Vector2(MENU_PRODUCT_CONTENT_X, 51.0)
+		recommendation.size = Vector2(MENU_PRODUCT_CONTENT_WIDTH, 18.0)
+		recommendation.text = "推荐：" + recommendation_text
+		recommendation.clip_text = true
+		recommendation.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		recommendation.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		recommendation.z_index = 2
+		ThemeColors.style_brush_label(recommendation, 12, ThemeColors.TEXT_SUBTITLE)
+		button.add_child(recommendation)
+
+
+func _menu_product_tag_values(product_key: String, limit: int = 0) -> PackedStringArray:
+	if _gm == null or _gm.appetite == null or not _gm.appetite.has_method("get_product_tags"):
+		return PackedStringArray()
+	return _strings_from_array(_gm.appetite.get_product_tags(product_key), limit)
+
+
+func _menu_product_visible_tag_values(product_key: String) -> PackedStringArray:
+	var tags := _menu_product_tag_values(product_key)
+	if tags.size() <= MENU_PRODUCT_TAG_LIMIT:
+		return tags
+	var visible := PackedStringArray()
+	for index in range(MENU_PRODUCT_TAG_LIMIT):
+		visible.append(tags[index])
+	visible.append("另%d项" % (tags.size() - MENU_PRODUCT_TAG_LIMIT))
+	return visible
+
+
+func _new_menu_product_tag_label(tag: String, index: int) -> Label:
+	var label := Label.new()
+	label.name = "TagText_%d" % index
+	label.text = tag
+	label.custom_minimum_size = Vector2(74.0, 20.0)
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ThemeColors.style_brush_label(label, 12, _menu_product_tag_color(tag))
+	return label
+
+
+func _menu_product_tag_color(tag: String) -> Color:
+	match tag:
+		"酒水":
+			return ThemeColors.AMBER_PRIMARY
+		"热食":
+			return Color(1.0, 0.42, 0.28)
+		"顶饿":
+			return Color(0.86, 0.68, 0.38)
+		"力量":
+			return Color(0.95, 0.32, 0.28)
+		"清香":
+			return Color(0.46, 0.78, 0.44)
+		"秘香":
+			return Color(0.72, 0.52, 0.94)
+		"轻快":
+			return Color(0.42, 0.78, 0.76)
+		"体面":
+			return ThemeColors.AMBER_BRIGHT
+		"精致":
+			return Color(0.96, 0.78, 0.42)
+		_:
+			return ThemeColors.TEXT_SUBTITLE
 
 
 func _menu_product_tag_text(product_key: String) -> String:
@@ -1589,7 +1765,9 @@ func _refresh_menu_prep_selection() -> void:
 	for key in _menu_prep_buttons.keys():
 		var button := _menu_prep_buttons[key] as Button
 		if button != null:
-			button.button_pressed = _menu_prep_selected.has(String(key))
+			var selected := _menu_prep_selected.has(String(key))
+			button.button_pressed = selected
+			_apply_menu_product_selected_visual(button, selected)
 	var names := PackedStringArray()
 	if _gm != null and _gm.craft != null:
 		for key in _menu_prep_selected:
@@ -1605,6 +1783,16 @@ func _refresh_menu_prep_selection() -> void:
 	_refresh_menu_prep_reason()
 
 
+func _apply_menu_product_selected_visual(button: Button, selected: bool) -> void:
+	var title := button.get_node_or_null("NamePrice") as Label
+	if title == null:
+		return
+	title.add_theme_color_override(
+		"font_color",
+		ThemeColors.AMBER_PRIMARY if selected else ThemeColors.TEXT_LIGHT
+	)
+
+
 func _refresh_menu_prep_reason() -> void:
 	if _menu_prep_reason_label == null:
 		return
@@ -1614,11 +1802,74 @@ func _refresh_menu_prep_reason() -> void:
 	if focus_key == "":
 		_menu_prep_reason_label.text = "选择菜品查看推荐理由。"
 		return
+	var wind_text := _menu_product_wind_match_detail(focus_key)
+	if wind_text != "":
+		_menu_prep_reason_label.text = wind_text
+		return
 	var reason_text := _menu_product_reason_text(focus_key)
 	if reason_text == "":
 		_menu_prep_reason_label.text = "推荐理由：暂无特别命中，按价格、库存和口味补位。"
 	else:
 		_menu_prep_reason_label.text = "推荐理由：" + reason_text
+
+
+func _menu_product_wind_match_detail(product_key: String) -> String:
+	var match := _menu_product_wind_match(product_key)
+	var matched_tags := PackedStringArray()
+	var raw_tags = match.get("tags", PackedStringArray())
+	if raw_tags is PackedStringArray:
+		for tag in raw_tags:
+			if matched_tags.size() >= 3:
+				break
+			matched_tags.append(String(tag))
+	elif raw_tags is Array:
+		matched_tags = _strings_from_array(raw_tags, 3)
+	if matched_tags.is_empty():
+		return ""
+	var parts := PackedStringArray()
+	parts.append("命中标签：" + " / ".join(matched_tags))
+	var summary := String(match.get("summary", ""))
+	if summary != "":
+		parts.append("风声命中：" + summary)
+	return "；".join(parts)
+
+
+func _menu_product_wind_match(product_key: String) -> Dictionary:
+	var product_tags := _menu_product_tag_values(product_key)
+	if product_tags.is_empty() or _gm == null or not _gm.has_method("get_today_rumors"):
+		return {}
+	var matched_tags := PackedStringArray()
+	var summary := ""
+	for rumor in _gm.get_today_rumors():
+		if not rumor is Dictionary:
+			continue
+		var rumor_data := rumor as Dictionary
+		var menu_hints: Dictionary = rumor_data.get("menuHints", {})
+		var recommended_tags := _strings_from_array(menu_hints.get("recommendedTags", []))
+		var rumor_matches := _shared_menu_tags(product_tags, recommended_tags)
+		if rumor_matches.is_empty():
+			continue
+		for tag in rumor_matches:
+			if not matched_tags.has(tag):
+				matched_tags.append(tag)
+		if summary == "":
+			summary = String(menu_hints.get("summary", ""))
+			if summary == "":
+				summary = String(rumor_data.get("text", ""))
+		if matched_tags.size() >= 3:
+			break
+	return {
+		"tags": matched_tags,
+		"summary": summary,
+	}
+
+
+func _shared_menu_tags(left: PackedStringArray, right: PackedStringArray) -> PackedStringArray:
+	var result := PackedStringArray()
+	for tag in left:
+		if right.has(tag) and not result.has(tag):
+			result.append(tag)
+	return result
 
 
 func _confirm_menu_preparation() -> void:
@@ -1677,6 +1928,33 @@ func _contains_reaction_bbcode(text: String) -> bool:
 
 func _strip_reaction_bbcode(text: String) -> String:
 	return text.replace("[color=#d6a84d]", "").replace("[/color]", "")
+
+
+func show_meme_guest_event(customer_name: String, hint: String) -> void:
+	if _meme_event_notice == null or _meme_event_title == null or _meme_event_hint == null:
+		return
+	var clean_name := customer_name.strip_edges()
+	var clean_hint := hint.strip_edges()
+	if clean_name == "" and clean_hint == "":
+		return
+	_meme_event_title.text = "事件：%s 来访" % clean_name
+	_meme_event_hint.text = clean_hint
+	if _meme_event_tween != null and _meme_event_tween.is_valid():
+		_meme_event_tween.kill()
+	_meme_event_notice.visible = true
+	_meme_event_notice.modulate = Color(1, 1, 1, 0)
+	_meme_event_notice.scale = Vector2(0.96, 0.96)
+	_meme_event_notice.pivot_offset = _meme_event_notice.size * 0.5
+	_meme_event_tween = create_tween()
+	_meme_event_tween.tween_property(_meme_event_notice, "modulate:a", 1.0, 0.14)
+	_meme_event_tween.parallel().tween_property(_meme_event_notice, "scale", Vector2(1.02, 1.02), 0.14)
+	_meme_event_tween.tween_interval(2.15)
+	_meme_event_tween.tween_property(_meme_event_notice, "modulate:a", 0.0, 0.35)
+	_meme_event_tween.parallel().tween_property(_meme_event_notice, "scale", Vector2.ONE, 0.35)
+	_meme_event_tween.tween_callback(func():
+		_meme_event_notice.visible = false
+		_meme_event_notice.scale = Vector2.ONE
+	)
 
 ## 鍑哄彛鈶★細鑸炲彴鎻愮ず娴瓧鈥斺€旂涓変汉绉板姩浣滄弿鍐欙紝娣″叆鈫掑仠鐣欌啋娣″嚭銆?
 func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
@@ -1892,6 +2170,11 @@ func _open_settings() -> void:
 	_settings_panel.move_to_front()
 
 
+func _return_to_main_menu() -> void:
+	_menu_panel.visible = false
+	get_tree().change_scene_to_file("res://scenes/ui/TitleScreen.tscn")
+
+
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
 	_menu_panel.move_to_front()
@@ -1964,6 +2247,10 @@ func _on_inventory_item_dropped(item_key: String, global_position: Vector2) -> v
 		if bar.bind_shortcut_at_position(item_key, global_position):
 			call_deferred("_restore_menu_prep_if_no_blocking_overlay")
 			return
+	if bar != null and bar.has_method("drop_inventory_item_at"):
+		bar.call("drop_inventory_item_at", item_key, global_position)
+		call_deferred("_restore_menu_prep_if_no_blocking_overlay")
+		return
 	if bar != null and bar.has_method("spawn_inventory_item_at"):
 		bar.spawn_inventory_item_at(item_key, global_position)
 	call_deferred("_restore_menu_prep_if_no_blocking_overlay")
@@ -1985,26 +2272,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_end_night() -> void:
 	_gm.end_night()
-
-func _add_tutorial_button_to_menu() -> void:
-	var tab_btns = $OverlayMenu/TabBtns
-	if tab_btns == null:
-		return
-	if tab_btns.get_node_or_null("BtnTutorial") != null:
-		return
-
-	var tutorial_btn = Button.new()
-	tutorial_btn.name = "BtnTutorial"
-	tutorial_btn.text = "重置教程"
-	tutorial_btn.custom_minimum_size = Vector2(96, 30)
-	ThemeColors.style_brush_tab_button(tutorial_btn)
-	tutorial_btn.pressed.connect(_on_tutorial_btn_pressed)
-	tab_btns.add_child(tutorial_btn)
-
-
-func _on_tutorial_btn_pressed() -> void:
-	_reset_tutorial_progress_from_ui()
-
 
 func _on_tutorial_reset_requested() -> void:
 	_reset_tutorial_progress_from_ui()
@@ -2287,7 +2554,7 @@ func _build_split_recipe_list() -> void:
 
 	var left_column := VBoxContainer.new()
 	left_column.name = "LeftColumn"
-	left_column.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, 0.0)
+	left_column.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, RECIPE_LAYOUT_MIN_SIZE.y)
 	left_column.add_theme_constant_override("separation", 8)
 	layout.add_child(left_column)
 
@@ -2306,10 +2573,20 @@ func _build_split_recipe_list() -> void:
 		tab.pressed.connect(_on_recipe_container_tab_pressed.bind(tab))
 		tabs.add_child(tab)
 
+	var rows_scroll := ScrollContainer.new()
+	rows_scroll.name = "RecipeRowsScroll"
+	rows_scroll.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, RECIPE_LAYOUT_MIN_SIZE.y - 42.0)
+	rows_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rows_scroll.clip_contents = true
+	rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rows_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	left_column.add_child(rows_scroll)
+
 	var rows := VBoxContainer.new()
 	rows.name = "RecipeRows"
+	rows.custom_minimum_size = Vector2(RECIPE_LEFT_COLUMN_WIDTH, 0.0)
 	rows.add_theme_constant_override("separation", 6)
-	left_column.add_child(rows)
+	rows_scroll.add_child(rows)
 	for product_key in keys:
 		var row := Button.new()
 		row.name = "Recipe_%s" % product_key
@@ -2325,7 +2602,7 @@ func _build_split_recipe_list() -> void:
 
 	var detail := PanelContainer.new()
 	detail.name = "RecipeDetail"
-	detail.custom_minimum_size = Vector2(RECIPE_DETAIL_WIDTH, 0.0)
+	detail.custom_minimum_size = Vector2(RECIPE_DETAIL_WIDTH, RECIPE_LAYOUT_MIN_SIZE.y)
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_recipe_panel_art(detail, RECIPE_DETAIL_PANEL_ART, Vector4(14.0, 14.0, 14.0, 14.0))
 	layout.add_child(detail)
@@ -2486,7 +2763,7 @@ func _render_recipe_detail(detail: PanelContainer, product_key: String) -> void:
 
 func _unknown_recipe_instruction(container_key: String) -> String:
 	if container_key == "hand":
-		return "继续尝试把材料直接组合在一起。"
+		return "继续尝试把材料直接组合在一起，可能形成预制品或成品。"
 	return "继续尝试%s里的材料组合。" % String(CONTAINER_NAMES.get(container_key, container_key))
 
 

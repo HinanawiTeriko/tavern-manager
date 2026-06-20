@@ -475,6 +475,37 @@ layout_mode = 0
 custom_minimum_size = Vector2(80, 0)
 text = "打烊"
 
+[node name="MemeEventNotice" type="Panel" parent="."]
+visible = false
+z_index = 91
+layout_mode = 0
+offset_left = 330.0
+offset_top = 52.0
+offset_right = 950.0
+offset_bottom = 106.0
+mouse_filter = 2
+modulate = Color(1, 1, 1, 0)
+
+[node name="Title" type="Label" parent="MemeEventNotice"]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 4.0
+offset_right = 602.0
+offset_bottom = 26.0
+mouse_filter = 2
+text = ""
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="MemeEventNotice"]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 26.0
+offset_right = 602.0
+offset_bottom = 50.0
+mouse_filter = 2
+text = ""
+vertical_alignment = 1
+
 [node name="StageCaption" type="Label" parent="."]
 offset_left = 240.0
 offset_top = 470.0
@@ -540,6 +571,11 @@ text = "背包"
 layout_mode = 0
 custom_minimum_size = Vector2(100, 0)
 text = "设置"
+
+[node name="BtnMainMenu" type="Button" parent="OverlayMenu/TabBtns"]
+layout_mode = 0
+custom_minimum_size = Vector2(140, 0)
+text = "返回主菜单"
 
 [node name="RecipePanel" type="ScrollContainer" parent="OverlayMenu"]
 layout_mode = 0

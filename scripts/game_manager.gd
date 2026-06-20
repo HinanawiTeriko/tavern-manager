@@ -197,6 +197,7 @@ const MATERIAL_ICON_PATHS: Dictionary = {
 	"grey_renamed_escort": "res://assets/ui/generated/investigation/clearing_table/items/clearing_rename_stamp.png",
 	"grey_supply_stamp": "res://assets/ui/generated/investigation/clearing_table/items/clearing_supply_contract.png",
 }
+const TAVERN_ITEM_ART_PATH_PREFIX := "res://assets/textures/tavern/items/"
 const RECIPE_ICON_PATH_PREFIX := "res://assets/textures/recipes/"
 
 ## resolve_action 的 feedback key → 玩家可见提示 [文案, 颜色]。
@@ -1707,6 +1708,9 @@ func _on_guest_arrived(guest: GuestData) -> void:
 
 	var item: Dictionary = craft.get_item(guest.order_key)
 	_tavern_view.show_customer(display_name, item.get("name", guest.order_key), portrait_id, guest.order_key)
+	var event_hint := String(guest.get_meta("event_hint", ""))
+	if event_hint != "" and _tavern_view.has_method("show_meme_guest_event"):
+		_tavern_view.show_meme_guest_event(display_name, event_hint)
 	_activate_guest_physics_law(guest)
 	var arrival_line := String(guest.get_meta("arrival_line", ""))
 	if arrival_line != "" and _tavern_view.has_method("customer_say"):
@@ -3007,6 +3011,9 @@ func remove_from_inventory(key: String, amount: int = 1) -> bool:
 func try_load_material_icon(key: String) -> Texture2D:
 	if MATERIAL_ICON_PATHS.has(key):
 		return TextureManager.try_load(MATERIAL_ICON_PATHS[key])
+	var tavern_item := TextureManager.try_load(TAVERN_ITEM_ART_PATH_PREFIX + key + ".png")
+	if tavern_item != null:
+		return tavern_item
 	var recipe_icon := TextureManager.try_load(RECIPE_ICON_PATH_PREFIX + key + ".png")
 	if recipe_icon != null:
 		return recipe_icon

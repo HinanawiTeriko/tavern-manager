@@ -20,6 +20,16 @@
     { "key": "wakeful_herb_juice", "price": 30 },
     { "key": "roasted_malt_porridge", "price": 35 },
     { "key": "mushroom_meat_pie", "price": 50 },
+    { "key": "roasted_mushroom_broth", "price": 35 },
+    { "key": "toasted_herb_broth", "price": 30 },
+    { "key": "warm_spiced_wine", "price": 35 },
+    { "key": "sour_roast_herb_wine", "price": 45 },
+    { "key": "double_char_black_ale", "price": 50 },
+    { "key": "grape_flour_porridge", "price": 35 },
+    { "key": "ash_flatbread", "price": 25 },
+    { "key": "charred_mushroom_meat_stew", "price": 40 },
+    { "key": "charred_lizard_herb_plate", "price": 45 },
+    { "key": "bitter_grape_dark_ale", "price": 45 },
     { "key": "meat_stew", "price": 40 }
   ],
   "abilities": [

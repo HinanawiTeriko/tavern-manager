@@ -60,6 +60,16 @@ func _control_uses_pixel_font(control: Control) -> bool:
 	return font != null and font.resource_path == PIXEL_FONT_PATH
 
 
+func _button_pressed_connects_to_method(button: Button, method_name: StringName) -> bool:
+	if button == null:
+		return false
+	for connection in button.pressed.get_connections():
+		var callable: Callable = connection.get("callable", Callable())
+		if callable.is_valid() and callable.get_method() == method_name:
+			return true
+	return false
+
+
 func _stylebox_texture(control: Control, style_name: String) -> Texture2D:
 	var stylebox := control.get_theme_stylebox(style_name) as StyleBoxTexture
 	if stylebox == null:
@@ -342,6 +352,7 @@ func _test_tavern_patience_ui_contract() -> void:
 
 	if order_bubble != null and reaction_bubble != null:
 		tavern.show_customer("Test Guest", "order_ale", "regular_belta", "ale_beer")
+		await get_tree().process_frame
 		var recipe_hint := tavern.get_node_or_null("CustomerArea/RecipeHintPanel") as PanelContainer
 		var recipe_hint_label := tavern.get_node_or_null("CustomerArea/RecipeHintPanel/HintText") as Label
 		if customer_name != null:
@@ -357,12 +368,23 @@ func _test_tavern_patience_ui_contract() -> void:
 				"RecipeHintPanel does not block table item clicks")
 			_ok(recipe_hint.global_position.y + recipe_hint.size.y <= order_bubble.global_position.y + 2.0,
 				"RecipeHintPanel sits above the carved order groove instead of covering shortcuts")
-			_ok(_stylebox_texture_path(recipe_hint, "panel") == "res://assets/textures/ui/menu_brush_band.png",
-				"RecipeHintPanel uses existing brush band art")
+			_ok(recipe_hint.size == Vector2(472.0, 56.0),
+				"RecipeHintPanel keeps a stable one-line strip size")
+			_ok(recipe_hint.global_position.y + recipe_hint.size.y >= order_bubble.global_position.y - 8.0,
+				"RecipeHintPanel sits close enough to read as attached to the order groove")
+			_ok(_stylebox_texture_path(recipe_hint, "panel") == "res://assets/textures/ui/recipe_hint_strip/recipe_hint_strip_panel.png",
+				"RecipeHintPanel uses the warm paper and wood recipe hint strip art")
 			_ok(String(recipe_hint.get_meta("product_key", "")) == "ale_beer",
 				"RecipeHintPanel records the current order product key")
 		if recipe_hint_label != null:
 			_ok(_control_uses_pixel_font(recipe_hint_label), "RecipeHintPanel text uses the shared pixel UI font")
+			_ok(recipe_hint_label.get_theme_color("font_color") == Color(0.18, 0.105, 0.055),
+				"RecipeHintPanel text uses dark ink on warm paper instead of white on cyan")
+			if recipe_hint != null:
+				_ok(recipe_hint_label.global_position.x >= recipe_hint.global_position.x + 96.0,
+					"RecipeHintPanel text starts after the left wood clamp")
+				_ok(recipe_hint_label.global_position.x + recipe_hint_label.size.x <= recipe_hint.global_position.x + 400.0,
+					"RecipeHintPanel text stays before the right wood clamp")
 			_ok(recipe_hint_label.text.find("ale_beer") == -1,
 				"RecipeHintPanel shows display names instead of raw product keys")
 			_ok(recipe_hint_label.text.find("->") >= 0,
@@ -411,19 +433,58 @@ func _test_tavern_patience_ui_contract() -> void:
 		_ok(not order_bubble.visible, "hide_customer hides the order text while no guest is present")
 		if recipe_hint != null:
 			_ok(not recipe_hint.visible, "hide_customer hides the active recipe hint")
+	var overlay_tabs := tavern.get_node_or_null("OverlayMenu/TabBtns") as HBoxContainer
 	var btn_tutorial := tavern.get_node_or_null("OverlayMenu/TabBtns/BtnTutorial") as Button
-	_ok(btn_tutorial != null and btn_tutorial.text == "重置教程", "reset tutorial menu button uses readable Chinese")
+	_ok(btn_tutorial == null, "reset tutorial stays out of the legacy overlay menu")
+	var btn_main_menu := tavern.get_node_or_null("OverlayMenu/TabBtns/BtnMainMenu") as Button
+	_ok(btn_main_menu != null and btn_main_menu.text == "返回主菜单",
+		"return to main menu button uses readable Chinese in the top menu row")
+	if btn_main_menu != null:
+		_ok(btn_main_menu.get_parent() == overlay_tabs,
+			"return to main menu button is placed with the top menu buttons")
+		_ok(_control_uses_pixel_font(btn_main_menu),
+			"return to main menu button uses the shared pixel UI font")
+		_ok(_button_pressed_connects_to_method(btn_main_menu, &"_return_to_main_menu"),
+			"return to main menu button is wired to the tavern scene change handler")
 	var tavern_source := FileAccess.get_file_as_string("res://scripts/ui/tavern_view.gd")
 	_ok(tavern_source.contains('"barrel": "酒桶"') and tavern_source.contains('"grill": "烤架"') and tavern_source.contains('"pot": "炖锅"'),
 		"recipe container names use readable Chinese source strings")
-	_ok(tavern_source.contains('tutorial_btn.text = "重置教程"'),
-		"reset tutorial dynamic button uses readable Chinese source text")
+	_ok(not tavern_source.contains('tutorial_btn.text = "重置教程"'),
+		"legacy overlay menu no longer creates a duplicate reset tutorial button")
+	_ok(tavern_source.contains('change_scene_to_file("res://scenes/ui/TitleScreen.tscn")'),
+		"return to main menu action targets the title screen")
 	_ok(tavern_source.contains('%d金') and not tavern_source.contains('%d閲'),
 		"recipe row price source uses readable Chinese currency text")
 	_ok(tavern_source.contains('"暂无配方"') and not tavern_source.contains("鏆傛棤"),
 		"empty recipe detail source uses readable Chinese")
 	_ok(tavern_source.contains('"IngredientTitle", "材料"') and not tavern_source.contains("鏉愭枡"),
 		"recipe ingredient heading source uses readable Chinese")
+	var recipe_panel := tavern.get_node_or_null("OverlayMenu/RecipePanel") as ScrollContainer
+	_ok(recipe_panel != null, "recipe book keeps the stable RecipePanel path")
+	if recipe_panel != null:
+		_ok(recipe_panel.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+			"recipe book outer panel does not scroll horizontally")
+		_ok(recipe_panel.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+			"recipe book outer panel does not scroll both columns")
+	if tavern.has_method("_build_recipe_list"):
+		tavern.call("_build_recipe_list")
+		await get_tree().process_frame
+	var recipe_rows_scroll := tavern.get_node_or_null("OverlayMenu/RecipePanel/RecipeList/RecipeLayout/LeftColumn/RecipeRowsScroll") as ScrollContainer
+	_ok(recipe_rows_scroll != null, "recipe book scroll is scoped to the left recipe list")
+	if recipe_rows_scroll != null:
+		_ok(recipe_rows_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+			"recipe row scroll does not drift sideways")
+		_ok(recipe_rows_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER,
+			"recipe row scroll hides its scrollbar while keeping wheel scrolling")
+	var recipe_rows := tavern.get_node_or_null("OverlayMenu/RecipePanel/RecipeList/RecipeLayout/LeftColumn/RecipeRows") as VBoxContainer
+	_ok(recipe_rows == null, "recipe rows are no longer direct children of the left column")
+	var recipe_rows_in_scroll := tavern.get_node_or_null("OverlayMenu/RecipePanel/RecipeList/RecipeLayout/LeftColumn/RecipeRowsScroll/RecipeRows") as VBoxContainer
+	_ok(recipe_rows_in_scroll != null, "recipe rows live inside the left-side scroll area")
+	var recipe_detail := tavern.get_node_or_null("OverlayMenu/RecipePanel/RecipeList/RecipeLayout/RecipeDetail") as PanelContainer
+	_ok(recipe_detail != null, "recipe detail stays fixed as the right-side sibling")
+	if recipe_detail != null and recipe_rows_scroll != null:
+		_ok(not recipe_rows_scroll.is_ancestor_of(recipe_detail),
+			"recipe detail is outside the left scrolling area")
 	var stage_caption := tavern.get_node_or_null("StageCaption") as Label
 	_ok(stage_caption != null, "StageCaption remains the public tavern feedback caption path")
 	if stage_caption != null:
@@ -443,6 +504,40 @@ func _test_tavern_patience_ui_contract() -> void:
 			"show_stage_caption keeps the all-guests-served caption as Godot-rendered text")
 		_ok(_control_uses_pixel_font(stage_caption),
 			"all-guests-served StageCaption remains rendered with the pixel UI font")
+	var meme_event_notice := tavern.get_node_or_null("MemeEventNotice") as Panel
+	var meme_event_title := tavern.get_node_or_null("MemeEventNotice/Title") as Label
+	var meme_event_hint := tavern.get_node_or_null("MemeEventNotice/Hint") as Label
+	_ok(meme_event_notice != null, "Tavern exposes a separate meme guest event notice panel")
+	if meme_event_notice != null:
+		_ok(meme_event_notice.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"meme guest event notice never blocks tavern clicks")
+		_ok(not meme_event_notice.visible and meme_event_notice.modulate.a <= 0.01,
+			"meme guest event notice starts hidden")
+		if stage_caption != null:
+			_ok(meme_event_notice.global_position.y >= 48.0,
+				"meme guest event notice sits below the top bar")
+			_ok(meme_event_notice.global_position.y + meme_event_notice.size.y <= stage_caption.global_position.y - 4.0,
+				"meme guest event notice stays above StageCaption instead of fighting physics hints")
+	if meme_event_title != null:
+		_ok(_control_uses_pixel_font(meme_event_title), "meme guest event title uses the shared pixel UI font")
+	if meme_event_hint != null:
+		_ok(_control_uses_pixel_font(meme_event_hint), "meme guest event hint uses the shared pixel UI font")
+		_ok(meme_event_hint.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART,
+			"meme guest event hint wraps safely inside the panel")
+	_ok(tavern.has_method("show_meme_guest_event"),
+		"TavernView exposes a transient meme guest event notice method for GameManager")
+	if meme_event_notice != null and meme_event_title != null and meme_event_hint != null and tavern.has_method("show_meme_guest_event"):
+		tavern.call("show_meme_guest_event", "高松灯企鹅", "旮旯给木里不是这样的。")
+		await get_tree().process_frame
+		_ok(meme_event_notice.visible and meme_event_notice.modulate.a > 0.0,
+			"show_meme_guest_event reveals the event panel immediately")
+		_ok(meme_event_title.text == "事件：高松灯企鹅 来访",
+			"meme guest event title uses the requested event format")
+		_ok(meme_event_hint.text == "旮旯给木里不是这样的。",
+			"meme guest event hint uses the configured meme line")
+		if stage_caption != null:
+			_ok(stage_caption.text != meme_event_hint.text,
+				"meme guest event hint does not overwrite StageCaption physics feedback")
 	var inference_notice := tavern.get_node_or_null("InferenceReadyNotice") as Label
 	_ok(inference_notice != null, "Tavern exposes a visual-only inference-ready question mark notice")
 	if inference_notice != null:
@@ -813,6 +908,8 @@ func _test_tavern_game_manager_contract() -> void:
 		_ok(tavern.is_preparation_phase() == true, "TavernView starts in menu preparation phase")
 	if tavern.has_method("is_business_phase"):
 		_ok(tavern.is_business_phase() == false, "TavernView does not enter business phase before menu confirmation")
+	await _test_menu_prep_colored_tag_chips(tavern)
+	await _test_menu_prep_wind_match_detail(tavern)
 	await _test_inventory_drop_restores_menu_preparation(tavern)
 
 	if tavern.has_method("get_daily_menu_items"):
@@ -875,6 +972,136 @@ func _select_first_menu_prep_product(tavern: Node) -> void:
 	if products.is_empty():
 		return
 	tavern.call("_toggle_menu_prep_product", products[0])
+
+
+func _test_menu_prep_colored_tag_chips(tavern: Node) -> void:
+	var product_list := tavern.get_node_or_null("MenuPrepPanel/ProductScroll/ProductList") as VBoxContainer
+	_ok(product_list != null, "menu preparation keeps the product list")
+	if product_list == null:
+		return
+	var product_button: Button = null
+	for child in product_list.get_children():
+		if child is Button:
+			product_button = child
+			break
+	_ok(product_button != null, "menu preparation renders product buttons")
+	if product_button == null:
+		return
+	_ok(product_button.custom_minimum_size.y <= 74.0,
+		"menu product buttons keep the existing stable row height while showing compact tag chips")
+	var name_price := product_button.get_node_or_null("NamePrice") as Label
+	_ok(name_price != null, "menu prep product button exposes the bounded NamePrice label")
+	var tag_row := product_button.get_node_or_null("TagRow") as HBoxContainer
+	_ok(tag_row != null, "menu prep product button exposes a compact TagRow")
+	if tag_row == null:
+		return
+	var tag_label := tag_row.get_node_or_null("TagText_0") as Label
+	_ok(tag_label != null, "menu prep product button exposes the first colored text tag")
+	if tag_label == null:
+		return
+	var plain_plus_count_seen := false
+	for child in tag_row.get_children():
+		var child_label := child as Label
+		if child_label != null and _is_plain_plus_count(child_label.text):
+			plain_plus_count_seen = true
+	_ok(not plain_plus_count_seen,
+		"menu prep product tag overflow uses readable text instead of a bare +count")
+	var ale_button := _menu_prep_product_button_for_key(tavern, get_node("/root/GameManager"), "ale_beer")
+	_ok(ale_button != null, "menu preparation renders the ale beer product button")
+	if ale_button != null:
+		var ale_tag_row := ale_button.get_node_or_null("TagRow") as HBoxContainer
+		_ok(ale_tag_row != null, "ale beer button exposes its tag row")
+		if ale_tag_row != null:
+			_ok(ale_tag_row.get_child_count() >= 3,
+				"three-tag menu products show all tags instead of collapsing the third tag")
+			var collapsed_third_tag := false
+			for child in ale_tag_row.get_children():
+				var child_label := child as Label
+				if child_label != null and child_label.text.begins_with("另"):
+					collapsed_third_tag = true
+			_ok(not collapsed_third_tag,
+				"three-tag menu products do not use the overflow label")
+	var color := tag_label.get_theme_color("font_color")
+	_ok(color != ThemeColors.TEXT_LIGHT and color != Color.WHITE,
+		"food tag uses semantic text color instead of plain white")
+	_ok(tag_label.text.strip_edges() != "",
+		"food tag keeps readable colored text")
+	_ok(tag_label.get_node_or_null("Swatch") == null,
+		"food tag avoids boxed color swatches")
+	if name_price != null:
+		var normal_color := name_price.get_theme_color("font_color")
+		product_button.pressed.emit()
+		await get_tree().process_frame
+		_ok(name_price.get_theme_color("font_color") == ThemeColors.AMBER_PRIMARY,
+			"selected menu prep product highlights the dish name")
+		product_button.pressed.emit()
+		await get_tree().process_frame
+		_ok(name_price.get_theme_color("font_color") == normal_color,
+			"deselected menu prep product restores the dish name color")
+
+
+func _is_plain_plus_count(text: String) -> bool:
+	var value := text.strip_edges()
+	if not value.begins_with("+") or value.length() <= 1:
+		return false
+	return value.substr(1).is_valid_int()
+
+
+func _test_menu_prep_wind_match_detail(tavern: Node) -> void:
+	var gm = get_node("/root/GameManager")
+	if gm.rumors != null:
+		gm.rumors.restore_state({
+			"current_day": int(gm.economy.current_day),
+			"heard_ids": ["dark_river_cold_shift"],
+			"today_ids": ["dark_river_cold_shift"],
+		})
+	if tavern.has_method("configure_menu_preparation"):
+		tavern.configure_menu_preparation(gm.get_today_rumors(), gm.get_menu_preparation_echoes())
+	await get_tree().process_frame
+	var product_key := _first_menu_prep_product_matching_tags(gm, ["热食", "酒水", "顶饿"])
+	_ok(product_key != "", "menu preparation has a product matching the active wind tags")
+	if product_key == "":
+		return
+	var button := _menu_prep_product_button_for_key(tavern, gm, product_key)
+	_ok(button != null, "matching product button exists for wind detail test")
+	if button == null:
+		return
+	button.pressed.emit()
+	await get_tree().process_frame
+	var reason := tavern.get_node_or_null("MenuPrepPanel/MenuPrepReasonLabel") as Label
+	_ok(reason != null, "menu preparation keeps the fixed reason label")
+	if reason == null:
+		return
+	_ok(reason.size == Vector2(688, 34), "menu prep reason label keeps its fixed safe area")
+	_ok(reason.clip_text, "menu prep reason label clips text inside its safe area")
+	_ok(reason.text.contains("命中标签"), "selected wind-recommended product shows matched tags")
+	_ok(reason.text.contains("风声命中"), "selected wind-recommended product names the wind recommendation source")
+	_ok(reason.text.find("dark_river") == -1, "menu prep wind detail does not expose raw location ids")
+	button.pressed.emit()
+	await get_tree().process_frame
+
+
+func _first_menu_prep_product_matching_tags(gm: Node, expected_tags: Array[String]) -> String:
+	if gm == null or gm.craft == null or gm.appetite == null:
+		return ""
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	for product_key in products:
+		var tags: Array = gm.appetite.get_product_tags(product_key)
+		for tag in expected_tags:
+			if tags.has(tag):
+				return product_key
+	return ""
+
+
+func _menu_prep_product_button_for_key(tavern: Node, gm: Node, product_key: String) -> Button:
+	var product_list := tavern.get_node_or_null("MenuPrepPanel/ProductScroll/ProductList") as VBoxContainer
+	if product_list == null or gm == null or gm.craft == null:
+		return null
+	var products: Array[String] = gm.craft.get_orderable_products(gm.economy.current_day)
+	var index := products.find(product_key)
+	if index < 0 or index >= product_list.get_child_count():
+		return null
+	return product_list.get_child(index) as Button
 
 
 func _test_important_guest_patience_ratio_uses_important_guest_max() -> void:

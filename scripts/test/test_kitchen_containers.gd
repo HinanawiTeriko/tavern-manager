@@ -206,6 +206,7 @@ func _test_grill_continues_searing_cooked_items() -> void:
 	grill.container_key = "grill"
 	_ok(grill.can_sear_item_key("meat_cooked"), "cooked meat should keep searing toward burnt")
 	_ok(grill.can_sear_item_key("bread"), "bread should keep searing toward burnt")
+	_ok(grill.can_sear_item_key("rock_lizard_steak"), "cooked lizard steak should keep searing toward burnt")
 	_ok(not grill.can_sear_item_key("wine"), "unrelated finished products should not sear on grill")
 	grill.free()
 
@@ -379,11 +380,41 @@ func _test_pot_unfreezes_while_held() -> void:
 func _test_recipe_data() -> void:
 	var craft := CraftSystem.new()
 	craft.load_data()
-	_ok(craft.query_recipe("grill", ["flour"]) == "", "flour should not grill directly into bread")
+	var material_grill_chains := {
+		"flour": ["flour_toasted", "flour_burnt"],
+		"meat_raw": ["meat_cooked", "meat_burnt"],
+		"rock_lizard_meat": ["rock_lizard_steak", "rock_lizard_burnt"],
+		"ale": ["ale_roasted", "ale_burnt"],
+		"black_malt": ["black_malt_roasted", "black_malt_burnt"],
+		"grape": ["grape_roasted", "grape_burnt"],
+		"north_sour_grape": ["north_sour_grape_roasted", "north_sour_grape_burnt"],
+		"herb": ["herb_roasted", "herb_ash"],
+		"cave_mushroom": ["cave_mushroom_roasted", "cave_mushroom_burnt"],
+	}
+	for material_key in material_grill_chains.keys():
+		var chain: Array = material_grill_chains[material_key]
+		_ok(craft.query_recipe("grill", [material_key]) == String(chain[0]),
+			"material should have a cooked grill result: " + String(material_key))
+		_ok(craft.query_recipe("grill", [String(chain[0])]) == String(chain[1]),
+			"material should have a burnt grill result after the cooked stage: " + String(material_key))
+	_ok(craft.query_recipe("grill", ["flour"]) != "bread", "flour should not grill directly into bread")
+	_ok(craft.query_recipe("grill", ["ale"]) == "ale_roasted", "malt should roast through the single-item grill route")
+	_ok(craft.query_recipe("grill", ["ale_roasted"]) == "ale_burnt", "roasted malt should burn through the single-item grill route")
 	_ok(craft.query_recipe("grill", ["dough"]) == "bread", "dough on grill should make bread")
 	_ok(craft.query_recipe("grill", ["meat_raw"]) == "meat_cooked", "meat on grill should make cooked meat")
 	_ok(craft.query_recipe("grill", ["meat_raw", "flour"]) == "", "grill should not expose direct two-raw-ingredient recipes")
+	_ok(craft.query_recipe("grill", ["dough", "grape"]) == "", "grill should not expose direct two-ingredient tart recipes")
 	_ok(craft.query_recipe("grill", ["dough_meat"]) == "meat_sand", "meat sandwich should grill from prepared dough_meat")
+	_ok(craft.query_recipe("grill", ["herbed_lizard_raw"]) == "herbal_lizard_roast",
+		"herbal lizard roast should grill from a single prepared item")
+	_ok(craft.query_recipe("grill", ["mushroom_pie_raw"]) == "mushroom_pie",
+		"mushroom pie should grill from a single prepared item")
+	_ok(craft.query_recipe("grill", ["grape_tart_raw"]) == "grape_tart",
+		"grape tart should grill from a single prepared item")
+	_ok(craft.query_recipe("grill", ["mushroom_meat_pie_raw"]) == "mushroom_meat_pie",
+		"mushroom meat pie should grill from a single prepared item")
+	_ok(craft.query_recipe("hand", ["meat_burnt", "herb"]) == "charred_meat_plate",
+		"charred meat plate should be hand-finished from burnt meat and herb")
 	_ok(craft.query_recipe("pot", ["meat_raw", "ale"]) == "meat_stew", "meat and ale in pot should make stew")
 	_ok(craft.query_recipe("pot", ["ale", "herb"]) == "herb_broth", "herb and ale in pot should make broth")
 	_ok(craft.query_recipe("pot", ["flour", "ale"]) == "malt_porridge", "flour and ale in pot should make porridge")

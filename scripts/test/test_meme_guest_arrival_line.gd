@@ -10,6 +10,7 @@ class FakeMemeArrivalView extends Node:
 	var customer_lines: Array[String] = []
 	var stage_lines: Array = []
 	var applied_laws: Array = []
+	var meme_events: Array = []
 
 	func show_customer(customer_name: String, order_name: String, npc_id: String = "guest", order_key: String = "") -> void:
 		shown_customers.append({
@@ -27,6 +28,9 @@ class FakeMemeArrivalView extends Node:
 
 	func show_stage_caption(text: String, color: Color = Color.WHITE) -> void:
 		stage_lines.append({"text": text, "color": color})
+
+	func show_meme_guest_event(customer_name: String, hint: String) -> void:
+		meme_events.append({"customer_name": customer_name, "hint": hint})
 
 	func set_close_enabled(_enabled: bool) -> void:
 		pass
@@ -74,11 +78,16 @@ func _check_game_manager_speaks_meme_arrival_line() -> void:
 	guest.set_meta("portrait_id", "meme_doge")
 	guest.set_meta("physics_law_id", "low_gravity")
 	guest.set_meta("arrival_line", "wow... woof?")
+	guest.set_meta("event_hint", "such 客人. very 点单. wow.")
 
 	gm._on_guest_arrived(guest)
 
 	_ok(fake_view.shown_customers.size() == 1, "meme guest arrival should still show the customer")
 	_ok(fake_view.applied_laws.size() == 1, "meme guest arrival should still activate physics law")
+	_ok(fake_view.meme_events.size() == 1, "meme guest arrival should show one event notice")
+	if fake_view.meme_events.size() == 1:
+		_ok(String(fake_view.meme_events[0].get("customer_name", "")) == "Doge", "meme event notice should name the arriving guest")
+		_ok(String(fake_view.meme_events[0].get("hint", "")) == "such 客人. very 点单. wow.", "meme event notice should use the guest event hint")
 	_ok(fake_view.customer_lines.size() == 1, "meme guest arrival should speak one animal-like line")
 	if fake_view.customer_lines.size() == 1:
 		_ok(fake_view.customer_lines[0] == "wow... woof?", "meme guest arrival line should use guest metadata")
