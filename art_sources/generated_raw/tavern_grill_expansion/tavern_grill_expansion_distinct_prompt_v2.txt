@@ -1,0 +1,23 @@
+Use case: game asset sprite sheet
+Asset type: replacement source art for 24x24 pixel-art tavern item icons
+Primary request: Create one square 4x4 grid sprite sheet of 16 isolated fantasy tavern food and drink icons, one object per cell, centered, on a perfectly flat solid #ff00ff chroma-key background. No text, no labels, no numbers, no watermark, no grid lines, no frames.
+Style/medium: dark teal dungeon tavern pixel-art concept source, chunky silhouettes, hard dark outline, limited palette, high contrast, designed to remain distinct after downscaling to 24x24. Use clear symbol shapes over realism.
+Composition/framing: exact row-major order, each cell must have a very different silhouette and color cue:
+1 burnt flour: low black-gray powder mound with tan flour specks, triangular pile silhouette.
+2 herb ash: flat gray ash pile with one blackened curled green leaf on top, wide flat silhouette, not a cone.
+3 roasted black malt: many golden-brown oval grains in a crescent pile, amber highlights.
+4 burnt black malt: black oval grains in a small cracked scoop, orange ember cracks, not a gray mound.
+5 roasted red grapes: bright red grape cluster on curved brown stem, plump round grapes, amber shine.
+6 burnt red grapes: dark raisin cluster, shriveled black-red grapes, curled twig, small orange scorch dots.
+7 roasted sour purple grapes: purple grape cluster with a tiny green sour leaf flag, cool violet highlights.
+8 burnt sour purple grapes: angular black-purple grape cluster on forked twig, violet rim lights, no red shine.
+9 roasted mushroom broth: round stone bowl, one oversized mushroom cap visibly floating, tan broth.
+10 toasted herb broth: shallow clay bowl, clear green broth with three long herb leaves crossing the surface.
+11 grape flour porridge: cream porridge bowl with a bold purple grape swirl spiral and two grape dots.
+12 charred mushroom meat stew: black iron mini-cauldron with orange stew chunks and black char flecks.
+13 warm spiced wine: red mug with cinnamon stick and star anise shape, squat mug silhouette.
+14 sour roast herb wine: tall narrow purple bottle with green herb sprig tied to neck, bottle silhouette.
+15 double-char black ale: black wooden tankard with high pale foam and orange cracks on the mug.
+16 bitter grape dark ale: tall dark goblet with a purple grape cluster charm on the rim, high-stem silhouette.
+Lighting/mood: warm amber tavern fire accents; dark outline; no cast shadows.
+Constraints: background must be uniform #ff00ff with no texture, shadows, gradients, floor plane, or lighting variation. Do not use #ff00ff in any object. Keep generous padding in each cell. The 16 icons must be visually distinguishable by silhouette at 24x24.

@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_hand_combine_recipes_are_discoverable()
 	_test_intermediate_items_have_downstream_use()
 	_test_recipe_expansion_items_unlocks_and_attributes()
+	_test_all_recipes_are_reachable_through_current_workspace_rules()
 	_test_shop_unlock_keys_exist_in_recipes()
 	_test_today_important_npc_resets_on_empty_day()
 	_test_material_icons_load()
@@ -156,6 +157,16 @@ func _test_recipe_expansion_items_unlocks_and_attributes() -> void:
 		"wakeful_herb_juice",
 		"roasted_malt_porridge",
 		"mushroom_meat_pie",
+		"roasted_mushroom_broth",
+		"toasted_herb_broth",
+		"warm_spiced_wine",
+		"sour_roast_herb_wine",
+		"double_char_black_ale",
+		"grape_flour_porridge",
+		"ash_flatbread",
+		"charred_mushroom_meat_stew",
+		"charred_lizard_herb_plate",
+		"bitter_grape_dark_ale",
 	]
 	for product_key in expected_products:
 		_ok(craft.items.has(product_key), "expanded recipe item exists: " + product_key)
@@ -173,6 +184,16 @@ func _test_recipe_expansion_items_unlocks_and_attributes() -> void:
 		"wakeful_herb_juice",
 		"roasted_malt_porridge",
 		"mushroom_meat_pie",
+		"roasted_mushroom_broth",
+		"toasted_herb_broth",
+		"warm_spiced_wine",
+		"sour_roast_herb_wine",
+		"double_char_black_ale",
+		"grape_flour_porridge",
+		"ash_flatbread",
+		"charred_mushroom_meat_stew",
+		"charred_lizard_herb_plate",
+		"bitter_grape_dark_ale",
 	]
 	var shop := ShopSystem.new()
 	shop.load_config()
@@ -180,6 +201,78 @@ func _test_recipe_expansion_items_unlocks_and_attributes() -> void:
 		_ok(craft.recipes.has(product_key) and bool(craft.recipes[product_key].get("requires_purchase", false)),
 			"advanced expanded recipe requires purchase: " + product_key)
 		_ok(shop.get_recipe_unlock_price(product_key) > 0, "advanced expanded recipe has shop price: " + product_key)
+
+
+func _test_all_recipes_are_reachable_through_current_workspace_rules() -> void:
+	var craft := CraftSystem.new()
+	craft.load_data()
+	var reachable := {}
+	for item_key in craft.items.keys():
+		var item: Dictionary = craft.items[item_key]
+		if String(item.get("type", "")) == "material":
+			reachable[String(item_key)] = true
+	var changed := true
+	while changed:
+		changed = false
+		var keys := _sorted_keys(reachable)
+		for key in keys:
+			for result in _single_workspace_results(craft, key):
+				changed = _mark_reachable(reachable, result) or changed
+		keys = _sorted_keys(reachable)
+		for i in range(keys.size()):
+			for j in range(i, keys.size()):
+				var a := String(keys[i])
+				var b := String(keys[j])
+				if not _can_use_as_container_ingredient(craft, a) or not _can_use_as_container_ingredient(craft, b):
+					continue
+				changed = _mark_reachable(reachable, craft.query_recipe("pot", [a, b])) or changed
+				changed = _mark_reachable(reachable, craft.query_recipe("barrel", [a, b])) or changed
+				changed = _mark_reachable(reachable, craft.get_combine_result(a, b)) or changed
+				changed = _mark_reachable(reachable, craft.query_recipe("hand", [a, b])) or changed
+	var unreachable: Array[String] = []
+	for product_key in craft.recipes.keys():
+		if not reachable.has(String(product_key)):
+			unreachable.append(String(product_key))
+	unreachable.sort()
+	_ok(unreachable.is_empty(), "all recipes should be reachable through current workspace rules: " + ", ".join(unreachable))
+
+
+func _single_workspace_results(craft: CraftSystem, key: String) -> Array[String]:
+	var results: Array[String] = []
+	var grill_result := craft.query_recipe("grill", [key])
+	if grill_result != "":
+		results.append(grill_result)
+	if not _can_use_as_container_ingredient(craft, key):
+		return results
+	var pot_result := craft.query_recipe("pot", [key])
+	if pot_result != "":
+		results.append(pot_result)
+	var stir_result := String(craft.get_operations(key).get("stir", ""))
+	if stir_result != "":
+		results.append(stir_result)
+	var barrel_result := craft.query_recipe("barrel", [key])
+	if barrel_result != "":
+		results.append(barrel_result)
+	return results
+
+
+func _can_use_as_container_ingredient(craft: CraftSystem, key: String) -> bool:
+	return key != "" and not craft.is_product(key)
+
+
+func _mark_reachable(reachable: Dictionary, key: String) -> bool:
+	if key == "" or reachable.has(key):
+		return false
+	reachable[key] = true
+	return true
+
+
+func _sorted_keys(values: Dictionary) -> Array[String]:
+	var keys: Array[String] = []
+	for key in values.keys():
+		keys.append(String(key))
+	keys.sort()
+	return keys
 
 
 func _test_shop_unlock_keys_exist_in_recipes() -> void:
@@ -222,3 +315,50 @@ func _test_material_icons_load() -> void:
 	var gm = get_node("/root/GameManager")
 	for key in ["ale", "grape", "flour", "meat_raw", "herb", "cave_mushroom", "rock_lizard_meat", "north_sour_grape", "black_malt"]:
 		_ok(gm.try_load_material_icon(key) != null, "material icon should load: " + key)
+	var tavern_item_keys := [
+		"charred_crust_broth",
+		"charred_meat_plate",
+		"bitter_black_ale",
+		"ash_pot_stew",
+		"sour_herb_wine",
+		"black_malt_porridge",
+		"herbal_lizard_roast",
+		"mushroom_pie",
+		"grape_tart",
+		"wakeful_herb_juice",
+		"roasted_malt_porridge",
+		"mushroom_meat_pie",
+		"herbed_lizard_raw",
+		"mushroom_pie_raw",
+		"grape_tart_raw",
+		"mushroom_meat_pie_raw",
+		"flour_toasted",
+		"flour_burnt",
+		"rock_lizard_burnt",
+		"black_malt_roasted",
+		"black_malt_burnt",
+		"grape_roasted",
+		"grape_burnt",
+		"north_sour_grape_roasted",
+		"north_sour_grape_burnt",
+		"herb_roasted",
+		"herb_ash",
+		"cave_mushroom_roasted",
+		"cave_mushroom_burnt",
+		"roasted_mushroom_broth",
+		"toasted_herb_broth",
+		"warm_spiced_wine",
+		"sour_roast_herb_wine",
+		"double_char_black_ale",
+		"grape_flour_porridge",
+		"ash_flatbread",
+		"charred_mushroom_meat_stew",
+		"charred_lizard_herb_plate",
+		"bitter_grape_dark_ale",
+	]
+	for key in tavern_item_keys:
+		var texture: Texture2D = gm.try_load_material_icon(key)
+		_ok(texture != null, "tavern recipe item art should load: " + key)
+		if texture != null:
+			_ok(String(texture.resource_path).begins_with("res://assets/textures/tavern/items/"),
+				"tavern recipe item art should use dedicated DeskItem texture: " + key)

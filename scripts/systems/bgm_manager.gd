@@ -16,6 +16,10 @@ var _player_b: AudioStreamPlayer
 var _active: String = "a"
 var _current_stream: AudioStream = null
 var _current_stream_key: String = ""
+var _pending_web_bgm_stream: AudioStream = null
+var _pending_web_bgm_stream_key: String = ""
+var _pending_web_bgm_duration: float = DEFAULT_CROSSFADE
+var _web_audio_unlocked: bool = false
 
 # 交叉淡变状态
 var _state: int = State.IDLE
@@ -35,18 +39,18 @@ var _shade_done_callback: Callable
 
 func _ready() -> void:
 	# 确保 "Music" 音频总线存在
-	if AudioServer.get_bus_index("Music") < 0:
-		var master_idx := AudioServer.get_bus_index("Master")
-		AudioServer.add_bus(master_idx + 1)
-		AudioServer.set_bus_name(master_idx + 1, "Music")
-		AudioServer.set_bus_send(master_idx + 1, "Master")
+	if not OS.has_feature("web"):
+		_ensure_music_bus()
 	_apply_settings_volume()
 
 	_player_a = AudioStreamPlayer.new()
 	_player_b = AudioStreamPlayer.new()
-	_player_a.bus = "Music"; _player_b.bus = "Music"
+	var bgm_bus := _bgm_bus_name(OS.has_feature("web"))
+	_player_a.bus = bgm_bus; _player_b.bus = bgm_bus
 	_player_a.volume_db = MIN_VOLUME_DB; _player_b.volume_db = MIN_VOLUME_DB
 	add_child(_player_a); add_child(_player_b)
+	_player_a.finished.connect(_on_bgm_player_finished.bind(_player_a))
+	_player_b.finished.connect(_on_bgm_player_finished.bind(_player_b))
 
 	# 场景过渡遮罩
 	_shade_layer = CanvasLayer.new()
@@ -63,6 +67,16 @@ func _ready() -> void:
 	_active = "a"
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
+	set_process_input(true)
+
+
+func _input(event: InputEvent) -> void:
+	if not OS.has_feature("web") or _web_audio_unlocked:
+		return
+	if not _is_web_audio_unlock_event(event):
+		return
+	_web_audio_unlocked = true
+	_flush_pending_web_bgm()
 
 
 func _process(delta: float) -> void:
@@ -122,7 +136,9 @@ func crossfade_to(stream: AudioStream, duration: float = DEFAULT_CROSSFADE) -> v
 
 
 func crossfade_to_path(path: String, duration: float = DEFAULT_CROSSFADE) -> void:
-	if path == "" or path == _current_stream_key:
+	if path == "":
+		return
+	if path == _current_stream_key and _active_player_is_playing():
 		return
 	var resource := load(path)
 	var stream := resource as AudioStream
@@ -132,8 +148,14 @@ func crossfade_to_path(path: String, duration: float = DEFAULT_CROSSFADE) -> voi
 	_crossfade_to_stream(stream, path, duration)
 
 
-func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: float) -> void:
+func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: float, ignore_web_gate: bool = false) -> void:
 	if stream == null or stream_key == _current_stream_key:
+		return
+	if not ignore_web_gate and _should_defer_web_bgm():
+		_defer_web_bgm(stream, stream_key, duration)
+		return
+	if OS.has_feature("web"):
+		_start_bgm_immediate(stream, stream_key)
 		return
 	var prepared_stream := _prepare_bgm_stream(stream)
 	_current_stream = prepared_stream
@@ -147,18 +169,99 @@ func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: flo
 	_state = State.CROSSFADE
 
 
+func _start_bgm_immediate(stream: AudioStream, stream_key: String) -> void:
+	var prepared_stream := _prepare_bgm_stream(stream)
+	_current_stream = prepared_stream
+	_current_stream_key = stream_key
+	_state = State.IDLE
+	_fade_out_player = null
+	_fade_in_player = null
+	_player_a.stop()
+	_player_b.stop()
+	_player_a.stream = prepared_stream
+	_player_a.volume_db = MAX_VOLUME_DB
+	_player_b.stream = null
+	_player_b.volume_db = MIN_VOLUME_DB
+	_active = "a"
+	_player_a.play()
+
+
+func _should_defer_web_bgm() -> bool:
+	return OS.has_feature("web") and not _web_audio_unlocked
+
+
+func _defer_web_bgm(stream: AudioStream, stream_key: String, duration: float) -> void:
+	_pending_web_bgm_stream = stream
+	_pending_web_bgm_stream_key = stream_key
+	_pending_web_bgm_duration = duration
+
+
+func _flush_pending_web_bgm() -> void:
+	if _pending_web_bgm_stream == null or _pending_web_bgm_stream_key == "":
+		return
+	var stream := _pending_web_bgm_stream
+	var stream_key := _pending_web_bgm_stream_key
+	var duration := _pending_web_bgm_duration
+	_pending_web_bgm_stream = null
+	_pending_web_bgm_stream_key = ""
+	_pending_web_bgm_duration = DEFAULT_CROSSFADE
+	_crossfade_to_stream(stream, stream_key, duration, true)
+
+
+func _is_web_audio_unlock_event(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		return event.pressed
+	if event is InputEventScreenTouch:
+		return event.pressed
+	if event is InputEventKey:
+		return event.pressed and not event.echo
+	if event is InputEventJoypadButton:
+		return event.pressed
+	return false
+
+
 func _prepare_bgm_stream(stream: AudioStream) -> AudioStream:
 	var wav := stream as AudioStreamWAV
 	if wav == null:
 		return stream
-	var prepared := wav.duplicate(true) as AudioStreamWAV
-	prepared.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	return prepared
+	# Imported compressed WAV resources can stop immediately when loop_mode is changed.
+	# Keep the stream untouched; loop by replaying the active player on finished.
+	return wav
+
+
+func _ensure_music_bus() -> void:
+	if AudioServer.get_bus_index("Music") >= 0:
+		return
+	var master_idx := AudioServer.get_bus_index("Master")
+	var music_idx := master_idx + 1
+	AudioServer.add_bus(music_idx)
+	AudioServer.set_bus_name(music_idx, "Music")
+	AudioServer.set_bus_send(music_idx, "Master")
+
+
+func _bgm_bus_name(is_web: bool) -> String:
+	return "Master" if is_web else "Music"
+
+
+func _active_player_is_playing() -> bool:
+	var active_player := _player_a if _active == "a" else _player_b
+	return is_instance_valid(active_player) and active_player.playing
+
+
+func _on_bgm_player_finished(player: AudioStreamPlayer) -> void:
+	if _state != State.IDLE or _current_stream_key == "":
+		return
+	var active_player := _player_a if _active == "a" else _player_b
+	if player != active_player or player.stream == null:
+		return
+	player.play()
 
 
 func fade_out(duration: float = 0.5) -> void:
 	_current_stream = null
 	_current_stream_key = ""
+	_pending_web_bgm_stream = null
+	_pending_web_bgm_stream_key = ""
 	_fade_out_player = _player_a if _active == "a" else _player_b
 	_fade_in_player = null
 	if not is_instance_valid(_fade_out_player) or not _fade_out_player.playing:
@@ -171,6 +274,8 @@ func fade_out(duration: float = 0.5) -> void:
 func stop_immediate() -> void:
 	_current_stream = null; _state = State.IDLE
 	_current_stream_key = ""
+	_pending_web_bgm_stream = null
+	_pending_web_bgm_stream_key = ""
 	_player_a.stop(); _player_a.stream = null
 	_player_b.stop(); _player_b.stream = null
 

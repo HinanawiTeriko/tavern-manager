@@ -2,6 +2,13 @@
   "pairs": [
     ["dough", "meat_raw", "dough_meat"],
     ["ale", "herb", "ale_herb"],
-    ["grape", "herb", "grape_herb"]
+    ["grape", "herb", "grape_herb"],
+    ["rock_lizard_meat", "herb", "herbed_lizard_raw"],
+    ["dough", "cave_mushroom", "mushroom_pie_raw"],
+    ["dough", "grape", "grape_tart_raw"],
+    ["dough_meat", "cave_mushroom", "mushroom_meat_pie_raw"],
+    ["meat_burnt", "herb", "charred_meat_plate"],
+    ["flour_burnt", "herb_ash", "ash_flatbread"],
+    ["rock_lizard_burnt", "herb", "charred_lizard_herb_plate"]
   ]
 }

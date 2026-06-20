@@ -8,7 +8,9 @@ const InventoryGridSlotScript := preload("res://scripts/ui/inventory_grid_slot.g
 const GRID_COLUMNS := 5
 const GRID_SLOT_H_GAP := 16
 const GRID_SLOT_V_GAP := 10
-const TOOLTIP_OFFSET := Vector2(18.0, 10.0)
+const TOOLTIP_SIZE := Vector2(196.0, 118.0)
+const TOOLTIP_GAP := 12.0
+const TOOLTIP_PANEL_MARGIN := 4.0
 const TITLE_RECT := Rect2(40.0, 24.0, 420.0, 32.0)
 const SECTION_TITLE_RECT := Rect2(72.0, 78.0, 476.0, 28.0)
 const GRID_RECT := Rect2(78.0, 96.0, 464.0, 360.0)
@@ -160,7 +162,9 @@ func _ensure_tooltip() -> void:
 		_tooltip.name = "ItemTooltip"
 		_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_tooltip.z_index = 50
-		_tooltip.custom_minimum_size = Vector2(196.0, 0.0)
+		_tooltip.clip_contents = true
+		_tooltip.custom_minimum_size = TOOLTIP_SIZE
+		_tooltip.size = TOOLTIP_SIZE
 		ThemeColors.style_brush_content_panel(_tooltip)
 		_panel.add_child(_tooltip)
 	var box := _tooltip.get_node_or_null("VBox") as VBoxContainer
@@ -183,7 +187,9 @@ func _ensure_tooltip_label(box: VBoxContainer, label_name: String, font_size: in
 		label = Label.new()
 		label.name = label_name
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		box.add_child(label)
 	ThemeColors.style_brush_label(label, font_size, color)
 	return label
@@ -223,12 +229,22 @@ func _show_item_tooltip(item_key: String, slot: Control) -> void:
 	_tooltip_price.text = "价格：%d金" % price if price > 0 else "价格：-"
 	_tooltip_tags.text = "标记：" + _capability_label(capabilities)
 	_tooltip.visible = true
-	_tooltip.reset_size()
-	var desired := slot.get_global_rect().position - _panel.global_position + TOOLTIP_OFFSET
-	var min_size := _tooltip.get_combined_minimum_size()
-	var max_x := maxf(4.0, _panel.size.x - min_size.x - 8.0)
-	var max_y := maxf(4.0, _panel.size.y - min_size.y - 8.0)
-	_tooltip.position = Vector2(clampf(desired.x, 4.0, max_x), clampf(desired.y, 4.0, max_y))
+	_tooltip.custom_minimum_size = TOOLTIP_SIZE
+	_tooltip.size = TOOLTIP_SIZE
+	var slot_rect := slot.get_global_rect()
+	var panel_rect := _panel.get_global_rect()
+	var desired := Vector2(
+		slot_rect.position.x - panel_rect.position.x + slot_rect.size.x + TOOLTIP_GAP,
+		slot_rect.position.y - panel_rect.position.y
+	)
+	if desired.x + TOOLTIP_SIZE.x > _panel.size.x - TOOLTIP_PANEL_MARGIN:
+		desired.x = slot_rect.position.x - panel_rect.position.x - TOOLTIP_SIZE.x - TOOLTIP_GAP
+	var max_x := maxf(TOOLTIP_PANEL_MARGIN, _panel.size.x - TOOLTIP_SIZE.x - TOOLTIP_PANEL_MARGIN)
+	var max_y := maxf(TOOLTIP_PANEL_MARGIN, _panel.size.y - TOOLTIP_SIZE.y - TOOLTIP_PANEL_MARGIN)
+	_tooltip.position = Vector2(
+		clampf(desired.x, TOOLTIP_PANEL_MARGIN, max_x),
+		clampf(desired.y, TOOLTIP_PANEL_MARGIN, max_y)
+	)
 
 
 func _hide_tooltip() -> void:

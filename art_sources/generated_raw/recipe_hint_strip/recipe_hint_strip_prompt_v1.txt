@@ -1,0 +1,13 @@
+Built-in imagegen prompt, extracted from Codex session JSONL with scripts/tools/extract_codex_imagegen_results.py.
+
+Use case: game UI asset source sheet
+Asset type: production source sheet for a Godot pixel-art UI recipe hint strip, later cropped by fixed manifest rectangles and downsampled through a native pixel pipeline.
+Primary request: Create four horizontal UI strip variants for a compact tavern recipe hint panel. Each strip is a warm parchment note held by dark rough wooden clamps or dark ink-brushed edges, designed to sit just above an order groove on a tavern table. No text, no letters, no numbers, no symbols that look like readable writing.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background only.
+Subject: four separate long narrow horizontal strips, stacked vertically with generous padding. Each strip should be centered and fully visible, with crisp silhouette and no cast shadow. The strip should have a warm paper center for readable Godot-rendered text, dark brown/black tavern wood or ink edge accents, and small amber candle-warm highlights. It should not look like a cyan or teal menu panel.
+Style/medium: original pixel-game UI source art, historical tavern printmaking influence, rough ink edges, chunky pixel clusters, limited palette, low-density details. Dynamic text will be rendered later by Godot Labels.
+Composition/framing: square sheet; four variants in fixed horizontal bands; each strip approximately 820 px wide by 120 px tall in source image, with at least 50 px padding around each strip. Background must remain one uniform #00ff00 color.
+Color palette: warm parchment, dark walnut brown, charcoal ink, muted amber highlights. Avoid cyan, bright blue, purple, neon colors.
+Materials/textures: worn paper grain, uneven cut edge, small wooden tabs or clamps, rough ink border, subtle candle-warm speckles. Keep the middle area clean enough for one line of Chinese text after pixel downsampling.
+Constraints: no readable text; no fake letters; no logos; no watermark; no transparency; no gradients or texture in the #00ff00 background; no shadows on background; no floor plane; no decorative characters; no icons that imply a specific recipe. Keep all important art away from crop edges.
+Avoid: modern flat UI, glossy bevels, cyan/teal menu brush panel, full parchment cards, nested panels, heavy ornate frame, high-detail painting, soft blur, antialiased border glow.

@@ -1,6 +1,7 @@
 extends Node
 
 const TAVERN_SCENE := preload("res://scenes/ui/Tavern.tscn")
+const PHYSICS_LAW_SYSTEM := preload("res://scripts/systems/physics_law_system.gd")
 const BASE_GRAVITY_META := "base_gravity_scale"
 const BASE_LINEAR_DAMP_META := "base_linear_damp"
 const BASE_ANGULAR_DAMP_META := "base_angular_damp"
@@ -27,6 +28,14 @@ func _ok(condition: bool, message: String) -> void:
 		push_error(message)
 
 
+func _load_default_law(law_id: String) -> Dictionary:
+	var system = PHYSICS_LAW_SYSTEM.new()
+	_ok(system.load_from_path("res://data/physics_laws.json"), "default physics laws should load")
+	var law: Dictionary = system.get_law(law_id)
+	_ok(not law.is_empty(), "%s law should exist in default physics data" % law_id)
+	return law
+
+
 func _check_existing_and_new_item_gravity() -> void:
 	var tavern := TAVERN_SCENE.instantiate()
 	add_child(tavern)
@@ -46,18 +55,18 @@ func _check_existing_and_new_item_gravity() -> void:
 	var base_gravity := first.gravity_scale
 	_ok(is_equal_approx(base_gravity, 1.0), "test item should start with base gravity 1")
 
-	bar.call("apply_physics_law", {
-		"id": "low_gravity",
-		"gravity_scale_multiplier": 0.45,
-		"scope": "desk_items"
-	})
+	var low_gravity := _load_default_law("low_gravity")
+	bar.call("apply_physics_law", low_gravity)
 	await get_tree().process_frame
-	_ok(is_equal_approx(first.gravity_scale, base_gravity * 0.45), "existing item should receive gravity law")
+	var low_gravity_multiplier := float(low_gravity.get("gravity_scale_multiplier", 1.0))
+	_ok(is_equal_approx(first.gravity_scale, base_gravity * low_gravity_multiplier), "existing item should receive gravity law")
 
 	var second := bar._spawn_desk_item_at(Vector2(380, 250), "herb")
 	await get_tree().process_frame
 	_ok(second.has_meta(BASE_GRAVITY_META), "new item should store base gravity")
-	_ok(is_equal_approx(second.gravity_scale, float(second.get_meta(BASE_GRAVITY_META)) * 0.45), "new item should receive active law")
+	_ok(
+		is_equal_approx(second.gravity_scale, float(second.get_meta(BASE_GRAVITY_META)) * low_gravity_multiplier),
+		"new item should receive active law")
 
 	bar.call("clear_physics_law")
 	await get_tree().process_frame
@@ -87,18 +96,15 @@ func _check_damp_and_bounce_laws_restore() -> void:
 	var base_linear_damp := slippery_item.linear_damp
 	var base_angular_damp := slippery_item.angular_damp
 
-	bar.call("apply_physics_law", {
-		"id": "slippery_physics",
-		"gravity_scale_multiplier": 1.0,
-		"linear_damp_multiplier": 0.25,
-		"angular_damp_multiplier": 0.25,
-		"scope": "desk_items"
-	})
+	var slippery_law := _load_default_law("slippery_physics")
+	bar.call("apply_physics_law", slippery_law)
 	await get_tree().process_frame
+	var slippery_linear_damp := float(slippery_law.get("linear_damp_multiplier", 1.0))
+	var slippery_angular_damp := float(slippery_law.get("angular_damp_multiplier", 1.0))
 	_ok(slippery_item.has_meta(BASE_LINEAR_DAMP_META), "slippery law should store base linear damp")
 	_ok(slippery_item.has_meta(BASE_ANGULAR_DAMP_META), "slippery law should store base angular damp")
-	_ok(is_equal_approx(slippery_item.linear_damp, base_linear_damp * 0.25), "slippery law should reduce linear damp")
-	_ok(is_equal_approx(slippery_item.angular_damp, base_angular_damp * 0.25), "slippery law should reduce angular damp")
+	_ok(is_equal_approx(slippery_item.linear_damp, base_linear_damp * slippery_linear_damp), "slippery law should reduce linear damp")
+	_ok(is_equal_approx(slippery_item.angular_damp, base_angular_damp * slippery_angular_damp), "slippery law should reduce angular damp")
 
 	bar.call("clear_physics_law")
 	await get_tree().process_frame
@@ -111,17 +117,13 @@ func _check_damp_and_bounce_laws_restore() -> void:
 	await get_tree().process_frame
 	var base_material = bouncy_item.physics_material_override
 
-	bar.call("apply_physics_law", {
-		"id": "bouncy_physics",
-		"gravity_scale_multiplier": 1.0,
-		"bounce_override": 0.8,
-		"scope": "desk_items"
-	})
+	var bouncy_law := _load_default_law("bouncy_physics")
+	bar.call("apply_physics_law", bouncy_law)
 	await get_tree().process_frame
 	_ok(bouncy_item.has_meta(HAS_BASE_MATERIAL_META), "bouncy law should remember whether a base material existed")
 	_ok(bouncy_item.has_meta(BASE_MATERIAL_META) or base_material == null, "bouncy law should store base material when one exists")
 	_ok(bouncy_item.physics_material_override != null, "bouncy law should install a physics material override")
-	_ok(is_equal_approx(bouncy_item.physics_material_override.bounce, 0.8), "bouncy law should override bounce")
+	_ok(is_equal_approx(bouncy_item.physics_material_override.bounce, float(bouncy_law.get("bounce_override", 0.0))), "bouncy law should override bounce")
 
 	bar.call("clear_physics_law")
 	await get_tree().process_frame
@@ -151,19 +153,12 @@ func _check_dramatic_release_law_adds_extra_spin_and_impulse() -> void:
 	item.angular_velocity = 0.0
 	var base_speed := item.linear_velocity.length()
 
-	bar.call("apply_physics_law", {
-		"id": "slippery_physics",
-		"gravity_scale_multiplier": 1.0,
-		"release_impulse_multiplier": 1.85,
-		"release_spin_multiplier": 2.1,
-		"stage_chaos_feed": 0.45,
-		"scope": "desk_items"
-	})
+	bar.call("apply_physics_law", _load_default_law("slippery_physics"))
 	bar._on_drag_ended(item)
 	await get_tree().process_frame
 
-	_ok(item.linear_velocity.length() > base_speed + 60.0, "dramatic law should add readable release impulse")
-	_ok(absf(item.angular_velocity) >= 10.0, "dramatic law should add much stronger meme spin")
+	_ok(item.linear_velocity.length() > base_speed + 115.0, "dramatic default law should add obvious release impulse")
+	_ok(absf(item.angular_velocity) >= 16.0, "dramatic default law should add much stronger meme spin")
 
 	tavern.queue_free()
 	await get_tree().process_frame
@@ -188,17 +183,12 @@ func _check_collision_law_kicks_items_apart() -> void:
 	right.linear_velocity = Vector2(-260.0, 0.0)
 	var before_vertical := absf(left.linear_velocity.y) + absf(right.linear_velocity.y)
 
-	bar.call("apply_physics_law", {
-		"id": "bouncy_physics",
-		"gravity_scale_multiplier": 1.0,
-		"collision_impulse_multiplier": 1.8,
-		"scope": "desk_items"
-	})
+	bar.call("apply_physics_law", _load_default_law("bouncy_physics"))
 	bar._on_item_collision(right, left)
 	await get_tree().process_frame
 
 	var after_vertical := absf(left.linear_velocity.y) + absf(right.linear_velocity.y)
-	_ok(after_vertical > before_vertical + 60.0, "collision law should kick colliding items into a visible hop")
+	_ok(after_vertical > before_vertical + 220.0, "default collision law should kick colliding items into a visible hop")
 	_ok(left.linear_velocity.x < 260.0 or right.linear_velocity.x > -260.0, "collision law should push items away from each other")
 
 	tavern.queue_free()
@@ -228,16 +218,11 @@ func _check_customer_pull_law_draws_items_toward_drop_area() -> void:
 	var drop_area := tavern.get_node("BarWorkspace/CustomerDropArea") as Area2D
 	var direction_to_customer := (drop_area.global_position - item.global_position).normalized()
 
-	bar.call("apply_physics_law", {
-		"id": "heavy_gravity",
-		"gravity_scale_multiplier": 2.0,
-		"near_customer_pull": 140.0,
-		"scope": "desk_items"
-	})
+	bar.call("apply_physics_law", _load_default_law("heavy_gravity"))
 	bar.call("_apply_active_customer_pull", 1.0)
 	await get_tree().process_frame
 
-	_ok(item.linear_velocity.dot(direction_to_customer) > 80.0, "snack cat law should pull loose food toward the customer")
+	_ok(item.linear_velocity.dot(direction_to_customer) > 140.0, "heavy default law should visibly pull loose food toward the customer")
 
 	tavern.queue_free()
 	await get_tree().process_frame

@@ -121,6 +121,26 @@ def remove_purple_cast(image: Image.Image) -> Image.Image:
     return out
 
 
+def remove_daymap_notice_red_residue(image: Image.Image) -> Image.Image:
+    """Keep red wax out of the DayMap panel/icon assets while preserving dark edge value."""
+    out = image.convert("RGBA")
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha < 160:
+                continue
+            if red >= 90 and red > green * 1.55 and red > blue * 1.25 and green <= 90 and blue <= 90:
+                luma = red * 0.32 + green * 0.42 + blue * 0.26
+                if luma < 62.0:
+                    pixels[x, y] = (56, 58, 45, alpha)
+                elif luma < 78.0:
+                    pixels[x, y] = (92, 68, 45, alpha)
+                else:
+                    pixels[x, y] = (114, 76, 41, alpha)
+    return out
+
+
 def normalize_asset(source: Image.Image, asset_id: str) -> Image.Image:
     spec = ASSETS[asset_id]
     rect = SOURCE_RECTS[asset_id]
@@ -136,7 +156,10 @@ def normalize_asset(source: Image.Image, asset_id: str) -> Image.Image:
     fitted = ImageEnhance.Sharpness(fitted).enhance(1.35)
     quantized = fitted.convert("RGB").quantize(colors=int(spec["colors"]), method=Image.Quantize.MEDIANCUT).convert("RGBA")
     quantized.putalpha(fitted.getchannel("A").point(lambda value: 255 if value >= 28 else 0))
-    return clear_transparent_pixels(remove_purple_cast(quantized))
+    cleaned = remove_purple_cast(quantized)
+    if asset_id in ["wind_notice_panel", "wind_notice_icon"]:
+        cleaned = remove_daymap_notice_red_residue(cleaned)
+    return clear_transparent_pixels(cleaned)
 
 
 def save_pair(asset_id: str, native: Image.Image) -> None:

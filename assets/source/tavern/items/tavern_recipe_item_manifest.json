@@ -1,0 +1,168 @@
+{
+  "generated_sources": {
+    "prep_item_sheet_v1": {
+      "source_file": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_20260620T061924Z_ig_0e0483fede568931016a3630bd36dc819191b316b7dcbf80dd.png",
+      "prompt": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_prompt_v1.txt",
+      "size": [1254, 1254],
+      "intended_use": "2x2 source sheet for new hand-prep intermediate desk item art"
+    },
+    "expanded_recipe_icons_v1": {
+      "source_manifest": "assets/source/recipes/recipe_icon_manifest.json",
+      "intended_use": "approved expanded recipe native icons reused as tavern desk item art sources"
+    }
+  },
+  "items": {
+    "charred_crust_broth": {
+      "source_file": "assets/source/recipes/charred_crust_broth_native.png",
+      "native": "assets/source/tavern/items/charred_crust_broth_native.png",
+      "runtime": "assets/textures/tavern/items/charred_crust_broth.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for charred crust broth"
+    },
+    "charred_meat_plate": {
+      "source_file": "assets/source/recipes/charred_meat_plate_native.png",
+      "native": "assets/source/tavern/items/charred_meat_plate_native.png",
+      "runtime": "assets/textures/tavern/items/charred_meat_plate.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for charred meat plate"
+    },
+    "bitter_black_ale": {
+      "source_file": "assets/source/recipes/bitter_black_ale_native.png",
+      "native": "assets/source/tavern/items/bitter_black_ale_native.png",
+      "runtime": "assets/textures/tavern/items/bitter_black_ale.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for bitter black ale"
+    },
+    "ash_pot_stew": {
+      "source_file": "assets/source/recipes/ash_pot_stew_native.png",
+      "native": "assets/source/tavern/items/ash_pot_stew_native.png",
+      "runtime": "assets/textures/tavern/items/ash_pot_stew.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for ash pot stew"
+    },
+    "sour_herb_wine": {
+      "source_file": "assets/source/recipes/sour_herb_wine_native.png",
+      "native": "assets/source/tavern/items/sour_herb_wine_native.png",
+      "runtime": "assets/textures/tavern/items/sour_herb_wine.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for sour herb wine"
+    },
+    "black_malt_porridge": {
+      "source_file": "assets/source/recipes/black_malt_porridge_native.png",
+      "native": "assets/source/tavern/items/black_malt_porridge_native.png",
+      "runtime": "assets/textures/tavern/items/black_malt_porridge.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for black malt porridge"
+    },
+    "herbal_lizard_roast": {
+      "source_file": "assets/source/recipes/herbal_lizard_roast_native.png",
+      "native": "assets/source/tavern/items/herbal_lizard_roast_native.png",
+      "runtime": "assets/textures/tavern/items/herbal_lizard_roast.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for herbal lizard roast"
+    },
+    "mushroom_pie": {
+      "source_file": "assets/source/recipes/mushroom_pie_native.png",
+      "native": "assets/source/tavern/items/mushroom_pie_native.png",
+      "runtime": "assets/textures/tavern/items/mushroom_pie.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for mushroom pie"
+    },
+    "grape_tart": {
+      "source_file": "assets/source/recipes/grape_tart_native.png",
+      "native": "assets/source/tavern/items/grape_tart_native.png",
+      "runtime": "assets/textures/tavern/items/grape_tart.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for grape tart"
+    },
+    "wakeful_herb_juice": {
+      "source_file": "assets/source/recipes/wakeful_herb_juice_native.png",
+      "native": "assets/source/tavern/items/wakeful_herb_juice_native.png",
+      "runtime": "assets/textures/tavern/items/wakeful_herb_juice.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for wakeful herb juice"
+    },
+    "roasted_malt_porridge": {
+      "source_file": "assets/source/recipes/roasted_malt_porridge_native.png",
+      "native": "assets/source/tavern/items/roasted_malt_porridge_native.png",
+      "runtime": "assets/textures/tavern/items/roasted_malt_porridge.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for roasted malt porridge"
+    },
+    "mushroom_meat_pie": {
+      "source_file": "assets/source/recipes/mushroom_meat_pie_native.png",
+      "native": "assets/source/tavern/items/mushroom_meat_pie_native.png",
+      "runtime": "assets/textures/tavern/items/mushroom_meat_pie.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem and recipe-book item art for mushroom meat pie"
+    },
+    "herbed_lizard_raw": {
+      "source_file": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_20260620T061924Z_ig_0e0483fede568931016a3630bd36dc819191b316b7dcbf80dd.png",
+      "source_rect": [0, 0, 627, 627],
+      "native": "assets/source/tavern/items/herbed_lizard_raw_native.png",
+      "runtime": "assets/textures/tavern/items/herbed_lizard_raw.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem art for hand-prepped lizard meat before grilling"
+    },
+    "mushroom_pie_raw": {
+      "source_file": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_20260620T061924Z_ig_0e0483fede568931016a3630bd36dc819191b316b7dcbf80dd.png",
+      "source_rect": [627, 0, 1254, 627],
+      "native": "assets/source/tavern/items/mushroom_pie_raw_native.png",
+      "runtime": "assets/textures/tavern/items/mushroom_pie_raw.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem art for raw mushroom pie before grilling"
+    },
+    "grape_tart_raw": {
+      "source_file": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_20260620T061924Z_ig_0e0483fede568931016a3630bd36dc819191b316b7dcbf80dd.png",
+      "source_rect": [0, 627, 627, 1254],
+      "native": "assets/source/tavern/items/grape_tart_raw_native.png",
+      "runtime": "assets/textures/tavern/items/grape_tart_raw.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem art for raw grape tart before grilling"
+    },
+    "mushroom_meat_pie_raw": {
+      "source_file": "art_sources/generated_raw/tavern_recipe_items/tavern_recipe_prep_items_20260620T061924Z_ig_0e0483fede568931016a3630bd36dc819191b316b7dcbf80dd.png",
+      "source_rect": [627, 627, 1254, 1254],
+      "native": "assets/source/tavern/items/mushroom_meat_pie_raw_native.png",
+      "runtime": "assets/textures/tavern/items/mushroom_meat_pie_raw.png",
+      "native_size": [24, 24],
+      "scale": 4,
+      "padding": 2,
+      "safe_area": [1, 1, 22, 22],
+      "intended_godot_use": "DeskItem art for raw mushroom meat pie before grilling"
+    }
+  }
+}

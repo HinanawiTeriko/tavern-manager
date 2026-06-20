@@ -10,6 +10,7 @@
       "patience_multiplier": 1.15,
       "tip_multiplier": 1.05,
       "arrival_line": "wow... woof?",
+      "event_hint": "such 客人. very 点单. wow.",
       "reactions": {
         "success": "wow... such serve. very snack.",
         "fail_wrong": "wow... no. much wrong.",
@@ -29,6 +30,7 @@
       "patience_multiplier": 0.9,
       "tip_multiplier": 1.0,
       "arrival_line": "mrrp... crunch.",
+      "event_hint": "小猫咪能有什么坏心思，只是想吃点东西。",
       "reactions": {
         "success": "mrrp. crunch crunch. mine.",
         "fail_wrong": "mrrp? not chip.",
@@ -48,6 +50,7 @@
       "patience_multiplier": 1.05,
       "tip_multiplier": 1.0,
       "arrival_line": "bork... cheems.",
+      "event_hint": "bonk！不许不做 cheemsburger。",
       "reactions": {
         "success": "such noms... cheems.",
         "fail_wrong": "bonk... wrong noms.",
@@ -67,6 +70,7 @@
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.0,
       "arrival_line": "pop. pop. pop!",
+      "event_hint": "pop pop pop pop pop pop pop pop pop pop。",
       "reactions": {
         "success": "pop. pop. POP!",
         "fail_wrong": "pop?",
@@ -86,6 +90,7 @@
       "patience_multiplier": 1.1,
       "tip_multiplier": 1.0,
       "arrival_line": "咕咕嘎嘎。",
+      "event_hint": "旮旯给木里不是这样的。",
       "reactions": {
         "success": "咕咕嘎嘎！",
         "fail_wrong": "咕？不是这个。",
@@ -105,6 +110,7 @@
       "patience_multiplier": 1.0,
       "tip_multiplier": 1.0,
       "arrival_line": "欧润吉。",
+      "event_hint": "欧润吉。它从角落里爬出来了。",
       "reactions": {
         "success": "欧润吉！",
         "fail_wrong": "欧润吉？",
@@ -124,6 +130,7 @@
       "patience_multiplier": 1.05,
       "tip_multiplier": 1.0,
       "arrival_line": "hii... hia?",
+      "event_hint": "hiiihiahiahia。",
       "reactions": {
         "success": "hiiiiiii! hiaaaaaa!",
         "fail_wrong": "hi...? hia...",
@@ -143,6 +150,7 @@
       "patience_multiplier": 0.95,
       "tip_multiplier": 1.0,
       "arrival_line": "哈哈哈哈哈！",
+      "event_hint": "哈哈哈哈哈哈哈哈哈哈哈哈哈。",
       "reactions": {
         "success": "哈哈哈哈哈哈！",
         "fail_wrong": "啊？笑不出来了。",

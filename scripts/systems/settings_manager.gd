@@ -12,8 +12,10 @@ const RESOLUTIONS: Array[Vector2i] = [
 const DEFAULT_RESOLUTION := Vector2i(1280, 720)
 const DEFAULT_MASTER_VOLUME_PERCENT := 100.0
 const DEFAULT_BGM_VOLUME_PERCENT := 80.0
+const SETTINGS_VERSION := 2
 
 var _path: String
+var _loaded_settings_version := SETTINGS_VERSION
 var fullscreen := false
 var resolution := DEFAULT_RESOLUTION
 var master_volume_percent := DEFAULT_MASTER_VOLUME_PERCENT
@@ -26,14 +28,18 @@ func _init(path: String = SETTINGS_PATH) -> void:
 
 func load_and_apply() -> void:
 	load_settings()
+	if _repair_legacy_web_silent_audio_settings(OS.has_feature("web")):
+		save_settings()
 	apply_all()
 
 
 func load_settings() -> void:
 	reset_defaults()
+	_loaded_settings_version = SETTINGS_VERSION
 	var config := ConfigFile.new()
 	if config.load(_path) != OK:
 		return
+	_loaded_settings_version = int(config.get_value("meta", "settings_version", 0))
 	fullscreen = bool(config.get_value("display", "fullscreen", false))
 	resolution = _normalize_resolution(Vector2i(
 		int(config.get_value("display", "width", DEFAULT_RESOLUTION.x)),
@@ -53,6 +59,7 @@ func load_settings() -> void:
 
 func save_settings() -> int:
 	var config := ConfigFile.new()
+	config.set_value("meta", "settings_version", SETTINGS_VERSION)
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "width", resolution.x)
 	config.set_value("display", "height", resolution.y)
@@ -100,6 +107,21 @@ func reset_defaults() -> void:
 	resolution = DEFAULT_RESOLUTION
 	master_volume_percent = DEFAULT_MASTER_VOLUME_PERCENT
 	bgm_volume_percent = DEFAULT_BGM_VOLUME_PERCENT
+
+
+func _repair_legacy_web_silent_audio_settings(is_web: bool) -> bool:
+	if not is_web or _loaded_settings_version >= SETTINGS_VERSION:
+		return false
+	var changed := false
+	if master_volume_percent <= 0.0:
+		master_volume_percent = DEFAULT_MASTER_VOLUME_PERCENT
+		changed = true
+	if bgm_volume_percent <= 0.0:
+		bgm_volume_percent = DEFAULT_BGM_VOLUME_PERCENT
+		changed = true
+	if changed:
+		_loaded_settings_version = SETTINGS_VERSION
+	return changed
 
 
 func _normalize_resolution(value: Vector2i) -> Vector2i:

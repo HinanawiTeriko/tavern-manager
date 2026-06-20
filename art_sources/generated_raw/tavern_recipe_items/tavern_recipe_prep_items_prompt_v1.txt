@@ -1,0 +1,15 @@
+Create ONLY four fantasy tavern food prep objects as isolated inventory-icon source art. No paper, no parchment, no signs, no wind symbol, no decorative panels, no UI, no text.
+
+Canvas: a 2 by 2 grid on one perfectly flat solid #ff00ff chroma-key background. The background must be uniform magenta, no gradients, no shadows, no texture.
+
+Object order, row-major:
+1. Herbed raw lizard meat: a small raw green-brown lizard meat cut tied with herb sprigs, clearly uncooked.
+2. Raw mushroom pie: pale unbaked dough shell with grey-brown cave mushroom pieces, not golden, not cooked.
+3. Raw grape tart: pale unbaked tart shell filled with dark red-purple grapes, uncooked.
+4. Raw mushroom meat pie: pale unbaked dough shell with visible raw red meat chunks and grey mushroom pieces, uncooked.
+
+Style: compact hand-painted RPG inventory food icons, dark ink outline, readable silhouette, warm tavern browns, designed to be downsampled into 24x24 pixel-art icons.
+
+Composition: each object centered in its quadrant with generous padding and no overlap. Transparent-looking object edges are not needed; use the flat magenta background for later removal.
+
+Avoid: parchment, scrolls, paper tags, labels, letters, numbers, fake UI, plated finished dishes, cooked golden crust, flames, smoke, watermark. Do not use #ff00ff inside the objects.

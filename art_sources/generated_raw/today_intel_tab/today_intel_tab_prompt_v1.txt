@@ -1,0 +1,16 @@
+Built-in imagegen prompt, extracted from Codex session JSONL with scripts/tools/extract_codex_imagegen_results.py.
+Extraction cutoff: 2026-06-20T03:28:34Z
+Extracted result: today_intel_tab_source_20260620T032936Z_ig_02145f10e8905db8016a3608eac3348191a16a3832da2c4841.png
+Stable source: today_intel_tab_source_v1.png
+
+Use case: stylized-concept
+Asset type: UI source art sheet for a pixel-art dungeon tavern management game
+Primary request: Create a 2x2 sheet of four small parchment paper tab button states for a bottom-right 'rumor notes' UI control. No readable text, no letters, no numbers, no icons that look like text.
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background, no shadows on the background, no gradient, no texture outside the tabs.
+Subject: four separate hand-painted parchment tabs, each a small horizontal paper slip with rough inked edges, slightly torn corners, subtle paper grain, and a tiny abstract hand-drawn wind/whisper mark on the left side only. The tabs should match a dark teal dungeon tavern UI with warm candlelight accents and rough printmaking influence. State 1 normal: muted parchment and dark ink edge. State 2 hover: slightly warmer edge glow, still restrained. State 3 pressed: slightly darker and lower-feeling. State 4 unread/new: same as normal with a tiny amber wax-dot accent near one corner.
+Style/medium: original stylized game UI art, rough ink lines, paper grain, pixel-art-friendly shapes, crisp silhouettes suitable for downsampling into a 30x12 native pixel grid per tab.
+Composition/framing: 2x2 grid, generous padding, each tab isolated and fully visible, each tab roughly the same size and aspect ratio, centered in its quadrant. Background must remain pure #00ff00 between and around tabs.
+Lighting/mood: warm candlelit parchment, restrained contrast, no realistic cast shadows.
+Color palette: parchment tan, dark brown ink, tiny amber accent on unread state; avoid saturated modern UI colors except the #00ff00 background.
+Materials/textures: handmade rough paper, dry brush ink edge, simple tavern note feel.
+Constraints: no text, no logos, no watermark, no UI labels, no fake readable glyphs. Keep every tab separated from the chroma background with crisp edges. Do not use #00ff00 inside the tab artwork.
