@@ -16,6 +16,7 @@ var _failures := 0
 func _ready() -> void:
 	_test_scene_scripts_do_not_preload_raw_bgm_wavs()
 	_test_bgm_manager_owns_path_loading_and_looping()
+	_test_bgm_manager_defers_web_bgm_until_user_input()
 	_test_bgm_manager_does_not_duplicate_imported_wav_streams()
 	_test_transparent_shade_out_is_noop()
 	BGMManager.stop_immediate()
@@ -48,6 +49,23 @@ func _test_bgm_manager_owns_path_loading_and_looping() -> void:
 	_ok(text.contains("finished.connect"), "BGM manager loops music with player finished signals")
 	_ok(text.contains("_on_bgm_player_finished"), "BGM manager owns player-level replay looping")
 	_ok(text.contains("settings.apply_all()"), "BGM manager reapplies loaded settings after Music bus setup")
+
+
+func _test_bgm_manager_defers_web_bgm_until_user_input() -> void:
+	var file := FileAccess.open("res://scripts/systems/bgm_manager.gd", FileAccess.READ)
+	_ok(file != null, "BGM manager script exists for web unlock checks")
+	if file == null:
+		return
+	var text := file.get_as_text()
+	file.close()
+	_ok(text.contains("OS.has_feature(\"web\")"), "BGM manager detects web exports for browser audio policy")
+	_ok(text.contains("_pending_web_bgm_stream"), "BGM manager stores the first web BGM request until input")
+	_ok(text.contains("func _input"), "BGM manager listens before scene input can consume the first click")
+	_ok(text.contains("_flush_pending_web_bgm"), "BGM manager flushes deferred BGM after the browser unlock input")
+	_ok(text.contains("_is_web_audio_unlock_event"), "BGM manager filters real user gesture events")
+	_ok(text.contains("InputEventMouseButton"), "mouse clicks unlock web BGM")
+	_ok(text.contains("InputEventScreenTouch"), "touch taps unlock web BGM")
+	_ok(text.contains("InputEventKey"), "keyboard input unlocks web BGM")
 
 
 func _test_bgm_manager_does_not_duplicate_imported_wav_streams() -> void:
