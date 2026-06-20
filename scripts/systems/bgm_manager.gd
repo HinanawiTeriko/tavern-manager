@@ -39,16 +39,14 @@ var _shade_done_callback: Callable
 
 func _ready() -> void:
 	# 确保 "Music" 音频总线存在
-	if AudioServer.get_bus_index("Music") < 0:
-		var master_idx := AudioServer.get_bus_index("Master")
-		AudioServer.add_bus(master_idx + 1)
-		AudioServer.set_bus_name(master_idx + 1, "Music")
-		AudioServer.set_bus_send(master_idx + 1, "Master")
+	if not OS.has_feature("web"):
+		_ensure_music_bus()
 	_apply_settings_volume()
 
 	_player_a = AudioStreamPlayer.new()
 	_player_b = AudioStreamPlayer.new()
-	_player_a.bus = "Music"; _player_b.bus = "Music"
+	var bgm_bus := _bgm_bus_name(OS.has_feature("web"))
+	_player_a.bus = bgm_bus; _player_b.bus = bgm_bus
 	_player_a.volume_db = MIN_VOLUME_DB; _player_b.volume_db = MIN_VOLUME_DB
 	add_child(_player_a); add_child(_player_b)
 	_player_a.finished.connect(_on_bgm_player_finished.bind(_player_a))
@@ -229,6 +227,20 @@ func _prepare_bgm_stream(stream: AudioStream) -> AudioStream:
 	# Imported compressed WAV resources can stop immediately when loop_mode is changed.
 	# Keep the stream untouched; loop by replaying the active player on finished.
 	return wav
+
+
+func _ensure_music_bus() -> void:
+	if AudioServer.get_bus_index("Music") >= 0:
+		return
+	var master_idx := AudioServer.get_bus_index("Master")
+	var music_idx := master_idx + 1
+	AudioServer.add_bus(music_idx)
+	AudioServer.set_bus_name(music_idx, "Music")
+	AudioServer.set_bus_send(music_idx, "Master")
+
+
+func _bgm_bus_name(is_web: bool) -> String:
+	return "Master" if is_web else "Music"
 
 
 func _active_player_is_playing() -> bool:

@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_save_and_reload()
 	_test_setters_persist()
 	_test_invalid_values_are_normalized()
+	_test_legacy_web_zero_audio_settings_are_repaired_once()
 	_test_pixel_display_configuration()
 	print("[TEST-SETTINGS] ALL PASS")
 	get_tree().quit()
@@ -69,6 +70,33 @@ func _test_setters_persist() -> void:
 	assert(reloaded.master_volume_percent == 0.0)
 	manager.set_master_volume_percent(100.0)
 	manager.clear_settings()
+
+
+func _test_legacy_web_zero_audio_settings_are_repaired_once() -> void:
+	var config := ConfigFile.new()
+	config.set_value("audio", "master_volume_percent", 0.0)
+	config.set_value("audio", "bgm_volume_percent", 0.0)
+	assert(config.save(TEST_PATH) == OK)
+
+	var manager := SettingsManager.new(TEST_PATH)
+	manager.load_settings()
+	assert(manager.master_volume_percent == 0.0)
+	assert(manager.bgm_volume_percent == 0.0)
+	assert(manager.call("_repair_legacy_web_silent_audio_settings", true))
+	assert(manager.master_volume_percent == SettingsManager.DEFAULT_MASTER_VOLUME_PERCENT)
+	assert(manager.bgm_volume_percent == SettingsManager.DEFAULT_BGM_VOLUME_PERCENT)
+	assert(manager.save_settings() == OK)
+
+	var migrated := SettingsManager.new(TEST_PATH)
+	migrated.load_settings()
+	assert(not migrated.call("_repair_legacy_web_silent_audio_settings", true))
+	migrated.set_master_volume_percent(0.0)
+
+	var explicit_mute := SettingsManager.new(TEST_PATH)
+	explicit_mute.load_settings()
+	assert(not explicit_mute.call("_repair_legacy_web_silent_audio_settings", true))
+	assert(explicit_mute.master_volume_percent == 0.0)
+	explicit_mute.clear_settings()
 
 
 func _test_pixel_display_configuration() -> void:

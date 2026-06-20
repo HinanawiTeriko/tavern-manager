@@ -18,6 +18,7 @@ func _ready() -> void:
 	_test_bgm_manager_owns_path_loading_and_looping()
 	_test_bgm_manager_defers_web_bgm_until_user_input()
 	_test_web_bgm_immediate_start_uses_audible_volume()
+	_test_web_bgm_routes_to_master_bus()
 	_test_bgm_manager_does_not_duplicate_imported_wav_streams()
 	_test_transparent_shade_out_is_noop()
 	BGMManager.stop_immediate()
@@ -92,6 +93,22 @@ func _test_web_bgm_immediate_start_uses_audible_volume() -> void:
 	_ok(String(BGMManager.get("_current_stream_key")) == "test:web-immediate", "immediate start records stream key")
 	_ok(int(BGMManager.get("_state")) == 0, "immediate start does not depend on fade state")
 	BGMManager.stop_immediate()
+
+
+func _test_web_bgm_routes_to_master_bus() -> void:
+	_ok(BGMManager.has_method("_bgm_bus_name"), "BGM manager exposes a platform-aware BGM bus selector")
+	if not BGMManager.has_method("_bgm_bus_name"):
+		return
+	_ok(String(BGMManager.call("_bgm_bus_name", true)) == "Master", "web BGM routes to Master to avoid WebAudio bus loops")
+	_ok(String(BGMManager.call("_bgm_bus_name", false)) == "Music", "desktop BGM keeps the dedicated Music bus")
+	var file := FileAccess.open("res://scripts/systems/bgm_manager.gd", FileAccess.READ)
+	_ok(file != null, "BGM manager script exists for web bus checks")
+	if file == null:
+		return
+	var text := file.get_as_text()
+	file.close()
+	_ok(text.contains("_ensure_music_bus"), "BGM manager isolates desktop Music bus creation behind a helper")
+	_ok(text.contains("if not OS.has_feature(\"web\")"), "web export skips creating the dedicated Music bus")
 
 
 func _test_bgm_manager_does_not_duplicate_imported_wav_streams() -> void:
