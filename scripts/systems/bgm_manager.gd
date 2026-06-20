@@ -156,6 +156,9 @@ func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: flo
 	if not ignore_web_gate and _should_defer_web_bgm():
 		_defer_web_bgm(stream, stream_key, duration)
 		return
+	if OS.has_feature("web"):
+		_start_bgm_immediate(stream, stream_key)
+		return
 	var prepared_stream := _prepare_bgm_stream(stream)
 	_current_stream = prepared_stream
 	_current_stream_key = stream_key
@@ -166,6 +169,23 @@ func _crossfade_to_stream(stream: AudioStream, stream_key: String, duration: flo
 	_fade_in_player.play()
 	_elapsed = 0.0; _duration = max(duration, 0.05)
 	_state = State.CROSSFADE
+
+
+func _start_bgm_immediate(stream: AudioStream, stream_key: String) -> void:
+	var prepared_stream := _prepare_bgm_stream(stream)
+	_current_stream = prepared_stream
+	_current_stream_key = stream_key
+	_state = State.IDLE
+	_fade_out_player = null
+	_fade_in_player = null
+	_player_a.stop()
+	_player_b.stop()
+	_player_a.stream = prepared_stream
+	_player_a.volume_db = MAX_VOLUME_DB
+	_player_b.stream = null
+	_player_b.volume_db = MIN_VOLUME_DB
+	_active = "a"
+	_player_a.play()
 
 
 func _should_defer_web_bgm() -> bool:

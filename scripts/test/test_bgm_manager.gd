@@ -17,6 +17,7 @@ func _ready() -> void:
 	_test_scene_scripts_do_not_preload_raw_bgm_wavs()
 	_test_bgm_manager_owns_path_loading_and_looping()
 	_test_bgm_manager_defers_web_bgm_until_user_input()
+	_test_web_bgm_immediate_start_uses_audible_volume()
 	_test_bgm_manager_does_not_duplicate_imported_wav_streams()
 	_test_transparent_shade_out_is_noop()
 	BGMManager.stop_immediate()
@@ -66,6 +67,31 @@ func _test_bgm_manager_defers_web_bgm_until_user_input() -> void:
 	_ok(text.contains("InputEventMouseButton"), "mouse clicks unlock web BGM")
 	_ok(text.contains("InputEventScreenTouch"), "touch taps unlock web BGM")
 	_ok(text.contains("InputEventKey"), "keyboard input unlocks web BGM")
+
+
+func _test_web_bgm_immediate_start_uses_audible_volume() -> void:
+	_ok(BGMManager.has_method("_start_bgm_immediate"), "BGM manager has a no-fade Web start path")
+	if not BGMManager.has_method("_start_bgm_immediate"):
+		return
+	BGMManager.stop_immediate()
+	var stream := load("res://assets/audio/bgm/title.wav") as AudioStreamWAV
+	_ok(stream != null, "title BGM loads for immediate start")
+	if stream == null:
+		return
+	BGMManager.call("_start_bgm_immediate", stream, "test:web-immediate")
+	var active := String(BGMManager.get("_active"))
+	var player := BGMManager.get("_player_a") as AudioStreamPlayer
+	if active == "b":
+		player = BGMManager.get("_player_b") as AudioStreamPlayer
+	_ok(player != null, "immediate start selects an active player")
+	if player == null:
+		return
+	_ok(player.stream == stream, "immediate start assigns the requested stream")
+	_ok(is_equal_approx(player.volume_db, 0.0), "immediate start begins at audible volume")
+	_ok(player.playing, "immediate start begins playback")
+	_ok(String(BGMManager.get("_current_stream_key")) == "test:web-immediate", "immediate start records stream key")
+	_ok(int(BGMManager.get("_state")) == 0, "immediate start does not depend on fade state")
+	BGMManager.stop_immediate()
 
 
 func _test_bgm_manager_does_not_duplicate_imported_wav_streams() -> void:
